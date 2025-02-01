@@ -38,7 +38,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               {getPageTitle()}
             </h1>
 
-            <div className="bg-background rounded-[0.25rem] p-6">
+            <div className="bg-[hsl(220,33%,97%)] rounded-[0.25rem] p-6">
               {children}
             </div>
           </div>
