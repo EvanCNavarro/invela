@@ -52,25 +52,25 @@
   }
 
   .dark {
-    --background: 222 47% 11%; /* Darker, but still readable background */
+    --background: 225 25% 12%; /* Dark blue-gray base */
     --foreground: 210 40% 98%; /* High contrast text */
-    --card: 223 47% 11%;
+    --card: 225 25% 14%; /* Slightly lighter than background */
     --card-foreground: 210 40% 98%;
-    --popover: 223 47% 11%;
+    --popover: 225 25% 14%;
     --popover-foreground: 210 40% 98%;
-    --primary: 227 81% 61%; /* Keep primary color consistent */
+    --primary: 227 81% 65%; /* Brightened primary for dark mode */
     --primary-foreground: 210 40% 98%;
-    --secondary: 217 32% 17%;
+    --secondary: 225 25% 16%; /* Subtle contrast for sections */
     --secondary-foreground: 210 40% 98%;
-    --muted: 223 47% 11%;
-    --muted-foreground: 215 20% 75%; /* Improved muted text contrast */
-    --accent: 216 34% 17%;
+    --muted: 225 25% 20%;
+    --muted-foreground: 217 25% 75%; /* Improved muted text contrast */
+    --accent: 227 81% 25%; /* Darker accent for contrast */
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
+    --destructive: 0 75% 45%;
     --destructive-foreground: 210 40% 98%;
-    --border: 216 34% 17%;
-    --input: 216 34% 17%;
-    --ring: 224 76% 48%;
+    --border: 225 25% 22%;
+    --input: 225 25% 22%;
+    --ring: 227 81% 65%;
     --chart: {
       "1": "hsl(var(--chart-1))",
       "2": "hsl(var(--chart-2))",
@@ -79,14 +79,14 @@
       "5": "hsl(var(--chart-5))",
     };
     --sidebar: {
-      background: 222 47% 11%;
+      background: 225 25% 12%;
       foreground: 210 40% 98%;
-      primary: 227 81% 61%;
+      primary: 227 81% 65%;
       primary-foreground: 210 40% 98%;
-      accent: 216 34% 17%;
-      accent-foreground: 227 81% 61%;
-      border: 216 34% 17%;
-      ring: 224 76% 48%;
+      accent: 227 81% 25%;
+      accent-foreground: 210 40% 98%;
+      border: 225 25% 22%;
+      ring: 227 81% 65%;
     };
   }
 
