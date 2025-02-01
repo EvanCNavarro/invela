@@ -52,25 +52,25 @@
   }
 
   .dark {
-    --background: 0 0% 10%; /* #1A1A1A */
-    --foreground: 0 0% 95%; /* #F2F2F2 */
-    --card: 0 0% 14%; /* #242424 */
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 14%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 227 65% 65%; /* Slightly desaturated blue */
+    --background: 215 28% 17%; /* #202938 - Main background */
+    --foreground: 210 6% 93%; /* #EBEBED - Primary text */
+    --card: 215 28% 19%; /* #243041 - Card background */
+    --card-foreground: 210 6% 93%;
+    --popover: 215 28% 19%;
+    --popover-foreground: 210 6% 93%;
+    --primary: 217 91% 60%; /* Optimized blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 16%; /* #292929 */
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 18%; /* #2E2E2E */
-    --muted-foreground: 0 0% 70%; /* #B3B3B3 */
-    --accent: 227 40% 25%; /* Darker, desaturated blue */
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 20%; /* #333333 */
-    --input: 0 0% 20%;
-    --ring: 227 65% 65%;
+    --secondary: 215 28% 15%; /* #1B2330 - Secondary surfaces */
+    --secondary-foreground: 210 6% 93%;
+    --muted: 215 28% 25%; /* #2F3B4B - Muted surfaces */
+    --muted-foreground: 217 9% 75%; /* #BABBBD - Muted text */
+    --accent: 215 28% 21%; /* #283447 - Accent surfaces */
+    --accent-foreground: 210 6% 93%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 6% 93%;
+    --border: 215 28% 25%; /* #2F3B4B - Borders */
+    --input: 215 28% 25%;
+    --ring: 217 91% 60%;
     --chart: {
       "1": "hsl(var(--chart-1))",
       "2": "hsl(var(--chart-2))",
@@ -79,14 +79,14 @@
       "5": "hsl(var(--chart-5))",
     };
     --sidebar: {
-      background: 0 0% 10%;
-      foreground: 0 0% 95%;
-      primary: 227 65% 65%;
+      background: 215 28% 17%;
+      foreground: 210 6% 93%;
+      primary: 217 91% 60%;
       primary-foreground: 0 0% 100%;
-      accent: 0 0% 14%;
-      accent-foreground: 0 0% 95%;
-      border: 0 0% 20%;
-      ring: 227 65% 65%;
+      accent: 215 28% 21%;
+      accent-foreground: 210 6% 93%;
+      border: 215 28% 25%;
+      ring: 217 91% 60%;
     };
   }
 
