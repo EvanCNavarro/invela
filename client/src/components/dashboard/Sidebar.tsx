@@ -25,7 +25,7 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-sidebar text-sidebar-foreground border-r border-sidebar-border transition-all duration-200",
+      "fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-200 z-50",
       isExpanded ? "w-64" : "w-20"
     )}>
       <div className="flex items-center h-16 px-4">
@@ -42,13 +42,13 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
       <nav className="mt-8">
         {menuItems.map(({ icon: Icon, label, href }) => (
           <Link key={href} href={href}>
-            <a className={cn(
-              "flex items-center h-12 px-4 text-sidebar-foreground hover:bg-sidebar-accent rounded-lg mx-2 mb-1",
+            <div className={cn(
+              "flex items-center h-12 px-4 text-sidebar-foreground hover:bg-sidebar-accent rounded-lg mx-2 mb-1 cursor-pointer",
               !isExpanded && "justify-center"
             )}>
               <Icon className="h-5 w-5" />
               {isExpanded && <span className="ml-3">{label}</span>}
-            </a>
+            </div>
           </Link>
         ))}
       </nav>
