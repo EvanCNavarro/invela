@@ -1,10 +1,7 @@
-import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import { 
   SearchIcon, 
-  SunIcon, 
-  MoonIcon,
   HelpCircleIcon,
   BellIcon,
   LogOutIcon,
@@ -24,13 +21,7 @@ import {
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [, setLocation] = useLocation();
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
 
   return (
     <header className="h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -46,14 +37,6 @@ export function TopNav() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleTheme}
-          >
-            {isDarkMode ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
-          </Button>
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon">
