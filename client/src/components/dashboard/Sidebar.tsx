@@ -29,11 +29,14 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
       "fixed left-0 top-0 h-screen bg-background transition-all duration-200 z-50",
       isExpanded ? "w-64" : "w-20"
     )}>
-      <div className="flex items-center h-16 px-4">
+      <div className={cn(
+        "flex items-center h-16",
+        isExpanded ? "px-4" : "justify-center"
+      )}>
         <img 
           src="/invela-logo.svg" 
           alt="Invela"
-          className="h-8 w-8"
+          className="h-6 w-6"
         />
         {isExpanded && (
           <span className="ml-3 font-semibold text-lg">Invela</span>
@@ -47,8 +50,8 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
             <Link key={href} href={href}>
               <div className={cn(
                 "flex items-center h-12 px-4 rounded-lg mx-2 mb-1 cursor-pointer",
-                "transition-all duration-200 ease-in-out",
-                "hover:bg-primary/10 hover:text-primary",
+                "transition-all duration-200",
+                "hover:bg-muted hover:text-foreground",
                 !isExpanded && "justify-center",
                 isActive && "bg-[hsl(228,89%,96%)] text-primary shadow-sm"
               )}>
