@@ -1,5 +1,6 @@
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   return (
@@ -52,14 +53,18 @@ export default function DashboardPage() {
           title="Your Company Score"
           className="col-span-full md:col-span-1"
         >
-          {/* Add company score visualization */}
+          <div className="flex items-center justify-center h-48">
+            <p className="text-muted-foreground">No score data available</p>
+          </div>
         </Widget>
 
         <Widget
           title="Network Visualization"
           className="col-span-full"
         >
-          {/* Add network graph visualization */}
+          <div className="flex items-center justify-center h-64">
+            <p className="text-muted-foreground">Network visualization coming soon</p>
+          </div>
         </Widget>
       </div>
     </DashboardLayout>
