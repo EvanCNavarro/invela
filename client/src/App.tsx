@@ -4,7 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 
-import HomePage from "@/pages/dashboard-page";
+import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import RegistryPage from "@/pages/registry-page";
@@ -15,7 +15,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={HomePage} />
+      <ProtectedRoute path="/" component={DashboardPage} />
       <ProtectedRoute path="/registry" component={RegistryPage} />
       <ProtectedRoute path="/task-center" component={TaskCenterPage} />
       <ProtectedRoute path="/insights" component={InsightsPage} />
