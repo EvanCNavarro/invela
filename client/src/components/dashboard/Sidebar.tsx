@@ -42,7 +42,7 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background transition-all duration-200 z-50",
+      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200 z-50",
       isExpanded ? "w-64" : "w-20"
     )}>
       <div className={cn(
@@ -55,7 +55,7 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
           className="h-6 w-6"
         />
         {isExpanded && (
-          <span className="ml-3 font-semibold text-lg">Invela</span>
+          <span className="ml-3 font-semibold text-lg text-foreground">Invela</span>
         )}
       </div>
 
@@ -69,8 +69,8 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
                 "transition-all duration-200",
                 !isExpanded && "justify-center",
                 isActive 
-                  ? "bg-[hsl(228,89%,96%)] text-primary" 
-                  : "hover:bg-muted hover:text-foreground"
+                  ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
+                  : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground"
               )}>
                 <Icon className={cn(
                   "h-5 w-5",
@@ -79,7 +79,7 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
                 {isExpanded && (
                   <span className={cn(
                     "ml-3",
-                    isActive && "font-semibold"
+                    isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
                   )}>
                     {label}
                   </span>
@@ -94,7 +94,7 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
         variant="ghost"
         size="icon"
         onClick={onToggleExpanded}
-        className="absolute bottom-4 right-4"
+        className="absolute bottom-4 right-4 text-foreground/80 hover:text-foreground dark:text-foreground/60 dark:hover:text-foreground"
       >
         {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
       </Button>
