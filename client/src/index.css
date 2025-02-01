@@ -52,25 +52,25 @@
   }
 
   .dark {
-    --background: 0 0% 7%; /* #121212 - Material Dark Background */
-    --foreground: 0 0% 88%; /* #E0E0E0 - High emphasis text */
-    --card: 0 0% 12%; /* #1E1E1E - Surface 1 */
+    --background: 222 47% 11%;
+    --foreground: 0 0% 88%;
+    --card: 222 47% 13%;
     --card-foreground: 0 0% 88%;
-    --popover: 0 0% 12%;
+    --popover: 222 47% 13%;
     --popover-foreground: 0 0% 88%;
-    --primary: 265 89% 78%; /* #BB86FC - Material primary */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 13%; /* #222222 - Surface 2 */
+    --primary: 214 84% 56%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 15%;
     --secondary-foreground: 0 0% 88%;
-    --muted: 0 0% 15%; /* #262626 - Surface 3 */
-    --muted-foreground: 0 0% 60%; /* #999999 - Medium emphasis text */
-    --accent: 291 100% 58%; /* #CF6DFF - Material accent */
+    --muted: 222 47% 17%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 213 68% 45%;
     --accent-foreground: 0 0% 88%;
-    --destructive: 0 100% 71%; /* #FF4081 - Material error */
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 88%;
-    --border: 0 0% 15%; /* #262626 */
-    --input: 0 0% 15%;
-    --ring: 265 89% 78%;
+    --border: 222 47% 17%;
+    --input: 222 47% 17%;
+    --ring: 214 84% 56%;
     --chart: {
       "1": "hsl(var(--chart-1))",
       "2": "hsl(var(--chart-2))",
@@ -79,14 +79,14 @@
       "5": "hsl(var(--chart-5))",
     };
     --sidebar: {
-      background: 0 0% 7%;
+      background: 222 47% 11%;
       foreground: 0 0% 88%;
-      primary: 265 89% 78%;
-      primary-foreground: 0 0% 0%;
-      accent: 0 0% 12%;
+      primary: 214 84% 56%;
+      primary-foreground: 0 0% 100%;
+      accent: 222 47% 13%;
       accent-foreground: 0 0% 88%;
-      border: 0 0% 15%;
-      ring: 265 89% 78%;
+      border: 222 47% 17%;
+      ring: 214 84% 56%;
     };
   }
 
