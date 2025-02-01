@@ -32,27 +32,67 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 227 81% 61%;
+    --sidebar: {
+      background: 228 100% 99%;
+      foreground: 222.2 84% 4.9%;
+      primary: 227 81% 61%;
+      primary-foreground: 210 40% 98%;
+      accent: 228 89% 96%;
+      accent-foreground: 227 81% 61%;
+      border: 214.3 31.8% 91.4%;
+      ring: 227 81% 61%;
+    };
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 215 20.2% 65.1%;
     --primary: 227 81% 61%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 222.2 47.4% 11.2%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215.4 16.3% 56.9%;
+    --accent: 216 34% 17%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
     --ring: 224.3 76.3% 48%;
+    --sidebar: {
+      background: 224 71% 4%;
+      foreground: 213 31% 91%;
+      primary: 227 81% 61%;
+      primary-foreground: 210 40% 98%;
+      accent: 222.2 47.4% 11.2%;
+      accent-foreground: 227 81% 61%;
+      border: 216 34% 17%;
+      ring: 224.3 76.3% 48%;
+    };
+  }
+
+  /* Improved focus styles for better accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-background;
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-interactive {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Enhanced button states */
+  button, [role="button"] {
+    @apply transition-interactive focus-visible:ring-2 focus-visible:ring-primary;
+  }
+
+  /* Improved link states */
+  a {
+    @apply transition-interactive hover:text-primary focus-visible:ring-2 focus-visible:ring-primary;
   }
 }
