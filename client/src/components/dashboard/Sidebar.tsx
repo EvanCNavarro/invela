@@ -1,8 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
-  HomeIcon, 
-  CheckCircleIcon, 
+  HomeIcon,
+  CheckCircleIcon,
   BookIcon,
   BarChartIcon,
   ChevronLeftIcon,
@@ -18,10 +18,26 @@ interface SidebarProps {
 export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
   const [location] = useLocation();
   const menuItems = [
-    { icon: HomeIcon, label: "Dashboard", href: "/" },
-    { icon: CheckCircleIcon, label: "Task Center", href: "/task-center" },
-    { icon: BookIcon, label: "Registry", href: "/registry" },
-    { icon: BarChartIcon, label: "Insights", href: "/insights" }
+    { 
+      icon: HomeIcon,
+      label: "Dashboard", 
+      href: "/" 
+    },
+    { 
+      icon: CheckCircleIcon,
+      label: "Task Center", 
+      href: "/task-center" 
+    },
+    { 
+      icon: BookIcon,
+      label: "Registry", 
+      href: "/registry" 
+    },
+    { 
+      icon: BarChartIcon,
+      label: "Insights", 
+      href: "/insights" 
+    }
   ];
 
   return (
@@ -51,12 +67,23 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
               <div className={cn(
                 "flex items-center h-12 px-4 rounded-lg mx-2 mb-1 cursor-pointer",
                 "transition-all duration-200",
-                "hover:bg-muted hover:text-foreground",
                 !isExpanded && "justify-center",
-                isActive && "bg-[hsl(228,89%,96%)] text-primary shadow-sm"
+                isActive 
+                  ? "bg-[hsl(228,89%,96%)] text-primary" 
+                  : "hover:bg-muted hover:text-foreground"
               )}>
-                <Icon className="h-5 w-5" />
-                {isExpanded && <span className="ml-3">{label}</span>}
+                <Icon className={cn(
+                  "h-5 w-5",
+                  isActive && "stroke-[2.5]"
+                )} />
+                {isExpanded && (
+                  <span className={cn(
+                    "ml-3",
+                    isActive && "font-semibold"
+                  )}>
+                    {label}
+                  </span>
+                )}
               </div>
             </Link>
           );
