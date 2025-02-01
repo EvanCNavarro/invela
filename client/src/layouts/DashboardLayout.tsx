@@ -20,27 +20,25 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar 
         isExpanded={isSidebarExpanded}
         onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
       />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
+
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-200",
+        isSidebarExpanded ? "ml-64" : "ml-20"
+      )}>
         <TopNav />
-        
+
         <main className="flex-1 overflow-y-auto p-6">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-2xl font-semibold text-foreground mb-6">
               {getPageTitle()}
             </h1>
-            
-            <div className={cn(
-              "transition-all duration-200",
-              isSidebarExpanded ? "ml-64" : "ml-20"
-            )}>
-              {children}
-            </div>
+
+            {children}
           </div>
         </main>
       </div>
