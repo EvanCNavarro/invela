@@ -65,6 +65,13 @@ export default function InsightsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-semibold mb-1">Insights</h1>
+          <p className="text-sm text-muted-foreground">
+            Analyze and visualize your company's data and relationships.
+          </p>
+        </div>
+
         <div className="flex justify-between items-center">
           <Select
             value={selectedVisualization}
