@@ -23,59 +23,46 @@ export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
 
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => setLocation('/login')
+    });
+  };
+
   return (
-    <header className="h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-between h-full px-4">
-        <div className="flex items-center flex-1">
-          <div className="relative w-96">
+    <header className="h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="flex items-center justify-between h-full px-4 md:px-6">
+        <div className="flex items-center flex-1 max-w-md">
+          <div className="relative w-full">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
-              placeholder="Search anything..." 
-              className="pl-9"
+              placeholder="Search..." 
+              className="pl-9 h-8"
             />
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <HelpCircleIcon className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Send Feedback</DropdownMenuItem>
-              <DropdownMenuItem>What's New?</DropdownMenuItem>
-              <DropdownMenuItem>FAQs</DropdownMenuItem>
-              <DropdownMenuItem>Help Center</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <HelpCircleIcon className="h-4 w-4" />
+          </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <BellIcon className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>No new notifications</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <BellIcon className="h-4 w-4" />
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 cursor-pointer">
-                <AvatarFallback>
-                  {user?.fullName.charAt(0).toUpperCase()}
+                <AvatarFallback className="text-sm">
+                  {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <div className="flex items-center space-x-2 p-2">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium">{user?.fullName}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5">
+                <p className="text-sm font-medium truncate">{user?.fullName}</p>
+                <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
@@ -88,14 +75,7 @@ export function TopNav() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => {
-                  logoutMutation.mutate(undefined, {
-                    onSuccess: () => {
-                      setLocation('/login');
-                    }
-                  })
-                  
-                }}
+                onClick={handleLogout}
                 className="text-red-600 focus:text-red-600"
               >
                 <LogOutIcon className="mr-2 h-4 w-4" />
