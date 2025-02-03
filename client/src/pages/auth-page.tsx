@@ -28,27 +28,27 @@ const titleRegex = /\b(mr|mrs|ms|dr|prof|rev|sir|madam)\b/i;
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   fullName: z.string()
-    .min(2, "Full name must be at least 2 characters.")
-    .max(50, "Full name must not exceed 50 characters.")
+    .min(2, "Name must be at least 2 characters.")
+    .max(50, "Name must not exceed 50 characters.")
     .refine(
       (value) => fullNameRegex.test(value),
-      "Name can only contain letters and simple spacing characters"
+      "Please use only letters and spaces."
     )
     .refine(
       (value) => !repeatingCharsRegex.test(value),
-      "Name cannot contain repeating characters"
+      "Please avoid repeating characters."
     )
     .refine(
       (value) => !mixedScriptRegex.test(value),
-      "Name cannot contain characters from multiple languages"
+      "Please use standard characters only."
     )
     .refine(
       (value) => !titleRegex.test(value.toLowerCase()),
-      "Name cannot contain titles (e.g., Mr., Dr., Prof.)"
+      "Please remove any titles."
     )
     .refine(
       (value) => !/\d/.test(value),
-      "Name cannot contain numbers"
+      "Please remove any numbers."
     ),
   company: z.string()
     .min(1, "Company name is required.")
@@ -223,14 +223,14 @@ export default function AuthPage() {
                                 "border-green-500"
                               )}
                               onBlur={(e) => {
-                                field.onBlur(e);
+                                field.onBlur();
                                 if (field.value) {
                                   setTouchedFields(prev => ({ ...prev, fullName: true }));
                                 }
                               }}
                             />
                           </FormControl>
-                          {touchedFields.fullName && field.value && !form.formState.errors.fullName && (
+                          {field.value && !form.formState.errors.fullName && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               <Check className="w-5 h-5 text-green-500" />
                             </div>
@@ -259,14 +259,14 @@ export default function AuthPage() {
                                 "border-green-500"
                               )}
                               onBlur={(e) => {
-                                field.onBlur(e);
+                                field.onBlur();
                                 if (field.value) {
                                   setTouchedFields(prev => ({ ...prev, company: true }));
                                 }
                               }}
                             />
                           </FormControl>
-                          {touchedFields.company && field.value && !form.formState.errors.company && (
+                          {field.value && !form.formState.errors.company && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                               <Check className="w-5 h-5 text-green-500" />
                             </div>
@@ -291,7 +291,7 @@ export default function AuthPage() {
                           type={showPassword ? "text" : "password"}
                           {...field} 
                           onBlur={(e) => {
-                            field.onBlur(e);
+                            field.onBlur();
                             if (field.value) {
                               setTouchedFields(prev => ({ ...prev, password: true }));
                             }
@@ -300,11 +300,16 @@ export default function AuthPage() {
                             "pr-10",
                             touchedFields.password && form.formState.errors.password && 
                             "border-[#E56047] focus-visible:ring-[#E56047]",
-                            !isLogin && touchedFields.password && field.value && !form.formState.errors.password &&
+                            !isLogin && field.value && !form.formState.errors.password &&
                             "border-green-500"
                           )}
                         />
                       </FormControl>
+                      {!isLogin && field.value && !form.formState.errors.password && (
+                        <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
