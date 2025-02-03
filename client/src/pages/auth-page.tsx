@@ -40,6 +40,7 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [location, setLocation] = useLocation();
   const [redirectEmail, setRedirectEmail] = useState<string>("");
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const isLogin = location.includes("mode=login");
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -50,6 +51,7 @@ export default function AuthPage() {
       company: "",
       password: "",
     },
+    mode: "onBlur"
   });
 
   useEffect(() => {
@@ -65,14 +67,20 @@ export default function AuthPage() {
     if (!popularEmailProviders.includes(domain.toLowerCase())) {
       // Extract company name (remove TLD)
       const company = domain.split('.')[0];
-      form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1));
+      form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
+        shouldValidate: true,
+        shouldTouch: false
+      });
 
       // Extract full name
       const nameParts = localPart.split(/[._]/);
       const fullName = nameParts
         .map(part => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
-      form.setValue('fullName', fullName);
+      form.setValue('fullName', fullName, {
+        shouldValidate: true,
+        shouldTouch: false
+      });
     }
   };
 
@@ -128,9 +136,19 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input 
+                            {...field} 
+                            className={cn(
+                              field.value && !form.formState.errors.fullName && 
+                              "border-green-500"
+                            )}
+                            onBlur={(e) => {
+                              field.onBlur(e);
+                              setTouchedFields(prev => ({ ...prev, fullName: true }));
+                            }}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        {touchedFields.fullName && <FormMessage />}
                       </FormItem>
                     )}
                   />
@@ -142,9 +160,19 @@ export default function AuthPage() {
                       <FormItem>
                         <FormLabel>Company</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input 
+                            {...field} 
+                            className={cn(
+                              field.value && !form.formState.errors.company && 
+                              "border-green-500"
+                            )}
+                            onBlur={(e) => {
+                              field.onBlur(e);
+                              setTouchedFields(prev => ({ ...prev, company: true }));
+                            }}
+                          />
                         </FormControl>
-                        <FormMessage />
+                        {touchedFields.company && <FormMessage />}
                       </FormItem>
                     )}
                   />
@@ -158,9 +186,16 @@ export default function AuthPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input 
+                        type="password" 
+                        {...field} 
+                        onBlur={(e) => {
+                          field.onBlur(e);
+                          setTouchedFields(prev => ({ ...prev, password: true }));
+                        }}
+                      />
                     </FormControl>
-                    <FormMessage />
+                    {touchedFields.password && <FormMessage />}
                   </FormItem>
                 )}
               />
@@ -181,6 +216,7 @@ export default function AuthPage() {
               onClick={() => {
                 setLocation(isLogin ? '/auth' : '/auth?mode=login');
                 form.reset();
+                setTouchedFields({});
               }}
               className="text-primary hover:underline"
             >
