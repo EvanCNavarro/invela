@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -62,7 +63,6 @@ export const relationships = pgTable("relationships", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Relations
 export const usersRelations = relations(users, ({ one }) => ({
   company: one(companies, {
     fields: [users.companyId],
@@ -76,7 +76,15 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   relationships: many(relationships),
 }));
 
-// Schemas
+export const registrationSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  firstName: z.string().min(1),
+  lastName: z.string().nullable(),
+  password: z.string().min(6),
+  company: z.string().min(1),
+});
+
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
@@ -84,10 +92,10 @@ export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = createInsertSchema(tasks);
 export const selectTaskSchema = createSelectSchema(tasks);
 
-// Types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertCompany = typeof companies.$inferInsert;
 export type SelectCompany = typeof companies.$inferSelect;
 export type InsertTask = typeof tasks.$inferInsert;
 export type SelectTask = typeof tasks.$inferSelect;
+export type RegistrationData = z.infer<typeof registrationSchema>;

@@ -5,7 +5,7 @@ import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, companies, insertUserSchema, type SelectUser } from "@db/schema";
+import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
 import { eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
@@ -80,7 +80,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const result = insertUserSchema.safeParse(req.body);
+      const result = registrationSchema.safeParse(req.body);
       if (!result.success) {
         const error = fromZodError(result.error);
         return res.status(400).send(error.toString());
