@@ -7,7 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
 
 declare global {
@@ -40,7 +40,10 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 async function getUserByEmail(email: string) {
-  return db.select().from(users).where(eq(users.email, email)).limit(1);
+  return db.select()
+    .from(users)
+    .where(sql`LOWER(${users.email}) = LOWER(${email})`)
+    .limit(1);
 }
 
 export function setupAuth(app: Express) {
