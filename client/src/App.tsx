@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
+import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -20,10 +21,38 @@ function Router() {
       </Route>
       <Route path="/login" component={AuthPage} />
       <Route path="/register" component={AuthPage} />
-      <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/registry" component={RegistryPage} />
-      <ProtectedRoute path="/task-center" component={TaskCenterPage} />
-      <ProtectedRoute path="/insights" component={InsightsPage} />
+      <ProtectedRoute 
+        path="/" 
+        component={() => (
+          <OnboardingWrapper>
+            <DashboardPage />
+          </OnboardingWrapper>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/registry" 
+        component={() => (
+          <OnboardingWrapper>
+            <RegistryPage />
+          </OnboardingWrapper>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/task-center" 
+        component={() => (
+          <OnboardingWrapper>
+            <TaskCenterPage />
+          </OnboardingWrapper>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/insights" 
+        component={() => (
+          <OnboardingWrapper>
+            <InsightsPage />
+          </OnboardingWrapper>
+        )} 
+      />
       <Route component={NotFound} />
     </Switch>
   );
