@@ -7,7 +7,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
-import { sql } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
 
 declare global {
