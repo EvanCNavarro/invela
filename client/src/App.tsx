@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
+import { NavigationMenu } from "@/components/dashboard/NavigationMenu";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -12,6 +13,15 @@ import RegistryPage from "@/pages/registry-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import { ProtectedRoute } from "./lib/protected-route";
+
+function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen">
+      <NavigationMenu />
+      {children}
+    </div>
+  );
+}
 
 function Router() {
   return (
@@ -24,33 +34,41 @@ function Router() {
       <ProtectedRoute 
         path="/" 
         component={() => (
-          <OnboardingWrapper>
-            <DashboardPage />
-          </OnboardingWrapper>
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <DashboardPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
         )} 
       />
       <ProtectedRoute 
         path="/registry" 
         component={() => (
-          <OnboardingWrapper>
-            <RegistryPage />
-          </OnboardingWrapper>
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <RegistryPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
         )} 
       />
       <ProtectedRoute 
         path="/task-center" 
         component={() => (
-          <OnboardingWrapper>
-            <TaskCenterPage />
-          </OnboardingWrapper>
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <TaskCenterPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
         )} 
       />
       <ProtectedRoute 
         path="/insights" 
         component={() => (
-          <OnboardingWrapper>
-            <InsightsPage />
-          </OnboardingWrapper>
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <InsightsPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
         )} 
       />
       <Route component={NotFound} />
