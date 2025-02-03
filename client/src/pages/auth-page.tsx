@@ -14,8 +14,16 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const registerSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  username: z.string().min(3).max(20),
+  password: z.string().min(6),
+});
+
+const loginSchema = z.object({
   username: z.string().min(3).max(20),
   password: z.string().min(6),
 });
@@ -24,9 +32,11 @@ export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     defaultValues: {
+      fullName: "",
+      email: "",
       username: "",
       password: "",
     },
@@ -36,9 +46,10 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     if (isLogin) {
-      loginMutation.mutate(values);
+      const { username, password } = values;
+      loginMutation.mutate({ username, password });
     } else {
       registerMutation.mutate(values);
     }
@@ -61,6 +72,36 @@ export default function AuthPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {!isLogin && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
               <FormField
                 control={form.control}
                 name="username"
@@ -100,7 +141,10 @@ export default function AuthPage() {
           <p className="mt-4 text-center text-sm text-muted-foreground">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                form.reset();
+              }}
               className="text-primary hover:underline"
             >
               {isLogin ? "Register" : "Log in"}
@@ -109,11 +153,16 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center">
+      <div 
+        className={cn(
+          "hidden lg:flex flex-1 items-center justify-center",
+          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-[hsl(260,11%,95%)]"
+        )}
+      >
         <div className="relative w-[500px] h-[500px] p-8">
           <img
-            src="/assets/auth_animation.gif"
-            alt="Secure Login Animation"
+            src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"}
+            alt={isLogin ? "Secure Login Animation" : "Register Animation"}
             className="w-full h-full object-contain"
             style={{
               imageRendering: 'auto',
