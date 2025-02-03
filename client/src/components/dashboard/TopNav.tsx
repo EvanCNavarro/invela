@@ -6,7 +6,8 @@ import {
   BellIcon,
   LogOutIcon,
   SettingsIcon,
-  UserIcon
+  UserIcon,
+  Menu
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,26 +31,28 @@ export function TopNav() {
   };
 
   return (
-    <header className="h-16 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-      <div className="flex items-center justify-between h-full px-4 md:px-6">
-        <div className="flex items-center flex-1 max-w-md">
-          <div className="relative w-full">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <header className="sticky top-0 z-50 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="container flex h-full items-center justify-between px-4">
+        <div className="flex flex-1 items-center justify-start lg:justify-center">
+          <div className="w-full max-w-md relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input 
               placeholder="Search..." 
-              className="pl-9 h-8"
+              className="pl-9 h-8 w-full lg:max-w-sm"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <HelpCircleIcon className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-2 ml-auto">
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <HelpCircleIcon className="h-4 w-4" />
+            </Button>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <BellIcon className="h-4 w-4" />
-          </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <BellIcon className="h-4 w-4" />
+            </Button>
+          </div>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -74,6 +77,17 @@ export function TopNav() {
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <div className="sm:hidden px-2 py-1.5">
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <HelpCircleIcon className="mr-2 h-4 w-4" />
+                  Help
+                </Button>
+                <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <BellIcon className="mr-2 h-4 w-4" />
+                  Notifications
+                </Button>
+              </div>
+              <DropdownMenuSeparator className="sm:hidden" />
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="text-red-600 focus:text-red-600"

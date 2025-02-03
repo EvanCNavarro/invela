@@ -19,18 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
-const taskFormSchema = z.object({
-  title: z.string().min(2).max(100),
-  description: z.string().optional(),
-  status: z.string(),
-  dueDate: z.string().optional(),
-});
 
 function ProgressTracker() {
   const steps = [
@@ -38,34 +27,33 @@ function ProgressTracker() {
     { title: "Company Information", status: "completed", progress: 100 },
     { title: "Document Uploads", status: "in-progress", progress: 75 },
     { title: "File Verification", status: "pending", progress: 0 },
-    { title: "Unlock Invela", status: "pending", progress: 0 },
   ];
 
   return (
-    <div className="bg-background rounded-lg p-6 mb-6 border shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-semibold">Earn Accreditation for Your Company</h1>
-        <div className="bg-primary/10 text-primary p-1 rounded">
-          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+    <div className="bg-background rounded-lg p-4 md:p-6 mb-6 border shadow-sm">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
+        <h1 className="text-xl md:text-2xl font-semibold">Earn Accreditation for Your Company</h1>
+        <div className="bg-primary/10 text-primary p-1 rounded self-start">
+          <svg className="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
         </div>
       </div>
-      <p className="text-muted-foreground mb-8">Complete all the required steps to earn Invela's Accreditation for your company.</p>
+      <p className="text-sm text-muted-foreground mb-8">Complete all the required steps to earn Invela's Accreditation for your company.</p>
 
       <div className="relative">
-        <div className="flex justify-between mb-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
           {steps.map((step, index) => (
-            <div key={index} className="flex flex-col items-center w-48">
+            <div key={index} className="flex flex-col items-center text-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2
                 ${step.status === 'completed' ? 'bg-primary text-primary-foreground' :
                   step.status === 'in-progress' ? 'bg-primary text-primary-foreground' :
                   'bg-muted text-muted-foreground'}`}>
                 {step.status === 'completed' ? '✓' : (index + 1)}
               </div>
-              <span className="text-sm text-center">{step.title}</span>
-              {step.status === 'completed' && <span className="text-xs text-muted-foreground">Completed</span>}
-              {step.status === 'in-progress' && <span className="text-xs text-primary">In Progress: {step.progress}%</span>}
+              <span className="text-xs md:text-sm line-clamp-2">{step.title}</span>
+              {step.status === 'completed' && <span className="text-xs text-muted-foreground mt-1">Completed</span>}
+              {step.status === 'in-progress' && <span className="text-xs text-primary mt-1">In Progress: {step.progress}%</span>}
             </div>
           ))}
         </div>
@@ -82,16 +70,12 @@ function ProgressTracker() {
 export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("Last 6 months");
-  const [statusFilter, setStatusFilter] = useState("All");
-  const { toast } = useToast();
-
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["/api/tasks"],
-  });
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const { data: tasks = [], isLoading } = useQuery({ queryKey: ["/api/tasks"] });
 
   const filteredTasks = tasks.filter((task: any) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All" || task.status === statusFilter.toLowerCase();
+    const matchesSearch = task?.title?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "All Status" || task?.status === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
@@ -101,7 +85,7 @@ export default function TaskCenterPage() {
         <ProgressTracker />
 
         <div className="mt-8">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <h2 className="text-xl font-semibold">Tasks</h2>
             <Button>
               <PlusIcon className="h-4 w-4 mr-2" />
@@ -109,11 +93,11 @@ export default function TaskCenterPage() {
             </Button>
           </div>
 
-          <div className="bg-background rounded-lg p-6 border">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="relative flex-1 max-w-md">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="bg-background rounded-lg p-4 md:p-6 border">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="w-full md:max-w-md">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search Tasks & Files"
                     className="pl-9"
@@ -121,9 +105,11 @@ export default function TaskCenterPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
+              </div>
 
+              <div className="flex flex-wrap gap-4">
                 <Select value={timeFilter} onValueChange={setTimeFilter}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -138,81 +124,84 @@ export default function TaskCenterPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Status</SelectItem>
+                    <SelectItem value="All Status">All Status</SelectItem>
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
                   </SelectContent>
                 </Select>
 
-                <Button variant="outline">
-                  Advanced search
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="whitespace-nowrap">
+                    Advanced search
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Clear
+                  </Button>
+                </div>
               </div>
-
-              <Button variant="outline" className="ml-4">
-                Clear
-              </Button>
             </div>
 
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px]">
-                    <input type="checkbox" className="rounded border-gray-300" />
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Change</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
-                      Loading...
-                    </TableCell>
+                    <TableHead className="w-[30px]">
+                      <input type="checkbox" className="rounded border-gray-300" />
+                    </TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Last Change</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : filteredTasks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center">
-                      No tasks found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTasks.map((task: any) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
-                        <input type="checkbox" className="rounded border-gray-300" />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{task.title}</div>
-                          <div className="text-sm text-muted-foreground">To: {task.assignedTo}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                          ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                          'bg-yellow-100 text-yellow-800'}`}>
-                          {task.status === 'completed' ? 'Completed' : 'Pending'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(task.updatedAt || task.createdAt).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
-                        </Button>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        Loading...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : filteredTasks.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-8">
+                        No tasks found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTasks.map((task: any) => (
+                      <TableRow key={task.id}>
+                        <TableCell>
+                          <input type="checkbox" className="rounded border-gray-300" />
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{task.title}</div>
+                            <div className="text-xs text-muted-foreground">To: {task.assignedTo}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                            'bg-yellow-100 text-yellow-800'}`}>
+                            {task.status === 'completed' ? 'Completed' : 'Pending'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm">
+                          {new Date(task.updatedAt || task.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm">
+                            <Download className="h-4 w-4 mr-2" />
+                            <span className="hidden sm:inline">Download</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
       </div>
