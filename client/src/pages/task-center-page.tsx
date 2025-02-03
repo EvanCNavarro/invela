@@ -42,9 +42,9 @@ function ProgressTracker() {
   ];
 
   return (
-    <div className="bg-background rounded-lg p-6 mb-6 border">
+    <div className="bg-background rounded-lg p-6 mb-6 border shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold">Earn Accreditation for Your Company</h2>
+        <h1 className="text-2xl font-semibold">Earn Accreditation for Your Company</h1>
         <div className="bg-primary/10 text-primary p-1 rounded">
           <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -89,15 +89,6 @@ export default function TaskCenterPage() {
     queryKey: ["/api/tasks"],
   });
 
-  const form = useForm<z.infer<typeof taskFormSchema>>({
-    resolver: zodResolver(taskFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      status: "pending",
-    },
-  });
-
   const filteredTasks = tasks.filter((task: any) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All" || task.status === statusFilter.toLowerCase();
@@ -109,110 +100,113 @@ export default function TaskCenterPage() {
       <div className="space-y-6">
         <ProgressTracker />
 
-        <div className="bg-background rounded-lg p-6 border">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search Tasks & Files"
-                  className="pl-9"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Tasks</h2>
+          <div className="bg-background rounded-lg p-6 border">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4 flex-1">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search Tasks & Files"
+                    className="pl-9"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+
+                <Select value={timeFilter} onValueChange={setTimeFilter}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Last 6 months">Last 6 months</SelectItem>
+                    <SelectItem value="Last year">Last year</SelectItem>
+                    <SelectItem value="All time">All time</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All">All Status</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline">
+                  Advanced search
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
               </div>
 
-              <Select value={timeFilter} onValueChange={setTimeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                  <SelectItem value="Last year">Last year</SelectItem>
-                  <SelectItem value="All time">All time</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All">All Status</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button variant="outline">
-                Advanced search
-                <ChevronDown className="ml-2 h-4 w-4" />
+              <Button variant="outline" className="ml-4">
+                Clear
               </Button>
             </div>
 
-            <Button variant="outline" className="ml-4">
-              Clear
-            </Button>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[30px]">
-                  <input type="checkbox" className="rounded border-gray-300" />
-                </TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Change</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    Loading...
-                  </TableCell>
+                  <TableHead className="w-[30px]">
+                    <input type="checkbox" className="rounded border-gray-300" />
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Change</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ) : filteredTasks.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center">
-                    No tasks found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredTasks.map((task: any) => (
-                  <TableRow key={task.id}>
-                    <TableCell>
-                      <input type="checkbox" className="rounded border-gray-300" />
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{task.title}</div>
-                        <div className="text-sm text-muted-foreground">To: {task.assignedTo}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 
-                        'bg-yellow-100 text-yellow-800'}`}>
-                        {task.status === 'completed' ? 'Completed' : 'Pending'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(task.updatedAt || task.createdAt).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </Button>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      Loading...
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : filteredTasks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      No tasks found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTasks.map((task: any) => (
+                    <TableRow key={task.id}>
+                      <TableCell>
+                        <input type="checkbox" className="rounded border-gray-300" />
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{task.title}</div>
+                          <div className="text-sm text-muted-foreground">To: {task.assignedTo}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${task.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                          'bg-yellow-100 text-yellow-800'}`}>
+                          {task.status === 'completed' ? 'Completed' : 'Pending'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(task.updatedAt || task.createdAt).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </DashboardLayout>
