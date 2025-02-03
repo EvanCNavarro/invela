@@ -267,7 +267,7 @@ export default function FileVault() {
               <TableRow key={file.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(228,89%,96%)]">
+                    <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
                       <FileIcon className="w-4 h-4 text-primary" />
                     </div>
                     {file.name}
