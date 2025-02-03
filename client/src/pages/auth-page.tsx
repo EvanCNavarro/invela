@@ -4,6 +4,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import Lottie from "lottie-react";
+import networkAnimation from "../assets/network-animation.json";
 import {
   Form,
   FormControl,
@@ -109,12 +111,14 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center text-primary-foreground">
-        <img 
-          src="/4791418cb5702cd0c706d63d9edb6e88.gif" 
-          alt="Invela Network Visualization"
-          className="w-96 h-96 object-contain"
-        />
+      <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center">
+        <div className="w-[400px] h-[400px]">
+          <Lottie
+            animationData={networkAnimation}
+            loop={true}
+            className="w-full h-full"
+          />
+        </div>
       </div>
     </div>
   );
