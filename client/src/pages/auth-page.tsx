@@ -305,11 +305,7 @@ export default function AuthPage() {
                           )}
                         />
                       </FormControl>
-                      {!isLogin && field.value && !form.formState.errors.password && (
-                        <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                          <Check className="w-5 h-5 text-green-500" />
-                        </div>
-                      )}
+                      
                       <Button
                         type="button"
                         variant="ghost"
