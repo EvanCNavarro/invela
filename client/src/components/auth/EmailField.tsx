@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { FormControl, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Check, X, ArrowRight } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
@@ -59,6 +59,12 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
     }
   };
 
+  useEffect(() => {
+    if (showError && field.value) {
+      setIsValidFormat(validateEmailFormat(field.value));
+    }
+  }, [showError, field.value]);
+
   const handleLoginRedirect = () => {
     if (setRedirectEmail) {
       setRedirectEmail(field.value);
@@ -70,7 +76,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
     <>
       <FormItem>
         <FormLabel className={cn(
-          (touched || showError) && !isValidFormat && "text-[#E56047]"
+          (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && "text-[#E56047]"
         )}>Email</FormLabel>
         <div className="relative">
           <FormControl>
@@ -81,8 +87,9 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
               className={cn(
                 "pr-10",
                 !touched && !showError ? '' :
-                isValidFormat === false ? 'border-[#E56047] focus-visible:ring-[#E56047]' :
-                isValidFormat && !emailExists ? 'border-green-500' : ''
+                ((field.value && !isValidFormat) || (!field.value && showError)) 
+                  ? 'border-[#E56047] focus-visible:ring-[#E56047]' 
+                  : field.value && isValidFormat && !emailExists ? 'border-green-500' : ''
               )}
             />
           </FormControl>
@@ -97,7 +104,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
             </div>
           )}
         </div>
-        {(touched || showError) && !isValidFormat && (
+        {(touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && (
           <FormMessage className="text-[#E56047]">
             Please enter a valid email address.
           </FormMessage>
