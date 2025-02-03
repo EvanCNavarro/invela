@@ -9,11 +9,13 @@ interface EmailFieldProps {
   field: any;
   setRedirectEmail?: (email: string) => void;
   isLogin?: boolean;
+  onValidEmail?: (email: string) => void;
 }
 
-export function EmailField({ field, setRedirectEmail, isLogin }: EmailFieldProps) {
+export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: EmailFieldProps) {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [isValidFormat, setIsValidFormat] = useState<boolean | null>(null);
+  const [touched, setTouched] = useState(false);
   const [, setLocation] = useLocation();
 
   const validateEmailFormat = (email: string) => {
@@ -39,22 +41,23 @@ export function EmailField({ field, setRedirectEmail, isLogin }: EmailFieldProps
 
   useEffect(() => {
     const checkEmail = async () => {
-      if (field.value) {
+      if (field.value && touched) {
         const isValid = validateEmailFormat(field.value);
         setIsValidFormat(isValid);
-        
+
         if (isValid && !isLogin) {
           const exists = await checkEmailExists(field.value);
           setEmailExists(exists);
+
+          if (!exists && onValidEmail) {
+            onValidEmail(field.value);
+          }
         }
-      } else {
-        setIsValidFormat(null);
-        setEmailExists(null);
       }
     };
 
     checkEmail();
-  }, [field.value, isLogin]);
+  }, [field.value, isLogin, touched, onValidEmail]);
 
   const handleLoginRedirect = () => {
     if (setRedirectEmail) {
@@ -72,12 +75,18 @@ export function EmailField({ field, setRedirectEmail, isLogin }: EmailFieldProps
             <Input 
               type="email" 
               {...field} 
+              onBlur={(e) => {
+                field.onBlur(e);
+                setTouched(true);
+              }}
               className={`pr-10 ${
-                isValidFormat === false ? 'border-[#EE7151]' : ''
+                !touched ? '' :
+                isValidFormat === false ? 'border-[#EE7151]' :
+                isValidFormat && !emailExists ? 'border-green-500' : ''
               }`}
             />
           </FormControl>
-          {field.value && (
+          {field.value && touched && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValidFormat && !emailExists && (
                 <Check className="w-5 h-5 text-green-500" />
@@ -88,7 +97,7 @@ export function EmailField({ field, setRedirectEmail, isLogin }: EmailFieldProps
             </div>
           )}
         </div>
-        {isValidFormat === false && (
+        {touched && isValidFormat === false && (
           <FormMessage className="text-[#EE7151]">
             Please enter a valid email address
           </FormMessage>
