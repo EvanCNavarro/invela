@@ -1,5 +1,4 @@
 import { useState, useMemo } from "react";
-import { useDropzone } from "react-dropzone";
 import { 
   Table,
   TableBody,
@@ -26,6 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
+import { FileUpload } from "@/components/ui/file-upload";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
 type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted';
@@ -35,64 +38,73 @@ interface FileItem {
   name: string;
   size: number;
   type: string;
-  uploadedAt: Date;
   status: FileStatus;
-  progress: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-type SortField = 'name' | 'size' | 'uploadedAt' | 'status';
+type SortField = 'name' | 'size' | 'createdAt' | 'status';
 type SortOrder = 'asc' | 'desc';
 
 export default function FileVault() {
-  const [files, setFiles] = useState<FileItem[]>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
-    field: 'uploadedAt',
+    field: 'createdAt',
     order: 'desc'
   });
 
-  const onDrop = (acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map(file => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      uploadedAt: new Date(),
-      status: 'uploading' as FileStatus,
-      progress: 0,
-    }));
+  const { data: files = [] } = useQuery({
+    queryKey: ['/api/files'],
+  });
 
-    setFiles(prev => [...prev, ...newFiles]);
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const response = await apiRequest('/api/files', {
+        method: 'POST',
+        body: formData,
+      });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive",
+      });
+    },
+  });
 
-    // Simulate file upload progress for each file
-    newFiles.forEach(file => {
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += Math.random() * 20;
-        if (progress >= 100) {
-          progress = 100;
-          clearInterval(interval);
-          setFiles(prev => 
-            prev.map(f => 
-              f.id === file.id 
-                ? { ...f, status: 'completed' as FileStatus, progress: 100 }
-                : f
-            )
-          );
-        } else {
-          setFiles(prev => 
-            prev.map(f => 
-              f.id === file.id 
-                ? { ...f, progress: Math.round(progress) }
-                : f
-            )
-          );
-        }
-      }, 500);
-    });
+  const deleteMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      await apiRequest(`/api/files/${fileId}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      toast({
+        title: "Success",
+        description: "File deleted successfully",
+      });
+    },
+  });
+
+  const onDrop = async (acceptedFiles: File[]) => {
+    for (const file of acceptedFiles) {
+      const formData = new FormData();
+      formData.append('file', file);
+      await uploadMutation.mutateAsync(formData);
+    }
   };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -112,12 +124,10 @@ export default function FileVault() {
   const filteredAndSortedFiles = useMemo(() => {
     let result = [...files];
 
-    // Apply status filter
     if (statusFilter !== 'all') {
       result = result.filter(file => file.status === statusFilter);
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       const modifier = sortConfig.order === 'asc' ? 1 : -1;
       switch (sortConfig.field) {
@@ -125,8 +135,8 @@ export default function FileVault() {
           return modifier * a.name.localeCompare(b.name);
         case 'size':
           return modifier * (a.size - b.size);
-        case 'uploadedAt':
-          return modifier * (a.uploadedAt.getTime() - b.uploadedAt.getTime());
+        case 'createdAt':
+          return modifier * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         case 'status':
           return modifier * a.status.localeCompare(b.status);
         default:
@@ -160,21 +170,7 @@ export default function FileVault() {
         </p>
       </div>
 
-      <div
-        {...getRootProps()}
-        className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-          isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25"
-        )}
-      >
-        <input {...getInputProps()} />
-        <UploadIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-        <p className="text-muted-foreground">
-          {isDragActive
-            ? "Drop your files here"
-            : "Drag and drop files here, or click to select files"}
-        </p>
-      </div>
+      <FileUpload onDrop={onDrop} />
 
       <div className="flex justify-end mb-4">
         <Select
@@ -223,7 +219,7 @@ export default function FileVault() {
               <TableHead>
                 <Button 
                   variant="ghost" 
-                  onClick={() => handleSort('uploadedAt')}
+                  onClick={() => handleSort('createdAt')}
                   className="hover:bg-transparent"
                 >
                   Upload Date
@@ -255,28 +251,19 @@ export default function FileVault() {
                 <TableCell>{file.type || "Unknown"}</TableCell>
                 <TableCell>{formatFileSize(file.size)}</TableCell>
                 <TableCell>
-                  {file.uploadedAt.toLocaleDateString()}
+                  {new Date(file.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(file.status)}
                     <span className="capitalize">{file.status}</span>
-                    {file.status === 'uploading' && (
-                      <Progress value={file.progress} className="w-[60px]" />
-                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      setFiles(files.map(f => 
-                        f.id === file.id 
-                          ? { ...f, status: 'deleted' }
-                          : f
-                      ));
-                    }}
+                    onClick={() => deleteMutation.mutate(file.id)}
                   >
                     <Trash2Icon className="w-4 h-4" />
                   </Button>

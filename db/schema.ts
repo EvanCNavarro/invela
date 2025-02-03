@@ -63,11 +63,25 @@ export const relationships = pgTable("relationships", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const usersRelations = relations(users, ({ one }) => ({
+export const files = pgTable("files", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  size: integer("size").notNull(),
+  type: text("type").notNull(),
+  path: text("path").notNull(),
+  status: text("status").notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.companyId],
     references: [companies.id],
   }),
+  files: many(files),
 }));
 
 export const companiesRelations = relations(companies, ({ many }) => ({
@@ -92,10 +106,16 @@ export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = createInsertSchema(tasks);
 export const selectTaskSchema = createSelectSchema(tasks);
 
+export const insertFileSchema = createInsertSchema(files);
+export const selectFileSchema = createSelectSchema(files);
+
+
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertCompany = typeof companies.$inferInsert;
 export type SelectCompany = typeof companies.$inferSelect;
 export type InsertTask = typeof tasks.$inferInsert;
 export type SelectTask = typeof tasks.$inferSelect;
+export type InsertFile = typeof files.$inferInsert;
+export type SelectFile = typeof files.$inferSelect;
 export type RegistrationData = z.infer<typeof registrationSchema>;
