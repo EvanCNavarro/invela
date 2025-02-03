@@ -14,14 +14,17 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
         src={isLogin ? '/assets/auth_animation.gif' : '/assets/register_animation.gif'}
         alt={isLogin ? "Secure Login Animation" : "Register Animation"}
         className={cn(
-          "w-full h-full object-contain transition-opacity duration-300",
+          "w-full h-full object-contain transition-opacity duration-500",
           imageLoaded ? "opacity-100" : "opacity-0"
         )}
         style={{
+          willChange: 'transform, opacity',
           imageRendering: 'auto',
           WebkitBackfaceVisibility: 'hidden',
           backfaceVisibility: 'hidden'
         }}
+        loading="eager"
+        decoding="async"
         onLoad={() => setImageLoaded(true)}
       />
     </div>
