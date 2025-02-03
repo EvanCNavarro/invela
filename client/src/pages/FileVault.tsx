@@ -27,9 +27,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { FileUpload } from "@/components/ui/file-upload";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 
 type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted';
 
@@ -62,33 +60,17 @@ export default function FileVault() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const fileId = formData.get('file') as File;
-      const id = crypto.randomUUID();
-
-      // Start with 0 progress
-      setUploadProgress(prev => ({ ...prev, [id]: 0 }));
-
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const currentProgress = prev[id] || 0;
-          if (currentProgress >= 100) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return { ...prev, [id]: Math.min(currentProgress + 10, 100) };
-        });
-      }, 500);
-
-      const response = await apiRequest('/api/files', {
+      const response = await fetch('/api/files', {
         method: 'POST',
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setUploadProgress(prev => ({ ...prev, [id]: 100 }));
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
 
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -97,10 +79,10 @@ export default function FileVault() {
         description: "File uploaded successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to upload file",
+        description: error.message || "Failed to upload file",
         variant: "destructive",
       });
     },
@@ -108,9 +90,14 @@ export default function FileVault() {
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      await apiRequest(`/api/files/${fileId}`, {
+      const response = await fetch(`/api/files/${fileId}`, {
         method: 'DELETE',
       });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -119,13 +106,44 @@ export default function FileVault() {
         description: "File deleted successfully",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete file",
+        variant: "destructive",
+      });
+    },
   });
 
   const onDrop = async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
       const formData = new FormData();
       formData.append('file', file);
-      await uploadMutation.mutateAsync(formData);
+
+      // Start with 0 progress
+      const uploadId = crypto.randomUUID();
+      setUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const currentProgress = prev[uploadId] || 0;
+          if (currentProgress >= 100) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return { ...prev, [uploadId]: Math.min(currentProgress + 10, 100) };
+        });
+      }, 500);
+
+      try {
+        await uploadMutation.mutateAsync(formData);
+      } catch (error) {
+        console.error('Upload error:', error);
+      } finally {
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({ ...prev, [uploadId]: 100 }));
+      }
     }
   };
 

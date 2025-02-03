@@ -4,6 +4,7 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
+import { ToastProvider } from "@/components/ui/toast"; // Add this import
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -88,10 +89,12 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router />
-        <Toaster />
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <Router />
+          <Toaster />
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }
