@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,12 +13,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { EmailField } from "@/components/auth/EmailField";
 
 const registerSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
+  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+  company: z.string().min(2, "Company name must be at least 2 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -27,18 +29,52 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+const popularEmailProviders = [
+  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
+  'icloud.com', 'protonmail.com', 'mail.com', 'zoho.com', 'yandex.com',
+  'gmx.com', 'live.com', 'msn.com', 'fastmail.com', 'me.com',
+  'mailbox.org', 'tutanota.com', 'inbox.com', 'mail.ru', 'qq.com'
+];
+
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [location, setLocation] = useLocation();
+  const [redirectEmail, setRedirectEmail] = useState<string>("");
+  const isLogin = location.includes("mode=login");
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     defaultValues: {
+      email: redirectEmail,
       fullName: "",
-      email: "",
+      company: "",
       password: "",
     },
   });
+
+  useEffect(() => {
+    if (redirectEmail) {
+      form.setValue("email", redirectEmail);
+    }
+  }, [redirectEmail, form]);
+
+  const extractInfoFromEmail = (email: string) => {
+    const [localPart, domain] = email.split('@');
+
+    // Only process if it's not a popular email provider
+    if (!popularEmailProviders.includes(domain.toLowerCase())) {
+      // Extract company name (remove TLD)
+      const company = domain.split('.')[0];
+      form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1));
+
+      // Extract full name
+      const nameParts = localPart.split(/[._]/);
+      const fullName = nameParts
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+      form.setValue('fullName', fullName);
+    }
+  };
 
   if (user) {
     return <Redirect to="/" />;
@@ -70,34 +106,50 @@ export default function AuthPage() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {!isLogin && (
-                <FormField
-                  control={form.control}
-                  name="fullName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <EmailField 
+                    field={field} 
+                    setRedirectEmail={setRedirectEmail}
+                    isLogin={isLogin}
+                  />
                 )}
               />
+
+              {!isLogin && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="fullName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="company"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+
               <FormField
                 control={form.control}
                 name="password"
@@ -111,9 +163,10 @@ export default function AuthPage() {
                   </FormItem>
                 )}
               />
+
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full font-bold hover:opacity-90"
                 disabled={loginMutation.isPending || registerMutation.isPending}
               >
                 {isLogin ? "Log in" : "Register"}
@@ -125,7 +178,7 @@ export default function AuthPage() {
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
               onClick={() => {
-                setIsLogin(!isLogin);
+                setLocation(isLogin ? '/auth' : '/auth?mode=login');
                 form.reset();
               }}
               className="text-primary hover:underline"
