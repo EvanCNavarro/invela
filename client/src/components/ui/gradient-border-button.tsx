@@ -9,17 +9,11 @@ interface GradientBorderButtonProps extends ButtonHTMLAttributes<HTMLButtonEleme
 export const GradientBorderButton = forwardRef<HTMLButtonElement, GradientBorderButtonProps>(
   ({ className, showGradient = false, children, ...props }, ref) => {
     return (
-      <div className="relative">
-        {showGradient && (
-          <div
-            className="box__bg absolute -inset-[1px] rounded-md bg-[#070707]"
-            style={{ height: 'auto', width: 'auto' }}
-          />
-        )}
+      <div className={cn("relative", showGradient && "fancy-border-button")}>
         <Button
           ref={ref}
           className={cn(
-            "relative w-full font-bold hover:opacity-90",
+            "relative w-full font-bold hover:opacity-90 z-10",
             className
           )}
           {...props}

@@ -116,19 +116,33 @@ export default function AuthPage() {
     form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
     form.formState.isValid;
 
-  const focusFirstError = () => {
-    const fields = ['email', 'fullName', 'company', 'password'];
-    const firstErrorField = fields.find(field => form.formState.errors[field]);
-    if (firstErrorField) {
-      // Touch all fields to show error messages
-      fields.forEach(field => {
-        setTouchedFields(prev => ({ ...prev, [field]: true }));
+    const focusFirstError = () => {
+      const fields = ['email', 'fullName', 'company', 'password'];
+      const firstErrorField = fields.find(field => {
+        const fieldValue = form.getValues(field);
+        return !fieldValue || form.formState.errors[field];
       });
-      form.setFocus(firstErrorField);
+    
+      if (firstErrorField) {
+        // Touch all fields to show error messages
+        fields.forEach(field => {
+          setTouchedFields(prev => ({ ...prev, [field]: true }));
+           // Trigger validation for all fields
+          form.trigger(field);
+        });
+        form.setFocus(firstErrorField);
+      }
+    };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.formState.isValid) {
+      focusFirstError();
+      return;
     }
+    form.handleSubmit(onSubmit)(e);
   };
     
-
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
@@ -145,7 +159,7 @@ export default function AuthPage() {
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
