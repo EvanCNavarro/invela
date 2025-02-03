@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Check, X, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 interface EmailFieldProps {
   field: any;
@@ -69,7 +70,9 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
   return (
     <>
       <FormItem>
-        <FormLabel>Email</FormLabel>
+        <FormLabel className={cn(
+          touched && !isValidFormat && "text-[#E56047]"
+        )}>Email</FormLabel>
         <div className="relative">
           <FormControl>
             <Input 
@@ -79,11 +82,12 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
                 field.onBlur(e);
                 setTouched(true);
               }}
-              className={`pr-10 ${
+              className={cn(
+                "pr-10",
                 !touched ? '' :
-                isValidFormat === false ? 'border-[#EE7151]' :
+                isValidFormat === false ? 'border-[#E56047] focus-visible:ring-[#E56047]' :
                 isValidFormat && !emailExists ? 'border-green-500' : ''
-              }`}
+              )}
             />
           </FormControl>
           {field.value && touched && (
@@ -92,13 +96,13 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
                 <Check className="w-5 h-5 text-green-500" />
               )}
               {(!isValidFormat || emailExists) && (
-                <X className="w-5 h-5 text-[#EE7151]" />
+                <X className="w-5 h-5 text-[#E56047]" />
               )}
             </div>
           )}
         </div>
         {touched && isValidFormat === false && (
-          <FormMessage className="text-[#EE7151]">
+          <FormMessage className="text-[#E56047]">
             Please enter a valid email address
           </FormMessage>
         )}
