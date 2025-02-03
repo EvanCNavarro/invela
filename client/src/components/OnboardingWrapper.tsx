@@ -10,17 +10,19 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   const { user } = useAuth();
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       {!user?.onboardingCompleted && (
-        <Alert className="mb-4">
+        <Alert className="mx-4 md:mx-6 mt-4">
           <Info className="h-4 w-4" />
-          <AlertTitle>Welcome to Invela!</AlertTitle>
-          <AlertDescription>
-            Complete your onboarding tasks in the Task Center to unlock all features.
+          <AlertTitle className="text-sm font-medium">Welcome to Invela</AlertTitle>
+          <AlertDescription className="text-sm text-muted-foreground">
+            Complete your tasks in the Task Center to unlock all features.
           </AlertDescription>
         </Alert>
       )}
-      {children}
+      <div className="flex-1 p-4 md:p-6">
+        {children}
+      </div>
     </div>
   );
 }
