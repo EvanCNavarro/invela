@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      setLocation("/dashboard");
     },
     onError: (error: Error) => {
       toast({
