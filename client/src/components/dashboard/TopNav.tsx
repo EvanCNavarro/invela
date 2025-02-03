@@ -31,9 +31,9 @@ export function TopNav() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="h-14 flex items-center relative">
-        <div className="flex w-full max-w-7xl mx-auto px-6">
+    <div className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div className="h-14 flex items-center">
+        <div className="w-full max-w-7xl mx-auto px-6 flex items-center">
           <div className="relative w-full max-w-md">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input 
@@ -99,6 +99,6 @@ export function TopNav() {
           </div>
         </div>
       </div>
-    </header>
+    </div>
   );
 }
