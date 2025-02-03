@@ -239,10 +239,10 @@ export default function FileVault() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 md:p-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">File Vault</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-semibold tracking-tight">File Vault</h1>
+          <p className="text-sm text-muted-foreground">
             Securely store and manage your company documents
           </p>
         </div>
@@ -250,21 +250,21 @@ export default function FileVault() {
         <FileUpload onDrop={onDrop} />
 
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
+                className="pl-9 w-full"
               />
             </div>
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -278,7 +278,7 @@ export default function FileVault() {
             </Select>
           </div>
 
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -288,7 +288,7 @@ export default function FileVault() {
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                     />
                   </TableHead>
-                  <TableHead className="w-[400px]">
+                  <TableHead className="min-w-[200px] lg:w-[400px]">
                     <Button 
                       variant="ghost" 
                       onClick={() => handleSort('name')}
@@ -298,8 +298,8 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
+                  <TableHead className="hidden sm:table-cell">
                     <Button 
                       variant="ghost" 
                       onClick={() => handleSort('size')}
@@ -309,11 +309,11 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="hidden lg:table-cell">
                     <Button 
                       variant="ghost" 
                       onClick={() => handleSort('createdAt')}
-                      className="hover:bg-transparent"
+                      className="hover:bg-transparent whitespace-nowrap"
                     >
                       Upload Date
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
@@ -352,12 +352,12 @@ export default function FileVault() {
                         <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
                           <FileIcon className="w-4 h-4 text-primary" />
                         </div>
-                        {file.name}
+                        <span className="truncate">{file.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{file.type || "Unknown"}</TableCell>
-                    <TableCell>{formatFileSize(file.size)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">{file.type || "Unknown"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{formatFileSize(file.size)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {new Date(file.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
@@ -365,7 +365,7 @@ export default function FileVault() {
                         {getStatusIcon(file.status)}
                         <span className="capitalize min-w-[80px]">{file.status}</span>
                         {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
-                          <div className="flex items-center gap-2 min-w-[120px]">
+                          <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
                             <Progress 
                               value={uploadProgress[file.id]} 
                               className="h-2 bg-primary/20"

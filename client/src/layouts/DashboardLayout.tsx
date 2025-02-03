@@ -20,7 +20,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (isNewUser && !isTaskCenter) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 px-4">
           <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-semibold">Section Locked</h1>
           <p className="text-muted-foreground max-w-md">
@@ -39,12 +39,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         isNewUser={isNewUser}
       />
       <div className={cn(
-        "flex-1 flex flex-col transition-all duration-200",
-        isSidebarExpanded ? "pl-64" : "pl-20"
+        "flex-1 flex flex-col transition-all duration-200 w-full",
+        isSidebarExpanded ? "lg:pl-64" : "lg:pl-20",
+        "pl-0" // Mobile: no left padding
       )}>
         <TopNav />
-        <div className="flex-1 overflow-y-auto pt-6">
-          <div className="max-w-7xl mx-auto px-6">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </div>
