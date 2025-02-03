@@ -29,7 +29,6 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 
 type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted';
 
@@ -56,39 +55,44 @@ export default function FileVault() {
   });
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
-  const { data: files = [] } = useQuery({
+  const { data: files = [] } = useQuery<FileItem[]>({
     queryKey: ['/api/files'],
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const fileId = formData.get('file') as File;
-      const id = crypto.randomUUID();
+      const fileId = crypto.randomUUID();
 
       // Start with 0 progress
-      setUploadProgress(prev => ({ ...prev, [id]: 0 }));
+      setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
 
       // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          const currentProgress = prev[id] || 0;
+          const currentProgress = prev[fileId] || 0;
           if (currentProgress >= 100) {
             clearInterval(progressInterval);
             return prev;
           }
-          return { ...prev, [id]: Math.min(currentProgress + 10, 100) };
+          return { ...prev, [fileId]: Math.min(currentProgress + 10, 100) };
         });
       }, 500);
 
-      const response = await apiRequest('/api/files', {
-        method: 'POST',
-        body: formData,
-      });
+      try {
+        const response = await apiRequest('/api/files', {
+          method: 'POST',
+          body: formData,
+        });
 
-      clearInterval(progressInterval);
-      setUploadProgress(prev => ({ ...prev, [id]: 100 }));
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({ ...prev, [fileId]: 100 }));
 
-      return response;
+        return response;
+      } catch (error) {
+        clearInterval(progressInterval);
+        setUploadProgress(prev => ({ ...prev, [fileId]: 0 }));
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -109,7 +113,7 @@ export default function FileVault() {
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
       await apiRequest(`/api/files/${fileId}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       });
     },
     onSuccess: () => {
@@ -181,11 +185,13 @@ export default function FileVault() {
       case 'canceled':
       case 'deleted':
         return <XCircleIcon className="w-4 h-4 text-red-500" />;
+      default:
+        return null; // Handle unknown status
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">File Vault</h1>
         <p className="text-muted-foreground">
@@ -300,6 +306,7 @@ export default function FileVault() {
                     variant="ghost"
                     size="icon"
                     onClick={() => deleteMutation.mutate(file.id)}
+                    disabled={file.status === 'deleted'}
                   >
                     <Trash2Icon className="w-4 h-4" />
                   </Button>

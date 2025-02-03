@@ -3,8 +3,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
-import { OnboardingWrapper } from "@/components/OnboardingWrapper";
-import { ToastProvider } from "@/hooks/use-toast";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -14,6 +12,7 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import { ProtectedRoute } from "./lib/protected-route";
+import { ToastProvider } from "@/hooks/use-toast";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -35,9 +34,7 @@ function Router() {
         path="/" 
         component={() => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <DashboardPage />
-            </OnboardingWrapper>
+            <DashboardPage />
           </ProtectedLayout>
         )} 
       />
@@ -45,9 +42,7 @@ function Router() {
         path="/registry" 
         component={() => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <RegistryPage />
-            </OnboardingWrapper>
+            <RegistryPage />
           </ProtectedLayout>
         )} 
       />
@@ -55,9 +50,7 @@ function Router() {
         path="/task-center" 
         component={() => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <TaskCenterPage />
-            </OnboardingWrapper>
+            <TaskCenterPage />
           </ProtectedLayout>
         )} 
       />
@@ -65,9 +58,7 @@ function Router() {
         path="/file-vault" 
         component={() => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <FileVault />
-            </OnboardingWrapper>
+            <FileVault />
           </ProtectedLayout>
         )} 
       />
@@ -75,9 +66,7 @@ function Router() {
         path="/insights" 
         component={() => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <InsightsPage />
-            </OnboardingWrapper>
+            <InsightsPage />
           </ProtectedLayout>
         )} 
       />
