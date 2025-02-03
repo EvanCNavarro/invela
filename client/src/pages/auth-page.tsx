@@ -116,6 +116,10 @@ export default function AuthPage() {
           <Lottie
             animationData={networkAnimation}
             loop={true}
+            autoplay={true}
+            rendererSettings={{
+              preserveAspectRatio: 'xMidYMid slice'
+            }}
             className="w-full h-full"
           />
         </div>
