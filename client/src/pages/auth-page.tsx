@@ -19,15 +19,15 @@ import { EmailField } from "@/components/auth/EmailField";
 import { Check, Eye, EyeOff, X } from "lucide-react";
 
 const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  company: z.string().min(2, "Company name must be at least 2 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Please enter a valid email address."),
+  fullName: z.string().min(2, "Full name must be at least 2 characters."),
+  company: z.string().min(2, "Company name must be at least 2 characters."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Please enter a valid email address."),
+  password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
 const popularEmailProviders = [
@@ -149,7 +149,7 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className={cn(
-                          touchedFields.fullName && form.formState.errors.fullName && "text-[#E56047]"
+                          touchedFields.fullName && field.value && form.formState.errors.fullName && "text-[#E56047]"
                         )}>Full Name</FormLabel>
                         <div className="relative">
                           <FormControl>
@@ -157,7 +157,7 @@ export default function AuthPage() {
                               {...field} 
                               className={cn(
                                 "pr-10",
-                                touchedFields.fullName && form.formState.errors.fullName && 
+                                touchedFields.fullName && field.value && form.formState.errors.fullName && 
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.fullName && 
                                 "border-green-500"
@@ -191,7 +191,7 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className={cn(
-                          touchedFields.company && form.formState.errors.company && "text-[#E56047]"
+                          touchedFields.company && field.value && form.formState.errors.company && "text-[#E56047]"
                         )}>Company</FormLabel>
                         <div className="relative">
                           <FormControl>
@@ -199,7 +199,7 @@ export default function AuthPage() {
                               {...field} 
                               className={cn(
                                 "pr-10",
-                                touchedFields.company && form.formState.errors.company && 
+                                touchedFields.company && field.value && form.formState.errors.company && 
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.company && 
                                 "border-green-500"
@@ -235,7 +235,7 @@ export default function AuthPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className={cn(
-                      touchedFields.password && form.formState.errors.password && "text-[#E56047]"
+                      touchedFields.password && field.value && form.formState.errors.password && "text-[#E56047]"
                     )}>Password</FormLabel>
                     <div className="relative">
                       <FormControl>
@@ -250,7 +250,7 @@ export default function AuthPage() {
                           }}
                           className={cn(
                             "pr-10",
-                            touchedFields.password && form.formState.errors.password && 
+                            touchedFields.password && field.value && form.formState.errors.password && 
                             "border-[#E56047] focus-visible:ring-[#E56047]"
                           )}
                         />
