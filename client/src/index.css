@@ -32,23 +32,6 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 227 81% 61%;
-    --chart: {
-      "1": "hsl(var(--chart-1))",
-      "2": "hsl(var(--chart-2))",
-      "3": "hsl(var(--chart-3))",
-      "4": "hsl(var(--chart-4))",
-      "5": "hsl(var(--chart-5))",
-    };
-    --sidebar: {
-      background: 228 100% 99%;
-      foreground: 222.2 84% 4.9%;
-      primary: 227 81% 61%;
-      primary-foreground: 210 40% 98%;
-      accent: 210 40% 96.1%;
-      accent-foreground: 222.2 47.4% 11.2%;
-      border: 214.3 31.8% 91.4%;
-      ring: 227 81% 61%;
-    };
   }
 
   /* Improved focus styles for better accessibility */
@@ -72,14 +55,36 @@
   }
 }
 
-@keyframes border-animation {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
+.box__bg::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-color: #000;
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 50% 50%;
+  background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+  background-image: linear-gradient(#22c55e, #16a34a);
+  animation: bgRotate 4s linear infinite;
+}
+
+.box__bg::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 1px;
+  top: 1px;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  background: hsl(var(--background));
+  border-radius: 6px;
+}
+
+@keyframes bgRotate {
   100% {
-    background-position: 0% 50%;
+    transform: rotate(1turn);
   }
 }

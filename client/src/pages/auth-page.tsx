@@ -120,6 +120,10 @@ export default function AuthPage() {
     const fields = ['email', 'fullName', 'company', 'password'];
     const firstErrorField = fields.find(field => form.formState.errors[field]);
     if (firstErrorField) {
+      // Touch all fields to show error messages
+      fields.forEach(field => {
+        setTouchedFields(prev => ({ ...prev, [field]: true }));
+      });
       form.setFocus(firstErrorField);
     }
   };
@@ -265,19 +269,13 @@ export default function AuthPage() {
                           className={cn(
                             "pr-10",
                             touchedFields.password && field.value && form.formState.errors.password && 
-                            "border-[#E56047] focus-visible:ring-[#E56047]",
-                            field.value && touchedFields.password && !form.formState.errors.password &&
-                            "border-green-500"
+                            "border-[#E56047] focus-visible:ring-[#E56047]"
                           )}
                         />
                       </FormControl>
-                      {field.value && touchedFields.password && (
+                      {field.value && touchedFields.password && form.formState.errors.password && (
                         <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                          {!form.formState.errors.password ? (
-                            <Check className="w-5 h-5 text-green-500" />
-                          ) : (
-                            <X className="w-5 h-5 text-[#E56047]" />
-                          )}
+                          <X className="w-5 h-5 text-[#E56047]" />
                         </div>
                       )}
                       <Button
