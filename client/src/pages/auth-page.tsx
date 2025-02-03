@@ -156,7 +156,7 @@ export default function AuthPage() {
       <div 
         className={cn(
           "hidden lg:flex flex-1 items-center justify-center",
-          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-[hsl(260,11%,95%)]"
+          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-white"
         )}
       >
         <div className="max-w-[500px] w-full h-[500px] relative flex items-center justify-center">
