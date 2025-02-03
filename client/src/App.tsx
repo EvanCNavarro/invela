@@ -11,6 +11,7 @@ import AuthPage from "@/pages/auth-page";
 import RegistryPage from "@/pages/registry-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
+import FileVaultPage from "@/pages/file-vault-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -55,6 +56,16 @@ function Router() {
           <ProtectedLayout>
             <OnboardingWrapper>
               <TaskCenterPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        )} 
+      />
+       <ProtectedRoute 
+        path="/file-vault" 
+        component={() => (
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <FileVaultPage />
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 

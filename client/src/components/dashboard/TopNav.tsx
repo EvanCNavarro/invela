@@ -30,7 +30,7 @@ export function TopNav() {
   };
 
   return (
-    <div className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="w-full">
       <div className="h-14 px-6 flex items-center">
         <div className="relative w-full max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
@@ -53,7 +53,7 @@ export function TopNav() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 cursor-pointer">
+              <Avatar className="h-8 w-8 cursor-pointer bg-white">
                 <AvatarFallback className="text-sm">
                   {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
                 </AvatarFallback>
