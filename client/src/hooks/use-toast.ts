@@ -139,9 +139,7 @@ interface ToastProviderProps {
   children: React.ReactNode
 }
 
-export const ToastProvider: React.FC<ToastProviderProps> = ({
-  children,
-}: ToastProviderProps): JSX.Element => {
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = React.useReducer(reducer, {
     toasts: [],
   })
