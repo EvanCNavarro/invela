@@ -154,24 +154,24 @@ export default function AuthPage() {
       </div>
 
       <div 
-            className={cn(
-              "hidden lg:flex flex-1 items-center justify-center",
-              isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-[hsl(260,11%,95%)]"
-            )}
-          >
-            <div className="relative w-[500px] h-[500px] p-8">
-              <img
-                src={isLogin ? "/invela-logo.svg" : "/assets/register_animation.gif"}
-                alt={isLogin ? "Secure Login Animation" : "Register Animation"}
-                className="w-full h-full object-contain"
-                style={{
-                  imageRendering: 'auto',
-                  WebkitBackfaceVisibility: 'hidden',
-                  backfaceVisibility: 'hidden'
-                }}
-              />
-            </div>
-          </div>
+        className={cn(
+          "hidden lg:flex flex-1 items-center justify-center",
+          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-[hsl(260,11%,95%)]"
+        )}
+      >
+        <div className="relative w-[500px] h-[500px] p-8">
+          <img
+            src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"}
+            alt={isLogin ? "Secure Login Animation" : "Register Animation"}
+            className="w-full h-full object-contain"
+            style={{
+              imageRendering: 'auto',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden'
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 }
