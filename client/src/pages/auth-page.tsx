@@ -4,8 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import Lottie from "lottie-react";
-import networkAnimation from "../assets/network-animation.json";
+import { NetworkAnimation } from "@/components/NetworkAnimation";
 import {
   Form,
   FormControl,
@@ -112,16 +111,8 @@ export default function AuthPage() {
       </div>
 
       <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center">
-        <div className="w-[400px] h-[400px]">
-          <Lottie
-            animationData={networkAnimation}
-            loop={true}
-            autoplay={true}
-            rendererSettings={{
-              preserveAspectRatio: 'xMidYMid slice'
-            }}
-            className="w-full h-full"
-          />
+        <div className="w-[500px] h-[500px] p-8">
+          <NetworkAnimation />
         </div>
       </div>
     </div>
