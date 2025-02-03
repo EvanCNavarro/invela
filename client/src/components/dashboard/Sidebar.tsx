@@ -6,37 +6,43 @@ import {
   BookIcon,
   BarChartIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  LockIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
+  isNewUser?: boolean;
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
+export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
   const menuItems = [
     { 
       icon: HomeIcon,
       label: "Dashboard", 
-      href: "/" 
+      href: "/",
+      locked: isNewUser
     },
     { 
       icon: CheckCircleIcon,
       label: "Task Center", 
-      href: "/task-center" 
+      href: "/task-center",
+      locked: false // Always accessible
     },
     { 
       icon: BookIcon,
       label: "Registry", 
-      href: "/registry" 
+      href: "/registry",
+      locked: isNewUser 
     },
     { 
       icon: BarChartIcon,
       label: "Insights", 
-      href: "/insights" 
+      href: "/insights",
+      locked: isNewUser
     }
   ];
 
@@ -60,17 +66,21 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
       </div>
 
       <nav className="mt-8">
-        {menuItems.map(({ icon: Icon, label, href }) => {
+        {menuItems.map(({ icon: Icon, label, href, locked }) => {
           const isActive = location === href;
+          const isDisabled = locked;
+
           return (
-            <Link key={href} href={href}>
+            <Link key={href} href={isDisabled ? "#" : href}>
               <div className={cn(
-                "flex items-center h-12 px-4 rounded-lg mx-2 mb-1 cursor-pointer",
-                "transition-all duration-200",
+                "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
+                "transition-all duration-200 relative",
                 !isExpanded && "justify-center",
                 isActive 
                   ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
-                  : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground"
+                  : isDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
               )}>
                 <Icon className={cn(
                   "h-5 w-5",
@@ -78,11 +88,14 @@ export function Sidebar({ isExpanded, onToggleExpanded }: SidebarProps) {
                 )} />
                 {isExpanded && (
                   <span className={cn(
-                    "ml-3",
+                    "ml-3 flex-1",
                     isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
                   )}>
                     {label}
                   </span>
+                )}
+                {isDisabled && isExpanded && (
+                  <LockIcon className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
             </Link>
