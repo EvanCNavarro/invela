@@ -114,6 +114,7 @@ export default function AuthPage() {
                     field={field} 
                     setRedirectEmail={setRedirectEmail}
                     isLogin={isLogin}
+                    onValidEmail={!isLogin ? extractInfoFromEmail : undefined}
                   />
                 )}
               />
