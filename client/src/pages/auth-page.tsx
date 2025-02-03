@@ -43,6 +43,7 @@ export default function AuthPage() {
   const [redirectEmail, setRedirectEmail] = useState<string>("");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [showPassword, setShowPassword] = useState(false);
+  const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
   const isLogin = location.includes("mode=login");
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -63,6 +64,8 @@ export default function AuthPage() {
   }, [redirectEmail, form]);
 
   const extractInfoFromEmail = (email: string) => {
+    if (fieldsAutoFilled) return;
+
     const [localPart, domain] = email.split('@');
 
     // Only process if it's not a popular email provider
@@ -71,17 +74,16 @@ export default function AuthPage() {
       const currentFullName = form.getValues('fullName');
       const currentCompany = form.getValues('company');
 
-      // Extract company name if field is empty
-      if (!currentCompany) {
+      // Only proceed if both fields are empty
+      if (!currentFullName && !currentCompany) {
+        // Extract company name if field is empty
         const company = domain.split('.')[0];
         form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
           shouldValidate: true,
           shouldTouch: true
         });
-      }
 
-      // Extract full name if field is empty
-      if (!currentFullName) {
+        // Extract full name if field is empty
         const nameParts = localPart.split(/[._]/);
         const fullName = nameParts
           .map(part => part.charAt(0).toUpperCase() + part.slice(1))
@@ -90,6 +92,8 @@ export default function AuthPage() {
           shouldValidate: true,
           shouldTouch: true
         });
+
+        setFieldsAutoFilled(true);
       }
     }
   };
@@ -265,6 +269,7 @@ export default function AuthPage() {
                 setLocation(isLogin ? '/auth' : '/auth?mode=login');
                 form.reset();
                 setTouchedFields({});
+                setFieldsAutoFilled(false);
               }}
               className="text-primary hover:underline"
             >
