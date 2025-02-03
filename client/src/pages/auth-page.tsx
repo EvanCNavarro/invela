@@ -46,13 +46,22 @@ export default function AuthPage() {
     const timer = setTimeout(() => setIsPageLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
-  
+
   useEffect(() => {
     form.reset();
     setTouchedFields({});
     setFieldsAutoFilled(false);
   }, [isLogin]);
 
+  const handleExtractedData = (data: { fullName?: string; company?: string }) => {
+    if (!fieldsAutoFilled && data.fullName) {
+      form.setValue('fullName', data.fullName);
+    }
+    if (!fieldsAutoFilled && data.company) {
+      form.setValue('company', data.company);
+    }
+    setFieldsAutoFilled(true);
+  };
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
@@ -69,7 +78,7 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
-    if (isPageLoading) {
+  if (isPageLoading) {
     return (
       <div className="min-h-screen flex">
         <div className="flex-1 flex items-center justify-center">
@@ -160,6 +169,7 @@ export default function AuthPage() {
                     field={field}
                     isLogin={isLogin}
                     showError={touchedFields.email}
+                    onExtractData={handleExtractedData}
                   />
                 )}
               />
