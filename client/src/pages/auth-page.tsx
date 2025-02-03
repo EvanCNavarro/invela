@@ -13,10 +13,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
-import { Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, X } from "lucide-react";
+import { GradientBorderButton } from "@/components/ui/gradient-border-button";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -29,6 +30,13 @@ const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
+
+const popularEmailProviders = [
+  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
+  'icloud.com', 'protonmail.com', 'mail.com', 'zoho.com', 'yandex.com',
+  'gmx.com', 'live.com', 'msn.com', 'fastmail.com', 'me.com',
+  'mailbox.org', 'tutanota.com', 'inbox.com', 'mail.ru', 'qq.com'
+];
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -50,15 +58,70 @@ export default function AuthPage() {
     mode: "onBlur"
   });
 
+  useEffect(() => {
+    if (redirectEmail) {
+      form.setValue("email", redirectEmail);
+    }
+  }, [redirectEmail, form]);
+
+  const extractInfoFromEmail = (email: string) => {
+    if (fieldsAutoFilled) return;
+
+    const [localPart, domain] = email.split('@');
+
+    // Only process if it's not a popular email provider
+    if (!popularEmailProviders.includes(domain.toLowerCase())) {
+      // Only autofill if fields are empty
+      const currentFullName = form.getValues('fullName');
+      const currentCompany = form.getValues('company');
+
+      // Only proceed if both fields are empty
+      if (!currentFullName && !currentCompany) {
+        // Extract company name if field is empty
+        const company = domain.split('.')[0];
+        form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
+          shouldValidate: true,
+          shouldTouch: true
+        });
+
+        // Extract full name if field is empty
+        const nameParts = localPart.split(/[._]/);
+        const fullName = nameParts
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+        form.setValue('fullName', fullName, {
+          shouldValidate: true,
+          shouldTouch: true
+        });
+
+        setFieldsAutoFilled(true);
+      }
+    }
+  };
+
   if (user) {
     return <Redirect to="/" />;
   }
+
+  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+    if (isLogin) {
+      const { email, password } = values;
+      loginMutation.mutate({ email, password });
+    } else {
+      registerMutation.mutate(values);
+    }
+  };
+
+  const isFormValid = !isLogin ? 
+    form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
+    form.formState.isValid;
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Show all error messages by marking all fields as touched
-    const fields = isLogin ? ['email', 'password'] as const : ['email', 'fullName', 'company', 'password'] as const;
+    const fields = ['email', 'fullName', 'company', 'password'] as const;
     fields.forEach(field => {
       setTouchedFields(prev => ({ ...prev, [field]: true }));
     });
@@ -81,16 +144,7 @@ export default function AuthPage() {
 
     form.handleSubmit(onSubmit)(e);
   };
-
-  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
-    if (isLogin) {
-      const { email, password } = values;
-      loginMutation.mutate({ email, password });
-    } else {
-      registerMutation.mutate(values);
-    }
-  };
-
+    
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
@@ -116,6 +170,7 @@ export default function AuthPage() {
                     field={field} 
                     setRedirectEmail={setRedirectEmail}
                     isLogin={isLogin}
+                    onValidEmail={!isLogin ? extractInfoFromEmail : undefined}
                     showError={touchedFields.email}
                   />
                 )}
@@ -150,6 +205,15 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
+                          {field.value && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {!form.formState.errors.fullName ? (
+                                <Check className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <X className="w-5 h-5 text-[#E56047]" />
+                              )}
+                            </div>
+                          )}
                         </div>
                         {touchedFields.fullName && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -183,6 +247,15 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
+                          {field.value && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              {!form.formState.errors.company ? (
+                                <Check className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <X className="w-5 h-5 text-[#E56047]" />
+                              )}
+                            </div>
+                          )}
                         </div>
                         {touchedFields.company && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -266,20 +339,34 @@ export default function AuthPage() {
 
       <div 
         className={cn(
-          "hidden lg:flex flex-1 items-center justify-center bg-[#346CF0]"
+          "hidden lg:flex flex-1 items-center justify-center",
+          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-white"
         )}
       >
         <div className="max-w-[500px] w-full h-[500px] relative flex items-center justify-center">
-          <img
-            src="/assets/auth_animation.gif"
-            alt="Secure Login Animation"
-            className="w-full h-full object-contain"
-            style={{
-              imageRendering: 'auto',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden'
-            }}
-          />
+          {isLogin ? (
+            <img
+              src="/assets/auth_animation.gif"
+              alt="Secure Login Animation"
+              className="w-full h-full object-contain"
+              style={{
+                imageRendering: 'auto',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden'
+              }}
+            />
+          ) : (
+            <img
+              src="/assets/register_animation.gif"
+              alt="Register Animation"
+              className="w-full h-full object-contain"
+              style={{
+                imageRendering: 'auto',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden'
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
