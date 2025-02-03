@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface EmailFieldProps {
   field: any;
@@ -12,9 +13,10 @@ interface EmailFieldProps {
   isLogin?: boolean;
   onValidEmail?: (email: string) => void;
   showError?: boolean;
+  isLoading?: boolean;
 }
 
-export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, showError }: EmailFieldProps) {
+export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, showError, isLoading }: EmailFieldProps) {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [isValidFormat, setIsValidFormat] = useState<boolean | null>(null);
   const [touched, setTouched] = useState(false);
@@ -26,6 +28,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
   };
 
   const checkEmailExists = async (email: string) => {
+    if (isLogin) return false;
     try {
       const response = await fetch('/api/check-email', {
         method: 'POST',
@@ -43,15 +46,13 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
 
   const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     field.onBlur(e);
-    if (field.value) {
+    if (!isLogin && field.value) {
       setTouched(true);
       const isValid = validateEmailFormat(field.value);
       setIsValidFormat(isValid);
 
-      if (isValid && !isLogin) {
+      if (isValid) {
         const exists = await checkEmailExists(field.value);
-        setEmailExists(exists);
-
         if (!exists && onValidEmail) {
           onValidEmail(field.value);
         }
@@ -60,23 +61,32 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
   };
 
   useEffect(() => {
-    if (showError && field.value) {
+    if (!isLogin && showError && field.value) {
       setIsValidFormat(validateEmailFormat(field.value));
     }
-  }, [showError, field.value]);
+  }, [showError, field.value, isLogin]);
 
   const handleLoginRedirect = () => {
     if (setRedirectEmail) {
       setRedirectEmail(field.value);
     }
-    setLocation('/auth?mode=login');
+    setLocation('/login');
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
 
   return (
     <>
       <FormItem>
         <FormLabel className={cn(
-          (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && "text-[#E56047]"
+          !isLogin && (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && "text-[#E56047]"
         )}>Email</FormLabel>
         <div className="relative">
           <FormControl>
@@ -86,14 +96,14 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
               onBlur={handleBlur}
               className={cn(
                 "pr-10",
-                !touched && !showError ? '' :
+                !isLogin && (!touched && !showError ? '' :
                 ((field.value && !isValidFormat) || (!field.value && showError)) 
                   ? 'border-[#E56047] focus-visible:ring-[#E56047]' 
-                  : field.value && isValidFormat && !emailExists ? 'border-green-500' : ''
+                  : field.value && isValidFormat && !emailExists ? 'border-green-500' : '')
               )}
             />
           </FormControl>
-          {field.value && (touched || showError) && (
+          {!isLogin && field.value && (touched || showError) && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValidFormat && !emailExists && (
                 <Check className="w-5 h-5 text-green-500" />
@@ -104,14 +114,14 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
             </div>
           )}
         </div>
-        {(touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && (
+        {!isLogin && (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && (
           <FormMessage className="text-[#E56047]">
             Please enter a valid email address.
           </FormMessage>
         )}
       </FormItem>
 
-      {emailExists && !isLogin && (
+      {!isLogin && emailExists && (
         <Button
           type="button"
           variant="ghost"
@@ -119,7 +129,6 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
           onClick={handleLoginRedirect}
         >
           Account exists. Log in instead
-          <ArrowRight className="w-4 h-4 ml-2" />
         </Button>
       )}
     </>
