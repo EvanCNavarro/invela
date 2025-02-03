@@ -65,7 +65,7 @@
 
 .fancy-border-button::before {
   content: '';
-  background: conic-gradient(from 0deg, #22c55e, #16a34a, #22c55e);
+  background: conic-gradient(from 0deg, #22c55e, #16a34a, #15803d, #22c55e);
   position: absolute;
   top: 50%;
   left: 50%;

@@ -116,30 +116,39 @@ export default function AuthPage() {
     form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
     form.formState.isValid;
 
-    const focusFirstError = () => {
-      const fields = ['email', 'fullName', 'company', 'password'];
-      const firstErrorField = fields.find(field => {
-        const fieldValue = form.getValues(field);
-        return !fieldValue || form.formState.errors[field];
-      });
-    
-      if (firstErrorField) {
-        // Touch all fields to show error messages
-        fields.forEach(field => {
-          setTouchedFields(prev => ({ ...prev, [field]: true }));
-           // Trigger validation for all fields
-          form.trigger(field);
-        });
-        form.setFocus(firstErrorField);
-      }
-    };
-
+  const focusFirstError = () => {
+    const fields = ['email', 'fullName', 'company', 'password'] as const;
+  
+    // Touch all fields to show error messages
+    fields.forEach(field => {
+      setTouchedFields(prev => ({ ...prev, [field]: true }));
+    });
+  
+    // Validate all fields
+    form.trigger();
+  
+    // Find first error field
+    const firstErrorField = fields.find(field => {
+      const value = form.getValues(field);
+      return !value || form.formState.errors[field];
+    });
+  
+    if (firstErrorField) {
+      form.setFocus(firstErrorField);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.formState.isValid) {
+  
+    // Trigger validation for all fields
+    const isValid = await form.trigger();
+  
+    if (!isValid) {
       focusFirstError();
       return;
     }
+  
     form.handleSubmit(onSubmit)(e);
   };
     
@@ -283,7 +292,9 @@ export default function AuthPage() {
                           className={cn(
                             "pr-10",
                             touchedFields.password && field.value && form.formState.errors.password && 
-                            "border-[#E56047] focus-visible:ring-[#E56047]"
+                            "border-[#E56047] focus-visible:ring-[#E56047]",
+                            touchedFields.password && field.value && !form.formState.errors.password &&
+                            "border-green-500"
                           )}
                         />
                       </FormControl>
