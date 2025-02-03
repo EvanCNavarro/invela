@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -46,6 +46,12 @@ export default function AuthPage() {
     const timer = setTimeout(() => setIsPageLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
+  
+  useEffect(() => {
+    form.reset();
+    setTouchedFields({});
+    setFieldsAutoFilled(false);
+  }, [isLogin]);
 
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -185,6 +191,11 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
+                          {touchedFields.fullName && field.value && !form.formState.errors.fullName && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Check className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
                         </div>
                         {touchedFields.fullName && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -216,6 +227,11 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
+                          {touchedFields.company && field.value && !form.formState.errors.company && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Check className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
                         </div>
                         {touchedFields.company && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -244,7 +260,9 @@ export default function AuthPage() {
                           className={cn(
                             "pr-10",
                             touchedFields.password && form.formState.errors.password && 
-                            "border-[#E56047] focus-visible:ring-[#E56047]"
+                            "border-[#E56047] focus-visible:ring-[#E56047]",
+                            !isLogin && touchedFields.password && field.value && !form.formState.errors.password &&
+                            "border-green-500"
                           )}
                         />
                       </FormControl>
