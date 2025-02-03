@@ -89,9 +89,14 @@ export function TopNav() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
-                  logoutMutation.mutate();
-                  setLocation('/auth');
+                  logoutMutation.mutate(undefined, {
+                    onSuccess: () => {
+                      setLocation('/login');
+                    }
+                  })
+                  
                 }}
+                className="text-red-600 focus:text-red-600"
               >
                 <LogOutIcon className="mr-2 h-4 w-4" />
                 <span>Log out</span>
