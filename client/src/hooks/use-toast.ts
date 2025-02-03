@@ -141,7 +141,7 @@ interface ToastProviderProps {
 }
 
 export const ToastProvider = React.memo(
-  ({ children }: ToastProviderProps): JSX.Element => {
+  ({ children }: ToastProviderProps) => {
     const [state, dispatch] = React.useReducer(reducer, {
       toasts: [],
     })
