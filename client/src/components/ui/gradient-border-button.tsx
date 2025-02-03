@@ -12,12 +12,8 @@ export const GradientBorderButton = forwardRef<HTMLButtonElement, GradientBorder
       <div className="relative">
         {showGradient && (
           <div
-            className="absolute -inset-[1px] rounded-md bg-gradient-to-r from-green-400 via-emerald-500 to-teal-500"
-            style={{
-              maskImage: 'radial-gradient(at center, black, transparent)',
-              WebkitMaskImage: 'radial-gradient(at center, black, transparent)',
-              animation: 'border-animation 3s linear infinite',
-            }}
+            className="box__bg absolute -inset-[1px] rounded-md bg-[#070707]"
+            style={{ height: 'auto', width: 'auto' }}
           />
         )}
         <Button
