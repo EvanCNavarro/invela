@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { NetworkAnimation } from "@/components/NetworkAnimation";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -159,17 +160,21 @@ export default function AuthPage() {
           isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-[hsl(260,11%,95%)]"
         )}
       >
-        <div className="relative w-[500px] h-[500px] p-8">
-          <img
-            src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"}
-            alt={isLogin ? "Secure Login Animation" : "Register Animation"}
-            className="w-full h-full object-contain"
-            style={{
-              imageRendering: 'auto',
-              WebkitBackfaceVisibility: 'hidden',
-              backfaceVisibility: 'hidden'
-            }}
-          />
+        <div className="max-w-[500px] w-full h-[500px] relative flex items-center justify-center">
+          {isLogin ? (
+            <img
+              src="/assets/auth_animation.gif"
+              alt="Secure Login Animation"
+              className="w-full h-full object-contain"
+              style={{
+                imageRendering: 'auto',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden'
+              }}
+            />
+          ) : (
+            <NetworkAnimation />
+          )}
         </div>
       </div>
     </div>
