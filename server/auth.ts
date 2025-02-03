@@ -26,10 +26,17 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  const [hashed, salt] = stored.split(".");
-  const hashedBuf = Buffer.from(hashed, "hex");
-  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-  return timingSafeEqual(hashedBuf, suppliedBuf);
+  try {
+    const [hashedStored, salt] = stored.split(".");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    const storedBuf = Buffer.from(hashedStored, "hex");
+
+    // Now both buffers should be the same length (64 bytes)
+    return timingSafeEqual(storedBuf, suppliedBuf);
+  } catch (error) {
+    console.error("Password comparison error:", error);
+    return false;
+  }
 }
 
 async function getUserByEmail(email: string) {
@@ -57,11 +64,20 @@ export function setupAuth(app: Express) {
     new LocalStrategy(
       { usernameField: 'email' },
       async (email, password, done) => {
-        const [user] = await getUserByEmail(email);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
+        try {
+          const [user] = await getUserByEmail(email);
+          if (!user) {
+            return done(null, false);
+          }
+
+          const isValid = await comparePasswords(password, user.password);
+          if (!isValid) {
+            return done(null, false);
+          }
+
           return done(null, user);
+        } catch (error) {
+          return done(error);
         }
       }
     )
@@ -69,13 +85,17 @@ export function setupAuth(app: Express) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
 
-    done(null, user);
+      done(null, user);
+    } catch (error) {
+      done(error);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {
@@ -136,20 +156,5 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
-  });
-
-  app.post("/api/check-email", async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
-    }
-
-    try {
-      const [existingUser] = await getUserByEmail(email);
-      return res.json(!!existingUser);
-    } catch (error) {
-      console.error("Error checking email:", error);
-      return res.status(500).json({ error: "Internal server error" });
-    }
   });
 }
