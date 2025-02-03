@@ -13,10 +13,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
 import { Eye, EyeOff } from "lucide-react";
+import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -38,6 +40,13 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
   const isLogin = !match;
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsPageLoading(false), 300);
+    return () => clearTimeout(timer);
+  }, []);
+
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
@@ -54,6 +63,38 @@ export default function AuthPage() {
     return <Redirect to="/" />;
   }
 
+    if (isPageLoading) {
+    return (
+      <div className="min-h-screen flex">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-sm p-6 space-y-6">
+            <div className="text-center space-y-4">
+              <Skeleton className="h-12 w-12 rounded-full mx-auto" />
+              <Skeleton className="h-8 w-48 mx-auto" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              {!isLogin && (
+                <>
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </>
+              )}
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+        <div className={cn(
+          "hidden lg:flex flex-1 items-center justify-center",
+          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-white"
+        )}>
+          <Skeleton className="w-[500px] h-[500px]" />
+        </div>
+      </div>
+    );
+  }
+
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     if (isLogin) {
       const { email, password } = values;
@@ -66,17 +107,14 @@ export default function AuthPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Show all error messages by marking all fields as touched
     const fields = ['email', 'fullName', 'company', 'password'] as const;
     fields.forEach(field => {
       setTouchedFields(prev => ({ ...prev, [field]: true }));
     });
 
-    // Trigger validation for all fields
     const isValid = await form.trigger();
 
     if (!isValid) {
-      // Find first error field
       const firstErrorField = fields.find(field => {
         const value = form.getValues(field);
         return !value || form.formState.errors[field];
@@ -264,37 +302,11 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div 
-        className={cn(
-          "hidden lg:flex flex-1 items-center justify-center",
-          isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-white"
-        )}
-      >
-        <div className="max-w-[500px] w-full h-[500px] relative flex items-center justify-center">
-          {isLogin ? (
-            <img
-              src="/assets/auth_animation.gif"
-              alt="Secure Login Animation"
-              className="w-full h-full object-contain"
-              style={{
-                imageRendering: 'auto',
-                WebkitBackfaceVisibility: 'hidden',
-                backfaceVisibility: 'hidden'
-              }}
-            />
-          ) : (
-            <img
-              src="/assets/register_animation.gif"
-              alt="Register Animation"
-              className="w-full h-full object-contain"
-              style={{
-                imageRendering: 'auto',
-                WebkitBackfaceVisibility: 'hidden',
-                backfaceVisibility: 'hidden'
-              }}
-            />
-          )}
-        </div>
+      <div className={cn(
+        "hidden lg:flex flex-1 items-center justify-center",
+        isLogin ? "bg-[hsl(209,99%,50%)]" : "bg-white"
+      )}>
+        <AuthHeroSection isLogin={isLogin} />
       </div>
     </div>
   );
