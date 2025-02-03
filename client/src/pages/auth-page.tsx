@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Redirect, useLocation } from "wouter";
+import { Redirect, useLocation, useRoute } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,11 +13,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
-import { Check, Eye, EyeOff, X } from "lucide-react";
-import { GradientBorderButton } from "@/components/ui/gradient-border-button";
+import { Eye, EyeOff } from "lucide-react";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -31,73 +30,25 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
-const popularEmailProviders = [
-  'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
-  'icloud.com', 'protonmail.com', 'mail.com', 'zoho.com', 'yandex.com',
-  'gmx.com', 'live.com', 'msn.com', 'fastmail.com', 'me.com',
-  'mailbox.org', 'tutanota.com', 'inbox.com', 'mail.ru', 'qq.com'
-];
-
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location, setLocation] = useLocation();
-  const [redirectEmail, setRedirectEmail] = useState<string>("");
+  const [, setLocation] = useLocation();
+  const [match] = useRoute("/register");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [fieldsAutoFilled, setFieldsAutoFilled] = useState(false);
-  const isLogin = location.includes("mode=login");
+  const isLogin = !match;
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     defaultValues: {
-      email: redirectEmail,
+      email: "",
       fullName: "",
       company: "",
       password: "",
     },
     mode: "onBlur"
   });
-
-  useEffect(() => {
-    if (redirectEmail) {
-      form.setValue("email", redirectEmail);
-    }
-  }, [redirectEmail, form]);
-
-  const extractInfoFromEmail = (email: string) => {
-    if (fieldsAutoFilled) return;
-
-    const [localPart, domain] = email.split('@');
-
-    // Only process if it's not a popular email provider
-    if (!popularEmailProviders.includes(domain.toLowerCase())) {
-      // Only autofill if fields are empty
-      const currentFullName = form.getValues('fullName');
-      const currentCompany = form.getValues('company');
-
-      // Only proceed if both fields are empty
-      if (!currentFullName && !currentCompany) {
-        // Extract company name if field is empty
-        const company = domain.split('.')[0];
-        form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
-          shouldValidate: true,
-          shouldTouch: true
-        });
-
-        // Extract full name if field is empty
-        const nameParts = localPart.split(/[._]/);
-        const fullName = nameParts
-          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-          .join(' ');
-        form.setValue('fullName', fullName, {
-          shouldValidate: true,
-          shouldTouch: true
-        });
-
-        setFieldsAutoFilled(true);
-      }
-    }
-  };
 
   if (user) {
     return <Redirect to="/" />;
@@ -111,11 +62,6 @@ export default function AuthPage() {
       registerMutation.mutate(values);
     }
   };
-
-  const isFormValid = !isLogin ? 
-    form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
-    form.formState.isValid;
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +90,7 @@ export default function AuthPage() {
 
     form.handleSubmit(onSubmit)(e);
   };
-    
+
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
@@ -167,10 +113,8 @@ export default function AuthPage() {
                 name="email"
                 render={({ field }) => (
                   <EmailField 
-                    field={field} 
-                    setRedirectEmail={setRedirectEmail}
+                    field={field}
                     isLogin={isLogin}
-                    onValidEmail={!isLogin ? extractInfoFromEmail : undefined}
                     showError={touchedFields.email}
                   />
                 )}
@@ -205,15 +149,6 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
-                          {field.value && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {!form.formState.errors.fullName ? (
-                                <Check className="w-5 h-5 text-green-500" />
-                              ) : (
-                                <X className="w-5 h-5 text-[#E56047]" />
-                              )}
-                            </div>
-                          )}
                         </div>
                         {touchedFields.fullName && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -247,15 +182,6 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
-                          {field.value && (
-                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              {!form.formState.errors.company ? (
-                                <Check className="w-5 h-5 text-green-500" />
-                              ) : (
-                                <X className="w-5 h-5 text-[#E56047]" />
-                              )}
-                            </div>
-                          )}
                         </div>
                         {touchedFields.company && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
@@ -310,6 +236,7 @@ export default function AuthPage() {
                   </FormItem>
                 )}
               />
+
               <Button
                 type="submit"
                 className="w-full font-bold hover:opacity-90"
@@ -324,7 +251,7 @@ export default function AuthPage() {
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button
               onClick={() => {
-                setLocation(isLogin ? '/auth' : '/auth?mode=login');
+                setLocation(isLogin ? '/register' : '/login');
                 form.reset();
                 setTouchedFields({});
                 setFieldsAutoFilled(false);
