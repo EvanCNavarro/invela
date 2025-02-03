@@ -20,10 +20,39 @@ import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const fullNameRegex = /^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$/;
+const repeatingCharsRegex = /(.)\1{2,}/;
+const mixedScriptRegex = /[^\u0000-\u007F\u0080-\u00FF\u0100-\u017F]/;
+const titleRegex = /\b(mr|mrs|ms|dr|prof|rev|sir|madam)\b/i;
+
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  fullName: z.string().min(2, "Full name must be at least 2 characters."),
-  company: z.string().min(2, "Company name must be at least 2 characters."),
+  fullName: z.string()
+    .min(2, "Full name must be at least 2 characters.")
+    .max(50, "Full name must not exceed 50 characters.")
+    .refine(
+      (value) => fullNameRegex.test(value),
+      "Name can only contain letters and simple spacing characters"
+    )
+    .refine(
+      (value) => !repeatingCharsRegex.test(value),
+      "Name cannot contain repeating characters"
+    )
+    .refine(
+      (value) => !mixedScriptRegex.test(value),
+      "Name cannot contain characters from multiple languages"
+    )
+    .refine(
+      (value) => !titleRegex.test(value.toLowerCase()),
+      "Name cannot contain titles (e.g., Mr., Dr., Prof.)"
+    )
+    .refine(
+      (value) => !/\d/.test(value),
+      "Name cannot contain numbers"
+    ),
+  company: z.string()
+    .min(1, "Company name is required.")
+    .max(50, "Company name must not exceed 50 characters."),
   password: z.string().min(6, "Password must be at least 6 characters."),
 });
 
