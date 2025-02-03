@@ -116,39 +116,32 @@ export default function AuthPage() {
     form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
     form.formState.isValid;
 
-  const focusFirstError = () => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Show all error messages by marking all fields as touched
     const fields = ['email', 'fullName', 'company', 'password'] as const;
-  
-    // Touch all fields to show error messages
     fields.forEach(field => {
       setTouchedFields(prev => ({ ...prev, [field]: true }));
     });
-  
-    // Validate all fields
-    form.trigger();
-  
-    // Find first error field
-    const firstErrorField = fields.find(field => {
-      const value = form.getValues(field);
-      return !value || form.formState.errors[field];
-    });
-  
-    if (firstErrorField) {
-      form.setFocus(firstErrorField);
-    }
-  };
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-  
+
     // Trigger validation for all fields
     const isValid = await form.trigger();
-  
+
     if (!isValid) {
-      focusFirstError();
+      // Find first error field
+      const firstErrorField = fields.find(field => {
+        const value = form.getValues(field);
+        return !value || form.formState.errors[field];
+      });
+
+      if (firstErrorField) {
+        form.setFocus(firstErrorField);
+      }
       return;
     }
-  
+
     form.handleSubmit(onSubmit)(e);
   };
     
@@ -190,7 +183,7 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className={cn(
-                          touchedFields.fullName && field.value && form.formState.errors.fullName && "text-[#E56047]"
+                          touchedFields.fullName && form.formState.errors.fullName && "text-[#E56047]"
                         )}>Full Name</FormLabel>
                         <div className="relative">
                           <FormControl>
@@ -198,7 +191,7 @@ export default function AuthPage() {
                               {...field} 
                               className={cn(
                                 "pr-10",
-                                touchedFields.fullName && field.value && form.formState.errors.fullName && 
+                                touchedFields.fullName && form.formState.errors.fullName && 
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.fullName && 
                                 "border-green-500"
@@ -221,7 +214,7 @@ export default function AuthPage() {
                             </div>
                           )}
                         </div>
-                        {touchedFields.fullName && field.value && <FormMessage className="text-[#E56047]" />}
+                        {touchedFields.fullName && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
                     )}
                   />
@@ -232,7 +225,7 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className={cn(
-                          touchedFields.company && field.value && form.formState.errors.company && "text-[#E56047]"
+                          touchedFields.company && form.formState.errors.company && "text-[#E56047]"
                         )}>Company</FormLabel>
                         <div className="relative">
                           <FormControl>
@@ -240,7 +233,7 @@ export default function AuthPage() {
                               {...field} 
                               className={cn(
                                 "pr-10",
-                                touchedFields.company && field.value && form.formState.errors.company && 
+                                touchedFields.company && form.formState.errors.company && 
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.company && 
                                 "border-green-500"
@@ -263,7 +256,7 @@ export default function AuthPage() {
                             </div>
                           )}
                         </div>
-                        {touchedFields.company && field.value && <FormMessage className="text-[#E56047]" />}
+                        {touchedFields.company && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
                     )}
                   />
@@ -276,7 +269,7 @@ export default function AuthPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className={cn(
-                      touchedFields.password && field.value && form.formState.errors.password && "text-[#E56047]"
+                      touchedFields.password && form.formState.errors.password && "text-[#E56047]"
                     )}>Password</FormLabel>
                     <div className="relative">
                       <FormControl>
@@ -291,14 +284,14 @@ export default function AuthPage() {
                           }}
                           className={cn(
                             "pr-10",
-                            touchedFields.password && field.value && form.formState.errors.password && 
+                            touchedFields.password && form.formState.errors.password && 
                             "border-[#E56047] focus-visible:ring-[#E56047]",
                             touchedFields.password && field.value && !form.formState.errors.password &&
                             "border-green-500"
                           )}
                         />
                       </FormControl>
-                      {field.value && touchedFields.password && form.formState.errors.password && (
+                      {touchedFields.password && form.formState.errors.password && (
                         <div className="absolute right-10 top-1/2 -translate-y-1/2">
                           <X className="w-5 h-5 text-[#E56047]" />
                         </div>
@@ -317,9 +310,7 @@ export default function AuthPage() {
                         )}
                       </Button>
                     </div>
-                    {touchedFields.password && field.value && (
-                      <FormMessage className="text-[#E56047]" />
-                    )}
+                    {touchedFields.password && <FormMessage className="text-[#E56047]" />}
                   </FormItem>
                 )}
               />
@@ -331,7 +322,7 @@ export default function AuthPage() {
                 showGradient={!isLogin && isFormValid}
                 onClick={() => {
                   if (!form.formState.isValid) {
-                    focusFirstError();
+                    // focusFirstError();
                   }
                 }}
               >
