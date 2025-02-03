@@ -110,11 +110,16 @@ export default function AuthPage() {
       </div>
 
       <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center">
-        <div className="w-[500px] h-[500px] p-8">
+        <div className="relative w-[500px] h-[500px] p-8">
           <img
             src="/assets/auth_animation.gif"
-            alt="Network Visualization"
+            alt="Secure Login Animation"
             className="w-full h-full object-contain"
+            style={{
+              imageRendering: 'auto',
+              WebkitBackfaceVisibility: 'hidden',
+              backfaceVisibility: 'hidden'
+            }}
           />
         </div>
       </div>
