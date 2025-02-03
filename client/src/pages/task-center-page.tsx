@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ChevronDown, Download } from "lucide-react";
+import { Search, ChevronDown, Download, PlusIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -101,7 +101,14 @@ export default function TaskCenterPage() {
         <ProgressTracker />
 
         <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Tasks</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Tasks</h2>
+            <Button>
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add New Task
+            </Button>
+          </div>
+
           <div className="bg-background rounded-lg p-6 border">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-4 flex-1">
