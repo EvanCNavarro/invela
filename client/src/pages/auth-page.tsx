@@ -17,6 +17,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
 import { Check, Eye, EyeOff, X } from "lucide-react";
+import { GradientBorderButton } from "@/components/ui/gradient-border-button";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -110,6 +111,19 @@ export default function AuthPage() {
       registerMutation.mutate(values);
     }
   };
+
+  const isFormValid = !isLogin ? 
+    form.formState.isValid && Object.keys(form.formState.errors).length === 0 :
+    form.formState.isValid;
+
+  const focusFirstError = () => {
+    const fields = ['email', 'fullName', 'company', 'password'];
+    const firstErrorField = fields.find(field => form.formState.errors[field]);
+    if (firstErrorField) {
+      form.setFocus(firstErrorField);
+    }
+  };
+    
 
   return (
     <div className="min-h-screen flex">
@@ -251,10 +265,21 @@ export default function AuthPage() {
                           className={cn(
                             "pr-10",
                             touchedFields.password && field.value && form.formState.errors.password && 
-                            "border-[#E56047] focus-visible:ring-[#E56047]"
+                            "border-[#E56047] focus-visible:ring-[#E56047]",
+                            field.value && touchedFields.password && !form.formState.errors.password &&
+                            "border-green-500"
                           )}
                         />
                       </FormControl>
+                      {field.value && touchedFields.password && (
+                        <div className="absolute right-10 top-1/2 -translate-y-1/2">
+                          {!form.formState.errors.password ? (
+                            <Check className="w-5 h-5 text-green-500" />
+                          ) : (
+                            <X className="w-5 h-5 text-[#E56047]" />
+                          )}
+                        </div>
+                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -276,13 +301,19 @@ export default function AuthPage() {
                 )}
               />
 
-              <Button
+              <GradientBorderButton
                 type="submit"
                 className="w-full font-bold hover:opacity-90"
                 disabled={loginMutation.isPending || registerMutation.isPending}
+                showGradient={!isLogin && isFormValid}
+                onClick={() => {
+                  if (!form.formState.isValid) {
+                    focusFirstError();
+                  }
+                }}
               >
                 {isLogin ? "Log in" : "Register"}
-              </Button>
+              </GradientBorderButton>
             </form>
           </Form>
 
