@@ -184,9 +184,7 @@ export const ToastProvider = React.memo(
     }, [])
 
     return (
-      <ToastContext.Provider
-        value={{ toasts: state.toasts, toast, dismiss }}
-      >
+      <ToastContext.Provider value={{ toasts: state.toasts, toast, dismiss }}>
         {children}
       </ToastContext.Provider>
     )
