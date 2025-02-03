@@ -4,7 +4,6 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
-import { NavigationMenu } from "@/components/dashboard/NavigationMenu";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -17,7 +16,6 @@ import { ProtectedRoute } from "./lib/protected-route";
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
-      <NavigationMenu />
       {children}
     </div>
   );
