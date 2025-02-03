@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
+import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -12,7 +13,6 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import { ProtectedRoute } from "./lib/protected-route";
-import { ToastProvider } from "@/hooks/use-toast";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -34,7 +34,9 @@ function Router() {
         path="/" 
         component={() => (
           <ProtectedLayout>
-            <DashboardPage />
+            <OnboardingWrapper>
+              <DashboardPage />
+            </OnboardingWrapper>
           </ProtectedLayout>
         )} 
       />
@@ -42,7 +44,9 @@ function Router() {
         path="/registry" 
         component={() => (
           <ProtectedLayout>
-            <RegistryPage />
+            <OnboardingWrapper>
+              <RegistryPage />
+            </OnboardingWrapper>
           </ProtectedLayout>
         )} 
       />
@@ -50,7 +54,9 @@ function Router() {
         path="/task-center" 
         component={() => (
           <ProtectedLayout>
-            <TaskCenterPage />
+            <OnboardingWrapper>
+              <TaskCenterPage />
+            </OnboardingWrapper>
           </ProtectedLayout>
         )} 
       />
@@ -58,7 +64,9 @@ function Router() {
         path="/file-vault" 
         component={() => (
           <ProtectedLayout>
-            <FileVault />
+            <OnboardingWrapper>
+              <FileVault />
+            </OnboardingWrapper>
           </ProtectedLayout>
         )} 
       />
@@ -66,7 +74,9 @@ function Router() {
         path="/insights" 
         component={() => (
           <ProtectedLayout>
-            <InsightsPage />
+            <OnboardingWrapper>
+              <InsightsPage />
+            </OnboardingWrapper>
           </ProtectedLayout>
         )} 
       />
@@ -79,10 +89,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <Router />
-          <Toaster />
-        </ToastProvider>
+        <Router />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   );
