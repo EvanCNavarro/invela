@@ -20,14 +20,20 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 function ProgressTracker() {
+  const { user } = useAuth();
   const steps = [
     { title: "User Information", status: "completed", progress: 100 },
     { title: "Company Information", status: "completed", progress: 100 },
     { title: "Document Uploads", status: "in-progress", progress: 75 },
     { title: "File Verification", status: "pending", progress: 0 },
   ];
+
+  if (user?.onboardingCompleted) {
+    return null;
+  }
 
   return (
     <div className="bg-background rounded-lg p-4 md:p-6 mb-6 border shadow-sm">
