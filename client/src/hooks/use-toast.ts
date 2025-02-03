@@ -178,14 +178,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     })
   }, [])
 
-  return React.createElement(ToastContext.Provider, {
-    value: {
-      toasts: state.toasts,
-      toast,
-      dismiss,
-    },
-    children,
-  })
+  return (
+    <ToastContext.Provider
+      value={{
+        toasts: state.toasts,
+        toast,
+        dismiss,
+      }}
+    >
+      {children}
+    </ToastContext.Provider>
+  )
 }
 
 export function useToast(): ToastContextType {
