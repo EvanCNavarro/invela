@@ -22,6 +22,18 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
   const [touched, setTouched] = useState(false);
   const [, setLocation] = useLocation();
 
+  // Reset state when isLogin changes or component unmounts
+  useEffect(() => {
+    setEmailExists(null);
+    setIsValidFormat(null);
+    setTouched(false);
+    return () => {
+      setEmailExists(null);
+      setIsValidFormat(null);
+      setTouched(false);
+    };
+  }, [isLogin]);
+
   const validateEmailFormat = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -44,8 +56,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
     }
   };
 
-  const handleBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    field.onBlur(e);
+  const handleBlur = async () => {
     if (!isLogin && field.value) {
       setTouched(true);
       const isValid = validateEmailFormat(field.value);
@@ -71,6 +82,10 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
       setRedirectEmail(field.value);
     }
     setLocation('/login');
+    // Reset state
+    setEmailExists(null);
+    setIsValidFormat(null);
+    setTouched(false);
   };
 
   if (isLoading) {
