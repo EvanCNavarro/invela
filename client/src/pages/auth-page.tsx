@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
-import { Check } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -42,6 +42,7 @@ export default function AuthPage() {
   const [location, setLocation] = useLocation();
   const [redirectEmail, setRedirectEmail] = useState<string>("");
   const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
+  const [showPassword, setShowPassword] = useState(false);
   const isLogin = location.includes("mode=login");
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -66,22 +67,30 @@ export default function AuthPage() {
 
     // Only process if it's not a popular email provider
     if (!popularEmailProviders.includes(domain.toLowerCase())) {
-      // Extract company name (remove TLD)
-      const company = domain.split('.')[0];
-      form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
-        shouldValidate: true,
-        shouldTouch: true
-      });
+      // Only autofill if fields are empty
+      const currentFullName = form.getValues('fullName');
+      const currentCompany = form.getValues('company');
 
-      // Extract full name
-      const nameParts = localPart.split(/[._]/);
-      const fullName = nameParts
-        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ');
-      form.setValue('fullName', fullName, {
-        shouldValidate: true,
-        shouldTouch: true
-      });
+      // Extract company name if field is empty
+      if (!currentCompany) {
+        const company = domain.split('.')[0];
+        form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
+          shouldValidate: true,
+          shouldTouch: true
+        });
+      }
+
+      // Extract full name if field is empty
+      if (!currentFullName) {
+        const nameParts = localPart.split(/[._]/);
+        const fullName = nameParts
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+          .join(' ');
+        form.setValue('fullName', fullName, {
+          shouldValidate: true,
+          shouldTouch: true
+        });
+      }
     }
   };
 
@@ -147,7 +156,9 @@ export default function AuthPage() {
                               )}
                               onBlur={(e) => {
                                 field.onBlur(e);
-                                setTouchedFields(prev => ({ ...prev, fullName: true }));
+                                if (field.value) {
+                                  setTouchedFields(prev => ({ ...prev, fullName: true }));
+                                }
                               }}
                             />
                           </FormControl>
@@ -157,7 +168,7 @@ export default function AuthPage() {
                             </div>
                           )}
                         </div>
-                        {touchedFields.fullName && <FormMessage className="text-[#EE7151]" />}
+                        {touchedFields.fullName && field.value && <FormMessage className="text-[#EE7151]" />}
                       </FormItem>
                     )}
                   />
@@ -179,7 +190,9 @@ export default function AuthPage() {
                               )}
                               onBlur={(e) => {
                                 field.onBlur(e);
-                                setTouchedFields(prev => ({ ...prev, company: true }));
+                                if (field.value) {
+                                  setTouchedFields(prev => ({ ...prev, company: true }));
+                                }
                               }}
                             />
                           </FormControl>
@@ -189,7 +202,7 @@ export default function AuthPage() {
                             </div>
                           )}
                         </div>
-                        {touchedFields.company && <FormMessage className="text-[#EE7151]" />}
+                        {touchedFields.company && field.value && <FormMessage className="text-[#EE7151]" />}
                       </FormItem>
                     )}
                   />
@@ -202,17 +215,35 @@ export default function AuthPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        {...field} 
-                        onBlur={(e) => {
-                          field.onBlur(e);
-                          setTouchedFields(prev => ({ ...prev, password: true }));
-                        }}
-                      />
-                    </FormControl>
-                    {touchedFields.password && <FormMessage className="text-[#EE7151]" />}
+                    <div className="relative">
+                      <FormControl>
+                        <Input 
+                          type={showPassword ? "text" : "password"}
+                          {...field} 
+                          onBlur={(e) => {
+                            field.onBlur(e);
+                            if (field.value) {
+                              setTouchedFields(prev => ({ ...prev, password: true }));
+                            }
+                          }}
+                          className="pr-10"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    {touchedFields.password && field.value && <FormMessage className="text-[#EE7151]" />}
                   </FormItem>
                 )}
               />
