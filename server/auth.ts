@@ -40,9 +40,10 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 async function getUserByEmail(email: string) {
+  const normalizedEmail = email.toLowerCase();
   return db.select()
     .from(users)
-    .where(sql`LOWER(${users.email}) = LOWER(${email})`)
+    .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
     .limit(1);
 }
 
@@ -109,7 +110,8 @@ export function setupAuth(app: Express) {
         return res.status(400).send(error.toString());
       }
 
-      const [existingUser] = await getUserByEmail(result.data.email);
+      const normalizedEmail = result.data.email.toLowerCase();
+      const [existingUser] = await getUserByEmail(normalizedEmail);
       if (existingUser) {
         return res.status(400).send("Email already registered");
       }
@@ -122,11 +124,11 @@ export function setupAuth(app: Express) {
         })
         .returning();
 
-      // Then create the user with the company ID
+      // Then create the user with the company ID and normalized email
       const [user] = await db
         .insert(users)
         .values({
-          email: result.data.email,
+          email: normalizedEmail,
           fullName: result.data.fullName,
           firstName: result.data.firstName,
           lastName: result.data.lastName,
