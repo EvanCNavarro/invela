@@ -47,7 +47,7 @@ const companyFormSchema = z.object({
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
-  
+
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
   });
@@ -86,8 +86,15 @@ export default function RegistryPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="relative w-96">
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-semibold mb-1">Company Registry</h1>
+          <p className="text-sm text-muted-foreground">
+            View and manage companies in your network.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="relative w-full sm:w-96">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search companies..."
@@ -160,42 +167,44 @@ export default function RegistryPage() {
           </Dialog>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Risk Score</TableHead>
-              <TableHead>Accreditation</TableHead>
-              <TableHead>Location</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
+        <div className="bg-background rounded-lg p-4 md:p-6 border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  Loading...
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Risk Score</TableHead>
+                <TableHead>Accreditation</TableHead>
+                <TableHead>Location</TableHead>
               </TableRow>
-            ) : filteredCompanies.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center">
-                  No companies found
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredCompanies.map((company: any) => (
-                <TableRow key={company.id}>
-                  <TableCell>{company.name}</TableCell>
-                  <TableCell>{company.type}</TableCell>
-                  <TableCell>{company.riskScore || 'N/A'}</TableCell>
-                  <TableCell>{company.accreditationStatus || 'Pending'}</TableCell>
-                  <TableCell>{company.location || 'N/A'}</TableCell>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    Loading...
+                  </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : filteredCompanies.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    No companies found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCompanies.map((company: any) => (
+                  <TableRow key={company.id}>
+                    <TableCell>{company.name}</TableCell>
+                    <TableCell>{company.type}</TableCell>
+                    <TableCell>{company.riskScore || 'N/A'}</TableCell>
+                    <TableCell>{company.accreditationStatus || 'Pending'}</TableCell>
+                    <TableCell>{company.location || 'N/A'}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </DashboardLayout>
   );
