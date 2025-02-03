@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
-import { Check, Eye, EyeOff } from "lucide-react";
+import { Check, Eye, EyeOff, X } from "lucide-react";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -148,13 +148,17 @@ export default function AuthPage() {
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Full Name</FormLabel>
+                        <FormLabel className={cn(
+                          touchedFields.fullName && form.formState.errors.fullName && "text-[#E56047]"
+                        )}>Full Name</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input 
                               {...field} 
                               className={cn(
                                 "pr-10",
+                                touchedFields.fullName && form.formState.errors.fullName && 
+                                "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.fullName && 
                                 "border-green-500"
                               )}
@@ -166,13 +170,17 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
-                          {field.value && !form.formState.errors.fullName && (
+                          {field.value && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <Check className="w-5 h-5 text-green-500" />
+                              {!form.formState.errors.fullName ? (
+                                <Check className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <X className="w-5 h-5 text-[#E56047]" />
+                              )}
                             </div>
                           )}
                         </div>
-                        {touchedFields.fullName && field.value && <FormMessage className="text-[#EE7151]" />}
+                        {touchedFields.fullName && field.value && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
                     )}
                   />
@@ -182,13 +190,17 @@ export default function AuthPage() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company</FormLabel>
+                        <FormLabel className={cn(
+                          touchedFields.company && form.formState.errors.company && "text-[#E56047]"
+                        )}>Company</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input 
                               {...field} 
                               className={cn(
                                 "pr-10",
+                                touchedFields.company && form.formState.errors.company && 
+                                "border-[#E56047] focus-visible:ring-[#E56047]",
                                 field.value && !form.formState.errors.company && 
                                 "border-green-500"
                               )}
@@ -200,13 +212,17 @@ export default function AuthPage() {
                               }}
                             />
                           </FormControl>
-                          {field.value && !form.formState.errors.company && (
+                          {field.value && (
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                              <Check className="w-5 h-5 text-green-500" />
+                              {!form.formState.errors.company ? (
+                                <Check className="w-5 h-5 text-green-500" />
+                              ) : (
+                                <X className="w-5 h-5 text-[#E56047]" />
+                              )}
                             </div>
                           )}
                         </div>
-                        {touchedFields.company && field.value && <FormMessage className="text-[#EE7151]" />}
+                        {touchedFields.company && field.value && <FormMessage className="text-[#E56047]" />}
                       </FormItem>
                     )}
                   />
@@ -218,7 +234,9 @@ export default function AuthPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel className={cn(
+                      touchedFields.password && form.formState.errors.password && "text-[#E56047]"
+                    )}>Password</FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input 
@@ -230,7 +248,11 @@ export default function AuthPage() {
                               setTouchedFields(prev => ({ ...prev, password: true }));
                             }
                           }}
-                          className="pr-10"
+                          className={cn(
+                            "pr-10",
+                            touchedFields.password && form.formState.errors.password && 
+                            "border-[#E56047] focus-visible:ring-[#E56047]"
+                          )}
                         />
                       </FormControl>
                       <Button
@@ -247,7 +269,9 @@ export default function AuthPage() {
                         )}
                       </Button>
                     </div>
-                    {touchedFields.password && field.value && <FormMessage className="text-[#EE7151]" />}
+                    {touchedFields.password && field.value && (
+                      <FormMessage className="text-[#E56047]" />
+                    )}
                   </FormItem>
                 )}
               />
