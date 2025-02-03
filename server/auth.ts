@@ -32,8 +32,8 @@ async function comparePasswords(supplied: string, stored: string) {
   return timingSafeEqual(hashedBuf, suppliedBuf);
 }
 
-async function getUserByUsername(username: string) {
-  return db.select().from(users).where(eq(users.username, username)).limit(1);
+async function getUserByEmail(email: string) {
+  return db.select().from(users).where(eq(users.email, email)).limit(1);
 }
 
 export function setupAuth(app: Express) {
@@ -54,14 +54,17 @@ export function setupAuth(app: Express) {
   app.use(passport.session());
 
   passport.use(
-    new LocalStrategy(async (username, password, done) => {
-      const [user] = await getUserByUsername(username);
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return done(null, false);
-      } else {
-        return done(null, user);
+    new LocalStrategy(
+      { usernameField: 'email' },
+      async (email, password, done) => {
+        const [user] = await getUserByEmail(email);
+        if (!user || !(await comparePasswords(password, user.password))) {
+          return done(null, false);
+        } else {
+          return done(null, user);
+        }
       }
-    }),
+    )
   );
 
   passport.serializeUser((user, done) => done(null, user.id));
@@ -82,9 +85,9 @@ export function setupAuth(app: Express) {
       return res.status(400).send(error.toString());
     }
 
-    const [existingUser] = await getUserByUsername(result.data.username);
+    const [existingUser] = await getUserByEmail(result.data.email);
     if (existingUser) {
-      return res.status(400).send("Username already exists");
+      return res.status(400).send("Email already registered");
     }
 
     const [user] = await db
