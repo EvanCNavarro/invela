@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
@@ -8,9 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { 
-  FileIcon, 
-  UploadIcon, 
+import {
+  FileIcon,
+  UploadIcon,
   Trash2Icon,
   CheckCircleIcon,
   PauseIcon,
@@ -192,7 +192,7 @@ export default function FileVault() {
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(file => 
+      result = result.filter(file =>
         file.name.toLowerCase().includes(query) ||
         file.type.toLowerCase().includes(query) ||
         file.status.toLowerCase().includes(query) ||
@@ -239,8 +239,8 @@ export default function FileVault() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 p-6"> {/* Added p-6 for padding */}
-        <div className="flex flex-col"> {/* Added flex container */}
+      <div className="space-y-6">
+        <div className="flex flex-col">
           <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
           <p className="text-sm text-muted-foreground">
             Securely store and manage your company documents
@@ -249,158 +249,156 @@ export default function FileVault() {
 
         <FileUpload onDrop={onDrop} />
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="relative w-full sm:w-96">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search files..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="uploading">Uploading</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-                <SelectItem value="deleted">Deleted</SelectItem>
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="relative w-full sm:w-96">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search files..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
-          <div className="bg-background rounded-lg p-4 md:p-6 border">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[30px]">
-                      <Checkbox
-                        checked={selectedFiles.size === filteredAndSortedFiles.length}
-                        onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                      />
-                    </TableHead>
-                    <TableHead className="min-w-[200px] lg:w-[400px]">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('name')}
-                        className="hover:bg-transparent"
-                      >
-                        Name
-                        <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="hidden md:table-cell">Type</TableHead>
-                    <TableHead className="hidden sm:table-cell">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('size')}
-                        className="hover:bg-transparent"
-                      >
-                        Size
-                        <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="hidden lg:table-cell">
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('createdAt')}
-                        className="hover:bg-transparent whitespace-nowrap"
-                      >
-                        Upload Date
-                        <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button 
-                        variant="ghost" 
-                        onClick={() => handleSort('status')}
-                        className="hover:bg-transparent"
-                      >
-                        Status
-                        <ArrowUpDownIcon className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedFiles.map((file) => (
-                    <TableRow 
-                      key={file.id}
-                      className={cn(
-                        file.status === 'deleted' && "opacity-50",
-                        selectedFiles.has(file.id) && "bg-muted/50"
-                      )}
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="uploading">Uploading</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+              <SelectItem value="canceled">Canceled</SelectItem>
+              <SelectItem value="deleted">Deleted</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="bg-background rounded-lg p-4 md:p-6 border">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[30px]">
+                    <Checkbox
+                      checked={selectedFiles.size === filteredAndSortedFiles.length}
+                      onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
+                    />
+                  </TableHead>
+                  <TableHead className="min-w-[200px] lg:w-[400px]">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('name')}
+                      className="hover:bg-transparent"
                     >
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedFiles.has(file.id)}
-                          onCheckedChange={() => toggleFileSelection(file.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
-                            <FileIcon className="w-4 h-4 text-primary" />
+                      Name
+                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden md:table-cell">Type</TableHead>
+                  <TableHead className="hidden sm:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('size')}
+                      className="hover:bg-transparent"
+                    >
+                      Size
+                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('createdAt')}
+                      className="hover:bg-transparent whitespace-nowrap"
+                    >
+                      Upload Date
+                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('status')}
+                      className="hover:bg-transparent"
+                    >
+                      Status
+                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredAndSortedFiles.map((file) => (
+                  <TableRow
+                    key={file.id}
+                    className={cn(
+                      file.status === 'deleted' && "opacity-50",
+                      selectedFiles.has(file.id) && "bg-muted/50"
+                    )}
+                  >
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedFiles.has(file.id)}
+                        onCheckedChange={() => toggleFileSelection(file.id)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
+                          <FileIcon className="w-4 h-4 text-primary" />
+                        </div>
+                        <span className="truncate">{file.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{file.type || "Unknown"}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{formatFileSize(file.size)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {new Date(file.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(file.status)}
+                        <span className="capitalize min-w-[80px]">{file.status}</span>
+                        {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
+                          <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
+                            <Progress
+                              value={uploadProgress[file.id]}
+                              className="h-2 bg-primary/20"
+                            />
+                            <span className="text-sm text-muted-foreground min-w-[40px]">
+                              {uploadProgress[file.id]}%
+                            </span>
                           </div>
-                          <span className="truncate">{file.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{file.type || "Unknown"}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{formatFileSize(file.size)}</TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        {new Date(file.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {getStatusIcon(file.status)}
-                          <span className="capitalize min-w-[80px]">{file.status}</span>
-                          {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
-                            <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
-                              <Progress 
-                                value={uploadProgress[file.id]} 
-                                className="h-2 bg-primary/20"
-                              />
-                              <span className="text-sm text-muted-foreground min-w-[40px]">
-                                {uploadProgress[file.id]}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteMutation.mutate(file.id)}
-                          disabled={file.status === 'deleted'}
-                        >
-                          <Trash2Icon className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {filteredAndSortedFiles.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteMutation.mutate(file.id)}
+                        disabled={file.status === 'deleted'}
+                      >
+                        <Trash2Icon className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {filteredAndSortedFiles.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
       </div>

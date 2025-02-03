@@ -33,20 +33,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-[hsl(220,33%,97%)]">
-      {/* Sidebar */}
-      <div className={cn(
-        "h-screen sticky top-0 z-40 transition-all duration-300 ease-in-out",
-        isSidebarExpanded ? "w-64" : "w-20"
-      )}>
+      {/* Sidebar with dynamic width */}
+      <aside 
+        className={cn(
+          "shrink-0 sticky top-0 z-40 h-screen transition-all duration-300 ease-in-out",
+          isSidebarExpanded ? "w-64" : "w-20"
+        )}
+      >
         <Sidebar 
           isExpanded={isSidebarExpanded}
           onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
           isNewUser={isNewUser}
         />
-      </div>
+      </aside>
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen">
+      {/* Main content area with flex-grow */}
+      <div className="flex-grow flex flex-col min-h-screen">
         <TopNav />
         <main className="flex-1">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
