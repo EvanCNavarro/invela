@@ -119,4 +119,19 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     res.json(req.user);
   });
+
+    app.post("/api/check-email", async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    try {
+      const [existingUser] = await getUserByEmail(email);
+      return res.json(!!existingUser);
+    } catch (error) {
+      console.error("Error checking email:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
 }
