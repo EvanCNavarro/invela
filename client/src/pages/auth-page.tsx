@@ -23,7 +23,7 @@ const formSchema = z.object({
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -109,15 +109,13 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-primary items-center justify-center text-primary-foreground">
-        <div className="max-w-md text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            Welcome to Invela
-          </h2>
-          <p className="text-lg">
-            Your comprehensive platform for managing FinTech relationships,
-            risk assessment, and compliance.
-          </p>
+      <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center text-primary-foreground">
+        <div className="max-w-md flex items-center justify-center">
+          <img 
+            src="/assets/loading.gif" 
+            alt="Invela Network Visualization"
+            className="w-96 h-96 object-contain"
+          />
         </div>
       </div>
     </div>
