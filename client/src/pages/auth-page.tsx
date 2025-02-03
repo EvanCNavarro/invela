@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
+import { Check } from "lucide-react";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -69,7 +70,7 @@ export default function AuthPage() {
       const company = domain.split('.')[0];
       form.setValue('company', company.charAt(0).toUpperCase() + company.slice(1), {
         shouldValidate: true,
-        shouldTouch: false
+        shouldTouch: true
       });
 
       // Extract full name
@@ -79,7 +80,7 @@ export default function AuthPage() {
         .join(' ');
       form.setValue('fullName', fullName, {
         shouldValidate: true,
-        shouldTouch: false
+        shouldTouch: true
       });
     }
   };
@@ -135,20 +136,28 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            className={cn(
-                              field.value && !form.formState.errors.fullName && 
-                              "border-green-500"
-                            )}
-                            onBlur={(e) => {
-                              field.onBlur(e);
-                              setTouchedFields(prev => ({ ...prev, fullName: true }));
-                            }}
-                          />
-                        </FormControl>
-                        {touchedFields.fullName && <FormMessage />}
+                        <div className="relative">
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              className={cn(
+                                "pr-10",
+                                field.value && !form.formState.errors.fullName && 
+                                "border-green-500"
+                              )}
+                              onBlur={(e) => {
+                                field.onBlur(e);
+                                setTouchedFields(prev => ({ ...prev, fullName: true }));
+                              }}
+                            />
+                          </FormControl>
+                          {field.value && !form.formState.errors.fullName && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Check className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
+                        </div>
+                        {touchedFields.fullName && <FormMessage className="text-[#EE7151]" />}
                       </FormItem>
                     )}
                   />
@@ -159,20 +168,28 @@ export default function AuthPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Company</FormLabel>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            className={cn(
-                              field.value && !form.formState.errors.company && 
-                              "border-green-500"
-                            )}
-                            onBlur={(e) => {
-                              field.onBlur(e);
-                              setTouchedFields(prev => ({ ...prev, company: true }));
-                            }}
-                          />
-                        </FormControl>
-                        {touchedFields.company && <FormMessage />}
+                        <div className="relative">
+                          <FormControl>
+                            <Input 
+                              {...field} 
+                              className={cn(
+                                "pr-10",
+                                field.value && !form.formState.errors.company && 
+                                "border-green-500"
+                              )}
+                              onBlur={(e) => {
+                                field.onBlur(e);
+                                setTouchedFields(prev => ({ ...prev, company: true }));
+                              }}
+                            />
+                          </FormControl>
+                          {field.value && !form.formState.errors.company && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                              <Check className="w-5 h-5 text-green-500" />
+                            </div>
+                          )}
+                        </div>
+                        {touchedFields.company && <FormMessage className="text-[#EE7151]" />}
                       </FormItem>
                     )}
                   />
@@ -195,7 +212,7 @@ export default function AuthPage() {
                         }}
                       />
                     </FormControl>
-                    {touchedFields.password && <FormMessage />}
+                    {touchedFields.password && <FormMessage className="text-[#EE7151]" />}
                   </FormItem>
                 )}
               />
