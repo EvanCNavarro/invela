@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { NetworkAnimation } from "@/components/NetworkAnimation";
 
 const registerSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
@@ -173,7 +172,16 @@ export default function AuthPage() {
               }}
             />
           ) : (
-            <NetworkAnimation />
+            <img
+              src="/assets/register_animation.gif"
+              alt="Register Animation"
+              className="w-full h-full object-contain"
+              style={{
+                imageRendering: 'auto',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden'
+              }}
+            />
           )}
         </div>
       </div>
