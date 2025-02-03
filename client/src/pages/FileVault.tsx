@@ -54,6 +54,7 @@ export default function FileVault() {
     field: 'createdAt',
     order: 'desc'
   });
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
   const { data: files = [] } = useQuery({
     queryKey: ['/api/files'],
@@ -61,10 +62,32 @@ export default function FileVault() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      const fileId = formData.get('file') as File;
+      const id = crypto.randomUUID();
+
+      // Start with 0 progress
+      setUploadProgress(prev => ({ ...prev, [id]: 0 }));
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const currentProgress = prev[id] || 0;
+          if (currentProgress >= 100) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return { ...prev, [id]: Math.min(currentProgress + 10, 100) };
+        });
+      }, 500);
+
       const response = await apiRequest('/api/files', {
         method: 'POST',
         body: formData,
       });
+
+      clearInterval(progressInterval);
+      setUploadProgress(prev => ({ ...prev, [id]: 100 }));
+
       return response;
     },
     onSuccess: () => {
@@ -244,7 +267,9 @@ export default function FileVault() {
               <TableRow key={file.id}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
-                    <FileIcon className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(228,89%,96%)]">
+                      <FileIcon className="w-4 h-4 text-primary" />
+                    </div>
                     {file.name}
                   </div>
                 </TableCell>
@@ -254,9 +279,20 @@ export default function FileVault() {
                   {new Date(file.createdAt).toLocaleDateString()}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     {getStatusIcon(file.status)}
-                    <span className="capitalize">{file.status}</span>
+                    <span className="capitalize min-w-[80px]">{file.status}</span>
+                    {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
+                      <div className="flex items-center gap-2 min-w-[120px]">
+                        <Progress 
+                          value={uploadProgress[file.id]} 
+                          className="h-2 bg-primary/20"
+                        />
+                        <span className="text-sm text-muted-foreground min-w-[40px]">
+                          {uploadProgress[file.id]}%
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">

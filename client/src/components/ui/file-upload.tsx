@@ -35,12 +35,14 @@ export function FileUpload({ onDrop, className }: FileUploadProps) {
       )}
     >
       <input {...getInputProps()} />
-      <UploadIcon className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[hsl(228,89%,96%)] flex items-center justify-center">
+        <UploadIcon className="w-6 h-6 text-primary" />
+      </div>
       <p className="text-muted-foreground mb-2">
         {isDragActive ? "Drop your files here" : "Drag and drop files here, or click to select files"}
       </p>
-      <p className="text-sm text-muted-foreground">
-        Accepted file types: CSV, DOC, DOCX, ODT, PDF, RTF, TXT, WPD, WPF
+      <p className="text-sm text-muted-foreground/80">
+        Accepted formats: CSV, DOC, DOCX, ODT, PDF, RTF, TXT, WPD, WPF
       </p>
     </div>
   );
