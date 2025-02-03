@@ -32,8 +32,8 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-full items-center px-0">
-        <div className="flex w-full max-w-md px-4">
+      <div className="flex h-14 items-center">
+        <div className="flex w-full max-w-md pl-4">
           <div className="w-full relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input 
@@ -43,7 +43,7 @@ export function TopNav() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 ml-auto px-4">
+        <div className="flex items-center gap-2 ml-auto pr-4">
           <div className="hidden sm:flex items-center gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <HelpCircleIcon className="h-4 w-4" />
