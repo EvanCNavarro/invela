@@ -32,18 +32,18 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-[hsl(220,33%,97%)]">
-      <TopNav />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar 
-          isExpanded={isSidebarExpanded}
-          onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          isNewUser={isNewUser}
-        />
-        <main className={cn(
-          "flex-1 overflow-y-auto transition-all duration-200",
-          isSidebarExpanded ? "ml-64" : "ml-20"
-        )}>
+    <div className="flex h-screen overflow-hidden bg-[hsl(220,33%,97%)]">
+      <Sidebar 
+        isExpanded={isSidebarExpanded}
+        onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
+        isNewUser={isNewUser}
+      />
+      <div className={cn(
+        "flex-1 flex flex-col transition-all duration-200",
+        isSidebarExpanded ? "ml-64" : "ml-20"
+      )}>
+        <TopNav />
+        <main className="flex-1 overflow-y-auto">
           <div className="max-w-7xl mx-auto p-6">
             {children}
           </div>
