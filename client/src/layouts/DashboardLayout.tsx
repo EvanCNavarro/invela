@@ -43,11 +43,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         isSidebarExpanded ? "ml-64" : "ml-20"
       )}>
         <TopNav />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto p-6">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-7xl mx-auto px-6">
             {children}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
