@@ -14,9 +14,18 @@ interface EmailFieldProps {
   onValidEmail?: (email: string) => void;
   showError?: boolean;
   isLoading?: boolean;
+  onExtractData?: (data: { fullName?: string; company?: string }) => void;
 }
 
-export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, showError, isLoading }: EmailFieldProps) {
+export function EmailField({ 
+  field, 
+  setRedirectEmail, 
+  isLogin, 
+  onValidEmail, 
+  showError, 
+  isLoading,
+  onExtractData 
+}: EmailFieldProps) {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [isValidFormat, setIsValidFormat] = useState<boolean | null>(null);
   const [touched, setTouched] = useState(false);
@@ -37,6 +46,23 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
   const validateEmailFormat = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  };
+
+  const extractDataFromEmail = (email: string) => {
+    try {
+      const [localPart, domain] = email.split('@');
+      let fullName = localPart
+        .split(/[._]/)
+        .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+
+      let company = domain.split('.')[0];
+      company = company.charAt(0).toUpperCase() + company.slice(1);
+
+      return { fullName, company };
+    } catch (error) {
+      return {};
+    }
   };
 
   const checkEmailExists = async (email: string) => {
@@ -64,8 +90,15 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
 
       if (isValid) {
         const exists = await checkEmailExists(field.value);
-        if (!exists && onValidEmail) {
-          onValidEmail(field.value);
+        if (!exists) {
+          if (onValidEmail) {
+            onValidEmail(field.value);
+          }
+          // Extract and populate data
+          if (onExtractData) {
+            const extractedData = extractDataFromEmail(field.value);
+            onExtractData(extractedData);
+          }
         }
       }
     }
