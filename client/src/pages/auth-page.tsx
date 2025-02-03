@@ -4,7 +4,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { NetworkAnimation } from "@/components/NetworkAnimation";
 import {
   Form,
   FormControl,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { motion } from "framer-motion";
 
 const formSchema = z.object({
   username: z.string().min(3).max(20),
@@ -112,7 +112,51 @@ export default function AuthPage() {
 
       <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center">
         <div className="w-[500px] h-[500px] p-8">
-          <NetworkAnimation />
+          <motion.svg 
+            viewBox="0 0 400 400" 
+            className="w-full h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.circle
+              cx="200"
+              cy="200"
+              r="80"
+              stroke="white"
+              strokeWidth="2"
+              fill="none"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            />
+            {[...Array(6)].map((_, i) => (
+              <motion.circle
+                key={i}
+                cx={200 + Math.cos((i * Math.PI * 2) / 6) * 120}
+                cy={200 + Math.sin((i * Math.PI * 2) / 6) * 120}
+                r="20"
+                fill="white"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.6 }}
+                transition={{ duration: 0.3, delay: i * 0.1 }}
+              />
+            ))}
+            {[...Array(6)].map((_, i) => (
+              <motion.line
+                key={`line-${i}`}
+                x1="200"
+                y1="200"
+                x2={200 + Math.cos((i * Math.PI * 2) / 6) * 120}
+                y2={200 + Math.sin((i * Math.PI * 2) / 6) * 120}
+                stroke="white"
+                strokeWidth="2"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
+              />
+            ))}
+          </motion.svg>
         </div>
       </div>
     </div>
