@@ -54,29 +54,3 @@
     @apply transition-interactive hover:text-primary focus-visible:ring-2 focus-visible:ring-primary;
   }
 }
-
-.fancy-border-button {
-  --border-width: 2px;
-  position: relative;
-  border-radius: 8px;
-  background: hsl(var(--background));
-}
-
-.fancy-border-button::before {
-  content: '';
-  position: absolute;
-  inset: calc(-1 * var(--border-width));
-  background: conic-gradient(from 0deg, #22c55e, #16a34a, #15803d, #22c55e);
-  border-radius: 10px;
-  z-index: -1;
-  animation: rotate 4s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
