@@ -171,6 +171,7 @@ export default function AuthPage() {
                     setRedirectEmail={setRedirectEmail}
                     isLogin={isLogin}
                     onValidEmail={!isLogin ? extractInfoFromEmail : undefined}
+                    showError={touchedFields.email}
                   />
                 )}
               />
@@ -291,11 +292,6 @@ export default function AuthPage() {
                           )}
                         />
                       </FormControl>
-                      {touchedFields.password && form.formState.errors.password && (
-                        <div className="absolute right-10 top-1/2 -translate-y-1/2">
-                          <X className="w-5 h-5 text-[#E56047]" />
-                        </div>
-                      )}
                       <Button
                         type="button"
                         variant="ghost"
@@ -314,20 +310,13 @@ export default function AuthPage() {
                   </FormItem>
                 )}
               />
-
-              <GradientBorderButton
+              <Button
                 type="submit"
                 className="w-full font-bold hover:opacity-90"
                 disabled={loginMutation.isPending || registerMutation.isPending}
-                showGradient={!isLogin && isFormValid}
-                onClick={() => {
-                  if (!form.formState.isValid) {
-                    // focusFirstError();
-                  }
-                }}
               >
                 {isLogin ? "Log in" : "Register"}
-              </GradientBorderButton>
+              </Button>
             </form>
           </Form>
 

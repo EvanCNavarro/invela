@@ -11,9 +11,10 @@ interface EmailFieldProps {
   setRedirectEmail?: (email: string) => void;
   isLogin?: boolean;
   onValidEmail?: (email: string) => void;
+  showError?: boolean;
 }
 
-export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: EmailFieldProps) {
+export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, showError }: EmailFieldProps) {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [isValidFormat, setIsValidFormat] = useState<boolean | null>(null);
   const [touched, setTouched] = useState(false);
@@ -69,7 +70,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
     <>
       <FormItem>
         <FormLabel className={cn(
-          touched && field.value && !isValidFormat && "text-[#E56047]"
+          (touched || showError) && !isValidFormat && "text-[#E56047]"
         )}>Email</FormLabel>
         <div className="relative">
           <FormControl>
@@ -79,13 +80,13 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
               onBlur={handleBlur}
               className={cn(
                 "pr-10",
-                !touched || !field.value ? '' :
+                !touched && !showError ? '' :
                 isValidFormat === false ? 'border-[#E56047] focus-visible:ring-[#E56047]' :
                 isValidFormat && !emailExists ? 'border-green-500' : ''
               )}
             />
           </FormControl>
-          {field.value && touched && (
+          {field.value && (touched || showError) && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
               {isValidFormat && !emailExists && (
                 <Check className="w-5 h-5 text-green-500" />
@@ -96,7 +97,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail }: E
             </div>
           )}
         </div>
-        {touched && field.value && isValidFormat === false && (
+        {(touched || showError) && !isValidFormat && (
           <FormMessage className="text-[#E56047]">
             Please enter a valid email address.
           </FormMessage>
