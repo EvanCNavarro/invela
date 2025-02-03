@@ -85,9 +85,7 @@ export function EmailField({ field, setRedirectEmail, isLogin, onValidEmail, sho
   return (
     <>
       <FormItem>
-        <FormLabel className={cn(
-          !isLogin && (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && "text-[#E56047]"
-        )}>Email</FormLabel>
+        <FormLabel>Email</FormLabel>
         <div className="relative">
           <FormControl>
             <Input 

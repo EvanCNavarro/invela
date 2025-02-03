@@ -165,9 +165,7 @@ export default function AuthPage() {
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={cn(
-                          touchedFields.fullName && form.formState.errors.fullName && "text-[#E56047]"
-                        )}>Full Name</FormLabel>
+                        <FormLabel>Full Name</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input 
@@ -198,9 +196,7 @@ export default function AuthPage() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className={cn(
-                          touchedFields.company && form.formState.errors.company && "text-[#E56047]"
-                        )}>Company</FormLabel>
+                        <FormLabel>Company</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input 
@@ -233,9 +229,7 @@ export default function AuthPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className={cn(
-                      touchedFields.password && form.formState.errors.password && "text-[#E56047]"
-                    )}>Password</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <div className="relative">
                       <FormControl>
                         <Input 
@@ -250,9 +244,7 @@ export default function AuthPage() {
                           className={cn(
                             "pr-10",
                             touchedFields.password && form.formState.errors.password && 
-                            "border-[#E56047] focus-visible:ring-[#E56047]",
-                            touchedFields.password && field.value && !form.formState.errors.password &&
-                            "border-green-500"
+                            "border-[#E56047] focus-visible:ring-[#E56047]"
                           )}
                         />
                       </FormControl>
