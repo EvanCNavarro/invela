@@ -7,7 +7,8 @@ import {
   BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  LockIcon
+  LockIcon,
+  FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -36,6 +37,12 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: BookIcon,
       label: "Registry", 
       href: "/registry",
+      locked: isNewUser 
+    },
+    { 
+      icon: FileIcon,
+      label: "File Vault", 
+      href: "/file-vault",
       locked: isNewUser 
     },
     { 
