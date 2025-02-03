@@ -15,7 +15,6 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
         alt={isLogin ? "Secure Login Animation" : "Register Animation"}
         className={cn(
           "w-full h-full object-contain transition-opacity duration-300",
-          "absolute inset-0",
           imageLoaded ? "opacity-100" : "opacity-0"
         )}
         style={{
