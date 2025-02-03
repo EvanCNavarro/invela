@@ -110,13 +110,11 @@ export default function AuthPage() {
       </div>
 
       <div className="hidden lg:flex flex-1 bg-[hsl(209,99%,50%)] items-center justify-center text-primary-foreground">
-        <div className="max-w-md flex items-center justify-center">
-          <img 
-            src="/assets/loading.gif" 
-            alt="Invela Network Visualization"
-            className="w-96 h-96 object-contain"
-          />
-        </div>
+        <img 
+          src="/4791418cb5702cd0c706d63d9edb6e88.gif" 
+          alt="Invela Network Visualization"
+          className="w-96 h-96 object-contain"
+        />
       </div>
     </div>
   );
