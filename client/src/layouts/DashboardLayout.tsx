@@ -38,10 +38,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
         isNewUser={isNewUser}
       />
-      <div className="flex-1 flex flex-col transition-all duration-200">
+      <div className="flex-1 flex flex-col">
         <TopNav />
         <div className={cn(
-          "flex-1 overflow-y-auto",
+          "flex-1 overflow-y-auto pt-6",
           isSidebarExpanded ? "ml-64" : "ml-20"
         )}>
           <div className="max-w-7xl mx-auto px-6">
