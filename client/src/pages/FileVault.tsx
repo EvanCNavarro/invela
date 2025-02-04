@@ -573,7 +573,7 @@ export default function FileVault() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b hover:bg-transparent">
-                    <TableHead className="w-[48px] bg-muted text-center">
+                    <TableHead className="w-8 bg-muted text-center">
                       <Checkbox
                         checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                         onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
@@ -631,7 +631,7 @@ export default function FileVault() {
                         {getSortIcon('size')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[64px] bg-muted text-center">
+                    <TableHead className="w-8 bg-muted text-center">
                       <span className="sr-only">Actions</span>
                     </TableHead>
                   </TableRow>
