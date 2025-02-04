@@ -237,15 +237,15 @@ const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: st
   );
 };
 
-// Add column priority configuration
+// Update the column priorities to match the new order
 const columnPriorities = {
-  fileName: 0,
-  actions: 0,
-  status: 1,
-  uploadDate: 2,
-  uploadTime: 3,
-  size: 4,
-  textPreview: 5,
+  fileName: 0,      // Always visible
+  size: 1,         // First to show
+  uploadDate: 2,    // Second to show
+  uploadTime: 3,    // Third to show
+  status: 4,        // Fourth to show
+  actions: 0,       // Always visible
+  textPreview: 5,   // Last to show
 } as const;
 
 // Add useBreakpoint hook for responsive design
@@ -265,6 +265,38 @@ const useBreakpoint = () => {
   }, []);
 
   return breakpoint;
+};
+
+// Add timezone formatting helper
+const formatTimeWithZone = (date: Date) => {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'shortGeneric'  // This will show EST, CST, etc.
+  });
+  return formatter.format(date);
+};
+
+// Update the getVisibleColumns function
+const getVisibleColumns = () => {
+  const minWidth = 640;
+  const columnWidth = 100; // Even more compact
+  const sidebarWidth = 256;
+  const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
+  const maxColumns = Math.floor(availableSpace / columnWidth);
+
+  // Always show priority 0 columns
+  const visibleColumns = new Set(['fileName', 'actions']);
+
+  // Add columns based on priority until we run out of space
+  const priorityOrder = ['size', 'uploadDate', 'uploadTime', 'status'];
+
+  for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
+    visibleColumns.add(priorityOrder[i]);
+  }
+
+  return visibleColumns;
 };
 
 export default function FileVault() {
@@ -607,29 +639,6 @@ export default function FileVault() {
   };
 
   // Update the visibility logic in the component
-  const getVisibleColumns = () => {
-    const minWidth = 640; // Base width for mobile
-    const columnWidth = 120; // Reduced from 150 to make columns tighter
-    const sidebarWidth = 256; // Standard sidebar width
-    const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
-    const maxColumns = Math.floor(availableSpace / columnWidth);
-
-    // Always show priority 0 columns
-    const visibleColumns = new Set(['fileName', 'actions']);
-
-    // Add columns based on priority until we run out of space
-    const priorityOrder = Object.entries(columnPriorities)
-      .filter(([col]) => !visibleColumns.has(col))
-      .sort(([, a], [, b]) => a - b)
-      .map(([col]) => col);
-
-    for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
-      visibleColumns.add(priorityOrder[i]);
-    }
-
-    return visibleColumns;
-  };
-
   const visibleColumns = getVisibleColumns();
 
   return (
@@ -732,13 +741,13 @@ export default function FileVault() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b hover:bg-transparent">
-                      <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
+                      <TableHead className="w-[2rem] min-w-[2rem] max-w-[2rem] bg-muted text-center sticky left-0 z-20">
                         <Checkbox
                           checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[12rem] min-w-[12rem] bg-muted"> {/* Reduced from 14rem */}
+                      <TableHead className="w-[10rem] min-w-[10rem] bg-muted"> {/* Reduced from 14rem */}
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -748,20 +757,20 @@ export default function FileVault() {
                           {getSortIcon('name')}
                         </Button>
                       </TableHead>
-                      {visibleColumns.has('status') && (
-                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-center"> {/* Reduced from 8rem */}
+                      {visibleColumns.has('size') && (
+                        <TableHead className="w-[4.5rem] min-w-[4.5rem] bg-muted text-right">
                           <Button
                             variant="ghost"
-                            onClick={() => handleSort('status')}
-                            className="flex items-center gap-1 mx-auto"
+                            onClick={() => handleSort('size')}
+                            className="flex items-center gap-1 ml-auto"
                           >
-                            Status
-                            {getSortIcon('status')}
+                            Size
+                            {getSortIcon('size')}
                           </Button>
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[9rem] min-w-[9rem] bg-muted text-right">
+                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -773,23 +782,23 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
+                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right">
                           Upload Time
                         </TableHead>
                       )}
-                      {visibleColumns.has('size') && (
-                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right"> {/* Reduced from 5.5rem */}
+                      {visibleColumns.has('status') && (
+                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-center">
                           <Button
                             variant="ghost"
-                            onClick={() => handleSort('size')}
-                            className="flex items-center gap-1 ml-auto"
+                            onClick={() => handleSort('status')}
+                            className="flex items-center gap-1 mx-auto"
                           >
-                            Size
-                            {getSortIcon('size')}
+                            Status
+                            {getSortIcon('status')}
                           </Button>
                         </TableHead>
                       )}
-                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-center">
+                      <TableHead className="w-[2rem] min-w-[2rem] max-w-[2rem] bg-muted text-center sticky right-0 z-20">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -797,7 +806,7 @@ export default function FileVault() {
                   <TableBody>
                     {paginatedFiles.map((file) => (
                       <TableRow key={file.id}>
-                        <TableCell className="text-center">
+                        <TableCell className="text-center sticky left-0 z-20 bg-white">
                           <Checkbox
                             checked={selectedFiles.has(file.id)}
                             onCheckedChange={() => toggleFileSelection(file.id)}
@@ -806,11 +815,9 @@ export default function FileVault() {
                         <TableCell>
                           <FileNameCell file={file} />
                         </TableCell>
-                        {visibleColumns.has('status') && (
-                          <TableCell className="text-center">
-                            <span className={getStatusStyles(file.status)}>
-                              {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                            </span>
+                        {visibleColumns.has('size') && (
+                          <TableCell className="text-right">
+                            {formatFileSize(file.size)}
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadDate') && (
@@ -824,20 +831,17 @@ export default function FileVault() {
                         )}
                         {visibleColumns.has('uploadTime') && (
                           <TableCell className="text-right">
-                            {new Date(file.uploadTime).toLocaleTimeString(undefined, {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              second: '2-digit',
-                              timeZoneName: 'short'
-                            })}
+                            {formatTimeWithZone(new Date(file.uploadTime))}
                           </TableCell>
                         )}
-                        {visibleColumns.has('size') && (
-                          <TableCell className="text-right">
-                            {formatFileSize(file.size)}
+                        {visibleColumns.has('status') && (
+                          <TableCell className="text-center">
+                            <span className={getStatusStyles(file.status)}>
+                              {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                            </span>
                           </TableCell>
                         )}
-                        <TableCell className="text-center">
+                        <TableCell className="text-center sticky right-0 z-20 bg-white">
                           <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
                       </TableRow>
@@ -922,8 +926,7 @@ export default function FileVault() {
 
           <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
             <DialogContent
-              className="max-w-2xl"
-              aria-describedby="file-details-description"
+              className="max-w-2xl"              aria-describedby="file-details-description"
             >
               <DialogHeader>
                 <DialogTitle>File Details</DialogTitle>
@@ -956,12 +959,7 @@ export default function FileVault() {
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
                         <p className="mt-1">
-                          {new Date(selectedFileDetails.uploadTime).toLocaleTimeString(undefined, {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            timeZoneName: 'short'
-                          })}
+                          {formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}
                         </p>
                       </div>
                     </div>
