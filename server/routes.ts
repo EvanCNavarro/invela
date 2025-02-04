@@ -120,7 +120,7 @@ export function registerRoutes(app: Express): Server {
         size: req.file.size,
         type: req.file.mimetype,
         path: req.file.path,
-        status: 'completed',
+        status: 'uploaded',
         userId: req.user!.id,
         companyId: req.user!.companyId,
       };
