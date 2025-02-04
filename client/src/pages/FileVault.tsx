@@ -534,19 +534,19 @@ export default function FileVault() {
           </div>
 
           <div>
-            <div className="w-full">
+            <div className="w-full border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="border-b hover:bg-transparent">
                     {/* Priority 0: Always visible */}
-                    <TableHead className="w-[30px]">
+                    <TableHead className="w-[30px] bg-muted/50">
                       <Checkbox
                         checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                         onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                       />
                     </TableHead>
                     {/* Priority 0: Always visible - Name */}
-                    <TableHead className="min-w-[150px] max-w-[300px] w-[50%]"> {/* Added width percentage */}
+                    <TableHead className="min-w-[150px] max-w-[300px] w-[50%] bg-muted/50">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
@@ -560,7 +560,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 1: Upload Date - Hidden on xs, visible on lg and up */}
-                    <TableHead className="w-[140px] hidden lg:table-cell">
+                    <TableHead className="w-[140px] hidden lg:table-cell bg-muted/50">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
@@ -574,7 +574,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 2: Status - Hidden on xs, visible on md and up */}
-                    <TableHead className="w-[120px] hidden md:table-cell">
+                    <TableHead className="w-[120px] hidden md:table-cell bg-muted/50">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('status')}
@@ -588,7 +588,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 3: Size - Hidden on xs and sm, visible on xl and up */}
-                    <TableHead className="w-[100px] hidden xl:table-cell">
+                    <TableHead className="w-[100px] hidden xl:table-cell bg-muted/50">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('size')}
@@ -602,7 +602,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 0: Always visible - Actions */}
-                    <TableHead className="w-[50px]">
+                    <TableHead className="w-[50px] bg-muted/50">
                       <span className="sr-only">Actions</span>
                     </TableHead>
                   </TableRow>
@@ -612,6 +612,7 @@ export default function FileVault() {
                     <TableRow
                       key={file.id}
                       className={cn(
+                        "border-b transition-colors",
                         file.status === 'deleted' && "opacity-60",
                         selectedFiles.has(file.id) && "bg-muted/50"
                       )}
