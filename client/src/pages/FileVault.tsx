@@ -27,6 +27,7 @@ import {
   ShieldIcon,
   BarChart2Icon,
   ClockIcon,
+  Download,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -309,6 +310,10 @@ export default function FileVault() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => downloadMutation.mutate(file.id)}>
+            <Download className="w-4 h-4 mr-2" />
+            Download
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
             <FileTextIcon className="w-4 h-4 mr-2" />
             View Details
@@ -454,6 +459,66 @@ export default function FileVault() {
       toast({
         title: "Error",
         description: error.message || "Failed to restore file. Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    },
+  });
+
+  const downloadMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const response = await fetch(`/api/files/${fileId}/download`);
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = files.find(f => f.id === fileId)?.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download file",
+        variant: "destructive",
+        duration: 3000,
+      });
+    },
+  });
+
+  const bulkDownloadMutation = useMutation({
+    mutationFn: async (fileIds: string[]) => {
+      const response = await fetch('/api/files/download-bulk', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fileIds }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Bulk download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'files.zip';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to download files",
         variant: "destructive",
         duration: 3000,
       });
@@ -751,6 +816,13 @@ export default function FileVault() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
+                    disabled={selectedFiles.size === 0}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Selected
+                  </DropdownMenuItem>
                   {canRestore ? (
                     <DropdownMenuItem onClick={() => handleBulkAction('restore')}>
                       <RefreshCcwIcon className="w-4 h-4 mr-2" />
