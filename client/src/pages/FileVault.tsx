@@ -570,147 +570,149 @@ export default function FileVault() {
 
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-b hover:bg-transparent">
-                    <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
-                      <Checkbox
-                        checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                        onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                      />
-                    </TableHead>
-                    <TableHead className="w-[30%] bg-muted">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('name')}
-                        className={cn(
-                          "hover:bg-muted text-left pl-0 gap-1 transition-colors",
-                          sortConfig.field === 'name' && "text-primary"
-                        )}
-                      >
-                        Name
-                        {getSortIcon('name')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-[120px] hidden xl:table-cell bg-muted text-right">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('createdAt')}
-                        className={cn(
-                          "hover:bg-muted text-right pr-0 gap-1 transition-colors whitespace-nowrap",
-                          sortConfig.field === 'createdAt' && "text-primary"
-                        )}
-                      >
-                        Upload Date
-                        {getSortIcon('createdAt')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-[120px] hidden lg:table-cell bg-muted text-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('status')}
-                        className={cn(
-                          "hover:bg-muted justify-center gap-1 transition-colors",
-                          sortConfig.field === 'status' && "text-primary"
-                        )}
-                      >
-                        Status
-                        {getSortIcon('status')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-[100px] hidden xl:table-cell bg-muted text-right">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('size')}
-                        className={cn(
-                          "hover:bg-muted text-right pr-0 gap-1 transition-colors",
-                          sortConfig.field === 'size' && "text-primary"
-                        )}
-                      >
-                        Size
-                        {getSortIcon('size')}
-                      </Button>
-                    </TableHead>
-                    <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedFiles.map((file) => (
-                    <TableRow
-                      key={file.id}
-                      className={cn(
-                        "border-b transition-colors",
-                        file.status === 'deleted' && "opacity-60",
-                        selectedFiles.has(file.id) && "bg-muted/50"
-                      )}
-                    >
-                      <TableCell className="text-center">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b hover:bg-transparent">
+                      <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
                         <Checkbox
-                          checked={selectedFiles.has(file.id)}
-                          onCheckedChange={() => toggleFileSelection(file.id)}
+                          checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
+                          onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
-                      </TableCell>
-                      <TableCell>
-                        <FileNameCell file={file} />
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-right">
-                        {new Date(file.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-center">
-                        <span className={getStatusStyles(file.status)}>
-                          {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                        </span>
-                        {'progress' in file && file.status === 'uploading' && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <Progress value={file.progress} className="h-2" />
-                            <span className="text-xs text-muted-foreground">
-                              {Math.round(file.progress)}%
-                            </span>
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-right">
-                        {formatFileSize(file.size)}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
-                            >
-                              <MoreVerticalIcon className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
-                              <FileTextIcon className="w-4 h-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            {file.status === 'deleted' ? (
-                              <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
-                                <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                                Restore
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => deleteMutation.mutate(file.id)}
-                              >
-                                <Trash2Icon className="w-4 h-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+                      </TableHead>
+                      <TableHead className="w-[300px] min-w-[300px] bg-muted">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort('name')}
+                          className={cn(
+                            "hover:bg-muted text-left pl-0 gap-1 transition-colors",
+                            sortConfig.field === 'name' && "text-primary"
+                          )}
+                        >
+                          Name
+                          {getSortIcon('name')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[120px] min-w-[120px] hidden xl:table-cell bg-muted text-right">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort('createdAt')}
+                          className={cn(
+                            "hover:bg-muted text-right pr-0 gap-1 transition-colors whitespace-nowrap",
+                            sortConfig.field === 'createdAt' && "text-primary"
+                          )}
+                        >
+                          Upload Date
+                          {getSortIcon('createdAt')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[120px] min-w-[120px] hidden lg:table-cell bg-muted text-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort('status')}
+                          className={cn(
+                            "hover:bg-muted justify-center gap-1 transition-colors",
+                            sortConfig.field === 'status' && "text-primary"
+                          )}
+                        >
+                          Status
+                          {getSortIcon('status')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[100px] min-w-[100px] hidden xl:table-cell bg-muted text-right">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort('size')}
+                          className={cn(
+                            "hover:bg-muted text-right pr-0 gap-1 transition-colors",
+                            sortConfig.field === 'size' && "text-primary"
+                          )}
+                        >
+                          Size
+                          {getSortIcon('size')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedFiles.map((file) => (
+                      <TableRow
+                        key={file.id}
+                        className={cn(
+                          "border-b transition-colors",
+                          file.status === 'deleted' && "opacity-60",
+                          selectedFiles.has(file.id) && "bg-muted/50"
+                        )}
+                      >
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={selectedFiles.has(file.id)}
+                            onCheckedChange={() => toggleFileSelection(file.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <FileNameCell file={file} />
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell text-right">
+                          {new Date(file.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-center">
+                          <span className={getStatusStyles(file.status)}>
+                            {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                          </span>
+                          {'progress' in file && file.status === 'uploading' && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <Progress value={file.progress} className="h-2" />
+                              <span className="text-xs text-muted-foreground">
+                                {Math.round(file.progress)}%
+                              </span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden xl:table-cell text-right">
+                          {formatFileSize(file.size)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
+                              >
+                                <MoreVerticalIcon className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
+                                <FileTextIcon className="w-4 h-4 mr-2" />
+                                View Details
+                              </DropdownMenuItem>
+                              {file.status === 'deleted' ? (
+                                <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+                                  <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                                  Restore
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => deleteMutation.mutate(file.id)}
+                                >
+                                  <Trash2Icon className="w-4 h-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
 
               <div className="flex items-center justify-between px-4 py-3 bg-muted border-t">
                 <div className="flex-1 text-sm text-muted-foreground">
