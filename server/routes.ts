@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
@@ -16,6 +16,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
+// Add back the requireAuth middleware
+function requireAuth(req: Request, res: Response, next: NextFunction) {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  next();
+}
+
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -30,6 +38,17 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
   }
 });
+
+// Function to generate text preview
+async function generateTextPreview(filePath: string, maxLength: number = 1000): Promise<string> {
+  try {
+    const content = await fs.promises.readFile(filePath, 'utf-8');
+    return content.slice(0, maxLength);
+  } catch (error) {
+    console.error('Error generating text preview:', error);
+    return '';
+  }
+}
 
 const upload = multer({ 
   storage: storage,
@@ -52,13 +71,6 @@ const upload = multer({
     }
   }
 });
-
-function requireAuth(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
-  if (!req.isAuthenticated()) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  next();
-}
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -115,6 +127,12 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      let preview = '';
+      // Generate preview for text files
+      if (req.file.mimetype === 'text/plain' || req.file.mimetype === 'text/csv') {
+        preview = await generateTextPreview(req.file.path);
+      }
+
       const fileData = {
         name: req.file.originalname,
         size: req.file.size,
@@ -123,6 +141,11 @@ export function registerRoutes(app: Express): Server {
         status: 'uploaded',
         userId: req.user!.id,
         companyId: req.user!.companyId,
+        preview: preview || undefined,
+        accessLevel: 'private',
+        classificationType: 'internal',
+        encryptionStatus: false,
+        retentionPeriod: 365, // Default 1 year retention
       };
 
       const [file] = await db.insert(files)
@@ -207,6 +230,37 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error restoring file:", error);
       res.status(500).json({ message: "Error restoring file" });
+    }
+  });
+
+  // Add preview endpoint
+  app.get("/api/files/:id/preview", requireAuth, async (req, res) => {
+    try {
+      const [file] = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.id, parseInt(req.params.id)),
+          eq(files.userId, req.user!.id)
+        ));
+
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      if (!file.preview && (file.type === 'text/plain' || file.type === 'text/csv')) {
+        const preview = await generateTextPreview(file.path);
+        // Update the file with the preview
+        await db.update(files)
+          .set({ preview })
+          .where(eq(files.id, file.id));
+
+        return res.json({ preview });
+      }
+
+      res.json({ preview: file.preview || '' });
+    } catch (error) {
+      console.error("Error fetching file preview:", error);
+      res.status(500).json({ message: "Error fetching file preview" });
     }
   });
 

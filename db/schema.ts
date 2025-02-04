@@ -72,6 +72,11 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
+  preview: text("preview"),
+  accessLevel: text("access_level").default('private'),
+  classificationType: text("classification_type").default('internal'),
+  encryptionStatus: boolean("encryption_status").default(false),
+  retentionPeriod: integer("retention_period").default(365),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
