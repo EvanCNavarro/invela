@@ -533,7 +533,7 @@ export default function FileVault() {
             </div>
           </div>
 
-          <div className="overflow-x-auto" > {/* Added overflow-x-auto to the table container */}
+          <div>
             <div className="w-full">
               <Table>
                 <TableHeader>
@@ -546,7 +546,7 @@ export default function FileVault() {
                       />
                     </TableHead>
                     {/* Priority 0: Always visible - Name */}
-                    <TableHead className="min-w-[150px] max-w-[300px] w-auto"> {/* Added max-width */}
+                    <TableHead className="min-w-[150px] max-w-[300px] w-[50%]"> {/* Added width percentage */}
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
@@ -559,8 +559,8 @@ export default function FileVault() {
                         {getSortIcon('name')}
                       </Button>
                     </TableHead>
-                    {/* Priority 1: Upload Date - Hidden on xs, visible on sm and up */}
-                    <TableHead className="w-[140px] hidden sm:table-cell">
+                    {/* Priority 1: Upload Date - Hidden on xs, visible on lg and up */}
+                    <TableHead className="w-[140px] hidden lg:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
@@ -573,8 +573,8 @@ export default function FileVault() {
                         {getSortIcon('createdAt')}
                       </Button>
                     </TableHead>
-                    {/* Priority 2: Status - Hidden on xs, visible on sm and up */}
-                    <TableHead className="w-[120px] hidden sm:table-cell">
+                    {/* Priority 2: Status - Hidden on xs, visible on md and up */}
+                    <TableHead className="w-[120px] hidden md:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('status')}
@@ -587,8 +587,8 @@ export default function FileVault() {
                         {getSortIcon('status')}
                       </Button>
                     </TableHead>
-                    {/* Priority 3: Size - Hidden on xs and sm, visible on md and up */}
-                    <TableHead className="w-[100px] hidden md:table-cell">
+                    {/* Priority 3: Size - Hidden on xs and sm, visible on xl and up */}
+                    <TableHead className="w-[100px] hidden xl:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('size')}
@@ -638,11 +638,11 @@ export default function FileVault() {
                         </div>
                       </TableCell>
                       {/* Priority 1: Upload Date */}
-                      <TableCell className="hidden sm:table-cell w-[140px]">
+                      <TableCell className="hidden lg:table-cell w-[140px]">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </TableCell>
                       {/* Priority 2: Status */}
-                      <TableCell className="hidden sm:table-cell w-[120px]">
+                      <TableCell className="hidden md:table-cell w-[120px]">
                         <span className={getStatusStyles(file.status)}>
                           {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                         </span>
@@ -656,7 +656,7 @@ export default function FileVault() {
                         )}
                       </TableCell>
                       {/* Priority 3: Size */}
-                      <TableCell className="hidden md:table-cell w-[100px]">
+                      <TableCell className="hidden xl:table-cell w-[100px]">
                         {formatFileSize(file.size)}
                       </TableCell>
                       <TableCell className="w-[50px]">
