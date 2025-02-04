@@ -152,36 +152,23 @@ export default function FileVault() {
 
   const restoreMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      try {
-        const response = await fetch(`/api/files/${fileId}/restore`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          const error = await response.text();
-          throw new Error(error);
+      const response = await fetch(`/api/files/${fileId}/restore`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         }
-
-        const updatedFile = {
-          ...files.find((f: FileItem) => f.id === fileId),
-          status: 'restored'
-        };
-
-        return updatedFile;
-      } catch (error) {
-        console.error('Restore error:', error);
-        throw error;
-      }
-    },
-    onSuccess: (updatedFile) => {
-      queryClient.setQueryData(['/api/files'], (oldData: FileItem[]) => {
-        return oldData.map(file =>
-          file.id === updatedFile.id ? { ...file, status: 'restored' } : file
-        );
       });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+
+      const result = await response.json();
+      return result;
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       toast({
         title: "Success",
         description: "File restored successfully",
@@ -325,7 +312,7 @@ export default function FileVault() {
       Array.from(selectedFiles).forEach(fileId => {
         deleteMutation.mutate(fileId);
       });
-    } else {
+    } else if (action === 'restore') {
       Array.from(selectedFiles).forEach(fileId => {
         restoreMutation.mutate(fileId);
       });
@@ -437,7 +424,8 @@ export default function FileVault() {
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                       className={cn(
-                        selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-input after:content-[''] after:block after:w-2 after:h-0.5 after:bg-muted-foreground after:rounded-full"
+                        selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
+                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary after:content-[''] after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:block after:w-2 after:h-0.5 after:bg-primary after:rounded-full"
                       )}
                     />
                   </TableHead>
@@ -544,10 +532,7 @@ export default function FileVault() {
                             View Details
                           </DropdownMenuItem>
                           {file.status === 'deleted' ? (
-                            <DropdownMenuItem onClick={() => {
-                              setSelectedFiles(new Set([file.id]));
-                              handleBulkAction('restore');
-                            }}>
+                            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
                               <RefreshCcwIcon className="w-4 h-4 mr-2" />
                               Restore
                             </DropdownMenuItem>
