@@ -534,17 +534,19 @@ export default function FileVault() {
           </div>
 
           <div className="bg-background rounded-lg p-4 md:p-6 border">
-            <div className="overflow-x-auto">
+            <div className="w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    {/* Priority 0: Always visible */}
                     <TableHead className="w-[30px]">
                       <Checkbox
                         checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                         onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                       />
                     </TableHead>
-                    <TableHead className="w-[45%]">
+                    {/* Priority 0: Always visible - Name */}
+                    <TableHead className="w-[45%] min-w-[200px]">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
@@ -557,19 +559,7 @@ export default function FileVault() {
                         {getSortIcon('name')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[15%] hidden md:table-cell">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort('size')}
-                        className={cn(
-                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
-                          sortConfig.field === 'size' && "text-primary"
-                        )}
-                      >
-                        Size
-                        {getSortIcon('size')}
-                      </Button>
-                    </TableHead>
+                    {/* Priority 1: Upload Date - Hidden on xs, visible on sm and up */}
                     <TableHead className="w-[20%] hidden sm:table-cell">
                       <Button
                         variant="ghost"
@@ -583,6 +573,7 @@ export default function FileVault() {
                         {getSortIcon('createdAt')}
                       </Button>
                     </TableHead>
+                    {/* Priority 2: Status - Hidden on xs, visible on sm and up */}
                     <TableHead className="w-[15%] hidden sm:table-cell">
                       <Button
                         variant="ghost"
@@ -596,6 +587,21 @@ export default function FileVault() {
                         {getSortIcon('status')}
                       </Button>
                     </TableHead>
+                    {/* Priority 3: Size - Hidden on xs and sm, visible on md and up */}
+                    <TableHead className="w-[15%] hidden md:table-cell">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('size')}
+                        className={cn(
+                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          sortConfig.field === 'size' && "text-primary"
+                        )}
+                      >
+                        Size
+                        {getSortIcon('size')}
+                      </Button>
+                    </TableHead>
+                    {/* Priority 0: Always visible - Actions */}
                     <TableHead className="w-[5%] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -614,14 +620,14 @@ export default function FileVault() {
                           onCheckedChange={() => toggleFileSelection(file.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium max-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
+                          <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
                             <FileIcon className="w-3 h-3 text-primary" />
                           </div>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <span className="truncate max-w-[300px]">{file.name}</span>
+                              <span className="truncate block">{file.name}</span>
                             </TooltipTrigger>
                             <TooltipContent>
                               <p>{file.name}</p>
@@ -629,10 +635,11 @@ export default function FileVault() {
                           </Tooltip>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell">{formatFileSize(file.size)}</TableCell>
+                      {/* Priority 1: Upload Date */}
                       <TableCell className="hidden sm:table-cell">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </TableCell>
+                      {/* Priority 2: Status */}
                       <TableCell className="hidden sm:table-cell">
                         <span className={getStatusStyles(file.status)}>
                           {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
@@ -645,6 +652,10 @@ export default function FileVault() {
                             </span>
                           </div>
                         )}
+                      </TableCell>
+                      {/* Priority 3: Size */}
+                      <TableCell className="hidden md:table-cell">
+                        {formatFileSize(file.size)}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
