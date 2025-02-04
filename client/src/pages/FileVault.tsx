@@ -530,7 +530,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="w-[20%]">
+                  <TableHead className="w-[20%] hidden md:table-cell">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('createdAt')}
@@ -576,8 +576,8 @@ export default function FileVault() {
                         <span className="truncate">{file.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">{formatFileSize(file.size)}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell>{formatFileSize(file.size)}</TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {new Date(file.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
@@ -596,7 +596,7 @@ export default function FileVault() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
