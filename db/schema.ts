@@ -72,6 +72,7 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   userId: integer("user_id").references(() => users.id).notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
+  uploadTime: timestamp("upload_time").notNull().defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

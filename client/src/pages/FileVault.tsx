@@ -72,6 +72,7 @@ interface FileItem {
   status: FileStatus;
   createdAt: string;
   updatedAt: string;
+  uploadTime: string;  // New field for upload time
   uploader?: string;
   uploadTimeMs?: number;
   downloadCount?: number;
@@ -236,6 +237,36 @@ const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: st
   );
 };
 
+// Add column priority configuration
+const columnPriorities = {
+  fileName: 0,
+  actions: 0,
+  status: 1,
+  uploadDate: 2,
+  uploadTime: 3,
+  size: 4,
+  textPreview: 5,
+} as const;
+
+// Add useBreakpoint hook for responsive design
+const useBreakpoint = () => {
+  const [breakpoint, setBreakpoint] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    return window.innerWidth;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setBreakpoint(window.innerWidth);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return breakpoint;
+};
+
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -252,6 +283,7 @@ export default function FileVault() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const breakpoint = useBreakpoint();
 
   const { data: files = [] } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
@@ -394,6 +426,7 @@ export default function FileVault() {
       status: 'uploading',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      uploadTime: new Date().toISOString(), //Added for new field
       progress: 0
     }));
 
@@ -415,8 +448,12 @@ export default function FileVault() {
       }, 500);
 
       try {
-        await uploadMutation.mutateAsync(formData);
+        const uploadedFile = await uploadMutation.mutateAsync(formData);
         setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
+        // Update uploadTime in the state after successful upload
+        queryClient.setQueryData(['/api/files'], oldFiles => {
+          return [...oldFiles, {...uploadedFile, uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString()}]
+        })
       } catch (error) {
         console.error('Upload error:', error);
         setUploadingFiles(prev =>
@@ -569,6 +606,31 @@ export default function FileVault() {
     deleteMutation.mutate(fileId);
   };
 
+  // Update the visibility logic in the component
+  const getVisibleColumns = () => {
+    const minWidth = 640; // Base width for mobile
+    const columnWidth = 150; // Approximate width per column
+    const availableSpace = Math.max(0, breakpoint - minWidth);
+    const maxColumns = Math.floor(availableSpace / columnWidth);
+
+    // Always show priority 0 columns
+    const visibleColumns = new Set(['fileName', 'actions']);
+
+    // Add columns based on priority until we run out of space
+    const priorityOrder = Object.entries(columnPriorities)
+      .filter(([col]) => !visibleColumns.has(col))
+      .sort(([, a], [, b]) => a - b)
+      .map(([col]) => col);
+
+    for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
+      visibleColumns.add(priorityOrder[i]);
+    }
+
+    return visibleColumns;
+  };
+
+  const visibleColumns = getVisibleColumns();
+
   return (
     <DashboardLayout>
       <TooltipProvider>
@@ -685,42 +747,47 @@ export default function FileVault() {
                           {getSortIcon('name')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[8rem] min-w-[8rem] hidden md:table-cell bg-muted text-center">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort('status')}
-                          className="flex items-center gap-1 mx-auto"
-                        >
-                          Status
-                          {getSortIcon('status')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[7rem] min-w-[7rem] hidden lg:table-cell bg-muted text-center">
-                        Access Level
-                      </TableHead>
-                      <TableHead className="w-[8rem] min-w-[8rem] hidden lg:table-cell bg-muted text-center">
-                        Classification
-                      </TableHead>
-                      <TableHead className="w-fit min-w-[5.5rem] hidden md:table-cell bg-muted text-right">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort('size')}
-                          className="flex items-center gap-1 ml-auto"
-                        >
-                          Size
-                          {getSortIcon('size')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[9rem] min-w-[9rem] hidden lg:table-cell bg-muted text-right">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort('createdAt')}
-                          className="flex items-center gap-1 ml-auto"
-                        >
-                          Upload Date
-                          {getSortIcon('createdAt')}
-                        </Button>
-                      </TableHead>
+                      {visibleColumns.has('status') && (
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-center">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleSort('status')}
+                            className="flex items-center gap-1 mx-auto"
+                          >
+                            Status
+                            {getSortIcon('status')}
+                          </Button>
+                        </TableHead>
+                      )}
+                      {visibleColumns.has('uploadDate') && (
+                        <TableHead className="w-[9rem] min-w-[9rem] bg-muted text-right">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleSort('createdAt')}
+                            className="flex items-center gap-1 ml-auto"
+                          >
+                            Upload Date
+                            {getSortIcon('createdAt')}
+                          </Button>
+                        </TableHead>
+                      )}
+                      {visibleColumns.has('uploadTime') && (
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
+                          Upload Time
+                        </TableHead>
+                      )}
+                      {visibleColumns.has('size') && (
+                        <TableHead className="w-fit min-w-[5.5rem] bg-muted text-right">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleSort('size')}
+                            className="flex items-center gap-1 ml-auto"
+                          >
+                            Size
+                            {getSortIcon('size')}
+                          </Button>
+                        </TableHead>
+                      )}
                       <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-center">
                         Actions
                       </TableHead>
@@ -738,35 +805,28 @@ export default function FileVault() {
                         <TableCell>
                           <FileNameCell file={file} />
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-center">
-                          <span className={getStatusStyles(file.status)}>
-                            {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                          </span>
-                          {'progress' in file && file.status === 'uploading' && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <Progress value={file.progress} className="h-2" />
-                              <span className="text-xs text-muted-foreground">
-                                {Math.round(file.progress)}%
-                              </span>
-                            </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center">
-                          <span className="rounded-full px-2.5 py-1 text-xs font-medium capitalize bg-muted">
-                            {file.accessLevel || 'private'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center">
-                          <span className="rounded-full px-2.5 py-1 text-xs font-medium capitalize bg-muted">
-                            {file.classificationType || 'internal'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-right">
-                          {formatFileSize(file.size)}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right">
-                          {new Date(file.createdAt).toLocaleDateString()}
-                        </TableCell>
+                        {visibleColumns.has('status') && (
+                          <TableCell className="text-center">
+                            <span className={getStatusStyles(file.status)}>
+                              {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                            </span>
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('uploadDate') && (
+                          <TableCell className="text-right">
+                            {new Date(file.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('uploadTime') && (
+                          <TableCell className="text-right">
+                            {new Date(file.uploadTime).toLocaleTimeString()}
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('size') && (
+                          <TableCell className="text-right">
+                            {formatFileSize(file.size)}
+                          </TableCell>
+                        )}
                         <TableCell className="text-center">
                           <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
@@ -868,7 +928,7 @@ export default function FileVault() {
                     <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">File Name</p>
+                        <p className="textsm font-medium text-muted-foreground">File Name</p>
                         <p className="mt-1">{selectedFileDetails.name}</p>
                       </div>
                       <div>
@@ -876,12 +936,16 @@ export default function FileVault() {
                         <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-muted-foreground">Type</p>
-                        <p className="mt-1">{selectedFileDetails.type}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                        <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Status</p>
                         <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                        <p className="mt-1">{new Date(selectedFileDetails.uploadTime).toLocaleTimeString()}</p>
                       </div>
                     </div>
                   </div>
