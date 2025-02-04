@@ -299,11 +299,11 @@ export default function FileVault() {
 
   // Update getVisibleColumns for better space usage
   const getVisibleColumns = () => {
-    const minWidth = 480; // Even smaller threshold
-    const columnWidth = 60; // More compact
+    const minWidth = 480; // Base threshold
+    const columnWidth = 120; // Standard column width
     const sidebarWidth = isSidebarCollapsed ? 64 : 256;
-    const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
-    const maxColumns = Math.floor(availableSpace / columnWidth);
+    const availableSpace = Math.max(0, breakpoint - sidebarWidth);
+    const maxColumns = Math.floor((availableSpace - minWidth) / columnWidth);
 
     // Always show priority 0 columns
     const visibleColumns = new Set(['fileName', 'actions']);
@@ -738,17 +738,17 @@ export default function FileVault() {
 
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <div className="relative w-full overflow-x-auto">
-                <Table>
+              <div className="relative overflow-x-auto">
+                <Table className="w-full">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[2rem] min-w-[2rem] bg-muted text-center sticky left-0 z-20">
+                      <TableHead className="w-[40px] bg-muted text-center sticky left-0 z-20">
                         <Checkbox
                           checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted sticky left-[2rem] z-20">
+                      <TableHead className="w-[200px] bg-muted sticky left-[40px] z-20">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -758,7 +758,7 @@ export default function FileVault() {
                         </Button>
                       </TableHead>
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
+                        <TableHead className="w-[100px] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
@@ -769,7 +769,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[10rem] min-w-[10rem] bg-muted text-right">
+                        <TableHead className="w-[140px] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -780,12 +780,12 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
+                        <TableHead className="w-[120px] bg-muted text-right">
                           <span className="whitespace-nowrap">Time</span>
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-center">
+                        <TableHead className="w-[120px] bg-muted text-center">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
@@ -795,7 +795,7 @@ export default function FileVault() {
                           </Button>
                         </TableHead>
                       )}
-                      <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-center sticky right-0 z-20">
+                      <TableHead className="w-[80px] bg-muted text-center sticky right-0 z-20">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -809,7 +809,7 @@ export default function FileVault() {
                             onCheckedChange={() => toggleFileSelection(file.id)}
                           />
                         </TableCell>
-                        <TableCell className="sticky left-[2rem] z-20 bg-inherit">
+                        <TableCell className="sticky left-[40px] z-20 bg-inherit">
                           <FileNameCell file={file} />
                         </TableCell>
                         {visibleColumns.has('size') && (
@@ -846,9 +846,7 @@ export default function FileVault() {
                   </TableBody>
                 </Table>
               </div>
-
             </div>
-
           </div>
 
           <div>
@@ -901,7 +899,8 @@ export default function FileVault() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
                           <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
-                        </div>                        {selectedFileDetails.lastAccessed && (
+                        </div>
+                        {selectedFileDetails.lastAccessed && (
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
                             <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
