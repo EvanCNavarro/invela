@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { 
+import {
   companies,
   tasks,
   relationships,
@@ -32,7 +32,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
@@ -90,11 +90,17 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "File not found on disk" });
       }
 
-      // Update download count in background
-      db.update(files)
-        .set({ downloadCount: (file.downloadCount || 0) + 1 })
-        .where(eq(files.id, file.id))
-        .catch(err => console.error(`Error updating download count for file ${file.id}:`, err));
+      // Update download count in background - Fixed query syntax
+      try {
+        await db.update(files)
+          .set({
+            downloadCount: (file.downloadCount || 0) + 1
+          })
+          .where(eq(files.id, fileId))
+          .execute();
+      } catch (updateError) {
+        console.error(`Error updating download count for file ${fileId}:`, updateError);
+      }
 
       // Set headers for file download
       res.setHeader('Content-Type', file.type || 'application/octet-stream');
@@ -119,7 +125,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Bulk download endpoint
+  // Bulk download endpoint with fixed query syntax
   app.post("/api/files/download-bulk", requireAuth, async (req, res) => {
     try {
       const { fileIds } = req.body;
@@ -163,11 +169,17 @@ export function registerRoutes(app: Express): Server {
       // Add files to archive
       for (const file of validFiles) {
         archive.file(file.path, { name: file.name });
-        // Update download count in background
-        db.update(files)
-          .set({ downloadCount: (file.downloadCount || 0) + 1 })
-          .where(eq(files.id, file.id))
-          .catch(err => console.error(`Error updating download count for file ${file.id}:`, err));
+        // Update download count in background with fixed query syntax
+        try {
+          await db.update(files)
+            .set({
+              downloadCount: (file.downloadCount || 0) + 1
+            })
+            .where(eq(files.id, file.id))
+            .execute();
+        } catch (updateError) {
+          console.error(`Error updating download count for file ${file.id}:`, updateError);
+        }
       }
 
       // Finalize archive
