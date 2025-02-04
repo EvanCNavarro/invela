@@ -63,6 +63,33 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // New endpoint for getting file content preview
+  app.get("/api/files/:id/preview", requireAuth, async (req, res) => {
+    try {
+      const [file] = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.id, parseInt(req.params.id)),
+          eq(files.userId, req.user!.id)
+        ));
+
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      if (file.type !== 'text/plain') {
+        return res.status(400).json({ message: "File preview is only available for text files" });
+      }
+
+      const content = fs.readFileSync(file.path, 'utf8');
+      // Return first 1000 characters as preview
+      res.json({ preview: content.slice(0, 1000) });
+    } catch (error) {
+      console.error("Error getting file preview:", error);
+      res.status(500).json({ message: "Error getting file preview" });
+    }
+  });
+
   // Companies
   app.get("/api/companies", requireAuth, async (req, res) => {
     const results = await db.select().from(companies);
@@ -108,7 +135,7 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // File routes
+  // Modified file upload endpoint to include new metrics
   app.post("/api/files", requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -123,6 +150,14 @@ export function registerRoutes(app: Express): Server {
         status: 'uploaded',
         userId: req.user!.id,
         companyId: req.user!.companyId,
+        downloadCount: 0,
+        uniqueViewers: 0,
+        accessLevel: 'private',
+        classificationType: 'internal',
+        retentionPeriod: 365, // Default 1 year retention
+        storageLocation: 'hot-storage',
+        encryptionStatus: false,
+        version: 1,
       };
 
       const [file] = await db.insert(files)
