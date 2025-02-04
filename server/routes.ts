@@ -15,6 +15,7 @@ import { eq, and } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import archiver from "archiver";
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -62,6 +63,94 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Add download endpoint
+  app.get("/api/files/:id/download", requireAuth, async (req, res) => {
+    try {
+      const [file] = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.id, parseInt(req.params.id)),
+          eq(files.userId, req.user!.id)
+        ));
+
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      if (!fs.existsSync(file.path)) {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      // Update download count
+      await db.update(files)
+        .set({ downloadCount: (file.downloadCount || 0) + 1 })
+        .where(eq(files.id, file.id));
+
+      // Set headers for file download
+      res.setHeader('Content-Type', file.type);
+      res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+
+      // Stream the file
+      const fileStream = fs.createReadStream(file.path);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      res.status(500).json({ message: "Error downloading file" });
+    }
+  });
+
+  // Add bulk download endpoint
+  app.post("/api/files/download-bulk", requireAuth, async (req, res) => {
+    try {
+      const { fileIds } = req.body;
+      if (!Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({ message: "No files selected for download" });
+      }
+
+      // Fetch all requested files
+      const selectedFiles = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.userId, req.user!.id)
+        ));
+
+      const validFiles = selectedFiles.filter(file => 
+        fileIds.includes(file.id) && fs.existsSync(file.path)
+      );
+
+      if (validFiles.length === 0) {
+        return res.status(404).json({ message: "No valid files found for download" });
+      }
+
+      // Set headers for zip download
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', 'attachment; filename=download.zip');
+
+      // Create zip archive
+      const archive = archiver('zip', {
+        zlib: { level: 9 } // Maximum compression
+      });
+
+      // Pipe archive data to response
+      archive.pipe(res);
+
+      // Add files to archive and update download counts
+      for (const file of validFiles) {
+        archive.file(file.path, { name: file.name });
+        await db.update(files)
+          .set({ downloadCount: (file.downloadCount || 0) + 1 })
+          .where(eq(files.id, file.id));
+      }
+
+      // Finalize archive
+      await archive.finalize();
+
+    } catch (error) {
+      console.error("Error creating bulk download:", error);
+      res.status(500).json({ message: "Error creating bulk download" });
+    }
+  });
 
   // New endpoint for getting file content preview
   app.get("/api/files/:id/preview", requireAuth, async (req, res) => {
