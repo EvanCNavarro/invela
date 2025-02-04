@@ -162,7 +162,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[10rem]" role="cell"> {/* Further reduced from 12.25rem */}
+    <div className="flex items-center gap-2 min-w-0" role="cell">
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
@@ -189,7 +189,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
       ) : (
         <span
           ref={nameRef}
-          className="truncate block min-w-0 flex-1"
+          className="block min-w-0 flex-1"
           aria-label={`File name: ${file.name}`}
         >
           {file.name}
@@ -300,8 +300,8 @@ export default function FileVault() {
 
   // Update the getVisibleColumns function
   const getVisibleColumns = () => {
-    const minWidth = 640;
-    const columnWidth = 80; // Even more compact (reduced from 100)
+    const minWidth = 540; // Reduced from 640
+    const columnWidth = 70; // Further reduced for more efficient space usage
     const sidebarWidth = isSidebarCollapsed ? 64 : 256;
     const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
     const maxColumns = Math.floor(availableSpace / columnWidth);
@@ -749,7 +749,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted"> {/* Reduced from 10rem by 40% */}
+                      <TableHead className="w-[8rem] min-w-[8rem] bg-muted whitespace-nowrap">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -760,7 +760,7 @@ export default function FileVault() {
                         </Button>
                       </TableHead>
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-right"> {/* Reduced from 4.5rem */}
+                        <TableHead className="w-[3.5rem] min-w-[3.5rem] bg-muted text-right whitespace-nowrap">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
@@ -772,7 +772,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[11rem] min-w-[11rem] whitespace-nowrap bg-muted text-right"> {/* Increased to 11rem */}
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right whitespace-nowrap">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -784,12 +784,12 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-right"> {/* Reduced from 7rem */}
+                        <TableHead className="w-[5.5rem] min-w-[5.5rem] bg-muted text-right whitespace-nowrap">
                           Upload Time
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[4.5rem] min-w-[4.5rem] bg-muted text-center"> {/* Reduced from 5rem */}
+                        <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-center whitespace-nowrap">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
@@ -926,123 +926,126 @@ export default function FileVault() {
             </div>
           </div>
 
-          <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
-            <DialogContent
-                            className="max-w-2xl"              aria-describedby="file-details-description"
-            >
-              <DialogHeader>
-                <DialogTitle>File Details</DialogTitle>
-                <p id="file-details-description" className="text-sm text-muted-foreground">
-                  View detailed information about the selected file
-                </p>
-              </DialogHeader>
-              {selectedFileDetails && (
-                <div className="space-y-6">
-                  {/* Basic Information */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="textsm font-medium text-muted-foreground">File Name</p>
-                        <p className="mt-1">{selectedFileDetails.name}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Size</p>
-                        <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Created At</p>
-                        <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleDateString()}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Status</p>
-                        <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                        <p className="mt-1">
-                          {formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Security & Access Control */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Security & Access Control</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Access Level</p>
-                        <p className="mt-1 capitalize">{selectedFileDetails.accessLevel || 'private'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Classification</p>
-                        <p className="mt-1 capitalize">{selectedFileDetails.classificationType || 'internal'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Encryption Status</p>
-                        <p className="mt-1">{selectedFileDetails.encryptionStatus ? 'Encrypted' : 'Not Encrypted'}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Storage Location</p>
-                        <p className="mt-1 capitalize">{selectedFileDetails.storageLocation?.replace('-', ' ') || 'hot storage'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Usage Statistics */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Usage Statistics</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                        <p className="mt-1">{selectedFileDetails.downloadCount || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Unique Viewers</p>
-                        <p className="mt-1">{selectedFileDetails.uniqueViewers || 0}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Version</p>
-                        <p className="mt-1">{selectedFileDetails.version || 1}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Retention Period</p>
-                        <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Timestamps */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Timestamps</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
-                        <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
-                      </div>
-                      {selectedFileDetails.lastAccessed && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
-                          <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* File Preview Section */}
-                  {selectedFileDetails.type === 'text/plain' && (
+          <div>
+            <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
+              <DialogContent
+                className="max-w-2xl"
+                aria-describedby="file-details-description"
+              >
+                <DialogHeader>
+                  <DialogTitle>File Details</DialogTitle>
+                  <p id="file-details-description" className="text-sm text-muted-foreground">
+                    View detailed information about the selected file
+                  </p>
+                </DialogHeader>
+                {selectedFileDetails && (
+                  <div className="space-y-6">
+                    {/* Basic Information */}
                     <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">File Preview</h3>
-                      <div className="max-h-[200px] overflow-y-auto rounded border bg-muted p-4">
-                        <FilePreview fileId={selectedFileDetails.id} />
+                      <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">File Name</p>
+                          <p className="mt-1">{selectedFileDetails.name}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Size</p>
+                          <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Created At</p>
+                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Status</p>
+                          <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                          <p className="mt-1">
+                            {formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              )}
-            </DialogContent>
-          </Dialog>
+
+                    {/* Security & Access Control */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Security & Access Control</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Access Level</p>
+                          <p className="mt-1 capitalize">{selectedFileDetails.accessLevel || 'private'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Classification</p>
+                          <p className="mt-1 capitalize">{selectedFileDetails.classificationType || 'internal'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Encryption Status</p>
+                          <p className="mt-1">{selectedFileDetails.encryptionStatus ? 'Encrypted' : 'Not Encrypted'}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Storage Location</p>
+                          <p className="mt-1 capitalize">{selectedFileDetails.storageLocation?.replace('-', ' ') || 'hot storage'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Usage Statistics */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Usage Statistics</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                          <p className="mt-1">{selectedFileDetails.downloadCount || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Unique Viewers</p>
+                          <p className="mt-1">{selectedFileDetails.uniqueViewers || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Version</p>
+                          <p className="mt-1">{selectedFileDetails.version || 1}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Retention Period</p>
+                          <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Timestamps */}
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Timestamps</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                        </div>
+                        {selectedFileDetails.lastAccessed && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
+                            <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* File Preview Section */}
+                    {selectedFileDetails.type === 'text/plain' && (
+                      <div className="space-y-4">
+                        <h3 className="text-sm font-medium text-muted-foreground">File Preview</h3>
+                        <div className="max-h-[200px] overflow-y-auto rounded border bg-muted p-4">
+                          <FilePreview fileId={selectedFileDetails.id} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </TooltipProvider>
     </DashboardLayout>
