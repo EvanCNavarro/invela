@@ -162,7 +162,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[18.25rem]" role="cell">
+    <div className="flex items-center gap-2 min-w-0 max-w-[12.25rem]" role="cell"> {/* Reduced max width */}
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
@@ -296,12 +296,13 @@ export default function FileVault() {
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
 
-  // Move getVisibleColumns inside the component
+  // Update the getVisibleColumns function
   const getVisibleColumns = () => {
     const minWidth = 640;
     const columnWidth = 100; // Even more compact
-    const sidebarWidth = 256;
+    const sidebarWidth = isSidebarCollapsed ? 64 : 256; // Adjust based on sidebar state
     const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
     const maxColumns = Math.floor(availableSpace / columnWidth);
 
@@ -771,7 +772,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[9rem] min-w-[9rem] whitespace-nowrap bg-muted text-right"> {/* Increased from 7rem to 9rem and added whitespace-nowrap */}
+                        <TableHead className="w-[11rem] min-w-[11rem] whitespace-nowrap bg-muted text-right"> {/* Increased to 11rem */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -914,7 +915,7 @@ export default function FileVault() {
                       variant="outline"
                       size="icon"
                       onClick={() => handlePageChange(totalPages)}
-                      disabled={currentPage === totalPages}
+                      disabled={currentPage ===totalPages}
                       className="hidden sm:inline-flex"
                     >
                       <ChevronsRightIcon className="h-4 w-4" />
