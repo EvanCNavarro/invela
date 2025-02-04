@@ -293,8 +293,7 @@ export default function FileVault() {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
-  const [isLoading, setIsLoading] = useState(true); // Added loading state
-
+  // Removed separate isLoading state
 
   // Move FileActions component inside to access state
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
@@ -333,30 +332,25 @@ export default function FileVault() {
     );
   };
 
-  // Update getVisibleColumns for better space usage
+  // Update getVisibleColumns for better responsiveness
   const getVisibleColumns = () => {
-    const minWidth = 480; // Base threshold
-    const columnWidth = 120; // Standard column width
     const sidebarWidth = isSidebarCollapsed ? 64 : 256;
     const availableSpace = Math.max(0, breakpoint - sidebarWidth);
-    const maxColumns = Math.floor((availableSpace - minWidth) / columnWidth);
 
     // Always show priority 0 columns
     const visibleColumns = new Set(['fileName', 'actions']);
 
-    // Add columns based on priority until we run out of space
-    const priorityOrder = ['size', 'uploadDate', 'uploadTime', 'status'];
-
-    for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
-      visibleColumns.add(priorityOrder[i]);
-    }
+    // Add columns based on available space
+    if (availableSpace > 640) visibleColumns.add('size');
+    if (availableSpace > 768) visibleColumns.add('uploadDate');
+    if (availableSpace > 1024) visibleColumns.add('status');
+    if (availableSpace > 1280) visibleColumns.add('uploadTime');
 
     return visibleColumns;
   };
 
-  const { data: files = [], isLoading: apiIsLoading } = useQuery<FileApiResponse[]>({
-    queryKey: ['/api/files'],
-    onSettled: () => setIsLoading(false) //Set loading to false once data is fetched
+  const { data: files = [], isLoading } = useQuery<FileApiResponse[]>({
+    queryKey: ['/api/files']
   });
 
   const uploadMutation = useMutation({
@@ -776,64 +770,64 @@ export default function FileVault() {
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
               <div className="relative">
-                <div className="overflow-x-auto">
-                  <Table className="w-full">
+                <div className="w-full overflow-x-auto">
+                  <Table className="w-full table-fixed">
                     <TableHeader className="sticky top-0 z-30 bg-muted">
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-[40px] sticky left-0 z-40 bg-muted">
+                        <TableHead className="w-12 sticky left-0 z-40 bg-muted">
                           <Checkbox
                             checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                             onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                           />
                         </TableHead>
-                        <TableHead className="w-[200px] sticky left-[40px] z-20 bg-muted">
+                        <TableHead className="w-48 lg:w-64 sticky left-12 z-20 bg-muted">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('name')}
-                            className="flex items-center gap-1 whitespace-nowrap"
+                            className="flex items-center gap-1"
                           >
                             Name {getSortIcon('name')}
                           </Button>
                         </TableHead>
                         {visibleColumns.has('size') && (
-                          <TableHead className="w-[100px] bg-muted text-right">
+                          <TableHead className="w-24">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('size')}
-                              className="flex items-center gap-1 ml-auto whitespace-nowrap"
+                              className="flex items-center gap-1 ml-auto"
                             >
                               Size {getSortIcon('size')}
                             </Button>
                           </TableHead>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableHead className="w-[140px] bg-muted text-right">
+                          <TableHead className="w-32">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('createdAt')}
-                              className="flex items-center gap-1 ml-auto whitespace-nowrap"
+                              className="flex items-center gap-1 ml-auto"
                             >
                               Upload Date {getSortIcon('createdAt')}
                             </Button>
                           </TableHead>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableHead className="w-[120px] bg-muted text-right">
+                          <TableHead className="w-28">
                             <span className="whitespace-nowrap">Time</span>
                           </TableHead>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableHead className="w-[120px] bg-muted text-center">
+                          <TableHead className="w-28">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('status')}
-                              className="flex items-center gap-1 mx-auto whitespace-nowrap"
+                              className="flex items-center gap-1 mx-auto"
                             >
                               Status {getSortIcon('status')}
                             </Button>
                           </TableHead>
                         )}
-                        <TableHead className="w-[80px] bg-muted text-center sticky right-0 z-20">
+                        <TableHead className="w-24 bg-muted text-center sticky right-0 z-20">
                           Actions
                         </TableHead>
                       </TableRow>
@@ -849,14 +843,14 @@ export default function FileVault() {
                         </TableRow>
                       ) : (
                         paginatedFiles.map((file) => (
-                          <TableRow key={file.id} className="bg-white hover:bg-muted/50 transition-colors">
+                          <TableRow key={file.id} className="bg-white hover:bg-muted/50">
                             <TableCell className="text-center sticky left-0 z-20 bg-inherit">
                               <Checkbox
                                 checked={selectedFiles.has(file.id)}
                                 onCheckedChange={() => toggleFileSelection(file.id)}
                               />
                             </TableCell>
-                            <TableCell className="sticky left-[40px] z-20 bg-inherit">
+                            <TableCell className="sticky left-12 z-20 bg-inherit">
                               <FileNameCell file={file} />
                             </TableCell>
                             {visibleColumns.has('size') && (
