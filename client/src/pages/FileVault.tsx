@@ -278,27 +278,6 @@ const formatTimeWithZone = (date: Date) => {
   return formatter.format(date);
 };
 
-// Update the getVisibleColumns function
-const getVisibleColumns = () => {
-  const minWidth = 640;
-  const columnWidth = 100; // Even more compact
-  const sidebarWidth = 256;
-  const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
-  const maxColumns = Math.floor(availableSpace / columnWidth);
-
-  // Always show priority 0 columns
-  const visibleColumns = new Set(['fileName', 'actions']);
-
-  // Add columns based on priority until we run out of space
-  const priorityOrder = ['size', 'uploadDate', 'uploadTime', 'status'];
-
-  for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
-    visibleColumns.add(priorityOrder[i]);
-  }
-
-  return visibleColumns;
-};
-
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -316,6 +295,27 @@ export default function FileVault() {
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
+
+  // Move getVisibleColumns inside the component
+  const getVisibleColumns = () => {
+    const minWidth = 640;
+    const columnWidth = 100; // Even more compact
+    const sidebarWidth = 256;
+    const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
+    const maxColumns = Math.floor(availableSpace / columnWidth);
+
+    // Always show priority 0 columns
+    const visibleColumns = new Set(['fileName', 'actions']);
+
+    // Add columns based on priority until we run out of space
+    const priorityOrder = ['size', 'uploadDate', 'uploadTime', 'status'];
+
+    for (let i = 0; i < Math.min(maxColumns, priorityOrder.length); i++) {
+      visibleColumns.add(priorityOrder[i]);
+    }
+
+    return visibleColumns;
+  };
 
   const { data: files = [] } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
