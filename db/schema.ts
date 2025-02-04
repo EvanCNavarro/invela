@@ -75,6 +75,7 @@ export const files = pgTable("files", {
   uploadTime: timestamp("upload_time").notNull().defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  downloadCount: integer("download_count").default(0),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
