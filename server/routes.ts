@@ -72,32 +72,45 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Invalid file ID" });
       }
 
-      const [file] = await db.select().from(files)
-        .where(and(
-          eq(files.id, fileId),
-          eq(files.userId, req.user!.id)
-        ));
+      // First try to get the file from database
+      const result = await db.select().from(files).where(eq(files.id, fileId));
 
-      if (!file) {
+      if (!result || result.length === 0) {
         return res.status(404).json({ message: "File not found" });
+      }
+
+      const file = result[0];
+
+      // Check if user has access to this file
+      if (file.userId !== req.user!.id) {
+        return res.status(403).json({ message: "Access denied" });
       }
 
       if (!fs.existsSync(file.path)) {
         return res.status(404).json({ message: "File not found on disk" });
       }
 
-      // Update download count
-      await db.update(files)
+      // Update download count in background
+      db.update(files)
         .set({ downloadCount: (file.downloadCount || 0) + 1 })
-        .where(eq(files.id, file.id));
+        .where(eq(files.id, file.id))
+        .catch(err => console.error(`Error updating download count for file ${file.id}:`, err));
 
       // Set headers for file download
-      res.setHeader('Content-Type', file.type);
+      res.setHeader('Content-Type', file.type || 'application/octet-stream');
       res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
 
       // Stream the file
       const fileStream = fs.createReadStream(file.path);
       fileStream.pipe(res);
+
+      // Handle streaming errors
+      fileStream.on('error', (error) => {
+        console.error("Error streaming file:", error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error streaming file" });
+        }
+      });
     } catch (error) {
       console.error("Error downloading file:", error);
       if (!res.headersSent) {

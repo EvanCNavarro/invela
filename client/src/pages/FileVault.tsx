@@ -468,20 +468,35 @@ export default function FileVault() {
   const downloadMutation = useMutation({
     mutationFn: async (fileId: string) => {
       const response = await fetch(`/api/files/${fileId}/download`);
+
       if (!response.ok) {
-        throw new Error('Download failed');
+        const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
+        throw new Error(errorData.message || 'Failed to download file');
       }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType) {
+        throw new Error('No content type specified');
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = files.find(f => f.id === fileId)?.name || 'download';
+
+      // Get filename from Content-Disposition header or fallback to the one in our files array
+      const contentDisposition = response.headers.get('content-disposition');
+      const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : files.find(f => f.id === fileId)?.name || 'download';
+
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     },
     onError: (error: Error) => {
+      console.error('Download error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to download file",
@@ -937,7 +952,7 @@ export default function FileVault() {
                                   day: 'numeric',
                                   year: 'numeric'
                                 })}
-                                                            </TableCell>
+                              </TableCell>
                             )}
                             {visibleColumns.has('uploadTime') && (
                               <TableCell className="text-right bg-inherit">
