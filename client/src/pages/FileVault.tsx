@@ -592,7 +592,7 @@ export default function FileVault() {
                         {getSortIcon('name')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[160px] hidden xl:table-cell bg-muted text-right">
+                    <TableHead className="w-[120px] hidden xl:table-cell bg-muted text-right">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
