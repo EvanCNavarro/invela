@@ -269,13 +269,26 @@ const useBreakpoint = () => {
 
 // Add timezone formatting helper
 const formatTimeWithZone = (date: Date) => {
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
+  // Format the time portion with timezone
+  const timeFormatter = new Intl.DateTimeFormat('en-US', {
+    hour: 'numeric',
     minute: '2-digit',
-    second: '2-digit',
-    timeZoneName: 'shortGeneric'  // This will show EST, CST, etc.
+    hour12: true,
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timeZoneName: 'short' // This will show abbreviations like 'ET', 'CT', 'PT'
   });
-  return formatter.format(date);
+
+  // Format the date portion
+  const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric'
+  });
+
+  // Get year separately to match the requested format
+  const year = date.getFullYear();
+
+  // Combine all parts
+  return `${dateFormatter.format(date)}, ${year}, ${timeFormatter.format(date)}`;
 };
 
 export default function FileVault() {
@@ -919,7 +932,7 @@ export default function FileVault() {
                       <ChevronsRightIcon className="h-4 w-4" />
                     </Button>
                   </div>
-                )}
+                                )}
               </div>
             </div>
           </div>
