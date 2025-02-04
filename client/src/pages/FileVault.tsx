@@ -56,6 +56,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
 
@@ -290,8 +291,8 @@ export default function FileVault() {
 
   const getSortIcon = (field: SortField) => {
     if (sortConfig.field !== field) return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
-    return sortConfig.order === 'asc' ? 
-      <ArrowUpIcon className="h-4 w-4 text-primary" /> : 
+    return sortConfig.order === 'asc' ?
+      <ArrowUpIcon className="h-4 w-4 text-primary" /> :
       <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
@@ -419,432 +420,434 @@ export default function FileVault() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
-            <p className="text-sm text-muted-foreground">
-              Secure document storage for your company.
-            </p>
-          </div>
-          <Button onClick={handleUploadClick} className="gap-2">
-            <UploadIcon className="w-4 h-4" />
-            Upload
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files?.length) {
-                  onDrop(Array.from(e.target.files));
-                }
-              }}
-              multiple
-            />
-          </Button>
-        </div>
-
-        <FileUpload onDrop={onDrop} className="bg-muted/50" />
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap w-full">
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
-            >
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="uploaded">Uploaded</SelectItem>
-                <SelectItem value="restored">Restored</SelectItem>
-                <SelectItem value="uploading">Uploading</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-                <SelectItem value="deleted">Deleted</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search files..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+      <TooltipProvider>
+        <div className="space-y-6">
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
+              <p className="text-sm text-muted-foreground">
+                Secure document storage for your company.
+              </p>
+            </div>
+            <Button onClick={handleUploadClick} className="gap-2">
+              <UploadIcon className="w-4 h-4" />
+              Upload
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) {
+                    onDrop(Array.from(e.target.files));
+                  }
+                }}
+                multiple
               />
+            </Button>
+          </div>
+
+          <FileUpload onDrop={onDrop} className="bg-muted/50" />
+
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap w-full">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+              >
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="uploaded">Uploaded</SelectItem>
+                  <SelectItem value="restored">Restored</SelectItem>
+                  <SelectItem value="uploading">Uploading</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="canceled">Canceled</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="relative flex-1">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search files..."
+                  className="pl-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={selectedFiles.size > 0 ? "default" : "outline"}
+                    disabled={selectedFiles.size === 0}
+                    className="min-w-[100px]"
+                  >
+                    Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {canRestore ? (
+                    <DropdownMenuItem onClick={() => handleBulkAction('restore')}>
+                      <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                      Restore Selected
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                      <Trash2Icon className="w-4 h-4 mr-2" />
+                      Delete Selected
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          <div className="bg-background rounded-lg p-4 md:p-6 border">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[30px]">
+                      <Checkbox
+                        checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
+                        data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
+                        onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles as FileApiResponse[])}
+                        className={cn(
+                          "transition-colors",
+                          selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
+                          "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary"
+                        )}
+                      >
+                        {selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && (
+                          <MinusIcon className="h-3 w-3 text-primary" />
+                        )}
+                      </Checkbox>
+                    </TableHead>
+                    <TableHead className="w-[45%]">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('name')}
+                        className={cn(
+                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          sortConfig.field === 'name' && "text-primary"
+                        )}
+                      >
+                        Name
+                        {getSortIcon('name')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-[15%]">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('size')}
+                        className={cn(
+                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          sortConfig.field === 'size' && "text-primary"
+                        )}
+                      >
+                        Size
+                        {getSortIcon('size')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-[20%] hidden md:table-cell">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('createdAt')}
+                        className={cn(
+                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors whitespace-nowrap",
+                          sortConfig.field === 'createdAt' && "text-primary"
+                        )}
+                      >
+                        Upload Date
+                        {getSortIcon('createdAt')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-[15%]">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort('status')}
+                        className={cn(
+                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          sortConfig.field === 'status' && "text-primary"
+                        )}
+                      >
+                        Status
+                        {getSortIcon('status')}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="w-[5%] text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedFiles.map((file) => (
+                    <TableRow
+                      key={file.id}
+                      className={cn(
+                        file.status === 'deleted' && "opacity-60",
+                        selectedFiles.has(file.id) && "bg-muted/50"
+                      )}
+                    >
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedFiles.has(file.id)}
+                          onCheckedChange={() => toggleFileSelection(file.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
+                            <FileIcon className="w-3 h-3 text-primary" />
+                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="truncate max-w-[300px]">{file.name}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{file.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                      <TableCell>{formatFileSize(file.size)}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {new Date(file.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <span className={getStatusStyles(file.status)}>
+                          {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                        </span>
+                        {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
+                          <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
+                            <Progress
+                              value={uploadProgress[file.id]}
+                              className="h-2 bg-primary/20"
+                            />
+                            <span className="text-sm text-muted-foreground min-w-[40px]">
+                              {uploadProgress[file.id]}%
+                            </span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="hover:bg-muted/80 transition-colors rounded-full"
+                            >
+                              <MoreVerticalIcon className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
+                              <FileTextIcon className="w-4 h-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            {file.status === 'deleted' ? (
+                              <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+                                <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                                Restore
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteMutation.mutate(file.id)}
+                              >
+                                <Trash2Icon className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {paginatedFiles.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-24 text-center">
+                        No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant={selectedFiles.size > 0 ? "default" : "outline"}
-                  disabled={selectedFiles.size === 0}
-                  className="min-w-[100px]"
-                >
-                  Actions
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {canRestore ? (
-                  <DropdownMenuItem onClick={() => handleBulkAction('restore')}>
-                    <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                    Restore Selected
-                  </DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
-                    <Trash2Icon className="w-4 h-4 mr-2" />
-                    Delete Selected
-                  </DropdownMenuItem>
+            <div className="flex items-center justify-between px-2 py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {filteredAndSortedFiles.length > 0 && (
+                  filteredAndSortedFiles.length <= 5 ? (
+                    `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
+                  ) : (
+                    `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
+                  )
                 )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        <div className="bg-background rounded-lg p-4 md:p-6 border">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px]">
-                    <Checkbox
-                      checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                      data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
-                      onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles as FileApiResponse[])}
-                      className={cn(
-                        "transition-colors",
-                        selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
-                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary"
-                      )}
-                    >
-                      {selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && (
-                        <MinusIcon className="h-3 w-3 text-primary" />
-                      )}
-                    </Checkbox>
-                  </TableHead>
-                  <TableHead className="w-[45%]">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('name')}
-                      className={cn(
-                        "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
-                        sortConfig.field === 'name' && "text-primary"
-                      )}
-                    >
-                      Name
-                      {getSortIcon('name')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[15%]">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('size')}
-                      className={cn(
-                        "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
-                        sortConfig.field === 'size' && "text-primary"
-                      )}
-                    >
-                      Size
-                      {getSortIcon('size')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[20%] hidden md:table-cell">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('createdAt')}
-                      className={cn(
-                        "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors whitespace-nowrap",
-                        sortConfig.field === 'createdAt' && "text-primary"
-                      )}
-                    >
-                      Upload Date
-                      {getSortIcon('createdAt')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[15%]">
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('status')}
-                      className={cn(
-                        "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
-                        sortConfig.field === 'status' && "text-primary"
-                      )}
-                    >
-                      Status
-                      {getSortIcon('status')}
-                    </Button>
-                  </TableHead>
-                  <TableHead className="w-[5%] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedFiles.map((file) => (
-                  <TableRow
-                    key={file.id}
-                    className={cn(
-                      file.status === 'deleted' && "opacity-60",
-                      selectedFiles.has(file.id) && "bg-muted/50"
-                    )}
+              </div>
+              {filteredAndSortedFiles.length > 5 && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="hidden sm:inline-flex"
                   >
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedFiles.has(file.id)}
-                        onCheckedChange={() => toggleFileSelection(file.id)}
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
-                          <FileIcon className="w-3 h-3 text-primary" />
-                        </div>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="truncate max-w-[300px]">{file.name}</span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{file.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatFileSize(file.size)}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {new Date(file.createdAt).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <span className={getStatusStyles(file.status)}>
-                        {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                      </span>
-                      {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
-                        <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
-                          <Progress
-                            value={uploadProgress[file.id]}
-                            className="h-2 bg-primary/20"
-                          />
-                          <span className="text-sm text-muted-foreground min-w-[40px]">
-                            {uploadProgress[file.id]}%
-                          </span>
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="hover:bg-muted/80 transition-colors rounded-full"
-                          >
-                            <MoreVerticalIcon className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
-                            <FileTextIcon className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          {file.status === 'deleted' ? (
-                            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
-                              <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                              Restore
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => deleteMutation.mutate(file.id)}
-                            >
-                              <Trash2Icon className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
+                    <ChevronsLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <div className="flex items-center gap-2">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        const distance = Math.abs(page - currentPage);
+                        return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                      })
+                      .map((page, index, array) => (
+                        <React.Fragment key={page}>
+                          {index > 0 && array[index - 1] !== page - 1 && (
+                            <span className="text-muted-foreground">...</span>
                           )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {paginatedFiles.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
-                      No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex items-center justify-between px-2 py-4">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {filteredAndSortedFiles.length > 0 && (
-                filteredAndSortedFiles.length <= 5 ? (
-                  `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
-                ) : (
-                  `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
-                )
+                          <Button
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="icon"
+                            onClick={() => handlePageChange(page)}
+                            className="w-8 h-8"
+                          >
+                            {page}
+                          </Button>
+                        </React.Fragment>
+                      ))}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="hidden sm:inline-flex"
+                  >
+                    <ChevronsRightIcon className="h-4 w-4" />
+                  </Button>
+                </div>
               )}
             </div>
-            {filteredAndSortedFiles.length > 5 && (
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                  className="hidden sm:inline-flex"
-                >
-                  <ChevronsLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeftIcon className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => {
-                      const distance = Math.abs(page - currentPage);
-                      return distance === 0 || distance === 1 || page === 1 || page === totalPages;
-                    })
-                    .map((page, index, array) => (
-                      <React.Fragment key={page}>
-                        {index > 0 && array[index - 1] !== page - 1 && (
-                          <span className="text-muted-foreground">...</span>
-                        )}
-                        <Button
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="icon"
-                          onClick={() => handlePageChange(page)}
-                          className="w-8 h-8"
-                        >
-                          {page}
-                        </Button>
-                      </React.Fragment>
-                    ))}
+          </div>
+        </div>
+
+        <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>File Details</DialogTitle>
+            </DialogHeader>
+            {selectedFileDetails && (
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">File Name</p>
+                      <p className="mt-1">{selectedFileDetails.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Size</p>
+                      <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Type</p>
+                      <p className="mt-1">{selectedFileDetails.type}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Status</p>
+                      <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
+                    </div>
+                  </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="hidden sm:inline-flex"
-                >
-                  <ChevronsRightIcon className="h-4 w-4" />
-                </Button>
+
+                {/* Upload Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                      <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                    </div>
+                    {selectedFileDetails.uploader && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
+                        <p className="mt-1">{selectedFileDetails.uploader}</p>
+                      </div>
+                    )}
+                    {selectedFileDetails.uploadTimeMs && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                        <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Access Information */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedFileDetails.downloadCount !== undefined && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                        <p className="mt-1">{selectedFileDetails.downloadCount}</p>
+                      </div>
+                    )}
+                    {selectedFileDetails.lastAccessed && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
+                        <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Technical Details */}
+                {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedFileDetails.version !== undefined && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Version</p>
+                          <p className="mt-1">{selectedFileDetails.version}</p>
+                        </div>
+                      )}
+                      {selectedFileDetails.checksum && (
+                        <div className="col-span-2">
+                          <p className="text-sm font-medium text-muted-foreground">Checksum</p>
+                          <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        </div>
-      </div>
-
-      <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>File Details</DialogTitle>
-          </DialogHeader>
-          {selectedFileDetails && (
-            <div className="space-y-6">
-              {/* Basic Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">File Name</p>
-                    <p className="mt-1">{selectedFileDetails.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Size</p>
-                    <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Type</p>
-                    <p className="mt-1">{selectedFileDetails.type}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Upload Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
-                    <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
-                  </div>
-                  {selectedFileDetails.uploader && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
-                      <p className="mt-1">{selectedFileDetails.uploader}</p>
-                    </div>
-                  )}
-                  {selectedFileDetails.uploadTimeMs && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                      <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Access Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  {selectedFileDetails.downloadCount !== undefined && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                      <p className="mt-1">{selectedFileDetails.downloadCount}</p>
-                    </div>
-                  )}
-                  {selectedFileDetails.lastAccessed && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
-                      <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Technical Details */}
-              {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedFileDetails.version !== undefined && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Version</p>
-                        <p className="mt-1">{selectedFileDetails.version}</p>
-                      </div>
-                    )}
-                    {selectedFileDetails.checksum && (
-                      <div className="col-span-2">
-                        <p className="text-sm font-medium text-muted-foreground">Checksum</p>
-                        <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      </TooltipProvider>
     </DashboardLayout>
   );
 }
