@@ -120,12 +120,14 @@ interface FileApiResponse {
   status: FileStatus;
   createdAt: string;
   updatedAt: string;
+  uploadTime: string;  // Added to match FileItem
   uploader?: string;
   uploadTimeMs?: number;
   downloadCount?: number;
   lastAccessed?: string;
   version?: number;
   checksum?: string;
+  // Add other optional fields...
 }
 
 type SortField = 'name' | 'size' | 'createdAt' | 'status';
@@ -201,42 +203,6 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 
 FileNameCell.displayName = 'FileNameCell';
 
-const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
-        >
-          <MoreVerticalIcon className="w-4 h-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
-          <FileTextIcon className="w-4 h-4 mr-2" />
-          View Details
-        </DropdownMenuItem>
-        {file.status === 'deleted' ? (
-          <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
-            <RefreshCcwIcon className="w-4 h-4 mr-2" />
-            Restore
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem
-            className="text-destructive"
-            onClick={() => onDelete(file.id)}
-          >
-            <Trash2Icon className="w-4 h-4 mr-2" />
-            Delete
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
-
 // Update the column priorities to match the new order
 const columnPriorities = {
   fileName: 0,      // Always visible
@@ -298,10 +264,47 @@ export default function FileVault() {
   const breakpoint = useBreakpoint();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
 
-  // Update the getVisibleColumns function
+  // Move FileActions component inside to access state
+  const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
+          >
+            <MoreVerticalIcon className="w-4 h-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
+            <FileTextIcon className="w-4 h-4 mr-2" />
+            View Details
+          </DropdownMenuItem>
+          {file.status === 'deleted' ? (
+            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+              <RefreshCcwIcon className="w-4 h-4 mr-2" />
+              Restore
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem
+              className="text-destructive"
+              onClick={() => onDelete(file.id)}
+            >
+              <Trash2Icon className="w-4 h-4 mr-2" />
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
+  // Update getVisibleColumns for better space usage
   const getVisibleColumns = () => {
-    const minWidth = 540; // Reduced from 640
-    const columnWidth = 70; // Further reduced for more efficient space usage
+    const minWidth = 480; // Even smaller threshold
+    const columnWidth = 60; // More compact
     const sidebarWidth = isSidebarCollapsed ? 64 : 256;
     const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
     const maxColumns = Math.floor(availableSpace / columnWidth);
@@ -749,7 +752,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[8rem] min-w-[8rem] bg-muted whitespace-nowrap">
+                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted whitespace-nowrap">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -772,7 +775,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right whitespace-nowrap">
+                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right whitespace-nowrap">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -784,8 +787,8 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[5.5rem] min-w-[5.5rem] bg-muted text-right whitespace-nowrap">
-                          Upload Time
+                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right whitespace-nowrap">
+                          Time
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
@@ -918,7 +921,7 @@ export default function FileVault() {
                       disabled={currentPage ===totalPages}
                       className="hidden sm:inline-flex"
                     >
-                      <ChevronsRightIcon className="h-4 w-4" />
+                      <ChevronsRightIcon className="h4 w-4" />
                     </Button>
                   </div>
                 )}
