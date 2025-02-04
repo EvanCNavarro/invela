@@ -113,24 +113,22 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0">
+    <div className="flex items-center gap-2 min-w-0 max-w-[18.25rem]">
       <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
         <FileIcon className="w-3 h-3 text-primary" />
       </div>
-      <span ref={nameRef} className="truncate block">
-        {isTextTruncated ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="truncate block">{file.name}</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{file.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <span className="truncate block">{file.name}</span>
-        )}
-      </span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span ref={nameRef} className="truncate block min-w-0 flex-1">
+              {file.name}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{file.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 });
@@ -581,12 +579,12 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[18.25rem] min-w-[18.25rem] max-w-[18.25rem] bg-muted">
+                      <TableHead className="w-[18.25rem] min-w-[18.25rem] max-w-[18.25rem] bg-muted overflow-hidden">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
                           className={cn(
-                            "hover:bg-muted text-left pl-0 gap-1 transition-colors",
+                            "hover:bg-muted text-left pl-0 gap-1 transition-colors overflow-hidden",
                             sortConfig.field === 'name' && "text-primary"
                           )}
                         >
