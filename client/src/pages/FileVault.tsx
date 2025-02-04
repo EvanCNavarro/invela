@@ -24,6 +24,9 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
+  ShieldIcon,
+  BarChart2Icon,
+  ClockIcon,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -164,38 +167,31 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0" role="cell">
+    <div className="flex items-center gap-2 min-w-0 max-w-[14rem]" role="cell">
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
       >
         <FileIcon className="w-3 h-3 text-primary" />
       </div>
-      {isTextTruncated ? (
+      <span
+        ref={nameRef}
+        className="truncate block min-w-0 flex-1"
+        aria-label={`File name: ${file.name}`}
+      >
+        {file.name}
+      </span>
+      {isTextTruncated && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span
-                ref={nameRef}
-                className="truncate block min-w-0 flex-1"
-                aria-label={`File name: ${file.name}`}
-              >
-                {file.name}
-              </span>
+              <span className="sr-only">Show full file name</span>
             </TooltipTrigger>
             <TooltipContent>
               <p>{file.name}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-      ) : (
-        <span
-          ref={nameRef}
-          className="block min-w-0 flex-1"
-          aria-label={`File name: ${file.name}`}
-        >
-          {file.name}
-        </span>
       )}
     </div>
   );
@@ -746,64 +742,60 @@ export default function FileVault() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b hover:bg-transparent">
-                      <TableHead className="w-[2rem] min-w-[2rem] max-w-[2rem] bg-muted text-center sticky left-0 z-20">
+                      <TableHead className="w-[2rem] min-w-[2rem] bg-muted text-center sticky left-0 z-20">
                         <Checkbox
                           checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted whitespace-nowrap">
+                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 whitespace-nowrap"
                         >
-                          Name
-                          {getSortIcon('name')}
+                          Name {getSortIcon('name')}
                         </Button>
                       </TableHead>
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-[3.5rem] min-w-[3.5rem] bg-muted text-right whitespace-nowrap">
+                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
-                            className="flex items-center gap-1 ml-auto"
+                            className="flex items-center gap-1 ml-auto whitespace-nowrap"
                           >
-                            Size
-                            {getSortIcon('size')}
+                            Size {getSortIcon('size')}
                           </Button>
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right whitespace-nowrap">
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
-                            className="flex items-center gap-1 ml-auto"
+                            className="flex items-center gap-1 ml-auto whitespace-nowrap"
                           >
-                            Upload Date
-                            {getSortIcon('createdAt')}
+                            Upload Date {getSortIcon('createdAt')}
                           </Button>
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right whitespace-nowrap">
-                          Time
+                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-right">
+                          <span className="whitespace-nowrap">Time</span>
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-center whitespace-nowrap">
+                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-center">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
-                            className="flex items-center gap-1 mx-auto"
+                            className="flex items-center gap-1 mx-auto whitespace-nowrap"
                           >
-                            Status
-                            {getSortIcon('status')}
+                            Status {getSortIcon('status')}
                           </Button>
                         </TableHead>
                       )}
-                      <TableHead className="w-[2rem] min-w-[2rem] max-w-[2rem] bg-muted text-center sticky right-0 z-20">
+                      <TableHead className="w-[2rem] min-w-[2rem] bg-muted text-center sticky right-0 z-20">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -923,8 +915,7 @@ export default function FileVault() {
                     >
                       <ChevronsRightIcon className="h4 w-4" />
                     </Button>
-                  </div>
-                )}
+                  </div>                )}
               </div>
             </div>
           </div>
@@ -936,45 +927,45 @@ export default function FileVault() {
                 aria-describedby="file-details-description"
               >
                 <DialogHeader>
-                  <DialogTitle>File Details</DialogTitle>
+                  <DialogTitle className="text-xl font-semibold">File Details</DialogTitle>
                   <p id="file-details-description" className="text-sm text-muted-foreground">
                     View detailed information about the selected file
                   </p>
                 </DialogHeader>
                 {selectedFileDetails && (
                   <div className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+                    {/* File Overview */}
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <FileIcon className="w-4 h-4 text-primary" />
+                        <h3 className="text-sm font-medium">File Overview</h3>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">File Name</p>
-                          <p className="mt-1">{selectedFileDetails.name}</p>
+                          <p className="text-sm font-medium text-muted-foreground">Name</p>
+                          <p className="mt-1 truncate">{selectedFileDetails.name}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Size</p>
                           <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Created At</p>
-                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleDateString()}</p>
+                          <p className="text-sm font-medium text-muted-foreground">Type</p>
+                          <p className="mt-1">{selectedFileDetails.type}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Status</p>
                           <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                          <p className="mt-1">
-                            {formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}
-                          </p>
-                        </div>
                       </div>
                     </div>
 
-                    {/* Security & Access Control */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Security & Access Control</h3>
+                    {/* Security & Access */}
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <ShieldIcon className="w-4 h-4 text-amber-600" />
+                        <h3 className="text-sm font-medium text-amber-600">Security & Access</h3>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Access Level</p>
@@ -985,46 +976,56 @@ export default function FileVault() {
                           <p className="mt-1 capitalize">{selectedFileDetails.classificationType || 'internal'}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Encryption Status</p>
+                          <p className="text-sm font-medium text-muted-foreground">Encryption</p>
                           <p className="mt-1">{selectedFileDetails.encryptionStatus ? 'Encrypted' : 'Not Encrypted'}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Storage Location</p>
+                          <p className="text-sm font-medium text-muted-foreground">Storage</p>
                           <p className="mt-1 capitalize">{selectedFileDetails.storageLocation?.replace('-', ' ') || 'hot storage'}</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Usage Statistics */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Usage Statistics</h3>
+                    {/* Activity & Usage */}
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <BarChart2Icon className="w-4 h-4 text-blue-600" />
+                        <h3 className="text-sm font-medium text-blue-600">Activity & Usage</h3>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Downloads</p>
                           <p className="mt-1">{selectedFileDetails.downloadCount || 0}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Unique Viewers</p>
+                          <p className="text-sm font-medium text-muted-foreground">Unique Views</p>
                           <p className="mt-1">{selectedFileDetails.uniqueViewers || 0}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Version</p>
-                          <p className="mt-1">{selectedFileDetails.version || 1}</p>
+                          <p className="mt-1">v{selectedFileDetails.version || '1.0'}</p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Retention Period</p>
+                          <p className="text-sm font-medium text-muted-foreground">Retention</p>
                           <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Timestamps */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Timestamps</h3>
+                    {/* Timeline */}
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <ClockIcon className="w-4 h-4 text-green-600" />
+                        <h3 className="text-sm font-medium text-green-600">Timeline</h3>
+                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                          <p className="text-sm font-medium text-muted-foreground">Created</p>
                           <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                          <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
                         </div>
                         {selectedFileDetails.lastAccessed && (
                           <div>
@@ -1034,16 +1035,6 @@ export default function FileVault() {
                         )}
                       </div>
                     </div>
-
-                    {/* File Preview Section */}
-                    {selectedFileDetails.type === 'text/plain' && (
-                      <div className="space-y-4">
-                        <h3 className="text-sm font-medium text-muted-foreground">File Preview</h3>
-                        <div className="max-h-[200px] overflow-y-auto rounded border bg-muted p-4">
-                          <FilePreview fileId={selectedFileDetails.id} />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </DialogContent>
