@@ -436,8 +436,9 @@ export default function FileVault() {
                       checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                      className="data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-input"
-                      icon={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? <MinusIcon className="h-3 w-3 text-muted-foreground" /> : undefined}
+                      className={cn(
+                        selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-input after:content-[''] after:block after:w-2 after:h-0.5 after:bg-muted-foreground after:rounded-full"
+                      )}
                     />
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
