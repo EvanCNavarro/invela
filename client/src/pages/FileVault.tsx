@@ -162,7 +162,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[12.25rem]" role="cell"> {/* Reduced max width */}
+    <div className="flex items-center gap-2 min-w-0 max-w-[10rem]" role="cell"> {/* Further reduced from 12.25rem */}
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
@@ -301,8 +301,8 @@ export default function FileVault() {
   // Update the getVisibleColumns function
   const getVisibleColumns = () => {
     const minWidth = 640;
-    const columnWidth = 100; // Even more compact
-    const sidebarWidth = isSidebarCollapsed ? 64 : 256; // Adjust based on sidebar state
+    const columnWidth = 80; // Even more compact (reduced from 100)
+    const sidebarWidth = isSidebarCollapsed ? 64 : 256;
     const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
     const maxColumns = Math.floor(availableSpace / columnWidth);
 
@@ -760,7 +760,7 @@ export default function FileVault() {
                         </Button>
                       </TableHead>
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-[4.5rem] min-w-[4.5rem] bg-muted text-right">
+                        <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-right"> {/* Reduced from 4.5rem */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
@@ -784,12 +784,12 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right">
+                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-right"> {/* Reduced from 7rem */}
                           Upload Time
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-center">
+                        <TableHead className="w-[4.5rem] min-w-[4.5rem] bg-muted text-center"> {/* Reduced from 5rem */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
