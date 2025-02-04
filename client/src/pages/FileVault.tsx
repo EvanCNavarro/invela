@@ -449,7 +449,7 @@ export default function FileVault() {
   return (
     <DashboardLayout>
       <TooltipProvider>
-        <div className="space-y-6">
+        <div className="space-y-4"> {/* Reduced from space-y-6 */}
           <div className="flex justify-between items-start">
             <div>
               <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
@@ -539,14 +539,14 @@ export default function FileVault() {
                 <TableHeader>
                   <TableRow className="border-b hover:bg-transparent">
                     {/* Priority 0: Always visible */}
-                    <TableHead className="w-[30px] bg-muted/50">
+                    <TableHead className="w-[48px] bg-muted/50 text-center">
                       <Checkbox
                         checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                         onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                       />
                     </TableHead>
                     {/* Priority 0: Always visible - Name */}
-                    <TableHead className="min-w-[150px] max-w-[300px] w-[50%] bg-muted/50">
+                    <TableHead className="w-[35%] bg-muted/50">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
@@ -560,12 +560,12 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 1: Upload Date - Hidden on xs, visible on lg and up */}
-                    <TableHead className="w-[140px] hidden lg:table-cell bg-muted/50">
+                    <TableHead className="w-[160px] hidden lg:table-cell bg-muted/50 text-right">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
                         className={cn(
-                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors whitespace-nowrap",
+                          "hover:bg-muted/50 text-right pr-0 gap-1 transition-colors whitespace-nowrap",
                           sortConfig.field === 'createdAt' && "text-primary"
                         )}
                       >
@@ -574,12 +574,12 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 2: Status - Hidden on xs, visible on md and up */}
-                    <TableHead className="w-[120px] hidden md:table-cell bg-muted/50">
+                    <TableHead className="w-[120px] hidden md:table-cell bg-muted/50 text-center">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('status')}
                         className={cn(
-                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          "hover:bg-muted/50 justify-center gap-1 transition-colors",
                           sortConfig.field === 'status' && "text-primary"
                         )}
                       >
@@ -588,12 +588,12 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 3: Size - Hidden on xs and sm, visible on xl and up */}
-                    <TableHead className="w-[100px] hidden xl:table-cell bg-muted/50">
+                    <TableHead className="w-[100px] hidden xl:table-cell bg-muted/50 text-right">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('size')}
                         className={cn(
-                          "hover:bg-muted/50 text-left pl-0 gap-1 transition-colors",
+                          "hover:bg-muted/50 text-right pr-0 gap-1 transition-colors",
                           sortConfig.field === 'size' && "text-primary"
                         )}
                       >
@@ -602,7 +602,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 0: Always visible - Actions */}
-                    <TableHead className="w-[50px] bg-muted/50">
+                    <TableHead className="w-[64px] bg-muted/50 text-center">
                       <span className="sr-only">Actions</span>
                     </TableHead>
                   </TableRow>
@@ -617,7 +617,7 @@ export default function FileVault() {
                         selectedFiles.has(file.id) && "bg-muted/50"
                       )}
                     >
-                      <TableCell className="w-[30px]">
+                      <TableCell className="text-center">
                         <Checkbox
                           checked={selectedFiles.has(file.id)}
                           onCheckedChange={() => toggleFileSelection(file.id)}
@@ -639,11 +639,11 @@ export default function FileVault() {
                         </div>
                       </TableCell>
                       {/* Priority 1: Upload Date */}
-                      <TableCell className="hidden lg:table-cell w-[140px]">
+                      <TableCell className="hidden lg:table-cell text-right">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </TableCell>
                       {/* Priority 2: Status */}
-                      <TableCell className="hidden md:table-cell w-[120px]">
+                      <TableCell className="hidden md:table-cell text-center">
                         <span className={getStatusStyles(file.status)}>
                           {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                         </span>
@@ -657,16 +657,16 @@ export default function FileVault() {
                         )}
                       </TableCell>
                       {/* Priority 3: Size */}
-                      <TableCell className="hidden xl:table-cell w-[100px]">
+                      <TableCell className="hidden xl:table-cell text-right">
                         {formatFileSize(file.size)}
                       </TableCell>
-                      <TableCell className="w-[50px]">
+                      <TableCell className="text-center">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="hover:bg-muted/80 transition-colors rounded-full float-right"
+                              className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
                             >
                               <MoreVerticalIcon className="w-4 h-4" />
                             </Button>
@@ -697,174 +697,175 @@ export default function FileVault() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          </div>
 
-          <div className="flex items-center justify-between px-2 py-4">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {filteredAndSortedFiles.length > 0 && (
-                filteredAndSortedFiles.length <= 5 ? (
-                  `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
-                ) : (
-                  `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
-                )
-              )}
-            </div>
-            {filteredAndSortedFiles.length > 5 && (
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                  className="hidden sm:inline-flex"
-                >
-                  <ChevronsLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeftIcon className="h-4 w-4" />
-                </Button>
-                <div className="flex items-center gap-2">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter(page => {
-                      const distance = Math.abs(page - currentPage);
-                      return distance === 0 || distance === 1 || page === 1 || page === totalPages;
-                    })
-                    .map((page, index, array) => (
-                      <React.Fragment key={page}>
-                        {index > 0 && array[index - 1] !== page - 1 && (
-                          <span className="text-muted-foreground">...</span>
-                        )}
-                        <Button
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="icon"
-                          onClick={() => handlePageChange(page)}
-                          className="w-8 h-8"
-                        >
-                          {page}
-                        </Button>
-                      </React.Fragment>
-                    ))}
+              {/* Pagination moved inside table container with white background */}
+              <div className="flex items-center justify-between px-4 py-3 bg-white border-t">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  {filteredAndSortedFiles.length > 0 && (
+                    filteredAndSortedFiles.length <= 5 ? (
+                      `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
+                    ) : (
+                      `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
+                    )
+                  )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                  className="hidden sm:inline-flex"
-                >
-                  <ChevronsRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>File Details</DialogTitle>
-            </DialogHeader>
-            {selectedFileDetails && (
-              <div className="space-y-6">
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">File Name</p>
-                      <p className="mt-1">{selectedFileDetails.name}</p>
+                {filteredAndSortedFiles.length > 5 && (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1}
+                      className="hidden sm:inline-flex"
+                    >
+                      <ChevronsLeftIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeftIcon className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(page => {
+                          const distance = Math.abs(page - currentPage);
+                          return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                        })
+                        .map((page, index, array) => (
+                          <React.Fragment key={page}>
+                            {index > 0 && array[index - 1] !== page - 1 && (
+                              <span className="text-muted-foreground">...</span>
+                            )}
+                            <Button
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="icon"
+                              onClick={() => handlePageChange(page)}
+                              className="w-8 h-8"
+                            >
+                              {page}
+                            </Button>
+                          </React.Fragment>
+                        ))}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Size</p>
-                      <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Type</p>
-                      <p className="mt-1">{selectedFileDetails.type}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Status</p>
-                      <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
-                      <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
-                    </div>
-                    {selectedFileDetails.uploader && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
-                        <p className="mt-1">{selectedFileDetails.uploader}</p>
-                      </div>
-                    )}
-                    {selectedFileDetails.uploadTimeMs && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                        <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedFileDetails.downloadCount !== undefined && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                        <p className="mt-1">{selectedFileDetails.downloadCount}</p>
-                      </div>
-                    )}
-                    {selectedFileDetails.lastAccessed && (
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
-                        <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {selectedFileDetails.version !== undefined && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Version</p>
-                          <p className="mt-1">{selectedFileDetails.version}</p>
-                        </div>
-                      )}
-                      {selectedFileDetails.checksum && (
-                        <div className="col-span-2">
-                          <p className="text-sm font-medium text-muted-foreground">Checksum</p>
-                          <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
-                        </div>
-                      )}
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRightIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className="hidden sm:inline-flex"
+                    >
+                      <ChevronsRightIcon className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
+            </div>
+          </div>
+
+          <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>File Details</DialogTitle>
+              </DialogHeader>
+              {selectedFileDetails && (
+                <div className="space-y-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">File Name</p>
+                        <p className="mt-1">{selectedFileDetails.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Size</p>
+                        <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Type</p>
+                        <p className="mt-1">{selectedFileDetails.type}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                        <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                        <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                      </div>
+                      {selectedFileDetails.uploader && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
+                          <p className="mt-1">{selectedFileDetails.uploader}</p>
+                        </div>
+                      )}
+                      {selectedFileDetails.uploadTimeMs && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                          <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedFileDetails.downloadCount !== undefined && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                          <p className="mt-1">{selectedFileDetails.downloadCount}</p>
+                        </div>
+                      )}
+                      {selectedFileDetails.lastAccessed && (
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
+                          <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        {selectedFileDetails.version !== undefined && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Version</p>
+                            <p className="mt-1">{selectedFileDetails.version}</p>
+                          </div>
+                        )}
+                        {selectedFileDetails.checksum && (
+                          <div className="col-span-2">
+                            <p className="text-sm font-medium text-muted-foreground">Checksum</p>
+                            <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </div>
       </TooltipProvider>
     </DashboardLayout>
   );
