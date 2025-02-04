@@ -97,6 +97,11 @@ interface FileApiResponse {
 type SortField = 'name' | 'size' | 'createdAt' | 'status';
 type SortOrder = 'asc' | 'desc';
 
+interface UploadingFile extends Omit<FileItem, 'id'> {
+  id: string;
+  progress: number;
+}
+
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -112,6 +117,7 @@ export default function FileVault() {
   const [selectedFileDetails, setSelectedFileDetails] = useState<FileItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
+  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
 
   const { data: files = [] } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
@@ -236,7 +242,7 @@ export default function FileVault() {
     });
   };
 
-  const toggleAllFiles = (files: FileApiResponse[]) => {
+  const toggleAllFiles = (files: (FileApiResponse | UploadingFile)[]) => {
     if (selectedFiles.size === files.length) {
       setSelectedFiles(new Set());
     } else {
@@ -245,31 +251,46 @@ export default function FileVault() {
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
+    const newUploadingFiles = acceptedFiles.map(file => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'uploading',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      progress: 0
+    }));
+
+    setUploadingFiles(prev => [...prev, ...newUploadingFiles]);
+
     for (const file of acceptedFiles) {
+      const uploadId = newUploadingFiles.find(f => f.name === file.name)?.id;
       const formData = new FormData();
       formData.append('file', file);
 
-      const uploadId = crypto.randomUUID();
-      setUploadProgress(prev => ({ ...prev, [uploadId]: 0 }));
-
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          const currentProgress = prev[uploadId] || 0;
-          if (currentProgress >= 100) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return { ...prev, [uploadId]: Math.min(currentProgress + 10, 100) };
-        });
+        setUploadingFiles(prev =>
+          prev.map(f =>
+            f.id === uploadId
+              ? { ...f, progress: Math.min((f.progress || 0) + 10, 100) }
+              : f
+          )
+        );
       }, 500);
 
       try {
         await uploadMutation.mutateAsync(formData);
+        setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
       } catch (error) {
         console.error('Upload error:', error);
+        setUploadingFiles(prev =>
+          prev.map(f =>
+            f.id === uploadId ? { ...f, status: 'canceled' } : f
+          )
+        );
       } finally {
         clearInterval(progressInterval);
-        setUploadProgress(prev => ({ ...prev, [uploadId]: 100 }));
       }
     }
   };
@@ -296,8 +317,15 @@ export default function FileVault() {
       <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
+  const allFiles = useMemo(() => {
+    return [
+      ...uploadingFiles,
+      ...(files as FileApiResponse[])
+    ];
+  }, [files, uploadingFiles]);
+
   const filteredAndSortedFiles = useMemo(() => {
-    let result = [...(files as FileApiResponse[])];
+    let result = [...allFiles];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -328,7 +356,7 @@ export default function FileVault() {
     });
 
     return result;
-  }, [files, statusFilter, sortConfig, searchQuery]);
+  }, [allFiles, statusFilter, sortConfig, searchQuery]);
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -413,10 +441,10 @@ export default function FileVault() {
 
   const canRestore = useMemo(() => {
     return Array.from(selectedFiles).some(fileId => {
-      const file = (files as FileApiResponse[]).find(f => f.id === fileId);
+      const file = allFiles.find(f => f.id === fileId);
       return file?.status === 'deleted';
     });
-  }, [selectedFiles, files]);
+  }, [selectedFiles, allFiles]);
 
   return (
     <DashboardLayout>
@@ -513,18 +541,8 @@ export default function FileVault() {
                     <TableHead className="w-[30px]">
                       <Checkbox
                         checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                        data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
-                        onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles as FileApiResponse[])}
-                        className={cn(
-                          "transition-colors",
-                          selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
-                          "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary"
-                        )}
-                      >
-                        {selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && (
-                          <MinusIcon className="h-3 w-3 text-primary" />
-                        )}
-                      </Checkbox>
+                        onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
+                      />
                     </TableHead>
                     <TableHead className="w-[45%]">
                       <Button
@@ -539,7 +557,7 @@ export default function FileVault() {
                         {getSortIcon('name')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[15%]">
+                    <TableHead className="w-[15%] hidden md:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('size')}
@@ -552,7 +570,7 @@ export default function FileVault() {
                         {getSortIcon('size')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[20%] hidden md:table-cell">
+                    <TableHead className="w-[20%] hidden sm:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
@@ -565,7 +583,7 @@ export default function FileVault() {
                         {getSortIcon('createdAt')}
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[15%]">
+                    <TableHead className="w-[15%] hidden sm:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('status')}
@@ -611,22 +629,19 @@ export default function FileVault() {
                           </Tooltip>
                         </div>
                       </TableCell>
-                      <TableCell>{formatFileSize(file.size)}</TableCell>
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden md:table-cell">{formatFileSize(file.size)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <span className={getStatusStyles(file.status)}>
                           {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                         </span>
-                        {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
-                          <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
-                            <Progress
-                              value={uploadProgress[file.id]}
-                              className="h-2 bg-primary/20"
-                            />
-                            <span className="text-sm text-muted-foreground min-w-[40px]">
-                              {uploadProgress[file.id]}%
+                        {'progress' in file && file.status === 'uploading' && (
+                          <div className="flex items-center gap-2 mt-1">
+                            <Progress value={file.progress} className="h-2" />
+                            <span className="text-xs text-muted-foreground">
+                              {file.progress}%
                             </span>
                           </div>
                         )}
@@ -758,7 +773,6 @@ export default function FileVault() {
             </DialogHeader>
             {selectedFileDetails && (
               <div className="space-y-6">
-                {/* Basic Information */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -781,7 +795,6 @@ export default function FileVault() {
                   </div>
                 </div>
 
-                {/* Upload Information */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -804,7 +817,6 @@ export default function FileVault() {
                   </div>
                 </div>
 
-                {/* Access Information */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -823,7 +835,6 @@ export default function FileVault() {
                   </div>
                 </div>
 
-                {/* Technical Details */}
                 {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
