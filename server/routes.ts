@@ -297,7 +297,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Updated files GET endpoint with better error handling
   app.get("/api/files", requireAuth, async (req, res) => {
     try {
       const userFiles = await db.select({
@@ -311,13 +310,18 @@ export function registerRoutes(app: Express): Server {
         createdAt: files.createdAt,
         updatedAt: files.updatedAt,
         userId: files.userId,
-        companyId: files.companyId,
-        downloadCount: files.downloadCount
+        companyId: files.companyId
       })
         .from(files)
         .where(eq(files.userId, req.user!.id));
 
-      res.json(userFiles);
+      // Add downloadCount as 0 for now until we add the column
+      const filesWithDownloadCount = userFiles.map(file => ({
+        ...file,
+        downloadCount: 0
+      }));
+
+      res.json(filesWithDownloadCount);
     } catch (error) {
       console.error("Error fetching files:", error);
       res.status(500).json({ message: "Error fetching files" });
