@@ -150,19 +150,29 @@ export default function FileVault() {
 
   const restoreMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/restore`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+        const response = await fetch(`/api/files/${fileId}/restore`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.text();
+          throw new Error(error);
         }
-      });
 
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return response.json();
+        }
+
+        return { success: true };
+      } catch (error) {
+        console.error('Restore error:', error);
+        throw error;
       }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -172,9 +182,10 @@ export default function FileVault() {
       });
     },
     onError: (error: Error) => {
+      console.error('Restore error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to restore file",
+        description: "Failed to restore file. Please try again.",
         variant: "destructive",
       });
     },
@@ -199,7 +210,6 @@ export default function FileVault() {
       setSelectedFiles(new Set(files.map(file => file.id)));
     }
   };
-
 
   const onDrop = async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
@@ -366,7 +376,8 @@ export default function FileVault() {
                 <TableRow>
                   <TableHead className="w-[30px]">
                     <Checkbox
-                      checked={selectedFiles.size === filteredAndSortedFiles.length}
+                      checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
+                      indeterminate={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                     />
                   </TableHead>
@@ -374,40 +385,40 @@ export default function FileVault() {
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('name')}
-                      className="hover:bg-transparent text-left pl-0"
+                      className="hover:bg-muted/50 text-left pl-0 gap-1 transition-colors"
                     >
                       Name
-                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                      <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead className="hidden sm:table-cell text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('size')}
-                      className="hover:bg-transparent text-left pl-0"
+                      className="hover:bg-muted/50 text-left pl-0 gap-1 transition-colors"
                     >
                       Size
-                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                      <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead className="hidden lg:table-cell text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('createdAt')}
-                      className="hover:bg-transparent text-left pl-0 whitespace-nowrap"
+                      className="hover:bg-muted/50 text-left pl-0 gap-1 transition-colors whitespace-nowrap"
                     >
                       Upload Date
-                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                      <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead className="text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('status')}
-                      className="hover:bg-transparent text-left pl-0"
+                      className="hover:bg-muted/50 text-left pl-0 gap-1 transition-colors"
                     >
                       Status
-                      <ArrowUpDownIcon className="ml-2 h-4 w-4" />
+                      <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
                   <TableHead className="w-[60px]">Actions</TableHead>
@@ -460,7 +471,11 @@ export default function FileVault() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="hover:bg-muted/80 transition-colors rounded-full"
+                          >
                             <MoreVerticalIcon className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
