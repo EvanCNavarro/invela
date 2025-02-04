@@ -276,6 +276,19 @@ const TableSkeleton = () => (
 );
 
 
+// Add the timestamp formatting function
+const formatTimestampForFilename = () => {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  const hours = String(now.getUTCHours()).padStart(2, '0');
+  const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
+};
+
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -506,6 +519,7 @@ export default function FileVault() {
     },
   });
 
+  // Update the bulkDownloadMutation
   const bulkDownloadMutation = useMutation({
     mutationFn: async (fileIds: string[]) => {
       const response = await fetch('/api/files/download-bulk', {
@@ -524,7 +538,7 @@ export default function FileVault() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'files.zip';
+      a.download = `invela_download_${formatTimestampForFilename()}.zip`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -831,7 +845,7 @@ export default function FileVault() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
                     disabled={selectedFiles.size === 0}
                   >
