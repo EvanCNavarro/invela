@@ -45,7 +45,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen">
+      <div className="flex-1 flex flex-col min-h-screen relative">
         {/* Floating navbar that stretches full width */}
         <div className={cn(
           "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80",
@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* Main content area with padding for navbar */}
         <main className="flex-1 pt-16"> {/* Add padding-top to account for fixed navbar */}
-          <div className="px-4 md:px-6 py-4 md:py-6">
+          <div className="px-4 md:px-6 py-4 md:py-6 w-full overflow-x-hidden">
             {children}
           </div>
         </main>
