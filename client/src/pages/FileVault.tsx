@@ -546,7 +546,7 @@ export default function FileVault() {
                       />
                     </TableHead>
                     {/* Priority 0: Always visible - Name */}
-                    <TableHead className="w-[45%] min-w-[200px]">
+                    <TableHead className="min-w-[150px] w-auto">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
@@ -560,7 +560,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 1: Upload Date - Hidden on xs, visible on sm and up */}
-                    <TableHead className="w-[20%] hidden sm:table-cell">
+                    <TableHead className="w-[140px] hidden sm:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('createdAt')}
@@ -574,7 +574,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 2: Status - Hidden on xs, visible on sm and up */}
-                    <TableHead className="w-[15%] hidden sm:table-cell">
+                    <TableHead className="w-[120px] hidden sm:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('status')}
@@ -588,7 +588,7 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 3: Size - Hidden on xs and sm, visible on md and up */}
-                    <TableHead className="w-[15%] hidden md:table-cell">
+                    <TableHead className="w-[100px] hidden md:table-cell">
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('size')}
@@ -602,7 +602,9 @@ export default function FileVault() {
                       </Button>
                     </TableHead>
                     {/* Priority 0: Always visible - Actions */}
-                    <TableHead className="w-[5%] text-right">Actions</TableHead>
+                    <TableHead className="w-[50px]">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -614,14 +616,14 @@ export default function FileVault() {
                         selectedFiles.has(file.id) && "bg-muted/50"
                       )}
                     >
-                      <TableCell>
+                      <TableCell className="w-[30px]">
                         <Checkbox
                           checked={selectedFiles.has(file.id)}
                           onCheckedChange={() => toggleFileSelection(file.id)}
                         />
                       </TableCell>
-                      <TableCell className="font-medium max-w-0">
-                        <div className="flex items-center gap-2">
+                      <TableCell>
+                        <div className="flex items-center gap-2 min-w-0">
                           <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
                             <FileIcon className="w-3 h-3 text-primary" />
                           </div>
@@ -636,11 +638,11 @@ export default function FileVault() {
                         </div>
                       </TableCell>
                       {/* Priority 1: Upload Date */}
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell className="hidden sm:table-cell w-[140px]">
                         {new Date(file.createdAt).toLocaleDateString()}
                       </TableCell>
                       {/* Priority 2: Status */}
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell className="hidden sm:table-cell w-[120px]">
                         <span className={getStatusStyles(file.status)}>
                           {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                         </span>
@@ -654,16 +656,16 @@ export default function FileVault() {
                         )}
                       </TableCell>
                       {/* Priority 3: Size */}
-                      <TableCell className="hidden md:table-cell">
+                      <TableCell className="hidden md:table-cell w-[100px]">
                         {formatFileSize(file.size)}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="w-[50px]">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="hover:bg-muted/80 transition-colors rounded-full"
+                              className="hover:bg-muted/80 transition-colors rounded-full float-right"
                             >
                               <MoreVerticalIcon className="w-4 h-4" />
                             </Button>
@@ -692,88 +694,81 @@ export default function FileVault() {
                       </TableCell>
                     </TableRow>
                   ))}
-                  {paginatedFiles.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">
-                        No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
-                      </TableCell>
-                    </TableRow>
-                  )}
                 </TableBody>
               </Table>
             </div>
+          </div>
 
-            <div className="flex items-center justify-between px-2 py-4">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {filteredAndSortedFiles.length > 0 && (
-                  filteredAndSortedFiles.length <= 5 ? (
-                    `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
-                  ) : (
-                    `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
-                  )
-                )}
-              </div>
-              {filteredAndSortedFiles.length > 5 && (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(1)}
-                    disabled={currentPage === 1}
-                    className="hidden sm:inline-flex"
-                  >
-                    <ChevronsLeftIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronLeftIcon className="h-4 w-4" />
-                  </Button>
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(page => {
-                        const distance = Math.abs(page - currentPage);
-                        return distance === 0 || distance === 1 || page === 1 || page === totalPages;
-                      })
-                      .map((page, index, array) => (
-                        <React.Fragment key={page}>
-                          {index > 0 && array[index - 1] !== page - 1 && (
-                            <span className="text-muted-foreground">...</span>
-                          )}
-                          <Button
-                            variant={currentPage === page ? "default" : "outline"}
-                            size="icon"
-                            onClick={() => handlePageChange(page)}
-                            className="w-8 h-8"
-                          >
-                            {page}
-                          </Button>
-                        </React.Fragment>
-                      ))}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRightIcon className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handlePageChange(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="hidden sm:inline-flex"
-                  >
-                    <ChevronsRightIcon className="h-4 w-4" />
-                  </Button>
-                </div>
+          <div className="flex items-center justify-between px-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              {filteredAndSortedFiles.length > 0 && (
+                filteredAndSortedFiles.length <= 5 ? (
+                  `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
+                ) : (
+                  `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
+                )
               )}
             </div>
+            {filteredAndSortedFiles.length > 5 && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="hidden sm:inline-flex"
+                >
+                  <ChevronsLeftIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      const distance = Math.abs(page - currentPage);
+                      return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                    })
+                    .map((page, index, array) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="text-muted-foreground">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => handlePageChange(page)}
+                          className="w-8 h-8"
+                        >
+                          {page}
+                        </Button>
+                      </React.Fragment>
+                    ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="hidden sm:inline-flex"
+                >
+                  <ChevronsRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
