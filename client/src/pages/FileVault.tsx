@@ -21,7 +21,7 @@ import {
   AlertCircleIcon,
   ClockIcon,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -177,7 +177,7 @@ export default function FileVault() {
     },
     onSuccess: (updatedFile) => {
       queryClient.setQueryData(['/api/files'], (oldData: FileItem[]) => {
-        return oldData.map(file => 
+        return oldData.map(file =>
           file.id === updatedFile.id ? { ...file, status: 'restored' } : file
         );
       });
@@ -317,13 +317,13 @@ export default function FileVault() {
     switch (status) {
       case 'completed':
       case 'restored':
-        return "bg-success/10 text-success rounded-full px-2 py-0.5 text-xs font-medium";
+        return "bg-success/10 text-success rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       case 'uploading':
       case 'paused':
-        return "bg-warning/10 text-warning rounded-full px-2 py-0.5 text-xs font-medium";
+        return "bg-warning/10 text-warning rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       case 'canceled':
       case 'deleted':
-        return "bg-danger/10 text-danger rounded-full px-2 py-0.5 text-xs font-medium";
+        return "bg-danger/10 text-danger rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       default:
         return "text-muted-foreground";
     }
@@ -332,6 +332,26 @@ export default function FileVault() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  const handleBulkAction = (action: 'delete' | 'restore') => {
+    if (action === 'delete') {
+      Array.from(selectedFiles).forEach(fileId => {
+        deleteMutation.mutate(fileId);
+      });
+    } else {
+      Array.from(selectedFiles).forEach(fileId => {
+        restoreMutation.mutate(fileId);
+      });
+    }
+    setSelectedFiles(new Set());
+  };
+
+  const canRestore = useMemo(() => {
+    return Array.from(selectedFiles).some(fileId => {
+      const file = files.find(f => f.id === fileId);
+      return file?.status === 'deleted';
+    });
+  }, [selectedFiles, files]);
 
   return (
     <DashboardLayout>
@@ -363,33 +383,60 @@ export default function FileVault() {
         <FileUpload onDrop={onDrop} className="bg-muted/50" />
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="relative w-full sm:w-72">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search files..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap w-full">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="uploading">Uploading</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
+                <SelectItem value="restored">Restored</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="uploading">Uploading</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="canceled">Canceled</SelectItem>
-              <SelectItem value="deleted">Deleted</SelectItem>
-              <SelectItem value="restored">Restored</SelectItem>
-            </SelectContent>
-          </Select>
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search files..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  disabled={selectedFiles.size === 0}
+                  className="min-w-[100px]"
+                >
+                  Actions
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {canRestore ? (
+                  <DropdownMenuItem onClick={() => handleBulkAction('restore')}>
+                    <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                    Restore Selected
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
+                    <Trash2Icon className="w-4 h-4 mr-2" />
+                    Delete Selected
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         <div className="bg-background rounded-lg p-4 md:p-6 border">
@@ -400,8 +447,9 @@ export default function FileVault() {
                   <TableHead className="w-[30px]">
                     <Checkbox
                       checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                      indeterminate={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length}
+                      data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
+                      className="data-[state=indeterminate]:bg-primary/50 data-[state=indeterminate]:text-primary-foreground"
                     />
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
@@ -477,7 +525,9 @@ export default function FileVault() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getStatusIcon(file.status)}
-                        <span className={getStatusStyles(file.status)}>{file.status}</span>
+                        <span className={getStatusStyles(file.status)}>
+                          {file.status}
+                        </span>
                         {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
                           <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
                             <Progress
@@ -494,8 +544,8 @@ export default function FileVault() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="icon"
                             className="hover:bg-muted/80 transition-colors rounded-full"
                           >
