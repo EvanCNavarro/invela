@@ -427,14 +427,17 @@ export default function FileVault() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="uploading">Uploading</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-                <SelectItem value="deleted">Deleted</SelectItem>
-                <SelectItem value="restored">Restored</SelectItem>
-              </SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  {/* Successful states */}
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="restored">Restored</SelectItem>
+                  {/* Pending states */}
+                  <SelectItem value="uploading">Uploading</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  {/* Removed states */}
+                  <SelectItem value="canceled">Canceled</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
+                </SelectContent>
             </Select>
 
             <div className="relative flex-1">
