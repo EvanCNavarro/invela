@@ -533,7 +533,7 @@ export default function FileVault() {
             </div>
           </div>
 
-          <div className="bg-background rounded-lg p-4 md:p-6 border">
+          <div className="overflow-x-auto" > {/* Added overflow-x-auto to the table container */}
             <div className="w-full">
               <Table>
                 <TableHeader>
@@ -546,7 +546,7 @@ export default function FileVault() {
                       />
                     </TableHead>
                     {/* Priority 0: Always visible - Name */}
-                    <TableHead className="min-w-[150px] w-auto">
+                    <TableHead className="min-w-[150px] max-w-[300px] w-auto"> {/* Added max-width */}
                       <Button
                         variant="ghost"
                         onClick={() => handleSort('name')}
