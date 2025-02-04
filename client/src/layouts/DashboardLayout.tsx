@@ -51,7 +51,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         "w-[calc(100%-5rem)]", // Base width when sidebar is collapsed (20px)
         isSidebarExpanded && "w-[calc(100%-16rem)]" // Adjust width when sidebar is expanded (64px)
       )}>
-        <TopNav />
+        <div className="sticky top-0 z-30 w-full backdrop-blur-sm bg-background/80 border-b">
+          <TopNav />
+        </div>
         <main className="flex-1">
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
             {children}
