@@ -241,6 +241,40 @@ const formatTimeWithZone = (date: Date) => {
   }).format(date);
 };
 
+const TableSkeleton = () => (
+  <>
+    {Array.from({ length: 5 }).map((_, index) => (
+      <TableRow key={index} className="animate-pulse">
+        <TableCell className="w-[40px]">
+          <div className="h-4 w-4 bg-muted rounded" />
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 bg-muted rounded" />
+            <div className="h-4 w-32 bg-muted rounded" />
+          </div>
+        </TableCell>
+        <TableCell>
+          <div className="h-4 w-16 bg-muted rounded ml-auto" />
+        </TableCell>
+        <TableCell>
+          <div className="h-4 w-24 bg-muted rounded ml-auto" />
+        </TableCell>
+        <TableCell>
+          <div className="h-4 w-20 bg-muted rounded ml-auto" />
+        </TableCell>
+        <TableCell>
+          <div className="h-6 w-20 bg-muted rounded mx-auto" />
+        </TableCell>
+        <TableCell>
+          <div className="h-8 w-8 bg-muted rounded mx-auto" />
+        </TableCell>
+      </TableRow>
+    ))}
+  </>
+);
+
+
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -259,6 +293,8 @@ export default function FileVault() {
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
+  const [isLoading, setIsLoading] = useState(true); // Added loading state
+
 
   // Move FileActions component inside to access state
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
@@ -318,8 +354,9 @@ export default function FileVault() {
     return visibleColumns;
   };
 
-  const { data: files = [] } = useQuery<FileApiResponse[]>({
+  const { data: files = [], isLoading: apiIsLoading } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
+    onSettled: () => setIsLoading(false) //Set loading to false once data is fetched
   });
 
   const uploadMutation = useMutation({
@@ -738,113 +775,177 @@ export default function FileVault() {
 
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <div className="relative overflow-x-auto">
-                <Table className="w-full">
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[40px] bg-muted text-center sticky left-0 z-20">
-                        <Checkbox
-                          checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                          onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                        />
-                      </TableHead>
-                      <TableHead className="w-[200px] bg-muted sticky left-[40px] z-20">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort('name')}
-                          className="flex items-center gap-1 whitespace-nowrap"
-                        >
-                          Name {getSortIcon('name')}
-                        </Button>
-                      </TableHead>
-                      {visibleColumns.has('size') && (
-                        <TableHead className="w-[100px] bg-muted text-right">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort('size')}
-                            className="flex items-center gap-1 ml-auto whitespace-nowrap"
-                          >
-                            Size {getSortIcon('size')}
-                          </Button>
-                        </TableHead>
-                      )}
-                      {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[140px] bg-muted text-right">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort('createdAt')}
-                            className="flex items-center gap-1 ml-auto whitespace-nowrap"
-                          >
-                            Upload Date {getSortIcon('createdAt')}
-                          </Button>
-                        </TableHead>
-                      )}
-                      {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[120px] bg-muted text-right">
-                          <span className="whitespace-nowrap">Time</span>
-                        </TableHead>
-                      )}
-                      {visibleColumns.has('status') && (
-                        <TableHead className="w-[120px] bg-muted text-center">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort('status')}
-                            className="flex items-center gap-1 mx-auto whitespace-nowrap"
-                          >
-                            Status {getSortIcon('status')}
-                          </Button>
-                        </TableHead>
-                      )}
-                      <TableHead className="w-[80px] bg-muted text-center sticky right-0 z-20">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedFiles.map((file) => (
-                      <TableRow key={file.id} className="bg-white hover:bg-muted/50 transition-colors">
-                        <TableCell className="text-center sticky left-0 z-20 bg-inherit">
+              <div className="relative">
+                <div className="overflow-x-auto">
+                  <Table className="w-full">
+                    <TableHeader className="sticky top-0 z-30 bg-muted">
+                      <TableRow className="hover:bg-transparent">
+                        <TableHead className="w-[40px] sticky left-0 z-40 bg-muted">
                           <Checkbox
-                            checked={selectedFiles.has(file.id)}
-                            onCheckedChange={() => toggleFileSelection(file.id)}
+                            checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
+                            onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                           />
-                        </TableCell>
-                        <TableCell className="sticky left-[40px] z-20 bg-inherit">
-                          <FileNameCell file={file} />
-                        </TableCell>
+                        </TableHead>
+                        <TableHead className="w-[200px] sticky left-[40px] z-20 bg-muted">
+                          <Button
+                            variant="ghost"
+                            onClick={() => handleSort('name')}
+                            className="flex items-center gap-1 whitespace-nowrap"
+                          >
+                            Name {getSortIcon('name')}
+                          </Button>
+                        </TableHead>
                         {visibleColumns.has('size') && (
-                          <TableCell className="text-right bg-inherit">
-                            {formatFileSize(file.size)}
-                          </TableCell>
+                          <TableHead className="w-[100px] bg-muted text-right">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort('size')}
+                              className="flex items-center gap-1 ml-auto whitespace-nowrap"
+                            >
+                              Size {getSortIcon('size')}
+                            </Button>
+                          </TableHead>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableCell className="text-right bg-inherit">
-                            {new Date(file.createdAt).toLocaleDateString(undefined, {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </TableCell>
+                          <TableHead className="w-[140px] bg-muted text-right">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort('createdAt')}
+                              className="flex items-center gap-1 ml-auto whitespace-nowrap"
+                            >
+                              Upload Date {getSortIcon('createdAt')}
+                            </Button>
+                          </TableHead>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableCell className="text-right bg-inherit">
-                            {formatTimeWithZone(new Date(file.uploadTime))}
-                          </TableCell>
+                          <TableHead className="w-[120px] bg-muted text-right">
+                            <span className="whitespace-nowrap">Time</span>
+                          </TableHead>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableCell className="text-center bg-inherit">
-                            <span className={getStatusStyles(file.status)}>
-                              {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                            </span>
-                          </TableCell>
+                          <TableHead className="w-[120px] bg-muted text-center">
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleSort('status')}
+                              className="flex items-center gap-1 mx-auto whitespace-nowrap"
+                            >
+                              Status {getSortIcon('status')}
+                            </Button>
+                          </TableHead>
                         )}
-                        <TableCell className="text-center sticky right-0 z-20 bg-inherit">
-                          <FileActions file={file} onDelete={handleDelete} />
-                        </TableCell>
+                        <TableHead className="w-[80px] bg-muted text-center sticky right-0 z-20">
+                          Actions
+                        </TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {isLoading ? (
+                        <TableSkeleton />
+                      ) : filteredAndSortedFiles.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="h-32 text-center">
+                            No files found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        paginatedFiles.map((file) => (
+                          <TableRow key={file.id} className="bg-white hover:bg-muted/50 transition-colors">
+                            <TableCell className="text-center sticky left-0 z-20 bg-inherit">
+                              <Checkbox
+                                checked={selectedFiles.has(file.id)}
+                                onCheckedChange={() => toggleFileSelection(file.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="sticky left-[40px] z-20 bg-inherit">
+                              <FileNameCell file={file} />
+                            </TableCell>
+                            {visibleColumns.has('size') && (
+                              <TableCell className="text-right bg-inherit">
+                                {formatFileSize(file.size)}
+                              </TableCell>
+                            )}
+                            {visibleColumns.has('uploadDate') && (
+                              <TableCell className="text-right bg-inherit">
+                                {new Date(file.createdAt).toLocaleDateString(undefined, {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </TableCell>
+                            )}
+                            {visibleColumns.has('uploadTime') && (
+                              <TableCell className="text-right bg-inherit">
+                                {formatTimeWithZone(new Date(file.uploadTime))}
+                              </TableCell>
+                            )}
+                            {visibleColumns.has('status') && (
+                              <TableCell className="text-center bg-inherit">
+                                <span className={getStatusStyles(file.status)}>
+                                  {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                </span>
+                              </TableCell>
+                            )}
+                            <TableCell className="text-center sticky right-0 z-20 bg-inherit">
+                              <FileActions file={file} onDelete={handleDelete} />
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination footer - make it sticky */}
+                {filteredAndSortedFiles.length > 0 && (
+                  <div className="sticky bottom-0 left-0 right-0 bg-muted border-t px-4 py-3 flex items-center justify-between">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                      {filteredAndSortedFiles.length <= itemsPerPage
+                        ? `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
+                        : `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
+                      }
+                    </div>
+
+                    {filteredAndSortedFiles.length > itemsPerPage && (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handlePageChange(1)}
+                          disabled={currentPage === 1}
+                          className="hidden sm:inline-flex"
+                        >
+                          <ChevronsLeftIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                        >
+                          <ChevronLeftIcon className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium">{currentPage}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                        >
+                          <ChevronRightIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handlePageChange(totalPages)}
+                          disabled={currentPage === totalPages}
+                          className="hidden sm:inline-flex"
+                        >
+                          <ChevronsRightIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
