@@ -23,7 +23,7 @@ const ACCEPTED_FILE_TYPES = {
 export function FileUpload({ onDrop, className }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
-    accept: Object.keys(ACCEPTED_FILE_TYPES).map(key => ACCEPTED_FILE_TYPES[key].join(',')).join(',')
+    accept: ACCEPTED_FILE_TYPES
   });
 
   return (
