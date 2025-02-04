@@ -102,6 +102,21 @@ interface UploadingFile extends Omit<FileItem, 'id'> {
   progress: number;
 }
 
+// Simplified status styles function
+const getStatusStyles = (status: FileStatus) => {
+  const baseStyles = "rounded-full px-2.5 py-1 text-xs font-medium";
+  const statusMap = {
+    uploaded: "bg-[#ECFDF3] text-[#027A48]",
+    restored: "bg-[#ECFDF3] text-[#027A48]",
+    uploading: "bg-[#FFF4ED] text-[#B93815]",
+    paused: "bg-[#F2F4F7] text-[#344054]", // Improved contrast from #475467
+    canceled: "bg-[#FFF1F3] text-[#C01048]",
+    deleted: "bg-[#FFF1F3] text-[#C01048]"
+  };
+  return `${baseStyles} ${statusMap[status] || "text-muted-foreground"}`;
+};
+
+// File name cell with improved accessibility
 const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFile }) => {
   const nameRef = useRef<HTMLSpanElement>(null);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
@@ -113,14 +128,21 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[18.25rem]">
-      <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
+    <div className="flex items-center gap-2 min-w-0 max-w-[18.25rem]" role="cell">
+      <div 
+        className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
+        aria-hidden="true"
+      >
         <FileIcon className="w-3 h-3 text-primary" />
       </div>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span ref={nameRef} className="truncate block min-w-0 flex-1">
+            <span 
+              ref={nameRef} 
+              className="truncate block min-w-0 flex-1"
+              aria-label={`File name: ${file.name}`}
+            >
               {file.name}
             </span>
           </TooltipTrigger>
@@ -403,22 +425,6 @@ export default function FileVault() {
     setCurrentPage(page);
   };
 
-  const getStatusStyles = (status: FileStatus) => {
-    switch (status) {
-      case 'uploaded':
-      case 'restored':
-        return "bg-[#ECFDF3] text-[#027A48] rounded-full px-2.5 py-1 text-xs font-medium";
-      case 'uploading':
-        return "bg-[#FFF4ED] text-[#B93815] rounded-full px-2.5 py-1 text-xs font-medium";
-      case 'paused':
-        return "bg-[#F2F4F7] text-[#475467] rounded-full px-2.5 py-1 text-xs font-medium";
-      case 'canceled':
-      case 'deleted':
-        return "bg-[#FFF1F3] text-[#C01048] rounded-full px-2.5 py-1 text-xs font-medium";
-      default:
-        return "text-muted-foreground";
-    }
-  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -491,8 +497,12 @@ export default function FileVault() {
                 Secure document storage for your company.
               </p>
             </div>
-            <Button onClick={handleUploadClick} className="gap-2">
-              <UploadIcon className="w-4 h-4" />
+            <Button 
+              onClick={handleUploadClick} 
+              className="gap-2"
+              aria-label="Upload new files"
+            >
+              <UploadIcon className="w-4 h-4" aria-hidden="true" />
               Upload
               <input
                 type="file"
@@ -504,6 +514,7 @@ export default function FileVault() {
                   }
                 }}
                 multiple
+                aria-hidden="true"
               />
             </Button>
           </div>
@@ -515,8 +526,9 @@ export default function FileVault() {
               <Select
                 value={statusFilter}
                 onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+                aria-label="Filter files by status"
               >
-                <SelectTrigger className="w-[150px]">
+                <SelectTrigger className="w-[150px] bg-white">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -534,9 +546,10 @@ export default function FileVault() {
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search files..."
-                  className="pl-9"
+                  className="pl-9 bg-white"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search files"
                 />
               </div>
 
