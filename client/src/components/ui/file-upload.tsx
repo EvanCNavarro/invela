@@ -7,22 +7,23 @@ interface FileUploadProps {
   className?: string;
 }
 
+// Define accepted MIME types and their corresponding extensions
 const ACCEPTED_FILE_TYPES = {
-  'text/csv': '.csv',
-  'application/msword': '.doc',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-  'application/vnd.oasis.opendocument.text': '.odt',
-  'application/pdf': '.pdf',
-  'application/rtf': '.rtf',
-  'text/plain': '.txt',
-  'application/wordperfect': '.wpd',
-  'application/x-wpwin': '.wpf'
+  'text/csv': ['.csv'],
+  'application/msword': ['.doc'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'application/vnd.oasis.opendocument.text': ['.odt'],
+  'application/pdf': ['.pdf'],
+  'application/rtf': ['.rtf'],
+  'text/plain': ['.txt'],
+  'application/wordperfect': ['.wpd'],
+  'application/x-wpwin': ['.wpf']
 };
 
 export function FileUpload({ onDrop, className }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
-    accept: ACCEPTED_FILE_TYPES
+    accept: Object.keys(ACCEPTED_FILE_TYPES).map(key => ACCEPTED_FILE_TYPES[key].join(',')).join(',')
   });
 
   return (
