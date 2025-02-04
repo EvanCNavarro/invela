@@ -110,6 +110,7 @@ export default function FileVault() {
       toast({
         title: "Success",
         description: "File uploaded successfully",
+        duration: 3000,
       });
     },
     onError: (error: Error) => {
@@ -117,6 +118,7 @@ export default function FileVault() {
         title: "Error",
         description: error.message || "Failed to upload file",
         variant: "destructive",
+        duration: 3000,
       });
     },
   });
@@ -137,6 +139,7 @@ export default function FileVault() {
       toast({
         title: "Success",
         description: "File deleted successfully",
+        duration: 3000,
       });
     },
     onError: (error: Error) => {
@@ -144,6 +147,7 @@ export default function FileVault() {
         title: "Error",
         description: error.message || "Failed to delete file",
         variant: "destructive",
+        duration: 3000,
       });
     },
   });
@@ -177,13 +181,14 @@ export default function FileVault() {
     },
     onSuccess: (updatedFile) => {
       queryClient.setQueryData(['/api/files'], (oldData: FileItem[]) => {
-        return oldData.map(file =>
+        return oldData.map(file => 
           file.id === updatedFile.id ? { ...file, status: 'restored' } : file
         );
       });
       toast({
         title: "Success",
         description: "File restored successfully",
+        duration: 3000, 
       });
     },
     onError: (error: Error) => {
@@ -192,6 +197,7 @@ export default function FileVault() {
         title: "Error",
         description: "Failed to restore file. Please try again.",
         variant: "destructive",
+        duration: 3000, 
       });
     },
   });
@@ -317,13 +323,14 @@ export default function FileVault() {
     switch (status) {
       case 'completed':
       case 'restored':
-        return "bg-success/10 text-success rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#ECFDF3] text-[#027A48] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       case 'uploading':
+        return "bg-[#FFF4ED] text-[#B93815] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       case 'paused':
-        return "bg-warning/10 text-warning rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#F2F4F7] text-[#475467] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       case 'canceled':
       case 'deleted':
-        return "bg-danger/10 text-danger rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#FFF1F3] text-[#C01048] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
       default:
         return "text-muted-foreground";
     }
@@ -449,7 +456,7 @@ export default function FileVault() {
                       checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                      className="data-[state=indeterminate]:bg-primary/50 data-[state=indeterminate]:text-primary-foreground"
+                      className="data-[state=indeterminate]:bg-muted data-[state=indeterminate]:text-muted-foreground"
                     />
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
