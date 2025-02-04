@@ -17,7 +17,13 @@ const ACCEPTED_FILE_TYPES = {
   'application/rtf': ['.rtf'],
   'text/plain': ['.txt'],
   'application/wordperfect': ['.wpd'],
-  'application/x-wpwin': ['.wpf']
+  'application/x-wpwin': ['.wpf'],
+  // Add image support
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/gif': ['.gif'],
+  'image/webp': ['.webp'],
+  'image/svg+xml': ['.svg']
 };
 
 export function FileUpload({ onDrop, className }: FileUploadProps) {
@@ -43,7 +49,7 @@ export function FileUpload({ onDrop, className }: FileUploadProps) {
         {isDragActive ? "Drop your files here" : "Drag and drop files here, or click to select files"}
       </p>
       <p className="text-sm text-muted-foreground/80">
-        Accepted formats: CSV, DOC, DOCX, ODT, PDF, RTF, TXT, WPD, WPF
+        Accepted formats: CSV, DOC, DOCX, ODT, PDF, RTF, TXT, WPD, WPF, JPG, PNG, GIF, WEBP, SVG
       </p>
     </div>
   );
