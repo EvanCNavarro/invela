@@ -592,7 +592,7 @@ export default function FileVault() {
                           {getSortIcon('name')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[120px] min-w-[120px] hidden xl:table-cell bg-muted text-right">
+                      <TableHead className="w-fit hidden xl:table-cell bg-muted text-right">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('createdAt')}
@@ -605,7 +605,7 @@ export default function FileVault() {
                           {getSortIcon('createdAt')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[120px] min-w-[120px] hidden lg:table-cell bg-muted text-center">
+                      <TableHead className="w-fit hidden lg:table-cell bg-muted text-center">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('status')}
@@ -618,7 +618,7 @@ export default function FileVault() {
                           {getSortIcon('status')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-[100px] min-w-[100px] hidden xl:table-cell bg-muted text-right">
+                      <TableHead className="w-fit hidden xl:table-cell bg-muted text-right">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('size')}
