@@ -76,6 +76,37 @@ interface FileItem {
   lastAccessed?: string;
   version?: number;
   checksum?: string;
+
+  // New suggested metrics
+  // File lifecycle tracking
+  expiryDate?: string;               // Optional expiration date for temporary files
+  retentionPeriod?: number;          // How long to keep the file in days
+  lastModifiedBy?: string;           // User who last modified the file
+  modificationHistory?: string[];     // Array of modification timestamps
+
+  // Security and compliance
+  accessLevel?: 'public' | 'private' | 'restricted';  // File visibility level
+  encryptionStatus?: boolean;        // Whether file is encrypted
+  classificationType?: string;       // e.g., 'confidential', 'internal', 'public'
+  complianceTags?: string[];        // e.g., ['GDPR', 'HIPAA', 'PCI']
+
+  // Access patterns
+  lastDownloadDate?: string;        // Date of last download
+  uniqueViewers?: number;           // Number of unique users who viewed
+  averageViewDuration?: number;     // Average time spent viewing (for viewable files)
+  peakAccessTimes?: string[];      // Times of high access frequency
+
+  // Storage optimization
+  compressionRatio?: number;        // Compression effectiveness
+  duplicateCount?: number;          // Number of duplicate copies
+  storageLocation?: string;         // e.g., 'hot-storage', 'cold-storage'
+  storageOptimizationFlag?: boolean; // Whether file needs optimization
+
+  // Collaboration
+  sharedWith?: string[];           // List of users with access
+  collaboratorCount?: number;      // Number of users with access
+  commentCount?: number;           // Number of comments/annotations
+  lastCollaborationDate?: string;  // Last collaborative action date
 }
 
 interface FileApiResponse {
@@ -135,22 +166,32 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
       >
         <FileIcon className="w-3 h-3 text-primary" />
       </div>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span 
-              ref={nameRef} 
-              className="truncate block min-w-0 flex-1"
-              aria-label={`File name: ${file.name}`}
-            >
-              {file.name}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{file.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {isTextTruncated ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span 
+                ref={nameRef} 
+                className="truncate block min-w-0 flex-1"
+                aria-label={`File name: ${file.name}`}
+              >
+                {file.name}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{file.name}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <span 
+          ref={nameRef} 
+          className="truncate block min-w-0 flex-1"
+          aria-label={`File name: ${file.name}`}
+        >
+          {file.name}
+        </span>
+      )}
     </div>
   );
 });
@@ -857,8 +898,7 @@ export default function FileVault() {
                       {selectedFileDetails.downloadCount !== undefined && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                          <p className="mt-1">{selectedFileDetails.downloadCount}</p>
-                        </div>
+                          <p className="mt-1">{selectedFileDetails.downloadCount}</p>                        </div>
                       )}
                       {selectedFileDetails.lastAccessed && (
                         <div>
@@ -894,6 +934,5 @@ export default function FileVault() {
           </Dialog>
         </div>
       </TooltipProvider>
-    </DashboardLayout>
-  );
+    </DashboardLayout>  );
 }
