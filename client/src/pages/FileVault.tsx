@@ -168,19 +168,31 @@ export default function FileVault() {
 
   const restoreMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/restore`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+        const response = await fetch(`/api/files/${fileId}/restore`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType?.includes("application/json")) {
+          throw new Error("Server returned an invalid response. Please try again.");
         }
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || 'Failed to restore file');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData?.message || 'Failed to restore file');
+        }
+
+        return response.json();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('Failed to restore file. Please try again.');
       }
-
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -191,6 +203,7 @@ export default function FileVault() {
       });
     },
     onError: (error: Error) => {
+      console.error('Restore error:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to restore file. Please try again.",
@@ -330,18 +343,31 @@ export default function FileVault() {
       } else if (action === 'restore') {
         // Execute restore operations sequentially to prevent race conditions
         for (const fileId of fileIds) {
-          await fetch(`/api/files/${fileId}/restore`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
+          try {
+            const response = await fetch(`/api/files/${fileId}/restore`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            });
+
+            const contentType = response.headers.get("content-type");
+            if (!contentType?.includes("application/json")) {
+              throw new Error("Server returned an invalid response. Please try again.");
             }
-          }).then(async (response) => {
+
             if (!response.ok) {
-              const errorData = await response.json().catch(() => null);
+              const errorData = await response.json();
               throw new Error(errorData?.message || `Failed to restore file ${fileId}`);
             }
-            return response.json();
-          });
+
+            await response.json();
+          } catch (error) {
+            if (error instanceof Error) {
+              throw error;
+            }
+            throw new Error(`Failed to restore file ${fileId}. Please try again.`);
+          }
         }
         // Refresh the file list after successful restoration
         queryClient.invalidateQueries({ queryKey: ['/api/files'] });
