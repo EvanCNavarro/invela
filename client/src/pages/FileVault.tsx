@@ -17,9 +17,7 @@ import {
   SearchIcon,
   ArrowUpDownIcon,
   Trash2Icon,
-  CheckCircle2Icon,
-  AlertCircleIcon,
-  ClockIcon,
+  MinusIcon,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -42,12 +40,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -167,7 +159,6 @@ export default function FileVault() {
           throw new Error(error);
         }
 
-        // Update the file status locally
         const updatedFile = {
           ...files.find((f: FileItem) => f.id === fileId),
           status: 'restored'
@@ -181,14 +172,14 @@ export default function FileVault() {
     },
     onSuccess: (updatedFile) => {
       queryClient.setQueryData(['/api/files'], (oldData: FileItem[]) => {
-        return oldData.map(file => 
+        return oldData.map(file =>
           file.id === updatedFile.id ? { ...file, status: 'restored' } : file
         );
       });
       toast({
         title: "Success",
         description: "File restored successfully",
-        duration: 3000, 
+        duration: 3000,
       });
     },
     onError: (error: Error) => {
@@ -197,7 +188,7 @@ export default function FileVault() {
         title: "Error",
         description: "Failed to restore file. Please try again.",
         variant: "destructive",
-        duration: 3000, 
+        duration: 3000,
       });
     },
   });
@@ -301,36 +292,19 @@ export default function FileVault() {
     return result;
   }, [files, statusFilter, sortConfig, searchQuery]);
 
-  const getStatusIcon = (status: FileStatus) => {
-    switch (status) {
-      case 'uploading':
-        return <ClockIcon className="w-4 h-4 text-primary animate-spin" />;
-      case 'completed':
-      case 'restored':
-        return <CheckCircle2Icon className="w-4 h-4 text-success" />;
-      case 'paused':
-        return <AlertCircleIcon className="w-4 h-4 text-warning" />;
-      case 'canceled':
-        return <AlertCircleIcon className="w-4 h-4 text-danger" />;
-      case 'deleted':
-        return <Trash2Icon className="w-4 h-4 text-danger" />;
-      default:
-        return null;
-    }
-  };
 
   const getStatusStyles = (status: FileStatus) => {
     switch (status) {
       case 'completed':
       case 'restored':
-        return "bg-[#ECFDF3] text-[#027A48] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#ECFDF3] text-[#027A48] rounded-full px-2.5 py-1 text-xs font-medium";
       case 'uploading':
-        return "bg-[#FFF4ED] text-[#B93815] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#FFF4ED] text-[#B93815] rounded-full px-2.5 py-1 text-xs font-medium";
       case 'paused':
-        return "bg-[#F2F4F7] text-[#475467] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#F2F4F7] text-[#475467] rounded-full px-2.5 py-1 text-xs font-medium";
       case 'canceled':
       case 'deleted':
-        return "bg-[#FFF1F3] text-[#C01048] rounded-full px-2.5 py-1 text-xs font-medium inline-flex items-center gap-1.5";
+        return "bg-[#FFF1F3] text-[#C01048] rounded-full px-2.5 py-1 text-xs font-medium";
       default:
         return "text-muted-foreground";
     }
@@ -395,7 +369,7 @@ export default function FileVault() {
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -422,7 +396,7 @@ export default function FileVault() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
+                  variant={selectedFiles.size > 0 ? "default" : "outline"}
                   disabled={selectedFiles.size === 0}
                   className="min-w-[100px]"
                 >
@@ -456,7 +430,8 @@ export default function FileVault() {
                       checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                      className="data-[state=indeterminate]:bg-muted data-[state=indeterminate]:text-muted-foreground"
+                      className="data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-input"
+                      icon={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? <MinusIcon className="h-3 w-3 text-muted-foreground" /> : undefined}
                     />
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
@@ -530,23 +505,20 @@ export default function FileVault() {
                       {new Date(file.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(file.status)}
-                        <span className={getStatusStyles(file.status)}>
-                          {file.status}
-                        </span>
-                        {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
-                          <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
-                            <Progress
-                              value={uploadProgress[file.id]}
-                              className="h-2 bg-primary/20"
-                            />
-                            <span className="text-sm text-muted-foreground min-w-[40px]">
-                              {uploadProgress[file.id]}%
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      <span className={getStatusStyles(file.status)}>
+                        {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                      </span>
+                      {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
+                        <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
+                          <Progress
+                            value={uploadProgress[file.id]}
+                            className="h-2 bg-primary/20"
+                          />
+                          <span className="text-sm text-muted-foreground min-w-[40px]">
+                            {uploadProgress[file.id]}%
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -565,7 +537,10 @@ export default function FileVault() {
                             View Details
                           </DropdownMenuItem>
                           {file.status === 'deleted' ? (
-                            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+                            <DropdownMenuItem onClick={() => {
+                              setSelectedFiles(new Set([file.id]));
+                              handleBulkAction('restore');
+                            }}>
                               <RefreshCcwIcon className="w-4 h-4 mr-2" />
                               Restore
                             </DropdownMenuItem>
