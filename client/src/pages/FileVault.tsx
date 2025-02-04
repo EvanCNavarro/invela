@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import {
   Table,
@@ -17,6 +17,9 @@ import {
   SearchIcon,
   ArrowUpDownIcon,
   Trash2Icon,
+  CheckCircle2Icon,
+  AlertCircleIcon,
+  ClockIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -70,6 +73,7 @@ type SortOrder = 'asc' | 'desc';
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
     field: 'createdAt',
@@ -148,18 +152,30 @@ export default function FileVault() {
     mutationFn: async (fileId: string) => {
       const response = await fetch(`/api/files/${fileId}/restore`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       if (!response.ok) {
         const error = await response.text();
         throw new Error(error);
       }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       toast({
         title: "Success",
         description: "File restored successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to restore file",
+        variant: "destructive",
       });
     },
   });
@@ -267,18 +283,22 @@ export default function FileVault() {
   const getStatusIcon = (status: FileStatus) => {
     switch (status) {
       case 'uploading':
-        return <UploadIcon className="w-4 h-4 text-primary" />;
+        return <ClockIcon className="w-4 h-4 text-primary animate-spin" />;
       case 'completed':
-        return <FileTextIcon className="w-4 h-4 text-success" />;
+        return <CheckCircle2Icon className="w-4 h-4 text-success" />;
       case 'paused':
-        return <RefreshCcwIcon className="w-4 h-4 text-warning" />;
+        return <AlertCircleIcon className="w-4 h-4 text-warning" />;
       case 'canceled':
-        return <RefreshCcwIcon className="w-4 h-4 text-danger" />;
+        return <AlertCircleIcon className="w-4 h-4 text-danger" />;
       case 'deleted':
         return <Trash2Icon className="w-4 h-4 text-danger" />;
       default:
         return null;
     }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -291,9 +311,20 @@ export default function FileVault() {
               Secure document storage for your company.
             </p>
           </div>
-          <Button className="gap-2">
+          <Button onClick={handleUploadClick} className="gap-2">
             <UploadIcon className="w-4 h-4" />
             Upload
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.length) {
+                  onDrop(Array.from(e.target.files));
+                }
+              }}
+              multiple
+            />
           </Button>
         </div>
 
@@ -339,41 +370,41 @@ export default function FileVault() {
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                     />
                   </TableHead>
-                  <TableHead className="min-w-[200px] lg:w-[400px]">
+                  <TableHead className="min-w-[200px] lg:w-[400px] text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('name')}
-                      className="hover:bg-transparent"
+                      className="hover:bg-transparent text-left pl-0"
                     >
                       Name
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell">
+                  <TableHead className="hidden sm:table-cell text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('size')}
-                      className="hover:bg-transparent"
+                      className="hover:bg-transparent text-left pl-0"
                     >
                       Size
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell">
+                  <TableHead className="hidden lg:table-cell text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('createdAt')}
-                      className="hover:bg-transparent whitespace-nowrap"
+                      className="hover:bg-transparent text-left pl-0 whitespace-nowrap"
                     >
                       Upload Date
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="text-left">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('status')}
-                      className="hover:bg-transparent"
+                      className="hover:bg-transparent text-left pl-0"
                     >
                       Status
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
