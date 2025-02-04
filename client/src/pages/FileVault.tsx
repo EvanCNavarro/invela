@@ -278,11 +278,12 @@ export default function FileVault() {
   };
 
   const toggleAllFiles = (files: (FileApiResponse | UploadingFile)[]) => {
-    if (selectedFiles.size === files.length) {
-      setSelectedFiles(new Set());
-    } else {
-      setSelectedFiles(new Set(files.map(file => file.id)));
-    }
+    setSelectedFiles(prev => {
+      if (prev.size === files.length) {
+        return new Set();
+      }
+      return new Set(files.map(file => file.id));
+    });
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
