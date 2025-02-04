@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* Main content area with padding for navbar */}
         <main className="flex-1 pt-16"> {/* Add padding-top to account for fixed navbar */}
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="px-4 md:px-6 py-4 md:py-6">
             {children}
           </div>
         </main>
