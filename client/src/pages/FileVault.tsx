@@ -309,16 +309,22 @@ export default function FileVault() {
 
   const handleBulkAction = async (action: 'delete' | 'restore') => {
     try {
+      const fileIds = [...selectedFiles]; // Convert Set to Array using spread operator
       if (action === 'delete') {
-        for (const fileId of selectedFiles) {
+        for (const fileId of fileIds) {
           await deleteMutation.mutateAsync(fileId);
         }
       } else if (action === 'restore') {
-        for (const fileId of selectedFiles) {
+        for (const fileId of fileIds) {
           await restoreMutation.mutateAsync(fileId);
         }
       }
       setSelectedFiles(new Set());
+      toast({
+        title: "Success",
+        description: `Successfully ${action}d selected files`,
+        duration: 3000,
+      });
     } catch (error) {
       console.error(`Bulk ${action} error:`, error);
       toast({
@@ -436,8 +442,10 @@ export default function FileVault() {
                       className={cn(
                         "transition-colors",
                         selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
-                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary after:content-['-'] after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-[60%] after:text-primary after:text-sm"
+                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary"
                       )}
+                      icon={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ?
+                        <MinusIcon className="h-3 w-3 text-primary" /> : undefined}
                     />
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
