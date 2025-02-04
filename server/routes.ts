@@ -64,7 +64,7 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
-  // Add download endpoint
+  // Single file download endpoint
   app.get("/api/files/:id/download", requireAuth, async (req, res) => {
     try {
       const fileId = parseInt(req.params.id);
@@ -90,12 +90,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "File not found on disk" });
       }
 
-      // Update download count in background - Fixed query syntax
+      // Update download count
       try {
-        await db.update(files)
-          .set({
-            downloadCount: (file.downloadCount || 0) + 1
-          })
+        await db
+          .update(files)
+          .set({ downloadCount: (file.downloadCount ?? 0) + 1 })
           .where(eq(files.id, fileId))
           .execute();
       } catch (updateError) {
@@ -166,15 +165,13 @@ export function registerRoutes(app: Express): Server {
       // Pipe archive data to response
       archive.pipe(res);
 
-      // Add files to archive
+      // Add files to archive and update download counts
       for (const file of validFiles) {
         archive.file(file.path, { name: file.name });
-        // Update download count in background with fixed query syntax
         try {
-          await db.update(files)
-            .set({
-              downloadCount: (file.downloadCount || 0) + 1
-            })
+          await db
+            .update(files)
+            .set({ downloadCount: (file.downloadCount ?? 0) + 1 })
             .where(eq(files.id, file.id))
             .execute();
         } catch (updateError) {
