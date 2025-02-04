@@ -11,11 +11,9 @@ import {
 import {
   FileIcon,
   UploadIcon,
-  Trash2Icon,
-  CheckCircleIcon,
-  PauseIcon,
-  XCircleIcon,
-  ArrowUpDownIcon,
+  RefreshCcwIcon,
+  FileTextIcon,
+  MoreVerticalIcon,
   SearchIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +31,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted';
 
@@ -44,6 +54,12 @@ interface FileItem {
   status: FileStatus;
   createdAt: string;
   updatedAt: string;
+  uploader?: string;
+  uploadTimeMs?: number;
+  downloadCount?: number;
+  lastAccessed?: string;
+  version?: number;
+  checksum?: string;
 }
 
 type SortField = 'name' | 'size' | 'createdAt' | 'status';
@@ -60,6 +76,7 @@ export default function FileVault() {
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [selectedFileDetails, setSelectedFileDetails] = useState<FileItem | null>(null);
 
   const { data: files = [] } = useQuery({
     queryKey: ['/api/files'],
@@ -67,6 +84,7 @@ export default function FileVault() {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
+      const startTime = performance.now();
       const response = await fetch('/api/files', {
         method: 'POST',
         body: formData,
@@ -77,7 +95,9 @@ export default function FileVault() {
         throw new Error(error);
       }
 
-      return response.json();
+      const result = await response.json();
+      result.uploadTimeMs = performance.now() - startTime;
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
@@ -118,6 +138,26 @@ export default function FileVault() {
         title: "Error",
         description: error.message || "Failed to delete file",
         variant: "destructive",
+      });
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const response = await fetch(`/api/files/${fileId}/restore`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      toast({
+        title: "Success",
+        description: "File restored successfully",
       });
     },
   });
@@ -167,36 +207,14 @@ export default function FileVault() {
     }));
   };
 
-  const toggleFileSelection = (fileId: string) => {
-    setSelectedFiles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(fileId)) {
-        newSet.delete(fileId);
-      } else {
-        newSet.add(fileId);
-      }
-      return newSet;
-    });
-  };
-
-  const toggleAllFiles = (files: FileItem[]) => {
-    if (selectedFiles.size === files.length) {
-      setSelectedFiles(new Set());
-    } else {
-      setSelectedFiles(new Set(files.map(file => file.id)));
-    }
-  };
-
   const filteredAndSortedFiles = useMemo(() => {
-    let result = [...files];
+    let result = [...(files as FileItem[])];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(file =>
         file.name.toLowerCase().includes(query) ||
-        file.type.toLowerCase().includes(query) ||
-        file.status.toLowerCase().includes(query) ||
-        new Date(file.createdAt).toLocaleDateString().toLowerCase().includes(query)
+        file.status.toLowerCase().includes(query)
       );
     }
 
@@ -223,34 +241,26 @@ export default function FileVault() {
     return result;
   }, [files, statusFilter, sortConfig, searchQuery]);
 
-  const getStatusIcon = (status: FileStatus) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
-      case 'uploading':
-        return <UploadIcon className="w-4 h-4 text-blue-500 animate-pulse" />;
-      case 'paused':
-        return <PauseIcon className="w-4 h-4 text-yellow-500" />;
-      case 'canceled':
-      case 'deleted':
-        return <XCircleIcon className="w-4 h-4 text-red-500" />;
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
-          <p className="text-sm text-muted-foreground">
-            Securely store and manage your company documents
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
+            <p className="text-sm text-muted-foreground">
+              Secure document storage for your company.
+            </p>
+          </div>
+          <Button className="gap-2">
+            <UploadIcon className="w-4 h-4" />
+            Upload
+          </Button>
         </div>
 
-        <FileUpload onDrop={onDrop} />
+        <FileUpload onDrop={onDrop} className="bg-muted/50" />
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="relative w-full sm:w-96">
+          <div className="relative w-full sm:w-72">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search files..."
@@ -299,7 +309,6 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">Type</TableHead>
                   <TableHead className="hidden sm:table-cell">
                     <Button
                       variant="ghost"
@@ -330,7 +339,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[60px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -356,7 +365,6 @@ export default function FileVault() {
                         <span className="truncate">{file.name}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{file.type || "Unknown"}</TableCell>
                     <TableCell className="hidden sm:table-cell">{formatFileSize(file.size)}</TableCell>
                     <TableCell className="hidden lg:table-cell">
                       {new Date(file.createdAt).toLocaleDateString()}
@@ -378,21 +386,40 @@ export default function FileVault() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => deleteMutation.mutate(file.id)}
-                        disabled={file.status === 'deleted'}
-                      >
-                        <Trash2Icon className="w-4 h-4" />
-                      </Button>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVerticalIcon className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
+                            <FileTextIcon className="w-4 h-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          {file.status === 'deleted' ? (
+                            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+                              <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                              Restore
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => deleteMutation.mutate(file.id)}
+                            >
+                              <Trash2Icon className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
                 {filteredAndSortedFiles.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
                     </TableCell>
                   </TableRow>
@@ -402,6 +429,72 @@ export default function FileVault() {
           </div>
         </div>
       </div>
+
+      <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>File Details</DialogTitle>
+          </DialogHeader>
+          {selectedFileDetails && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">File Name</p>
+                  <p className="mt-1">{selectedFileDetails.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Size</p>
+                  <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                  <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
+                </div>
+                {selectedFileDetails.uploader && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
+                    <p className="mt-1">{selectedFileDetails.uploader}</p>
+                  </div>
+                )}
+                {selectedFileDetails.uploadTimeMs && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                    <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
+                  </div>
+                )}
+                {selectedFileDetails.downloadCount !== undefined && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                    <p className="mt-1">{selectedFileDetails.downloadCount}</p>
+                  </div>
+                )}
+                {selectedFileDetails.lastAccessed && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
+                    <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
+                  </div>
+                )}
+                {selectedFileDetails.version !== undefined && (
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Version</p>
+                    <p className="mt-1">{selectedFileDetails.version}</p>
+                  </div>
+                )}
+                {selectedFileDetails.checksum && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Checksum</p>
+                    <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
