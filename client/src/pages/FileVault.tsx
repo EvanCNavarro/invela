@@ -160,14 +160,12 @@ export default function FileVault() {
       });
 
       if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+        throw new Error('Failed to restore file');
       }
 
-      const result = await response.json();
-      return result;
+      return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       toast({
         title: "Success",
@@ -176,10 +174,9 @@ export default function FileVault() {
       });
     },
     onError: (error: Error) => {
-      console.error('Restore error:', error);
       toast({
         title: "Error",
-        description: "Failed to restore file. Please try again.",
+        description: error.message || "Failed to restore file. Please try again.",
         variant: "destructive",
         duration: 3000,
       });
@@ -309,16 +306,14 @@ export default function FileVault() {
 
   const handleBulkAction = async (action: 'delete' | 'restore') => {
     try {
-      const fileIds = [...selectedFiles]; // Convert Set to Array using spread operator
+      const fileIds = Array.from(selectedFiles);
+
       if (action === 'delete') {
-        for (const fileId of fileIds) {
-          await deleteMutation.mutateAsync(fileId);
-        }
+        await Promise.all(fileIds.map(fileId => deleteMutation.mutateAsync(fileId)));
       } else if (action === 'restore') {
-        for (const fileId of fileIds) {
-          await restoreMutation.mutateAsync(fileId);
-        }
+        await Promise.all(fileIds.map(fileId => restoreMutation.mutateAsync(fileId)));
       }
+
       setSelectedFiles(new Set());
       toast({
         title: "Success",
