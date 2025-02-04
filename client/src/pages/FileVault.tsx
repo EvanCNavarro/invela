@@ -15,6 +15,8 @@ import {
   FileTextIcon,
   MoreVerticalIcon,
   SearchIcon,
+  ArrowUpDownIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -162,6 +164,27 @@ export default function FileVault() {
     },
   });
 
+  const toggleFileSelection = (fileId: string) => {
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileId)) {
+        newSet.delete(fileId);
+      } else {
+        newSet.add(fileId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleAllFiles = (files: FileItem[]) => {
+    if (selectedFiles.size === files.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(files.map(file => file.id)));
+    }
+  };
+
+
   const onDrop = async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
       const formData = new FormData();
@@ -240,6 +263,23 @@ export default function FileVault() {
 
     return result;
   }, [files, statusFilter, sortConfig, searchQuery]);
+
+  const getStatusIcon = (status: FileStatus) => {
+    switch (status) {
+      case 'uploading':
+        return <UploadIcon className="w-4 h-4 text-primary" />;
+      case 'completed':
+        return <FileTextIcon className="w-4 h-4 text-success" />;
+      case 'paused':
+        return <RefreshCcwIcon className="w-4 h-4 text-warning" />;
+      case 'canceled':
+        return <RefreshCcwIcon className="w-4 h-4 text-danger" />;
+      case 'deleted':
+        return <Trash2Icon className="w-4 h-4 text-danger" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <DashboardLayout>
