@@ -609,8 +609,9 @@ export default function FileVault() {
   // Update the visibility logic in the component
   const getVisibleColumns = () => {
     const minWidth = 640; // Base width for mobile
-    const columnWidth = 150; // Approximate width per column
-    const availableSpace = Math.max(0, breakpoint - minWidth);
+    const columnWidth = 120; // Reduced from 150 to make columns tighter
+    const sidebarWidth = 256; // Standard sidebar width
+    const availableSpace = Math.max(0, breakpoint - minWidth - sidebarWidth);
     const maxColumns = Math.floor(availableSpace / columnWidth);
 
     // Always show priority 0 columns
@@ -737,7 +738,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted">
+                      <TableHead className="w-[12rem] min-w-[12rem] bg-muted"> {/* Reduced from 14rem */}
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -748,7 +749,7 @@ export default function FileVault() {
                         </Button>
                       </TableHead>
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-center">
+                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-center"> {/* Reduced from 8rem */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
@@ -777,7 +778,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-fit min-w-[5.5rem] bg-muted text-right">
+                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right"> {/* Reduced from 5.5rem */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
@@ -814,12 +815,21 @@ export default function FileVault() {
                         )}
                         {visibleColumns.has('uploadDate') && (
                           <TableCell className="text-right">
-                            {new Date(file.createdAt).toLocaleDateString()}
+                            {new Date(file.createdAt).toLocaleDateString(undefined, {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadTime') && (
                           <TableCell className="text-right">
-                            {new Date(file.uploadTime).toLocaleTimeString()}
+                            {new Date(file.uploadTime).toLocaleTimeString(undefined, {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                              timeZoneName: 'short'
+                            })}
                           </TableCell>
                         )}
                         {visibleColumns.has('size') && (
@@ -945,7 +955,14 @@ export default function FileVault() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                        <p className="mt-1">{new Date(selectedFileDetails.uploadTime).toLocaleTimeString()}</p>
+                        <p className="mt-1">
+                          {new Date(selectedFileDetails.uploadTime).toLocaleTimeString(undefined, {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                            timeZoneName: 'short'
+                          })}
+                        </p>
                       </div>
                     </div>
                   </div>
