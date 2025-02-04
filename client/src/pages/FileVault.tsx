@@ -581,7 +581,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[19rem] min-w-[19rem] bg-muted">
+                      <TableHead className="w-[18.25rem] min-w-[18.25rem] max-w-[18.25rem] bg-muted">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
