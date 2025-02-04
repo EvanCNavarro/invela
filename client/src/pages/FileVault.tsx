@@ -738,7 +738,7 @@ export default function FileVault() {
 
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <div className="overflow-x-auto min-w-0">
+              <div className="relative w-full overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
@@ -758,7 +758,7 @@ export default function FileVault() {
                         </Button>
                       </TableHead>
                       {visibleColumns.has('size') && (
-                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-right">
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('size')}
@@ -769,7 +769,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
+                        <TableHead className="w-[10rem] min-w-[10rem] bg-muted text-right">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -780,12 +780,12 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadTime') && (
-                        <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-right">
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-right">
                           <span className="whitespace-nowrap">Time</span>
                         </TableHead>
                       )}
                       {visibleColumns.has('status') && (
-                        <TableHead className="w-[5rem] min-w-[5rem] bg-muted text-center">
+                        <TableHead className="w-[8rem] min-w-[8rem] bg-muted text-center">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('status')}
@@ -795,7 +795,7 @@ export default function FileVault() {
                           </Button>
                         </TableHead>
                       )}
-                      <TableHead className="w-[2rem] min-w-[2rem] bg-muted text-center sticky right-0 z-20">
+                      <TableHead className="w-[4rem] min-w-[4rem] bg-muted text-center sticky right-0 z-20">
                         Actions
                       </TableHead>
                     </TableRow>
@@ -847,76 +847,6 @@ export default function FileVault() {
                 </Table>
               </div>
 
-              <div className="flex items-center justify-between px-4 py-3 bg-muted border-t">
-                <div className="flex-1 text-sm text-muted-foreground">
-                  {filteredAndSortedFiles.length > 0 && (
-                    filteredAndSortedFiles.length <= 5 ? (
-                      `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
-                    ) : (
-                      `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
-                    )
-                  )}
-                </div>
-                {filteredAndSortedFiles.length > 5 && (
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(1)}
-                      disabled={currentPage === 1}
-                      className="hidden sm:inline-flex"
-                    >
-                      <ChevronsLeftIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeftIcon className="h-4 w-4" />
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1)
-                        .filter(page => {
-                          const distance = Math.abs(page - currentPage);
-                          return distance === 0 || distance === 1 || page === 1 || page === totalPages;
-                        })
-                        .map((page, index, array) => (
-                          <React.Fragment key={page}>
-                            {index > 0 && array[index - 1] !== page - 1 && (
-                              <span className="text-muted-foreground">...</span>
-                            )}
-                            <Button
-                              variant={currentPage === page ? "default" : "outline"}
-                              size="icon"
-                              onClick={() => handlePageChange(page)}
-                              className="w-8 h-8"
-                            >
-                              {page}
-                            </Button>
-                          </React.Fragment>
-                        ))}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRightIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"                      onClick={() => handlePageChange(totalPages)}
-                      disabled={currentPage === totalPages}
-                      className="hidden sm:inline-flex"
-                    >
-                      <ChevronsRightIcon className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </div>
             </div>
 
           </div>
@@ -971,8 +901,7 @@ export default function FileVault() {
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
                           <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
-                        </div>
-                        {selectedFileDetails.lastAccessed && (
+                        </div>                        {selectedFileDetails.lastAccessed && (
                           <div>
                             <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
                             <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
