@@ -29,23 +29,35 @@ const ACCEPTED_FILE_TYPES = {
 export function FileUpload({ onDrop, className }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
-    accept: ACCEPTED_FILE_TYPES
+    accept: ACCEPTED_FILE_TYPES,
+    aria: {
+      role: "button",
+      labelledby: "upload-area-label"
+    }
   });
 
   return (
     <div
       {...getRootProps()}
       className={cn(
-        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+        "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors bg-white",
         isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25",
         className
       )}
+      role="button"
+      tabIndex={0}
     >
-      <input {...getInputProps()} />
-      <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[hsl(228,89%,96%)] flex items-center justify-center">
+      <input {...getInputProps()} aria-label="File upload input" />
+      <div 
+        className="w-12 h-12 mx-auto mb-4 rounded-full bg-[hsl(228,89%,96%)] flex items-center justify-center"
+        aria-hidden="true"
+      >
         <UploadIcon className="w-6 h-6 text-primary" />
       </div>
-      <p className="text-muted-foreground mb-2">
+      <p 
+        id="upload-area-label"
+        className="text-muted-foreground mb-2 text-base"
+      >
         {isDragActive ? "Drop your files here" : "Drag and drop files here, or click to select files"}
       </p>
       <p className="text-sm text-muted-foreground/80">
