@@ -85,15 +85,15 @@ export default function RegistryPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">Invela Registry</h1>
+          <h1 className="text-2xl font-semibold">Invela Registry</h1>
           <p className="text-sm text-muted-foreground">
             View and manage companies in your network.
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="relative w-full sm:w-96">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -120,7 +120,7 @@ export default function RegistryPage() {
               </DialogHeader>
 
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
                   <FormField
                     control={form.control}
                     name="name"
@@ -167,7 +167,7 @@ export default function RegistryPage() {
           </Dialog>
         </div>
 
-        <div className="bg-background rounded-lg p-4 md:p-6 border">
+        <div className="bg-background rounded-lg border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -181,13 +181,13 @@ export default function RegistryPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-4">
                     Loading...
                   </TableCell>
                 </TableRow>
               ) : filteredCompanies.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell colSpan={5} className="text-center py-4">
                     No companies found
                   </TableCell>
                 </TableRow>
