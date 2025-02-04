@@ -49,7 +49,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted';
+type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
 interface FileItem {
   id: string;
@@ -295,6 +295,7 @@ export default function FileVault() {
       case 'uploading':
         return <ClockIcon className="w-4 h-4 text-primary animate-spin" />;
       case 'completed':
+      case 'restored':
         return <CheckCircle2Icon className="w-4 h-4 text-success" />;
       case 'paused':
         return <AlertCircleIcon className="w-4 h-4 text-warning" />;
@@ -304,6 +305,22 @@ export default function FileVault() {
         return <Trash2Icon className="w-4 h-4 text-danger" />;
       default:
         return null;
+    }
+  };
+
+  const getStatusStyles = (status: FileStatus) => {
+    switch (status) {
+      case 'completed':
+      case 'restored':
+        return "bg-success/10 text-success rounded-full px-2 py-0.5 text-xs font-medium";
+      case 'uploading':
+      case 'paused':
+        return "bg-warning/10 text-warning rounded-full px-2 py-0.5 text-xs font-medium";
+      case 'canceled':
+      case 'deleted':
+        return "bg-danger/10 text-danger rounded-full px-2 py-0.5 text-xs font-medium";
+      default:
+        return "text-muted-foreground";
     }
   };
 
@@ -365,6 +382,7 @@ export default function FileVault() {
               <SelectItem value="paused">Paused</SelectItem>
               <SelectItem value="canceled">Canceled</SelectItem>
               <SelectItem value="deleted">Deleted</SelectItem>
+              <SelectItem value="restored">Restored</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -429,7 +447,6 @@ export default function FileVault() {
                   <TableRow
                     key={file.id}
                     className={cn(
-                      file.status === 'deleted' && "opacity-50",
                       selectedFiles.has(file.id) && "bg-muted/50"
                     )}
                   >
@@ -441,8 +458,8 @@ export default function FileVault() {
                     </TableCell>
                     <TableCell className="font-medium">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
-                          <FileIcon className="w-4 h-4 text-primary" />
+                        <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)]">
+                          <FileIcon className="w-3 h-3 text-primary" />
                         </div>
                         <span className="truncate">{file.name}</span>
                       </div>
@@ -452,9 +469,9 @@ export default function FileVault() {
                       {new Date(file.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         {getStatusIcon(file.status)}
-                        <span className="capitalize min-w-[80px]">{file.status}</span>
+                        <span className={getStatusStyles(file.status)}>{file.status}</span>
                         {file.status === 'uploading' && uploadProgress[file.id] !== undefined && (
                           <div className="hidden sm:flex items-center gap-2 min-w-[120px]">
                             <Progress
