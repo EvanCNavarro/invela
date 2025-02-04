@@ -64,7 +64,7 @@ import {
 } from "@/components/ui/tooltip";
 import React from 'react';
 import Spinner from "@/components/ui/spinner";
-
+import { Loader2 } from "lucide-react";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -480,8 +480,12 @@ export default function FileVault() {
 
   const downloadMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/download`);
+      const file = files.find(f => f.id === fileId);
+      if (file) {
+        showDownloadToast(file.name);
+      }
 
+      const response = await fetch(`/api/files/${fileId}/download`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
         throw new Error(errorData.message || 'Failed to download file');
@@ -497,7 +501,6 @@ export default function FileVault() {
       const a = document.createElement('a');
       a.href = url;
 
-      // Get filename from Content-Disposition header or fallback to the one in our files array
       const contentDisposition = response.headers.get('content-disposition');
       const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
       const filename = filenameMatch ? filenameMatch[1] : files.find(f => f.id === fileId)?.name || 'download';
@@ -507,6 +510,12 @@ export default function FileVault() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
+      toast({
+        title: "Download Complete",
+        description: `${filename} has been downloaded successfully.`,
+        duration: 3000,
+      });
     },
     onError: (error: Error) => {
       console.error('Download error:', error);
@@ -519,9 +528,15 @@ export default function FileVault() {
     },
   });
 
-  // Update the bulkDownloadMutation
   const bulkDownloadMutation = useMutation({
     mutationFn: async (fileIds: string[]) => {
+      const selectedFileNames = files
+        .filter(f => fileIds.includes(f.id))
+        .map(f => f.name)
+        .join(", ");
+
+      showDownloadToast(`${fileIds.length} files`);
+
       const response = await fetch('/api/files/download-bulk', {
         method: 'POST',
         headers: {
@@ -543,6 +558,12 @@ export default function FileVault() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+
+      toast({
+        title: "Download Complete",
+        description: `${fileIds.length} files have been downloaded successfully.`,
+        duration: 3000,
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -553,6 +574,20 @@ export default function FileVault() {
       });
     },
   });
+
+  const showDownloadToast = (fileName: string) => {
+    toast({
+      title: "Downloading File",
+      description: (
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Downloading {fileName}...</span>
+        </div>
+      ),
+      duration: 2000,
+    });
+  };
+
 
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev => {
