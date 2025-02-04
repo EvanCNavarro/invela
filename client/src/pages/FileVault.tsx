@@ -748,7 +748,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[10rem] min-w-[10rem] bg-muted"> {/* Reduced from 14rem */}
+                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted"> {/* Reduced from 10rem by 40% */}
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -771,7 +771,7 @@ export default function FileVault() {
                         </TableHead>
                       )}
                       {visibleColumns.has('uploadDate') && (
-                        <TableHead className="w-[7rem] min-w-[7rem] bg-muted text-right">
+                        <TableHead className="w-[9rem] min-w-[9rem] whitespace-nowrap bg-muted text-right"> {/* Increased from 7rem to 9rem and added whitespace-nowrap */}
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('createdAt')}
@@ -927,7 +927,7 @@ export default function FileVault() {
 
           <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
             <DialogContent
-              className="max-w-2xl"              aria-describedby="file-details-description"
+                            className="max-w-2xl"              aria-describedby="file-details-description"
             >
               <DialogHeader>
                 <DialogTitle>File Details</DialogTitle>
