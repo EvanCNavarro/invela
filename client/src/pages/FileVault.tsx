@@ -894,8 +894,7 @@ export default function FileVault() {
                               className="w-8 h-8"
                             >
                               {page}
-                            </Button>
-                          </React.Fragment>
+                            </Button>                            </React.Fragment>
                         ))}
                     </div>
                     <Button
@@ -930,7 +929,7 @@ export default function FileVault() {
                   <DialogTitle className="text-xl font-semibold">File Details</DialogTitle>
                 </DialogHeader>
                 {selectedFileDetails && (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* File Overview */}
                     <div className="p-4 rounded-lg bg-muted/30 border border-border">
                       <div className="flex items-center gap-2 mb-4">
