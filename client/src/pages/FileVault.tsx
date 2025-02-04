@@ -307,17 +307,27 @@ export default function FileVault() {
     fileInputRef.current?.click();
   };
 
-  const handleBulkAction = (action: 'delete' | 'restore') => {
-    if (action === 'delete') {
-      Array.from(selectedFiles).forEach(fileId => {
-        deleteMutation.mutate(fileId);
-      });
-    } else if (action === 'restore') {
-      Array.from(selectedFiles).forEach(fileId => {
-        restoreMutation.mutate(fileId);
+  const handleBulkAction = async (action: 'delete' | 'restore') => {
+    try {
+      if (action === 'delete') {
+        for (const fileId of selectedFiles) {
+          await deleteMutation.mutateAsync(fileId);
+        }
+      } else if (action === 'restore') {
+        for (const fileId of selectedFiles) {
+          await restoreMutation.mutateAsync(fileId);
+        }
+      }
+      setSelectedFiles(new Set());
+    } catch (error) {
+      console.error(`Bulk ${action} error:`, error);
+      toast({
+        title: "Error",
+        description: `Failed to ${action} selected files. Please try again.`,
+        variant: "destructive",
+        duration: 3000,
       });
     }
-    setSelectedFiles(new Set());
   };
 
   const canRestore = useMemo(() => {
@@ -424,8 +434,9 @@ export default function FileVault() {
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
                       onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                       className={cn(
+                        "transition-colors",
                         selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
-                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary after:content-[''] after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:block after:w-2 after:h-0.5 after:bg-primary after:rounded-full"
+                        "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary after:content-['-'] after:absolute after:left-1/2 after:top-1/2 after:-translate-x-1/2 after:-translate-y-[60%] after:text-primary after:text-sm"
                       )}
                     />
                   </TableHead>
