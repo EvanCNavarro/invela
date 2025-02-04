@@ -167,7 +167,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[14rem] bg-white" role="cell">
+    <div className="flex items-center gap-2 min-w-0 max-w-[14rem]" role="cell">
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
@@ -803,13 +803,13 @@ export default function FileVault() {
                   <TableBody>
                     {paginatedFiles.map((file) => (
                       <TableRow key={file.id} className="group">
-                        <TableCell className="text-center sticky left-0 z-20 bg-white group-hover:bg-muted transition-colors">
+                        <TableCell className="text-center sticky left-0 z-20 bg-background group-hover:bg-muted transition-colors">
                           <Checkbox
                             checked={selectedFiles.has(file.id)}
                             onCheckedChange={() => toggleFileSelection(file.id)}
                           />
                         </TableCell>
-                        <TableCell className="sticky left-[2rem] z-20 bg-white group-hover:bg-muted transition-colors">
+                        <TableCell className="sticky left-[2rem] z-20 bg-background group-hover:bg-muted transition-colors">
                           <FileNameCell file={file} />
                         </TableCell>
                         {visibleColumns.has('size') && (
@@ -838,7 +838,7 @@ export default function FileVault() {
                             </span>
                           </TableCell>
                         )}
-                        <TableCell className="text-center sticky right-0 z-20 bg-white group-hover:bg-muted transition-colors">
+                        <TableCell className="text-center sticky right-0 z-20 bg-background group-hover:bg-muted transition-colors">
                           <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
                       </TableRow>
@@ -901,7 +901,7 @@ export default function FileVault() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handlePageChange(currentPage + 1)}
+                      onClick={()=> handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
                     >
                       <ChevronRightIcon className="h-4 w-4" />
