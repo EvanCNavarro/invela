@@ -738,10 +738,10 @@ export default function FileVault() {
 
           <div>
             <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto min-w-0">
                 <Table>
                   <TableHeader>
-                    <TableRow className="border-b hover:bg-transparent">
+                    <TableRow className="hover:bg-transparent">
                       <TableHead className="w-[2rem] min-w-[2rem] bg-muted text-center sticky left-0 z-20">
                         <Checkbox
                           checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
@@ -802,23 +802,23 @@ export default function FileVault() {
                   </TableHeader>
                   <TableBody>
                     {paginatedFiles.map((file) => (
-                      <TableRow key={file.id} className="group">
-                        <TableCell className="text-center sticky left-0 z-20 bg-background group-hover:bg-muted transition-colors">
+                      <TableRow key={file.id} className="bg-white hover:bg-muted/50 transition-colors">
+                        <TableCell className="text-center sticky left-0 z-20 bg-inherit">
                           <Checkbox
                             checked={selectedFiles.has(file.id)}
                             onCheckedChange={() => toggleFileSelection(file.id)}
                           />
                         </TableCell>
-                        <TableCell className="sticky left-[2rem] z-20 bg-background group-hover:bg-muted transition-colors">
+                        <TableCell className="sticky left-[2rem] z-20 bg-inherit">
                           <FileNameCell file={file} />
                         </TableCell>
                         {visibleColumns.has('size') && (
-                          <TableCell className="text-right group-hover:bg-muted transition-colors">
+                          <TableCell className="text-right bg-inherit">
                             {formatFileSize(file.size)}
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableCell className="text-right group-hover:bg-muted transition-colors">
+                          <TableCell className="text-right bg-inherit">
                             {new Date(file.createdAt).toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
@@ -827,18 +827,18 @@ export default function FileVault() {
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableCell className="text-right group-hover:bg-muted transition-colors">
+                          <TableCell className="text-right bg-inherit">
                             {formatTimeWithZone(new Date(file.uploadTime))}
                           </TableCell>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableCell className="text-center group-hover:bg-muted transition-colors">
+                          <TableCell className="text-center bg-inherit">
                             <span className={getStatusStyles(file.status)}>
                               {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                             </span>
                           </TableCell>
                         )}
-                        <TableCell className="text-center sticky right-0 z-20 bg-background group-hover:bg-muted transition-colors">
+                        <TableCell className="text-center sticky right-0 z-20 bg-inherit">
                           <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
                       </TableRow>
@@ -894,27 +894,28 @@ export default function FileVault() {
                               className="w-8 h-8"
                             >
                               {page}
-                            </Button>                            </React.Fragment>
+                            </Button>
+                          </React.Fragment>
                         ))}
                     </div>
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={()=> handlePageChange(currentPage + 1)}
+                      onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
                     >
                       <ChevronRightIcon className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
-                      onClick={() => handlePageChange(totalPages)}
-                      disabled={currentPage ===totalPages}
+                      size="icon"                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage === totalPages}
                       className="hidden sm:inline-flex"
                     >
-                      <ChevronsRightIcon className="h4 w-4" />
+                      <ChevronsRightIcon className="h-4 w-4" />
                     </Button>
-                  </div>                )}
+                  </div>
+                )}
               </div>
             </div>
 

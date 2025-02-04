@@ -48,7 +48,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Floating navbar that stretches full width */}
         <div className={cn(
-          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80 border-b",
+          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80",
           "transition-all duration-300 ease-in-out",
           isSidebarExpanded 
             ? "left-64" // When sidebar is expanded, start from sidebar width
