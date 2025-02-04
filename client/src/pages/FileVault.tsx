@@ -18,6 +18,10 @@ import {
   ArrowUpDownIcon,
   Trash2Icon,
   MinusIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -46,6 +50,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import React from 'react';
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -97,6 +102,8 @@ export default function FileVault() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [selectedFileDetails, setSelectedFileDetails] = useState<FileItem | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: files = [] } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
@@ -308,6 +315,16 @@ export default function FileVault() {
     return result;
   }, [files, statusFilter, sortConfig, searchQuery]);
 
+  const paginatedFiles = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredAndSortedFiles.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedFiles, currentPage]);
+
+  const totalPages = Math.ceil(filteredAndSortedFiles.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   const getStatusStyles = (status: FileStatus) => {
     switch (status) {
@@ -337,7 +354,6 @@ export default function FileVault() {
       if (action === 'delete') {
         await Promise.all(fileIds.map(fileId => deleteMutation.mutateAsync(fileId)));
       } else if (action === 'restore') {
-        // Execute restore operations sequentially
         for (const fileId of fileIds) {
           const response = await fetch(`/api/files/${fileId}/restore`, {
             method: 'POST',
@@ -360,7 +376,6 @@ export default function FileVault() {
           }
         }
 
-        // Refresh the file list after successful restoration
         queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       }
 
@@ -428,13 +443,10 @@ export default function FileVault() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Statuses</SelectItem>
-                {/* Successful states */}
                 <SelectItem value="uploaded">Uploaded</SelectItem>
                 <SelectItem value="restored">Restored</SelectItem>
-                {/* Pending states */}
                 <SelectItem value="uploading">Uploading</SelectItem>
                 <SelectItem value="paused">Paused</SelectItem>
-                {/* Removed states */}
                 <SelectItem value="canceled">Canceled</SelectItem>
                 <SelectItem value="deleted">Deleted</SelectItem>
               </SelectContent>
@@ -542,7 +554,7 @@ export default function FileVault() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAndSortedFiles.map((file) => (
+                {paginatedFiles.map((file) => (
                   <TableRow
                     key={file.id}
                     className={cn(
@@ -619,7 +631,7 @@ export default function FileVault() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredAndSortedFiles.length === 0 && (
+                {paginatedFiles.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center">
                       No files {statusFilter !== 'all' ? `with status "${statusFilter}"` : 'uploaded'}
@@ -628,6 +640,72 @@ export default function FileVault() {
                 )}
               </TableBody>
             </Table>
+          </div>
+
+          <div className="flex items-center justify-between px-2 py-4">
+            <div className="flex-1 text-sm text-muted-foreground">
+              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-
+              {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
+              {filteredAndSortedFiles.length} files
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+                className="hidden sm:inline-flex"
+              >
+                <ChevronsLeftIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(page => {
+                    const distance = Math.abs(page - currentPage);
+                    return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                  })
+                  .map((page, index, array) => (
+                    <React.Fragment key={page}>
+                      {index > 0 && array[index - 1] !== page - 1 && (
+                        <span className="text-muted-foreground">...</span>
+                      )}
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="icon"
+                        onClick={() => handlePageChange(page)}
+                        className="w-8 h-8"
+                      >
+                        {page}
+                      </Button>
+                    </React.Fragment>
+                  ))}
+              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+                className="hidden sm:inline-flex"
+              >
+                <ChevronsRightIcon className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
