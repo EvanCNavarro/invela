@@ -167,7 +167,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
   }, []);
 
   return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[14rem]" role="cell">
+    <div className="flex items-center gap-2 min-w-0 max-w-[14rem] bg-white" role="cell">
       <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
@@ -716,7 +716,7 @@ export default function FileVault() {
                     disabled={selectedFiles.size === 0}
                     className="min-w-[100px]"
                   >
-                    Actions
+                    Bulk Actions
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -748,7 +748,7 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted">
+                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted sticky left-[2rem] z-20">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
@@ -802,23 +802,23 @@ export default function FileVault() {
                   </TableHeader>
                   <TableBody>
                     {paginatedFiles.map((file) => (
-                      <TableRow key={file.id}>
-                        <TableCell className="text-center sticky left-0 z-20 bg-white">
+                      <TableRow key={file.id} className="group">
+                        <TableCell className="text-center sticky left-0 z-20 bg-white group-hover:bg-muted transition-colors">
                           <Checkbox
                             checked={selectedFiles.has(file.id)}
                             onCheckedChange={() => toggleFileSelection(file.id)}
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="sticky left-[2rem] z-20 bg-white group-hover:bg-muted transition-colors">
                           <FileNameCell file={file} />
                         </TableCell>
                         {visibleColumns.has('size') && (
-                          <TableCell className="text-right">
+                          <TableCell className="text-right group-hover:bg-muted transition-colors">
                             {formatFileSize(file.size)}
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableCell className="text-right">
+                          <TableCell className="text-right group-hover:bg-muted transition-colors">
                             {new Date(file.createdAt).toLocaleDateString(undefined, {
                               month: 'short',
                               day: 'numeric',
@@ -827,18 +827,18 @@ export default function FileVault() {
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableCell className="text-right">
+                          <TableCell className="text-right group-hover:bg-muted transition-colors">
                             {formatTimeWithZone(new Date(file.uploadTime))}
                           </TableCell>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableCell className="text-center">
+                          <TableCell className="text-center group-hover:bg-muted transition-colors">
                             <span className={getStatusStyles(file.status)}>
                               {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                             </span>
                           </TableCell>
                         )}
-                        <TableCell className="text-center sticky right-0 z-20 bg-white">
+                        <TableCell className="text-center sticky right-0 z-20 bg-white group-hover:bg-muted transition-colors">
                           <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
                       </TableRow>
@@ -918,26 +918,23 @@ export default function FileVault() {
                   </div>                )}
               </div>
             </div>
+
           </div>
 
           <div>
             <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
               <DialogContent
-                className="max-w-2xl"
-                aria-describedby="file-details-description"
+                className="max-w-2xl w-full p-6 gap-6"
               >
                 <DialogHeader>
                   <DialogTitle className="text-xl font-semibold">File Details</DialogTitle>
-                  <p id="file-details-description" className="text-sm text-muted-foreground">
-                    View detailed information about the selected file
-                  </p>
                 </DialogHeader>
                 {selectedFileDetails && (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* File Overview */}
                     <div className="p-4 rounded-lg bg-muted/30 border border-border">
                       <div className="flex items-center gap-2 mb-4">
-                        <FileIcon className="w-4 h-4 text-primary" />
+                        <FileIcon className="w-4 h-4 text-foreground" />
                         <h3 className="text-sm font-medium">File Overview</h3>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -957,6 +954,30 @@ export default function FileVault() {
                           <p className="text-sm font-medium text-muted-foreground">Status</p>
                           <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex items-center gap-2 mb-4">
+                        <ClockIcon className="w-4 h-4 text-green-600" />
+                        <h3 className="text-sm font-medium text-green-600">Timeline</h3>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Created</p>
+                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
+                          <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
+                        </div>
+                        {selectedFileDetails.lastAccessed && (
+                          <div>
+                            <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
+                            <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1009,30 +1030,6 @@ export default function FileVault() {
                           <p className="text-sm font-medium text-muted-foreground">Retention</p>
                           <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Timeline */}
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center gap-2 mb-4">
-                        <ClockIcon className="w-4 h-4 text-green-600" />
-                        <h3 className="text-sm font-medium text-green-600">Timeline</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Created</p>
-                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                          <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
-                        </div>
-                        {selectedFileDetails.lastAccessed && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
-                            <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
