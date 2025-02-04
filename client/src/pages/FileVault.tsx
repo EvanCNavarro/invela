@@ -163,19 +163,24 @@ export default function FileVault() {
           throw new Error(error);
         }
 
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          return response.json();
-        }
+        // Update the file status locally
+        const updatedFile = {
+          ...files.find((f: FileItem) => f.id === fileId),
+          status: 'restored'
+        };
 
-        return { success: true };
+        return updatedFile;
       } catch (error) {
         console.error('Restore error:', error);
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+    onSuccess: (updatedFile) => {
+      queryClient.setQueryData(['/api/files'], (oldData: FileItem[]) => {
+        return oldData.map(file => 
+          file.id === updatedFile.id ? { ...file, status: 'restored' } : file
+        );
+      });
       toast({
         title: "Success",
         description: "File restored successfully",
@@ -447,6 +452,7 @@ export default function FileVault() {
                   <TableRow
                     key={file.id}
                     className={cn(
+                      file.status === 'deleted' && "opacity-60",
                       selectedFiles.has(file.id) && "bg-muted/50"
                     )}
                   >
