@@ -644,68 +644,74 @@ export default function FileVault() {
 
           <div className="flex items-center justify-between px-2 py-4">
             <div className="flex-1 text-sm text-muted-foreground">
-              Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-
-              {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
-              {filteredAndSortedFiles.length} files
+              {filteredAndSortedFiles.length > 0 && (
+                filteredAndSortedFiles.length <= 10 ? (
+                  `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
+                ) : (
+                  `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
+                )
+              )}
             </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
-                className="hidden sm:inline-flex"
-              >
-                <ChevronsLeftIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-2">
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter(page => {
-                    const distance = Math.abs(page - currentPage);
-                    return distance === 0 || distance === 1 || page === 1 || page === totalPages;
-                  })
-                  .map((page, index, array) => (
-                    <React.Fragment key={page}>
-                      {index > 0 && array[index - 1] !== page - 1 && (
-                        <span className="text-muted-foreground">...</span>
-                      )}
-                      <Button
-                        variant={currentPage === page ? "default" : "outline"}
-                        size="icon"
-                        onClick={() => handlePageChange(page)}
-                        className="w-8 h-8"
-                      >
-                        {page}
-                      </Button>
-                    </React.Fragment>
-                  ))}
+            {filteredAndSortedFiles.length > 10 && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="hidden sm:inline-flex"
+                >
+                  <ChevronsLeftIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      const distance = Math.abs(page - currentPage);
+                      return distance === 0 || distance === 1 || page === 1 || page === totalPages;
+                    })
+                    .map((page, index, array) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="text-muted-foreground">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="icon"
+                          onClick={() => handlePageChange(page)}
+                          className="w-8 h-8"
+                        >
+                          {page}
+                        </Button>
+                      </React.Fragment>
+                    ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="hidden sm:inline-flex"
+                >
+                  <ChevronsRightIcon className="h-4 w-4" />
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-                className="hidden sm:inline-flex"
-              >
-                <ChevronsRightIcon className="h-4 w-4" />
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>
