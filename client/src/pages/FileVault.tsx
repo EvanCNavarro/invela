@@ -59,6 +59,8 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
+import Spinner from "@/components/ui/spinner";
+
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -160,7 +162,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 
   return (
     <div className="flex items-center gap-2 min-w-0 max-w-[18.25rem]" role="cell">
-      <div 
+      <div
         className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
         aria-hidden="true"
       >
@@ -170,8 +172,8 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span 
-                ref={nameRef} 
+              <span
+                ref={nameRef}
                 className="truncate block min-w-0 flex-1"
                 aria-label={`File name: ${file.name}`}
               >
@@ -184,8 +186,8 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
           </Tooltip>
         </TooltipProvider>
       ) : (
-        <span 
-          ref={nameRef} 
+        <span
+          ref={nameRef}
           className="truncate block min-w-0 flex-1"
           aria-label={`File name: ${file.name}`}
         >
@@ -197,6 +199,42 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 });
 
 FileNameCell.displayName = 'FileNameCell';
+
+const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
+        >
+          <MoreVerticalIcon className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
+          <FileTextIcon className="w-4 h-4 mr-2" />
+          View Details
+        </DropdownMenuItem>
+        {file.status === 'deleted' ? (
+          <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
+            <RefreshCcwIcon className="w-4 h-4 mr-2" />
+            Restore
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            className="text-destructive"
+            onClick={() => onDelete(file.id)}
+          >
+            <Trash2Icon className="w-4 h-4 mr-2" />
+            Delete
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
 
 export default function FileVault() {
   const { toast } = useToast();
@@ -527,6 +565,10 @@ export default function FileVault() {
     });
   }, [selectedFiles, allFiles]);
 
+  const handleDelete = (fileId: string) => {
+    deleteMutation.mutate(fileId);
+  };
+
   return (
     <DashboardLayout>
       <TooltipProvider>
@@ -538,8 +580,8 @@ export default function FileVault() {
                 Secure document storage for your company.
               </p>
             </div>
-            <Button 
-              onClick={handleUploadClick} 
+            <Button
+              onClick={handleUploadClick}
               className="gap-2"
               aria-label="Upload new files"
             >
@@ -633,73 +675,60 @@ export default function FileVault() {
                           onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
                         />
                       </TableHead>
-                      <TableHead className="w-[18.25rem] min-w-[18.25rem] max-w-[18.25rem] bg-muted overflow-hidden">
+                      <TableHead className="w-[14rem] min-w-[14rem] bg-muted">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('name')}
-                          className={cn(
-                            "hover:bg-muted text-left pl-0 gap-1 transition-colors overflow-hidden",
-                            sortConfig.field === 'name' && "text-primary"
-                          )}
+                          className="flex items-center gap-1"
                         >
                           Name
                           {getSortIcon('name')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-fit min-w-[8.5rem] hidden xl:table-cell bg-muted text-right">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort('createdAt')}
-                          className={cn(
-                            "hover:bg-muted text-right pr-0 gap-1 transition-colors whitespace-nowrap",
-                            sortConfig.field === 'createdAt' && "text-primary"
-                          )}
-                        >
-                          Upload Date
-                          {getSortIcon('createdAt')}
-                        </Button>
-                      </TableHead>
-                      <TableHead className="w-[9rem] min-w-[9rem] hidden lg:table-cell bg-muted text-center">
+                      <TableHead className="w-[8rem] min-w-[8rem] hidden md:table-cell bg-muted text-center">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('status')}
-                          className={cn(
-                            "hover:bg-muted justify-center gap-1 transition-colors",
-                            sortConfig.field === 'status' && "text-primary"
-                          )}
+                          className="flex items-center gap-1 mx-auto"
                         >
                           Status
                           {getSortIcon('status')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-fit min-w-[5.5rem] hidden xl:table-cell bg-muted text-right">
+                      <TableHead className="w-[7rem] min-w-[7rem] hidden lg:table-cell bg-muted text-center">
+                        Access Level
+                      </TableHead>
+                      <TableHead className="w-[8rem] min-w-[8rem] hidden lg:table-cell bg-muted text-center">
+                        Classification
+                      </TableHead>
+                      <TableHead className="w-fit min-w-[5.5rem] hidden md:table-cell bg-muted text-right">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort('size')}
-                          className={cn(
-                            "hover:bg-muted text-right pr-0 gap-1 transition-colors",
-                            sortConfig.field === 'size' && "text-primary"
-                          )}
+                          className="flex items-center gap-1 ml-auto"
                         >
                           Size
                           {getSortIcon('size')}
                         </Button>
                       </TableHead>
-                      <TableHead className="w-8 min-w-8 max-w-8 bg-muted text-center">
-                        <span className="sr-only">Actions</span>
+                      <TableHead className="w-[9rem] min-w-[9rem] hidden lg:table-cell bg-muted text-right">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort('createdAt')}
+                          className="flex items-center gap-1 ml-auto"
+                        >
+                          Upload Date
+                          {getSortIcon('createdAt')}
+                        </Button>
+                      </TableHead>
+                      <TableHead className="w-[6rem] min-w-[6rem] bg-muted text-center">
+                        Actions
                       </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedFiles.map((file) => (
-                      <TableRow
-                        key={file.id}
-                        className={cn(
-                          "border-b transition-colors",
-                          file.status === 'deleted' && "opacity-60",
-                          selectedFiles.has(file.id) && "bg-muted/50"
-                        )}
-                      >
+                      <TableRow key={file.id}>
                         <TableCell className="text-center">
                           <Checkbox
                             checked={selectedFiles.has(file.id)}
@@ -709,10 +738,7 @@ export default function FileVault() {
                         <TableCell>
                           <FileNameCell file={file} />
                         </TableCell>
-                        <TableCell className="hidden xl:table-cell text-right">
-                          {new Date(file.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-center">
+                        <TableCell className="hidden md:table-cell text-center">
                           <span className={getStatusStyles(file.status)}>
                             {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
                           </span>
@@ -725,41 +751,24 @@ export default function FileVault() {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell className="hidden xl:table-cell text-right">
+                        <TableCell className="hidden lg:table-cell text-center">
+                          <span className="rounded-full px-2.5 py-1 text-xs font-medium capitalize bg-muted">
+                            {file.accessLevel || 'private'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-center">
+                          <span className="rounded-full px-2.5 py-1 text-xs font-medium capitalize bg-muted">
+                            {file.classificationType || 'internal'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-right">
                           {formatFileSize(file.size)}
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right">
+                          {new Date(file.createdAt).toLocaleDateString()}
+                        </TableCell>
                         <TableCell className="text-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
-                              >
-                                <MoreVerticalIcon className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
-                                <FileTextIcon className="w-4 h-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              {file.status === 'deleted' ? (
-                                <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
-                                  <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                                  Restore
-                                </DropdownMenuItem>
-                              ) : (
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => deleteMutation.mutate(file.id)}
-                                >
-                                  <Trash2Icon className="w-4 h-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                          <FileActions file={file} onDelete={handleDelete} />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -842,12 +851,19 @@ export default function FileVault() {
           </div>
 
           <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent
+              className="max-w-2xl"
+              aria-describedby="file-details-description"
+            >
               <DialogHeader>
                 <DialogTitle>File Details</DialogTitle>
+                <p id="file-details-description" className="text-sm text-muted-foreground">
+                  View detailed information about the selected file
+                </p>
               </DialogHeader>
               {selectedFileDetails && (
                 <div className="space-y-6">
+                  {/* Basic Information */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-muted-foreground">Basic Information</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -870,36 +886,60 @@ export default function FileVault() {
                     </div>
                   </div>
 
+                  {/* Security & Access Control */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Upload Information</h3>
+                    <h3 className="text-sm font-medium text-muted-foreground">Security & Access Control</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Access Level</p>
+                        <p className="mt-1 capitalize">{selectedFileDetails.accessLevel || 'private'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Classification</p>
+                        <p className="mt-1 capitalize">{selectedFileDetails.classificationType || 'internal'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Encryption Status</p>
+                        <p className="mt-1">{selectedFileDetails.encryptionStatus ? 'Encrypted' : 'Not Encrypted'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Storage Location</p>
+                        <p className="mt-1 capitalize">{selectedFileDetails.storageLocation?.replace('-', ' ') || 'hot storage'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Usage Statistics */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Usage Statistics</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                        <p className="mt-1">{selectedFileDetails.downloadCount || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Unique Viewers</p>
+                        <p className="mt-1">{selectedFileDetails.uniqueViewers || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Version</p>
+                        <p className="mt-1">{selectedFileDetails.version || 1}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Retention Period</p>
+                        <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timestamps */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground">Timestamps</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
                         <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
                       </div>
-                      {selectedFileDetails.uploader && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Uploaded By</p>
-                          <p className="mt-1">{selectedFileDetails.uploader}</p>
-                        </div>
-                      )}
-                      {selectedFileDetails.uploadTimeMs && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                          <p className="mt-1">{(selectedFileDetails.uploadTimeMs / 1000).toFixed(2)}s</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-muted-foreground">Access Information</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      {selectedFileDetails.downloadCount !== undefined && (
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                          <p className="mt-1">{selectedFileDetails.downloadCount}</p>                        </div>
-                      )}
                       {selectedFileDetails.lastAccessed && (
                         <div>
                           <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
@@ -909,22 +949,12 @@ export default function FileVault() {
                     </div>
                   </div>
 
-                  {(selectedFileDetails.version !== undefined || selectedFileDetails.checksum) && (
+                  {/* File Preview Section */}
+                  {selectedFileDetails.type === 'text/plain' && (
                     <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground">Technical Details</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        {selectedFileDetails.version !== undefined && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Version</p>
-                            <p className="mt-1">{selectedFileDetails.version}</p>
-                          </div>
-                        )}
-                        {selectedFileDetails.checksum && (
-                          <div className="col-span-2">
-                            <p className="text-sm font-medium text-muted-foreground">Checksum</p>
-                            <p className="mt-1 font-mono text-xs break-all">{selectedFileDetails.checksum}</p>
-                          </div>
-                        )}
+                      <h3 className="text-sm font-medium text-muted-foreground">File Preview</h3>
+                      <div className="max-h-[200px] overflow-y-auto rounded border bg-muted p-4">
+                        <FilePreview fileId={selectedFileDetails.id} />
                       </div>
                     </div>
                   )}
@@ -934,5 +964,24 @@ export default function FileVault() {
           </Dialog>
         </div>
       </TooltipProvider>
-    </DashboardLayout>  );
+    </DashboardLayout>
+  );
 }
+
+// New component for file preview
+const FilePreview = ({ fileId }: { fileId: string }) => {
+  const { data: previewData } = useQuery({
+    queryKey: [`/api/files/${fileId}/preview`],
+    enabled: !!fileId,
+  });
+
+  if (!previewData) {
+    return <div className="text-sm text-muted-foreground">Loading preview...</div>;
+  }
+
+  return (
+    <pre className="text-sm whitespace-pre-wrap">
+      {previewData.preview}
+    </pre>
+  );
+};
