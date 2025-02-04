@@ -108,7 +108,6 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-
   // File routes
   app.post("/api/files", requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
@@ -176,6 +175,38 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error deleting file:", error);
       res.status(500).json({ message: "Error deleting file" });
+    }
+  });
+
+  // Add file restore endpoint
+  app.post("/api/files/:id/restore", requireAuth, async (req, res) => {
+    try {
+      // Find the file
+      const [file] = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.id, parseInt(req.params.id)),
+          eq(files.userId, req.user!.id)
+        ));
+
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      if (file.status !== 'deleted') {
+        return res.status(400).json({ message: "File is not in deleted state" });
+      }
+
+      // Update file status to restored
+      const [updatedFile] = await db.update(files)
+        .set({ status: 'restored' })
+        .where(eq(files.id, file.id))
+        .returning();
+
+      res.json(updatedFile);
+    } catch (error) {
+      console.error("Error restoring file:", error);
+      res.status(500).json({ message: "Error restoring file" });
     }
   });
 
