@@ -296,7 +296,7 @@ export default function FileVault() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
   // Removed separate isLoading state
 
-  // Move FileActions component inside to access state
+  // Reorder the dropdown menu items in FileActions component
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
     return (
       <DropdownMenu>
@@ -310,13 +310,13 @@ export default function FileVault() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => downloadMutation.mutate(file.id)}>
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
             <FileTextIcon className="w-4 h-4 mr-2" />
             View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => downloadMutation.mutate(file.id)}>
+            <Download className="w-4 h-4 mr-2" />
+            Download
           </DropdownMenuItem>
           {file.status === 'deleted' ? (
             <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
@@ -937,7 +937,7 @@ export default function FileVault() {
                                   day: 'numeric',
                                   year: 'numeric'
                                 })}
-                              </TableCell>
+                                                            </TableCell>
                             )}
                             {visibleColumns.has('uploadTime') && (
                               <TableCell className="text-right bg-inherit">

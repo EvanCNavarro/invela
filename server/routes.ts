@@ -11,7 +11,7 @@ import {
   insertTaskSchema,
   insertFileSchema
 } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -67,10 +67,14 @@ export function registerRoutes(app: Express): Server {
   // Add download endpoint
   app.get("/api/files/:id/download", requireAuth, async (req, res) => {
     try {
-      const [file] = await db.select()
-        .from(files)
+      const fileId = parseInt(req.params.id);
+      if (isNaN(fileId)) {
+        return res.status(400).json({ message: "Invalid file ID" });
+      }
+
+      const [file] = await db.select().from(files)
         .where(and(
-          eq(files.id, parseInt(req.params.id)),
+          eq(files.id, fileId),
           eq(files.userId, req.user!.id)
         ));
 
@@ -96,11 +100,13 @@ export function registerRoutes(app: Express): Server {
       fileStream.pipe(res);
     } catch (error) {
       console.error("Error downloading file:", error);
-      res.status(500).json({ message: "Error downloading file" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Error downloading file" });
+      }
     }
   });
 
-  // Add bulk download endpoint
+  // Bulk download endpoint
   app.post("/api/files/download-bulk", requireAuth, async (req, res) => {
     try {
       const { fileIds } = req.body;
@@ -108,16 +114,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "No files selected for download" });
       }
 
-      // Fetch all requested files
       const selectedFiles = await db.select()
         .from(files)
         .where(and(
-          eq(files.userId, req.user!.id)
+          eq(files.userId, req.user!.id),
+          inArray(files.id, fileIds.map(id => parseInt(id)))
         ));
 
-      const validFiles = selectedFiles.filter(file => 
-        fileIds.includes(file.id) && fs.existsSync(file.path)
-      );
+      const validFiles = selectedFiles.filter(file => fs.existsSync(file.path));
 
       if (validFiles.length === 0) {
         return res.status(404).json({ message: "No valid files found for download" });
@@ -129,26 +133,37 @@ export function registerRoutes(app: Express): Server {
 
       // Create zip archive
       const archive = archiver('zip', {
-        zlib: { level: 9 } // Maximum compression
+        zlib: { level: 9 }
+      });
+
+      // Handle archive errors
+      archive.on('error', (err) => {
+        console.error('Archive error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error creating zip file" });
+        }
       });
 
       // Pipe archive data to response
       archive.pipe(res);
 
-      // Add files to archive and update download counts
+      // Add files to archive
       for (const file of validFiles) {
         archive.file(file.path, { name: file.name });
-        await db.update(files)
+        // Update download count in background
+        db.update(files)
           .set({ downloadCount: (file.downloadCount || 0) + 1 })
-          .where(eq(files.id, file.id));
+          .where(eq(files.id, file.id))
+          .catch(err => console.error(`Error updating download count for file ${file.id}:`, err));
       }
 
       // Finalize archive
       await archive.finalize();
-
     } catch (error) {
       console.error("Error creating bulk download:", error);
-      res.status(500).json({ message: "Error creating bulk download" });
+      if (!res.headersSent) {
+        res.status(500).json({ message: "Error creating bulk download" });
+      }
     }
   });
 
