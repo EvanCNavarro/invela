@@ -45,16 +45,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       </aside>
 
-      {/* Main content area with dynamic width adjustment */}
-      <div className={cn(
-        "flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out",
-        "w-[calc(100%-5rem)]", // Base width when sidebar is collapsed (20px)
-        isSidebarExpanded && "w-[calc(100%-16rem)]" // Adjust width when sidebar is expanded (64px)
-      )}>
-        <div className="sticky top-0 z-30 w-full backdrop-blur-sm bg-background/80 border-b">
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Floating navbar that stretches full width */}
+        <div className={cn(
+          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80 border-b",
+          "transition-all duration-300 ease-in-out",
+          isSidebarExpanded 
+            ? "left-64" // When sidebar is expanded, start from sidebar width
+            : "left-20" // When sidebar is collapsed, start from collapsed width
+        )}>
           <TopNav />
         </div>
-        <main className="flex-1">
+
+        {/* Main content area with padding for navbar */}
+        <main className="flex-1 pt-16"> {/* Add padding-top to account for fixed navbar */}
           <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
             {children}
           </div>
