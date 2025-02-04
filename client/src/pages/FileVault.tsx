@@ -65,6 +65,22 @@ interface FileItem {
   checksum?: string;
 }
 
+interface FileApiResponse {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  status: FileStatus;
+  createdAt: string;
+  updatedAt: string;
+  uploader?: string;
+  uploadTimeMs?: number;
+  downloadCount?: number;
+  lastAccessed?: string;
+  version?: number;
+  checksum?: string;
+}
+
 type SortField = 'name' | 'size' | 'createdAt' | 'status';
 type SortOrder = 'asc' | 'desc';
 
@@ -82,7 +98,7 @@ export default function FileVault() {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [selectedFileDetails, setSelectedFileDetails] = useState<FileItem | null>(null);
 
-  const { data: files = [] } = useQuery({
+  const { data: files = [] } = useQuery<FileApiResponse[]>({
     queryKey: ['/api/files'],
   });
 
@@ -160,7 +176,8 @@ export default function FileVault() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to restore file');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || 'Failed to restore file');
       }
 
       return response.json();
@@ -195,7 +212,7 @@ export default function FileVault() {
     });
   };
 
-  const toggleAllFiles = (files: FileItem[]) => {
+  const toggleAllFiles = (files: FileApiResponse[]) => {
     if (selectedFiles.size === files.length) {
       setSelectedFiles(new Set());
     } else {
@@ -249,7 +266,7 @@ export default function FileVault() {
   };
 
   const filteredAndSortedFiles = useMemo(() => {
-    let result = [...(files as FileItem[])];
+    let result = [...(files as FileApiResponse[])];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -333,7 +350,7 @@ export default function FileVault() {
 
   const canRestore = useMemo(() => {
     return Array.from(selectedFiles).some(fileId => {
-      const file = files.find(f => f.id === fileId);
+      const file = (files as FileApiResponse[]).find(f => f.id === fileId);
       return file?.status === 'deleted';
     });
   }, [selectedFiles, files]);
@@ -433,15 +450,17 @@ export default function FileVault() {
                     <Checkbox
                       checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
                       data-state={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ? 'indeterminate' : selectedFiles.size === filteredAndSortedFiles.length ? 'checked' : 'unchecked'}
-                      onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
+                      onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles as FileApiResponse[])}
                       className={cn(
                         "transition-colors",
                         selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length &&
                         "data-[state=indeterminate]:bg-transparent data-[state=indeterminate]:border-primary"
                       )}
-                      icon={selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length ?
-                        <MinusIcon className="h-3 w-3 text-primary" /> : undefined}
-                    />
+                    >
+                      {selectedFiles.size > 0 && selectedFiles.size < filteredAndSortedFiles.length && (
+                        <MinusIcon className="h-3 w-3 text-primary" />
+                      )}
+                    </Checkbox>
                   </TableHead>
                   <TableHead className="min-w-[200px] lg:w-[400px] text-left">
                     <Button
