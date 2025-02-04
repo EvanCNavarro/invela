@@ -510,7 +510,7 @@ export default function FileVault() {
                       )}
                     </Checkbox>
                   </TableHead>
-                  <TableHead className="min-w-[200px] lg:w-[400px] text-left">
+                  <TableHead className="w-[45%]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('name')}
@@ -520,7 +520,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="hidden sm:table-cell text-left">
+                  <TableHead className="w-[15%]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('size')}
@@ -530,7 +530,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="hidden lg:table-cell text-left">
+                  <TableHead className="w-[20%]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('createdAt')}
@@ -540,7 +540,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="text-left">
+                  <TableHead className="w-[15%]">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('status')}
@@ -550,7 +550,7 @@ export default function FileVault() {
                       <ArrowUpDownIcon className="h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead className="w-[60px]">Actions</TableHead>
+                  <TableHead className="w-[5%] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
