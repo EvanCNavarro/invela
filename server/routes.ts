@@ -297,11 +297,26 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Updated files GET endpoint with better error handling
   app.get("/api/files", requireAuth, async (req, res) => {
     try {
-      const userFiles = await db.select()
+      const userFiles = await db.select({
+        id: files.id,
+        name: files.name,
+        size: files.size,
+        type: files.type,
+        status: files.status,
+        path: files.path,
+        uploadTime: files.uploadTime,
+        createdAt: files.createdAt,
+        updatedAt: files.updatedAt,
+        userId: files.userId,
+        companyId: files.companyId,
+        downloadCount: files.downloadCount
+      })
         .from(files)
         .where(eq(files.userId, req.user!.id));
+
       res.json(userFiles);
     } catch (error) {
       console.error("Error fetching files:", error);
