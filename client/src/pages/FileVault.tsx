@@ -47,7 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type FileStatus = 'uploading' | 'completed' | 'paused' | 'canceled' | 'deleted' | 'restored';
+type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
 interface FileItem {
   id: string;
@@ -311,7 +311,7 @@ export default function FileVault() {
 
   const getStatusStyles = (status: FileStatus) => {
     switch (status) {
-      case 'completed':
+      case 'uploaded':
       case 'restored':
         return "bg-[#ECFDF3] text-[#027A48] rounded-full px-2.5 py-1 text-xs font-medium";
       case 'uploading':
@@ -427,17 +427,17 @@ export default function FileVault() {
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  {/* Successful states */}
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="restored">Restored</SelectItem>
-                  {/* Pending states */}
-                  <SelectItem value="uploading">Uploading</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  {/* Removed states */}
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                  <SelectItem value="deleted">Deleted</SelectItem>
-                </SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {/* Successful states */}
+                <SelectItem value="uploaded">Uploaded</SelectItem>
+                <SelectItem value="restored">Restored</SelectItem>
+                {/* Pending states */}
+                <SelectItem value="uploading">Uploading</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+                {/* Removed states */}
+                <SelectItem value="canceled">Canceled</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
+              </SelectContent>
             </Select>
 
             <div className="relative flex-1">
