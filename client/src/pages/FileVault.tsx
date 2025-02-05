@@ -1028,6 +1028,31 @@ export default function FileVault() {
     );
   };
 
+  // Add window-level drag and drop event handlers
+  useEffect(() => {
+    const handleDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer!.dropEffect = 'copy';
+    };
+
+    const handleDrop = async (e: DragEvent) => {
+      e.preventDefault();
+      const fileId = e.dataTransfer!.getData('text/plain');
+      if (fileId) {
+        downloadMutation.mutate(fileId);
+      }
+    };
+
+    // Only add listeners if we're not in a table cell or row
+    window.addEventListener('dragover', handleDragOver);
+    window.addEventListener('drop', handleDrop);
+
+    return () => {
+      window.removeEventListener('dragover', handleDragOver);
+      window.removeEventListener('drop', handleDrop);
+    };
+  }, []);
+
   return (
     <DashboardLayout>
       <div className="space-y-4 p-4">
@@ -1195,7 +1220,10 @@ export default function FileVault() {
                   </TableHeader>
                   <TableBody>
                     {paginatedFiles.map((currentFile) => (
-                      <TableRow key={currentFile.id}>
+                      <TableRow key={currentFile.id} draggable onDragStart={(e) => {
+                        e.dataTransfer.setData('text/plain', currentFile.id);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}>
                         <TableCell className="w-12 p-0">
                           <div className="h-12 flex items-center justify-center">
                             <Checkbox
@@ -1304,33 +1332,33 @@ export default function FileVault() {
               </div>
             )}
           </div>
+
+          {/* File conflict modal */}
+          {showConflictModal && (
+            <FileConflictModal
+              conflicts={conflictFiles}
+              onResolve={(overrideAll) => {
+                setShowConflictModal(false);
+                if (overrideAll) {
+                  uploadFiles(conflictFiles.map((c) => c.file), true);
+                }
+                setConflictFiles([]);
+              }}
+              onCancel={() => {
+                setShowConflictModal(false);
+                setConflictFiles([]);
+              }}
+            />
+          )}
+
+          {/* File details modal */}
+          {selectedFileDetails && (
+            <FileDetails
+              file={selectedFileDetails}
+              onClose={() => setSelectedFileDetails(null)}
+            />
+          )}
         </div>
-
-        {/* File conflict modal */}
-        {showConflictModal && (
-          <FileConflictModal
-            conflicts={conflictFiles}
-            onResolve={(overrideAll) => {
-              setShowConflictModal(false);
-              if (overrideAll) {
-                uploadFiles(conflictFiles.map((c) => c.file), true);
-              }
-              setConflictFiles([]);
-            }}
-            onCancel={() => {
-              setShowConflictModal(false);
-              setConflictFiles([]);
-            }}
-          />
-        )}
-
-        {/* File details modal */}
-        {selectedFileDetails && (
-          <FileDetails
-            file={selectedFileDetails}
-            onClose={() => setSelectedFileDetails(null)}
-          />
-        )}
       </div>
     </DashboardLayout>
   );
