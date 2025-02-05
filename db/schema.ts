@@ -6,18 +6,28 @@ import {
   integer,
   boolean,
   jsonb,
-  real
+  real,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
+
+export const companyLogos = pgTable("company_logos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileType: text("file_type").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+});
 
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
   type: text("type").notNull(), // 'bank' or 'fintech'
-  companyLogo: text("company_logo"),
+  logoId: uuid("logo_id").references(() => companyLogos.id),
   stockTicker: text("stock_ticker"),
   websiteUrl: text("website_url"),
   legalStructure: text("legal_structure"),
@@ -35,6 +45,9 @@ export const companies = pgTable("companies", {
   certificationsCompliance: text("certifications_compliance"),
   riskScore: integer("risk_score"),
   accreditationStatus: text("accreditation_status"),
+  registryDate: timestamp("registry_date").notNull().defaultNow(),
+  filesPublic: jsonb("files_public").$type<string[]>().default([]),
+  filesPrivate: jsonb("files_private").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -104,6 +117,7 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   users: many(users),
   tasks: many(tasks),
   relationships: many(relationships),
+  logos: many(companyLogos)
 }));
 
 export const registrationSchema = z.object({
