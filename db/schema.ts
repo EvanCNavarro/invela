@@ -5,7 +5,8 @@ import {
   timestamp, 
   integer,
   boolean,
-  jsonb
+  jsonb,
+  real
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
@@ -76,6 +77,7 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   downloadCount: integer("download_count").default(0),
+  version: real("version").notNull().default(1.0),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
