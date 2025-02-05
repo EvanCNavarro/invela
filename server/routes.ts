@@ -9,13 +9,16 @@ import {
   files,
   insertCompanySchema,
   insertTaskSchema,
-  insertFileSchema
+  insertFileSchema,
+  companyLogos // Assuming this is defined in your schema
 } from "@db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
 import archiver from "archiver";
+import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -59,6 +62,33 @@ const upload = multer({
       cb(null, true);
     } else {
       cb(new Error('Invalid file type'));
+    }
+  }
+});
+
+// Update storage configuration for logos
+const logoStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.resolve('/home/runner/workspace/uploads/logos');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = uuidv4();
+    const safeFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${uniqueSuffix}-${safeFilename}`);
+  }
+});
+
+const logoUpload = multer({
+  storage: logoStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'image/svg+xml') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only SVG files are allowed'));
     }
   }
 });
@@ -451,6 +481,45 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error restoring file" });
     }
   });
+
+  // Add company logo upload endpoint
+  app.post("/api/companies/:id/logo", requireAuth, logoUpload.single('logo'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No logo uploaded" });
+      }
+
+      const companyId = parseInt(req.params.id);
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      // Create logo record
+      const [logo] = await db.insert(companyLogos)
+        .values({
+          companyId,
+          fileName: req.file.originalname,
+          filePath: req.file.filename,
+          fileType: req.file.mimetype,
+        })
+        .returning();
+
+      // Update company with logo reference
+      await db.update(companies)
+        .set({ logoId: logo.id })
+        .where(eq(companies.id, companyId));
+
+      res.json(logo);
+    } catch (error) {
+      console.error("Error uploading company logo:", error);
+      res.status(500).json({ message: "Error uploading company logo" });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;
