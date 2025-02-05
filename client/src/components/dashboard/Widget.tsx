@@ -46,28 +46,28 @@ export function Widget({
 }: WidgetProps) {
   return (
     <Card className={cn(
-      "transition-all duration-200",
+      "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
       size === 'single' ? 'col-span-1' : 
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
       !isVisible && 'opacity-50',
       className
     )}>
-      <div className="flex items-center justify-between p-4 border-b">
+      <div className="flex items-center justify-between px-4 pt-4">
         <div className="flex items-center gap-2">
           {icon && (
             <div className="text-muted-foreground">
               {icon}
             </div>
           )}
-          <h3 className="font-semibold text-lg">{title}</h3>
+          <h3 className="font-medium text-base">{title}</h3>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="icon"
-              className="h-8 w-8 rounded-md hover:bg-muted"
+              className="h-8 w-8 rounded-md hover:bg-background"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>

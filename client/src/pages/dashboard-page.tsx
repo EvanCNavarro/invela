@@ -12,7 +12,8 @@ import {
   Users,
   Activity,
   LineChart,
-  Bell
+  Bell,
+  Check
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -22,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -33,6 +35,7 @@ const DEFAULT_WIDGETS = {
 
 export default function DashboardPage() {
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const [isCustomizing, setIsCustomizing] = useState(false);
 
   const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
     setVisibleWidgets(prev => ({
@@ -51,7 +54,7 @@ export default function DashboardPage() {
             title="Dashboard"
             description="Get an overview of your company's performance and recent activities."
           />
-          <DropdownMenu>
+          <DropdownMenu open={isCustomizing} onOpenChange={setIsCustomizing}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
                 <Settings className="h-4 w-4 mr-2" />
@@ -61,41 +64,27 @@ export default function DashboardPage() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => toggleWidget('updates')}
-                className="flex items-center justify-between"
-              >
-                Recent Updates
-                {visibleWidgets.updates && <span>✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => toggleWidget('announcements')}
-                className="flex items-center justify-between"
-              >
-                Announcements
-                {visibleWidgets.announcements && <span>✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => toggleWidget('quickActions')}
-                className="flex items-center justify-between"
-              >
-                Quick Actions
-                {visibleWidgets.quickActions && <span>✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => toggleWidget('companyScore')}
-                className="flex items-center justify-between"
-              >
-                Company Score
-                {visibleWidgets.companyScore && <span>✓</span>}
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => toggleWidget('networkVisualization')}
-                className="flex items-center justify-between"
-              >
-                Network Visualization
-                {visibleWidgets.networkVisualization && <span>✓</span>}
-              </DropdownMenuItem>
+              {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                <DropdownMenuItem 
+                  key={key}
+                  onClick={() => toggleWidget(key as keyof typeof DEFAULT_WIDGETS)}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-4">
+                    {isVisible ? (
+                      <Check className="h-4 w-4 text-primary" />
+                    ) : (
+                      <div className="h-4 w-4" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "flex-1",
+                    isVisible ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </span>
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -105,7 +94,7 @@ export default function DashboardPage() {
             {[...Array(6)].map((_, i) => (
               <div 
                 key={i}
-                className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center"
+                className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
               >
                 <div className="space-y-2">
                   <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
@@ -126,8 +115,8 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('updates')}
                 isVisible={visibleWidgets.updates}
               >
-                <div className="space-y-2">
-                  <p className="text-muted-foreground">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
                     No recent updates to show.
                   </p>
                 </div>
@@ -141,8 +130,8 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('announcements')}
                 isVisible={visibleWidgets.announcements}
               >
-                <div className="space-y-2">
-                  <p className="text-muted-foreground">
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
                     Welcome to Invela! Check out our latest features.
                   </p>
                 </div>
@@ -153,6 +142,7 @@ export default function DashboardPage() {
               <Widget
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
+                size="double"
                 onVisibilityToggle={() => toggleWidget('quickActions')}
                 isVisible={visibleWidgets.quickActions}
                 actions={[
@@ -188,7 +178,7 @@ export default function DashboardPage() {
                 isVisible={visibleWidgets.companyScore}
               >
                 <div className="flex items-center justify-center min-h-[120px]">
-                  <p className="text-muted-foreground">No score data available</p>
+                  <p className="text-sm text-muted-foreground">No score data available</p>
                 </div>
               </Widget>
             )}
@@ -201,8 +191,8 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('networkVisualization')}
                 isVisible={visibleWidgets.networkVisualization}
               >
-                <div className="flex items-center justify-center min-h-[120px]">
-                  <p className="text-muted-foreground">
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <p className="text-sm text-muted-foreground">
                     Network visualization coming soon
                   </p>
                 </div>
