@@ -72,21 +72,29 @@ export default function DashboardPage() {
   const handleSendInvite = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Trigger confetti from the button's position
-    const quickActionsElement = document.querySelector('#quick-actions-widget');
-    if (quickActionsElement) {
-      const rect = quickActionsElement.getBoundingClientRect();
+    // Trigger confetti from multiple points
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x: 0.5, y: 0.6 }
+    });
+
+    // Add a delayed second burst for more effect
+    setTimeout(() => {
       confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: {
-          x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-          y: rect.top / window.innerHeight + (rect.height / window.innerHeight) / 2
-        },
-        gravity: 1.2,
-        scalar: 1.2
+        particleCount: 50,
+        angle: 60,
+        spread: 80,
+        origin: { x: 0.3, y: 0.6 }
       });
-    }
+
+      confetti({
+        particleCount: 50,
+        angle: 120,
+        spread: 80,
+        origin: { x: 0.7, y: 0.6 }
+      });
+    }, 150);
 
     // Show success toast
     toast({
