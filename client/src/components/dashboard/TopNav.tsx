@@ -62,23 +62,31 @@ export function TopNav() {
             <DropdownMenuContent 
               align="end" 
               className="w-56"
+              sideOffset={4}
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
               }}
               onOpenAutoFocus={(event) => {
                 event.preventDefault();
               }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium truncate">{user?.fullName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <DropdownMenuItem 
+                onSelect={(e) => e.preventDefault()}
+                className="cursor-pointer"
+              >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+              <DropdownMenuItem 
+                onSelect={(e) => e.preventDefault()}
+                className="cursor-pointer"
+              >
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -99,7 +107,7 @@ export function TopNav() {
                   e.preventDefault();
                   handleLogout();
                 }}
-                className="text-red-600 focus:text-red-600"
+                className="text-red-600 focus:text-red-600 cursor-pointer"
               >
                 <LogOutIcon className="mr-2 h-4 w-4" />
                 <span>Log out</span>
