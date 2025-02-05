@@ -61,13 +61,17 @@ export default function DashboardPage() {
                 Customize Dashboard
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {Object.entries(visibleWidgets).map(([key, isVisible]) => (
                 <DropdownMenuItem 
                   key={key}
-                  onClick={() => toggleWidget(key as keyof typeof DEFAULT_WIDGETS)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                  }}
+                  onSelect={(e) => e.preventDefault()}
                   className="flex items-center gap-2"
                 >
                   <div className="w-4">
@@ -85,6 +89,16 @@ export default function DashboardPage() {
                   </span>
                 </DropdownMenuItem>
               ))}
+              <DropdownMenuSeparator />
+              <div className="p-2">
+                <Button 
+                  className="w-full"
+                  size="sm"
+                  onClick={() => setIsCustomizing(false)}
+                >
+                  Done
+                </Button>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
