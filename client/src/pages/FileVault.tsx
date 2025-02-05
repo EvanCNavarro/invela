@@ -715,7 +715,7 @@ export default function FileVault() {
         updatedAt: new Date().toISOString(),
         uploadTime: new Date().toISOString(),
         progress: 0,
-        version: existingFile ? (existingFile.version || 1) + 0.1 : 1.0
+        version: existingFile?.version || 1.0 // Keep existing version during upload
       };
 
       // If file exists, update its status to uploading
@@ -754,7 +754,7 @@ export default function FileVault() {
           const newFile = {
             ...uploadedFile,
             uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-            version: existingFile ? (existingFile.version || 1) + 0.1 : 1.0,
+            version: existingFile ? existingFile.version + 1.0 : 1.0, // Increment by 1.0
             status: 'uploaded' as FileStatus,
           };
           return [...filteredFiles, newFile];
@@ -917,7 +917,7 @@ export default function FileVault() {
     }
   };
 
-  const canRestore = useMemo(() => {
+const canRestore = useMemo(() => {
     return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
       return file?.status === 'deleted';
@@ -981,9 +981,6 @@ export default function FileVault() {
     </Dialog>
   );
 };
-
-// Update version display in table
-// Removed lines 985-991 as per the edited snippet
 
 
   return (
