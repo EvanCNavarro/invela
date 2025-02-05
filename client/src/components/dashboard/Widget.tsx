@@ -4,8 +4,6 @@ import {
   MoreVertical, 
   Eye, 
   EyeOff,
-  Maximize2,
-  Minimize2,
   GripVertical
 } from "lucide-react";
 import {
@@ -50,8 +48,8 @@ export function Widget({
       size === 'single' ? 'col-span-3 md:col-span-1' : 
       size === 'oneAndHalf' ? 'col-span-3 md:col-span-1.5' :
       size === 'double' ? 'col-span-3 md:col-span-2' : 
-      size === 'triple' ? 'col-span-3 md:col-span-3' :
-      'col-span-3', // added default for triple
+      size === 'triple' ? 'col-span-3' :
+      'col-span-3',
       !isVisible && 'opacity-50',
       className
     )}>
