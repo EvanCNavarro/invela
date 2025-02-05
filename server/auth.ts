@@ -116,13 +116,25 @@ export function setupAuth(app: Express) {
         return res.status(400).send("Email already registered");
       }
 
-      // First create the company
-      const [company] = await db.insert(companies)
-        .values({
-          name: result.data.company,
-          type: 'Unknown',  // Default type for new companies
-        })
-        .returning();
+      // First check if company exists (case-insensitive)
+      const [existingCompany] = await db.select()
+        .from(companies)
+        .where(sql`LOWER(${companies.name}) = ${result.data.company.toLowerCase()}`);
+
+      let company;
+      if (existingCompany) {
+        company = existingCompany;
+      } else {
+        // Create new company with type 'fintech' by default
+        // Banks are typically pre-registered in the system
+        [company] = await db.insert(companies)
+          .values({
+            name: result.data.company,
+            type: 'fintech',  // Default type for new companies
+            description: '',  // Optional fields can be updated later
+          })
+          .returning();
+      }
 
       // Then create the user with the company ID and normalized email
       const [user] = await db

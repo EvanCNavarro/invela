@@ -12,6 +12,33 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+export const companies = pgTable("companies", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // 'bank' or 'fintech'
+  companyLogo: text("company_logo"),
+  stockTicker: text("stock_ticker"),
+  websiteUrl: text("website_url"),
+  legalStructure: text("legal_structure"),
+  marketPosition: text("market_position"),
+  hqAddress: text("hq_address"),
+  productsServices: text("products_services"),
+  incorporationYear: integer("incorporation_year"),
+  foundersAndLeadership: text("founders_and_leadership"),
+  numEmployees: integer("num_employees"),
+  revenue: text("revenue"),
+  keyClientsPartners: text("key_clients_partners"),
+  investors: text("investors"),
+  fundingStage: text("funding_stage"),
+  exitStrategyHistory: text("exit_strategy_history"),
+  certificationsCompliance: text("certifications_compliance"),
+  riskScore: integer("risk_score"),
+  accreditationStatus: text("accreditation_status"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -21,21 +48,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const companies = pgTable("companies", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  type: text("type").notNull(),
-  location: text("location"),
-  website: text("website"),
-  employeeCount: integer("employee_count"),
-  revenue: text("revenue"),
-  riskScore: integer("risk_score"),
-  accreditationStatus: text("accreditation_status"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -112,7 +124,6 @@ export const selectTaskSchema = createSelectSchema(tasks);
 
 export const insertFileSchema = createInsertSchema(files);
 export const selectFileSchema = createSelectSchema(files);
-
 
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
