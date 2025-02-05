@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, FilterIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -18,6 +18,13 @@ import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Updated function to handle status groups for styling
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
@@ -59,6 +66,7 @@ export default function RegistryPage() {
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const itemsPerPage = 10;
 
   const { data: companies = [], isLoading } = useQuery({
@@ -86,9 +94,11 @@ export default function RegistryPage() {
   };
 
   const filteredCompanies = companies
-    .filter((company: any) =>
-      company.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    .filter((company: any) => {
+      const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
     .sort(sortCompanies);
 
   // Convert company name to URL-friendly format
@@ -134,6 +144,25 @@ export default function RegistryPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
+              <SelectTrigger className="w-[200px]">
+                <FilterIcon className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="AWAITING_INVITATION">Awaiting Invitation</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                <SelectItem value="PROVISIONALLY_APPROVED">Provisionally Approved</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                <SelectItem value="REVOKED">Revoked</SelectItem>
+                <SelectItem value="EXPIRED">Expired</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
