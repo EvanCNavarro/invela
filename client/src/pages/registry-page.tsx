@@ -59,6 +59,33 @@ const statusOrderMap: Record<AccreditationStatus, number> = {
   EXPIRED: 7
 };
 
+// Skeleton loading component for the table
+function TableSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }).map((_, index) => (
+        <TableRow key={index}>
+          <TableCell>
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 bg-muted animate-pulse rounded" />
+              <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+            </div>
+          </TableCell>
+          <TableCell>
+            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+          </TableCell>
+          <TableCell>
+            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+          </TableCell>
+          <TableCell>
+            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+          </TableCell>
+        </TableRow>
+      ))}
+    </>
+  );
+}
+
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -67,11 +94,22 @@ export default function RegistryPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
+  const [loadedLogos, setLoadedLogos] = useState<Set<number>>(new Set());
   const itemsPerPage = 10;
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
   });
+
+  const handleLogoLoad = (companyId: number) => {
+    setLoadedLogos(prev => new Set([...prev, companyId]));
+  };
+
+  const areAllLogosLoaded = companies.every(company => 
+    !company.logoId || loadedLogos.has(company.id)
+  );
+
+  const isFullyLoaded = !isLoading && areAllLogosLoaded;
 
   const sortCompanies = (a: any, b: any) => {
     if (sortField === "name") {
@@ -138,7 +176,7 @@ export default function RegistryPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] justify-start">
                 <FilterIcon className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -157,8 +195,8 @@ export default function RegistryPage() {
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search companies..."
-                className="pl-9"
+                placeholder="Search the Registry"
+                className="pl-9 bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -204,12 +242,8 @@ export default function RegistryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">
-                    Loading...
-                  </TableCell>
-                </TableRow>
+              {!isFullyLoaded ? (
+                <TableSkeleton />
               ) : paginatedCompanies.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-4">
@@ -229,6 +263,7 @@ export default function RegistryPage() {
                       <CompanyCell
                         company={company}
                         isHovered={hoveredRow === company.id}
+                        onLogoLoad={() => handleLogoLoad(company.id)}
                       />
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
@@ -311,7 +346,7 @@ export default function RegistryPage() {
   );
 }
 
-function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
+function CompanyCell({ company, isHovered, onLogoLoad }: { company: any; isHovered: boolean; onLogoLoad: () => void }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
@@ -320,8 +355,10 @@ function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean 
             src={`/api/companies/${company.id}/logo`}
             alt={`${company.name} logo`}
             className="w-full h-full object-contain"
+            onLoad={onLogoLoad}
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultCompanyLogo;
+              onLogoLoad();
             }}
           />
         ) : (
@@ -329,6 +366,7 @@ function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean 
             src={defaultCompanyLogo}
             alt="Default company logo"
             className="w-full h-full object-contain"
+            onLoad={onLogoLoad}
           />
         )}
       </div>
