@@ -19,56 +19,38 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 
+// Updated function to handle status groups for styling
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
-  switch (status) {
-    case 'APPROVED':
-      return 'success';
-    case 'PROVISIONALLY_APPROVED':
-      return 'warning';
-    case 'AWAITING_INVITATION':
-      return 'secondary';
-    case 'PENDING':
-    case 'IN_REVIEW':
-      return 'default';
-    case 'SUSPENDED':
-    case 'REVOKED':
-    case 'EXPIRED':
-      return 'destructive';
-    default:
-      return 'secondary';
+  // Grey, neutral group
+  if (status === 'AWAITING_INVITATION' || status === 'SUSPENDED') {
+    return 'secondary';
   }
+  // Yellow, in progress group
+  if (status === 'PENDING' || status === 'IN_REVIEW') {
+    return 'warning';
+  }
+  // Green, success group
+  if (status === 'APPROVED' || status === 'PROVISIONALLY_APPROVED') {
+    return 'success';
+  }
+  // Red, bad group
+  if (status === 'REVOKED' || status === 'EXPIRED') {
+    return 'destructive';
+  }
+  return 'secondary'; // fallback
 }
 
-function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-        {company.logoId ? (
-          <img 
-            src={`/api/companies/${company.id}/logo`} 
-            alt={`${company.name} logo`}
-            className="w-full h-full object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = defaultCompanyLogo;
-            }}
-          />
-        ) : (
-          <img 
-            src={defaultCompanyLogo} 
-            alt="Default company logo"
-            className="w-full h-full object-contain"
-          />
-        )}
-      </div>
-      <span className={cn(
-        "font-normal text-foreground",
-        isHovered && "underline"
-      )}>
-        {company.name}
-      </span>
-    </div>
-  );
-}
+// Add status order mapping for sorting
+const statusOrderMap: Record<AccreditationStatus, number> = {
+  AWAITING_INVITATION: 0,
+  PENDING: 1,
+  IN_REVIEW: 2,
+  PROVISIONALLY_APPROVED: 3,
+  APPROVED: 4,
+  SUSPENDED: 5,
+  REVOKED: 6,
+  EXPIRED: 7
+};
 
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,7 +67,7 @@ export default function RegistryPage() {
 
   const sortCompanies = (a: any, b: any) => {
     if (sortField === "name") {
-      return sortDirection === "asc" 
+      return sortDirection === "asc"
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     }
@@ -93,6 +75,12 @@ export default function RegistryPage() {
       const scoreA = a.riskScore || 0;
       const scoreB = b.riskScore || 0;
       return sortDirection === "asc" ? scoreA - scoreB : scoreB - scoreA;
+    }
+    // Add specific sorting for accreditation status
+    if (sortField === "accreditationStatus") {
+      const orderA = statusOrderMap[a.accreditationStatus] ?? 999;
+      const orderB = statusOrderMap[b.accreditationStatus] ?? 999;
+      return sortDirection === "asc" ? orderA - orderB : orderB - orderA;
     }
     return 0;
   };
@@ -154,8 +142,8 @@ export default function RegistryPage() {
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="w-[300px]">
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="p-0 hover:bg-transparent"
                     onClick={() => handleSort("name")}
                   >
@@ -164,8 +152,8 @@ export default function RegistryPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button 
-                    variant="ghost" 
+                  <Button
+                    variant="ghost"
                     className="p-0 hover:bg-transparent"
                     onClick={() => handleSort("riskScore")}
                   >
@@ -174,9 +162,13 @@ export default function RegistryPage() {
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  <Button
+                    variant="ghost"
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => handleSort("accreditationStatus")}
+                  >
                     <span>Accreditation</span>
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    {getSortIcon("accreditationStatus")}
                   </Button>
                 </TableHead>
                 <TableHead className="w-[100px]"></TableHead>
@@ -205,19 +197,25 @@ export default function RegistryPage() {
                     onMouseLeave={() => setHoveredRow(null)}
                   >
                     <TableCell>
-                      <CompanyCell 
-                        company={company} 
+                      <CompanyCell
+                        company={company}
                         isHovered={hoveredRow === company.id}
                       />
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
-                      <Badge 
+                      <Badge
                         variant={getAccreditationBadgeVariant(company.accreditationStatus)}
                         className={cn(
                           "capitalize border-0",
-                          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
-                          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800 hover:bg-green-100/80"
+                          company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
+                          company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
+                          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800 hover:bg-green-100/80",
+                          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800 hover:bg-green-100/80",
+                          company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800 hover:bg-gray-100/80",
+                          company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800 hover:bg-red-100/80",
+                          company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800 hover:bg-red-100/80",
+                          company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800 hover:bg-gray-100/80"
                         )}
                       >
                         {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'Awaiting Invitation'}
@@ -281,5 +279,36 @@ export default function RegistryPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
+        {company.logoId ? (
+          <img
+            src={`/api/companies/${company.id}/logo`}
+            alt={`${company.name} logo`}
+            className="w-full h-full object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = defaultCompanyLogo;
+            }}
+          />
+        ) : (
+          <img
+            src={defaultCompanyLogo}
+            alt="Default company logo"
+            className="w-full h-full object-contain"
+          />
+        )}
+      </div>
+      <span className={cn(
+        "font-normal text-foreground",
+        isHovered && "underline"
+      )}>
+        {company.name}
+      </span>
+    </div>
   );
 }
