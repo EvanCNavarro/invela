@@ -307,7 +307,7 @@ const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
   return visibleColumns;
 };
 
-// Move FileConflictModal component definition above the FileVault component
+// Update the FileConflictModal to properly handle overrides
 const FileConflictModal = ({
   conflicts,
   onResolve,
@@ -441,6 +441,7 @@ export default function FileVault() {
       return result;
     },
     onSuccess: () => {
+      // Force a fresh reload of files data
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       toast({
         title: "Success",
@@ -681,112 +682,78 @@ export default function FileVault() {
     await uploadFiles(acceptedFiles);
   };
 
-  // Update the uploadFiles function to handle FileStatus type correctly
   const uploadFiles = async (filesToUpload: File[], override: boolean = false) => {
-    const newUploadingFiles: UploadingFile[] = filesToUpload.map(file => ({
-      id: crypto.randomUUID(),
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      status: 'uploading' as FileStatus,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      uploadTime: new Date().toISOString(),
-      progress: 0,
-      version: 1.0
-    }));
-
-    // If overriding, update existing files' status to uploading
-    if (override) {
-      setUploadingFiles(prev => {
-        const existingFiles = prev.filter(f => !filesToUpload.some(newFile => newFile.name === f.name));
-        return [...existingFiles, ...newUploadingFiles];
-      });
-
-      // Update the files in the query cache to show uploading status for existing files
-      queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-        return oldFiles.map(file => {
-          const isBeingOverridden = filesToUpload.some(newFile => newFile.name === file.name);
-          if (isBeingOverridden) {
-            return {
-              ...file,
-              status: 'uploading' as FileStatus,
-            };
-          }
-          return file;
-        });
-      });
-    } else {
-      setUploadingFiles(prev => [...prev, ...newUploadingFiles]);
-    }
-
-    // Show upload progress toast
-    toast({
-      title: "Uploading Files",
-      description: (
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Uploading {filesToUpload.length} file(s)...</span>
-        </div>
-      ),
-      duration: 2000,
-    });
-
     for (const file of filesToUpload) {
-      const uploadId = newUploadingFiles.find(f => f.name === file.name)?.id;
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('override', String(override));
+      if (override) {
+        formData.append('override', 'true');
+      }
 
-      const progressInterval = setInterval(() => {
-        setUploadingFiles(prev =>
-          prev.map(f =>
-            f.id === uploadId
-              ? { ...f, progress: Math.min((f.progress || 0) + 10, 100) }
-              : f
-          )
-        );
-      }, 500);
+      // Update UI to show uploading state
+      const tempId = crypto.randomUUID();
+      const uploadingFile: UploadingFile = {
+        id: tempId,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        status: 'uploading',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        uploadTime: new Date().toISOString(),
+        progress: 0,
+        version: override ?
+          ((files.find(f => f.name === file.name)?.version || 1) + 0.1) :
+          1.0
+      };
+
+      // If overriding, update existing file status
+      if (override) {
+        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+          return oldFiles.map(existing =>
+            existing.name === file.name
+              ? { ...existing, status: 'uploading' }
+              : existing
+          );
+        });
+      } else {
+        setUploadingFiles(prev => [...prev, uploadingFile]);
+      }
 
       try {
-        const uploadedFile = await uploadMutation.mutateAsync(formData);
-        setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
-
-        // Update the query cache with the new file information
-        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-          if (override) {
-            // If overriding, update the existing file with new information
-            return oldFiles.map(existingFile => {
-              if (existingFile.name === file.name) {
-                return {
-                  ...uploadedFile,
-                  uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-                  version: (existingFile.version || 1) + 1,
-                  status: 'uploaded' as FileStatus,
-                };
-              }
-              return existingFile;
-            });
-          } else {
-            // If not overriding, add as new file
-            const newFile = {
-              ...uploadedFile,
-              uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-              version: 1.0,
-              status: 'uploaded' as FileStatus,
-            };
-            return [...oldFiles, newFile];
-          }
+        // Show upload progress toast
+        toast({
+          title: "Uploading File",
+          description: (
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Uploading {file.name}...</span>
+            </div>
+          ),
+          duration: 2000,
         });
+
+        await uploadMutation.mutateAsync(formData);
+
+        // Remove uploading state
+        setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
       } catch (error) {
         console.error('Upload error:', error);
+        // Update UI to show error state
+        if (override) {
+          queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+            return oldFiles.map(existing =>
+              existing.name === file.name
+                ? { ...existing, status: 'uploaded' }
+                : existing
+            );
+          });
+        }
         setUploadingFiles(prev =>
           prev.map(f =>
-            f.id === uploadId ? { ...f, status: 'canceled' } : f
+            f.id === tempId ? { ...f, status: 'canceled' } : f
           )
         );
-      } finally {
-        clearInterval(progressInterval);
       }
     }
   };
