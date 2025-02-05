@@ -57,13 +57,13 @@
   /* Pulsing border animation */
   @keyframes pulse-border {
     0% {
-      box-shadow: 0 0 0 0 hsla(var(--primary) / 0.3);
+      box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0.4);
     }
     70% {
-      box-shadow: 0 0 0 6px hsla(var(--primary) / 0);
+      box-shadow: 0 0 0 8px hsla(227, 81%, 61%, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 hsla(var(--primary) / 0);
+      box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0);
     }
   }
 
