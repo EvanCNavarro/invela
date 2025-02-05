@@ -30,10 +30,8 @@ export function FileUpload({ onDrop, className }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     accept: ACCEPTED_FILE_TYPES,
-    aria: {
-      role: "button",
-      labelledby: "upload-area-label"
-    }
+    role: "button",
+    ariaLabelledby: "upload-area-label"
   });
 
   return (
