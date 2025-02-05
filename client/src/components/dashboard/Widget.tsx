@@ -4,6 +4,8 @@ import {
   MoreVertical, 
   Eye, 
   EyeOff,
+  Maximize2,
+  Minimize2,
   GripVertical
 } from "lucide-react";
 import {
@@ -23,7 +25,7 @@ interface WidgetProps {
   isVisible?: boolean;
   onEdit?: () => void;
   className?: string;
-  size?: 'single' | 'oneAndHalf' | 'double' | 'triple';
+  size?: 'single' | 'double' | 'triple';
   actions?: Array<{
     label: string;
     onClick: () => void;
@@ -45,10 +47,8 @@ export function Widget({
   return (
     <Card className={cn(
       "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
-      size === 'single' ? 'col-span-3 md:col-span-1' : 
-      size === 'oneAndHalf' ? 'col-span-3 md:col-span-1.5' :
-      size === 'double' ? 'col-span-3 md:col-span-2' : 
-      size === 'triple' ? 'col-span-3' :
+      size === 'single' ? 'col-span-1' : 
+      size === 'double' ? 'col-span-2' : 
       'col-span-3',
       !isVisible && 'opacity-50',
       className
