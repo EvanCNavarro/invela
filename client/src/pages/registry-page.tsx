@@ -2,8 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { SearchIcon, PlusIcon } from "lucide-react";
+import { SearchIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -13,93 +12,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-
-const companyFormSchema = z.object({
-  name: z.string().min(2).max(100),
-  description: z.string().optional(),
-  type: z.enum(['bank', 'fintech']),
-  companyLogo: z.string().url().optional(),
-  stockTicker: z.string().optional(),
-  websiteUrl: z.string().url().optional(),
-  legalStructure: z.string().optional(),
-  marketPosition: z.string().optional(),
-  hqAddress: z.string().optional(),
-  productsServices: z.string().optional(),
-  incorporationYear: z.number().int().positive().optional(),
-  foundersAndLeadership: z.string().optional(),
-  numEmployees: z.number().int().positive().optional(),
-  revenue: z.string().optional(),
-  keyClientsPartners: z.string().optional(),
-  investors: z.string().optional(),
-  fundingStage: z.string().optional(),
-  exitStrategyHistory: z.string().optional(),
-  certificationsCompliance: z.string().optional(),
-});
 
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
   });
 
-  const form = useForm<z.infer<typeof companyFormSchema>>({
-    resolver: zodResolver(companyFormSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-      type: "fintech",
-    },
-  });
-
   const filteredCompanies = companies.filter((company: any) =>
     company.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const onSubmit = async (values: z.infer<typeof companyFormSchema>) => {
-    try {
-      await apiRequest("POST", "/api/companies", values);
-      toast({
-        title: "Success",
-        description: "Company added successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add company",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -119,133 +42,6 @@ export default function RegistryPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Company
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Company</DialogTitle>
-                <DialogDescription>
-                  Enter the details of the company you want to add to the registry.
-                </DialogDescription>
-              </DialogHeader>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Name *</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="type"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company Type *</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select company type" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="bank">Bank</SelectItem>
-                              <SelectItem value="fintech">FinTech</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="websiteUrl"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Website URL</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="url" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="stockTicker"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stock Ticker</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem className="col-span-2">
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="legalStructure"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Legal Structure</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="marketPosition"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Market Position</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <Button type="submit">Add Company</Button>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
         </div>
 
         <div className="bg-background rounded-lg border">
