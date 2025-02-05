@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, ArrowUpDown, ArrowRight } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -70,6 +70,8 @@ export default function RegistryPage() {
   const [, setLocation] = useLocation();
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
@@ -80,6 +82,11 @@ export default function RegistryPage() {
       return sortDirection === "asc" 
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
+    }
+    if (sortField === "riskScore") {
+      const scoreA = a.riskScore || 0;
+      const scoreB = b.riskScore || 0;
+      return sortDirection === "asc" ? scoreA - scoreB : scoreB - scoreA;
     }
     return 0;
   };
@@ -95,12 +102,6 @@ export default function RegistryPage() {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   };
 
-  // Function to simplify market position text
-  const simplifyDescription = (text: string) => {
-    if (!text) return "N/A";
-    return text;
-  };
-
   const handleSort = (field: string) => {
     if (sortField === field) {
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -109,6 +110,18 @@ export default function RegistryPage() {
       setSortDirection("asc");
     }
   };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
+    return sortDirection === 'asc' ?
+      <ArrowUpIcon className="h-4 w-4 text-primary" /> :
+      <ArrowDownIcon className="h-4 w-4 text-primary" />;
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -141,19 +154,17 @@ export default function RegistryPage() {
                     onClick={() => handleSort("name")}
                   >
                     <span>Company</span>
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    {getSortIcon("name")}
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" className="p-0 hover:bg-transparent">
-                    <span>Description</span>
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  <Button 
+                    variant="ghost" 
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => handleSort("riskScore")}
+                  >
                     <span>Risk Score</span>
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                    {getSortIcon("riskScore")}
                   </Button>
                 </TableHead>
                 <TableHead>
@@ -168,21 +179,21 @@ export default function RegistryPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
+                  <TableCell colSpan={4} className="text-center py-4">
                     Loading...
                   </TableCell>
                 </TableRow>
-              ) : filteredCompanies.length === 0 ? (
+              ) : paginatedCompanies.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-4">
+                  <TableCell colSpan={4} className="text-center py-4">
                     No companies found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCompanies.map((company: any) => (
+                paginatedCompanies.map((company: any) => (
                   <TableRow
                     key={company.id}
-                    className="group cursor-pointer hover:bg-muted/50"
+                    className="group cursor-pointer hover:bg-muted/50 bg-white"
                     onClick={() => setLocation(`/registry/company/${getCompanySlug(company.name)}`)}
                     onMouseEnter={() => setHoveredRow(company.id)}
                     onMouseLeave={() => setHoveredRow(null)}
@@ -192,11 +203,6 @@ export default function RegistryPage() {
                         company={company} 
                         isHovered={hoveredRow === company.id}
                       />
-                    </TableCell>
-                    <TableCell>
-                      <div className="line-clamp-2">
-                        {simplifyDescription(company.marketPosition)}
-                      </div>
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
@@ -222,6 +228,50 @@ export default function RegistryPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Footer */}
+          <div className="flex items-center justify-between px-6 py-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Showing {Math.min(startIndex + 1, filteredCompanies.length)} to {Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} companies
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+              >
+                First
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground px-2">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                Last
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
