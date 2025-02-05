@@ -109,14 +109,14 @@ export default function TaskCenterPage() {
         <ProgressTracker />
 
         <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">Task Center</h1>
+          <h1 className="text-2xl font-semibold">Task Center</h1>
           <p className="text-sm text-muted-foreground">
             Manage and track your company's tasks and submissions.
           </p>
         </div>
 
-        <div className="bg-background rounded-md p-4 md:p-6 border">
-          <div className="flex flex-col gap-4 mb-6">
+        <div className="bg-background rounded-md border">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row gap-4 justify-between">
               <div className="w-full md:max-w-md">
                 <div className="relative">
@@ -159,7 +159,7 @@ export default function TaskCenterPage() {
               </Select>
 
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="whitespace-nowrap">
+                <Button variant="outline" size="sm">
                   Advanced search
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
@@ -194,7 +194,7 @@ export default function TaskCenterPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={5} className="text-center">
                       <div className="flex items-center justify-center">
                         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                       </div>
@@ -202,31 +202,31 @@ export default function TaskCenterPage() {
                   </TableRow>
                 ) : error ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-destructive">
+                    <TableCell colSpan={5} className="text-center text-destructive">
                       Failed to load tasks. Please try again later.
                     </TableCell>
                   </TableRow>
                 ) : filteredTasks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground">
                       No tasks found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredTasks.map((task) => (
-                    <TableRow key={task.id} className="h-12">
+                    <TableRow key={task.id}>
                       <TableCell className="w-[48px]">
                         <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
                       </TableCell>
-                      <TableCell className="py-2">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="font-medium leading-none">{task.title}</div>
-                          <div className="text-xs text-muted-foreground leading-none">To: {task.assignedTo}</div>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{task.title}</div>
+                          <div className="text-xs text-muted-foreground">To: {task.assignedTo}</div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-2">
+                      <TableCell>
                         <span className={cn(
-                          "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium leading-none",
+                          "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium",
                           task.status === 'completed'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
@@ -234,11 +234,11 @@ export default function TaskCenterPage() {
                           {task.status === 'completed' ? 'Completed' : 'Pending'}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell py-2 text-sm">
+                      <TableCell className="hidden md:table-cell">
                         {new Date(task.updatedAt || task.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right py-2">
-                        <Button variant="ghost" size="sm" className="h-8">
+                      <TableCell className="text-right">
+                        <Button variant="ghost" size="sm">
                           <Download className="h-4 w-4 mr-2" />
                           <span className="hidden sm:inline">Download</span>
                         </Button>
