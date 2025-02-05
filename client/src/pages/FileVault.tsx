@@ -28,6 +28,7 @@ import {
   BarChart2Icon,
   ClockIcon,
   Download,
+  Loader2
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -63,8 +64,6 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
-import Spinner from "@/components/ui/spinner";
-import { Loader2 } from "lucide-react";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -200,15 +199,16 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 
 FileNameCell.displayName = 'FileNameCell';
 
-// Update the column priorities to match the new order
+// Update the column priorities to include version
 const columnPriorities = {
   fileName: 0,      // Always visible
   size: 1,         // First to show
   uploadDate: 2,    // Second to show
   uploadTime: 3,    // Third to show
   status: 4,        // Fourth to show
+  version: 5,       // Fifth to show (new priority)
   actions: 0,       // Always visible
-  textPreview: 5,   // Last to show
+  textPreview: 6,   // Sixth to show
 } as const;
 
 // Add useBreakpoint hook for responsive design
@@ -289,6 +289,72 @@ const formatTimestampForFilename = () => {
   return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
 };
 
+// Update the getVisibleColumns function to include version
+const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
+  const sidebarWidth = isSidebarCollapsed ? 64 : 256;
+  const availableSpace = Math.max(0, breakpoint - sidebarWidth);
+
+  // Always show priority 0 columns
+  const visibleColumns = new Set(['fileName', 'actions']);
+
+  // Add columns based on available space
+  if (availableSpace > 640) visibleColumns.add('size');
+  if (availableSpace > 768) visibleColumns.add('uploadDate');
+  if (availableSpace > 896) visibleColumns.add('status');
+  if (availableSpace > 1024) visibleColumns.add('version');
+  if (availableSpace > 1280) visibleColumns.add('uploadTime');
+
+  return visibleColumns;
+};
+
+// Move FileConflictModal component definition above the FileVault component
+const FileConflictModal = ({
+  conflicts,
+  onResolve,
+  onCancel
+}: {
+  conflicts: { file: File; existingFile: FileItem }[];
+  onResolve: (overrideAll: boolean) => void;
+  onCancel: () => void;
+}) => {
+  return (
+    <Dialog open={conflicts.length > 0} onOpenChange={() => onCancel()}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>File Conflict Detected</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <p className="text-sm text-muted-foreground">
+            The following files already exist:
+          </p>
+          <div className="max-h-[200px] overflow-y-auto space-y-2">
+            {conflicts.map(({ file, existingFile }) => (
+              <div key={file.name} className="flex items-center gap-2 text-sm">
+                <FileIcon className="w-4 h-4" />
+                <span>{file.name}</span>
+                <span className="text-muted-foreground ml-auto">
+                  Current version: v{existingFile.version?.toFixed(1) || '1.0'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm font-medium">
+            Do you want to override these files with new versions?
+          </p>
+        </div>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => onCancel()}>
+            Cancel
+          </Button>
+          <Button onClick={() => onResolve(true)}>
+            Override All
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default function FileVault() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -306,10 +372,13 @@ export default function FileVault() {
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // Added state for sidebar collapse
-  // Removed separate isLoading state
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
+  const [showConflictModal, setShowConflictModal] = useState(false);
 
-  // Reorder the dropdown menu items in FileActions component
+  // Get visible columns using the previously defined function
+  const visibleColumns = getVisibleColumns(breakpoint, isSidebarCollapsed);
+
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
     return (
       <DropdownMenu>
@@ -348,23 +417,6 @@ export default function FileVault() {
         </DropdownMenuContent>
       </DropdownMenu>
     );
-  };
-
-  // Update getVisibleColumns for better responsiveness
-  const getVisibleColumns = () => {
-    const sidebarWidth = isSidebarCollapsed ? 64 : 256;
-    const availableSpace = Math.max(0, breakpoint - sidebarWidth);
-
-    // Always show priority 0 columns
-    const visibleColumns = new Set(['fileName', 'actions']);
-
-    // Add columns based on available space
-    if (availableSpace > 640) visibleColumns.add('size');
-    if (availableSpace > 768) visibleColumns.add('uploadDate');
-    if (availableSpace > 1024) visibleColumns.add('status');
-    if (availableSpace > 1280) visibleColumns.add('uploadTime');
-
-    return visibleColumns;
   };
 
   const { data: files = [], isLoading } = useQuery<FileApiResponse[]>({
@@ -611,24 +663,58 @@ export default function FileVault() {
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
-    const newUploadingFiles = acceptedFiles.map(file => ({
+    // Check for duplicate files
+    const duplicates = acceptedFiles.filter(file =>
+      files.some(existingFile => existingFile.name === file.name)
+    );
+
+    if (duplicates.length > 0) {
+      const conflicts = duplicates.map(file => ({
+        file,
+        existingFile: files.find(ef => ef.name === file.name)!
+      }));
+      setConflictFiles(conflicts);
+      setShowConflictModal(true);
+      return;
+    }
+
+    await uploadFiles(acceptedFiles);
+  };
+
+  // Fix the uploadFiles function to handle FileStatus type correctly
+  const uploadFiles = async (filesToUpload: File[], override: boolean = false) => {
+    const newUploadingFiles: UploadingFile[] = filesToUpload.map(file => ({
       id: crypto.randomUUID(),
       name: file.name,
       size: file.size,
       type: file.type,
-      status: 'uploading',
+      status: 'uploading' as FileStatus,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      uploadTime: new Date().toISOString(), //Added for new field
-      progress: 0
+      uploadTime: new Date().toISOString(),
+      progress: 0,
+      version: 1.0
     }));
 
     setUploadingFiles(prev => [...prev, ...newUploadingFiles]);
 
-    for (const file of acceptedFiles) {
+    // Show upload progress toast
+    toast({
+      title: "Uploading Files",
+      description: (
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Uploading {filesToUpload.length} file(s)...</span>
+        </div>
+      ),
+      duration: 2000,
+    });
+
+    for (const file of filesToUpload) {
       const uploadId = newUploadingFiles.find(f => f.name === file.name)?.id;
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('override', String(override));
 
       const progressInterval = setInterval(() => {
         setUploadingFiles(prev =>
@@ -643,10 +729,16 @@ export default function FileVault() {
       try {
         const uploadedFile = await uploadMutation.mutateAsync(formData);
         setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
-        // Update uploadTime in the state after successful upload
-        queryClient.setQueryData(['/api/files'], oldFiles => {
-          return [...oldFiles, {...uploadedFile, uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString()}]
-        })
+        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+          const newFile = {
+            ...uploadedFile,
+            uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
+            version: override ?
+              (files.find(f => f.name === file.name)?.version || 1) + 1 :
+              1.0
+          };
+          return [...oldFiles.filter(f => f.name !== file.name), newFile];
+        });
       } catch (error) {
         console.error('Upload error:', error);
         setUploadingFiles(prev =>
@@ -734,7 +826,6 @@ export default function FileVault() {
     setCurrentPage(page);
   };
 
-
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
@@ -798,9 +889,6 @@ export default function FileVault() {
   const handleDelete = (fileId: string) => {
     deleteMutation.mutate(fileId);
   };
-
-  // Update the visibility logic in the component
-  const visibleColumns = getVisibleColumns();
 
   return (
     <DashboardLayout>
@@ -963,6 +1051,13 @@ export default function FileVault() {
                             </Button>
                           </TableHead>
                         )}
+                        {visibleColumns.has('version') && (
+                          <TableHead className="w-24">
+                            <span className="flex items-center justify-center gap-1">
+                              Version
+                            </span>
+                          </TableHead>
+                        )}
                         <TableHead className="w-24 bg-muted text-center sticky right-0 z-20">
                           Actions
                         </TableHead>
@@ -973,13 +1068,13 @@ export default function FileVault() {
                         <TableSkeleton />
                       ) : filteredAndSortedFiles.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={7} className="h-32 text-center">
+                          <TableCell colSpan={8} className="h-32 text-center">
                             No files found
                           </TableCell>
                         </TableRow>
                       ) : (
                         paginatedFiles.map((file) => (
-                          <TableRow key={file.id} className="bg-white hover:bg-muted/50">
+                          <TableRow key={file.id}>
                             <TableCell className="text-center sticky left-0 z-20 bg-inherit">
                               <Checkbox
                                 checked={selectedFiles.has(file.id)}
@@ -1012,6 +1107,13 @@ export default function FileVault() {
                               <TableCell className="text-center bg-inherit">
                                 <span className={getStatusStyles(file.status)}>
                                   {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                </span>
+                              </TableCell>
+                            )}
+                            {visibleColumns.has('version') && (
+                              <TableCell className="text-center bg-inherit">
+                                <span className="text-sm">
+                                  v{file.version?.toFixed(1) || '1.0'}
                                 </span>
                               </TableCell>
                             )}
@@ -1197,9 +1299,24 @@ export default function FileVault() {
             </Dialog>
           </div>
         </div>
+        {/* Add the FileConflictModal here */}
+        <FileConflictModal
+          conflicts={conflictFiles}
+          onResolve={(override) => {
+            const filesToUpload = conflictFiles.map(({ file }) => file);
+            setShowConflictModal(false);
+            setConflictFiles([]);
+            uploadFiles(filesToUpload, override);
+          }}
+          onCancel={() => {
+            setShowConflictModal(false);
+            setConflictFiles([]);
+          }}
+        />
       </TooltipProvider>
     </DashboardLayout>
   );
+
 }
 
 // New component for file preview
