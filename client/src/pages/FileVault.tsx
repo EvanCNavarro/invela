@@ -1080,34 +1080,12 @@ export default function FileVault() {
   return (
     <DashboardLayout>
       <TooltipProvider>
-        <div className="space-y-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
-              <p className="text-sm text-muted-foreground">
-                Secure document storage for your company.
-              </p>
-            </div>
-            <Button
-              onClick={handleUploadClick}
-              className="gap-2"
-              aria-label="Upload new files"
-            >
-              <UploadIcon className="w-4 h-4" aria-hidden={true} />
-              Upload
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.length) {
-                    onDrop(Array.from(e.target.files));
-                  }
-                }}
-                multiple
-                aria-hidden="true"
-              />
-            </Button>
+        <div className="space-y-6">
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
+            <p className="text-sm text-muted-foreground">
+              Manage and organize your company's documents securely.
+            </p>
           </div>
 
           <FileUpload onDrop={onDrop} className="bg-muted/50" />
