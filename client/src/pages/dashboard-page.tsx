@@ -195,7 +195,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-muted-foreground">Loading company data...</p>
                     </div>
                   ) : companyData ? (
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                       <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-center space-x-3">
                         {companyData.logoId ? (
                           <img
