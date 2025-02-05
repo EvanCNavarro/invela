@@ -521,7 +521,7 @@ export function registerRoutes(app: Express): Server {
   });
 
 
-  // Update company logo endpoint to properly serve SVG files
+  // Update the company logo endpoint to properly serve SVG files
   app.get("/api/companies/:id/logo", requireAuth, async (req, res) => {
     try {
       const [company] = await db.select()
@@ -546,6 +546,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Logo file not found" });
       }
 
+      // Set proper content type for SVG
       res.setHeader('Content-Type', 'image/svg+xml');
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);

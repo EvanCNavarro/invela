@@ -42,7 +42,7 @@ function getAccreditationBadgeVariant(status: AccreditationStatus) {
 function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-6 h-6 rounded flex items-center justify-center overflow-hidden bg-muted">
+      <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
         {company.logoId ? (
           <img 
             src={`/api/companies/${company.id}/logo`} 
@@ -61,7 +61,7 @@ function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean 
         )}
       </div>
       <span className={cn(
-        "text-foreground",
+        "font-normal text-foreground",
         isHovered && "underline"
       )}>
         {company.name}
@@ -152,7 +152,7 @@ export default function RegistryPage() {
         <div className="bg-background rounded-lg border">
           <Table>
             <TableHeader>
-              <TableRow>
+              <TableRow className="bg-muted/50">
                 <TableHead className="w-[300px]">
                   <Button 
                     variant="ghost" 
@@ -225,7 +225,7 @@ export default function RegistryPage() {
                     </TableCell>
                     <TableCell>
                       <div className="invisible group-hover:visible flex items-center justify-center text-primary">
-                        <span className="font-semibold mr-2">View</span>
+                        <span className="font-medium mr-2">View</span>
                         <ArrowRight className="h-4 w-4" />
                       </div>
                     </TableCell>
