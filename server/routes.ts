@@ -20,15 +20,18 @@ import archiver from "archiver";
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = path.join(process.cwd(), 'uploads');
+    // Ensure upload directory exists and is absolute
+    const uploadDir = path.resolve(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    // Use a more secure filename generation
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    const safeFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${path.parse(safeFilename).name}-${uniqueSuffix}${path.extname(file.originalname)}`);
   }
 });
 
@@ -76,7 +79,7 @@ export function registerRoutes(app: Express): Server {
       const result = await db.select().from(files).where(eq(files.id, fileId));
 
       if (!result || result.length === 0) {
-        return res.status(404).json({ message: "File not found" });
+        return res.status(404).json({ message: "File not found in database" });
       }
 
       const file = result[0];
@@ -86,7 +89,14 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      if (!fs.existsSync(file.path)) {
+      // Ensure file path is absolute and normalized
+      const filePath = path.resolve(process.cwd(), file.path);
+
+      // Add debug logging
+      console.log('Debug - File path:', filePath);
+      console.log('Debug - File exists:', fs.existsSync(filePath));
+
+      if (!fs.existsSync(filePath)) {
         return res.status(404).json({ message: "File not found on disk" });
       }
 
@@ -98,10 +108,10 @@ export function registerRoutes(app: Express): Server {
 
       // Set headers for file download
       res.setHeader('Content-Type', file.type || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${file.name}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
 
       // Stream the file
-      const fileStream = fs.createReadStream(file.path);
+      const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
 
       // Handle streaming errors
@@ -134,7 +144,7 @@ export function registerRoutes(app: Express): Server {
           inArray(files.id, fileIds.map(id => parseInt(id)))
         ));
 
-      const validFiles = selectedFiles.filter(file => fs.existsSync(file.path));
+      const validFiles = selectedFiles.filter(file => fs.existsSync(path.resolve(process.cwd(), file.path)));
 
       if (validFiles.length === 0) {
         return res.status(404).json({ message: "No valid files found for download" });
@@ -162,7 +172,7 @@ export function registerRoutes(app: Express): Server {
 
       // Add files to archive and update download counts
       for (const file of validFiles) {
-        archive.file(file.path, { name: file.name });
+        archive.file(path.resolve(process.cwd(), file.path), { name: file.name });
         try {
           await db
             .update(files)
@@ -202,7 +212,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "File preview is only available for text files" });
       }
 
-      const content = fs.readFileSync(file.path, 'utf8');
+      const content = fs.readFileSync(path.resolve(process.cwd(), file.path), 'utf8');
       // Return first 1000 characters as preview
       res.json({ preview: content.slice(0, 1000) });
     } catch (error) {
@@ -276,8 +286,8 @@ export function registerRoutes(app: Express): Server {
       if (existingFile.length > 0 && req.body.override === 'true') {
         try {
           // Remove the old file from storage
-          if (fs.existsSync(existingFile[0].path)) {
-            fs.unlinkSync(existingFile[0].path);
+          if (fs.existsSync(path.resolve(process.cwd(), existingFile[0].path))) {
+            fs.unlinkSync(path.resolve(process.cwd(), existingFile[0].path));
           }
 
           // Calculate new version number - increment by 1.0
@@ -370,8 +380,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Remove the file from storage
-      if (fs.existsSync(file.path)) {
-        fs.unlinkSync(file.path);
+      if (fs.existsSync(path.resolve(process.cwd(), file.path))) {
+        fs.unlinkSync(path.resolve(process.cwd(), file.path));
       }
 
       // Update file status to deleted
