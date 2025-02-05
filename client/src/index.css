@@ -60,7 +60,7 @@
       box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0.4);
     }
     70% {
-      box-shadow: 0 0 0 8px hsla(227, 81%, 61%, 0);
+      box-shadow: 0 0 0 6px hsla(227, 81%, 61%, 0);
     }
     100% {
       box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0);
@@ -68,6 +68,6 @@
   }
 
   .pulse-border {
-    animation: pulse-border 2s infinite;
+    animation: pulse-border 1.5s infinite;
   }
 }
