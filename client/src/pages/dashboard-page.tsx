@@ -77,8 +77,8 @@ export default function DashboardPage() {
     if (addFinTechButton) {
       const rect = addFinTechButton.getBoundingClientRect();
       confetti({
-        particleCount: 150,
-        spread: 90,
+        particleCount: 75,
+        spread: 60,
         origin: {
           x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
           y: rect.top / window.innerHeight
@@ -86,7 +86,7 @@ export default function DashboardPage() {
         colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
         ticks: 200,
         gravity: 0.8,
-        scalar: 1.2,
+        scalar: 0.8,
         shapes: ["circle"]
       });
     }
