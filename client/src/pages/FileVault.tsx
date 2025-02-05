@@ -534,7 +534,7 @@ export default function FileVault() {
   const downloadMutation = useMutation({
     mutationFn: async (fileId: string) => {
       const file = files.find(f => f.id === fileId);
-      const toastId = toast({
+      const downloadToast = toast({
         title: "Downloading File",
         description: (
           <div className="flex items-center gap-2">
@@ -542,44 +542,40 @@ export default function FileVault() {
             <span>Downloading {file?.name}...</span>
           </div>
         ),
-        duration: 5000, // Changed from null to 5000ms
+        duration: 0, // Keep toast until we dismiss it
       });
 
       try {
         const response = await fetch(`/api/files/${fileId}/download`);
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
-          throw new Error(errorData.message || 'Failed to download file');
+          throw new Error('Download failed');
         }
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-
-        const contentDisposition = response.headers.get('content-disposition');
-        const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
-        const filename = filenameMatch ? filenameMatch[1] : file?.name || 'download';
-
-        a.download = filename;
+        a.download = file?.name || 'download';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        // Close the downloading toast and show success toast
-        toast.dismiss(toastId);
+        // Dismiss the downloading toast
+        toast.dismiss(downloadToast.id);
+
+        // Show success toast
         toast({
           title: "Download Complete",
-          description: `${filename} has been downloaded successfully.`,
+          description: `${file?.name} has been downloaded successfully.`,
           duration: 3000,
         });
 
-        // Force refresh files to get updated download count
-        queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+        return true;
       } catch (error) {
-        // Close the downloading toast and show error toast
-        toast.dismiss(toastId);
+        // Dismiss the downloading toast
+        toast.dismiss(downloadToast.id);
+
         console.error('Download error:', error);
         toast({
           title: "Error",
@@ -587,54 +583,75 @@ export default function FileVault() {
           variant: "destructive",
           duration: 3000,
         });
+        throw error;
       }
     }
   });
 
   const bulkDownloadMutation = useMutation({
     mutationFn: async (fileIds: string[]) => {
-      const selectedFileNames = files
-        .filter(f => fileIds.includes(f.id))
-        .map(f => f.name)
-        .join(", ");
-
-      showDownloadToast(`${fileIds.length} files`);
-
-      const response = await fetch('/api/files/download-bulk', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ fileIds }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Bulk download failed');
+      if (fileIds.length === 0) {
+        throw new Error('No files selected for download');
       }
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invela_download_${formatTimestampForFilename()}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const downloadToast = toast({
+        title: "Preparing Download",
+        description: (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Preparing {fileIds.length} files for download...</span>
+          </div>
+        ),
+        duration: 0,
+      });
 
-      toast({
-        title: "Download Complete",
-        description: `${fileIds.length} files have been downloaded successfully.`,
-        duration: 3000,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to download files",
-        variant: "destructive",
-        duration: 3000,
-      });
+      try {
+        const response = await fetch('/api/files/download-bulk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ fileIds }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Bulk download failed');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `invela_download_${formatTimestampForFilename()}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Dismiss the preparing toast
+        toast.dismiss(downloadToast.id);
+
+        toast({
+          title: "Download Complete",
+          description: `${fileIds.length} files have been downloaded successfully.`,
+          duration: 3000,
+        });
+
+        return true;
+      } catch (error) {
+        // Dismiss the preparing toast
+        toast.dismiss(downloadToast.id);
+
+        console.error('Bulk download error:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to download files",
+          variant: "destructive",
+          duration: 3000,
+        });
+        throw error;
+      }
     },
   });
 
@@ -928,7 +945,7 @@ export default function FileVault() {
     deleteMutation.mutate(fileId);
   };
 
-  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () =>void }) => {
+  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
     // Fetch fresh file data
     const { data: freshFileData } = useQuery({
       queryKey: ['/api/files', file.id],
