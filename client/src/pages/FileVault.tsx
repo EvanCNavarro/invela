@@ -1090,8 +1090,8 @@ return (
                 <Table className="w-full table-fixed">
                   <TableHeader className="sticky top-0 z-30 bg-muted">
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-12 p-0 sticky left-0 z-40 bg-muted">
-                        <div className="flex items-center justify-center h-full">
+                      <TableHead className="w-[48px] !p-0 sticky left-0 z-40 bg-muted">
+                        <div className="flex items-center justify-center h-[40px]">
                           <Checkbox
                             checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
                             onCheckedChange={() => toggleAllFiles(paginatedFiles)}
@@ -1167,8 +1167,8 @@ return (
                     ) : (
                       paginatedFiles.map((currentFile) => (
                         <TableRow key={currentFile.id}>
-                          <TableCell className="w-12 p-0">
-                            <div className="flex items-center justify-center h-full">
+                          <TableCell className="w-[48px] !p-0">
+                            <div className="flex items-center justify-center h-[40px]">
                               <Checkbox
                                 checked={selectedFiles.has(currentFile.id)}
                                 onCheckedChange={() => toggleFileSelection(currentFile.id)}
