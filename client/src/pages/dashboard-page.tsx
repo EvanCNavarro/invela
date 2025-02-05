@@ -137,7 +137,7 @@ export default function DashboardPage() {
       form.reset();
       setIsModalOpen(false);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: (
           <div className="flex items-center gap-2">
