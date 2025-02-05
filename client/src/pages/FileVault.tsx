@@ -681,7 +681,7 @@ export default function FileVault() {
     await uploadFiles(acceptedFiles);
   };
 
-  // Fix the uploadFiles function to handle FileStatus type correctly
+  // Update the uploadFiles function to handle FileStatus type correctly
   const uploadFiles = async (filesToUpload: File[], override: boolean = false) => {
     const newUploadingFiles: UploadingFile[] = filesToUpload.map(file => ({
       id: crypto.randomUUID(),
@@ -696,7 +696,29 @@ export default function FileVault() {
       version: 1.0
     }));
 
-    setUploadingFiles(prev => [...prev, ...newUploadingFiles]);
+    // If overriding, update existing files' status to uploading
+    if (override) {
+      setUploadingFiles(prev => {
+        const existingFiles = prev.filter(f => !filesToUpload.some(newFile => newFile.name === f.name));
+        return [...existingFiles, ...newUploadingFiles];
+      });
+
+      // Update the files in the query cache to show uploading status for existing files
+      queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+        return oldFiles.map(file => {
+          const isBeingOverridden = filesToUpload.some(newFile => newFile.name === file.name);
+          if (isBeingOverridden) {
+            return {
+              ...file,
+              status: 'uploading' as FileStatus,
+            };
+          }
+          return file;
+        });
+      });
+    } else {
+      setUploadingFiles(prev => [...prev, ...newUploadingFiles]);
+    }
 
     // Show upload progress toast
     toast({
@@ -729,15 +751,32 @@ export default function FileVault() {
       try {
         const uploadedFile = await uploadMutation.mutateAsync(formData);
         setUploadingFiles(prev => prev.filter(f => f.id !== uploadId));
+
+        // Update the query cache with the new file information
         queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-          const newFile = {
-            ...uploadedFile,
-            uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-            version: override ?
-              (files.find(f => f.name === file.name)?.version || 1) + 1 :
-              1.0
-          };
-          return [...oldFiles.filter(f => f.name !== file.name), newFile];
+          if (override) {
+            // If overriding, update the existing file with new information
+            return oldFiles.map(existingFile => {
+              if (existingFile.name === file.name) {
+                return {
+                  ...uploadedFile,
+                  uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
+                  version: (existingFile.version || 1) + 1,
+                  status: 'uploaded' as FileStatus,
+                };
+              }
+              return existingFile;
+            });
+          } else {
+            // If not overriding, add as new file
+            const newFile = {
+              ...uploadedFile,
+              uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
+              version: 1.0,
+              status: 'uploaded' as FileStatus,
+            };
+            return [...oldFiles, newFile];
+          }
         });
       } catch (error) {
         console.error('Upload error:', error);
@@ -1005,7 +1044,7 @@ export default function FileVault() {
                             aria-label="Select all files"
                           />
                         </TableCell>
-                        <TableCell className="w-[30%] sticky left-[40px] z-20 bg-muted">
+                        <TableCell className="w-[30%] sticky left-[5%] z-20 bg-muted">
                           <button
                             className="flex items-center gap-2"
                             onClick={() => handleSort('name')}
@@ -1042,14 +1081,14 @@ export default function FileVault() {
                           </TableCell>
                         )}
                         {visibleColumns.has('version') && (
-                          <TableCell className="w-[10%] text-right">
+                          <TableCell className="w-[10%] text-center">
                             Version
                           </TableCell>
                         )}
                         {visibleColumns.has('status') && (
                           <TableCell className="w-[12%] text-center">
                             <button
-                              className="flex items-center gap-2 mx-auto"
+                              className="flex items-center gap-2 justify-center w-full"
                               onClick={() => handleSort('status')}
                             >
                               Status
@@ -1077,49 +1116,41 @@ export default function FileVault() {
                       ) : (
                         paginatedFiles.map((file) => (
                           <TableRow key={file.id}>
-                            <TableCell className="text-center sticky left-0 z-20 bg-inherit">
+                            <TableCell className="w-[5%] px-4">
                               <Checkbox
                                 checked={selectedFiles.has(file.id)}
                                 onCheckedChange={() => toggleFileSelection(file.id)}
+                                aria-label={`Select ${file.name}`}
                               />
                             </TableCell>
-                            <TableCell className="sticky left-12 z-20 bg-inherit">
+                            <TableCell className="w-[30%]">
                               <FileNameCell file={file} />
                             </TableCell>
                             {visibleColumns.has('size') && (
-                              <TableCell className="text-right bg-inherit">
+                              <TableCell className="w-[10%] text-right">
                                 {formatFileSize(file.size)}
                               </TableCell>
                             )}
                             {visibleColumns.has('uploadDate') && (
-                              <TableCell className="text-right bg-inherit">
-                                {new Date(file.createdAt).toLocaleDateString(undefined, {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                                })}
-                              </TableCell>
-                            )}
-                            {visibleColumns.has('uploadTime') && (
-                              <TableCell className="text-right bg-inherit">
-                                {formatTimeWithZone(new Date(file.uploadTime))}
-                              </TableCell>
-                            )}
-                            {visibleColumns.has('status') && (
-                              <TableCell className="text-center bg-inherit">
-                                <span className={getStatusStyles(file.status)}>
-                                  {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                                </span>
+                              <TableCell className="w-[15%] text-right">
+                                {new Date(file.createdAt).toLocaleDateString()}
                               </TableCell>
                             )}
                             {visibleColumns.has('version') && (
-                              <TableCell className="text-center bg-inherit">
-                                <span className="text-sm">
-                                  v{file.version?.toFixed(1) || '1.0'}
-                                </span>
+                              <TableCell className="w-[10%] text-center">
+                                v{file.version?.toFixed(1)}
                               </TableCell>
                             )}
-                            <TableCell className="text-center sticky right-0 z-20 bg-inherit">
+                            {visibleColumns.has('status') && (
+                              <TableCell className="w-[12%]">
+                                <div className="flex justify-center">
+                                  <span className={getStatusStyles(file.status)}>
+                                    {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                  </span>
+                                </div>
+                              </TableCell>
+                            )}
+                            <TableCell className="w-[8%]">
                               <FileActions file={file} onDelete={handleDelete} />
                             </TableCell>
                           </TableRow>
