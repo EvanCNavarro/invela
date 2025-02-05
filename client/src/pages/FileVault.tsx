@@ -983,11 +983,7 @@ export default function FileVault() {
 };
 
 // Update version display in table
-{visibleColumns.has('version') && (
-  <TableCell className="text-center">
-    v{(file.version || 1.0).toFixed(1)}
-  </TableCell>
-)}
+// Removed lines 985-991 as per the edited snippet
 
 
   return (
