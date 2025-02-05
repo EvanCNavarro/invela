@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { SearchIcon } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -14,6 +15,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
   switch (status) {
@@ -35,8 +38,32 @@ function getAccreditationBadgeVariant(status: AccreditationStatus) {
   }
 }
 
+function CompanyCell({ company }: { company: any }) {
+  return (
+    <div className="flex items-center gap-3">
+      {company.logoId ? (
+        <div className="w-6 h-6 border-2 rounded flex items-center justify-center overflow-hidden">
+          <img 
+            src={`/api/companies/${company.id}/logo`} 
+            alt={`${company.name} logo`}
+            className="w-full h-full object-contain"
+          />
+        </div>
+      ) : (
+        <div className="w-6 h-6 border-2 rounded flex items-center justify-center bg-muted">
+          {company.name.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <span className="font-semibold text-foreground hover:underline">
+        {company.name}
+      </span>
+    </div>
+  );
+}
+
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [, setLocation] = useLocation();
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
@@ -45,6 +72,11 @@ export default function RegistryPage() {
   const filteredCompanies = companies.filter((company: any) =>
     company.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Convert company name to URL-friendly format
+  const getCompanySlug = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  };
 
   return (
     <DashboardLayout>
@@ -70,11 +102,31 @@ export default function RegistryPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Market Position</TableHead>
-                <TableHead>Risk Score</TableHead>
-                <TableHead className="w-[200px]">Accreditation</TableHead>
+                <TableHead className="w-[300px]">
+                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                    <span>Company</span>
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                    <span>Description</span>
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                    <span>Risk Score</span>
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                    <span>Accreditation</span>
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -92,15 +144,35 @@ export default function RegistryPage() {
                 </TableRow>
               ) : (
                 filteredCompanies.map((company: any) => (
-                  <TableRow key={company.id}>
-                    <TableCell>{company.name}</TableCell>
-                    <TableCell>{company.type}</TableCell>
-                    <TableCell>{company.marketPosition || "N/A"}</TableCell>
+                  <TableRow
+                    key={company.id}
+                    className="group cursor-pointer hover:bg-muted/50"
+                    onClick={() => setLocation(`/registry/company/${getCompanySlug(company.name)}`)}
+                  >
+                    <TableCell>
+                      <CompanyCell company={company} />
+                    </TableCell>
+                    <TableCell className="max-w-md truncate">
+                      {company.marketPosition || "N/A"}
+                    </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
-                      <Badge variant={getAccreditationBadgeVariant(company.accreditationStatus)}>
-                        {company.accreditationStatus?.replace('_', ' ') || 'AWAITING INVITATION'}
+                      <Badge 
+                        variant={getAccreditationBadgeVariant(company.accreditationStatus)}
+                        className={cn(
+                          "capitalize",
+                          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
+                          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800 hover:bg-green-100/80"
+                        )}
+                      >
+                        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'Awaiting Invitation'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="invisible group-hover:visible flex items-center justify-end text-primary">
+                        <span className="mr-2">View</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
