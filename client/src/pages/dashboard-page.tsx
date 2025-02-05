@@ -28,7 +28,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BellRing className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Recent Activity</h3>
+                  <span className="font-semibold">Recent Activity</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreHorizontal className="h-4 w-4" />
@@ -50,7 +50,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Documents</h3>
+                  <span className="font-semibold">Documents</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreHorizontal className="h-4 w-4" />
@@ -74,7 +74,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Team Members</h3>
+                  <span className="font-semibold">Team Members</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreHorizontal className="h-4 w-4" />
@@ -98,7 +98,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Quick Actions</h3>
+                  <span className="font-semibold">Quick Actions</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreHorizontal className="h-4 w-4" />
@@ -143,7 +143,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BellRing className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Announcements</h3>
+                  <span className="font-semibold">Announcements</span>
                 </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <MoreHorizontal className="h-4 w-4" />
@@ -178,7 +178,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Network Overview</h3>
+                  <span className="font-semibold">Network Overview</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm">View Details</Button>
