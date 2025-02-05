@@ -20,7 +20,6 @@ import archiver from "archiver";
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    // Use workspace directory for file storage
     const uploadDir = path.resolve('/home/runner/workspace/uploads');
     console.log('Debug - Upload directory:', uploadDir);
 
@@ -33,10 +32,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Use a more secure filename generation
+    // Generate a unique filename that includes original name for better tracking
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     const safeFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filename = `${path.parse(safeFilename).name}-${uniqueSuffix}${path.extname(file.originalname)}`;
+    const filename = `file-${uniqueSuffix}${path.extname(file.originalname)}`;
     console.log('Debug - Generated filename:', filename);
     cb(null, filename);
   }
@@ -84,39 +83,39 @@ export function registerRoutes(app: Express): Server {
 
       console.log('Debug - Attempting to download file:', fileId);
 
-      // First try to get the file from database
-      const result = await db.select().from(files).where(eq(files.id, fileId));
+      // Get the file from database
+      const [file] = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.id, fileId),
+          eq(files.userId, req.user!.id),
+          eq(files.status, 'uploaded')
+        ));
 
-      if (!result || result.length === 0) {
+      if (!file) {
         console.log('Debug - File not found in database');
-        return res.status(404).json({ message: "File not found in database" });
+        return res.status(404).json({ message: "File not found or not accessible" });
       }
 
-      const file = result[0];
       console.log('Debug - Found file in database:', file);
 
-      // Check if user has access to this file
-      if (file.userId !== req.user!.id) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Ensure file path is absolute and normalized
+      // Check if the file exists on disk
       const filePath = path.resolve('/home/runner/workspace/uploads', file.path);
-
-      // Add debug logging
       console.log('Debug - Looking for file at path:', filePath);
-      console.log('Debug - File exists:', fs.existsSync(filePath));
-      console.log('Debug - Directory contents:', fs.readdirSync('/home/runner/workspace/uploads'));
 
       if (!fs.existsSync(filePath)) {
+        console.log('Debug - File not found on disk');
+        // Update file status to deleted if file is missing
+        await db.update(files)
+          .set({ status: 'deleted' })
+          .where(eq(files.id, file.id));
         return res.status(404).json({ message: "File not found on disk" });
       }
 
       // Update download count
-      await db
-        .update(files)
+      await db.update(files)
         .set({ downloadCount: (file.downloadCount || 0) + 1 })
-        .where(eq(files.id, fileId));
+        .where(eq(files.id, file.id));
 
       // Set headers for file download
       res.setHeader('Content-Type', file.type || 'application/octet-stream');
@@ -153,10 +152,15 @@ export function registerRoutes(app: Express): Server {
         .from(files)
         .where(and(
           eq(files.userId, req.user!.id),
+          eq(files.status, 'uploaded'),
           inArray(files.id, fileIds.map(id => parseInt(id)))
         ));
 
-      const validFiles = selectedFiles.filter(file => fs.existsSync(path.resolve('/home/runner/workspace/uploads', file.path)));
+      // Verify files exist on disk
+      const validFiles = selectedFiles.filter(file => {
+        const filePath = path.resolve('/home/runner/workspace/uploads', file.path);
+        return fs.existsSync(filePath);
+      });
 
       if (validFiles.length === 0) {
         return res.status(404).json({ message: "No valid files found for download" });
@@ -164,7 +168,7 @@ export function registerRoutes(app: Express): Server {
 
       // Set headers for zip download
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', 'attachment; filename=download.zip');
+      res.setHeader('Content-Disposition', `attachment; filename=invela_download_${formatTimestampForFilename()}.zip`);
 
       // Create zip archive
       const archive = archiver('zip', {
@@ -184,19 +188,19 @@ export function registerRoutes(app: Express): Server {
 
       // Add files to archive and update download counts
       for (const file of validFiles) {
-        archive.file(path.resolve('/home/runner/workspace/uploads', file.path), { name: file.name });
+        const filePath = path.resolve('/home/runner/workspace/uploads', file.path);
+        archive.file(filePath, { name: file.name });
+
         try {
-          await db
-            .update(files)
-            .set({ downloadCount: (file.downloadCount ?? 0) + 1 })
-            .where(eq(files.id, file.id))
-            .execute();
+          await db.update(files)
+            .set({ downloadCount: (file.downloadCount || 0) + 1 })
+            .where(eq(files.id, file.id));
         } catch (updateError) {
           console.error(`Error updating download count for file ${file.id}:`, updateError);
         }
       }
 
-      // Finalize archive
+      // Finalize the archive
       await archive.finalize();
     } catch (error) {
       console.error("Error creating bulk download:", error);
@@ -278,7 +282,7 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // Updated file upload endpoint to handle correct path storage
+  // Updated file upload endpoint with improved error handling and path tracking
   app.post("/api/files", requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -290,11 +294,12 @@ export function registerRoutes(app: Express): Server {
         .from(files)
         .where(and(
           eq(files.name, req.file.originalname),
-          eq(files.userId, req.user!.id)
+          eq(files.userId, req.user!.id),
+          eq(files.status, 'uploaded')
         ))
         .limit(1);
 
-      // Store only the filename in the database, not the full path
+      // Store just the filename as the path
       const storedPath = req.file.filename;
       console.log('Debug - Storing file with path:', storedPath);
 
@@ -302,13 +307,14 @@ export function registerRoutes(app: Express): Server {
       if (existingFile.length > 0 && req.body.override === 'true') {
         try {
           // Remove the old file from storage
-          const oldFilePath = path.resolve('/home/runner/workspace/uploads', path.basename(existingFile[0].path));
+          const oldFilePath = path.resolve('/home/runner/workspace/uploads', existingFile[0].path);
+          console.log('Debug - Removing old file:', oldFilePath);
           if (fs.existsSync(oldFilePath)) {
             fs.unlinkSync(oldFilePath);
           }
 
           // Calculate new version number - increment by 1.0
-          const newVersion = Math.ceil(existingFile[0].version || 1.0) + 1.0;
+          const newVersion = (existingFile[0].version || 1.0) + 1.0;
 
           // Update the existing record with new file information
           const [updatedFile] = await db.update(files)
@@ -323,21 +329,20 @@ export function registerRoutes(app: Express): Server {
             .where(eq(files.id, existingFile[0].id))
             .returning();
 
+          console.log('Debug - Updated existing file record:', updatedFile);
           return res.status(200).json(updatedFile);
         } catch (error) {
           console.error('Error updating existing file:', error);
           // Clean up uploaded file on error
-          if (req.file) {
-            const filePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
-            if (fs.existsSync(filePath)) {
-              fs.unlinkSync(filePath);
-            }
+          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
+          if (fs.existsSync(newFilePath)) {
+            fs.unlinkSync(newFilePath);
           }
           throw error;
         }
       }
 
-      // If no existing file or override is false, create new record
+      // Create new file record
       const fileData = {
         name: req.file.originalname,
         size: req.file.size,
@@ -348,19 +353,13 @@ export function registerRoutes(app: Express): Server {
         companyId: req.user!.companyId,
         downloadCount: 0,
         version: 1.0,
-        uniqueViewers: 0,
-        accessLevel: 'private',
-        classificationType: 'internal',
-        retentionPeriod: 365,
-        storageLocation: 'hot-storage',
-        encryptionStatus: false,
       };
 
       const [file] = await db.insert(files)
         .values(fileData)
         .returning();
 
-      console.log('Debug - Successfully created file record:', file);
+      console.log('Debug - Created new file record:', file);
       res.status(201).json(file);
     } catch (error) {
       console.error("File upload error:", error);
@@ -455,4 +454,16 @@ export function registerRoutes(app: Express): Server {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+
+function formatTimestampForFilename() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  return `${year}${month}${day}${hours}${minutes}${seconds}`;
 }
