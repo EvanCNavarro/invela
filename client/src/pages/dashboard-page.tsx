@@ -42,7 +42,6 @@ import type { Company } from "@/types/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-//import { apiRequest } from "@/lib/queryClient"; //Removed as fetch is used directly
 import { useForm } from "react-hook-form";
 
 
@@ -96,12 +95,13 @@ export default function DashboardPage() {
         body: JSON.stringify(data)
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to send invitation');
+        throw new Error(result.error || result.message || 'Failed to send invitation');
       }
 
-      return response.json();
+      return result;
     },
     onSuccess: () => {
       const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
@@ -145,7 +145,7 @@ export default function DashboardPage() {
             <span>Failed to Send Invitation</span>
           </div>
         ),
-        description: error.message || "There was an error sending the invitation. Please try again.",
+        description: error.message,
         duration: 4000,
         variant: "destructive",
       });
