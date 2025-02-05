@@ -534,51 +534,61 @@ export default function FileVault() {
   const downloadMutation = useMutation({
     mutationFn: async (fileId: string) => {
       const file = files.find(f => f.id === fileId);
-      if (file) {
-        showDownloadToast(file.name);
-      }
-
-      const response = await fetch(`/api/files/${fileId}/download`);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
-        throw new Error(errorData.message || 'Failed to download file');
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType) {
-        throw new Error('No content type specified');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-
-      const contentDisposition = response.headers.get('content-disposition');
-      const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
-      const filename = filenameMatch ? filenameMatch[1] : files.find(f => f.id === fileId)?.name || 'download';
-
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-
-      toast({
-        title: "Download Complete",
-        description: `${filename} has been downloaded successfully.`,
-        duration: 3000,
+      const toastId = toast({
+        title: "Downloading File",
+        description: (
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Downloading {file?.name}...</span>
+          </div>
+        ),
+        duration: null, // Keep toast open until download completes
       });
-    },
-    onError: (error: Error) => {
-      console.error('Download error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to download file",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
+
+      try {
+        const response = await fetch(`/api/files/${fileId}/download`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Download failed' }));
+          throw new Error(errorData.message || 'Failed to download file');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        const contentDisposition = response.headers.get('content-disposition');
+        const filenameMatch = contentDisposition && contentDisposition.match(/filename="(.+)"/);
+        const filename = filenameMatch ? filenameMatch[1] : file?.name || 'download';
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Close the downloading toast and show success toast
+        toast.dismiss(toastId);
+        toast({
+          title: "Download Complete",
+          description: `${filename} has been downloaded successfully.`,
+          duration: 3000,
+        });
+
+        // Force refresh files to get updated download count
+        queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      } catch (error) {
+        // Close the downloading toast and show error toast
+        toast.dismiss(toastId);
+        console.error('Download error:', error);
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to download file",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
+    }
   });
 
   const bulkDownloadMutation = useMutation({
@@ -1026,68 +1036,64 @@ export default function FileVault() {
                   <Table className="w-full table-fixed">
                     <TableHeader className="sticky top-0 z-30 bg-muted">
                       <TableRow className="hover:bg-transparent">
-                        <TableCell className="w-[5%] px-4 sticky left-0 z-40 bg-muted">
+                        <TableHead className="w-[40px] sticky left-0 z-40 bg-muted">
                           <Checkbox
                             checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
                             onCheckedChange={() => toggleAllFiles(paginatedFiles)}
                             aria-label="Select all files"
                           />
-                        </TableCell>
-                        <TableCell className="w-[30%] sticky left-[5%] z-20 bg-muted">
-                          <button
-                            className="flex items-center gap-2"
+                        </TableHead>
+                        <TableHead className="w-[30%] sticky left-[5%] z-20 bg-muted">
+                          <Button
+                            variant="ghost"
                             onClick={() => handleSort('name')}
+                            className="flex items-center gap-1"
                           >
-                            Name
-                            {getSortIcon('name')}
-                          </button>
-                        </TableCell>
+                            Name {getSortIcon('name')}
+                          </Button>
+                        </TableHead>
                         {visibleColumns.has('size') && (
-                          <TableCell className="w-[10%] text-right">
-                            <button
-                              className="flex items-center gap-2 ml-auto"
+                          <TableHead className="w-[10%] text-right">
+                            <Button
+                              variant="ghost"
                               onClick={() => handleSort('size')}
+                              className="flex items-center gap-1 ml-auto"
                             >
-                              Size
-                              {getSortIcon('size')}
-                            </button>
-                          </TableCell>
+                              Size {getSortIcon('size')}
+                            </Button>
+                          </TableHead>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableCell className="w-[15%] text-right">
-                            <button
-                              className="flex items-center gap-2 ml-auto"
+                          <TableHead className="w-[15%] text-right">
+                            <Button
+                              variant="ghost"
                               onClick={() => handleSort('createdAt')}
+                              className="flex items-center gap-1 ml-auto"
                             >
-                              Upload Date
-                              {getSortIcon('createdAt')}
-                            </button>
-                          </TableCell>
+                              Upload Date {getSortIcon('createdAt')}
+                            </Button>
+                          </TableHead>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableCell className="w-[10%] text-right">
-                            Time
-                          </TableCell>
+                          <TableHead className="w-[10%] text-right">Time</TableHead>
                         )}
                         {visibleColumns.has('version') && (
-                          <TableCell className="w-[10%] text-center">
-                            Version
-                          </TableCell>
+                          <TableHead className="w-[10%] text-center">Version</TableHead>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableCell className="w-[12%] text-center">
-                            <button
-                              className="flex items-center gap-2 justify-center w-full"
+                          <TableHead className="w-[12%] text-center">
+                            <Button
+                              variant="ghost"
                               onClick={() => handleSort('status')}
+                              className="flex items-center gap-1 mx-auto"
                             >
-                              Status
-                              {getSortIcon('status')}
-                            </button>
-                          </TableCell>
+                              Status {getSortIcon('status')}
+                            </Button>
+                          </TableHead>
                         )}
-                        <TableCell className="w-[8%] text-center sticky right-0 z-20 bg-muted">
+                        <TableHead className="w-[8%] text-center sticky right-0 z-20 bg-muted">
                           Actions
-                        </TableCell>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1105,33 +1111,38 @@ export default function FileVault() {
                       ) : (
                         paginatedFiles.map((file) => (
                           <TableRow key={file.id}>
-                            <TableCell className="w-[5%] px-4">
+                            <TableCell className="w-[40px]">
                               <Checkbox
                                 checked={selectedFiles.has(file.id)}
                                 onCheckedChange={() => toggleFileSelection(file.id)}
                                 aria-label={`Select ${file.name}`}
                               />
                             </TableCell>
-                            <TableCell className="w-[30%]">
+                            <TableCell>
                               <FileNameCell file={file} />
                             </TableCell>
                             {visibleColumns.has('size') && (
-                              <TableCell className="w-[10%] text-right">
+                              <TableCell className="text-right">
                                 {formatFileSize(file.size)}
                               </TableCell>
                             )}
                             {visibleColumns.has('uploadDate') && (
-                              <TableCell className="w-[15%] text-right">
+                              <TableCell className="text-right">
                                 {new Date(file.createdAt).toLocaleDateString()}
                               </TableCell>
                             )}
+                            {visibleColumns.has('uploadTime') && (
+                              <TableCell className="text-right">
+                                {formatTimeWithZone(new Date(file.uploadTime))}
+                              </TableCell>
+                            )}
                             {visibleColumns.has('version') && (
-                              <TableCell className="w-[10%] text-center">
+                              <TableCell className="text-center">
                                 v{file.version?.toFixed(1)}
                               </TableCell>
                             )}
                             {visibleColumns.has('status') && (
-                              <TableCell className="w-[12%]">
+                              <TableCell>
                                 <div className="flex justify-center">
                                   <span className={getStatusStyles(file.status)}>
                                     {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
@@ -1139,7 +1150,7 @@ export default function FileVault() {
                                 </div>
                               </TableCell>
                             )}
-                            <TableCell className="w-[8%]">
+                            <TableCell>
                               <FileActions file={file} onDelete={handleDelete} />
                             </TableCell>
                           </TableRow>

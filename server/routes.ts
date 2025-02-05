@@ -293,7 +293,7 @@ export function registerRoutes(app: Express): Server {
               path: req.file.path,
               status: 'uploaded',
               updatedAt: new Date(),
-              version: (existingFile[0].version || 1.0) + 0.1,
+              version: Math.floor(existingFile[0].version || 1.0) + 1.0, // Increment by 1.0
             })
             .where(eq(files.id, existingFile[0].id))
             .returning();
@@ -319,13 +319,14 @@ export function registerRoutes(app: Express): Server {
         userId: req.user!.id,
         companyId: req.user!.companyId,
         downloadCount: 0,
+        version: 1.0,
         uniqueViewers: 0,
         accessLevel: 'private',
         classificationType: 'internal',
         retentionPeriod: 365, // Default 1 year retention
         storageLocation: 'hot-storage',
         encryptionStatus: false,
-        version: 1.0,
+
       };
 
       const [file] = await db.insert(files)
