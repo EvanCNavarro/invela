@@ -64,8 +64,8 @@ function ProgressTracker() {
               <div className={cn(
                 "w-8 h-8 rounded-md flex items-center justify-center mb-2",
                 step.status === 'completed' ? 'bg-primary text-primary-foreground' :
-                step.status === 'in-progress' ? 'bg-primary text-primary-foreground' :
-                'bg-muted text-muted-foreground'
+                  step.status === 'in-progress' ? 'bg-primary text-primary-foreground' :
+                    'bg-muted text-muted-foreground'
               )}>
                 {step.status === 'completed' ? '✓' : (index + 1)}
               </div>
@@ -77,8 +77,8 @@ function ProgressTracker() {
         </div>
         <div className="absolute top-4 left-0 w-full">
           <div className="h-1 bg-muted rounded-full">
-            <div 
-              className="h-full bg-primary rounded-full transition-all duration-300" 
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
               style={{ width: '50%' }}
             />
           </div>
@@ -93,7 +93,7 @@ export default function TaskCenterPage() {
   const [timeFilter, setTimeFilter] = useState("Last 6 months");
   const [statusFilter, setStatusFilter] = useState("All Status");
 
-  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({ 
+  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
@@ -163,8 +163,8 @@ export default function TaskCenterPage() {
                   Advanced search
                   <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => {
                     setSearchQuery("");
@@ -182,8 +182,10 @@ export default function TaskCenterPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[30px]">
-                    <input type="checkbox" className="rounded-sm border-gray-300" />
+                  <TableHead className="w-12">
+                    <div className="flex items-center justify-center">
+                      <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
+                    </div>
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Status</TableHead>
@@ -215,8 +217,10 @@ export default function TaskCenterPage() {
                 ) : (
                   filteredTasks.map((task) => (
                     <TableRow key={task.id}>
-                      <TableCell>
-                        <input type="checkbox" className="rounded-sm border-gray-300" />
+                      <TableCell className="w-12">
+                        <div className="flex items-center justify-center">
+                          <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div>
@@ -227,8 +231,8 @@ export default function TaskCenterPage() {
                       <TableCell>
                         <span className={cn(
                           "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
-                          task.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
+                          task.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
                         )}>
                           {task.status === 'completed' ? 'Completed' : 'Pending'}
