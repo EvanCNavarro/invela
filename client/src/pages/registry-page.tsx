@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AccreditationStatus, Company } from "@/types/company";
+import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
@@ -67,33 +67,15 @@ export default function RegistryPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
-  const [loadedLogos, setLoadedLogos] = useState<Set<number>>(new Set());
   const itemsPerPage = 10;
 
-  const { data: companies = [], isLoading, error } = useQuery<Company[]>({
+  const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
-    staleTime: 30000, // Cache data for 30 seconds
-    cacheTime: 5 * 60 * 1000, // Keep cache for 5 minutes
   });
 
-  const handleLogoLoad = (companyId: number) => {
-    setLoadedLogos(prev => {
-      const newSet = new Set(prev);
-      newSet.add(companyId);
-      return newSet;
-    });
-  };
-
-  const areAllLogosLoaded = useMemo(() => {
-    if (!companies.length) return false;
-    return companies.every(company => !company.logoId || loadedLogos.has(company.id));
-  }, [companies, loadedLogos]);
-
-  const isFullyLoaded = !isLoading && areAllLogosLoaded;
-
-  const sortCompanies = (a: Company, b: Company) => {
+  const sortCompanies = (a: any, b: any) => {
     if (sortField === "name") {
-      return sortDirection === "asc" 
+      return sortDirection === "asc"
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     }
@@ -111,15 +93,13 @@ export default function RegistryPage() {
     return 0;
   };
 
-  const filteredCompanies = useMemo(() => {
-    return companies
-      .filter((company) => {
-        const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
-        return matchesSearch && matchesStatus;
-      })
-      .sort(sortCompanies);
-  }, [companies, searchQuery, statusFilter, sortField, sortDirection]);
+  const filteredCompanies = companies
+    .filter((company: any) => {
+      const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
+      return matchesSearch && matchesStatus;
+    })
+    .sort(sortCompanies);
 
   // Convert company name to URL-friendly format
   const getCompanySlug = (name: string) => {
@@ -145,25 +125,7 @@ export default function RegistryPage() {
   // Pagination
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedCompanies = useMemo(() => {
-    return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredCompanies, startIndex]);
-
-  if (error) {
-    return (
-      <DashboardLayout>
-        <div className="flex-1 space-y-6">
-          <PageHeader
-            title="Invela Registry"
-            description="View and manage companies in your network."
-          />
-          <div className="p-4 text-center text-red-500">
-            Error loading companies. Please try again later.
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <DashboardLayout>
@@ -176,7 +138,7 @@ export default function RegistryPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
-              <SelectTrigger className="w-[200px] justify-start">
+              <SelectTrigger className="w-[200px]">
                 <FilterIcon className="w-4 h-4 mr-2" />
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -195,8 +157,8 @@ export default function RegistryPage() {
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search the Registry"
-                className="pl-9 bg-white"
+                placeholder="Search companies..."
+                className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -255,7 +217,7 @@ export default function RegistryPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedCompanies.map((company) => (
+                paginatedCompanies.map((company: any) => (
                   <TableRow
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50 bg-white"
@@ -267,7 +229,6 @@ export default function RegistryPage() {
                       <CompanyCell
                         company={company}
                         isHovered={hoveredRow === company.id}
-                        onLogoLoad={() => handleLogoLoad(company.id)}
                       />
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
@@ -350,7 +311,7 @@ export default function RegistryPage() {
   );
 }
 
-function CompanyCell({ company, isHovered, onLogoLoad }: { company: Company; isHovered: boolean; onLogoLoad: () => void }) {
+function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
@@ -359,11 +320,8 @@ function CompanyCell({ company, isHovered, onLogoLoad }: { company: Company; isH
             src={`/api/companies/${company.id}/logo`}
             alt={`${company.name} logo`}
             className="w-full h-full object-contain"
-            loading="lazy"
-            onLoad={onLogoLoad}
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultCompanyLogo;
-              onLogoLoad();
             }}
           />
         ) : (
@@ -371,7 +329,6 @@ function CompanyCell({ company, isHovered, onLogoLoad }: { company: Company; isH
             src={defaultCompanyLogo}
             alt="Default company logo"
             className="w-full h-full object-contain"
-            onLoad={onLogoLoad}
           />
         )}
       </div>
