@@ -37,8 +37,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { apiRequest } from "@/lib/queryClient";
+import { useForm } from "react-hook-form";
+
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -48,12 +54,23 @@ const DEFAULT_WIDGETS = {
   networkVisualization: true
 };
 
+const inviteFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address")
+});
+
+type InviteFormData = z.infer<typeof inviteFormSchema>;
+
 export default function DashboardPage() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const { user } = useAuth();
+  const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const form = useForm<InviteFormData>({
+    resolver: zodResolver(inviteFormSchema),
+    defaultValues: {
+      email: ""
+    }
+  });
 
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -69,44 +86,63 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
-  const handleSendInvite = (e: React.FormEvent) => {
-    e.preventDefault();
+  const { mutate: sendInvite, isPending } = useMutation({
+    mutationFn: (data: InviteFormData) =>
+      apiRequest("/api/fintech/invite", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
+      if (addFinTechButton) {
+        const rect = addFinTechButton.getBoundingClientRect();
+        confetti({
+          particleCount: 75,
+          spread: 52,
+          origin: {
+            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+            y: rect.top / window.innerHeight
+          },
+          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+          ticks: 200,
+          gravity: 0.8,
+          scalar: 0.8,
+          shapes: ["circle"]
+        });
+      }
 
-    // Get the button element and its position
-    const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
-    if (addFinTechButton) {
-      const rect = addFinTechButton.getBoundingClientRect();
-      confetti({
-        particleCount: 75,
-        spread: 52,
-        origin: {
-          x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-          y: rect.top / window.innerHeight
-        },
-        colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-        ticks: 200,
-        gravity: 0.8,
-        scalar: 0.8,
-        shapes: ["circle"]
+      toast({
+        title: (
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            <span>Invitation Sent</span>
+          </div>
+        ),
+        description: "The FinTech has been invited to join.",
+        duration: 2000,
+        className: "border-l-4 border-green-500",
       });
-    }
 
-    // Show success toast
-    toast({
-      title: (
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          <span>Invitation Sent</span>
-        </div>
-      ),
-      description: "The FinTech has been invited to join.",
-      duration: 2000,
-      className: "border-l-4 border-green-500",
-    });
+      form.reset();
+      setIsModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: (
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <span>Failed to Send Invitation</span>
+          </div>
+        ),
+        description: error.message || "There was an error sending the invitation. Please try again.",
+        duration: 4000,
+        variant: "destructive",
+      });
+    },
+  });
 
-    // Close modal and reset form
-    setIsModalOpen(false);
-    setEmail("");
+  const handleSendInvite = (data: InviteFormData) => {
+    sendInvite(data);
   };
 
   return (
@@ -124,8 +160,8 @@ export default function DashboardPage() {
                 <span>Customize Dashboard</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               className="w-56"
               sideOffset={4}
               onCloseAutoFocus={(event) => {
@@ -228,8 +264,8 @@ export default function DashboardPage() {
                 ]}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full pulse-border font-medium"
                     onClick={() => setIsModalOpen(true)}
                     data-element="add-fintech-button"
@@ -247,7 +283,6 @@ export default function DashboardPage() {
                   </Button>
                 </div>
 
-                {/* Add FinTech Modal */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader className="space-y-3">
@@ -256,25 +291,48 @@ export default function DashboardPage() {
                         Enter the email address of the FinTech representative you'd like to invite.
                       </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSendInvite} className="space-y-6">
-                      <div className="space-y-3">
-                        <Input
-                          type="email"
-                          placeholder="Enter email address"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="w-full"
-                          aria-label="FinTech representative email"
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  placeholder="Enter email address"
+                                  className="w-full"
+                                  disabled={isPending}
+                                  aria-label="FinTech representative email"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                      <div className="flex justify-end">
-                        <Button type="submit" className="gap-2">
-                          <Send className="h-4 w-4" />
-                          Send Invite
-                        </Button>
-                      </div>
-                    </form>
+                        <div className="flex justify-end">
+                          <Button
+                            type="submit"
+                            className="gap-2"
+                            disabled={isPending}
+                          >
+                            {isPending ? (
+                              <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4" />
+                                Send Invite
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
                   </DialogContent>
                 </Dialog>
               </Widget>

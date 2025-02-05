@@ -19,6 +19,8 @@ import fs from "fs";
 import archiver from "archiver";
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
+import { emailService } from "./services/email/service.ts";
+import type { SendEmailParams } from "./services/email/service.ts";
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -576,6 +578,46 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error serving company logo:", error);
       res.status(500).json({ message: "Error serving company logo" });
+    }
+  });
+
+  // Add fintech invite endpoint
+  app.post("/api/fintech/invite", requireAuth, async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Generate invite URL
+      const inviteUrl = `${req.protocol}://${req.get('host')}/register?type=fintech&invited_by=${req.user!.id}`;
+
+      const emailParams: SendEmailParams = {
+        to: email,
+        from: process.env.GMAIL_USER!,
+        template: 'fintech_invite',
+        templateData: {
+          recipientEmail: email,
+          senderName: req.user!.fullName,
+          companyName: req.user!.companyName,
+          inviteUrl: inviteUrl
+        }
+      };
+
+      const result = await emailService.sendTemplateEmail(emailParams);
+
+      if (!result.success) {
+        return res.status(500).json({ 
+          message: "Failed to send invite email",
+          error: result.error
+        });
+      }
+
+      res.json({ message: "Invite sent successfully" });
+    } catch (error) {
+      console.error("Error sending fintech invite:", error);
+      res.status(500).json({ message: "Error sending invite" });
     }
   });
 
