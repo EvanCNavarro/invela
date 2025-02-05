@@ -13,13 +13,15 @@ import {
   Activity,
   LayoutGrid,
   AlertTriangle,
-  Send
+  Send,
+  CheckCircle2
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +30,6 @@ import { cn } from "@/lib/utils";
 import { DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -68,7 +69,8 @@ export default function DashboardPage() {
 
   const handleSendInvite = (e: React.FormEvent) => {
     e.preventDefault();
-    // Trigger confetti
+
+    // Trigger confetti from the button's position
     const quickActionsElement = document.querySelector('#quick-actions-widget');
     if (quickActionsElement) {
       const rect = quickActionsElement.getBoundingClientRect();
@@ -76,20 +78,28 @@ export default function DashboardPage() {
         particleCount: 100,
         spread: 70,
         origin: {
-          x: (rect.left + rect.width / 2) / window.innerWidth,
-          y: (rect.top + rect.height / 2) / window.innerHeight
-        }
+          x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+          y: rect.top / window.innerHeight + (rect.height / window.innerHeight) / 2
+        },
+        gravity: 1.2,
+        scalar: 1.2
       });
     }
 
     // Show success toast
     toast({
-      title: "Invitation Sent",
+      title: (
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <span>Invitation Sent</span>
+        </div>
+      ),
       description: "The FinTech has been invited to join.",
-      duration: 3000,
+      duration: 2000,
+      className: "border-l-4 border-green-500",
     });
 
-    // Close modal
+    // Close modal and reset form
     setIsModalOpen(false);
     setEmail("");
   };
@@ -237,11 +247,14 @@ export default function DashboardPage() {
                 {/* Add FinTech Modal */}
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
+                    <DialogHeader className="space-y-3">
                       <DialogTitle>Add FinTech</DialogTitle>
+                      <DialogDescription>
+                        Enter the email address of the FinTech representative you'd like to invite.
+                      </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={handleSendInvite} className="space-y-4">
-                      <div className="space-y-2">
+                    <form onSubmit={handleSendInvite} className="space-y-6">
+                      <div className="space-y-3">
                         <Input
                           type="email"
                           placeholder="Enter email address"
@@ -249,6 +262,7 @@ export default function DashboardPage() {
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           className="w-full"
+                          aria-label="FinTech representative email"
                         />
                       </div>
                       <div className="flex justify-end">
