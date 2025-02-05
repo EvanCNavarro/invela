@@ -12,6 +12,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AccreditationStatus } from "@/types/company";
+
+function getAccreditationBadgeVariant(status: AccreditationStatus) {
+  switch (status) {
+    case 'APPROVED':
+      return 'success';
+    case 'PROVISIONALLY_APPROVED':
+      return 'warning';
+    case 'PENDING':
+    case 'IN_REVIEW':
+      return 'secondary';
+    case 'SUSPENDED':
+    case 'REVOKED':
+    case 'EXPIRED':
+      return 'destructive';
+    default:
+      return 'default';
+  }
+}
 
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -52,7 +72,7 @@ export default function RegistryPage() {
                 <TableHead>Type</TableHead>
                 <TableHead>Market Position</TableHead>
                 <TableHead>Risk Score</TableHead>
-                <TableHead>Accreditation</TableHead>
+                <TableHead className="w-[200px]">Accreditation</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,7 +95,11 @@ export default function RegistryPage() {
                     <TableCell>{company.type}</TableCell>
                     <TableCell>{company.marketPosition || "N/A"}</TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
-                    <TableCell>{company.accreditationStatus || "Pending"}</TableCell>
+                    <TableCell>
+                      <Badge variant={getAccreditationBadgeVariant(company.accreditationStatus)}>
+                        {company.accreditationStatus?.replace('_', ' ') || 'PENDING'}
+                      </Badge>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
