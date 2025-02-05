@@ -1,0 +1,28 @@
+Warning: Function components cannot be given refs. Attempts to access this ref will fail. Did you mean to use React.forwardRef()?%s%s 
+
+Check the render method of `FileVault`. 
+    at FileUpload (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/ui/file-upload.tsx:38:30)
+    at div
+    at div
+    at div
+    at main
+    at div
+    at div
+    at DashboardLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/layouts/DashboardLayout.tsx:25:35)
+    at FileVault (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/FileVault.tsx:419:21)
+    at div
+    at div
+    at OnboardingWrapper (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/OnboardingWrapper.tsx:21:37)
+    at div
+    at ProtectedLayout (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?v=V-F6sQql1elPvAGl0PkNX:32:28)
+    at component
+    at ProtectedRoute (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/lib/protected-route.tsx:22:3)
+    at Switch (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4e26555f:379:17)
+    at Router
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AFJ6VPUJ.js?v=4e26555f:38:15)
+    at Provider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6SPNF6KQ.js?v=4e26555f:28:15)
+    at CollectionProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6SPNF6KQ.js?v=4e26555f:89:13)
+    at ToastProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-toast.js?v=4e26555f:55:5)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=4e26555f:2805:3)
+    at App

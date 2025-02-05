@@ -927,7 +927,7 @@ export default function FileVault() {
   const canRestore = useMemo(() => {
     return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
-      return file?.status === 'deleted';
+      return file?.status ==='deleted';
     });
   }, [selectedFiles, allFiles]);
 
@@ -1028,7 +1028,7 @@ export default function FileVault() {
     );
   };
 
-  // Add window-level drag and drop event handlers
+  // Add the useEffect inside the component
   useEffect(() => {
     const handleDragOver = (e: DragEvent) => {
       e.preventDefault();
@@ -1043,7 +1043,6 @@ export default function FileVault() {
       }
     };
 
-    // Only add listeners if we're not in a table cell or row
     window.addEventListener('dragover', handleDragOver);
     window.addEventListener('drop', handleDrop);
 
@@ -1051,7 +1050,7 @@ export default function FileVault() {
       window.removeEventListener('dragover', handleDragOver);
       window.removeEventListener('drop', handleDrop);
     };
-  }, []);
+  }, [downloadMutation]);
 
   return (
     <DashboardLayout>
@@ -1219,42 +1218,51 @@ export default function FileVault() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedFiles.map((currentFile) => (
-                      <TableRow key={currentFile.id} draggable onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', currentFile.id);
-                        e.dataTransfer.effectAllowed = 'copy';
-                      }}>
-                        <TableCell className="w-12 p-0">
-                          <div className="h-12 flex items-center justify-center">
-                            <Checkbox
-                              checked={selectedFiles.has(currentFile.id)}
-                              onCheckedChange={() => toggleFileSelection(currentFile.id)}
-                              aria-label={`Select ${currentFile.name}`}
-                            />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <FileNameCell file={currentFile} />
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {formatFileSize(currentFile.size)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {new Date(currentFile.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <span className={getStatusStyles(currentFile.status)}>
-                            {currentFile.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          v{currentFile.version?.toFixed(1) || '1.0'}
-                        </TableCell>
-                        <TableCell>
-                          <FileActions file={currentFile} onDelete={handleDelete} />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {paginatedFiles.map((currentFile) => {
+                      const isDraggable = currentFile.status !== 'deleted';
+                      return (
+                        <TableRow
+                          key={currentFile.id}
+                          draggable={isDraggable}
+                          onDragStart={(e) => {
+                            if (isDraggable) {
+                              e.dataTransfer.setData('text/plain', currentFile.id);
+                              e.dataTransfer.effectAllowed = 'copy';
+                            }
+                          }}
+                        >
+                          <TableCell className="w-12 p-0">
+                            <div className="h-12 flex items-center justify-center">
+                              <Checkbox
+                                checked={selectedFiles.has(currentFile.id)}
+                                onCheckedChange={() => toggleFileSelection(currentFile.id)}
+                                aria-label={`Select ${currentFile.name}`}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <FileNameCell file={currentFile} />
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatFileSize(currentFile.size)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {new Date(currentFile.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <span className={getStatusStyles(currentFile.status)}>
+                              {currentFile.status}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            v{currentFile.version?.toFixed(1) || '1.0'}
+                          </TableCell>
+                          <TableCell>
+                            <FileActions file={currentFile} onDelete={handleDelete} />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               )}
