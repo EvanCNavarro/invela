@@ -5,13 +5,16 @@ import { cn } from "@/lib/utils";
 interface RiskMeterProps {
   score: number;
   maxScore?: number;
-  animate?: boolean;
 }
 
-export function RiskMeter({ score = 0, maxScore = 1500, animate = true }: RiskMeterProps) {
-  const [isAnimating, setIsAnimating] = useState(animate);
+export function RiskMeter({ score = 0, maxScore = 1500 }: RiskMeterProps) {
+  const [mounted, setMounted] = useState(false);
   const normalizedScore = Math.min(Math.max(0, score), maxScore);
   const angle = (normalizedScore / maxScore) * 180 - 90; // -90 to 90 degrees
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const getRiskLevel = (score: number) => {
     if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
@@ -23,16 +26,8 @@ export function RiskMeter({ score = 0, maxScore = 1500, animate = true }: RiskMe
 
   const { level, color } = getRiskLevel(normalizedScore);
 
-  useEffect(() => {
-    if (animate) {
-      const timer = setTimeout(() => setIsAnimating(false), 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [animate]);
-
   return (
     <div className="relative w-full max-w-[300px] mx-auto">
-      {/* Gauge Background */}
       <svg className="w-full" viewBox="0 0 200 120">
         {/* Gray base arc */}
         <path
@@ -85,7 +80,7 @@ export function RiskMeter({ score = 0, maxScore = 1500, animate = true }: RiskMe
           stroke="hsl(var(--foreground))"
           strokeWidth="2"
           initial={{ rotate: -90 }}
-          animate={{ rotate: isAnimating ? -90 : angle }}
+          animate={{ rotate: mounted ? angle : -90 }}
           transition={{ duration: 1, ease: "easeOut" }}
           style={{ transformOrigin: "100px 100px" }}
         />
