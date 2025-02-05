@@ -59,17 +59,26 @@ export function TopNav() {
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56"
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+              }}
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+              }}
+            >
               <div className="px-2 py-1.5">
                 <p className="text-sm font-medium truncate">{user?.fullName}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
@@ -86,7 +95,10 @@ export function TopNav() {
               </div>
               <DropdownMenuSeparator className="sm:hidden" />
               <DropdownMenuItem
-                onClick={handleLogout}
+                onSelect={(e) => {
+                  e.preventDefault();
+                  handleLogout();
+                }}
                 className="text-red-600 focus:text-red-600"
               >
                 <LogOutIcon className="mr-2 h-4 w-4" />
