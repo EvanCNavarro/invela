@@ -175,16 +175,16 @@ export default function DashboardPage() {
                 ]}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="secondary" className="w-full pulse-border font-medium">
+                  <Button variant="outline" className="w-full font-medium">
                     Add FinTech
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full font-medium">
                     Add User
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full font-medium">
                     Set Risk Tracker
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full font-medium">
                     View Reports
                   </Button>
                 </div>
