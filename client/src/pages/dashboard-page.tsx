@@ -24,6 +24,9 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { RiskMeter } from "@/components/dashboard/RiskMeter";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -45,6 +48,13 @@ export default function DashboardPage() {
   };
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
+
+  const { user } = useAuth();
+
+  const { data: companyData } = useQuery({
+    queryKey: ["/api/companies/current"],
+    enabled: !!user,
+  });
 
   return (
     <DashboardLayout>
@@ -181,9 +191,21 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('companyScore')}
                 isVisible={visibleWidgets.companyScore}
               >
-                <div className="flex items-center justify-center min-h-[120px]">
-                  <p className="text-sm text-muted-foreground">No score data available</p>
-                </div>
+                {companyData ? (
+                  <div className="space-y-6">
+                    <RiskMeter score={companyData.riskScore || 0} />
+                    <div className="space-y-2 text-center">
+                      <h4 className="font-medium">{companyData.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {companyData.riskDescription || "Risk assessment based on current market conditions and company performance metrics."}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center min-h-[120px]">
+                    <p className="text-sm text-muted-foreground">Loading company data...</p>
+                  </div>
+                )}
               </Widget>
             )}
 
