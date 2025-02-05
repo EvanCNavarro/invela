@@ -279,25 +279,34 @@ export function registerRoutes(app: Express): Server {
 
       // If file exists and override is true, update the existing record
       if (existingFile.length > 0 && req.body.override === 'true') {
-        // Remove the old file from storage
-        if (fs.existsSync(existingFile[0].path)) {
-          fs.unlinkSync(existingFile[0].path);
+        try {
+          // Remove the old file from storage
+          if (fs.existsSync(existingFile[0].path)) {
+            fs.unlinkSync(existingFile[0].path);
+          }
+
+          // Update the existing record with new file information
+          const [updatedFile] = await db.update(files)
+            .set({
+              size: req.file.size,
+              type: req.file.mimetype,
+              path: req.file.path,
+              status: 'uploaded',
+              updatedAt: new Date(),
+              version: (existingFile[0].version || 1.0) + 0.1,
+            })
+            .where(eq(files.id, existingFile[0].id))
+            .returning();
+
+          return res.status(200).json(updatedFile);
+        } catch (error) {
+          console.error('Error updating existing file:', error);
+          // Clean up uploaded file on error
+          if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+          }
+          throw error;
         }
-
-        // Update the existing record with new file information
-        const [updatedFile] = await db.update(files)
-          .set({
-            size: req.file.size,
-            type: req.file.mimetype,
-            path: req.file.path,
-            status: 'uploaded',
-            updatedAt: new Date(), // Fixed: Pass Date object instead of string
-            version: (existingFile[0].version || 1) + 0.1,
-          })
-          .where(eq(files.id, existingFile[0].id))
-          .returning();
-
-        return res.status(200).json(updatedFile);
       }
 
       // If no existing file or override is false, create new record
@@ -316,7 +325,7 @@ export function registerRoutes(app: Express): Server {
         retentionPeriod: 365, // Default 1 year retention
         storageLocation: 'hot-storage',
         encryptionStatus: false,
-        version: 1,
+        version: 1.0,
       };
 
       const [file] = await db.insert(files)
