@@ -20,12 +20,12 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
   const { level, color } = getRiskLevel(normalizedScore);
 
   return (
-    <div className={cn("flex flex-col items-center justify-center py-8", className)}>
+    <div className={cn("flex flex-col items-center justify-center py-4", className)}>
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="text-6xl font-bold mb-4"
+        className="text-6xl font-bold mb-2"
       >
         {normalizedScore}
       </motion.div>
