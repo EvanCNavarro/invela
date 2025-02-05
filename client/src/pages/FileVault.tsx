@@ -929,7 +929,7 @@ export default function FileVault() {
   };
 
   const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })=> {
-  // Fetch fresh file data
+  // Fetch freshfile data
   const { data: freshFileData } = useQuery({
     queryKey: ['/api/files', file.id],
     queryFn: async () => {
@@ -1101,56 +1101,60 @@ export default function FileVault() {
                             aria-label="Select all files"
                           />
                         </TableHead>
-                        <TableHead className="w-[30%] sticky left-[5%] z-20 bg-muted">
+                        <TableHead className="sticky left-[40px] z-20 bg-muted">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('name')}
-                            className="flex items-center gap-1"
+                            className="flex items-center gap-2 px-0 font-medium"
                           >
                             Name {getSortIcon('name')}
                           </Button>
                         </TableHead>
                         {visibleColumns.has('size') && (
-                          <TableHead className="w-[10%] text-right">
+                          <TableHead className="text-right">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('size')}
-                              className="flex items-center gap-1 ml-auto"
+                              className="flex items-center gap-2 ml-auto font-medium"
                             >
                               Size {getSortIcon('size')}
                             </Button>
                           </TableHead>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableHead className="w-[15%] text-right">
+                          <TableHead className="text-right">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('createdAt')}
-                              className="flex items-center gap-1 ml-auto"
+                              className="flex items-center gap-2 ml-auto font-medium"
                             >
                               Upload Date {getSortIcon('createdAt')}
                             </Button>
                           </TableHead>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableHead className="w-[10%] text-right">Time</TableHead>
+                          <TableHead className="text-right">
+                            <span className="font-medium">Time</span>
+                          </TableHead>
                         )}
                         {visibleColumns.has('version') && (
-                          <TableHead className="w-[10%] text-center">Version</TableHead>
+                          <TableHead className="text-center">
+                            <span className="font-medium">Version</span>
+                          </TableHead>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableHead className="w-[12%] text-center">
+                          <TableHead className="text-center">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('status')}
-                              className="flex items-center gap-1 mx-auto"
+                              className="flex items-center gap-2 mx-auto font-medium"
                             >
                               Status {getSortIcon('status')}
                             </Button>
                           </TableHead>
                         )}
-                        <TableHead className="w-[8%] text-center sticky right-0 z-20 bg-muted">
-                          Actions
+                        <TableHead className="w-[60px] text-center sticky right-0 z-20 bg-muted">
+                          <span className="font-medium">Actions</span>
                         </TableHead>
                       </TableRow>
                     </TableHeader>
