@@ -686,11 +686,14 @@ export default function FileVault() {
     for (const file of filesToUpload) {
       const formData = new FormData();
       formData.append('file', file);
-      if (override) {
+
+      // Always set override to true if a file with the same name exists
+      const existingFile = files.find(f => f.name === file.name);
+      if (existingFile) {
         formData.append('override', 'true');
       }
 
-      // Update UI to show uploading state
+      // Create temporary upload state
       const tempId = crypto.randomUUID();
       const uploadingFile: UploadingFile = {
         id: tempId,
@@ -698,27 +701,23 @@ export default function FileVault() {
         size: file.size,
         type: file.type,
         status: 'uploading',
-        createdAt: new Date().toISOString(),
+        createdAt: existingFile?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         uploadTime: new Date().toISOString(),
         progress: 0,
-        version: override ?
-          ((files.find(f => f.name === file.name)?.version || 1) + 0.1) :
-          1.0
+        version: existingFile ? (existingFile.version || 1) + 0.1 : 1.0
       };
 
-      // If overriding, update existing file status
-      if (override) {
+      // If file exists, update its status to uploading
+      if (existingFile) {
+        // Remove the old file entry from the list while uploading
         queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-          return oldFiles.map(existing =>
-            existing.name === file.name
-              ? { ...existing, status: 'uploading' }
-              : existing
-          );
+          return oldFiles.filter(f => f.name !== file.name);
         });
-      } else {
-        setUploadingFiles(prev => [...prev, uploadingFile]);
       }
+
+      // Add the uploading file to the list
+      setUploadingFiles(prev => [...prev.filter(f => f.name !== file.name), uploadingFile]);
 
       try {
         // Show upload progress toast
@@ -733,27 +732,50 @@ export default function FileVault() {
           duration: 2000,
         });
 
-        await uploadMutation.mutateAsync(formData);
+        const uploadedFile = await uploadMutation.mutateAsync(formData);
 
-        // Remove uploading state
+        // Remove temporary uploading state
         setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
+
+        // Update the query cache with the uploaded file information
+        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+          // Remove any existing file with the same name
+          const filteredFiles = oldFiles.filter(f => f.name !== file.name);
+          const newFile = {
+            ...uploadedFile,
+            uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
+            version: existingFile ? (existingFile.version || 1) + 0.1 : 1.0,
+            status: 'uploaded' as FileStatus,
+          };
+          return [...filteredFiles, newFile];
+        });
+
+        toast({
+          title: "Success",
+          description: `${file.name} uploaded successfully`,
+          duration: 3000,
+        });
       } catch (error) {
         console.error('Upload error:', error);
-        // Update UI to show error state
-        if (override) {
-          queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-            return oldFiles.map(existing =>
-              existing.name === file.name
-                ? { ...existing, status: 'uploaded' }
-                : existing
-            );
-          });
-        }
         setUploadingFiles(prev =>
           prev.map(f =>
             f.id === tempId ? { ...f, status: 'canceled' } : f
           )
         );
+
+        if (existingFile) {
+          // Restore the original file on error
+          queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+            return [...oldFiles.filter(f => f.name !== file.name), existingFile];
+          });
+        }
+
+        toast({
+          title: "Upload Error",
+          description: error instanceof Error ? error.message : "Failed to upload file",
+          variant: "destructive",
+          duration: 3000,
+        });
       }
     }
   };
@@ -912,7 +934,7 @@ export default function FileVault() {
               className="gap-2"
               aria-label="Upload new files"
             >
-              <UploadIcon className="w-4 h-4" aria-hidden="true" />
+              <UploadIcon className="w-4 h-4 aria-hidden="true" />
               Upload
               <input
                 type="file"
