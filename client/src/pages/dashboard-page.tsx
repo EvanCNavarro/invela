@@ -195,8 +195,8 @@ export default function DashboardPage() {
                       <p className="text-sm text-muted-foreground">Loading company data...</p>
                     </div>
                   ) : companyData ? (
-                    <div className="space-y-6">
-                      <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-center space-x-3">
+                    <div className="space-y-4">
+                      <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-center space-x-3">
                         {companyData.logoId ? (
                           <img
                             src={`/api/companies/${companyData.id}/logo`}
