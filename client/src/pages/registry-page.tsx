@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SearchIcon, PlusIcon } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
   TableBody,
@@ -85,13 +86,11 @@ export default function RegistryPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-4">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold">Invela Registry</h1>
-          <p className="text-sm text-muted-foreground">
-            View and manage companies in your network.
-          </p>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Invela Registry"
+          description="View and manage companies in your network."
+        />
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="relative w-full sm:w-96">
@@ -196,9 +195,9 @@ export default function RegistryPage() {
                   <TableRow key={company.id}>
                     <TableCell>{company.name}</TableCell>
                     <TableCell>{company.type}</TableCell>
-                    <TableCell>{company.riskScore || 'N/A'}</TableCell>
-                    <TableCell>{company.accreditationStatus || 'Pending'}</TableCell>
-                    <TableCell>{company.location || 'N/A'}</TableCell>
+                    <TableCell>{company.riskScore || "N/A"}</TableCell>
+                    <TableCell>{company.accreditationStatus || "Pending"}</TableCell>
+                    <TableCell>{company.location || "N/A"}</TableCell>
                   </TableRow>
                 ))
               )}

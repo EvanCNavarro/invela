@@ -1,17 +1,16 @@
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default function DashboardPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">
-            Get an overview of your company's performance and recent activities.
-          </p>
-        </div>
+        <PageHeader
+          title="Dashboard"
+          description="Get an overview of your company's performance and recent activities."
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <Widget
