@@ -25,7 +25,7 @@ interface WidgetProps {
   isVisible?: boolean;
   onEdit?: () => void;
   className?: string;
-  size?: 'single' | 'double' | 'triple' | 'oneAndHalf';
+  size?: 'single' | 'oneAndHalf' | 'double' | 'triple';
   actions?: Array<{
     label: string;
     onClick: () => void;
@@ -50,7 +50,8 @@ export function Widget({
       size === 'single' ? 'col-span-3 md:col-span-1' : 
       size === 'oneAndHalf' ? 'col-span-3 md:col-span-1.5' :
       size === 'double' ? 'col-span-3 md:col-span-2' : 
-      'col-span-3',
+      size === 'triple' ? 'col-span-3 md:col-span-3' :
+      'col-span-3', // added default for triple
       !isVisible && 'opacity-50',
       className
     )}>
