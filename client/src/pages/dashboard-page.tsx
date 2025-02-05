@@ -72,29 +72,24 @@ export default function DashboardPage() {
   const handleSendInvite = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Trigger confetti from multiple points
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { x: 0.5, y: 0.6 }
-    });
-
-    // Add a delayed second burst for more effect
-    setTimeout(() => {
+    // Get the button element and its position
+    const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
+    if (addFinTechButton) {
+      const rect = addFinTechButton.getBoundingClientRect();
       confetti({
-        particleCount: 50,
-        angle: 60,
-        spread: 80,
-        origin: { x: 0.3, y: 0.6 }
+        particleCount: 150,
+        spread: 90,
+        origin: {
+          x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+          y: rect.top / window.innerHeight
+        },
+        colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+        ticks: 200,
+        gravity: 0.8,
+        scalar: 1.2,
+        shapes: ["circle"]
       });
-
-      confetti({
-        particleCount: 50,
-        angle: 120,
-        spread: 80,
-        origin: { x: 0.7, y: 0.6 }
-      });
-    }, 150);
+    }
 
     // Show success toast
     toast({
@@ -237,6 +232,7 @@ export default function DashboardPage() {
                     variant="outline" 
                     className="w-full pulse-border font-medium"
                     onClick={() => setIsModalOpen(true)}
+                    data-element="add-fintech-button"
                   >
                     Add FinTech
                   </Button>
