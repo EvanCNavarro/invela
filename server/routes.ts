@@ -281,7 +281,7 @@ export function registerRoutes(app: Express): Server {
           }
 
           // Calculate new version number - increment by 1.0
-          const newVersion = Math.floor(existingFile[0].version || 1.0) + 1.0;
+          const newVersion = Math.ceil(existingFile[0].version || 1.0) + 1.0;
 
           // Update the existing record with new file information
           const [updatedFile] = await db.update(files)
