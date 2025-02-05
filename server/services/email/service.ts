@@ -118,11 +118,11 @@ class EmailService {
         try {
           const mxRecords = await resolveMx(domain);
           if (!mxRecords || mxRecords.length === 0) {
-            return { isValid: false, reason: "Domain does not have valid mail servers" };
+            return { isValid: false, reason: "This email doesn't exist. Enter a valid email." };
           }
         } catch (error) {
           console.error('MX record check failed:', error);
-          return { isValid: false, reason: "Could not verify domain mail servers" };
+          return { isValid: false, reason: "This email doesn't exist. Enter a valid email." };
         }
       }
 
