@@ -53,4 +53,21 @@
   a {
     @apply transition-interactive hover:text-primary focus-visible:ring-2 focus-visible:ring-primary;
   }
+
+  /* Pulsing border animation */
+  @keyframes pulse-border {
+    0% {
+      box-shadow: 0 0 0 0 hsla(var(--primary) / 0.3);
+    }
+    70% {
+      box-shadow: 0 0 0 6px hsla(var(--primary) / 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 hsla(var(--primary) / 0);
+    }
+  }
+
+  .pulse-border {
+    animation: pulse-border 2s infinite;
+  }
 }
