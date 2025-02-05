@@ -4,14 +4,13 @@ import { cn } from "@/lib/utils";
 
 interface RiskMeterProps {
   score: number;
-  maxScore?: number;
   className?: string;
 }
 
-export function RiskMeter({ score = 0, maxScore = 1500, className }: RiskMeterProps) {
+export function RiskMeter({ score = 0, className }: RiskMeterProps) {
   const [mounted, setMounted] = useState(false);
-  const normalizedScore = Math.min(Math.max(0, score), maxScore);
-  const angle = (normalizedScore / maxScore) * 180 - 90; // -90 to 90 degrees
+  const normalizedScore = Math.min(Math.max(0, score), 1500);
+  const angle = (normalizedScore / 1500) * 180 - 90; // -90 to 90 degrees
 
   useEffect(() => {
     setMounted(true);
@@ -28,10 +27,11 @@ export function RiskMeter({ score = 0, maxScore = 1500, className }: RiskMeterPr
   const { level, color } = getRiskLevel(normalizedScore);
 
   return (
-    <div className={cn("flex flex-col items-center justify-center p-4", className)}>
-      <div className="relative w-full max-w-[200px] aspect-[2/1.2]">
+    <div className={cn("flex flex-col items-center justify-center", className)}>
+      {/* Risk Meter SVG */}
+      <div className="relative w-64 h-40">
         <svg viewBox="0 0 200 120" className="w-full h-full">
-          {/* Base arc */}
+          {/* Base track */}
           <path
             d="M20 100 A80 80 0 0 1 180 100"
             fill="none"
@@ -40,32 +40,32 @@ export function RiskMeter({ score = 0, maxScore = 1500, className }: RiskMeterPr
             strokeLinecap="round"
           />
 
-          {/* Risk level arcs */}
+          {/* Risk level segments */}
           <path
             d="M20 100 A80 80 0 0 1 60 40"
             fill="none"
-            className="stroke-gray-200"
+            stroke="#f3f4f6"
             strokeWidth="12"
             strokeLinecap="round"
           />
           <path
             d="M60 40 A80 80 0 0 1 100 28"
             fill="none"
-            className="stroke-blue-200"
+            stroke="#bfdbfe"
             strokeWidth="12"
             strokeLinecap="round"
           />
           <path
             d="M100 28 A80 80 0 0 1 140 40"
             fill="none"
-            className="stroke-yellow-200"
+            stroke="#fef08a"
             strokeWidth="12"
             strokeLinecap="round"
           />
           <path
             d="M140 40 A80 80 0 0 1 180 100"
             fill="none"
-            className="stroke-red-200"
+            stroke="#fecaca"
             strokeWidth="12"
             strokeLinecap="round"
           />
@@ -76,7 +76,7 @@ export function RiskMeter({ score = 0, maxScore = 1500, className }: RiskMeterPr
             y1="100"
             x2="100"
             y2="40"
-            stroke="black"
+            stroke="#000000"
             strokeWidth="2"
             initial={{ rotate: -90 }}
             animate={{ rotate: mounted ? angle : -90 }}
@@ -89,7 +89,7 @@ export function RiskMeter({ score = 0, maxScore = 1500, className }: RiskMeterPr
             cx="100"
             cy="100"
             r="4"
-            fill="black"
+            fill="#000000"
           />
         </svg>
       </div>
