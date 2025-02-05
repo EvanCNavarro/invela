@@ -64,6 +64,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
+import { PageHeader } from "@/components/ui/page-header";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -1081,12 +1082,10 @@ export default function FileVault() {
     <DashboardLayout>
       <TooltipProvider>
         <div className="space-y-6">
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-semibold mb-1">File Vault</h1>
-            <p className="text-sm text-muted-foreground">
-              Manage and organize your company's documents securely.
-            </p>
-          </div>
+          <PageHeader
+            title="File Vault"
+            description="Manage and organize your company's documents securely."
+          />
 
           <FileUpload onDrop={onDrop} className="bg-muted/50" />
 
