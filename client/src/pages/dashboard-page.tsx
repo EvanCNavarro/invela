@@ -329,8 +329,8 @@ export default function DashboardPage() {
                               <FormMessage />
                               {serverError && (
                                 <p className="text-sm font-medium text-destructive mt-2">
-                                  {serverError.includes("mailbox") 
-                                    ? "This email address appears to be invalid or doesn't exist. Please verify and try again." 
+                                  {serverError.includes("mailbox")
+                                    ? "This email address does not exist. Please try again."
                                     : serverError}
                                 </p>
                               )}
