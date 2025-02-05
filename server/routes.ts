@@ -261,13 +261,46 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // Modified file upload endpoint to include new metrics
+  // Modified file upload endpoint to handle file overrides
   app.post("/api/files", requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
     try {
+      // Check if a file with the same name exists for this user
+      const existingFile = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.name, req.file.originalname),
+          eq(files.userId, req.user!.id)
+        ))
+        .limit(1);
+
+      // If file exists and override is true, update the existing record
+      if (existingFile.length > 0 && req.body.override === 'true') {
+        // Remove the old file from storage
+        if (fs.existsSync(existingFile[0].path)) {
+          fs.unlinkSync(existingFile[0].path);
+        }
+
+        // Update the existing record with new file information
+        const [updatedFile] = await db.update(files)
+          .set({
+            size: req.file.size,
+            type: req.file.mimetype,
+            path: req.file.path,
+            status: 'uploaded',
+            updatedAt: new Date().toISOString(),
+            version: (existingFile[0].version || 1) + 0.1,
+          })
+          .where(eq(files.id, existingFile[0].id))
+          .returning();
+
+        return res.status(200).json(updatedFile);
+      }
+
+      // If no existing file or override is false, create new record
       const fileData = {
         name: req.file.originalname,
         size: req.file.size,
@@ -294,6 +327,11 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("File upload error:", error);
       res.status(500).json({ message: "Error uploading file" });
+
+      // Clean up uploaded file on error
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
     }
   });
 
