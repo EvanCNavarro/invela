@@ -542,7 +542,7 @@ export default function FileVault() {
             <span>Downloading {file?.name}...</span>
           </div>
         ),
-        duration: null, // Keep toast open until download completes
+        duration: 5000, // Changed from null to 5000ms
       });
 
       try {
@@ -917,7 +917,7 @@ export default function FileVault() {
     }
   };
 
-const canRestore = useMemo(() => {
+  const canRestore = useMemo(() => {
     return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
       return file?.status === 'deleted';
@@ -928,60 +928,169 @@ const canRestore = useMemo(() => {
     deleteMutation.mutate(fileId);
   };
 
-  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })=> {
-  // Fetch fresh file data
-  const { data: freshFileData } = useQuery({
-    queryKey: ['/api/files', file.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/files/${file.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch file details');
-      }
-      return response.json();
-    },
-  });
+  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () =>void }) => {
+    // Fetch fresh file data
+    const { data: freshFileData } = useQuery({
+      queryKey: ['/api/files', file.id],
+      queryFn: async () => {
+        const response = await fetch(`/api/files/${file.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch file details');
+        }
+        return response.json();
+      },
+    });
 
-  const currentFile = freshFileData || file;
+    const currentFile = freshFileData || file;
 
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>File Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+    // Helper function for formatting dates
+    const formatDate = (dateString?: string) => {
+      if (!dateString) return 'N/A';
+      return new Date(dateString).toLocaleString();
+    };
+
+    const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
+      <div className="bg-muted/30 rounded-md p-4 space-y-3">
+        <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+        <div className="space-y-2">{children}</div>
+      </div>
+    );
+
+    const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-medium">{value}</span>
+      </div>
+    );
+
+    return (
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">File Details</DialogTitle>
+          </DialogHeader>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Name</p>
-              <p className="text-sm">{currentFile.name}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Size</p>
-              <p className="text-sm">{formatFileSize(currentFile.size)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Version</p>
-              <p className="text-sm">v{currentFile.version?.toFixed(1)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-              <p className="text-sm">{currentFile.downloadCount || 0}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <p className="text-sm">{currentFile.status}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
-              <p className="text-sm">{new Date(currentFile.createdAt).toLocaleDateString()}</p>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+            {/* Basic Information */}
+            <MetricBox title="File Information">
+              <MetricItem label="Name" value={currentFile.name} />
+              <MetricItem label="Size" value={formatFileSize(currentFile.size)} />
+              <MetricItem label="Type" value={currentFile.type || 'Unknown'} />
+              <MetricItem label="Version" value={`v${currentFile.version?.toFixed(1) || '1.0'}`} />
+              <MetricItem label="Status" value={
+                <span className={getStatusStyles(currentFile.status)}>
+                  {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
+                </span>
+              } />
+            </MetricBox>
 
+            {/* Usage Statistics */}
+            <MetricBox title="Usage Statistics">
+              <MetricItem label="Downloads" value={currentFile.downloadCount || 0} />
+              <MetricItem label="Last Accessed" value={formatDate(currentFile.lastAccessed)} />
+              <MetricItem label="Unique Viewers" value={currentFile.uniqueViewers || 0} />
+              <MetricItem 
+                label="Avg. View Duration" 
+                value={
+                  currentFile.averageViewDuration 
+                    ? `${currentFile.averageViewDuration.toFixed(1)}s` 
+                    : 'N/A'
+                }
+              />
+              <MetricItem 
+                label="Collaborators" 
+                value={currentFile.collaboratorCount || 0} 
+              />
+            </MetricBox>
+
+            {/* Security & Compliance */}
+            <MetricBox title="Security & Compliance">
+              <MetricItem 
+                label="Access Level" 
+                value={
+                  <span className={cn(
+                    "px-2 py-1 rounded-md text-xs font-medium",
+                    {
+                      'bg-red-100 text-red-800': currentFile.accessLevel === 'private',
+                      'bg-yellow-100 text-yellow-800': currentFile.accessLevel === 'restricted',
+                      'bg-green-100 text-green-800': !currentFile.accessLevel || currentFile.accessLevel === 'public'
+                    }
+                  )}>
+                    {(currentFile.accessLevel || 'public').charAt(0).toUpperCase() + 
+                     (currentFile.accessLevel || 'public').slice(1)}
+                  </span>
+                }
+              />
+              <MetricItem 
+                label="Encryption" 
+                value={currentFile.encryptionStatus ? 'Enabled' : 'Disabled'} 
+              />
+              <MetricItem 
+                label="Classification" 
+                value={currentFile.classificationType || 'Unclassified'} 
+              />
+              <MetricItem 
+                label="Compliance Tags" 
+                value={currentFile.complianceTags?.join(', ') || 'None'} 
+              />
+              <MetricItem 
+                label="Retention Period" 
+                value={currentFile.retentionPeriod ? `${currentFile.retentionPeriod} days` : 'N/A'} 
+              />
+            </MetricBox>
+
+            {/* Storage & Performance */}
+            <MetricBox title="Storage & Performance">
+              <MetricItem 
+                label="Upload Time" 
+                value={formatDate(currentFile.uploadTime)} 
+              />
+              <MetricItem 
+                label="Storage Location" 
+                value={currentFile.storageLocation || 'Standard Storage'} 
+              />
+              <MetricItem 
+                label="Compression Ratio" 
+                value={
+                  currentFile.compressionRatio 
+                    ? `${(currentFile.compressionRatio * 100).toFixed(1)}%` 
+                    : 'N/A'
+                } 
+              />
+              <MetricItem 
+                label="Duplicate Count" 
+                value={currentFile.duplicateCount || 0} 
+              />
+              <MetricItem 
+                label="Checksum" 
+                value={
+                  <span className="font-mono text-xs">
+                    {currentFile.checksum?.slice(0, 8) || 'N/A'}
+                  </span>
+                } 
+              />
+            </MetricBox>
+          </div>
+
+          <div className="mt-4 flex justify-end gap-2">
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+            <Button 
+              variant="default"
+              onClick={() => {
+                downloadMutation.mutate(currentFile.id);
+                onClose();
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <DashboardLayout>
@@ -1285,7 +1394,6 @@ const canRestore = useMemo(() => {
             </Dialog>
           </div>
         </div>
-        {/* Add the FileConflictModal here */}
         <FileConflictModal
           conflicts={conflictFiles}
           onResolve={(override) => {
