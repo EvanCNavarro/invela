@@ -210,6 +210,7 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
+                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
