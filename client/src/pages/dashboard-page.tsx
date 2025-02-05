@@ -27,9 +27,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import confetti from 'canvas-confetti';
 import { cn } from "@/lib/utils";
-import { DropdownMenu,
+import {
+  DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -126,9 +128,6 @@ export default function DashboardPage() {
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
               }}
-              onOpenAutoFocus={(event) => {
-                event.preventDefault();
-              }}
             >
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -211,7 +210,6 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
-                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
@@ -278,37 +276,37 @@ export default function DashboardPage() {
             )}
 
             {visibleWidgets.companyScore && (
-                <Widget
-                  title="Company Score"
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('companyScore')}
-                  isVisible={visibleWidgets.companyScore}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">Loading company data...</p>
+              <Widget
+                title="Company Score"
+                icon={<AlertTriangle className="h-5 w-5" />}
+                onVisibilityToggle={() => toggleWidget('companyScore')}
+                isVisible={visibleWidgets.companyScore}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">Loading company data...</p>
+                  </div>
+                ) : companyData ? (
+                  <div className="space-y-1">
+                    <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                      {companyData.logoId ? (
+                        <img
+                          src={`/api/companies/${companyData.id}/logo`}
+                          alt={`${companyData.name} logo`}
+                          className="w-6 h-6 object-contain"
+                        />
+                      ) : null}
+                      <span className="text-sm font-medium">{companyData.name}</span>
                     </div>
-                  ) : companyData ? (
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                          />
-                        ) : null}
-                        <span className="text-sm font-medium">{companyData.name}</span>
-                      </div>
-                      <RiskMeter score={companyData.riskScore || 0} />
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">No company data available</p>
-                    </div>
-                  )}
-                </Widget>
-              )}
+                    <RiskMeter score={companyData.riskScore || 0} />
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">No company data available</p>
+                  </div>
+                )}
+              </Widget>
+            )}
 
             {visibleWidgets.networkVisualization && (
               <Widget
