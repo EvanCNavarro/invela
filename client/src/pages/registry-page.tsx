@@ -59,42 +59,6 @@ const statusOrderMap: Record<AccreditationStatus, number> = {
   EXPIRED: 7
 };
 
-// Skeleton loading component for the table
-function TableSkeleton() {
-  return (
-    <>
-      {Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index} className="animate-pulse">
-          <TableCell className="w-[40px]">
-            <div className="h-4 w-4 bg-muted rounded" />
-          </TableCell>
-          <TableCell>
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 bg-muted rounded" />
-              <div className="h-4 w-32 bg-muted rounded" />
-            </div>
-          </TableCell>
-          <TableCell>
-            <div className="h-4 w-16 bg-muted rounded ml-auto" />
-          </TableCell>
-          <TableCell>
-            <div className="h-4 w-24 bg-muted rounded ml-auto" />
-          </TableCell>
-          <TableCell>
-            <div className="h-4 w-20 bg-muted rounded ml-auto" />
-          </TableCell>
-          <TableCell>
-            <div className="h-6 w-20 bg-muted rounded mx-auto" />
-          </TableCell>
-          <TableCell>
-            <div className="h-8 w-8 bg-muted rounded mx-auto" />
-          </TableCell>
-        </TableRow>
-      ))}
-    </>
-  );
-}
-
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -129,7 +93,7 @@ export default function RegistryPage() {
 
   const sortCompanies = (a: Company, b: Company) => {
     if (sortField === "name") {
-      return sortDirection === "asc"
+      return sortDirection === "asc" 
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     }
@@ -278,8 +242,12 @@ export default function RegistryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!isFullyLoaded ? (
-                <TableSkeleton />
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4">
+                    Loading...
+                  </TableCell>
+                </TableRow>
               ) : paginatedCompanies.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-4">
