@@ -118,9 +118,9 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* First Row - Recent Updates (1.5) and Announcements (1.5) */}
-            <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            {/* First Row */}
+            <div className="contents">
               {visibleWidgets.updates && (
                 <Widget
                   title="Recent Updates"
@@ -154,8 +154,8 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Second Row - Quick Actions (1.5) and Company Score (1.5) */}
-            <div className="col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Second Row */}
+            <div className="contents">
               {visibleWidgets.quickActions && (
                 <Widget
                   title="Quick Actions"
@@ -214,7 +214,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* Third Row - Network Visualization (3) */}
+            {/* Third Row */}
             {visibleWidgets.networkVisualization && (
               <Widget
                 title="Network Visualization"
