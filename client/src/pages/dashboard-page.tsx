@@ -11,7 +11,8 @@ import {
   Bell,
   Check,
   Activity,
-  LayoutGrid
+  LayoutGrid,
+  AlertTriangle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -183,33 +184,37 @@ export default function DashboardPage() {
             )}
 
             {visibleWidgets.companyScore && (
-              <Widget
-                title="Company Score"
-                icon={<BarChart3 className="h-5 w-5" />}
-                onVisibilityToggle={() => toggleWidget('companyScore')}
-                isVisible={visibleWidgets.companyScore}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">Loading company data...</p>
-                  </div>
-                ) : companyData ? (
-                  <div className="space-y-6">
-                    <RiskMeter score={companyData.riskScore || 0} />
-                    <div className="space-y-2 text-center">
-                      <h4 className="font-medium">{companyData.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Risk assessment based on current market conditions and company performance metrics.
-                      </p>
+                <Widget
+                  title="Company Score"
+                  icon={<AlertTriangle className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('companyScore')}
+                  isVisible={visibleWidgets.companyScore}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <p className="text-sm text-muted-foreground">Loading company data...</p>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">No company data available</p>
-                  </div>
-                )}
-              </Widget>
-            )}
+                  ) : companyData ? (
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 rounded-lg p-3 flex items-center justify-center space-x-3">
+                        {companyData.logoId ? (
+                          <img
+                            src={`/api/companies/${companyData.id}/logo`}
+                            alt={`${companyData.name} logo`}
+                            className="w-6 h-6 object-contain"
+                          />
+                        ) : null}
+                        <span className="text-sm font-medium">{companyData.name}</span>
+                      </div>
+                      <RiskMeter score={companyData.riskScore || 0} />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <p className="text-sm text-muted-foreground">No company data available</p>
+                    </div>
+                  )}
+                </Widget>
+              )}
 
             {visibleWidgets.networkVisualization && (
               <Widget

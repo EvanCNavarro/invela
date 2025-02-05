@@ -11,9 +11,9 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
 
   const getRiskLevel = (score: number) => {
     if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
-    if (score <= 250) return { level: 'Low Risk', color: 'bg-blue-100 text-blue-800' };
-    if (score <= 501) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
-    if (score <= 1001) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
+    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
+    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
+    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
     return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
   };
 
