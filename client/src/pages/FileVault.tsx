@@ -533,58 +533,27 @@ export default function FileVault() {
 
   const downloadMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const file = files.find(f => f.id === fileId);
-      const downloadToast = toast({
-        title: "Downloading File",
-        description: (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Downloading {file?.name}...</span>
-          </div>
-        ),
-        duration: 0, // Keep toast until we dismiss it
-      });
-
-      try {
-        const response = await fetch(`/api/files/${fileId}/download`);
-        if (!response.ok) {
-          throw new Error('Download failed');
-        }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file?.name || 'download';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
-        // Dismiss the downloading toast
-        toast.dismiss(downloadToast.id);
-
-        // Show success toast
-        toast({
-          title: "Download Complete",
-          description: `${file?.name} has been downloaded successfully.`,
-          duration: 3000,
-        });
-
-        return true;
-      } catch (error) {
-        // Dismiss the downloading toast
-        toast.dismiss(downloadToast.id);
-
-        console.error('Download error:', error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to download file",
-          variant: "destructive",
-          duration: 3000,
-        });
-        throw error;
-      }
+      const response = await fetch(`/api/files/${fileId}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = files.find(f => f.id === fileId)?.name || 'download';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onSuccess: (_, fileId) => {
+      // Invalidate both the file list and the specific file queries
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/files/${fileId}`] });
+    },
+    onError: (error, fileId) => {
+      const fileName = files.find(f => f.id === fileId)?.name || 'file';
+      //Assuming fileToast is defined elsewhere and has a showDownloadError method
+      fileToast.showDownloadError(fileName); //This line assumes fileToast exists and has this function
     }
   });
 
@@ -949,8 +918,7 @@ export default function FileVault() {
     // Fetch fresh file data
     const { data: freshFileData } = useQuery({
       queryKey: ['/api/files', file.id],
-      queryFn: async () => {
-        const response = await fetch(`/api/files/${file.id}`);
+      queryFn: async () => {        const response = await fetch(`/api/files/${file.id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch file details');
         }
