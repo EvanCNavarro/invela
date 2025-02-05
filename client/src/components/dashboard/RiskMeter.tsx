@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import {
-  RadialBarChart,
-  RadialBar,
-  ResponsiveContainer,
-  PolarAngleAxis
-} from "recharts";
+import ReactApexChart from "react-apexcharts";
+import { ApexOptions } from "apexcharts";
 
 interface RiskMeterProps {
   score: number;
@@ -19,7 +15,6 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
 
   useEffect(() => {
     setMounted(true);
-    console.log("RiskMeter mounted with score:", normalizedScore); // Debug log
   }, []);
 
   const getRiskLevel = (score: number) => {
@@ -32,44 +27,66 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
 
   const { level, color } = getRiskLevel(normalizedScore);
 
-  const data = [
-    {
-      name: 'Risk Score',
-      value: normalizedScore,
-      fill: '#0ea5e9'
-    }
-  ];
+  const chartOptions: ApexOptions = {
+    chart: {
+      type: 'radialBar',
+      offsetY: -20,
+      sparkline: {
+        enabled: true
+      }
+    },
+    plotOptions: {
+      radialBar: {
+        startAngle: -90,
+        endAngle: 90,
+        track: {
+          background: "#e7e7e7",
+          strokeWidth: '97%',
+          margin: 5,
+        },
+        dataLabels: {
+          name: {
+            show: false
+          },
+          value: {
+            offsetY: -2,
+            fontSize: '22px'
+          }
+        }
+      }
+    },
+    grid: {
+      padding: {
+        top: -10
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'light',
+        shadeIntensity: 0.4,
+        inverseColors: false,
+        opacityFrom: 1,
+        opacityTo: 1,
+        stops: [0, 50, 53, 91]
+      },
+    },
+    labels: ['Risk Score'],
+  };
 
-  console.log("Rendering RiskMeter with data:", data); // Debug log
+  const series = [Math.round((normalizedScore / 1500) * 100)];
 
   return (
     <div className={cn("flex flex-col items-center justify-center", className)}>
-      <div className="w-64 h-40">
-        <ResponsiveContainer width="100%" height={500}>
-          <RadialBarChart
-            cx="50%"
-            cy="100%"
-            innerRadius={60}
-            outerRadius={100}
-            barSize={10}
-            data={data}
-            startAngle={180}
-            endAngle={0}
-          >
-            <PolarAngleAxis
-              type="number"
-              domain={[0, 1500]}
-              angleAxisId={0}
-              tick={false}
-            />
-            <RadialBar
-              background
-              dataKey="value"
-              cornerRadius={30}
-              fill="#0ea5e9"
-            />
-          </RadialBarChart>
-        </ResponsiveContainer>
+      <div className="w-64 h-48">
+        {mounted && (
+          <ReactApexChart
+            options={chartOptions}
+            series={series}
+            type="radialBar"
+            height={250}
+          />
+        )}
       </div>
 
       <div className="text-center mt-4">
