@@ -206,9 +206,9 @@ const columnPriorities = {
   uploadDate: 2,    // Second to show
   uploadTime: 3,    // Third to show
   status: 4,        // Fourth to show
-  version: 5,       // Fifth to show (new priority)
+  version: 5,       // Fifth to show
   actions: 0,       // Always visible
-  textPreview: 6,   // Sixth to show
+  textPreview: 7,   // Seventh to show (bumped from 6)
 } as const;
 
 // Add useBreakpoint hook for responsive design
@@ -295,7 +295,7 @@ const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
   const availableSpace = Math.max(0, breakpoint - sidebarWidth);
 
   // Always show priority 0 columns
-  const visibleColumns = new Set(['fileName', 'actions']);
+  const visibleColumns = new Set(['fileName', 'actions', 'checkbox']);
 
   // Add columns based on available space
   if (availableSpace > 640) visibleColumns.add('size');
@@ -998,78 +998,82 @@ export default function FileVault() {
                   <Table className="w-full table-fixed">
                     <TableHeader className="sticky top-0 z-30 bg-muted">
                       <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-12 sticky left-0 z-40 bg-muted">
-                          <Checkbox
-                            checked={selectedFiles.size === filteredAndSortedFiles.length && filteredAndSortedFiles.length > 0}
-                            onCheckedChange={() => toggleAllFiles(filteredAndSortedFiles)}
-                          />
-                        </TableHead>
-                        <TableHead className="w-48 lg:w-64 sticky left-12 z-20 bg-muted">
+                        <TableCell className="w-[40px] p-0">
+                          <div className="h-10 flex items-center justify-center">
+                            <Checkbox
+                              checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
+                              onCheckedChange={() => toggleAllFiles(paginatedFiles)}
+                              aria-label="Select all files"
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="min-w-[200px]">
                           <Button
                             variant="ghost"
                             onClick={() => handleSort('name')}
-                            className="flex items-center gap-1"
+                            className="h-8 px-2 hover:bg-muted/80 -ml-3 whitespace-nowrap"
                           >
                             Name {getSortIcon('name')}
                           </Button>
-                        </TableHead>
+                        </TableCell>
                         {visibleColumns.has('size') && (
-                          <TableHead className="w-24">
+                          <TableCell className="text-right">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('size')}
-                              className="flex items-center gap-1 ml-auto"
+                              className="h-8 px-2 hover:bg-muted/80 ml-auto whitespace-nowrap"
                             >
                               Size {getSortIcon('size')}
                             </Button>
-                          </TableHead>
+                          </TableCell>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableHead className="w-32">
+                          <TableCell className="text-right">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('createdAt')}
-                              className="flex items-center gap-1 ml-auto"
+                              className="h-8 px-2 hover:bg-muted/80 ml-auto whitespace-nowrap"
                             >
                               Upload Date {getSortIcon('createdAt')}
                             </Button>
-                          </TableHead>
+                          </TableCell>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableHead className="w-28">
-                            <span className="whitespace-nowrap">Time</span>
-                          </TableHead>
+                          <TableCell className="text-right">
+                            <span className="inline-block min-w-[100px]">Upload Time</span>
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('version') && (
+                          <TableCell className="text-center">
+                            <span className="inline-block min-w-[80px]">Version</span>
+                          </TableCell>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableHead className="w-28">
+                          <TableCell className="text-center">
                             <Button
                               variant="ghost"
                               onClick={() => handleSort('status')}
-                              className="flex items-center gap-1 mx-auto"
+                              className="h-8 px-2 hover:bg-muted/80 mx-auto whitespace-nowrap"
                             >
                               Status {getSortIcon('status')}
                             </Button>
-                          </TableHead>
+                          </TableCell>
                         )}
-                        {visibleColumns.has('version') && (
-                          <TableHead className="w-24">
-                            <span className="flex items-center justify-center gap-1">
-                              Version
-                            </span>
-                          </TableHead>
-                        )}
-                        <TableHead className="w-24 bg-muted text-center sticky right-0 z-20">
-                          Actions
-                        </TableHead>
+                        <TableCell className="w-[100px]">
+                          <span className="sr-only">Actions</span>
+                        </TableCell>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {isLoading ? (
                         <TableSkeleton />
-                      ) : filteredAndSortedFiles.length === 0 ? (
+                      ) : paginatedFiles.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="h-32 text-center">
-                            No files found
+                          <TableCell colSpan={8} className="h-24 text-center">
+                            <div className="flex flex-col items-center justify-center text-muted-foreground">
+                              <FileIcon className="w-10 h-10 mb-2" />
+                              <span>No files found</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -1316,7 +1320,6 @@ export default function FileVault() {
       </TooltipProvider>
     </DashboardLayout>
   );
-
 }
 
 // New component for file preview
