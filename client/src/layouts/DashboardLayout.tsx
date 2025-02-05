@@ -55,8 +55,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <TopNav />
         </div>
 
-        <main className="flex-1 pt-14">
-          <div className="px-4 md:px-6 py-2 w-full overflow-x-hidden">
+        <main className="flex-1 pt-20">
+          <div className="px-6 md:px-8 py-4 w-full overflow-x-hidden">
             {children}
           </div>
         </main>
