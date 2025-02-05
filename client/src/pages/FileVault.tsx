@@ -998,14 +998,14 @@ export default function FileVault() {
                   <Table className="w-full table-fixed">
                     <TableHeader className="sticky top-0 z-30 bg-muted">
                       <TableRow className="hover:bg-transparent">
-                        <TableCell className="w-[40px] px-4">
+                        <TableCell className="w-[40px] px-4 sticky left-0 z-40 bg-muted">
                           <Checkbox
                             checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
                             onCheckedChange={() => toggleAllFiles(paginatedFiles)}
                             aria-label="Select all files"
                           />
                         </TableCell>
-                        <TableCell className="w-[300px]">
+                        <TableCell className="w-[300px] sticky left-[40px] z-20 bg-muted">
                           <button
                             className="flex items-center gap-2"
                             onClick={() => handleSort('name')}
@@ -1014,37 +1014,50 @@ export default function FileVault() {
                             {getSortIcon('name')}
                           </button>
                         </TableCell>
-                        <TableCell className="w-[120px] text-right">
-                          <button
-                            className="flex items-center gap-2 ml-auto"
-                            onClick={() => handleSort('size')}
-                          >
-                            Size
-                            {getSortIcon('size')}
-                          </button>
-                        </TableCell>
-                        <TableCell className="w-[180px] text-right">
-                          <button
-                            className="flex items-center gap-2 ml-auto"
-                            onClick={() => handleSort('createdAt')}
-                          >
-                            Upload Date
-                            {getSortIcon('createdAt')}
-                          </button>
-                        </TableCell>
-                        <TableCell className="w-[120px] text-right">
-                          Version
-                        </TableCell>
-                        <TableCell className="w-[140px] text-center">
-                          <button
-                            className="flex items-center gap-2 mx-auto"
-                            onClick={() => handleSort('status')}
-                          >
-                            Status
-                            {getSortIcon('status')}
-                          </button>
-                        </TableCell>
-                        <TableCell className="w-[100px] text-center">
+                        {visibleColumns.has('size') && (
+                          <TableCell className="w-[120px] text-right">
+                            <button
+                              className="flex items-center gap-2 ml-auto"
+                              onClick={() => handleSort('size')}
+                            >
+                              Size
+                              {getSortIcon('size')}
+                            </button>
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('uploadDate') && (
+                          <TableCell className="w-[180px] text-right">
+                            <button
+                              className="flex items-center gap-2 ml-auto"
+                              onClick={() => handleSort('createdAt')}
+                            >
+                              Upload Date
+                              {getSortIcon('createdAt')}
+                            </button>
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('uploadTime') && (
+                          <TableCell className="w-[120px] text-right">
+                            Time
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('version') && (
+                          <TableCell className="w-[120px] text-right">
+                            Version
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('status') && (
+                          <TableCell className="w-[140px] text-center">
+                            <button
+                              className="flex items-center gap-2 mx-auto"
+                              onClick={() => handleSort('status')}
+                            >
+                              Status
+                              {getSortIcon('status')}
+                            </button>
+                          </TableCell>
+                        )}
+                        <TableCell className="w-[100px] text-center sticky right-0 z-20 bg-muted">
                           Actions
                         </TableCell>
                       </TableRow>
@@ -1052,9 +1065,12 @@ export default function FileVault() {
                     <TableBody>
                       {isLoading ? (
                         <TableSkeleton />
-                      ) : filteredAndSortedFiles.length === 0 ? (
+                      ) : paginatedFiles.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="h-32 text-center">
+                          <TableCell
+                            colSpan={Object.keys(visibleColumns).length + 2}
+                            className="h-32 text-center"
+                          >
                             No files found
                           </TableCell>
                         </TableRow>
