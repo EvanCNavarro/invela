@@ -42,7 +42,7 @@ import type { Company } from "@/types/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { apiRequest } from "@/lib/queryClient";
+//import { apiRequest } from "@/lib/queryClient"; //Removed as fetch is used directly
 import { useForm } from "react-hook-form";
 
 
@@ -87,12 +87,22 @@ export default function DashboardPage() {
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
   const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: (data: InviteFormData) =>
-      apiRequest("/api/fintech/invite", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    mutationFn: async (data: InviteFormData) => {
+      const response = await fetch('/api/fintech/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data)
-      }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send invitation');
+      }
+
+      return response.json();
+    },
     onSuccess: () => {
       const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
       if (addFinTechButton) {
