@@ -291,7 +291,7 @@ export function registerRoutes(app: Express): Server {
             type: req.file.mimetype,
             path: req.file.path,
             status: 'uploaded',
-            updatedAt: new Date().toISOString(),
+            updatedAt: new Date(), // Fixed: Pass Date object instead of string
             version: (existingFile[0].version || 1) + 0.1,
           })
           .where(eq(files.id, existingFile[0].id))
