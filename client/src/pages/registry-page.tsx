@@ -21,15 +21,17 @@ function getAccreditationBadgeVariant(status: AccreditationStatus) {
       return 'success';
     case 'PROVISIONALLY_APPROVED':
       return 'warning';
+    case 'AWAITING_INVITATION':
+      return 'secondary';
     case 'PENDING':
     case 'IN_REVIEW':
-      return 'secondary';
+      return 'default';
     case 'SUSPENDED':
     case 'REVOKED':
     case 'EXPIRED':
       return 'destructive';
     default:
-      return 'default';
+      return 'secondary';
   }
 }
 
@@ -97,7 +99,7 @@ export default function RegistryPage() {
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
                       <Badge variant={getAccreditationBadgeVariant(company.accreditationStatus)}>
-                        {company.accreditationStatus?.replace('_', ' ') || 'PENDING'}
+                        {company.accreditationStatus?.replace('_', ' ') || 'AWAITING INVITATION'}
                       </Badge>
                     </TableCell>
                   </TableRow>
