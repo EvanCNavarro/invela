@@ -4,14 +4,10 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import {
-  LayoutGrid,
   Settings,
   BarChart3,
   Globe,
   Zap,
-  Users,
-  Activity,
-  LineChart,
   Bell,
   Check
 } from "lucide-react";
@@ -27,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
+import type { Company } from "@/types/company";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -39,6 +36,12 @@ const DEFAULT_WIDGETS = {
 export default function DashboardPage() {
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const [isCustomizing, setIsCustomizing] = useState(false);
+  const { user } = useAuth();
+
+  const { data: companyData, isLoading } = useQuery<Company>({
+    queryKey: ["/api/companies/current"],
+    enabled: !!user
+  });
 
   const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
     setVisibleWidgets(prev => ({
@@ -48,13 +51,6 @@ export default function DashboardPage() {
   };
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
-
-  const { user } = useAuth();
-
-  const { data: companyData } = useQuery({
-    queryKey: ["/api/companies/current"],
-    enabled: !!user,
-  });
 
   return (
     <DashboardLayout>
@@ -191,19 +187,23 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('companyScore')}
                 isVisible={visibleWidgets.companyScore}
               >
-                {companyData ? (
+                {isLoading ? (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">Loading company data...</p>
+                  </div>
+                ) : companyData ? (
                   <div className="space-y-6">
                     <RiskMeter score={companyData.riskScore || 0} />
                     <div className="space-y-2 text-center">
                       <h4 className="font-medium">{companyData.name}</h4>
                       <p className="text-sm text-muted-foreground">
-                        {companyData.riskDescription || "Risk assessment based on current market conditions and company performance metrics."}
+                        Risk assessment based on current market conditions and company performance metrics.
                       </p>
                     </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">Loading company data...</p>
+                    <p className="text-sm text-muted-foreground">No company data available</p>
                   </div>
                 )}
               </Widget>

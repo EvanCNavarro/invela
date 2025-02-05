@@ -17,6 +17,8 @@ export const companySchema = z.object({
   id: z.number(),
   name: z.string(),
   type: z.string(),
+  description: z.string().nullable(),
+  riskScore: z.number().optional(),
   accreditationStatus: z.enum([
     'AWAITING_INVITATION',
     'PENDING',
@@ -27,7 +29,6 @@ export const companySchema = z.object({
     'REVOKED',
     'EXPIRED'
   ]).default('AWAITING_INVITATION'),
-  // ... other fields
 });
 
 export type Company = z.infer<typeof companySchema>;
