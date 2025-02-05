@@ -138,9 +138,12 @@ export default function RegistryPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
-              <SelectTrigger className="w-[200px]">
-                <FilterIcon className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className="w-[200px] justify-between bg-white">
+                <div className="flex items-center">
+                  <FilterIcon className="w-4 h-4 mr-2" />
+                  <SelectValue className="text-left" placeholder="Filter by status" />
+                </div>
+                
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
@@ -157,8 +160,8 @@ export default function RegistryPage() {
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search companies..."
-                className="pl-9"
+                placeholder="Search the Registry"
+                className="pl-9 bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -173,34 +176,34 @@ export default function RegistryPage() {
                 <TableHead className="w-[300px]">
                   <Button
                     variant="ghost"
-                    className="p-0 hover:bg-transparent"
+                    className="p-0 hover:bg-transparent text-left w-full justify-start"
                     onClick={() => handleSort("name")}
                   >
                     <span>Company</span>
                     {getSortIcon("name")}
                   </Button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="text-right">
                   <Button
                     variant="ghost"
-                    className="p-0 hover:bg-transparent"
+                    className="p-0 hover:bg-transparent text-right w-full justify-end"
                     onClick={() => handleSort("riskScore")}
                   >
                     <span>Risk Score</span>
                     {getSortIcon("riskScore")}
                   </Button>
                 </TableHead>
-                <TableHead>
+                <TableHead className="text-center">
                   <Button
                     variant="ghost"
-                    className="p-0 hover:bg-transparent"
+                    className="p-0 hover:bg-transparent text-center w-full justify-center"
                     onClick={() => handleSort("accreditationStatus")}
                   >
                     <span>Accreditation</span>
                     {getSortIcon("accreditationStatus")}
                   </Button>
                 </TableHead>
-                <TableHead className="w-[100px]"></TableHead>
+                <TableHead className="w-[100px] text-center"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -225,14 +228,14 @@ export default function RegistryPage() {
                     onMouseEnter={() => setHoveredRow(company.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
-                    <TableCell>
+                    <TableCell className="text-left">
                       <CompanyCell
                         company={company}
                         isHovered={hoveredRow === company.id}
                       />
                     </TableCell>
-                    <TableCell>{company.riskScore || "N/A"}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+                    <TableCell className="text-center">
                       <Badge
                         variant={getAccreditationBadgeVariant(company.accreditationStatus)}
                         className={cn(
@@ -250,7 +253,7 @@ export default function RegistryPage() {
                         {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'Awaiting Invitation'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">
                       <div className="invisible group-hover:visible flex items-center justify-center text-primary">
                         <span className="font-medium mr-2">View</span>
                         <ArrowRight className="h-4 w-4" />
