@@ -185,10 +185,10 @@ export default function TaskCenterPage() {
                   <TableHead className="w-8 max-w-[40px] text-center p-0">
                     <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
                   </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Last Change</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[30%]">Name</TableHead>
+                  <TableHead className="w-[15%]">Status</TableHead>
+                  <TableHead className="hidden md:table-cell w-[25%]">Last Change</TableHead>
+                  <TableHead className="text-right w-[20%]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -214,19 +214,19 @@ export default function TaskCenterPage() {
                   </TableRow>
                 ) : (
                   filteredTasks.map((task) => (
-                    <TableRow key={task.id}>
+                    <TableRow key={task.id} className="h-12">
                       <TableCell className="w-8 max-w-[40px] text-center p-0">
                         <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{task.title}</div>
-                          <div className="text-xs text-muted-foreground">To: {task.assignedTo}</div>
+                      <TableCell className="py-2">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="font-medium leading-none">{task.title}</div>
+                          <div className="text-xs text-muted-foreground leading-none">To: {task.assignedTo}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="py-2">
                         <span className={cn(
-                          "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
+                          "inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium leading-none",
                           task.status === 'completed'
                             ? 'bg-green-100 text-green-800'
                             : 'bg-yellow-100 text-yellow-800'
@@ -234,11 +234,11 @@ export default function TaskCenterPage() {
                           {task.status === 'completed' ? 'Completed' : 'Pending'}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
+                      <TableCell className="hidden md:table-cell py-2 text-sm">
                         {new Date(task.updatedAt || task.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
+                      <TableCell className="text-right py-2">
+                        <Button variant="ghost" size="sm" className="h-8">
                           <Download className="h-4 w-4 mr-2" />
                           <span className="hidden sm:inline">Download</span>
                         </Button>
