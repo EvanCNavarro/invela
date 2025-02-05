@@ -63,42 +63,42 @@ export default function DashboardPage() {
             description="Get an overview of your company's performance and recent activities."
           />
           <DropdownMenu open={isCustomizing} onOpenChange={setIsCustomizing}>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-56 justify-start">
-                  <Settings className="h-4 w-4 mr-2" />
-                  <span>Customize Dashboard</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
-                <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                  <DropdownMenuItem
-                    key={key}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
-                    }}
-                    onSelect={(e) => e.preventDefault()}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="w-4">
-                      {isVisible ? (
-                        <Check className="h-4 w-4 text-primary" />
-                      ) : (
-                        <div className="h-4 w-4" />
-                      )}
-                    </div>
-                    <span className={cn(
-                      "flex-1",
-                      isVisible ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-56 justify-start">
+                <Settings className="h-4 w-4 mr-2" />
+                <span>Customize Dashboard</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                <DropdownMenuItem
+                  key={key}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                  }}
+                  onSelect={(e) => e.preventDefault()}
+                  className="flex items-center gap-2"
+                >
+                  <div className="w-4">
+                    {isVisible ? (
+                      <Check className="h-4 w-4 text-primary" />
+                    ) : (
+                      <div className="h-4 w-4" />
+                    )}
+                  </div>
+                  <span className={cn(
+                    "flex-1",
+                    isVisible ? "text-foreground" : "text-muted-foreground"
+                  )}>
+                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         {allWidgetsHidden ? (
@@ -118,7 +118,7 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {visibleWidgets.updates && (
               <Widget
                 title="Recent Updates"
@@ -150,62 +150,64 @@ export default function DashboardPage() {
               </Widget>
             )}
 
-            {visibleWidgets.quickActions && (
-              <Widget
-                title="Quick Actions"
-                icon={<Zap className="h-5 w-5" />}
-                size="oneAndHalf"
-                onVisibilityToggle={() => toggleWidget('quickActions')}
-                isVisible={visibleWidgets.quickActions}
-                actions={[
-                  {
-                    label: "Customize Actions",
-                    onClick: () => console.log("Customize actions"),
-                    icon: <Settings className="h-4 w-4" />
-                  }
-                ]}
-              >
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="w-full">
-                    Add FinTech
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    Add User
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    Set Risk Tracker
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    View Reports
-                  </Button>
-                </div>
-              </Widget>
-            )}
+            <div className="col-span-3 md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+              {visibleWidgets.quickActions && (
+                <Widget
+                  title="Quick Actions"
+                  icon={<Zap className="h-5 w-5" />}
+                  size="oneAndHalf"
+                  onVisibilityToggle={() => toggleWidget('quickActions')}
+                  isVisible={visibleWidgets.quickActions}
+                  actions={[
+                    {
+                      label: "Customize Actions",
+                      onClick: () => console.log("Customize actions"),
+                      icon: <Settings className="h-4 w-4" />
+                    }
+                  ]}
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="w-full">
+                      Add FinTech
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Add User
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      Set Risk Tracker
+                    </Button>
+                    <Button variant="outline" className="w-full">
+                      View Reports
+                    </Button>
+                  </div>
+                </Widget>
+              )}
 
-            {visibleWidgets.companyScore && (
-              <Widget
-                title="Company Score"
-                icon={<BarChart3 className="h-5 w-5" />}
-                size="oneAndHalf"
-                onVisibilityToggle={() => toggleWidget('companyScore')}
-                isVisible={visibleWidgets.companyScore}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">Loading company data...</p>
-                  </div>
-                ) : companyData ? (
-                  <RiskMeter 
-                    score={companyData.riskScore || 0} 
-                    companyName={companyData.name}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">No company data available</p>
-                  </div>
-                )}
-              </Widget>
-            )}
+              {visibleWidgets.companyScore && (
+                <Widget
+                  title="Company Score"
+                  icon={<BarChart3 className="h-5 w-5" />}
+                  size="oneAndHalf"
+                  onVisibilityToggle={() => toggleWidget('companyScore')}
+                  isVisible={visibleWidgets.companyScore}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <p className="text-sm text-muted-foreground">Loading company data...</p>
+                    </div>
+                  ) : companyData ? (
+                    <RiskMeter 
+                      score={companyData.riskScore || 0} 
+                      companyName={companyData.name}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <p className="text-sm text-muted-foreground">No company data available</p>
+                    </div>
+                  )}
+                </Widget>
+              )}
+            </div>
 
             {visibleWidgets.networkVisualization && (
               <Widget
