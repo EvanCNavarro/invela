@@ -934,7 +934,7 @@ export default function FileVault() {
               className="gap-2"
               aria-label="Upload new files"
             >
-              <UploadIcon className="w-4 h-4" aria-hidden="true" />
+              <UploadIcon className="w-4 h-4" aria-hidden={true} />
               Upload
               <input
                 type="file"
