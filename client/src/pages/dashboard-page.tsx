@@ -9,7 +9,9 @@ import {
   Globe,
   Zap,
   Bell,
-  Check
+  Check,
+  Activity,
+  LayoutGrid
 } from "lucide-react";
 import {
   DropdownMenu,
