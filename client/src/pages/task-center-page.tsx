@@ -182,10 +182,8 @@ export default function TaskCenterPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12">
-                    <div className="flex items-center justify-center">
-                      <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
-                    </div>
+                  <TableHead className="w-12 max-w-[3rem] text-center p-0">
+                    <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
                   </TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Status</TableHead>
@@ -217,10 +215,8 @@ export default function TaskCenterPage() {
                 ) : (
                   filteredTasks.map((task) => (
                     <TableRow key={task.id}>
-                      <TableCell className="w-12">
-                        <div className="flex items-center justify-center">
-                          <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
-                        </div>
+                      <TableCell className="w-12 max-w-[3rem] text-center p-0">
+                        <input type="checkbox" className="h-4 w-4 rounded-sm border-border" />
                       </TableCell>
                       <TableCell>
                         <div>
