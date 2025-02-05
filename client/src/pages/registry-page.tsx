@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
   switch (status) {
@@ -41,19 +42,24 @@ function getAccreditationBadgeVariant(status: AccreditationStatus) {
 function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      {company.logoId ? (
-        <div className="w-6 h-6 rounded flex items-center justify-center overflow-hidden">
+      <div className="w-6 h-6 rounded flex items-center justify-center overflow-hidden bg-muted">
+        {company.logoId ? (
           <img 
             src={`/api/companies/${company.id}/logo`} 
             alt={`${company.name} logo`}
             className="w-full h-full object-contain"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = defaultCompanyLogo;
+            }}
           />
-        </div>
-      ) : (
-        <div className="w-6 h-6 rounded flex items-center justify-center bg-muted">
-          {company.name.charAt(0).toUpperCase()}
-        </div>
-      )}
+        ) : (
+          <img 
+            src={defaultCompanyLogo} 
+            alt="Default company logo"
+            className="w-full h-full object-contain"
+          />
+        )}
+      </div>
       <span className={cn(
         "text-foreground",
         isHovered && "underline"
