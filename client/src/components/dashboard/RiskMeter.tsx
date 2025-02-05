@@ -8,7 +8,7 @@ interface RiskMeterProps {
   animate?: boolean;
 }
 
-export function RiskMeter({ score, maxScore = 1500, animate = true }: RiskMeterProps) {
+export function RiskMeter({ score = 0, maxScore = 1500, animate = true }: RiskMeterProps) {
   const [isAnimating, setIsAnimating] = useState(animate);
   const normalizedScore = Math.min(Math.max(0, score), maxScore);
   const angle = (normalizedScore / maxScore) * 180 - 90; // -90 to 90 degrees
@@ -42,29 +42,32 @@ export function RiskMeter({ score, maxScore = 1500, animate = true }: RiskMeterP
           strokeWidth="8"
           strokeLinecap="round"
         />
-        
-        {/* Colored segments */}
+
+        {/* No Risk (Gray) */}
         <path
           d="M20 100 A80 80 0 0 1 60 40"
+          fill="none"
+          className="stroke-gray-100"
+          strokeWidth="8"
+          strokeLinecap="round"
+        />
+        {/* Low Risk (Blue) */}
+        <path
+          d="M60 40 A80 80 0 0 1 100 28"
           fill="none"
           className="stroke-blue-100"
           strokeWidth="8"
           strokeLinecap="round"
         />
+        {/* Medium Risk (Yellow) */}
         <path
-          d="M60 40 A80 80 0 0 1 100 28"
+          d="M100 28 A80 80 0 0 1 140 40"
           fill="none"
           className="stroke-yellow-100"
           strokeWidth="8"
           strokeLinecap="round"
         />
-        <path
-          d="M100 28 A80 80 0 0 1 140 40"
-          fill="none"
-          className="stroke-red-100"
-          strokeWidth="8"
-          strokeLinecap="round"
-        />
+        {/* High/Critical Risk (Red) */}
         <path
           d="M140 40 A80 80 0 0 1 180 100"
           fill="none"
@@ -84,9 +87,9 @@ export function RiskMeter({ score, maxScore = 1500, animate = true }: RiskMeterP
           initial={{ rotate: -90 }}
           animate={{ rotate: isAnimating ? -90 : angle }}
           transition={{ duration: 1, ease: "easeOut" }}
-          style={{ originX: "100px", originY: "100px" }}
+          style={{ transformOrigin: "100px 100px" }}
         />
-        
+
         {/* Center point */}
         <circle
           cx="100"
