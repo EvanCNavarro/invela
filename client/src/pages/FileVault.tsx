@@ -246,28 +246,28 @@ const TableSkeleton = () => (
   <>
     {Array.from({ length: 5 }).map((_, index) => (
       <TableRow key={index} className="animate-pulse">
-        <TableCell className="w-[40px]">
+        <TableCell className="w-[48px]">
           <div className="h-4 w-4 bg-muted rounded" />
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 bg-muted rounded" />
             <div className="h-4 w-32 bg-muted rounded" />
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="h-4 w-16 bg-muted rounded ml-auto" />
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="h-4 w-24 bg-muted rounded ml-auto" />
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="h-4 w-20 bg-muted rounded ml-auto" />
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="h-6 w-20 bg-muted rounded mx-auto" />
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[48px]">
           <div className="h-8 w-8 bg-muted rounded mx-auto" />
         </TableCell>
       </TableRow>
@@ -929,60 +929,57 @@ export default function FileVault() {
   };
 
   const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })=> {  // Fetch fresh file data
-  const { data: freshFileData } = useQuery({
-    queryKey: ['/api/files', file.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/files/${file.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch file details');
-      }
-      return response.json();
-    },
-  });
+    const { data: freshFileData } = useQuery({
+      queryKey: ['/api/files', file.id],
+      queryFn: async () => {
+        const response = await fetch(`/api/files/${file.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch file details');
+        }
+        return response.json();
+      },
+    });
 
-  const currentFile = freshFileData || file;
+    const currentFile = freshFileData || file;
 
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>File Details</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Name</p>
-              <p className="text-sm">{currentFile.name}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Size</p>
-              <p className="text-sm">{formatFileSize(currentFile.size)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Version</p>
-              <p className="text-sm">v{currentFile.version?.toFixed(1)}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-              <p className="text-sm">{currentFile.downloadCount || 0}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
-              <p className="text-sm">{currentFile.status}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
-              <p className="text-sm">{new Date(currentFile.createdAt).toLocaleDateString()}</p>
+    return (
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>File Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Name</p>
+                <p className="text-sm">{currentFile.name}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Size</p>
+                <p className="text-sm">{formatFileSize(currentFile.size)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Version</p>
+                <p className="text-sm">v{currentFile.version?.toFixed(1)}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+                <p className="text-sm">{currentFile.downloadCount || 0}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Status</p>
+                <p className="text-sm">{currentFile.status}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+                <p className="text-sm">{new Date(currentFile.createdAt).toLocaleDateString()}</p>
+              </div>
             </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-// Update version display in table
-// Removed lines 985-991 as per the edited snippet
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
 
 return (
@@ -1093,12 +1090,14 @@ return (
                 <Table className="w-full table-fixed">
                   <TableHeader className="sticky top-0 z-30 bg-muted">
                     <TableRow className="hover:bg-transparent">
-                      <TableHead className="w-[40px] sticky left-0 z-40 bg-muted">
-                        <Checkbox
-                          checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
-                          onCheckedChange={() => toggleAllFiles(paginatedFiles)}
-                          aria-label="Select all files"
-                        />
+                      <TableHead className="w-12 p-0 sticky left-0 z-40 bg-muted">
+                        <div className="flex items-center justify-center h-full">
+                          <Checkbox
+                            checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
+                            onCheckedChange={() => toggleAllFiles(paginatedFiles)}
+                            aria-label="Select all files"
+                          />
+                        </div>
                       </TableHead>
                       <TableHead className="w-[30%] sticky left-[5%] z-20 bg-muted">
                         <Button
