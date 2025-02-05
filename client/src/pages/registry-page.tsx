@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AccreditationStatus } from "@/types/company";
+import { AccreditationStatus, Company } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
@@ -64,21 +64,30 @@ function TableSkeleton() {
   return (
     <>
       {Array.from({ length: 5 }).map((_, index) => (
-        <TableRow key={index}>
+        <TableRow key={index} className="animate-pulse">
+          <TableCell className="w-[40px]">
+            <div className="h-4 w-4 bg-muted rounded" />
+          </TableCell>
           <TableCell>
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-muted animate-pulse rounded" />
-              <div className="h-4 w-40 bg-muted animate-pulse rounded" />
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 bg-muted rounded" />
+              <div className="h-4 w-32 bg-muted rounded" />
             </div>
           </TableCell>
           <TableCell>
-            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-16 bg-muted rounded ml-auto" />
           </TableCell>
           <TableCell>
-            <div className="h-6 w-32 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-24 bg-muted rounded ml-auto" />
           </TableCell>
           <TableCell>
-            <div className="h-4 w-16 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-20 bg-muted rounded ml-auto" />
+          </TableCell>
+          <TableCell>
+            <div className="h-6 w-20 bg-muted rounded mx-auto" />
+          </TableCell>
+          <TableCell>
+            <div className="h-8 w-8 bg-muted rounded mx-auto" />
           </TableCell>
         </TableRow>
       ))}
@@ -97,21 +106,28 @@ export default function RegistryPage() {
   const [loadedLogos, setLoadedLogos] = useState<Set<number>>(new Set());
   const itemsPerPage = 10;
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading, error } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
+    staleTime: 30000, // Cache data for 30 seconds
+    cacheTime: 5 * 60 * 1000, // Keep cache for 5 minutes
   });
 
   const handleLogoLoad = (companyId: number) => {
-    setLoadedLogos(prev => new Set([...prev, companyId]));
+    setLoadedLogos(prev => {
+      const newSet = new Set(prev);
+      newSet.add(companyId);
+      return newSet;
+    });
   };
 
-  const areAllLogosLoaded = companies.every(company => 
-    !company.logoId || loadedLogos.has(company.id)
-  );
+  const areAllLogosLoaded = useMemo(() => {
+    if (!companies.length) return false;
+    return companies.every(company => !company.logoId || loadedLogos.has(company.id));
+  }, [companies, loadedLogos]);
 
   const isFullyLoaded = !isLoading && areAllLogosLoaded;
 
-  const sortCompanies = (a: any, b: any) => {
+  const sortCompanies = (a: Company, b: Company) => {
     if (sortField === "name") {
       return sortDirection === "asc"
         ? a.name.localeCompare(b.name)
@@ -131,13 +147,15 @@ export default function RegistryPage() {
     return 0;
   };
 
-  const filteredCompanies = companies
-    .filter((company: any) => {
-      const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort(sortCompanies);
+  const filteredCompanies = useMemo(() => {
+    return companies
+      .filter((company) => {
+        const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .sort(sortCompanies);
+  }, [companies, searchQuery, statusFilter, sortField, sortDirection]);
 
   // Convert company name to URL-friendly format
   const getCompanySlug = (name: string) => {
@@ -163,7 +181,25 @@ export default function RegistryPage() {
   // Pagination
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedCompanies = useMemo(() => {
+    return filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCompanies, startIndex]);
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex-1 space-y-6">
+          <PageHeader
+            title="Invela Registry"
+            description="View and manage companies in your network."
+          />
+          <div className="p-4 text-center text-red-500">
+            Error loading companies. Please try again later.
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -251,7 +287,7 @@ export default function RegistryPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedCompanies.map((company: any) => (
+                paginatedCompanies.map((company) => (
                   <TableRow
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50 bg-white"
@@ -346,7 +382,7 @@ export default function RegistryPage() {
   );
 }
 
-function CompanyCell({ company, isHovered, onLogoLoad }: { company: any; isHovered: boolean; onLogoLoad: () => void }) {
+function CompanyCell({ company, isHovered, onLogoLoad }: { company: Company; isHovered: boolean; onLogoLoad: () => void }) {
   return (
     <div className="flex items-center gap-3">
       <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
@@ -355,6 +391,7 @@ function CompanyCell({ company, isHovered, onLogoLoad }: { company: any; isHover
             src={`/api/companies/${company.id}/logo`}
             alt={`${company.name} logo`}
             className="w-full h-full object-contain"
+            loading="lazy"
             onLoad={onLogoLoad}
             onError={(e) => {
               (e.target as HTMLImageElement).src = defaultCompanyLogo;
