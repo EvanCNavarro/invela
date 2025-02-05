@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 export default function DashboardPage() {
   return (
     <DashboardLayout>
-      <div className="space-y-3">
+      <div className="space-y-6">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
+          <h1 className="text-2xl font-semibold mb-1">Dashboard</h1>
           <p className="text-sm text-muted-foreground">
             Get an overview of your company's performance and recent activities.
           </p>

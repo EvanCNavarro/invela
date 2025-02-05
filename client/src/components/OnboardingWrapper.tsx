@@ -20,7 +20,7 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
           </AlertDescription>
         </Alert>
       )}
-      <div className="flex-1 p-4 md:p-6">
+      <div className="flex-1">
         {children}
       </div>
     </div>
