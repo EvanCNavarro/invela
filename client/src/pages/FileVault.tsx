@@ -930,7 +930,7 @@ export default function FileVault() {
   };
 
   return (
-    <DashboardLayout>
+<DashboardLayout>
       <TooltipProvider>
         <div className="space-y-4">
           <div className="flex justify-between items-start">
@@ -1110,7 +1110,9 @@ export default function FileVault() {
                             colSpan={Object.keys(visibleColumns).length + 2}
                             className="h-32 text-center"
                           >
-                            No files found
+                            <span className="text-gray-600">
+                              No files found
+                            </span>
                           </TableCell>
                         </TableRow>
                       ) : (
