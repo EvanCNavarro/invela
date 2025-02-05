@@ -44,7 +44,6 @@ import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 
-
 const DEFAULT_WIDGETS = {
   updates: true,
   announcements: true,
@@ -64,6 +63,8 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const [serverError, setServerError] = useState<string | null>(null);
+
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
@@ -135,25 +136,24 @@ export default function DashboardPage() {
       });
 
       form.reset();
+      setServerError(null);
       setIsModalOpen(false);
     },
     onError: (error: Error) => {
-      toast({
-        title: (
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-            <span>Failed to Send Invitation</span>
-          </div>
-        ),
-        description: error.message,
-        duration: 4000,
-        variant: "destructive",
-      });
+      setServerError(error.message);
     },
   });
 
   const handleSendInvite = (data: InviteFormData) => {
+    setServerError(null);
     sendInvite(data);
+  };
+
+  // Clear server error when user starts typing
+  const handleInputChange = () => {
+    if (serverError) {
+      setServerError(null);
+    }
   };
 
   return (
@@ -314,12 +314,26 @@ export default function DashboardPage() {
                                   {...field}
                                   type="email"
                                   placeholder="Enter email address"
-                                  className="w-full"
+                                  className={cn(
+                                    "w-full",
+                                    serverError && "border-destructive"
+                                  )}
                                   disabled={isPending}
                                   aria-label="FinTech representative email"
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    handleInputChange();
+                                  }}
                                 />
                               </FormControl>
                               <FormMessage />
+                              {serverError && (
+                                <p className="text-sm font-medium text-destructive mt-2">
+                                  {serverError.includes("mailbox") 
+                                    ? "This email address appears to be invalid or doesn't exist. Please verify and try again." 
+                                    : serverError}
+                                </p>
+                              )}
                             </FormItem>
                           )}
                         />
