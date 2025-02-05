@@ -42,7 +42,7 @@ function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean 
   return (
     <div className="flex items-center gap-3">
       {company.logoId ? (
-        <div className="w-6 h-6 border-2 rounded flex items-center justify-center overflow-hidden">
+        <div className="w-6 h-6 rounded flex items-center justify-center overflow-hidden">
           <img 
             src={`/api/companies/${company.id}/logo`} 
             alt={`${company.name} logo`}
@@ -50,7 +50,7 @@ function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean 
           />
         </div>
       ) : (
-        <div className="w-6 h-6 border-2 rounded flex items-center justify-center bg-muted">
+        <div className="w-6 h-6 rounded flex items-center justify-center bg-muted">
           {company.name.charAt(0).toUpperCase()}
         </div>
       )}
@@ -68,14 +68,27 @@ export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [, setLocation] = useLocation();
+  const [sortField, setSortField] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
   });
 
-  const filteredCompanies = companies.filter((company: any) =>
-    company.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const sortCompanies = (a: any, b: any) => {
+    if (sortField === "name") {
+      return sortDirection === "asc" 
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
+    }
+    return 0;
+  };
+
+  const filteredCompanies = companies
+    .filter((company: any) =>
+      company.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort(sortCompanies);
 
   // Convert company name to URL-friendly format
   const getCompanySlug = (name: string) => {
@@ -85,7 +98,16 @@ export default function RegistryPage() {
   // Function to simplify market position text
   const simplifyDescription = (text: string) => {
     if (!text) return "N/A";
-    return text.length > 60 ? text.substring(0, 57) + "..." : text;
+    return text;
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   return (
@@ -113,7 +135,11 @@ export default function RegistryPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[300px]">
-                  <Button variant="ghost" className="p-0 hover:bg-transparent">
+                  <Button 
+                    variant="ghost" 
+                    className="p-0 hover:bg-transparent"
+                    onClick={() => handleSort("name")}
+                  >
                     <span>Company</span>
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -168,7 +194,9 @@ export default function RegistryPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      {simplifyDescription(company.marketPosition)}
+                      <div className="line-clamp-2">
+                        {simplifyDescription(company.marketPosition)}
+                      </div>
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
