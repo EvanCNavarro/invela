@@ -10,7 +10,7 @@ import {
   insertCompanySchema,
   insertTaskSchema,
   insertFileSchema,
-  companyLogos // Assuming this is defined in your schema
+  companyLogos
 } from "@db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import multer from "multer";
@@ -520,6 +520,41 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+
+  // Update company logo endpoint to properly serve SVG files
+  app.get("/api/companies/:id/logo", requireAuth, async (req, res) => {
+    try {
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, parseInt(req.params.id)));
+
+      if (!company || !company.logoId) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      const [logo] = await db.select()
+        .from(companyLogos)
+        .where(eq(companyLogos.id, company.logoId));
+
+      if (!logo) {
+        return res.status(404).json({ message: "Logo not found" });
+      }
+
+      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
+
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: "Logo file not found" });
+      }
+
+      res.setHeader('Content-Type', 'image/svg+xml');
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+
+    } catch (error) {
+      console.error("Error serving company logo:", error);
+      res.status(500).json({ message: "Error serving company logo" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
