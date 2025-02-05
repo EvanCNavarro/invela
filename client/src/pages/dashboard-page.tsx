@@ -3,8 +3,8 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { 
-  LayoutGrid, 
+import {
+  LayoutGrid,
   Settings,
   BarChart3,
   Globe,
@@ -65,7 +65,7 @@ export default function DashboardPage() {
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   key={key}
                   onClick={(e) => {
                     e.preventDefault();
@@ -89,16 +89,6 @@ export default function DashboardPage() {
                   </span>
                 </DropdownMenuItem>
               ))}
-              <DropdownMenuSeparator />
-              <div className="p-2">
-                <Button 
-                  className="w-full"
-                  size="sm"
-                  onClick={() => setIsCustomizing(false)}
-                >
-                  Done
-                </Button>
-              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -106,7 +96,7 @@ export default function DashboardPage() {
         {allWidgetsHidden ? (
           <div className="grid grid-cols-3 gap-4 min-h-[400px]">
             {[...Array(6)].map((_, i) => (
-              <div 
+              <div
                 key={i}
                 className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
               >
@@ -160,7 +150,7 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('quickActions')}
                 isVisible={visibleWidgets.quickActions}
                 actions={[
-                  { 
+                  {
                     label: "Customize Actions",
                     onClick: () => console.log("Customize actions"),
                     icon: <Settings className="h-4 w-4" />
