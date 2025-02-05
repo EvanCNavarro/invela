@@ -1164,56 +1164,56 @@ export default function FileVault() {
                       ) : paginatedFiles.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={Object.keys(visibleColumns).length + 2}
-                            className="h-32 text-center"
+                            colSpan={7}
+                            className="h-24 text-center"
                           >
-                            No files found
+                            No files found.
                           </TableCell>
                         </TableRow>
                       ) : (
-                        paginatedFiles.map((file) => (
-                          <TableRow key={file.id}>
+                        paginatedFiles.map((currentFile) => (
+                          <TableRow key={currentFile.id}>
                             <TableCell className="w-[40px]">
                               <Checkbox
-                                checked={selectedFiles.has(file.id)}
-                                onCheckedChange={() => toggleFileSelection(file.id)}
-                                aria-label={`Select ${file.name}`}
+                                checked={selectedFiles.has(currentFile.id)}
+                                onCheckedChange={() => toggleFileSelection(currentFile.id)}
+                                aria-label={`Select ${currentFile.name}`}
                               />
                             </TableCell>
                             <TableCell>
-                              <FileNameCell file={file} />
+                              <FileNameCell file={currentFile} />
                             </TableCell>
                             {visibleColumns.has('size') && (
                               <TableCell className="text-right">
-                                {formatFileSize(file.size)}
+                                {formatFileSize(currentFile.size)}
                               </TableCell>
                             )}
                             {visibleColumns.has('uploadDate') && (
                               <TableCell className="text-right">
-                                {new Date(file.createdAt).toLocaleDateString()}
+                                {new Date(currentFile.createdAt).toLocaleDateString()}
                               </TableCell>
                             )}
                             {visibleColumns.has('uploadTime') && (
                               <TableCell className="text-right">
-                                {formatTimeWithZone(new Date(file.uploadTime))}
+                                {formatTimeWithZone(new Date(currentFile.uploadTime))}
                               </TableCell>
                             )}
                             {visibleColumns.has('version') && (
                               <TableCell className="text-center">
-                                v{(file.version || 1.0).toFixed(1)}
+                                v{(currentFile.version || 1.0).toFixed(1)}
                               </TableCell>
                             )}
                             {visibleColumns.has('status') && (
                               <TableCell>
                                 <div className="flex justify-center">
-                                  <span className={getStatusStyles(file.status)}>
-                                    {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                  <span className={getStatusStyles(currentFile.status)}>
+                                    {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
                                   </span>
                                 </div>
                               </TableCell>
                             )}
                             <TableCell>
-                              <FileActions file={file} onDelete={handleDelete} />
+                              <FileActions file={currentFile} onDelete={handleDelete} />
                             </TableCell>
                           </TableRow>
                         ))
