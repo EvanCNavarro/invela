@@ -19,6 +19,7 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
 
   useEffect(() => {
     setMounted(true);
+    console.log("RiskMeter mounted with score:", normalizedScore); // Debug log
   }, []);
 
   const getRiskLevel = (score: number) => {
@@ -39,15 +40,17 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
     }
   ];
 
+  console.log("Rendering RiskMeter with data:", data); // Debug log
+
   return (
     <div className={cn("flex flex-col items-center justify-center", className)}>
       <div className="w-64 h-40">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={500}>
           <RadialBarChart
             cx="50%"
             cy="100%"
-            innerRadius="60%"
-            outerRadius="100%"
+            innerRadius={60}
+            outerRadius={100}
             barSize={10}
             data={data}
             startAngle={180}
