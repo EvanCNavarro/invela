@@ -156,7 +156,7 @@ const getStatusStyles = (status: FileStatus) => {
 };
 
 // File name cell with improved accessibility
-const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFile }) => {
+const FileNameCell = ({ file }: { file: FileApiResponse | UploadingFile }) => {
   const nameRef = useRef<HTMLSpanElement>(null);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
 
@@ -195,7 +195,7 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
       )}
     </div>
   );
-});
+};
 
 FileNameCell.displayName = 'FileNameCell';
 
