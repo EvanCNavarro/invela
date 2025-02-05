@@ -38,7 +38,6 @@ const DEFAULT_WIDGETS = {
 
 export default function DashboardPage() {
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
-  const [isCustomizing, setIsCustomizing] = useState(false);
   const { user } = useAuth();
 
   const { data: companyData, isLoading } = useQuery<Company>({
@@ -63,21 +62,31 @@ export default function DashboardPage() {
             title="Dashboard"
             description="Get an overview of your company's performance and recent activities."
           />
-          <DropdownMenu modal={true}>
+          <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-56 justify-start">
                 <Settings className="h-4 w-4 mr-2" />
                 <span>Customize Dashboard</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent 
+              align="end" 
+              className="w-56"
+              sideOffset={4}
+              onCloseAutoFocus={(event) => {
+                event.preventDefault();
+              }}
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+              }}
+            >
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {Object.entries(visibleWidgets).map(([key, isVisible]) => (
                 <DropdownMenuItem
                   key={key}
-                  onClick={(e) => {
-                    e.preventDefault();
+                  onSelect={(event) => {
+                    event.preventDefault();
                     toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
                   }}
                   className="flex items-center gap-2"
