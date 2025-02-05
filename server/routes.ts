@@ -103,6 +103,28 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Add the current company endpoint
+  app.get("/api/companies/current", requireAuth, async (req, res) => {
+    try {
+      if (!req.user?.companyId) {
+        return res.status(404).json({ message: "No company associated with user" });
+      }
+
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user.companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching current company:", error);
+      res.status(500).json({ message: "Error fetching company data" });
+    }
+  });
+
   // Single file download endpoint
   app.get("/api/files/:id/download", requireAuth, async (req, res) => {
     try {
