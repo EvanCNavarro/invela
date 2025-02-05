@@ -12,17 +12,26 @@ import {
   Check,
   Activity,
   LayoutGrid,
-  AlertTriangle
+  AlertTriangle,
+  Send
 } from "lucide-react";
 import {
-  DropdownMenu,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import confetti from 'canvas-confetti';
+import { cn } from "@/lib/utils";
+import { DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +46,9 @@ const DEFAULT_WIDGETS = {
 };
 
 export default function DashboardPage() {
+  const { toast } = useToast();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const { user } = useAuth();
 
@@ -53,6 +65,34 @@ export default function DashboardPage() {
   };
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
+
+  const handleSendInvite = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Trigger confetti
+    const quickActionsElement = document.querySelector('#quick-actions-widget');
+    if (quickActionsElement) {
+      const rect = quickActionsElement.getBoundingClientRect();
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: {
+          x: (rect.left + rect.width / 2) / window.innerWidth,
+          y: (rect.top + rect.height / 2) / window.innerHeight
+        }
+      });
+    }
+
+    // Show success toast
+    toast({
+      title: "Invitation Sent",
+      description: "The FinTech has been invited to join.",
+      duration: 3000,
+    });
+
+    // Close modal
+    setIsModalOpen(false);
+    setEmail("");
+  };
 
   return (
     <DashboardLayout>
@@ -161,6 +201,7 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
+                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
@@ -175,7 +216,11 @@ export default function DashboardPage() {
                 ]}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="w-full pulse-border font-medium">
+                  <Button 
+                    variant="outline" 
+                    className="w-full pulse-border font-medium"
+                    onClick={() => setIsModalOpen(true)}
+                  >
                     Add FinTech
                   </Button>
                   <Button variant="outline" className="w-full font-medium">
@@ -188,6 +233,33 @@ export default function DashboardPage() {
                     View Reports
                   </Button>
                 </div>
+
+                {/* Add FinTech Modal */}
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add FinTech</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSendInvite} className="space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button type="submit" className="gap-2">
+                          <Send className="h-4 w-4" />
+                          Send Invite
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </Widget>
             )}
 
