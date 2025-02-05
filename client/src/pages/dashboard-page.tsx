@@ -202,7 +202,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center min-h-[120px]">
+                  <div className="flex items-center justify-center min-h-[200px]">
                     <p className="text-sm text-muted-foreground">Loading company data...</p>
                   </div>
                 )}
