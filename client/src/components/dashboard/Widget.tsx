@@ -25,7 +25,7 @@ interface WidgetProps {
   isVisible?: boolean;
   onEdit?: () => void;
   className?: string;
-  size?: 'single' | 'double' | 'triple';
+  size?: 'single' | 'double' | 'triple' | 'oneAndHalf';
   actions?: Array<{
     label: string;
     onClick: () => void;
@@ -48,6 +48,7 @@ export function Widget({
     <Card className={cn(
       "transition-all duration-200 bg-background/40 backdrop-blur-sm hover:bg-background/60",
       size === 'single' ? 'col-span-1' : 
+      size === 'oneAndHalf' ? 'col-span-3 md:col-span-1.5' :
       size === 'double' ? 'col-span-2' : 
       'col-span-3',
       !isVisible && 'opacity-50',

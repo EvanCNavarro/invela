@@ -154,7 +154,7 @@ export default function DashboardPage() {
               <Widget
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
-                size="double"
+                size="oneAndHalf"
                 onVisibilityToggle={() => toggleWidget('quickActions')}
                 isVisible={visibleWidgets.quickActions}
                 actions={[
@@ -186,6 +186,7 @@ export default function DashboardPage() {
               <Widget
                 title="Company Score"
                 icon={<BarChart3 className="h-5 w-5" />}
+                size="oneAndHalf"
                 onVisibilityToggle={() => toggleWidget('companyScore')}
                 isVisible={visibleWidgets.companyScore}
               >
@@ -194,15 +195,10 @@ export default function DashboardPage() {
                     <p className="text-sm text-muted-foreground">Loading company data...</p>
                   </div>
                 ) : companyData ? (
-                  <div className="space-y-6">
-                    <RiskMeter score={companyData.riskScore || 0} />
-                    <div className="space-y-2 text-center">
-                      <h4 className="font-medium">{companyData.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Risk assessment based on current market conditions and company performance metrics.
-                      </p>
-                    </div>
-                  </div>
+                  <RiskMeter 
+                    score={companyData.riskScore || 0} 
+                    companyName={companyData.name}
+                  />
                 ) : (
                   <div className="flex items-center justify-center min-h-[200px]">
                     <p className="text-sm text-muted-foreground">No company data available</p>
