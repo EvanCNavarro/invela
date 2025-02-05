@@ -289,20 +289,20 @@ const formatTimestampForFilename = () => {
   return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
 };
 
-// Update the getVisibleColumns function to include version
+// Update the getVisibleColumns function to include version and handle sidebar states better
 const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
-  const sidebarWidth = isSidebarCollapsed ? 64 : 256;
-  const availableSpace = Math.max(0, breakpoint - sidebarWidth);
+  const sidebarWidth = isSidebarCollapsed ? 64 : 256; // Account for both states
+  const availableSpace = Math.max(0, breakpoint - sidebarWidth - 48); // 48px for padding
 
   // Always show priority 0 columns
   const visibleColumns = new Set(['fileName', 'actions']);
 
   // Add columns based on available space
-  if (availableSpace > 640) visibleColumns.add('size');
-  if (availableSpace > 768) visibleColumns.add('uploadDate');
-  if (availableSpace > 896) visibleColumns.add('status');
-  if (availableSpace > 1024) visibleColumns.add('version');
-  if (availableSpace > 1280) visibleColumns.add('uploadTime');
+  if (availableSpace > 500) visibleColumns.add('size');
+  if (availableSpace > 700) visibleColumns.add('status');
+  if (availableSpace > 900) visibleColumns.add('uploadDate');
+  if (availableSpace > 1100) visibleColumns.add('version');
+  if (availableSpace > 1300) visibleColumns.add('uploadTime');
 
   return visibleColumns;
 };
@@ -998,14 +998,14 @@ export default function FileVault() {
                   <Table className="w-full table-fixed">
                     <TableHeader className="sticky top-0 z-30 bg-muted">
                       <TableRow className="hover:bg-transparent">
-                        <TableCell className="w-[40px] px-4 sticky left-0 z-40 bg-muted">
+                        <TableCell className="w-[5%] px-4 sticky left-0 z-40 bg-muted">
                           <Checkbox
                             checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
                             onCheckedChange={() => toggleAllFiles(paginatedFiles)}
                             aria-label="Select all files"
                           />
                         </TableCell>
-                        <TableCell className="w-[300px] sticky left-[40px] z-20 bg-muted">
+                        <TableCell className="w-[30%] sticky left-[40px] z-20 bg-muted">
                           <button
                             className="flex items-center gap-2"
                             onClick={() => handleSort('name')}
@@ -1015,7 +1015,7 @@ export default function FileVault() {
                           </button>
                         </TableCell>
                         {visibleColumns.has('size') && (
-                          <TableCell className="w-[120px] text-right">
+                          <TableCell className="w-[10%] text-right">
                             <button
                               className="flex items-center gap-2 ml-auto"
                               onClick={() => handleSort('size')}
@@ -1026,7 +1026,7 @@ export default function FileVault() {
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadDate') && (
-                          <TableCell className="w-[180px] text-right">
+                          <TableCell className="w-[15%] text-right">
                             <button
                               className="flex items-center gap-2 ml-auto"
                               onClick={() => handleSort('createdAt')}
@@ -1037,17 +1037,17 @@ export default function FileVault() {
                           </TableCell>
                         )}
                         {visibleColumns.has('uploadTime') && (
-                          <TableCell className="w-[120px] text-right">
+                          <TableCell className="w-[10%] text-right">
                             Time
                           </TableCell>
                         )}
                         {visibleColumns.has('version') && (
-                          <TableCell className="w-[120px] text-right">
+                          <TableCell className="w-[10%] text-right">
                             Version
                           </TableCell>
                         )}
                         {visibleColumns.has('status') && (
-                          <TableCell className="w-[140px] text-center">
+                          <TableCell className="w-[12%] text-center">
                             <button
                               className="flex items-center gap-2 mx-auto"
                               onClick={() => handleSort('status')}
@@ -1057,7 +1057,7 @@ export default function FileVault() {
                             </button>
                           </TableCell>
                         )}
-                        <TableCell className="w-[100px] text-center sticky right-0 z-20 bg-muted">
+                        <TableCell className="w-[8%] text-center sticky right-0 z-20 bg-muted">
                           Actions
                         </TableCell>
                       </TableRow>
