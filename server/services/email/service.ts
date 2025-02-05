@@ -4,6 +4,7 @@ import dns from 'dns';
 import { promisify } from 'util';
 import type { EmailTemplate, TemplateNames } from './templates';
 import { getEmailTemplate } from './templates';
+import { abstractEmailValidator } from './abstract-api';
 
 const resolveMx = promisify(dns.resolveMx);
 
@@ -44,6 +45,10 @@ export type SendEmailParams = z.infer<typeof sendEmailSchema>;
 interface ValidationResult {
   isValid: boolean;
   reason?: string;
+  details?: {
+    autocorrect?: string;
+    deliverability?: 'DELIVERABLE' | 'UNDELIVERABLE' | 'UNKNOWN';
+  };
 }
 
 class EmailService {
@@ -74,52 +79,51 @@ class EmailService {
         return { isValid: false, reason: "Invalid email format" };
       }
 
-      // Step 2: Parse email parts
-      const [localPart, domain] = email.split('@');
-      if (!domain || !localPart) {
-        return { isValid: false, reason: "Invalid email format" };
+      // Step 2: AbstractAPI validation
+      const abstractValidation = await abstractEmailValidator.validateEmail(email);
+      if (!abstractValidation.isValid) {
+        return { 
+          isValid: false, 
+          reason: abstractValidation.reason
+        };
       }
 
-      // Step 3: Check for disposable email domains
-      if (disposableDomains.has(domain.toLowerCase())) {
-        return { isValid: false, reason: "Disposable email addresses are not allowed" };
+      // Step 3: If AbstractAPI succeeded but suggested corrections
+      if (abstractValidation.details?.autocorrect) {
+        return {
+          isValid: false,
+          reason: `Did you mean ${abstractValidation.details.autocorrect}?`
+        };
       }
 
-      // Step 4: Check for role-based emails
-      if (roleBasedPrefixes.has(localPart.toLowerCase())) {
-        return { isValid: false, reason: "Role-based email addresses are not allowed" };
-      }
-
-      // Step 5: Check MX records
-      try {
-        const mxRecords = await resolveMx(domain);
-        if (!mxRecords || mxRecords.length === 0) {
-          return { isValid: false, reason: "Domain does not have valid mail servers" };
+      // Only perform additional checks if AbstractAPI validation failed or returned uncertain results
+      if (!abstractValidation.details || abstractValidation.details.deliverability === 'UNKNOWN') {
+        // Step 4: Parse email parts
+        const [localPart, domain] = email.split('@');
+        if (!domain || !localPart) {
+          return { isValid: false, reason: "Invalid email format" };
         }
-      } catch (error) {
-        console.error('MX record check failed:', error);
-        return { isValid: false, reason: "Could not verify domain mail servers" };
-      }
 
-      // Step 6: SMTP Verification (basic)
-      try {
-        const verificationTransporter = nodemailer.createTransport({
-          host: process.env.GMAIL_SMTP_HOST || 'smtp.gmail.com',
-          port: 587,
-          secure: false,
-          auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD
+        // Step 5: Check for disposable email domains
+        if (disposableDomains.has(domain.toLowerCase())) {
+          return { isValid: false, reason: "Disposable email addresses are not allowed" };
+        }
+
+        // Step 6: Check for role-based emails
+        if (roleBasedPrefixes.has(localPart.toLowerCase())) {
+          return { isValid: false, reason: "Role-based email addresses are not allowed" };
+        }
+
+        // Step 7: Check MX records as fallback
+        try {
+          const mxRecords = await resolveMx(domain);
+          if (!mxRecords || mxRecords.length === 0) {
+            return { isValid: false, reason: "Domain does not have valid mail servers" };
           }
-        });
-
-        const verify = await verificationTransporter.verify();
-        if (!verify) {
-          return { isValid: false, reason: "Email verification failed" };
+        } catch (error) {
+          console.error('MX record check failed:', error);
+          return { isValid: false, reason: "Could not verify domain mail servers" };
         }
-      } catch (error) {
-        console.error('SMTP verification failed:', error);
-        return { isValid: false, reason: "Email verification failed" };
       }
 
       return { isValid: true };
