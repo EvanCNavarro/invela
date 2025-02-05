@@ -91,15 +91,10 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update download count
-      try {
-        await db
-          .update(files)
-          .set({ downloadCount: (file.downloadCount ?? 0) + 1 })
-          .where(eq(files.id, fileId))
-          .execute();
-      } catch (updateError) {
-        console.error(`Error updating download count for file ${fileId}:`, updateError);
-      }
+      await db
+        .update(files)
+        .set({ downloadCount: (file.downloadCount || 0) + 1 })
+        .where(eq(files.id, fileId));
 
       // Set headers for file download
       res.setHeader('Content-Type', file.type || 'application/octet-stream');
@@ -261,7 +256,7 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // Modified file upload endpoint to handle file overrides
+  // Modified file upload endpoint to handle file overrides and version increments correctly
   app.post("/api/files", requireAuth, upload.single('file'), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -285,6 +280,9 @@ export function registerRoutes(app: Express): Server {
             fs.unlinkSync(existingFile[0].path);
           }
 
+          // Calculate new version number - increment by 1.0
+          const newVersion = Math.floor(existingFile[0].version || 1.0) + 1.0;
+
           // Update the existing record with new file information
           const [updatedFile] = await db.update(files)
             .set({
@@ -293,7 +291,7 @@ export function registerRoutes(app: Express): Server {
               path: req.file.path,
               status: 'uploaded',
               updatedAt: new Date(),
-              version: Math.floor(existingFile[0].version || 1.0) + 1.0, // Increment by 1.0
+              version: newVersion,
             })
             .where(eq(files.id, existingFile[0].id))
             .returning();
@@ -323,10 +321,9 @@ export function registerRoutes(app: Express): Server {
         uniqueViewers: 0,
         accessLevel: 'private',
         classificationType: 'internal',
-        retentionPeriod: 365, // Default 1 year retention
+        retentionPeriod: 365,
         storageLocation: 'hot-storage',
         encryptionStatus: false,
-
       };
 
       const [file] = await db.insert(files)
@@ -345,31 +342,14 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update file list endpoint to include all necessary fields
   app.get("/api/files", requireAuth, async (req, res) => {
     try {
-      const userFiles = await db.select({
-        id: files.id,
-        name: files.name,
-        size: files.size,
-        type: files.type,
-        status: files.status,
-        path: files.path,
-        uploadTime: files.uploadTime,
-        createdAt: files.createdAt,
-        updatedAt: files.updatedAt,
-        userId: files.userId,
-        companyId: files.companyId
-      })
+      const userFiles = await db.select()
         .from(files)
         .where(eq(files.userId, req.user!.id));
 
-      // Add downloadCount as 0 for now until we add the column
-      const filesWithDownloadCount = userFiles.map(file => ({
-        ...file,
-        downloadCount: 0
-      }));
-
-      res.json(filesWithDownloadCount);
+      res.json(userFiles);
     } catch (error) {
       console.error("Error fetching files:", error);
       res.status(500).json({ message: "Error fetching files" });

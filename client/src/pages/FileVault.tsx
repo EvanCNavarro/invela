@@ -928,6 +928,68 @@ export default function FileVault() {
     deleteMutation.mutate(fileId);
   };
 
+  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })=> {
+  // Fetch fresh file data
+  const { data: freshFileData } = useQuery({
+    queryKey: ['/api/files', file.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/files/${file.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch file details');
+      }
+      return response.json();
+    },
+  });
+
+  const currentFile = freshFileData || file;
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>File Details</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Name</p>
+              <p className="text-sm">{currentFile.name}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Size</p>
+              <p className="text-sm">{formatFileSize(currentFile.size)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Version</p>
+              <p className="text-sm">v{currentFile.version?.toFixed(1)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Downloads</p>
+              <p className="text-sm">{currentFile.downloadCount || 0}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Status</p>
+              <p className="text-sm">{currentFile.status}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">Upload Date</p>
+              <p className="text-sm">{new Date(currentFile.createdAt).toLocaleDateString()}</p>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Update version display in table
+{visibleColumns.has('version') && (
+  <TableCell className="text-center">
+    v{(file.version || 1.0).toFixed(1)}
+  </TableCell>
+)}
+
+
   return (
     <DashboardLayout>
       <TooltipProvider>
@@ -1138,7 +1200,7 @@ export default function FileVault() {
                             )}
                             {visibleColumns.has('version') && (
                               <TableCell className="text-center">
-                                v{file.version?.toFixed(1)}
+                                v{(file.version || 1.0).toFixed(1)}
                               </TableCell>
                             )}
                             {visibleColumns.has('status') && (
@@ -1224,109 +1286,7 @@ export default function FileVault() {
                   <DialogTitle className="text-xl font-semibold">File Details</DialogTitle>
                 </DialogHeader>
                 {selectedFileDetails && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* File Overview */}
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center gap-2 mb-4">
-                        <FileIcon className="w-4 h-4 text-foreground" />
-                        <h3 className="text-sm font-medium">File Overview</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Name</p>
-                          <p className="mt-1 truncate">{selectedFileDetails.name}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Size</p>
-                          <p className="mt-1">{formatFileSize(selectedFileDetails.size)}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Type</p>
-                          <p className="mt-1">{selectedFileDetails.type}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Status</p>
-                          <p className="mt-1 capitalize">{selectedFileDetails.status}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Timeline */}
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center gap-2 mb-4">
-                        <ClockIcon className="w-4 h-4 text-green-600" />
-                        <h3 className="text-sm font-medium text-green-600">Timeline</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Created</p>
-                          <p className="mt-1">{new Date(selectedFileDetails.createdAt).toLocaleString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Upload Time</p>
-                          <p className="mt-1">{formatTimeWithZone(new Date(selectedFileDetails.uploadTime))}</p>
-                        </div>
-                        {selectedFileDetails.lastAccessed && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Last Accessed</p>
-                            <p className="mt-1">{new Date(selectedFileDetails.lastAccessed).toLocaleString()}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Security & Access */}
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center gap-2 mb-4">
-                        <ShieldIcon className="w-4 h-4 text-amber-600" />
-                        <h3 className="text-sm font-medium text-amber-600">Security & Access</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Access Level</p>
-                          <p className="mt-1 capitalize">{selectedFileDetails.accessLevel || 'private'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Classification</p>
-                          <p className="mt-1 capitalize">{selectedFileDetails.classificationType || 'internal'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Encryption</p>
-                          <p className="mt-1">{selectedFileDetails.encryptionStatus ? 'Encrypted' : 'Not Encrypted'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Storage</p>
-                          <p className="mt-1 capitalize">{selectedFileDetails.storageLocation?.replace('-', ' ') || 'hot storage'}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Activity & Usage */}
-                    <div className="p-4 rounded-lg bg-muted/30 border border-border">
-                      <div className="flex items-center gap-2 mb-4">
-                        <BarChart2Icon className="w-4 h-4 text-blue-600" />
-                        <h3 className="text-sm font-medium text-blue-600">Activity & Usage</h3>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Downloads</p>
-                          <p className="mt-1">{selectedFileDetails.downloadCount || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Unique Views</p>
-                          <p className="mt-1">{selectedFileDetails.uniqueViewers || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Version</p>
-                          <p className="mt-1">v{selectedFileDetails.version || '1.0'}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Retention</p>
-                          <p className="mt-1">{selectedFileDetails.retentionPeriod || 365} days</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <FileDetails file={selectedFileDetails} onClose={() => setSelectedFileDetails(null)} />
                 )}
               </DialogContent>
             </Dialog>
