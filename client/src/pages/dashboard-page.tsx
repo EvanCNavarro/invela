@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 ]}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button variant="outline" className="w-full font-medium">
+                  <Button variant="outline" className="w-full pulse-border font-medium">
                     Add FinTech
                   </Button>
                   <Button variant="outline" className="w-full font-medium">
