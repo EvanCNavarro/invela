@@ -90,7 +90,8 @@ export default function DashboardPage() {
     mutationFn: (data: InviteFormData) =>
       apiRequest("/api/fintech/invite", {
         method: "POST",
-        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
       }),
     onSuccess: () => {
       const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
