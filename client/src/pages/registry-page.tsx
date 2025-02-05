@@ -38,7 +38,7 @@ function getAccreditationBadgeVariant(status: AccreditationStatus) {
   }
 }
 
-function CompanyCell({ company }: { company: any }) {
+function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
   return (
     <div className="flex items-center gap-3">
       {company.logoId ? (
@@ -54,7 +54,10 @@ function CompanyCell({ company }: { company: any }) {
           {company.name.charAt(0).toUpperCase()}
         </div>
       )}
-      <span className="font-semibold text-foreground hover:underline">
+      <span className={cn(
+        "text-foreground",
+        isHovered && "underline"
+      )}>
         {company.name}
       </span>
     </div>
@@ -63,6 +66,7 @@ function CompanyCell({ company }: { company: any }) {
 
 export default function RegistryPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [, setLocation] = useLocation();
 
   const { data: companies = [], isLoading } = useQuery({
@@ -78,9 +82,15 @@ export default function RegistryPage() {
     return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   };
 
+  // Function to simplify market position text
+  const simplifyDescription = (text: string) => {
+    if (!text) return "N/A";
+    return text.length > 60 ? text.substring(0, 57) + "..." : text;
+  };
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="flex-1 space-y-6">
         <PageHeader
           title="Invela Registry"
           description="View and manage companies in your network."
@@ -148,19 +158,24 @@ export default function RegistryPage() {
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50"
                     onClick={() => setLocation(`/registry/company/${getCompanySlug(company.name)}`)}
+                    onMouseEnter={() => setHoveredRow(company.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
                   >
                     <TableCell>
-                      <CompanyCell company={company} />
+                      <CompanyCell 
+                        company={company} 
+                        isHovered={hoveredRow === company.id}
+                      />
                     </TableCell>
-                    <TableCell className="max-w-md truncate">
-                      {company.marketPosition || "N/A"}
+                    <TableCell>
+                      {simplifyDescription(company.marketPosition)}
                     </TableCell>
                     <TableCell>{company.riskScore || "N/A"}</TableCell>
                     <TableCell>
                       <Badge 
                         variant={getAccreditationBadgeVariant(company.accreditationStatus)}
                         className={cn(
-                          "capitalize",
+                          "capitalize border-0",
                           company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-yellow-100 text-yellow-800 hover:bg-yellow-100/80",
                           company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800 hover:bg-green-100/80"
                         )}
@@ -169,8 +184,8 @@ export default function RegistryPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="invisible group-hover:visible flex items-center justify-end text-primary">
-                        <span className="mr-2">View</span>
+                      <div className="invisible group-hover:visible flex items-center justify-center text-primary">
+                        <span className="font-semibold mr-2">View</span>
                         <ArrowRight className="h-4 w-4" />
                       </div>
                     </TableCell>
