@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import {
+  RadialBarChart,
+  RadialBar,
+  ResponsiveContainer,
+  PolarAngleAxis
+} from "recharts";
 
 interface RiskMeterProps {
   score: number;
@@ -10,7 +16,6 @@ interface RiskMeterProps {
 export function RiskMeter({ score = 0, className }: RiskMeterProps) {
   const [mounted, setMounted] = useState(false);
   const normalizedScore = Math.min(Math.max(0, score), 1500);
-  const angle = (normalizedScore / 1500) * 180 - 90; // -90 to 90 degrees
 
   useEffect(() => {
     setMounted(true);
@@ -26,75 +31,44 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
 
   const { level, color } = getRiskLevel(normalizedScore);
 
+  const data = [
+    {
+      name: 'Risk Score',
+      value: normalizedScore,
+      fill: '#0ea5e9'
+    }
+  ];
+
   return (
     <div className={cn("flex flex-col items-center justify-center", className)}>
-      {/* Risk Meter SVG */}
-      <div className="relative w-64 h-40">
-        <svg viewBox="0 0 200 120" className="w-full h-full">
-          {/* Base track */}
-          <path
-            d="M20 100 A80 80 0 0 1 180 100"
-            fill="none"
-            stroke="#e5e7eb"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-
-          {/* Risk level segments */}
-          <path
-            d="M20 100 A80 80 0 0 1 60 40"
-            fill="none"
-            stroke="#f3f4f6"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-          <path
-            d="M60 40 A80 80 0 0 1 100 28"
-            fill="none"
-            stroke="#bfdbfe"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-          <path
-            d="M100 28 A80 80 0 0 1 140 40"
-            fill="none"
-            stroke="#fef08a"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-          <path
-            d="M140 40 A80 80 0 0 1 180 100"
-            fill="none"
-            stroke="#fecaca"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
-
-          {/* Needle */}
-          <motion.line
-            x1="100"
-            y1="100"
-            x2="100"
-            y2="40"
-            stroke="#000000"
-            strokeWidth="2"
-            initial={{ rotate: -90 }}
-            animate={{ rotate: mounted ? angle : -90 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            style={{ transformOrigin: "100px 100px" }}
-          />
-
-          {/* Center point */}
-          <circle
-            cx="100"
-            cy="100"
-            r="4"
-            fill="#000000"
-          />
-        </svg>
+      <div className="w-64 h-40">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadialBarChart
+            cx="50%"
+            cy="100%"
+            innerRadius="60%"
+            outerRadius="100%"
+            barSize={10}
+            data={data}
+            startAngle={180}
+            endAngle={0}
+          >
+            <PolarAngleAxis
+              type="number"
+              domain={[0, 1500]}
+              angleAxisId={0}
+              tick={false}
+            />
+            <RadialBar
+              background
+              dataKey="value"
+              cornerRadius={30}
+              fill="#0ea5e9"
+            />
+          </RadialBarChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Score Display */}
       <div className="text-center mt-4">
         <motion.div
           initial={{ opacity: 0 }}
