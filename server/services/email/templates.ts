@@ -21,7 +21,7 @@ const templates = {
   fintech_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",
     text: `
-      You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.
+      You've been invited to join Invela, by ${data.senderName} of ${data.companyName}.
 
       Getting Started:
       1. Click the button below to Create Your Account.
@@ -93,6 +93,8 @@ const templates = {
             }
             li:last-child {
               margin-bottom: 0;
+              border-bottom: 1px solid #e5e7eb;
+              padding-bottom: 12px;
             }
             .button {
               background-color: #4965EC;
@@ -130,7 +132,7 @@ const templates = {
         <body>
           <div class="container">
             <h1 class="company-name">Invela</h1>
-            <h2 class="title">You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h2>
+            <h2 class="title">You've been invited to join Invela, by ${data.senderName} of ${data.companyName}.</h2>
 
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
