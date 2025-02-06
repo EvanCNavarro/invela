@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4, Info, ArrowUpDown, ArrowUp, ArrowDown, FilterX } from "lucide-react";
 import {
   Table,
@@ -422,10 +422,13 @@ interface TaskListProps {
 function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleDeleteTask = async (task: Task) => {
     try {
       await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+      // Invalidate the tasks cache
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Task deleted",
         description: "The task has been successfully removed.",
