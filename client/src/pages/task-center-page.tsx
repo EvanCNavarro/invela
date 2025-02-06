@@ -336,11 +336,23 @@ export default function TaskCenterPage() {
 
                 <div className="min-h-[400px]">
                   <TabsContent value="my-tasks" className="m-0">
-                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} sortConfig={sortConfig}/>
+                    <TaskList
+                      tasks={currentTasks}
+                      isLoading={isLoading}
+                      error={error}
+                      sortConfig={sortConfig}
+                      onSort={handleSort}
+                    />
                   </TabsContent>
 
                   <TabsContent value="for-others" className="m-0">
-                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} sortConfig={sortConfig}/>
+                    <TaskList
+                      tasks={currentTasks}
+                      isLoading={isLoading}
+                      error={error}
+                      sortConfig={sortConfig}
+                      onSort={handleSort}
+                    />
                   </TabsContent>
                 </div>
 
@@ -381,7 +393,15 @@ export default function TaskCenterPage() {
   );
 }
 
-function TaskList({ tasks, isLoading, error, sortConfig }: { tasks: Task[], isLoading: boolean, error: any, sortConfig: {key: string, direction: 'asc' | 'desc'} }) {
+interface TaskListProps {
+  tasks: Task[];
+  isLoading: boolean;
+  error: any;
+  sortConfig: { key: string; direction: 'asc' | 'desc' };
+  onSort: (key: string) => void;
+}
+
+function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { toast } = useToast();
 
@@ -447,7 +467,7 @@ function TaskList({ tasks, isLoading, error, sortConfig }: { tasks: Task[], isLo
             <TableHead className="w-[300px]">Task</TableHead>
             <TableHead>
               <button
-                onClick={() => handleSort('status')}
+                onClick={() => onSort('status')}
                 className="flex items-center space-x-1 hover:text-primary transition-colors"
               >
                 Status
@@ -461,7 +481,7 @@ function TaskList({ tasks, isLoading, error, sortConfig }: { tasks: Task[], isLo
             <TableHead>Progress</TableHead>
             <TableHead className="hidden md:table-cell">
               <button
-                onClick={() => handleSort('dueDate')}
+                onClick={() => onSort('dueDate')}
                 className="flex items-center space-x-1 hover:text-primary transition-colors"
               >
                 Due In
