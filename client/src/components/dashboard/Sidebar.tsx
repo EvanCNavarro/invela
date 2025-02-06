@@ -11,6 +11,8 @@ import {
   FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -18,8 +20,23 @@ interface SidebarProps {
   isNewUser?: boolean;
 }
 
+interface Task {
+  id: number;
+  title: string;
+  taskType: 'user_onboarding' | 'file_request';
+  createdBy: number;
+  assignedTo: number | null;
+}
+
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
+  });
+
+  // Get total task count
+  const totalTasks = tasks.length;
+
   const menuItems = [
     { 
       icon: HomeIcon,
@@ -31,7 +48,8 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false // Always accessible
+      locked: false, // Always accessible
+      count: totalTasks
     },
     { 
       icon: BookIcon,
@@ -73,7 +91,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       </div>
 
       <nav className="mt-8">
-        {menuItems.map(({ icon: Icon, label, href, locked }) => {
+        {menuItems.map(({ icon: Icon, label, href, locked, count }) => {
           const isActive = location === href;
           const isDisabled = locked;
 
@@ -94,12 +112,28 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                   isActive && "stroke-[2.5]"
                 )} />
                 {isExpanded && (
-                  <span className={cn(
-                    "ml-3 flex-1",
-                    isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
-                  )}>
-                    {label}
-                  </span>
+                  <>
+                    <span className={cn(
+                      "ml-3 flex-1",
+                      isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
+                    )}>
+                      {label}
+                    </span>
+                    {count !== undefined && (
+                      <Badge 
+                        variant={isActive ? "default" : "secondary"}
+                        className={cn(
+                          "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
+                          "rounded-md text-xs font-medium",
+                          isActive 
+                            ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        {count}
+                      </Badge>
+                    )}
+                  </>
                 )}
                 {isDisabled && isExpanded && (
                   <LockIcon className="h-4 w-4 text-muted-foreground" />
