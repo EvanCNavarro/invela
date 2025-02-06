@@ -321,7 +321,7 @@ export function registerRoutes(app: Express): Server {
   // Task creation logic update
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
-      const { taskType, taskScope, userEmail, companyId, dueDate } = req.body;
+      const { taskType, taskScope, userEmail, companyId } = req.body;
 
       // Generate task data based on type
       let taskData;
@@ -346,7 +346,11 @@ export function registerRoutes(app: Express): Server {
           progress: 0,
           status: 'pending',
           taskScope: 'user', // Always user scope for onboarding
-          priority: 'medium'
+          priority: 'medium',
+          filesRequested: [],
+          filesSubmitted: [],
+          metadata: {},
+          createdBy: req.user!.id
         };
       } else {
         // File request task logic
@@ -366,11 +370,15 @@ export function registerRoutes(app: Express): Server {
           description: `Document request task for ${assignee}`,
           userEmail: taskScope === 'user' ? userEmail : undefined,
           companyId: taskScope === 'company' ? companyId : undefined,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
+          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined,
           assignedTo: req.user!.id,
           progress: 0,
           status: 'pending',
-          priority: 'medium'
+          priority: 'medium',
+          filesRequested: [],
+          filesSubmitted: [],
+          metadata: {},
+          createdBy: req.user!.id
         };
       }
 
@@ -382,10 +390,7 @@ export function registerRoutes(app: Express): Server {
 
       // Create the task
       const [task] = await db.insert(tasks)
-        .values({
-          ...result.data,
-          createdBy: req.user!.id,
-        })
+        .values(result.data)
         .returning();
 
       // If it's a user onboarding task, send the invite email
