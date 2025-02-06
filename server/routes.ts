@@ -590,8 +590,17 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Email is required" });
       }
 
+      // Get company details for the sender
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
+
+      if (!company) {
+        return res.status(400).json({ message: "Company information not found" });
+      }
+
       // Generate invite URL
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?type=fintech&invited_by=${req.user!.id}`;
+      const inviteUrl = `${req.protocol}://${req.get('host')}`;
 
       const emailParams: SendEmailParams = {
         to: email,
@@ -600,7 +609,7 @@ export function registerRoutes(app: Express): Server {
         templateData: {
           recipientEmail: email,
           senderName: req.user!.fullName,
-          companyName: req.user!.companyName,
+          companyName: company.name,
           inviteUrl: inviteUrl
         }
       };
