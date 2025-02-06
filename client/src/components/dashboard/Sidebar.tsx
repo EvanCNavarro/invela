@@ -60,8 +60,9 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50",
-      isExpanded ? "w-64" : "w-20"
+      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+      isExpanded ? "w-64" : "w-20",
+      "transition-[width] duration-300 ease-in-out"
     )}>
       <div className={cn(
         "flex items-center h-16",
@@ -108,10 +109,10 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                     </span>
                     {badge && (
                       <div className={cn(
-                        "ml-2 px-1.5 h-5 min-w-[20px] rounded-md flex items-center justify-center text-xs font-medium",
+                        "ml-2 px-1.5 min-w-[20px] h-5 rounded-md flex items-center justify-center text-xs font-medium",
                         isActive 
                           ? "bg-primary text-primary-foreground" 
-                          : "bg-muted-foreground text-background"
+                          : "bg-muted-foreground/90 text-background"
                       )}>
                         {badge > 99 ? "99+" : badge}
                       </div>

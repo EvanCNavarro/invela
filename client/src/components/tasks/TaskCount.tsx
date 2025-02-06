@@ -11,14 +11,9 @@ export function useTaskCounts() {
 
   return useQuery<TaskCounts>({
     queryKey: ["/api/tasks/counts"],
-    queryFn: async () => {
-      const response = await fetch("/api/tasks/counts");
-      if (!response.ok) {
-        throw new Error("Failed to fetch task counts");
-      }
-      return response.json();
-    },
-    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    enabled: !!user,
+    refetchInterval: 30000, // Refetch every 30 seconds
+    staleTime: 15000, // Consider data fresh for 15 seconds
   });
 }
 
@@ -33,7 +28,7 @@ export function TaskCountBadge({ count, isActive = false }: { count: number; isA
         rounded-full text-xs font-medium
         ${isActive 
           ? "bg-primary text-primary-foreground" 
-          : "bg-muted-foreground text-background"}
+          : "bg-muted-foreground/90 text-background"}
       `}
     >
       {count > 99 ? "99+" : count}
