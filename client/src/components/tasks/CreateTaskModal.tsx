@@ -13,6 +13,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { PlusIcon } from "lucide-react";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -50,7 +51,10 @@ export function CreateTaskModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Create Task</Button>
+        <Button>
+          <PlusIcon className="h-4 w-4 mr-2" />
+          Create Task
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
@@ -101,7 +105,7 @@ export function CreateTaskModal() {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea 
+                    <Textarea
                       placeholder="Task description"
                       className="resize-none"
                       {...field}
@@ -189,9 +193,7 @@ export function CreateTaskModal() {
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date < new Date()
-                        }
+                        disabled={(date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>
