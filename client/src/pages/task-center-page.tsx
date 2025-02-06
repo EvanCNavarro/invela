@@ -43,7 +43,7 @@ interface Task {
   status: 'pending' | 'in_progress' | 'completed' | 'failed';
   priority: 'low' | 'medium' | 'high';
   progress: number;
-  assignedTo: string;
+  assignedTo: string | null; //Updated to include null
   dueDate?: string;
   completionDate?: string;
   updatedAt?: string;
@@ -126,9 +126,14 @@ export default function TaskCenterPage() {
     const matchesStatus = statusFilter === "All Status" || task.status === statusFilter.toLowerCase();
     const matchesType = typeFilter === "All Types" || task.taskType === typeFilter.toLowerCase();
     const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
+
+    // For "my-tasks", show tasks where:
+    // 1. The current user is assigned to the task
+    // 2. OR it's a user_onboarding task with no assignee (pending invites)
     const matchesTab = activeTab === "my-tasks"
-      ? task.assignedTo === user?.id
-      : task.assignedTo !== user?.id;
+      ? (task.assignedTo === user?.id) || (task.taskType === 'user_onboarding' && !task.assignedTo)
+      : (task.assignedTo !== user?.id && task.assignedTo !== null);
+
     return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
 

@@ -12,7 +12,7 @@ import {
   insertFileSchema,
   companyLogos
 } from "@db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, or } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -310,7 +310,10 @@ export function registerRoutes(app: Express): Server {
   // Tasks
   app.get("/api/tasks", requireAuth, async (req, res) => {
     const results = await db.select().from(tasks).where(
-      eq(tasks.assignedTo, req.user!.id)
+      or(
+        eq(tasks.createdBy, req.user!.id),
+        eq(tasks.assignedTo, req.user!.id)
+      )
     );
     res.json(results);
   });
@@ -334,7 +337,8 @@ export function registerRoutes(app: Express): Server {
           userEmail,
           companyId,
           dueDate: dueDate ? new Date(dueDate) : undefined,
-          assignedTo: req.user!.id,
+          // For invite tasks, we don't set assignedTo since the user doesn't exist yet
+          assignedTo: undefined,
         };
       } else {
         // File request task
@@ -371,7 +375,6 @@ export function registerRoutes(app: Express): Server {
           ...result.data,
           status: 'pending',
           createdBy: req.user!.id,
-          assignedTo: req.user!.id,
         })
         .returning();
 
