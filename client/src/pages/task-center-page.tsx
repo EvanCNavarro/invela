@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ChevronDown, Download, PlusIcon, Filter, Users, User } from "lucide-react";
+import { Search, X, PlusIcon, Users2, User, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -111,22 +112,31 @@ export default function TaskCenterPage() {
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [typeFilter, setTypeFilter] = useState("All Types");
   const [scopeFilter, setScopeFilter] = useState("All Scopes");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState("my-tasks");
   const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
+  const itemsPerPage = 10;
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All Status" || task.status === statusFilter.toLowerCase();
     const matchesType = typeFilter === "All Types" || task.taskType === typeFilter.toLowerCase();
     const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
-    return matchesSearch && matchesStatus && matchesType && matchesScope;
+    const matchesTab = activeTab === "my-tasks"
+      ? task.assignedTo === user?.id
+      : task.assignedTo !== user?.id;
+    return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
 
-  const myTasks = filteredTasks.filter(task => task.assignedTo === user?.id);
-  const teamTasks = filteredTasks.filter(task => task.assignedTo !== user?.id);
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const currentTasks = filteredTasks.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <DashboardLayout>
@@ -144,16 +154,32 @@ export default function TaskCenterPage() {
             <CreateTaskModal />
           </div>
 
-          <Tabs defaultValue="my-tasks" className="w-full">
+          <Tabs
+            defaultValue="my-tasks"
+            className="w-full"
+            onValueChange={(value) => {
+              setActiveTab(value);
+              setCurrentPage(1);
+            }}
+          >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <TabsList className="mb-0">
-                <TabsTrigger value="my-tasks" className="flex items-center gap-2">
+              <TabsList className="mb-0 bg-background">
+                <TabsTrigger
+                  value="my-tasks"
+                  className={cn(
+                    "flex items-center gap-2 data-[state=active]:text-primary",
+                    "data-[state=active]:bg-primary/10"
+                  )}
+                >
                   <User className="h-4 w-4" />
                   My Tasks
                 </TabsTrigger>
-                <TabsTrigger value="team-tasks" className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Team Tasks
+                <TabsTrigger
+                  value="for-others"
+                  className="flex items-center gap-2"
+                >
+                  <Users2 className="h-4 w-4" />
+                  For Others
                 </TabsTrigger>
               </TabsList>
 
@@ -219,8 +245,8 @@ export default function TaskCenterPage() {
 
                   <Button
                     variant="outline"
-                    size="sm"
-                    className="ml-auto"
+                    size="icon"
+                    className="ml-auto h-10 w-10"
                     onClick={() => {
                       setSearchQuery("");
                       setTimeFilter("Last 6 months");
@@ -229,17 +255,48 @@ export default function TaskCenterPage() {
                       setScopeFilter("All Scopes");
                     }}
                   >
-                    Clear Filters
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
 
-                <TabsContent value="my-tasks" className="m-0">
-                  <TaskList tasks={myTasks} isLoading={isLoading} error={error} />
-                </TabsContent>
+                <div className="min-h-[400px]">
+                  <TabsContent value="my-tasks" className="m-0">
+                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} />
+                  </TabsContent>
 
-                <TabsContent value="team-tasks" className="m-0">
-                  <TaskList tasks={teamTasks} isLoading={isLoading} error={error} />
-                </TabsContent>
+                  <TabsContent value="for-others" className="m-0">
+                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} />
+                  </TabsContent>
+                </div>
+
+                {!isLoading && !error && filteredTasks.length > 0 && (
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="text-sm font-medium">
+                        Page {currentPage} of {totalPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </Tabs>
