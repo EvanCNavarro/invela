@@ -59,7 +59,7 @@ const templates = {
               box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
             .company-name {
-              font-size: 20px;
+              font-size: 24px;
               font-weight: 600;
               color: #111827;
               margin: 0 0 24px 0;
@@ -68,14 +68,14 @@ const templates = {
               font-size: 16px;
               font-weight: 500;
               color: #374151;
-              margin: 0 0 32px 0;
+              margin: 0 0 24px 0;
               line-height: 1.4;
             }
             .getting-started {
               background-color: #f9fafb;
               border-radius: 8px;
               padding: 24px;
-              margin-bottom: 32px;
+              margin-bottom: 24px;
             }
             .section-title {
               font-weight: 600;
@@ -96,7 +96,7 @@ const templates = {
             }
             .button {
               background-color: #4965EC;
-              color: #ffffff;
+              color: #ffffff !important;
               padding: 12px 24px;
               text-decoration: none;
               border-radius: 6px;
@@ -104,11 +104,6 @@ const templates = {
               font-weight: 500;
               font-size: 14px;
               text-align: center;
-              transition: background-color 0.2s;
-              margin: 32px 0;
-            }
-            .button:hover {
-              background-color: #3b51c4;
             }
             .footer {
               margin-top: 40px;
