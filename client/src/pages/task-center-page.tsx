@@ -293,50 +293,50 @@ export default function TaskCenterPage() {
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px] justify-start">
-                      <SelectValue />
+                    <SelectTrigger className="w-[140px] justify-between">
+                      <span className="flex-grow text-left">{statusFilter}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Statuses" className="[&>[data-icon]]:text-primary">All Statuses</SelectItem>
-                      <SelectItem value="Pending" className="[&>[data-icon]]:text-primary">Pending</SelectItem>
-                      <SelectItem value="In Progress" className="[&>[data-icon]]:text-primary">In Progress</SelectItem>
-                      <SelectItem value="Completed" className="[&>[data-icon]]:text-primary">Completed</SelectItem>
-                      <SelectItem value="Failed" className="[&>[data-icon]]:text-primary">Failed</SelectItem>
-                      <SelectItem value="Email Sent" className="[&>[data-icon]]:text-primary">Email Sent</SelectItem>
+                      <SelectItem value="All Statuses" className="[&_[data-icon-check]]:text-primary">All Statuses</SelectItem>
+                      <SelectItem value="Pending" className="[&_[data-icon-check]]:text-primary">Pending</SelectItem>
+                      <SelectItem value="In Progress" className="[&_[data-icon-check]]:text-primary">In Progress</SelectItem>
+                      <SelectItem value="Completed" className="[&_[data-icon-check]]:text-primary">Completed</SelectItem>
+                      <SelectItem value="Failed" className="[&_[data-icon-check]]:text-primary">Failed</SelectItem>
+                      <SelectItem value="Email Sent" className="[&_[data-icon-check]]:text-primary">Email Sent</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[160px] justify-start">
-                      <SelectValue />
+                    <SelectTrigger className="w-[160px] justify-between">
+                      <span className="flex-grow text-left">{typeFilter}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Task Types" className="[&>[data-icon]]:text-primary">All Task Types</SelectItem>
-                      <SelectItem value="User Onboarding" className="[&>[data-icon]]:text-primary">User Onboarding</SelectItem>
-                      <SelectItem value="File Request" className="[&>[data-icon]]:text-primary">File Request</SelectItem>
+                      <SelectItem value="All Task Types" className="[&_[data-icon-check]]:text-primary">All Task Types</SelectItem>
+                      <SelectItem value="User Onboarding" className="[&_[data-icon-check]]:text-primary">User Onboarding</SelectItem>
+                      <SelectItem value="File Request" className="[&_[data-icon-check]]:text-primary">File Request</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={scopeFilter} onValueChange={setScopeFilter}>
-                    <SelectTrigger className="w-[160px] justify-start">
-                      <SelectValue />
+                    <SelectTrigger className="w-[180px] justify-between">
+                      <span className="flex-grow text-left">{scopeFilter}</span>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Assignee Types" className="[&>[data-icon]]:text-primary">All Assignee Types</SelectItem>
-                      <SelectItem value="User" className="[&>[data-icon]]:text-primary">User</SelectItem>
-                      <SelectItem value="Company" className="[&>[data-icon]]:text-primary">Company</SelectItem>
+                      <SelectItem value="All Assignee Types" className="[&_[data-icon-check]]:text-primary">All Assignee Types</SelectItem>
+                      <SelectItem value="User" className="[&_[data-icon-check]]:text-primary">User</SelectItem>
+                      <SelectItem value="Company" className="[&_[data-icon-check]]:text-primary">Company</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Button
-                    variant="outline"
+                    variant={hasActiveFilters ? "default" : "outline"}
                     size="default"
                     className="flex items-center gap-2 sm:w-auto w-10 h-10 shrink-0"
                     onClick={clearFilters}
                     disabled={!hasActiveFilters}
                   >
                     <FilterX className="h-4 w-4" />
-                    <span className="hidden [@media(min-width:1016px)]:inline">Clear Filters</span>
+                    <span className="hidden [@media(min-width:1200px)]:inline">Clear Filters</span>
                   </Button>
                 </div>
 
