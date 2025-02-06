@@ -135,7 +135,7 @@ export function EmailField({
   return (
     <>
       <FormItem>
-        <FormLabel>Email</FormLabel>
+        <FormLabel>{isLogin ? "Email" : "Work Email"}</FormLabel>
         <div className="relative">
           <FormControl>
             <Input 
@@ -150,6 +150,7 @@ export function EmailField({
                   ? 'border-[#E56047] focus-visible:ring-[#E56047]' 
                   : field.value && isValidFormat && !emailExists ? 'border-green-500' : '')
               )}
+              aria-label={isLogin ? "Email address" : "Work email address"}
             />
           </FormControl>
           {!isLogin && field.value && (touched || showError) && (
@@ -165,7 +166,7 @@ export function EmailField({
         </div>
         {!isLogin && (touched || showError) && ((field.value && !isValidFormat) || (!field.value && showError)) && (
           <FormMessage className="text-[#E56047]">
-            Please enter a valid email address.
+            Please enter a valid work email address.
           </FormMessage>
         )}
       </FormItem>
