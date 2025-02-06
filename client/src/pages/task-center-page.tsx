@@ -422,6 +422,8 @@ interface TaskListProps {
 function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -449,6 +451,8 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
 
       // Close any open dialogs/modals
       setSelectedTask(null);
+      setDeleteModalOpen(false);
+      setTaskToDelete(null);
     } catch (error) {
       console.error('Delete task error:', error);
       toast({
@@ -640,30 +644,15 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                       }}>
                         View Details
                       </DropdownMenuItem>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => {
-                            e.preventDefault();
-                            setOpenDropdownId(null);
-                          }}>
-                            Delete Task
-                          </DropdownMenuItem>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete this task? This will remove it from the task center and unassign it from the assigned user or company. This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteTask(task)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          setTaskToDelete(task);
+                          setDeleteModalOpen(true);
+                          setOpenDropdownId(null);
+                        }}
+                      >
+                        Delete Task
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -774,6 +763,27 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
           </div>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this task? This will remove it from the task center and unassign it from the assigned user or company. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setDeleteModalOpen(false);
+              setTaskToDelete(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => taskToDelete && handleDeleteTask(taskToDelete)}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
