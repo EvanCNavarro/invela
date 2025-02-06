@@ -162,12 +162,9 @@ export default function TaskCenterPage() {
           </div>
 
           <Tabs
-            defaultValue="my-tasks"
+            value={activeTab}
+            onValueChange={setActiveTab}
             className="w-full"
-            onValueChange={(value) => {
-              setActiveTab(value);
-              setCurrentPage(1);
-            }}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <TabsList className="mb-0 bg-background">
@@ -204,7 +201,6 @@ export default function TaskCenterPage() {
                   </span>
                 </TabsTrigger>
               </TabsList>
-
               <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
