@@ -67,6 +67,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false)
     const [_open, _setOpen] = React.useState(defaultOpen)
 
+    // Controlled or uncontrolled open state
     const open = openProp ?? _open
     const setOpen = React.useCallback(
       (value: boolean) => {
@@ -75,19 +76,26 @@ const SidebarProvider = React.forwardRef<
         } else {
           _setOpen(value)
         }
+        // Update cookie
         document.cookie = `${SIDEBAR_COOKIE_NAME}=${value}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
       },
       [setOpenProp]
     )
 
-    // Pure toggle function - only called by the trigger button
-    const toggleSidebar = React.useCallback(() => {
-      if (isMobile) {
-        setOpenMobile(prev => !prev)
-      } else {
-        setOpen(!open)
-      }
-    }, [isMobile, open, setOpen])
+    // Strict toggle function - only called by trigger button
+    const toggleSidebar = React.useCallback(
+      (e?: React.MouseEvent) => {
+        e?.preventDefault()
+        e?.stopPropagation()
+
+        if (isMobile) {
+          setOpenMobile(prev => !prev)
+        } else {
+          setOpen(!open)
+        }
+      },
+      [isMobile, open, setOpen]
+    )
 
     const state = open ? "expanded" : "collapsed"
 
@@ -129,34 +137,7 @@ const SidebarProvider = React.forwardRef<
 )
 SidebarProvider.displayName = "SidebarProvider"
 
-const SidebarTrigger = React.forwardRef<
-  React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
-
-  return (
-    <Button
-      ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("h-7 w-7", className)}
-      onClick={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        toggleSidebar()
-      }}
-      {...props}
-    >
-      <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
-  )
-})
-SidebarTrigger.displayName = "SidebarTrigger"
-
-// Menu button - only handles click events, no sidebar state management
+// Menu button component - completely isolated from sidebar state
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
   React.ComponentProps<"button"> & {
@@ -181,7 +162,9 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { state, isMobile } = useSidebar()
 
+    // Pure click handler - only manages menu item state
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation() // Prevent event bubbling
       if (onClick) {
         onClick(e)
       }
@@ -217,6 +200,30 @@ const SidebarMenuButton = React.forwardRef<
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
+
+// Trigger button - only component that can toggle sidebar
+const SidebarTrigger = React.forwardRef<
+  React.ElementRef<typeof Button>,
+  React.ComponentProps<typeof Button>
+>(({ className, ...props }, ref) => {
+  const { toggleSidebar } = useSidebar()
+
+  return (
+    <Button
+      ref={ref}
+      data-sidebar="trigger"
+      variant="ghost"
+      size="icon"
+      className={cn("h-7 w-7", className)}
+      onClick={toggleSidebar} // Direct connection to toggle function
+      {...props}
+    >
+      <PanelLeft />
+      <span className="sr-only">Toggle Sidebar</span>
+    </Button>
+  )
+})
+SidebarTrigger.displayName = "SidebarTrigger"
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
