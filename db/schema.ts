@@ -167,7 +167,7 @@ export const insertTaskSchema = z.object({
   userEmail: z.string().email().optional(),
   companyId: z.number().optional(),
   dueDate: z.date().optional(),
-  assignedTo: z.number().optional(),
+  assignedTo: z.number().nullable().optional(),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   filesRequested: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
