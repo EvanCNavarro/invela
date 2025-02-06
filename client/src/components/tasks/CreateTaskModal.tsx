@@ -40,9 +40,8 @@ export function CreateTaskModal() {
   const [searchQuery, setSearchQuery] = useState("");
   const tomorrow = addDays(new Date(), 1);
   const nextWeek = addDays(new Date(), 7);
-  const [selectedDueDateOption, setSelectedDueDateOption] = useState<typeof dueDateOptions[number]>(dueDateOptions[0]);
+  const [selectedDueDateOption, setSelectedDueDateOption] = useState(dueDateOptions[0]);
 
-  // Fetch companies when search query changes
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies", searchQuery],
     enabled: searchQuery.length > 0,
@@ -60,12 +59,6 @@ export function CreateTaskModal() {
 
   const taskType = form.watch("taskType");
   const taskScope = form.watch("taskScope");
-
-  const onSubmit = async (data: TaskFormData) => {
-    console.log(data);
-    // TODO: Add API call to create task
-    setOpen(false);
-  };
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -92,6 +85,11 @@ export function CreateTaskModal() {
       form.setValue("hasDueDate", true);
       form.setValue("dueDate", date);
     }
+  };
+
+  const onSubmit = async (data: TaskFormData) => {
+    console.log(data);
+    setOpen(false);
   };
 
   return (
@@ -223,7 +221,7 @@ export function CreateTaskModal() {
                             className="w-full justify-between"
                           >
                             {field.value
-                              ? companies.find((company) => company.id === field.value)?.name
+                              ? companies.find((company: any) => company.id === field.value)?.name
                               : "Search companies..."}
                             <Building2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
@@ -238,7 +236,7 @@ export function CreateTaskModal() {
                           />
                           <CommandEmpty>No companies found.</CommandEmpty>
                           <CommandGroup>
-                            {companies.map((company) => (
+                            {companies.map((company: any) => (
                               <CommandItem
                                 key={company.id}
                                 value={company.name}
