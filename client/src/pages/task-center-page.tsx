@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, PlusIcon, Users2, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, X, PlusIcon, Users2, User, ChevronLeft, ChevronRight, Download } from "lucide-react";
 import {
   Table,
   TableBody,
