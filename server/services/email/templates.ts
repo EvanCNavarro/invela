@@ -19,74 +19,125 @@ export const emailTemplateSchema = z.object({
 // Email template definitions
 const templates = {
   fintech_invite: (data: TemplateData): EmailTemplate => ({
-    subject: 'Invitation to Join Invela Platform',
+    subject: "You've been invited to join Invela",
     text: `
-      Dear${data.recipientName ? ` ${data.recipientName}` : ' Financial Technology Partner'},
+      You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.
 
-      You have been invited to join Invela, our secure document management and risk assessment platform, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.
+      Getting Started:
+      1. Click the button below to Create Your Account.
+      2. Finish updated your Company's Profile.
+      3. Upload the requested files to our secure system.
+      4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Invela offers:
-      • Secure document management and sharing
-      • Advanced risk assessment tools
-      • Real-time status tracking
-      • Comprehensive analytics dashboard
+      Click here to get started: ${data.inviteUrl}
 
-      To get started:
-      1. Click the following link to create your account: ${data.inviteUrl}
-      2. Complete your organization profile
-      3. Access our full suite of FinTech tools and services
-
-      This invitation is valid for 7 days. If you have any questions, please contact our support team.
-
-      Best regards,
-      The Invela Team
+      © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
     html: `
       <!DOCTYPE html>
       <html>
         <head>
           <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background-color: #4965EC; color: white; padding: 20px; border-radius: 8px 8px 0 0; margin-bottom: 20px; }
-            .content { background-color: #F4F6FA; padding: 20px; border-radius: 0 0 8px 8px; }
-            .button { background-color: #4965EC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; }
-            .features { background-color: white; padding: 15px; border-radius: 6px; margin: 20px 0; }
-            .footer { margin-top: 20px; color: #666; font-size: 0.9em; }
+            body { 
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              margin: 0;
+              padding: 40px 20px;
+              background-color: #f5f5f5;
+            }
+            .container {
+              max-width: 600px;
+              margin: 0 auto;
+              background: white;
+              border-radius: 12px;
+              padding: 40px;
+            }
+            .logo {
+              display: flex;
+              align-items: center;
+              margin-bottom: 40px;
+              color: #111;
+            }
+            .logo img {
+              height: 32px;
+              margin-right: 16px;
+            }
+            h1 {
+              font-size: 24px;
+              font-weight: 600;
+              color: #111;
+              margin: 0 0 24px 0;
+            }
+            .subtitle {
+              color: #666;
+              margin-bottom: 32px;
+            }
+            .section-title {
+              font-weight: 600;
+              font-size: 16px;
+              margin: 0 0 16px 0;
+            }
+            ol {
+              padding-left: 24px;
+              margin: 0 0 32px 0;
+            }
+            li {
+              margin-bottom: 12px;
+              color: #444;
+            }
+            .button {
+              background-color: #4965EC;
+              color: white;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 6px;
+              display: inline-block;
+              font-weight: 500;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #eee;
+              color: #666;
+              font-size: 14px;
+              text-align: center;
+            }
+            .footer a {
+              color: #666;
+              text-decoration: none;
+              margin: 0 8px;
+            }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h2>Welcome to Invela</h2>
-          </div>
-          <div class="content">
-            <p>Dear${data.recipientName ? ` ${data.recipientName}` : ' Financial Technology Partner'},</p>
-
-            <p>You have been invited to join Invela, our secure document management and risk assessment platform, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</p>
-
-            <div class="features">
-              <h3>What Invela Offers:</h3>
-              <ul>
-                <li>Secure document management and sharing</li>
-                <li>Advanced risk assessment tools</li>
-                <li>Real-time status tracking</li>
-                <li>Comprehensive analytics dashboard</li>
-              </ul>
+          <div class="container">
+            <div class="logo">
+              <img src="data:image/svg+xml;base64,..." alt="Invela" />
+              <span>Invela</span>
             </div>
 
-            <p><strong>Getting Started:</strong></p>
-            <ol>
-              <li>Click the button below to create your account</li>
-              <li>Complete your organization profile</li>
-              <li>Access our full suite of FinTech tools and services</li>
-            </ol>
+            <h1>You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h1>
 
-            <a href="${data.inviteUrl}" class="button">Create Your Account</a>
+            <div>
+              <h2 class="section-title">Getting Started:</h2>
+              <ol>
+                <li>Click the button below to Create Your Account.</li>
+                <li>Finish updated your Company's Profile.</li>
+                <li>Upload the requested files to our secure system.</li>
+                <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
+              </ol>
 
-            <p><em>Note: This invitation is valid for 7 days.</em></p>
+              <a href="${data.inviteUrl}" class="button">Create Your Account</a>
+            </div>
 
             <div class="footer">
-              <p>If you have any questions, please contact our support team.</p>
-              <p>Best regards,<br>The Invela Team</p>
+              <p>© ${new Date().getFullYear()} Invela</p>
+              <div>
+                <a href="/privacy">Privacy Policy</a>
+                <a href="/terms">Terms of Service</a>
+                <a href="/support">Support Center</a>
+              </div>
             </div>
           </div>
         </body>
