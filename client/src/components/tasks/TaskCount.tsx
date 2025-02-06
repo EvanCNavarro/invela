@@ -8,7 +8,7 @@ interface TaskCounts {
 
 export function useTaskCounts() {
   const { user } = useAuth();
-  
+
   return useQuery<TaskCounts>({
     queryKey: ["/api/tasks/counts"],
     queryFn: async () => {
@@ -18,14 +18,13 @@ export function useTaskCounts() {
       }
       return response.json();
     },
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    cacheTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
+    gcTime: 1000 * 60 * 5, // Keep in cache for 5 minutes
   });
 }
 
 export function TaskCountBadge({ count, isActive = false }: { count: number; isActive?: boolean }) {
   if (count === 0) return null;
-  
+
   return (
     <div
       className={`

@@ -35,7 +35,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false, // Always accessible
+      locked: false,
       badge: totalTasks > 0 ? totalTasks : undefined
     },
     { 
@@ -60,7 +60,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200 z-50",
+      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50",
       isExpanded ? "w-64" : "w-20"
     )}>
       <div className={cn(
@@ -98,7 +98,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                   "h-5 w-5",
                   isActive && "stroke-[2.5]"
                 )} />
-                {isExpanded ? (
+                {isExpanded && (
                   <>
                     <span className={cn(
                       "ml-3 flex-1",
@@ -108,7 +108,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                     </span>
                     {badge && (
                       <div className={cn(
-                        "ml-2 h-5 min-w-[20px] rounded-md flex items-center justify-center text-xs font-medium",
+                        "ml-2 px-1.5 h-5 min-w-[20px] rounded-md flex items-center justify-center text-xs font-medium",
                         isActive 
                           ? "bg-primary text-primary-foreground" 
                           : "bg-muted-foreground text-background"
@@ -120,10 +120,9 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                       <LockIcon className="h-4 w-4 text-muted-foreground" />
                     )}
                   </>
-                ) : (
-                  badge && (
-                    <div className="absolute top-2 right-1.5 w-2 h-2 rounded-full bg-primary" />
-                  )
+                )}
+                {!isExpanded && badge && (
+                  <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
                 )}
               </div>
             </Link>
