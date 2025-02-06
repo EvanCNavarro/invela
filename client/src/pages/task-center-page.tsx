@@ -2,7 +2,6 @@ import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X, PlusIcon, Users2, User, ChevronLeft, ChevronRight, Download } from "lucide-react";
-import { TaskCountBadge, useTaskCounts } from "@/components/tasks/TaskCount";
 import {
   Table,
   TableBody,
@@ -120,11 +119,8 @@ export default function TaskCenterPage() {
   const [activeTab, setActiveTab] = useState("my-tasks");
   const { user } = useAuth();
 
-  const { data: taskCounts = { myTasksCount: 0, forOthersCount: 0 } } = useTaskCounts();
-
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    enabled: !!user
   });
 
   const itemsPerPage = 10;
@@ -134,9 +130,12 @@ export default function TaskCenterPage() {
     const matchesType = typeFilter === "All Types" || task.taskType === typeFilter.toLowerCase();
     const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
 
+    // For "my-tasks", show tasks where:
+    // 1. Tasks assigned to the current user
+    // 2. File request tasks created by the current user
     const matchesTab = activeTab === "my-tasks"
       ? (task.assignedTo === user?.id) || (task.taskType === 'file_request' && task.createdBy === user?.id)
-      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id);
+      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id); // Show invitation tasks in "for-others" when created by current user
 
     return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
@@ -164,9 +163,12 @@ export default function TaskCenterPage() {
           </div>
 
           <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
+            defaultValue="my-tasks"
             className="w-full"
+            onValueChange={(value) => {
+              setActiveTab(value);
+              setCurrentPage(1);
+            }}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
               <TabsList className="mb-0 bg-background">
@@ -178,12 +180,22 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  <span className="flex items-center">
+                  <span className="flex items-center gap-2">
                     My Tasks
-                    <TaskCountBadge 
-                      count={taskCounts.myTasksCount}
-                      isActive={activeTab === "my-tasks"} 
-                    />
+                    {tasks.filter(task => 
+                      (task.assignedTo === user?.id) || 
+                      (task.taskType === 'file_request' && task.createdBy === user?.id)
+                    ).length > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
+                      >
+                        {tasks.filter(task => 
+                          (task.assignedTo === user?.id) || 
+                          (task.taskType === 'file_request' && task.createdBy === user?.id)
+                        ).length}
+                      </Badge>
+                    )}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger
@@ -194,15 +206,24 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <Users2 className="h-4 w-4" />
-                  <span className="flex items-center">
+                  <span className="flex items-center gap-2">
                     For Others
-                    <TaskCountBadge 
-                      count={taskCounts.forOthersCount}
-                      isActive={activeTab === "for-others"} 
-                    />
+                    {tasks.filter(task => 
+                      task.taskType === 'user_onboarding' && task.createdBy === user?.id
+                    ).length > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
+                      >
+                        {tasks.filter(task => 
+                          task.taskType === 'user_onboarding' && task.createdBy === user?.id
+                        ).length}
+                      </Badge>
+                    )}
                   </span>
                 </TabsTrigger>
               </TabsList>
+
               <div className="relative w-full sm:w-auto">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
