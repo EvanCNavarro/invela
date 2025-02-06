@@ -8,9 +8,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusIcon, Check } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { format, addDays, isSameDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const taskSchema = z.object({
   taskType: z.enum(["user_onboarding", "file_request"]),
@@ -31,6 +32,7 @@ const dueDateOptions = [
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false);
   const tomorrow = addDays(new Date(), 1);
+  const nextWeek = addDays(new Date(), 7);
   const [selectedDueDateOption, setSelectedDueDateOption] = useState<typeof dueDateOptions[number]>(dueDateOptions[0]);
 
   const form = useForm<TaskFormData>({
@@ -47,6 +49,22 @@ export function CreateTaskModal() {
     console.log(data);
     // TODO: Add API call to create task
     setOpen(false);
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+
+    // Determine which option should be selected based on the date
+    if (isSameDay(date, tomorrow)) {
+      setSelectedDueDateOption(dueDateOptions[0]); // Tomorrow
+    } else if (isSameDay(date, nextWeek)) {
+      setSelectedDueDateOption(dueDateOptions[1]); // Next Week
+    } else {
+      setSelectedDueDateOption(dueDateOptions[2]); // Custom
+    }
+
+    form.setValue("dueDate", date);
+    form.setValue("hasDueDate", true);
   };
 
   const handleDueDateOptionClick = (option: typeof dueDateOptions[number]) => {
@@ -69,7 +87,7 @@ export function CreateTaskModal() {
           Create Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[475px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
         </DialogHeader>
@@ -161,29 +179,35 @@ export function CreateTaskModal() {
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={handleDateSelect}
                         disabled={(date) => date < new Date()}
                         initialFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  <div className="flex gap-2 mt-2">
-                    {dueDateOptions.map((option) => (
-                      <Button
-                        key={option.label}
-                        type="button"
-                        size="sm"
-                        variant={selectedDueDateOption === option ? "default" : "outline"}
-                        className={cn(
-                          "flex-1",
-                          selectedDueDateOption !== option && "text-muted-foreground"
-                        )}
-                        onClick={() => handleDueDateOptionClick(option)}
-                      >
-                        {option.label}
-                      </Button>
-                    ))}
-                  </div>
+                  <Tabs
+                    value={selectedDueDateOption.label}
+                    onValueChange={(value) => {
+                      const option = dueDateOptions.find(opt => opt.label === value);
+                      if (option) handleDueDateOptionClick(option);
+                    }}
+                    className="w-full mt-2"
+                  >
+                    <TabsList className="grid grid-cols-4 w-full">
+                      {dueDateOptions.map((option) => (
+                        <TabsTrigger
+                          key={option.label}
+                          value={option.label}
+                          className={cn(
+                            "data-[state=active]:text-primary",
+                            "data-[state=active]:bg-primary/10"
+                          )}
+                        >
+                          {option.label}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
                   <FormMessage />
                 </FormItem>
               )}
