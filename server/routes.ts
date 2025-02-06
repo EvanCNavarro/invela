@@ -385,6 +385,18 @@ export function registerRoutes(app: Express): Server {
 
       console.log('Task data before validation:', JSON.stringify(taskData, null, 2));
 
+      // Validate required fields before schema validation
+      const requiredFields = ['title', 'taskType', 'taskScope', 'status', 'priority', 'progress', 'createdBy'];
+      const missingFields = requiredFields.filter(field => !taskData[field]);
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          missingFields: missingFields,
+          detail: `The following fields are required: ${missingFields.join(', ')}`
+        });
+      }
+
       // Validate the task data
       const result = insertTaskSchema.safeParse(taskData);
       if (!result.success) {
@@ -454,10 +466,12 @@ export function registerRoutes(app: Express): Server {
         console.error("Database error:", dbError);
         // Handle specific database errors
         if (dbError.code === '23502') { // not-null violation
+          const column = dbError.column || 'unknown';
+          const detail = dbError.detail || '';
           return res.status(400).json({
             message: "Missing required fields",
-            detail: dbError.detail,
-            column: dbError.column
+            detail: `Required field "${column}" cannot be null. ${detail}`,
+            missingFields: [column]
           });
         }
         throw dbError; // Re-throw other database errors
