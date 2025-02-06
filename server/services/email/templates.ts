@@ -29,7 +29,7 @@ const templates = {
       3. Upload the requested files to our secure system.
       4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Click here to get started: ${data.inviteUrl}/register?email=${encodeURIComponent(data.recipientEmail || '')}
+      Click here to get started: ${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -144,7 +144,7 @@ const templates = {
               </ol>
             </div>
 
-            <a href="${data.inviteUrl}/register?email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
+            <a href="${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>

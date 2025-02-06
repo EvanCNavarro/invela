@@ -82,6 +82,14 @@ export default function AuthPage() {
     setFieldsAutoFilled(false);
   }, [isLogin]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const workEmail = params.get('work_email');
+    if (workEmail && !isLogin) {
+      form.setValue('email', workEmail);
+    }
+  }, [isLogin]);
+
   const handleExtractedData = (data: { fullName?: string; company?: string }) => {
     if (!fieldsAutoFilled && data.fullName) {
       form.setValue('fullName', data.fullName);
@@ -207,7 +215,7 @@ export default function AuthPage() {
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <EmailField 
+                  <EmailField
                     key={isLogin ? 'login' : 'register'}
                     field={field}
                     isLogin={isLogin}
@@ -228,13 +236,13 @@ export default function AuthPage() {
                         <FormLabel>Full Name</FormLabel>
                         <div className="relative">
                           <FormControl>
-                            <Input 
-                              {...field} 
+                            <Input
+                              {...field}
                               className={cn(
                                 "pr-10",
-                                touchedFields.fullName && form.formState.errors.fullName && 
+                                touchedFields.fullName && form.formState.errors.fullName &&
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
-                                field.value && !form.formState.errors.fullName && 
+                                field.value && !form.formState.errors.fullName &&
                                 "border-green-500"
                               )}
                               onBlur={(e) => {
@@ -264,13 +272,13 @@ export default function AuthPage() {
                         <FormLabel>Company</FormLabel>
                         <div className="relative">
                           <FormControl>
-                            <Input 
-                              {...field} 
+                            <Input
+                              {...field}
                               className={cn(
                                 "pr-10",
-                                touchedFields.company && form.formState.errors.company && 
+                                touchedFields.company && form.formState.errors.company &&
                                 "border-[#E56047] focus-visible:ring-[#E56047]",
-                                field.value && !form.formState.errors.company && 
+                                field.value && !form.formState.errors.company &&
                                 "border-green-500"
                               )}
                               onBlur={(e) => {
@@ -302,9 +310,9 @@ export default function AuthPage() {
                     <FormLabel>Password</FormLabel>
                     <div className="relative">
                       <FormControl>
-                        <Input 
+                        <Input
                           type={showPassword ? "text" : "password"}
-                          {...field} 
+                          {...field}
                           onBlur={(e) => {
                             field.onBlur();
                             if (field.value) {
@@ -313,14 +321,14 @@ export default function AuthPage() {
                           }}
                           className={cn(
                             "pr-10",
-                            touchedFields.password && form.formState.errors.password && 
+                            touchedFields.password && form.formState.errors.password &&
                             "border-[#E56047] focus-visible:ring-[#E56047]",
                             !isLogin && field.value && !form.formState.errors.password &&
                             "border-green-500"
                           )}
                         />
                       </FormControl>
-                      
+
                       <Button
                         type="button"
                         variant="ghost"
