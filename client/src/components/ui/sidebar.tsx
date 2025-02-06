@@ -265,6 +265,13 @@ const SidebarTrigger = React.forwardRef<
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
 
+  // Only the trigger button can toggle sidebar state
+  const handleTriggerClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    toggleSidebar()
+    onClick?.(event)
+  }
+
   return (
     <Button
       ref={ref}
@@ -272,10 +279,7 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
+      onClick={handleTriggerClick}
       {...props}
     >
       <PanelLeft />
@@ -557,9 +561,10 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
+    // Only handle the navigation click, completely separate from sidebar state
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      // Only handle the click event, don't change sidebar state
       if (onClick) {
+        e.stopPropagation() // Prevent event bubbling
         onClick(e)
       }
     }
