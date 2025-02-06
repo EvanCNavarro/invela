@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, PlusIcon, Users2, User, ChevronLeft, ChevronRight, Download } from "lucide-react";
+import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,30 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -28,11 +52,11 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
+import { format, differenceInDays } from "date-fns";
 
 interface Task {
   id: number;
@@ -182,16 +206,16 @@ export default function TaskCenterPage() {
                   <User className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     My Tasks
-                    {tasks.filter(task => 
-                      (task.assignedTo === user?.id) || 
+                    {tasks.filter(task =>
+                      (task.assignedTo === user?.id) ||
                       (task.taskType === 'file_request' && task.createdBy === user?.id)
                     ).length > 0 && (
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {tasks.filter(task => 
-                          (task.assignedTo === user?.id) || 
+                        {tasks.filter(task =>
+                          (task.assignedTo === user?.id) ||
                           (task.taskType === 'file_request' && task.createdBy === user?.id)
                         ).length}
                       </Badge>
@@ -208,14 +232,14 @@ export default function TaskCenterPage() {
                   <Users2 className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     For Others
-                    {tasks.filter(task => 
+                    {tasks.filter(task =>
                       task.taskType === 'user_onboarding' && task.createdBy === user?.id
                     ).length > 0 && (
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {tasks.filter(task => 
+                        {tasks.filter(task =>
                           task.taskType === 'user_onboarding' && task.createdBy === user?.id
                         ).length}
                       </Badge>
@@ -349,26 +373,58 @@ export default function TaskCenterPage() {
 }
 
 function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boolean, error: any }) {
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const { toast } = useToast();
+
+  const handleDeleteTask = async (task: Task) => {
+    try {
+      await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
+      toast({
+        title: "Task deleted",
+        description: "The task has been successfully removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete the task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDueInDays = (dueDate: string | undefined) => {
+    if (!dueDate) return "-";
+    const days = differenceInDays(new Date(dueDate), new Date());
+    return `${days} days`;
+  };
+
+  const getTypeLabel = (type: string) => {
+    return type === 'user_onboarding' ? 'New Invite' : 'File Request';
+  };
+
+  const capitalizeStatus = (status: string) => {
+    return status.split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[30px]">
-              <input type="checkbox" className="rounded-sm border-gray-300" />
-            </TableHead>
             <TableHead>Task</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Progress</TableHead>
-            <TableHead className="hidden md:table-cell">Due Date</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="hidden md:table-cell">Due In</TableHead>
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8">
                 <div className="flex items-center justify-center">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 </div>
@@ -376,13 +432,13 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
             </TableRow>
           ) : error ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-destructive">
+              <TableCell colSpan={6} className="text-center py-8 text-destructive">
                 Failed to load tasks. Please try again later.
               </TableCell>
             </TableRow>
           ) : tasks.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                 No tasks found
               </TableCell>
             </TableRow>
@@ -390,18 +446,21 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
             tasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell>
-                  <input type="checkbox" className="rounded-sm border-gray-300" />
-                </TableCell>
-                <TableCell>
-                  <div>
-                    <div className="font-medium">{task.title}</div>
-                    <div className="text-xs text-muted-foreground">{task.description}</div>
+                  <div className="group relative">
+                    <div className="truncate max-w-[300px]">
+                      <div className="font-medium">{task.title}</div>
+                      <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+                    </div>
+                    <div className="invisible group-hover:visible absolute z-10 p-2 bg-popover text-popover-foreground shadow-md rounded-md -top-1 left-0 w-full max-w-[400px]">
+                      <div className="font-medium">{task.title}</div>
+                      <div className="text-xs mt-1">{task.description}</div>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={task.taskType === 'user_onboarding' ? 'default' : 'secondary'}>
-                    {task.taskType === 'user_onboarding' ? 'Onboarding' : 'File Request'}
-                  </Badge>
+                  <span className="text-sm font-medium">
+                    {getTypeLabel(task.taskType)}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <Badge variant={
@@ -411,34 +470,122 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                           task.status === 'email_sent' ? 'default' :
                             'default'
                   }>
-                    {task.status.replace('_', ' ')}
+                    {capitalizeStatus(task.status)}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="w-full bg-secondary rounded-full h-2">
-                    <div
-                      className="bg-primary rounded-full h-2"
-                      style={{ width: `${task.progress}%` }}
-                    />
+                  <div className="flex items-center justify-center">
+                    <div className="w-full max-w-[100px]">
+                      <div className="bg-secondary rounded-full h-2 w-full">
+                        <div
+                          className="bg-primary rounded-full h-2 transition-all"
+                          style={{ width: `${task.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground text-center block mt-1">
+                        {task.progress}%
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {task.progress}%
-                  </span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
+                  {getDueInDays(task.dueDate)}
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Download</span>
-                  </Button>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => setSelectedTask(task)}>
+                        View Details
+                      </DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            Delete Task
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Task</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to delete this task? This will remove it from the task center and unassign it from the assigned user or company. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteTask(task)}>
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
+
+      {/* Task Details Modal */}
+      <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Task Details</DialogTitle>
+            <DialogDescription>
+              View detailed information about this task.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedTask && (
+              <>
+                <div>
+                  <h4 className="text-sm font-medium">Title</h4>
+                  <p className="text-sm text-muted-foreground">{selectedTask.title}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Description</h4>
+                  <p className="text-sm text-muted-foreground">{selectedTask.description}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="text-sm font-medium">Type</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {getTypeLabel(selectedTask.taskType)}
+                    </p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Status</h4>
+                    <Badge variant={
+                      selectedTask.status === 'completed' ? 'success' :
+                        selectedTask.status === 'in_progress' ? 'warning' :
+                          selectedTask.status === 'failed' ? 'destructive' :
+                            'default'
+                    }>
+                      {capitalizeStatus(selectedTask.status)}
+                    </Badge>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Progress</h4>
+                    <p className="text-sm text-muted-foreground">{selectedTask.progress}%</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Due Date</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedTask.dueDate ? format(new Date(selectedTask.dueDate), 'PPP') : '-'}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
