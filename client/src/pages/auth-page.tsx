@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Redirect, useLocation, useRoute } from "wouter";
 import { z } from "zod";
@@ -13,7 +14,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { EmailField } from "@/components/auth/EmailField";
 import { Eye, EyeOff, Check } from "lucide-react";
@@ -144,12 +144,10 @@ export default function AuthPage() {
       const { email, password } = values;
       loginMutation.mutate({ email, password });
     } else {
-      // Split full name into first and last name
       const nameParts = values.fullName.trim().split(/\s+/);
       const firstName = nameParts[0];
       const lastName = nameParts.slice(1).join(' ') || null;
 
-      // Create registration data with the new fields
       const registrationData = {
         email: values.email,
         fullName: values.fullName,
@@ -210,6 +208,7 @@ export default function AuthPage() {
                 name="email"
                 render={({ field }) => (
                   <EmailField 
+                    key={isLogin ? 'login' : 'register'}
                     field={field}
                     isLogin={isLogin}
                     showError={touchedFields.email}
