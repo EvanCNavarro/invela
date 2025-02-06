@@ -37,7 +37,8 @@ const taskSchema = z.object({
     }
   }),
   dueDate: z.date().optional(),
-  hasDueDate: z.boolean().default(true),
+  title: z.string().optional(),
+  description: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -65,11 +66,18 @@ export function CreateTaskModal() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
+      // For invite tasks, set a default title
+      if (data.taskType === "user_onboarding") {
+        data.title = `Invite for ${data.userEmail}`;
+        data.description = `User invitation for ${data.userEmail} from ${companies.find((c: any) => c.id === data.companyId)?.name}`;
+      }
+
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to create task");
@@ -100,7 +108,6 @@ export function CreateTaskModal() {
       taskType: "file_request",
       taskScope: "user",
       dueDate: tomorrow,
-      hasDueDate: true,
     },
   });
 
@@ -309,6 +316,35 @@ export function CreateTaskModal() {
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input {...field} textarea />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
 
             {taskType === "file_request" && (
               <FormField
