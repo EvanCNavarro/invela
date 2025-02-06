@@ -321,164 +321,122 @@ export function registerRoutes(app: Express): Server {
   // Task creation logic update
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
-      const { taskType, taskScope, userEmail, companyId } = req.body;
+      const { taskType, userEmail, companyId } = req.body;
 
-      // Generate task data based on type
-      let taskData;
+      // Set due date to 2 weeks from now for invitation tasks
+      const twoWeeksFromNow = new Date();
+      twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+
+      // Get company name for the description
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, companyId));
+
+      if (!company) {
+        return res.status(400).json({ message: "Company not found" });
+      }
+
+      // Basic task data that's common for all task types
+      const baseTaskData = {
+        status: 'pending',
+        progress: 0,
+        priority: 'medium',
+        createdBy: req.user!.id,
+        filesRequested: [],
+        filesUploaded: [],
+        metadata: {}
+      };
+
+      // Specific task data based on type
+      let specificTaskData;
       if (taskType === 'user_onboarding') {
-        const [company] = await db.select()
-          .from(companies)
-          .where(eq(companies.id, companyId));
-        const companyName = company ? company.name : 'the company';
-
-        // Set due date to 2 weeks from now for invitation tasks
-        const twoWeeksFromNow = new Date();
-        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
-
-        taskData = {
+        specificTaskData = {
           title: `New User Invitation: ${userEmail}`,
-          description: `Invitation sent to ${userEmail} to join ${companyName} on the platform.`,
+          description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
+          taskType: 'user_onboarding',
+          taskScope: 'user',
           userEmail,
           companyId,
           dueDate: twoWeeksFromNow,
-          assignedTo: null,
-          progress: 0,
-          status: 'pending',
-          taskScope: 'user', // Always user scope for onboarding
-          priority: 'medium',
-          taskType: 'user_onboarding',
-          createdBy: req.user!.id,
-          filesRequested: [],
-          filesUploaded: [],
-          metadata: {}
+          assignedTo: null
         };
       } else {
-        // File request task logic
-        let assignee = '';
-        if (taskScope === 'company') {
-          const [company] = await db.select()
-            .from(companies)
-            .where(eq(companies.id, companyId));
-          assignee = company ? company.name : 'the company';
-        } else {
-          assignee = userEmail || '';
-        }
-
-        taskData = {
-          title: `File Request for ${assignee}`,
-          description: `Document request task for ${assignee}`,
-          userEmail: taskScope === 'user' ? userEmail : undefined,
-          companyId: taskScope === 'company' ? companyId : undefined,
-          dueDate: req.body.dueDate ? new Date(req.body.dueDate) : undefined,
-          assignedTo: req.user!.id,
-          progress: 0,
-          status: 'pending',
-          priority: 'medium',
+        specificTaskData = {
+          title: `File Request for ${userEmail}`,
+          description: `Document request task for ${userEmail}`,
           taskType: 'file_request',
-          taskScope,
-          createdBy: req.user!.id,
-          filesRequested: [],
-          filesUploaded: [],
-          metadata: {}
+          taskScope: 'user',
+          userEmail,
+          companyId,
+          dueDate: twoWeeksFromNow,
+          assignedTo: req.user!.id
         };
       }
 
-      console.log('Task data before validation:', JSON.stringify(taskData, null, 2));
+      // Combine base and specific task data
+      const taskData = {
+        ...baseTaskData,
+        ...specificTaskData
+      };
 
-      // Validate required fields before schema validation
-      const requiredFields = ['title', 'taskType', 'taskScope', 'status', 'priority', 'progress', 'createdBy'];
-      const missingFields = requiredFields.filter(field => !taskData[field]);
-
-      if (missingFields.length > 0) {
-        return res.status(400).json({
-          message: "Missing required fields",
-          missingFields: missingFields,
-          detail: `The following fields are required: ${missingFields.join(', ')}`
-        });
-      }
+      console.log('Task data:', JSON.stringify(taskData, null, 2));
 
       // Validate the task data
       const result = insertTaskSchema.safeParse(taskData);
       if (!result.success) {
         console.error("Task validation failed:", result.error);
-        return res.status(400).json({ 
-          message: "Invalid task data", 
-          errors: result.error.format() 
+        return res.status(400).json({
+          message: "Invalid task data",
+          errors: result.error.errors.map(err => ({
+            field: err.path.join('.'),
+            message: err.message
+          }))
         });
       }
 
-      console.log('Validated task data:', JSON.stringify(result.data, null, 2));
-
       // Create the task
-      try {
-        const [task] = await db.insert(tasks)
-          .values(result.data)
-          .returning();
+      const [task] = await db.insert(tasks)
+        .values(result.data)
+        .returning();
 
-        // If it's a user onboarding task, send the invite email
-        if (taskType === 'user_onboarding' && userEmail) {
-          // Get company details for the sender
-          const [company] = await db.select()
-            .from(companies)
-            .where(eq(companies.id, companyId));
+      // Handle email sending for onboarding tasks
+      if (taskType === 'user_onboarding') {
+        const inviteUrl = `${req.protocol}://${req.get('host')}`;
 
-          if (!company) {
-            return res.status(400).json({ message: "Company information not found" });
+        const emailParams: SendEmailParams = {
+          to: userEmail,
+          from: process.env.GMAIL_USER!,
+          template: 'fintech_invite',
+          templateData: {
+            recipientEmail: userEmail,
+            senderName: req.user!.fullName,
+            companyName: company.name,
+            inviteUrl: inviteUrl
           }
+        };
 
-          // Generate invite URL
-          const inviteUrl = `${req.protocol}://${req.get('host')}`;
+        const emailResult = await emailService.sendTemplateEmail(emailParams);
 
-          const emailParams: SendEmailParams = {
-            to: userEmail,
-            from: process.env.GMAIL_USER!,
-            template: 'fintech_invite',
-            templateData: {
-              recipientEmail: userEmail,
-              senderName: req.user!.fullName,
-              companyName: company.name,
-              inviteUrl: inviteUrl
-            }
-          };
-
-          const emailResult = await emailService.sendTemplateEmail(emailParams);
-
-          if (!emailResult.success) {
-            // If email fails, update task status
-            await db.update(tasks)
-              .set({ status: 'failed' })
-              .where(eq(tasks.id, task.id));
-
-            return res.status(500).json({
-              message: "Failed to send invite email",
-              error: emailResult.error
-            });
-          }
-
-          // Update task status to reflect email sent
+        if (!emailResult.success) {
           await db.update(tasks)
-            .set({ status: 'email_sent' })
+            .set({ status: 'failed' })
             .where(eq(tasks.id, task.id));
-        }
 
-        res.status(201).json(task);
-      } catch (dbError: any) {
-        console.error("Database error:", dbError);
-        // Handle specific database errors
-        if (dbError.code === '23502') { // not-null violation
-          const column = dbError.column || 'unknown';
-          const detail = dbError.detail || '';
-          return res.status(400).json({
-            message: "Missing required fields",
-            detail: `Required field "${column}" cannot be null. ${detail}`,
-            missingFields: [column]
+          return res.status(500).json({
+            message: "Failed to send invite email",
+            error: emailResult.error
           });
         }
-        throw dbError; // Re-throw other database errors
+
+        await db.update(tasks)
+          .set({ status: 'email_sent' })
+          .where(eq(tasks.id, task.id));
       }
+
+      res.status(201).json(task);
     } catch (error: any) {
       console.error("Error creating task:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error creating task",
         error: error.message,
         detail: error.detail || 'No additional details available'
