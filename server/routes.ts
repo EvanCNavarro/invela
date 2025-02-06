@@ -318,9 +318,51 @@ export function registerRoutes(app: Express): Server {
   // Add create task endpoint
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
-      const result = insertTaskSchema.safeParse(req.body);
+      const { taskType, taskScope, userEmail, companyId, dueDate } = req.body;
+
+      // Generate title and description before validation
+      let taskData;
+      if (taskType === 'user_onboarding') {
+        const [company] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, companyId));
+        const companyName = company ? company.name : 'the company';
+        taskData = {
+          taskType,
+          title: `New User Invitation: ${userEmail}`,
+          description: `Invitation sent to ${userEmail} to join ${companyName} on the platform.`,
+          userEmail,
+          companyId,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          assignedTo: req.user!.id,
+        };
+      } else {
+        // File request task
+        let assignee = '';
+        if (taskScope === 'company') {
+          const [company] = await db.select()
+            .from(companies)
+            .where(eq(companies.id, companyId));
+          assignee = company ? company.name : 'the company';
+        } else {
+          assignee = userEmail || '';
+        }
+        taskData = {
+          taskType,
+          taskScope,
+          title: `File Request for ${assignee}`,
+          description: `Document request task for ${assignee}`,
+          userEmail: taskScope === 'user' ? userEmail : undefined,
+          companyId: taskScope === 'company' ? companyId : undefined,
+          dueDate: dueDate ? new Date(dueDate) : undefined,
+          assignedTo: req.user!.id,
+        };
+      }
+
+      const result = insertTaskSchema.safeParse(taskData);
       if (!result.success) {
-        return res.status(400).json({ message: "Invalid task data" });
+        console.error("Task validation failed:", result.error);
+        return res.status(400).json({ message: "Invalid task data", errors: result.error.format() });
       }
 
       // Create the task
@@ -329,15 +371,16 @@ export function registerRoutes(app: Express): Server {
           ...result.data,
           status: 'pending',
           createdBy: req.user!.id,
+          assignedTo: req.user!.id,
         })
         .returning();
 
       // If it's a user onboarding task, send the invite email
-      if (result.data.taskType === 'user_onboarding') {
+      if (taskType === 'user_onboarding' && userEmail) {
         // Get company details for the sender
         const [company] = await db.select()
           .from(companies)
-          .where(eq(companies.id, result.data.companyId));
+          .where(eq(companies.id, companyId));
 
         if (!company) {
           return res.status(400).json({ message: "Company information not found" });
@@ -347,11 +390,11 @@ export function registerRoutes(app: Express): Server {
         const inviteUrl = `${req.protocol}://${req.get('host')}`;
 
         const emailParams: SendEmailParams = {
-          to: result.data.userEmail,
+          to: userEmail,
           from: process.env.GMAIL_USER!,
           template: 'fintech_invite',
           templateData: {
-            recipientEmail: result.data.userEmail,
+            recipientEmail: userEmail,
             senderName: req.user!.fullName,
             companyName: company.name,
             inviteUrl: inviteUrl
@@ -363,7 +406,7 @@ export function registerRoutes(app: Express): Server {
         if (!emailResult.success) {
           // If email fails, update task status
           await db.update(tasks)
-            .set({ status: 'failed', error: emailResult.error })
+            .set({ status: 'failed' })
             .where(eq(tasks.id, task.id));
 
           return res.status(500).json({
@@ -599,7 +642,6 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error uploading company logo" });
     }
   });
-
 
   // Update the company logo endpoint to properly serve SVG files
   app.get("/api/companies/:id/logo", requireAuth, async (req, res) => {

@@ -80,8 +80,6 @@ export const tasks = pgTable("tasks", {
   userEmail: text("user_email"),
   dueDate: timestamp("due_date"),
   completionDate: timestamp("completion_date"),
-  taskCategory: text("task_category"),
-  taskSource: text("task_source").notNull().default('user_action'),
   filesRequested: jsonb("files_requested").$type<string[]>().default([]),
   filesUploaded: jsonb("files_uploaded").$type<string[]>().default([]),
   metadata: jsonb("metadata").default({}),
@@ -169,7 +167,8 @@ export const insertTaskSchema = z.object({
   userEmail: z.string().email().optional(),
   companyId: z.number().optional(),
   dueDate: z.date().optional(),
-  priority: z.enum(["low", "medium", "high"]).optional(),
+  assignedTo: z.number().optional(),
+  priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   filesRequested: z.array(z.string()).optional(),
 }).superRefine((data, ctx) => {
   if (data.taskType === "user_onboarding") {
