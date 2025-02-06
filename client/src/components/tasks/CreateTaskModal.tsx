@@ -12,7 +12,7 @@ import { CalendarIcon, PlusIcon, Check, FileText, Send, User, Building2 } from "
 import { format, addDays } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 
@@ -73,6 +73,7 @@ export function CreateTaskModal() {
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies", searchQuery],
@@ -122,6 +123,9 @@ export function CreateTaskModal() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate and refetch tasks query
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+
       toast({
         title: "Success",
         description: taskType === TaskType.FILE_REQUEST
