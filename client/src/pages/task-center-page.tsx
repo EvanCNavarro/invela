@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 
 interface Task {
   id: number;
@@ -93,8 +94,8 @@ function ProgressTracker() {
         </div>
         <div className="absolute top-4 left-0 w-full">
           <div className="h-1 bg-muted rounded-full">
-            <div 
-              className="h-full bg-primary rounded-full transition-all duration-300" 
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
               style={{ width: '50%' }}
             />
           </div>
@@ -112,7 +113,7 @@ export default function TaskCenterPage() {
   const [scopeFilter, setScopeFilter] = useState("All Scopes");
   const { user } = useAuth();
 
-  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({ 
+  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
@@ -129,120 +130,120 @@ export default function TaskCenterPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <ProgressTracker />
 
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">Task Center</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and track your company's tasks and submissions.
-          </p>
-        </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold mb-1">Task Center</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage and track your company's tasks and submissions.
+              </p>
+            </div>
+            <CreateTaskModal />
+          </div>
 
-        <Tabs defaultValue="my-tasks" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="my-tasks" className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              My Tasks
-            </TabsTrigger>
-            <TabsTrigger value="team-tasks" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Team Tasks
-            </TabsTrigger>
-          </TabsList>
+          <Tabs defaultValue="my-tasks" className="w-full">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+              <TabsList className="mb-0">
+                <TabsTrigger value="my-tasks" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  My Tasks
+                </TabsTrigger>
+                <TabsTrigger value="team-tasks" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Team Tasks
+                </TabsTrigger>
+              </TabsList>
 
-          <div className="bg-background rounded-md p-4 md:p-6 border">
-            <div className="flex flex-col gap-4 mb-6">
-              <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                <div className="w-full md:max-w-md">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      placeholder="Search Tasks"
-                      className="pl-9"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <Button>
-                  <PlusIcon className="h-4 w-4 mr-2" />
-                  Create Task
-                </Button>
-              </div>
-
-              <div className="flex flex-wrap gap-4">
-                <Select value={timeFilter} onValueChange={setTimeFilter}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                    <SelectItem value="Last year">Last year</SelectItem>
-                    <SelectItem value="All time">All time</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Status">All Status</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Failed">Failed</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Types">All Types</SelectItem>
-                    <SelectItem value="User Onboarding">User Onboarding</SelectItem>
-                    <SelectItem value="File Request">File Request</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={scopeFilter} onValueChange={setScopeFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="All Scopes">All Scopes</SelectItem>
-                    <SelectItem value="User">User</SelectItem>
-                    <SelectItem value="Company">Company</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setTimeFilter("Last 6 months");
-                    setStatusFilter("All Status");
-                    setTypeFilter("All Types");
-                    setScopeFilter("All Scopes");
-                  }}
-                >
-                  Clear Filters
-                </Button>
+              <div className="relative w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search Tasks"
+                  className="pl-9 w-full sm:w-[300px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
             </div>
 
-            <TabsContent value="my-tasks">
-              <TaskList tasks={myTasks} isLoading={isLoading} error={error} />
-            </TabsContent>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <Select value={timeFilter} onValueChange={setTimeFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Last 6 months">Last 6 months</SelectItem>
+                      <SelectItem value="Last year">Last year</SelectItem>
+                      <SelectItem value="All time">All time</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-            <TabsContent value="team-tasks">
-              <TaskList tasks={teamTasks} isLoading={isLoading} error={error} />
-            </TabsContent>
-          </div>
-        </Tabs>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Status">All Status</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Failed">Failed</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[160px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Types">All Types</SelectItem>
+                      <SelectItem value="User Onboarding">User Onboarding</SelectItem>
+                      <SelectItem value="File Request">File Request</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={scopeFilter} onValueChange={setScopeFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All Scopes">All Scopes</SelectItem>
+                      <SelectItem value="User">User</SelectItem>
+                      <SelectItem value="Company">Company</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setTimeFilter("Last 6 months");
+                      setStatusFilter("All Status");
+                      setTypeFilter("All Types");
+                      setScopeFilter("All Scopes");
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </div>
+
+                <TabsContent value="my-tasks" className="m-0">
+                  <TaskList tasks={myTasks} isLoading={isLoading} error={error} />
+                </TabsContent>
+
+                <TabsContent value="team-tasks" className="m-0">
+                  <TaskList tasks={teamTasks} isLoading={isLoading} error={error} />
+                </TabsContent>
+              </CardContent>
+            </Card>
+          </Tabs>
+        </div>
       </div>
     </DashboardLayout>
   );
