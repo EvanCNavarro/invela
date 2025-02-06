@@ -421,6 +421,7 @@ interface TaskListProps {
 
 function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -623,19 +624,25 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                   {getDueInDays(task.dueDate)}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
+                  <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setSelectedTask(task)}>
+                      <DropdownMenuItem onSelect={() => {
+                        setDropdownOpen(false);
+                        setSelectedTask(task);
+                      }}>
                         View Details
                       </DropdownMenuItem>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <DropdownMenuItem onSelect={(e) => {
+                            e.preventDefault();
+                            setDropdownOpen(false);
+                          }}>
                             Delete Task
                           </DropdownMenuItem>
                         </AlertDialogTrigger>
