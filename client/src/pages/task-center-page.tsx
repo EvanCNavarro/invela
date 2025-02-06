@@ -40,15 +40,17 @@ interface Task {
   description: string;
   taskType: 'user_onboarding' | 'file_request';
   taskScope: 'user' | 'company';
-  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  status: 'pending' | 'email_sent' | 'completed' | 'failed';
   priority: 'low' | 'medium' | 'high';
   progress: number;
-  assignedTo: string | null; //Updated to include null
+  assignedTo: number | null;
+  createdBy: number;
+  userEmail?: string;
+  companyId?: number;
   dueDate?: string;
   completionDate?: string;
   updatedAt?: string;
   createdAt: string;
-  createdBy?: string; // Added createdBy field
 }
 
 function ProgressTracker() {
@@ -83,8 +85,8 @@ function ProgressTracker() {
               <div className={cn(
                 "w-8 h-8 rounded-md flex items-center justify-center mb-2",
                 step.status === 'completed' ? 'bg-primary text-primary-foreground' :
-                step.status === 'in-progress' ? 'bg-primary text-primary-foreground' :
-                'bg-muted text-muted-foreground'
+                  step.status === 'in-progress' ? 'bg-primary text-primary-foreground' :
+                    'bg-muted text-muted-foreground'
               )}>
                 {step.status === 'completed' ? '✓' : (index + 1)}
               </div>
@@ -129,12 +131,11 @@ export default function TaskCenterPage() {
     const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
 
     // For "my-tasks", show tasks where:
-    // 1. The current user is assigned to the task
-    // 2. For file_request tasks, show tasks created by the current user
+    // 1. Tasks assigned to the current user
+    // 2. File request tasks created by the current user
     const matchesTab = activeTab === "my-tasks"
       ? (task.assignedTo === user?.id) || (task.taskType === 'file_request' && task.createdBy === user?.id)
-      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id) || // Show invites in "for-others"
-        (task.assignedTo !== user?.id && task.assignedTo !== null); // Show other assigned tasks
+      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id); // Show invitation tasks in "for-others" when created by current user
 
     return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
@@ -228,6 +229,7 @@ export default function TaskCenterPage() {
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>
+                      <SelectItem value="Email Sent">Email Sent</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -374,9 +376,10 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                 <TableCell>
                   <Badge variant={
                     task.status === 'completed' ? 'success' :
-                    task.status === 'in_progress' ? 'warning' :
-                    task.status === 'failed' ? 'destructive' :
-                    'default'
+                      task.status === 'in_progress' ? 'warning' :
+                        task.status === 'failed' ? 'destructive' :
+                          task.status === 'email_sent' ? 'default' :
+                            'default'
                   }>
                     {task.status.replace('_', ' ')}
                   </Badge>

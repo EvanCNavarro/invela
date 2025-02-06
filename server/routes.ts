@@ -337,11 +337,13 @@ export function registerRoutes(app: Express): Server {
           userEmail,
           companyId,
           dueDate: dueDate ? new Date(dueDate) : undefined,
-          // For invite tasks, we don't set assignedTo since the user doesn't exist yet
-          assignedTo: undefined,
+          // For invite tasks, explicitly set assignedTo to null since the user doesn't exist yet
+          assignedTo: null,
+          progress: 0,
+          status: 'pending'
         };
       } else {
-        // File request task
+        // File request task logic remains unchanged
         let assignee = '';
         if (taskScope === 'company') {
           const [company] = await db.select()
@@ -360,6 +362,8 @@ export function registerRoutes(app: Express): Server {
           companyId: taskScope === 'company' ? companyId : undefined,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assignedTo: req.user!.id,
+          progress: 0,
+          status: 'pending'
         };
       }
 
@@ -373,7 +377,6 @@ export function registerRoutes(app: Express): Server {
       const [task] = await db.insert(tasks)
         .values({
           ...result.data,
-          status: 'pending',
           createdBy: req.user!.id,
         })
         .returning();
