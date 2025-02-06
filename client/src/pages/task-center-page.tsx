@@ -411,11 +411,16 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
 
   const formatTaskTitle = (task: Task) => {
     if (task.taskType === 'user_onboarding') {
+      // Extract company name from description using regex
+      // Pattern: "to join {companyName} on the platform"
+      const companyMatch = task.description?.match(/to join (.*?) on the platform/);
+      const companyName = companyMatch ? companyMatch[1] : 'Unknown';
+
       return (
         <>
           <div className="font-medium">User Onboarding:</div>
           <div className="text-xs text-muted-foreground line-clamp-2">
-            {task.userEmail} (employee of {task.companyName || 'Unknown'}) was sent a new invitation to start their onboarding on the Invela platform.
+            {task.userEmail} (employee of {companyName}) was sent a new invitation to start their onboarding on the Invela platform.
           </div>
         </>
       );
