@@ -21,6 +21,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import { emailService } from "./services/email/service.ts";
 import type { SendEmailParams } from "./services/email/service.ts";
+import { getTasks, createTask, updateTaskStatus, getCompanyUsers } from "./routes/tasks";
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -308,27 +309,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Tasks
-  app.get("/api/tasks", requireAuth, async (req, res) => {
-    const results = await db.select().from(tasks).where(
-      eq(tasks.assignedTo, req.user!.id)
-    );
-    res.json(results);
-  });
+  app.get("/api/tasks", requireAuth, getTasks);
+  app.post("/api/tasks", requireAuth, createTask);
+  app.patch("/api/tasks/:taskId/status", requireAuth, updateTaskStatus);
+  app.get("/api/company/users", requireAuth, getCompanyUsers);
 
-  app.post("/api/tasks", requireAuth, async (req, res) => {
-    const result = insertTaskSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ message: "Invalid task data" });
-    }
-
-    const task = await db.insert(tasks)
-      .values({
-        ...result.data,
-        createdBy: req.user!.id
-      })
-      .returning();
-    res.status(201).json(task[0]);
-  });
 
   // Relationships
   app.get("/api/relationships", requireAuth, async (req, res) => {
@@ -617,7 +602,7 @@ export function registerRoutes(app: Express): Server {
       const result = await emailService.sendTemplateEmail(emailParams);
 
       if (!result.success) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to send invite email",
           error: result.error
         });

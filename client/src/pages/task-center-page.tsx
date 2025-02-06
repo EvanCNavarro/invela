@@ -19,9 +19,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { CreateTaskForm } from "@/components/tasks/CreateTaskForm";
 
 interface Task {
   id: number;
@@ -92,6 +101,7 @@ export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("Last 6 months");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({ 
     queryKey: ["/api/tasks"],
@@ -129,10 +139,23 @@ export default function TaskCenterPage() {
                   />
                 </div>
               </div>
-              <Button>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add New Task
-              </Button>
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusIcon className="h-4 w-4 mr-2" />
+                    Add New Task
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create New Task</DialogTitle>
+                    <DialogDescription>
+                      Add a new task and assign it to a team member.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <CreateTaskForm onSuccess={() => setIsCreateDialogOpen(false)} />
+                </DialogContent>
+              </Dialog>
             </div>
 
             <div className="flex flex-wrap gap-4">
