@@ -121,8 +121,10 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
 
   const { data: taskCounts = { myTasksCount: 0, forOthersCount: 0 } } = useTaskCounts();
+
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+    enabled: !!user
   });
 
   const itemsPerPage = 10;
