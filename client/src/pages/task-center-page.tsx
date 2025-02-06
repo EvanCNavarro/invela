@@ -163,8 +163,9 @@ export default function TaskCenterPage() {
         return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
       } else if (sortConfig.key === 'status') {
         return sortConfig.direction === 'asc' ? a.status.localeCompare(b.status) : b.status.localeCompare(a.status);
+      } else if (sortConfig.key === 'progress') {
+        return sortConfig.direction === 'asc' ? a.progress - b.progress : b.progress - a.progress;
       }
-      // Add other sorting logic for different columns if needed
       return 0;
     });
   };
@@ -189,6 +190,18 @@ export default function TaskCenterPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const hasActiveFilters = searchQuery !== "" ||
+    statusFilter !== "All Statuses" ||
+    typeFilter !== "All Task Types" ||
+    scopeFilter !== "All Assignee Types";
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("All Statuses");
+    setTypeFilter("All Task Types");
+    setScopeFilter("All Assignee Types");
+  };
 
   return (
     <DashboardLayout>
@@ -283,54 +296,50 @@ export default function TaskCenterPage() {
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[140px] justify-start">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Failed">Failed</SelectItem>
-                      <SelectItem value="Email Sent">Email Sent</SelectItem>
+                      <SelectItem value="All Statuses" className="[&>[data-icon]]:text-primary">All Statuses</SelectItem>
+                      <SelectItem value="Pending" className="[&>[data-icon]]:text-primary">Pending</SelectItem>
+                      <SelectItem value="In Progress" className="[&>[data-icon]]:text-primary">In Progress</SelectItem>
+                      <SelectItem value="Completed" className="[&>[data-icon]]:text-primary">Completed</SelectItem>
+                      <SelectItem value="Failed" className="[&>[data-icon]]:text-primary">Failed</SelectItem>
+                      <SelectItem value="Email Sent" className="[&>[data-icon]]:text-primary">Email Sent</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] justify-start">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Task Types">All Task Types</SelectItem>
-                      <SelectItem value="User Onboarding">User Onboarding</SelectItem>
-                      <SelectItem value="File Request">File Request</SelectItem>
+                      <SelectItem value="All Task Types" className="[&>[data-icon]]:text-primary">All Task Types</SelectItem>
+                      <SelectItem value="User Onboarding" className="[&>[data-icon]]:text-primary">User Onboarding</SelectItem>
+                      <SelectItem value="File Request" className="[&>[data-icon]]:text-primary">File Request</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={scopeFilter} onValueChange={setScopeFilter}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[160px] justify-start">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Assignee Types">All Assignee Types</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                      <SelectItem value="Company">Company</SelectItem>
+                      <SelectItem value="All Assignee Types" className="[&>[data-icon]]:text-primary">All Assignee Types</SelectItem>
+                      <SelectItem value="User" className="[&>[data-icon]]:text-primary">User</SelectItem>
+                      <SelectItem value="Company" className="[&>[data-icon]]:text-primary">Company</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Button
                     variant="outline"
                     size="default"
-                    className="flex items-center gap-2"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setStatusFilter("All Statuses");
-                      setTypeFilter("All Task Types");
-                      setScopeFilter("All Assignee Types");
-                    }}
+                    className="flex items-center gap-2 sm:w-auto w-10 h-10"
+                    onClick={clearFilters}
+                    disabled={!hasActiveFilters}
                   >
                     <FilterX className="h-4 w-4" />
-                    Clear Filters
+                    <span className="hidden sm:inline">Clear Filters</span>
                   </Button>
                 </div>
 
@@ -472,13 +481,29 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
               >
                 Status
                 {sortConfig.key === 'status' ? (
-                  sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                  sortConfig.direction === 'asc' ?
+                    <ArrowUp className="h-4 w-4 text-primary" /> :
+                    <ArrowDown className="h-4 w-4 text-primary" />
                 ) : (
                   <ArrowUpDown className="h-4 w-4" />
                 )}
               </button>
             </TableHead>
-            <TableHead>Progress</TableHead>
+            <TableHead>
+              <button
+                onClick={() => onSort('progress')}
+                className="flex items-center space-x-1 hover:text-primary transition-colors"
+              >
+                Progress
+                {sortConfig.key === 'progress' ? (
+                  sortConfig.direction === 'asc' ?
+                    <ArrowUp className="h-4 w-4 text-primary" /> :
+                    <ArrowDown className="h-4 w-4 text-primary" />
+                ) : (
+                  <ArrowUpDown className="h-4 w-4" />
+                )}
+              </button>
+            </TableHead>
             <TableHead className="hidden md:table-cell">
               <button
                 onClick={() => onSort('dueDate')}
@@ -486,7 +511,9 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
               >
                 Due In
                 {sortConfig.key === 'dueDate' ? (
-                  sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                  sortConfig.direction === 'asc' ?
+                    <ArrowUp className="h-4 w-4 text-primary" /> :
+                    <ArrowDown className="h-4 w-4 text-primary" />
                 ) : (
                   <ArrowUpDown className="h-4 w-4" />
                 )}
