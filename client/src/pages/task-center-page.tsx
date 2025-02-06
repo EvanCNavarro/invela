@@ -426,17 +426,33 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
 
   const handleDeleteTask = async (task: Task) => {
     try {
-      await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
-      // Invalidate the tasks cache
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      const response = await fetch(`/api/tasks/${task.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to delete task');
+      }
+
+      // Force a fresh refetch of tasks data
+      await queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+
       toast({
         title: "Task deleted",
         description: "The task has been successfully removed.",
       });
+
+      // Close any open dialogs/modals
+      setSelectedTask(null);
     } catch (error) {
+      console.error('Delete task error:', error);
       toast({
         title: "Error",
-        description: "Failed to delete the task. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to delete the task. Please try again.",
         variant: "destructive",
       });
     }
