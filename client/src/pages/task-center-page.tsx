@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -57,6 +57,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { format, differenceInDays } from "date-fns";
+import { Separator } from "@/components/ui/separator";
 
 interface Task {
   id: number;
@@ -413,8 +414,7 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Task</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead className="w-[200px]">Task</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Progress</TableHead>
             <TableHead className="hidden md:table-cell">Due In</TableHead>
@@ -424,7 +424,7 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={5} className="text-center py-8">
                 <div className="flex items-center justify-center">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                 </div>
@@ -432,13 +432,13 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
             </TableRow>
           ) : error ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-destructive">
+              <TableCell colSpan={5} className="text-center py-8 text-destructive">
                 Failed to load tasks. Please try again later.
               </TableCell>
             </TableRow>
           ) : tasks.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+              <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                 No tasks found
               </TableCell>
             </TableRow>
@@ -447,28 +447,22 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
               <TableRow key={task.id}>
                 <TableCell>
                   <div className="group relative">
-                    <div className="truncate max-w-[300px]">
-                      <div className="font-medium">{task.title}</div>
+                    <div className="truncate max-w-[180px]">
+                      <div className="font-medium truncate">{task.title}</div>
                       <div className="text-xs text-muted-foreground truncate">{task.description}</div>
                     </div>
-                    <div className="invisible group-hover:visible absolute z-10 p-2 bg-popover text-popover-foreground shadow-md rounded-md -top-1 left-0 w-full max-w-[400px]">
+                    <div className="invisible group-hover:visible absolute z-10 p-2 bg-popover text-popover-foreground shadow-md rounded-md -top-1 left-0 w-full max-w-[300px]">
                       <div className="font-medium">{task.title}</div>
                       <div className="text-xs mt-1">{task.description}</div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm font-medium">
-                    {getTypeLabel(task.taskType)}
-                  </span>
-                </TableCell>
-                <TableCell>
                   <Badge variant={
-                    task.status === 'completed' ? 'success' :
-                      task.status === 'in_progress' ? 'warning' :
-                        task.status === 'failed' ? 'destructive' :
-                          task.status === 'email_sent' ? 'default' :
-                            'default'
+                    task.status === 'completed' ? 'default' :
+                      task.status === 'failed' ? 'destructive' :
+                        task.status === 'email_sent' ? 'default' :
+                          'default'
                   }>
                     {capitalizeStatus(task.status)}
                   </Badge>
@@ -534,51 +528,109 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
 
       {/* Task Details Modal */}
       <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Task Details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Task Details
+            </DialogTitle>
             <DialogDescription>
-              View detailed information about this task.
+              Detailed information about this task and its current status.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+
+          <div className="space-y-6">
             {selectedTask && (
               <>
-                <div>
-                  <h4 className="text-sm font-medium">Title</h4>
-                  <p className="text-sm text-muted-foreground">{selectedTask.title}</p>
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                    Basic Information
+                  </h4>
+                  <div className="grid gap-4 pl-6">
+                    <div>
+                      <div className="text-sm font-medium">Title</div>
+                      <div className="text-sm text-muted-foreground mt-1">{selectedTask.title}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">Description</div>
+                      <div className="text-sm text-muted-foreground mt-1">{selectedTask.description}</div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-medium">Description</h4>
-                  <p className="text-sm text-muted-foreground">{selectedTask.description}</p>
+
+                <Separator />
+
+                {/* Status & Progress */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <BarChart4 className="h-4 w-4 text-muted-foreground" />
+                    Status & Progress
+                  </h4>
+                  <div className="grid gap-4 pl-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-sm font-medium">Type</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {getTypeLabel(selectedTask.taskType)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">Status</div>
+                        <Badge variant={
+                          selectedTask.status === 'completed' ? 'default' :
+                            selectedTask.status === 'failed' ? 'destructive' :
+                              'default'
+                        } className="mt-1">
+                          {capitalizeStatus(selectedTask.status)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium mb-2">Progress</div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div
+                          className="bg-primary rounded-full h-2 transition-all"
+                          style={{ width: `${selectedTask.progress}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        {selectedTask.progress}% Complete
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Type</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {getTypeLabel(selectedTask.taskType)}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Status</h4>
-                    <Badge variant={
-                      selectedTask.status === 'completed' ? 'success' :
-                        selectedTask.status === 'in_progress' ? 'warning' :
-                          selectedTask.status === 'failed' ? 'destructive' :
-                            'default'
-                    }>
-                      {capitalizeStatus(selectedTask.status)}
-                    </Badge>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Progress</h4>
-                    <p className="text-sm text-muted-foreground">{selectedTask.progress}%</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Due Date</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedTask.dueDate ? format(new Date(selectedTask.dueDate), 'PPP') : '-'}
-                    </p>
+
+                <Separator />
+
+                {/* Timing Information */}
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    Timing Information
+                  </h4>
+                  <div className="grid grid-cols-2 gap-4 pl-6">
+                    <div>
+                      <div className="text-sm font-medium">Created On</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {selectedTask.createdAt ? format(new Date(selectedTask.createdAt), 'PPP') : '-'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">Due Date</div>
+                      <div className="text-sm text-muted-foreground mt-1">
+                        {selectedTask.dueDate ? format(new Date(selectedTask.dueDate), 'PPP') : '-'}
+                      </div>
+                    </div>
+                    {selectedTask.completionDate && (
+                      <div>
+                        <div className="text-sm font-medium">Completed On</div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          {format(new Date(selectedTask.completionDate), 'PPP')}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
