@@ -37,8 +37,6 @@ const taskSchema = z.object({
     }
   }),
   dueDate: z.date().optional(),
-  title: z.string().optional(),
-  description: z.string().optional(),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -66,10 +64,27 @@ export function CreateTaskModal() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
-      // For invite tasks, set a default title
+      // For invite tasks, set a default title and description
       if (data.taskType === "user_onboarding") {
-        data.title = `Invite for ${data.userEmail}`;
-        data.description = `User invitation for ${data.userEmail} from ${companies.find((c: any) => c.id === data.companyId)?.name}`;
+        const company = companies.find((c: any) => c.id === data.companyId);
+        const companyName = company ? company.name : 'the company';
+        const taskData = {
+          ...data,
+          title: `New User Invitation: ${data.userEmail}`,
+          description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`
+        };
+        data = taskData;
+      } else {
+        // For file request tasks
+        const assignee = data.taskScope === "company" 
+          ? companies.find((c: any) => c.id === data.companyId)?.name 
+          : data.userEmail;
+        const taskData = {
+          ...data,
+          title: `File Request for ${assignee}`,
+          description: `Document request task for ${assignee}`
+        };
+        data = taskData;
       }
 
       const response = await fetch("/api/tasks", {
@@ -84,10 +99,10 @@ export function CreateTaskModal() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast({
         title: "Success",
-        description: taskType === "file_request"
+        description: variables.taskType === "file_request"
           ? "File request task created successfully"
           : "Invite sent successfully and task created",
       });
@@ -116,27 +131,15 @@ export function CreateTaskModal() {
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
-
-    if (isSameDay(date, tomorrow)) {
-      setSelectedDueDateOption(dueDateOptions[0]);
-    } else if (isSameDay(date, nextWeek)) {
-      setSelectedDueDateOption(dueDateOptions[1]);
-    } else {
-      setSelectedDueDateOption(dueDateOptions[2]);
-    }
-
     form.setValue("dueDate", date);
-    form.setValue("hasDueDate", true);
   };
 
   const handleDueDateOptionClick = (option: typeof dueDateOptions[number]) => {
     setSelectedDueDateOption(option);
     if (option.value === "none") {
-      form.setValue("hasDueDate", false);
       form.setValue("dueDate", undefined);
     } else if (typeof option.value === "number") {
       const date = addDays(new Date(), option.value);
-      form.setValue("hasDueDate", true);
       form.setValue("dueDate", date);
     }
   };
@@ -317,35 +320,6 @@ export function CreateTaskModal() {
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Input {...field} textarea />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-
             {taskType === "file_request" && (
               <FormField
                 control={form.control}
@@ -360,7 +334,6 @@ export function CreateTaskModal() {
                             variant={"outline"}
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !form.getValues("hasDueDate") && "text-muted-foreground opacity-50",
                               !field.value && "text-muted-foreground"
                             )}
                           >
