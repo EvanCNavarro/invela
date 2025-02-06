@@ -152,6 +152,17 @@ export default function TaskCenterPage() {
     setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
   };
 
+  // Add due date failure check
+  const processTaskStatus = (task: Task): Task => {
+    if (task.status !== 'completed' && task.dueDate) {
+      const dueDate = new Date(task.dueDate);
+      if (dueDate < new Date() && task.status !== 'failed') {
+        return { ...task, status: 'failed' };
+      }
+    }
+    return task;
+  };
+
   const getSortedTasks = (tasks: Task[]) => {
     return [...tasks].sort((a, b) => {
       if (sortConfig.key === 'dueDate') {
@@ -168,10 +179,11 @@ export default function TaskCenterPage() {
   };
 
   const itemsPerPage = 10;
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = tasks.map(processTaskStatus).filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase();
-    const matchesType = typeFilter === "All Task Types" || task.taskType === typeFilter.toLowerCase();
+    const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase().replace(/ /g, '_');
+    const matchesType = typeFilter === "All Task Types" ||
+      task.taskType === typeFilter.toLowerCase().replace(/ /g, '_');
     const matchesScope = scopeFilter === "All Assignee Types" || task.taskScope === scopeFilter.toLowerCase();
 
     const matchesTab = activeTab === "my-tasks"
@@ -200,6 +212,7 @@ export default function TaskCenterPage() {
     setScopeFilter("All Assignee Types");
   };
 
+  // Component render
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -292,17 +305,27 @@ export default function TaskCenterPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
+                  <Button
+                    variant={hasActiveFilters ? "default" : "outline"}
+                    size="default"
+                    className="flex items-center w-10 h-10 shrink-0"
+                    onClick={clearFilters}
+                    disabled={!hasActiveFilters}
+                  >
+                    <FilterX className="h-4 w-4" />
+                  </Button>
+
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[140px] justify-between">
                       <span className="flex-grow text-left">{statusFilter}</span>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Statuses" className="[&_[data-icon-check]]:text-primary">All Statuses</SelectItem>
-                      <SelectItem value="Pending" className="[&_[data-icon-check]]:text-primary">Pending</SelectItem>
+                      <SelectItem value="Email Sent" className="[&_[data-icon-check]]:text-primary">Email Sent</SelectItem>
                       <SelectItem value="In Progress" className="[&_[data-icon-check]]:text-primary">In Progress</SelectItem>
+                      <SelectItem value="Pending" className="[&_[data-icon-check]]:text-primary">Pending</SelectItem>
                       <SelectItem value="Completed" className="[&_[data-icon-check]]:text-primary">Completed</SelectItem>
                       <SelectItem value="Failed" className="[&_[data-icon-check]]:text-primary">Failed</SelectItem>
-                      <SelectItem value="Email Sent" className="[&_[data-icon-check]]:text-primary">Email Sent</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -327,17 +350,6 @@ export default function TaskCenterPage() {
                       <SelectItem value="Company" className="[&_[data-icon-check]]:text-primary">Company</SelectItem>
                     </SelectContent>
                   </Select>
-
-                  <Button
-                    variant={hasActiveFilters ? "default" : "outline"}
-                    size="default"
-                    className="flex items-center gap-2 sm:w-auto w-10 h-10 shrink-0"
-                    onClick={clearFilters}
-                    disabled={!hasActiveFilters}
-                  >
-                    <FilterX className="h-4 w-4" />
-                    <span className="hidden [@media(min-width:1200px)]:inline">Clear Filters</span>
-                  </Button>
                 </div>
 
                 <div className="min-h-[400px]">
@@ -362,7 +374,7 @@ export default function TaskCenterPage() {
                   </TabsContent>
                 </div>
 
-                {!isLoading && !error && sortedAndFilteredTasks.length > 0 && (
+                {!isLoading && !error && totalPages > 1 && (
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="text-sm text-muted-foreground">
                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredTasks.length)} of {sortedAndFilteredTasks.length} tasks
@@ -465,6 +477,23 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
     );
   };
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'failed':
+        return 'destructive';
+      case 'in_progress':
+      case 'pending':
+        return 'warning';
+      case 'email_sent':
+        return 'secondary';
+      default:
+        return 'default';
+    }
+  };
+
+
   return (
     <div>
       <Table>
@@ -549,11 +578,10 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={
-                    task.status === 'completed' ? 'default' :
-                      task.status === 'failed' ? 'destructive' :
-                        'default'
-                  } className="no-hover text-center whitespace-normal">
+                  <Badge
+                    variant={getStatusBadgeVariant(task.status)}
+                    className="no-hover text-center whitespace-normal"
+                  >
                     {capitalizeStatus(task.status)}
                   </Badge>
                 </TableCell>
