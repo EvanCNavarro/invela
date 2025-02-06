@@ -214,6 +214,7 @@ export default function AuthPage() {
                     isLogin={isLogin}
                     showError={touchedFields.email}
                     onExtractData={handleExtractedData}
+                    autoFocus={true}
                   />
                 )}
               />

@@ -15,6 +15,7 @@ interface EmailFieldProps {
   showError?: boolean;
   isLoading?: boolean;
   onExtractData?: (data: { fullName?: string; company?: string }) => void;
+  autoFocus?: boolean;
 }
 
 export function EmailField({ 
@@ -24,7 +25,8 @@ export function EmailField({
   onValidEmail, 
   showError, 
   isLoading,
-  onExtractData 
+  onExtractData,
+  autoFocus
 }: EmailFieldProps) {
   const [emailExists, setEmailExists] = useState<boolean | null>(null);
   const [isValidFormat, setIsValidFormat] = useState<boolean | null>(null);
@@ -140,6 +142,7 @@ export function EmailField({
               type="email" 
               {...field} 
               onBlur={handleBlur}
+              autoFocus={autoFocus}
               className={cn(
                 "pr-10",
                 !isLogin && (!touched && !showError ? '' :
