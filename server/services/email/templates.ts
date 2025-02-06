@@ -29,7 +29,7 @@ const templates = {
       3. Upload the requested files to our secure system.
       4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Click here to get started: ${data.inviteUrl}?email=${encodeURIComponent(data.recipientEmail || '')}
+      Click here to get started: ${data.inviteUrl}/register?email=${encodeURIComponent(data.recipientEmail || '')}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -58,12 +58,24 @@ const templates = {
               padding: 40px;
               box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
-            .title {
+            .company-name {
               font-size: 20px;
               font-weight: 600;
               color: #111827;
+              margin: 0 0 24px 0;
+            }
+            .title {
+              font-size: 16px;
+              font-weight: 500;
+              color: #374151;
               margin: 0 0 32px 0;
               line-height: 1.4;
+            }
+            .getting-started {
+              background-color: #f9fafb;
+              border-radius: 8px;
+              padding: 24px;
+              margin-bottom: 32px;
             }
             .section-title {
               font-weight: 600;
@@ -73,15 +85,18 @@ const templates = {
             }
             ol {
               padding-left: 24px;
-              margin: 0 0 32px 0;
+              margin: 0;
             }
             li {
               margin-bottom: 12px;
               color: #374151;
             }
+            li:last-child {
+              margin-bottom: 0;
+            }
             .button {
               background-color: #4965EC;
-              color: white;
+              color: #ffffff;
               padding: 12px 24px;
               text-decoration: none;
               border-radius: 6px;
@@ -90,6 +105,7 @@ const templates = {
               font-size: 14px;
               text-align: center;
               transition: background-color 0.2s;
+              margin: 32px 0;
             }
             .button:hover {
               background-color: #3b51c4;
@@ -100,7 +116,7 @@ const templates = {
               border-top: 1px solid #e5e7eb;
               color: #6b7280;
               font-size: 12px;
-              text-align: center;
+              text-align: left;
             }
             .footer span {
               margin: 0 6px;
@@ -110,27 +126,28 @@ const templates = {
               .container {
                 padding: 24px;
               }
-              .title {
-                font-size: 18px;
+              .getting-started {
+                padding: 20px;
               }
             }
           </style>
         </head>
         <body>
           <div class="container">
-            <h1 class="title">You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h1>
+            <h1 class="company-name">Invela</h1>
+            <h2 class="title">You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h2>
 
-            <div>
-              <h2 class="section-title">Getting Started:</h2>
+            <div class="getting-started">
+              <h3 class="section-title">Getting Started:</h3>
               <ol>
                 <li>Click the button below to Create Your Account.</li>
                 <li>Finish updated your Company's Profile.</li>
                 <li>Upload the requested files to our secure system.</li>
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
-
-              <a href="${data.inviteUrl}?email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
             </div>
+
+            <a href="${data.inviteUrl}/register?email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
