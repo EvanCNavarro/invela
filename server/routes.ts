@@ -336,7 +336,6 @@ export function registerRoutes(app: Express): Server {
         twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
 
         taskData = {
-          taskType,
           title: `New User Invitation: ${userEmail}`,
           description: `Invitation sent to ${userEmail} to join ${companyName} on the platform.`,
           userEmail,
@@ -347,10 +346,10 @@ export function registerRoutes(app: Express): Server {
           status: 'pending',
           taskScope: 'user', // Always user scope for onboarding
           priority: 'medium',
+          taskType: 'user_onboarding',
+          createdBy: req.user!.id,
           filesRequested: [],
-          filesSubmitted: [],
-          metadata: {},
-          createdBy: req.user!.id
+          filesUploaded: []
         };
       } else {
         // File request task logic
@@ -363,9 +362,8 @@ export function registerRoutes(app: Express): Server {
         } else {
           assignee = userEmail || '';
         }
+
         taskData = {
-          taskType,
-          taskScope,
           title: `File Request for ${assignee}`,
           description: `Document request task for ${assignee}`,
           userEmail: taskScope === 'user' ? userEmail : undefined,
@@ -375,18 +373,23 @@ export function registerRoutes(app: Express): Server {
           progress: 0,
           status: 'pending',
           priority: 'medium',
+          taskType: 'file_request',
+          taskScope,
+          createdBy: req.user!.id,
           filesRequested: [],
-          filesSubmitted: [],
-          metadata: {},
-          createdBy: req.user!.id
+          filesUploaded: []
         };
       }
+
+      console.log('Task data before validation:', taskData);
 
       const result = insertTaskSchema.safeParse(taskData);
       if (!result.success) {
         console.error("Task validation failed:", result.error);
         return res.status(400).json({ message: "Invalid task data", errors: result.error.format() });
       }
+
+      console.log('Validated task data:', result.data);
 
       // Create the task
       const [task] = await db.insert(tasks)
