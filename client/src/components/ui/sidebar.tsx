@@ -162,11 +162,13 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { state, isMobile } = useSidebar()
 
-    // Pure click handler - only manages menu item state
+    // Completely isolated click handler - only manages the click event
+    // and prevents any interaction with sidebar state
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      e.stopPropagation() // Prevent event bubbling
+      e.preventDefault() // Prevent default to avoid any navigation side effects
+      e.stopPropagation() // Stop event from bubbling up
       if (onClick) {
-        onClick(e)
+        onClick(e) // Only call the provided click handler
       }
     }
 
@@ -201,12 +203,19 @@ const SidebarMenuButton = React.forwardRef<
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
 
-// Trigger button - only component that can toggle sidebar
+// Only the trigger component should handle sidebar state changes
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
   React.ComponentProps<typeof Button>
 >(({ className, ...props }, ref) => {
   const { toggleSidebar } = useSidebar()
+
+  // Explicit toggle handler that only responds to direct trigger clicks
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleSidebar()
+  }
 
   return (
     <Button
@@ -215,7 +224,7 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
-      onClick={toggleSidebar} // Direct connection to toggle function
+      onClick={handleToggle}
       {...props}
     >
       <PanelLeft />
