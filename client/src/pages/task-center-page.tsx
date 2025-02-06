@@ -180,7 +180,23 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  My Tasks
+                  <span className="flex items-center gap-2">
+                    My Tasks
+                    {tasks.filter(task => 
+                      (task.assignedTo === user?.id) || 
+                      (task.taskType === 'file_request' && task.createdBy === user?.id)
+                    ).length > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
+                      >
+                        {tasks.filter(task => 
+                          (task.assignedTo === user?.id) || 
+                          (task.taskType === 'file_request' && task.createdBy === user?.id)
+                        ).length}
+                      </Badge>
+                    )}
+                  </span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="for-others"
@@ -190,7 +206,21 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <Users2 className="h-4 w-4" />
-                  For Others
+                  <span className="flex items-center gap-2">
+                    For Others
+                    {tasks.filter(task => 
+                      task.taskType === 'user_onboarding' && task.createdBy === user?.id
+                    ).length > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
+                      >
+                        {tasks.filter(task => 
+                          task.taskType === 'user_onboarding' && task.createdBy === user?.id
+                        ).length}
+                      </Badge>
+                    )}
+                  </span>
                 </TabsTrigger>
               </TabsList>
 
