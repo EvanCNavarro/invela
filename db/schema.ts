@@ -77,6 +77,7 @@ export const tasks = pgTable("tasks", {
   assignedTo: integer("assigned_to").references(() => users.id),
   createdBy: integer("created_by").references(() => users.id),
   companyId: integer("company_id").references(() => companies.id),
+  userEmail: text("user_email"),
   dueDate: timestamp("due_date"),
   completionDate: timestamp("completion_date"),
   taskCategory: text("task_category"),
@@ -160,7 +161,17 @@ export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
-export const insertTaskSchema = createInsertSchema(tasks);
+export const insertTaskSchema = z.object({
+  taskType: z.enum(["user_onboarding", "file_request"]),
+  taskScope: z.enum(["user", "company"]),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  userEmail: z.string().email().optional(),
+  companyId: z.number().optional(),
+  dueDate: z.date().optional(),
+  priority: z.enum(["low", "medium", "high"]).optional(),
+  filesRequested: z.array(z.string()).optional(),
+});
 export const selectTaskSchema = createSelectSchema(tasks);
 
 export const insertFileSchema = createInsertSchema(files);
