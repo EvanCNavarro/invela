@@ -8,17 +8,19 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, PlusIcon, Check, FileText, Mail, Users2, User } from "lucide-react";
+import { CalendarIcon, PlusIcon, Check, FileText, Send, User, Building2 } from "lucide-react";
 import { format, addDays, isSameDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 
 const taskSchema = z.object({
   taskType: z.enum(["user_onboarding", "file_request"]),
   taskScope: z.enum(["user", "company"]),
   userEmail: z.string().email().optional(),
-  companyName: z.string().min(1).optional(),
+  companyId: z.number().optional(),
   dueDate: z.date().optional(),
   hasDueDate: z.boolean().default(true),
 });
@@ -34,9 +36,17 @@ const dueDateOptions = [
 
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false);
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const tomorrow = addDays(new Date(), 1);
   const nextWeek = addDays(new Date(), 7);
   const [selectedDueDateOption, setSelectedDueDateOption] = useState<typeof dueDateOptions[number]>(dueDateOptions[0]);
+
+  // Fetch companies when search query changes
+  const { data: companies = [] } = useQuery({
+    queryKey: ["/api/companies", searchQuery],
+    enabled: searchQuery.length > 0,
+  });
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
@@ -60,13 +70,12 @@ export function CreateTaskModal() {
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
 
-    // Determine which option should be selected based on the date
     if (isSameDay(date, tomorrow)) {
-      setSelectedDueDateOption(dueDateOptions[0]); // Tomorrow
+      setSelectedDueDateOption(dueDateOptions[0]);
     } else if (isSameDay(date, nextWeek)) {
-      setSelectedDueDateOption(dueDateOptions[1]); // Next Week
+      setSelectedDueDateOption(dueDateOptions[1]);
     } else {
-      setSelectedDueDateOption(dueDateOptions[2]); // Custom
+      setSelectedDueDateOption(dueDateOptions[2]);
     }
 
     form.setValue("dueDate", date);
@@ -108,18 +117,28 @@ export function CreateTaskModal() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select task type" />
+                        <SelectValue>
+                          {field.value === "user_onboarding" ? (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Invite New FinTech User
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="h-4 w-4 mr-2" />
+                              Request Files
+                            </>
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user_onboarding" className="relative pl-12">
-                        <Mail className="h-4 w-4 absolute left-2 top-2 text-muted-foreground" />
-                        <Check className="h-4 w-4 absolute left-7 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
+                      <SelectItem value="user_onboarding" className="relative pl-6">
+                        <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
                         Invite New FinTech User
                       </SelectItem>
-                      <SelectItem value="file_request" className="relative pl-12">
-                        <FileText className="h-4 w-4 absolute left-2 top-2 text-muted-foreground" />
-                        <Check className="h-4 w-4 absolute left-7 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
+                      <SelectItem value="file_request" className="relative pl-6">
+                        <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
                         Request Files
                       </SelectItem>
                     </SelectContent>
@@ -139,18 +158,28 @@ export function CreateTaskModal() {
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select assignee type" />
+                          <SelectValue>
+                            {field.value === "company" ? (
+                              <>
+                                <Building2 className="h-4 w-4 mr-2" />
+                                Company
+                              </>
+                            ) : (
+                              <>
+                                <User className="h-4 w-4 mr-2" />
+                                Single User
+                              </>
+                            )}
+                          </SelectValue>
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="company" className="relative pl-12">
-                          <Users2 className="h-4 w-4 absolute left-2 top-2 text-muted-foreground" />
-                          <Check className="h-4 w-4 absolute left-7 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
+                        <SelectItem value="company" className="relative pl-6">
+                          <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
                           Company
                         </SelectItem>
-                        <SelectItem value="user" className="relative pl-12">
-                          <User className="h-4 w-4 absolute left-2 top-2 text-muted-foreground" />
-                          <Check className="h-4 w-4 absolute left-7 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
+                        <SelectItem value="user" className="relative pl-6">
+                          <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
                           Single User
                         </SelectItem>
                       </SelectContent>
@@ -169,7 +198,7 @@ export function CreateTaskModal() {
                   <FormItem>
                     <FormLabel>User Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter user email" type="email" {...field} />
+                      <Input type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -180,13 +209,57 @@ export function CreateTaskModal() {
             {((taskType === "file_request" && taskScope === "company") || taskType === "user_onboarding") && (
               <FormField
                 control={form.control}
-                name="companyName"
+                name="companyId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Company Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Search for company" {...field} />
-                    </FormControl>
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openCombobox}
+                            className="w-full justify-between"
+                          >
+                            {field.value
+                              ? companies.find((company) => company.id === field.value)?.name
+                              : "Search companies..."}
+                            <Building2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Search companies..."
+                            value={searchQuery}
+                            onValueChange={setSearchQuery}
+                          />
+                          <CommandEmpty>No companies found.</CommandEmpty>
+                          <CommandGroup>
+                            {companies.map((company) => (
+                              <CommandItem
+                                key={company.id}
+                                value={company.name}
+                                onSelect={() => {
+                                  form.setValue("companyId", company.id);
+                                  setOpenCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    company.id === field.value ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {company.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -277,7 +350,7 @@ export function CreateTaskModal() {
                 ) : (
                   <>
                     Create Invite Task
-                    <Mail className="ml-2 h-4 w-4" />
+                    <Send className="ml-2 h-4 w-4" />
                   </>
                 )}
               </Button>
