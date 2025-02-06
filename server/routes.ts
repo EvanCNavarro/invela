@@ -416,6 +416,37 @@ export function registerRoutes(app: Express): Server {
   });
 
 
+  // Add task deletion endpoint after the existing task routes
+  app.delete("/api/tasks/:id", requireAuth, async (req, res) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      if (isNaN(taskId)) {
+        return res.status(400).json({ message: "Invalid task ID" });
+      }
+
+      // Find the task and verify ownership
+      const [task] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.id, taskId),
+          eq(tasks.createdBy, req.user!.id)
+        ));
+
+      if (!task) {
+        return res.status(404).json({ message: "Task not found or unauthorized" });
+      }
+
+      // Delete the task
+      await db.delete(tasks)
+        .where(eq(tasks.id, taskId));
+
+      res.status(200).json({ message: "Task deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      res.status(500).json({ message: "Error deleting task" });
+    }
+  });
+
   // Relationships
   app.get("/api/relationships", requireAuth, async (req, res) => {
     const results = await db.select().from(relationships);
