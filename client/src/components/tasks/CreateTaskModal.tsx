@@ -21,18 +21,32 @@ const taskSchema = z.object({
   taskType: z.enum(["user_onboarding", "file_request"]),
   taskScope: z.enum(["user", "company"]),
   userEmail: z.string().email("Valid email is required").optional().superRefine((val, ctx) => {
-    if (ctx.path[0] === "userEmail" && !val) {
+    if (ctx.parent.taskType === "user_onboarding" && !val) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Email is required",
+        message: "Email is required for user onboarding",
+      });
+    }
+    if (ctx.parent.taskType === "file_request" && 
+        ctx.parent.taskScope === "user" && !val) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email is required for user file requests",
       });
     }
   }),
   companyId: z.number().optional().superRefine((val, ctx) => {
-    if (ctx.path[0] === "companyId" && !val) {
+    if (ctx.parent.taskType === "user_onboarding" && !val) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Company is required",
+        message: "Company is required for user onboarding",
+      });
+    }
+    if (ctx.parent.taskType === "file_request" && 
+        ctx.parent.taskScope === "company" && !val) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company is required for company file requests",
       });
     }
   }),
@@ -64,7 +78,6 @@ export function CreateTaskModal() {
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
-      // For invite tasks, set a default title and description
       if (data.taskType === "user_onboarding") {
         const company = companies.find((c: any) => c.id === data.companyId);
         const companyName = company ? company.name : 'the company';
@@ -75,7 +88,6 @@ export function CreateTaskModal() {
         };
         data = taskData;
       } else {
-        // For file request tasks
         const assignee = data.taskScope === "company" 
           ? companies.find((c: any) => c.id === data.companyId)?.name 
           : data.userEmail;
@@ -122,6 +134,8 @@ export function CreateTaskModal() {
     defaultValues: {
       taskType: "file_request",
       taskScope: "user",
+      userEmail: "",
+      companyId: undefined,
       dueDate: tomorrow,
     },
   });
@@ -252,7 +266,7 @@ export function CreateTaskModal() {
                   <FormItem>
                     <FormLabel>User Email</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} />
+                      <Input type="email" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
