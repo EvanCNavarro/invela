@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusIcon, Check, FileText, Send, User, Building2 } from "lucide-react";
-import { format, addDays, isSameDay } from "date-fns";
+import { format, addDays } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,41 +17,25 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 
-const taskSchema = z.object({
-  taskType: z.enum(["user_onboarding", "file_request"]),
+const fileRequestSchema = z.object({
+  taskType: z.literal("file_request"),
   taskScope: z.enum(["user", "company"]),
-  userEmail: z.string().email("Valid email is required").optional().superRefine((val, ctx) => {
-    if (ctx.parent.taskType === "user_onboarding" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for user onboarding",
-      });
-    }
-    if (ctx.parent.taskType === "file_request" && 
-        ctx.parent.taskScope === "user" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for user file requests",
-      });
-    }
-  }),
-  companyId: z.number().optional().superRefine((val, ctx) => {
-    if (ctx.parent.taskType === "user_onboarding" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Company is required for user onboarding",
-      });
-    }
-    if (ctx.parent.taskType === "file_request" && 
-        ctx.parent.taskScope === "company" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Company is required for company file requests",
-      });
-    }
-  }),
+  userEmail: z.string().email("Valid email is required").optional(),
+  companyId: z.number().optional(),
   dueDate: z.date().optional(),
 });
+
+const userOnboardingSchema = z.object({
+  taskType: z.literal("user_onboarding"),
+  userEmail: z.string().email("Valid email is required"),
+  companyId: z.number({ required_error: "Company is required for user onboarding" }),
+  dueDate: z.date().optional(),
+});
+
+const taskSchema = z.discriminatedUnion("taskType", [
+  userOnboardingSchema,
+  fileRequestSchema,
+]);
 
 type TaskFormData = z.infer<typeof taskSchema>;
 
@@ -67,7 +51,6 @@ export function CreateTaskModal() {
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const tomorrow = addDays(new Date(), 1);
-  const nextWeek = addDays(new Date(), 7);
   const [selectedDueDateOption, setSelectedDueDateOption] = useState(dueDateOptions[0]);
   const { toast } = useToast();
 
@@ -76,33 +59,48 @@ export function CreateTaskModal() {
     enabled: searchQuery.length > 0,
   });
 
+  const form = useForm<TaskFormData>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      taskType: "file_request",
+      taskScope: "user",
+      userEmail: "",
+      companyId: undefined,
+      dueDate: tomorrow,
+    } as z.infer<typeof fileRequestSchema>,
+  });
+
+  const taskType = form.watch("taskType");
+
+  // Only watch taskScope if it's a file request
+  const taskScope = taskType === "file_request" ? form.watch("taskScope") : undefined;
+
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
+      let taskData;
       if (data.taskType === "user_onboarding") {
         const company = companies.find((c: any) => c.id === data.companyId);
         const companyName = company ? company.name : 'the company';
-        const taskData = {
+        taskData = {
           ...data,
           title: `New User Invitation: ${data.userEmail}`,
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`
         };
-        data = taskData;
       } else {
         const assignee = data.taskScope === "company" 
           ? companies.find((c: any) => c.id === data.companyId)?.name 
           : data.userEmail;
-        const taskData = {
+        taskData = {
           ...data,
           title: `File Request for ${assignee}`,
           description: `Document request task for ${assignee}`
         };
-        data = taskData;
       }
 
       const response = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(taskData),
       });
 
       if (!response.ok) {
@@ -128,20 +126,6 @@ export function CreateTaskModal() {
       });
     },
   });
-
-  const form = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
-    defaultValues: {
-      taskType: "file_request",
-      taskScope: "user",
-      userEmail: "",
-      companyId: undefined,
-      dueDate: tomorrow,
-    },
-  });
-
-  const taskType = form.watch("taskType");
-  const taskScope = form.watch("taskScope");
 
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -173,6 +157,9 @@ export function CreateTaskModal() {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
+          <DialogDescription>
+            Create a new task for user onboarding or file requests.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -201,13 +188,17 @@ export function CreateTaskModal() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user_onboarding" className="relative pl-6">
-                        <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
-                        Invite New FinTech User
+                      <SelectItem value="user_onboarding">
+                        <div className="flex items-center">
+                          <Send className="h-4 w-4 mr-2" />
+                          <span>Invite New FinTech User</span>
+                        </div>
                       </SelectItem>
-                      <SelectItem value="file_request" className="relative pl-6">
-                        <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
-                        Request Files
+                      <SelectItem value="file_request">
+                        <div className="flex items-center">
+                          <FileText className="h-4 w-4 mr-2" />
+                          <span>Request Files</span>
+                        </div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -242,13 +233,17 @@ export function CreateTaskModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="company" className="relative pl-6">
-                          <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
-                          Company
+                        <SelectItem value="company">
+                          <div className="flex items-center">
+                            <Building2 className="h-4 w-4 mr-2" />
+                            <span>Company</span>
+                          </div>
                         </SelectItem>
-                        <SelectItem value="user" className="relative pl-6">
-                          <Check className="h-4 w-4 absolute left-0 top-2 text-primary opacity-0 peer-[.selected]:opacity-100" />
-                          Single User
+                        <SelectItem value="user">
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2" />
+                            <span>Single User</span>
+                          </div>
                         </SelectItem>
                       </SelectContent>
                     </Select>
