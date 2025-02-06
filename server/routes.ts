@@ -330,14 +330,18 @@ export function registerRoutes(app: Express): Server {
           .from(companies)
           .where(eq(companies.id, companyId));
         const companyName = company ? company.name : 'the company';
+
+        // Set due date to 2 weeks from now for invitation tasks
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+
         taskData = {
           taskType,
           title: `New User Invitation: ${userEmail}`,
           description: `Invitation sent to ${userEmail} to join ${companyName} on the platform.`,
           userEmail,
           companyId,
-          dueDate: dueDate ? new Date(dueDate) : undefined,
-          // For invite tasks, explicitly set assignedTo to null since the user doesn't exist yet
+          dueDate: twoWeeksFromNow,
           assignedTo: null,
           progress: 0,
           status: 'pending',

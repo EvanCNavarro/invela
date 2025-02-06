@@ -66,7 +66,6 @@ const defaultValues: TaskFormData = {
   taskScope: TaskScope.USER,
   userEmail: "",
   companyId: undefined,
-  dueDate: addDays(new Date(), 1),
 } as const;
 
 export function CreateTaskModal() {
@@ -100,8 +99,8 @@ export function CreateTaskModal() {
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`
         };
       } else {
-        const assignee = data.taskScope === TaskScope.COMPANY 
-          ? companies.find((c: any) => c.id === data.companyId)?.name 
+        const assignee = data.taskScope === TaskScope.COMPANY
+          ? companies.find((c: any) => c.id === data.companyId)?.name
           : data.userEmail;
         taskData = {
           ...data,
@@ -343,46 +342,48 @@ export function CreateTaskModal() {
               />
             )}
 
-            {/* Due Date Selection */}
-            <FormField
-              control={form.control}
-              name="dueDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Due Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Choose a Due Date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={handleDateSelect}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Due Date Selection - only show for file requests */}
+            {taskType === TaskType.FILE_REQUEST && (
+              <FormField
+                control={form.control}
+                name="dueDate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Due Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Choose a Due Date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={handleDateSelect}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             <div className="flex justify-between gap-4 pt-4">
               <Button
