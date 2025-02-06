@@ -13,14 +13,29 @@ import { format, addDays, isSameDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { useToast } from "@/hooks/use-toast";
 
 const taskSchema = z.object({
   taskType: z.enum(["user_onboarding", "file_request"]),
   taskScope: z.enum(["user", "company"]),
-  userEmail: z.string().email().optional(),
-  companyId: z.number().optional(),
+  userEmail: z.string().email("Valid email is required").optional().superRefine((val, ctx) => {
+    if (ctx.path[0] === "userEmail" && !val) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email is required",
+      });
+    }
+  }),
+  companyId: z.number().optional().superRefine((val, ctx) => {
+    if (ctx.path[0] === "companyId" && !val) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company is required",
+      });
+    }
+  }),
   dueDate: z.date().optional(),
   hasDueDate: z.boolean().default(true),
 });
@@ -41,10 +56,42 @@ export function CreateTaskModal() {
   const tomorrow = addDays(new Date(), 1);
   const nextWeek = addDays(new Date(), 7);
   const [selectedDueDateOption, setSelectedDueDateOption] = useState(dueDateOptions[0]);
+  const { toast } = useToast();
 
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies", searchQuery],
     enabled: searchQuery.length > 0,
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: TaskFormData) => {
+      const response = await fetch("/api/tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create task");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: taskType === "file_request"
+          ? "File request task created successfully"
+          : "Invite sent successfully and task created",
+      });
+      setOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const form = useForm<TaskFormData>({
@@ -88,8 +135,7 @@ export function CreateTaskModal() {
   };
 
   const onSubmit = async (data: TaskFormData) => {
-    console.log(data);
-    setOpen(false);
+    createTaskMutation.mutate(data);
   };
 
   return (
@@ -117,15 +163,15 @@ export function CreateTaskModal() {
                       <SelectTrigger>
                         <SelectValue>
                           {field.value === "user_onboarding" ? (
-                            <>
+                            <div className="flex items-center">
                               <Send className="h-4 w-4 mr-2" />
-                              Invite New FinTech User
-                            </>
+                              <span>Invite New FinTech User</span>
+                            </div>
                           ) : (
-                            <>
+                            <div className="flex items-center">
                               <FileText className="h-4 w-4 mr-2" />
-                              Request Files
-                            </>
+                              <span>Request Files</span>
+                            </div>
                           )}
                         </SelectValue>
                       </SelectTrigger>
@@ -158,15 +204,15 @@ export function CreateTaskModal() {
                         <SelectTrigger>
                           <SelectValue>
                             {field.value === "company" ? (
-                              <>
+                              <div className="flex items-center">
                                 <Building2 className="h-4 w-4 mr-2" />
-                                Company
-                              </>
+                                <span>Company</span>
+                              </div>
                             ) : (
-                              <>
+                              <div className="flex items-center">
                                 <User className="h-4 w-4 mr-2" />
-                                Single User
-                              </>
+                                <span>Single User</span>
+                              </div>
                             )}
                           </SelectValue>
                         </SelectTrigger>
@@ -339,17 +385,21 @@ export function CreateTaskModal() {
               >
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1">
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={createTaskMutation.isPending}
+              >
                 {taskType === "file_request" ? (
-                  <>
-                    Create File Task
-                    <FileText className="ml-2 h-4 w-4" />
-                  </>
+                  <div className="flex items-center">
+                    <FileText className="h-4 w-4 mr-2" />
+                    <span>Create File Task</span>
+                  </div>
                 ) : (
-                  <>
-                    Create Invite Task
-                    <Send className="ml-2 h-4 w-4" />
-                  </>
+                  <div className="flex items-center">
+                    <Send className="h-4 w-4 mr-2" />
+                    <span>Create Invite Task</span>
+                  </div>
                 )}
               </Button>
             </div>

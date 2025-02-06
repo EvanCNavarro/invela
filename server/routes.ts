@@ -315,20 +315,76 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
+  // Add create task endpoint
   app.post("/api/tasks", requireAuth, async (req, res) => {
-    const result = insertTaskSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ message: "Invalid task data" });
-    }
+    try {
+      const result = insertTaskSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid task data" });
+      }
 
-    const task = await db.insert(tasks)
-      .values({
-        ...result.data,
-        createdBy: req.user!.id
-      })
-      .returning();
-    res.status(201).json(task[0]);
+      // Create the task
+      const [task] = await db.insert(tasks)
+        .values({
+          ...result.data,
+          status: 'pending',
+          createdBy: req.user!.id,
+        })
+        .returning();
+
+      // If it's a user onboarding task, send the invite email
+      if (result.data.taskType === 'user_onboarding') {
+        // Get company details for the sender
+        const [company] = await db.select()
+          .from(companies)
+          .where(eq(companies.id, result.data.companyId));
+
+        if (!company) {
+          return res.status(400).json({ message: "Company information not found" });
+        }
+
+        // Generate invite URL
+        const inviteUrl = `${req.protocol}://${req.get('host')}`;
+
+        const emailParams: SendEmailParams = {
+          to: result.data.userEmail,
+          from: process.env.GMAIL_USER!,
+          template: 'fintech_invite',
+          templateData: {
+            recipientEmail: result.data.userEmail,
+            senderName: req.user!.fullName,
+            companyName: company.name,
+            inviteUrl: inviteUrl
+          }
+        };
+
+        const emailResult = await emailService.sendTemplateEmail(emailParams);
+
+        if (!emailResult.success) {
+          // If email fails, update task status
+          await db.update(tasks)
+            .set({ status: 'failed', error: emailResult.error })
+            .where(eq(tasks.id, task.id));
+
+          return res.status(500).json({
+            message: "Failed to send invite email",
+            error: emailResult.error
+          });
+        }
+
+        // Update task status to reflect email sent
+        await db.update(tasks)
+          .set({ status: 'email_sent' })
+          .where(eq(tasks.id, task.id));
+      }
+
+      res.status(201).json(task);
+    } catch (error) {
+      console.error("Error creating task:", error);
+      res.status(500).json({ message: "Error creating task" });
+    }
   });
+
 
   // Relationships
   app.get("/api/relationships", requireAuth, async (req, res) => {
@@ -617,7 +673,7 @@ export function registerRoutes(app: Express): Server {
       const result = await emailService.sendTemplateEmail(emailParams);
 
       if (!result.success) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to send invite email",
           error: result.error
         });
