@@ -17,7 +17,7 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
           backfaceVisibility: 'hidden'
         }}
         loading="eager"
-        fetchPriority="high"
+        fetchpriority="high"
         decoding="async"
       />
     </div>
