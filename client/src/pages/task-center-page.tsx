@@ -71,7 +71,7 @@ interface Task {
   createdBy: number;
   userEmail?: string;
   companyId?: number;
-  companyName?: string; // Added companyName
+  companyName?: string;
   dueDate?: string;
   completionDate?: string;
   updatedAt?: string;
@@ -413,9 +413,9 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
     if (task.taskType === 'user_onboarding') {
       return (
         <>
-          <div className="font-medium">Onboarding:</div>
-          <div className="text-xs text-muted-foreground">
-            {task.userEmail} (employee of {task.companyName}) was sent a new invitation to start their onboarding on the Invela platform.
+          <div className="font-medium">User Onboarding:</div>
+          <div className="text-xs text-muted-foreground line-clamp-2">
+            {task.userEmail} (employee of {task.companyName || 'Unknown'}) was sent a new invitation to start their onboarding on the Invela platform.
           </div>
         </>
       );
@@ -423,7 +423,7 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
     return (
       <>
         <div className="font-medium truncate">{task.title}</div>
-        <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+        <div className="text-xs text-muted-foreground line-clamp-2">{task.description}</div>
       </>
     );
   };
