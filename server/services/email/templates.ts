@@ -29,7 +29,7 @@ const templates = {
       3. Upload the requested files to our secure system.
       4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Click here to get started: ${data.inviteUrl}
+      Click here to get started: ${data.inviteUrl}?email=${encodeURIComponent(data.recipientEmail || '')}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -37,46 +37,39 @@ const templates = {
       <!DOCTYPE html>
       <html>
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
             body { 
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+              line-height: 1.5;
+              color: #111827;
               margin: 0;
-              padding: 40px 20px;
-              background-color: #f5f5f5;
+              padding: 32px 16px;
+              background-color: #f3f4f6;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
             }
             .container {
-              max-width: 600px;
+              max-width: 580px;
               margin: 0 auto;
               background: white;
-              border-radius: 12px;
+              border-radius: 8px;
               padding: 40px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
-            .logo {
-              display: flex;
-              align-items: center;
-              margin-bottom: 40px;
-              color: #111;
-            }
-            .logo img {
-              height: 32px;
-              margin-right: 16px;
-            }
-            h1 {
-              font-size: 24px;
+            .title {
+              font-size: 20px;
               font-weight: 600;
-              color: #111;
-              margin: 0 0 24px 0;
-            }
-            .subtitle {
-              color: #666;
-              margin-bottom: 32px;
+              color: #111827;
+              margin: 0 0 32px 0;
+              line-height: 1.4;
             }
             .section-title {
               font-weight: 600;
               font-size: 16px;
               margin: 0 0 16px 0;
+              color: #111827;
             }
             ol {
               padding-left: 24px;
@@ -84,7 +77,7 @@ const templates = {
             }
             li {
               margin-bottom: 12px;
-              color: #444;
+              color: #374151;
             }
             .button {
               background-color: #4965EC;
@@ -94,30 +87,38 @@ const templates = {
               border-radius: 6px;
               display: inline-block;
               font-weight: 500;
+              font-size: 14px;
+              text-align: center;
+              transition: background-color 0.2s;
+            }
+            .button:hover {
+              background-color: #3b51c4;
             }
             .footer {
               margin-top: 40px;
               padding-top: 20px;
-              border-top: 1px solid #eee;
-              color: #666;
-              font-size: 14px;
+              border-top: 1px solid #e5e7eb;
+              color: #6b7280;
+              font-size: 12px;
               text-align: center;
             }
-            .footer a {
-              color: #666;
-              text-decoration: none;
-              margin: 0 8px;
+            .footer span {
+              margin: 0 6px;
+              color: #9ca3af;
+            }
+            @media (max-width: 480px) {
+              .container {
+                padding: 24px;
+              }
+              .title {
+                font-size: 18px;
+              }
             }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="logo">
-              <img src="data:image/svg+xml;base64,..." alt="Invela" />
-              <span>Invela</span>
-            </div>
-
-            <h1>You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h1>
+            <h1 class="title">You've been invited to join Invela, by ${data.senderName || 'a representative'} from ${data.companyName || 'our platform'}.</h1>
 
             <div>
               <h2 class="section-title">Getting Started:</h2>
@@ -128,16 +129,11 @@ const templates = {
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
 
-              <a href="${data.inviteUrl}" class="button">Create Your Account</a>
+              <a href="${data.inviteUrl}?email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
             </div>
 
             <div class="footer">
-              <p>© ${new Date().getFullYear()} Invela</p>
-              <div>
-                <a href="/privacy">Privacy Policy</a>
-                <a href="/terms">Terms of Service</a>
-                <a href="/support">Support Center</a>
-              </div>
+              <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
             </div>
           </div>
         </body>
