@@ -421,7 +421,7 @@ interface TaskListProps {
 
 function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -624,7 +624,10 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                   {getDueInDays(task.dueDate)}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+                  <DropdownMenu
+                    open={openDropdownId === task.id}
+                    onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}
+                  >
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <MoreHorizontal className="h-4 w-4" />
@@ -632,7 +635,7 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onSelect={() => {
-                        setDropdownOpen(false);
+                        setOpenDropdownId(null);
                         setSelectedTask(task);
                       }}>
                         View Details
@@ -641,7 +644,7 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                         <AlertDialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => {
                             e.preventDefault();
-                            setDropdownOpen(false);
+                            setOpenDropdownId(null);
                           }}>
                             Delete Task
                           </DropdownMenuItem>
