@@ -318,12 +318,12 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // Add create task endpoint
+  // Task creation logic update
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
       const { taskType, taskScope, userEmail, companyId, dueDate } = req.body;
 
-      // Generate title and description before validation
+      // Generate task data based on type
       let taskData;
       if (taskType === 'user_onboarding') {
         const [company] = await db.select()
@@ -340,10 +340,12 @@ export function registerRoutes(app: Express): Server {
           // For invite tasks, explicitly set assignedTo to null since the user doesn't exist yet
           assignedTo: null,
           progress: 0,
-          status: 'pending'
+          status: 'pending',
+          taskScope: 'user', // Always user scope for onboarding
+          priority: 'medium'
         };
       } else {
-        // File request task logic remains unchanged
+        // File request task logic
         let assignee = '';
         if (taskScope === 'company') {
           const [company] = await db.select()
@@ -363,7 +365,8 @@ export function registerRoutes(app: Express): Server {
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assignedTo: req.user!.id,
           progress: 0,
-          status: 'pending'
+          status: 'pending',
+          priority: 'medium'
         };
       }
 
