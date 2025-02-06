@@ -249,7 +249,10 @@ const SidebarTrigger = React.forwardRef<
       variant="ghost"
       size="icon"
       className={cn("h-7 w-7", className)}
-      onClick={toggleSidebar}
+      onClick={(e) => {
+        e.stopPropagation()
+        toggleSidebar()
+      }}
       {...props}
     >
       <PanelLeft />
@@ -531,7 +534,7 @@ const SidebarMenuButton = React.forwardRef<
     const Comp = asChild ? Slot : "button"
     const { isMobile, state } = useSidebar()
 
-    // Simplified click handler - only handles the navigation click
+    // Simple click handler that only manages the click event
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (onClick) {
         onClick(e)
@@ -574,6 +577,7 @@ const SidebarMenuButton = React.forwardRef<
   }
 )
 SidebarMenuButton.displayName = "SidebarMenuButton"
+
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
