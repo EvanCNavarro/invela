@@ -11,7 +11,6 @@ import {
   FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTaskCounts } from "@/components/tasks/TaskCount";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -21,9 +20,6 @@ interface SidebarProps {
 
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
-  const { data: taskCounts = { myTasksCount: 0, forOthersCount: 0 } } = useTaskCounts();
-  const totalTasks = taskCounts.myTasksCount + taskCounts.forOthersCount;
-
   const menuItems = [
     { 
       icon: HomeIcon,
@@ -35,8 +31,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false,
-      badge: totalTasks > 0 ? totalTasks : undefined
+      locked: false // Always accessible
     },
     { 
       icon: BookIcon,
@@ -60,9 +55,8 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   return (
     <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-      isExpanded ? "w-64" : "w-20",
-      "transition-[width] duration-300 ease-in-out"
+      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200 z-50",
+      isExpanded ? "w-64" : "w-20"
     )}>
       <div className={cn(
         "flex items-center h-16",
@@ -79,7 +73,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       </div>
 
       <nav className="mt-8">
-        {menuItems.map(({ icon: Icon, label, href, locked, badge }) => {
+        {menuItems.map(({ icon: Icon, label, href, locked }) => {
           const isActive = location === href;
           const isDisabled = locked;
 
@@ -100,30 +94,15 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                   isActive && "stroke-[2.5]"
                 )} />
                 {isExpanded && (
-                  <>
-                    <span className={cn(
-                      "ml-3 flex-1",
-                      isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
-                    )}>
-                      {label}
-                    </span>
-                    {badge && (
-                      <div className={cn(
-                        "ml-2 px-1.5 min-w-[20px] h-5 rounded-md flex items-center justify-center text-xs font-medium",
-                        isActive 
-                          ? "bg-primary text-primary-foreground" 
-                          : "bg-muted-foreground/90 text-background"
-                      )}>
-                        {badge > 99 ? "99+" : badge}
-                      </div>
-                    )}
-                    {isDisabled && (
-                      <LockIcon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </>
+                  <span className={cn(
+                    "ml-3 flex-1",
+                    isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
+                  )}>
+                    {label}
+                  </span>
                 )}
-                {!isExpanded && badge && (
-                  <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
+                {isDisabled && isExpanded && (
+                  <LockIcon className="h-4 w-4 text-muted-foreground" />
                 )}
               </div>
             </Link>
