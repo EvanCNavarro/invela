@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4, Info } from "lucide-react";
+import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4, Info, ArrowUpDown, ArrowUp, ArrowDown, FilterX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -136,37 +136,56 @@ function ProgressTracker() {
 
 export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [timeFilter, setTimeFilter] = useState("Last 6 months");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [typeFilter, setTypeFilter] = useState("All Types");
-  const [scopeFilter, setScopeFilter] = useState("All Scopes");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+  const [typeFilter, setTypeFilter] = useState("All Task Types");
+  const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
+  const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
   const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
+  const handleSort = (key: string) => {
+    setSortConfig(prevConfig => ({
+      key,
+      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const getSortedTasks = (tasks: Task[]) => {
+    return [...tasks].sort((a, b) => {
+      if (sortConfig.key === 'dueDate') {
+        const aDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+        const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+        return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
+      } else if (sortConfig.key === 'status') {
+        return sortConfig.direction === 'asc' ? a.status.localeCompare(b.status) : b.status.localeCompare(a.status);
+      }
+      // Add other sorting logic for different columns if needed
+      return 0;
+    });
+  };
+
   const itemsPerPage = 10;
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All Status" || task.status === statusFilter.toLowerCase();
-    const matchesType = typeFilter === "All Types" || task.taskType === typeFilter.toLowerCase();
-    const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
+    const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase();
+    const matchesType = typeFilter === "All Task Types" || task.taskType === typeFilter.toLowerCase();
+    const matchesScope = scopeFilter === "All Assignee Types" || task.taskScope === scopeFilter.toLowerCase();
 
-    // For "my-tasks", show tasks where:
-    // 1. Tasks assigned to the current user
-    // 2. File request tasks created by the current user
     const matchesTab = activeTab === "my-tasks"
       ? (task.assignedTo === user?.id) || (task.taskType === 'file_request' && task.createdBy === user?.id)
-      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id); // Show invitation tasks in "for-others" when created by current user
+      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id);
 
     return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
 
-  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
-  const currentTasks = filteredTasks.slice(
+  const sortedAndFilteredTasks = getSortedTasks(filteredTasks);
+  const totalPages = Math.ceil(sortedAndFilteredTasks.length / itemsPerPage);
+  const currentTasks = sortedAndFilteredTasks.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -263,23 +282,12 @@ export default function TaskCenterPage() {
             <Card>
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
-                  <Select value={timeFilter} onValueChange={setTimeFilter}>
-                    <SelectTrigger className="w-[160px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                      <SelectItem value="Last year">Last year</SelectItem>
-                      <SelectItem value="All time">All time</SelectItem>
-                    </SelectContent>
-                  </Select>
-
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-[140px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Status">All Status</SelectItem>
+                      <SelectItem value="All Statuses">All Statuses</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
@@ -293,18 +301,18 @@ export default function TaskCenterPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Types">All Types</SelectItem>
+                      <SelectItem value="All Task Types">All Task Types</SelectItem>
                       <SelectItem value="User Onboarding">User Onboarding</SelectItem>
                       <SelectItem value="File Request">File Request</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={scopeFilter} onValueChange={setScopeFilter}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[160px]">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All Scopes">All Scopes</SelectItem>
+                      <SelectItem value="All Assignee Types">All Assignee Types</SelectItem>
                       <SelectItem value="User">User</SelectItem>
                       <SelectItem value="Company">Company</SelectItem>
                     </SelectContent>
@@ -312,34 +320,34 @@ export default function TaskCenterPage() {
 
                   <Button
                     variant="outline"
-                    size="icon"
-                    className="ml-auto h-10 w-10"
+                    size="default"
+                    className="flex items-center gap-2"
                     onClick={() => {
                       setSearchQuery("");
-                      setTimeFilter("Last 6 months");
-                      setStatusFilter("All Status");
-                      setTypeFilter("All Types");
-                      setScopeFilter("All Scopes");
+                      setStatusFilter("All Statuses");
+                      setTypeFilter("All Task Types");
+                      setScopeFilter("All Assignee Types");
                     }}
                   >
-                    <X className="h-4 w-4" />
+                    <FilterX className="h-4 w-4" />
+                    Clear Filters
                   </Button>
                 </div>
 
                 <div className="min-h-[400px]">
                   <TabsContent value="my-tasks" className="m-0">
-                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} />
+                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} sortConfig={sortConfig}/>
                   </TabsContent>
 
                   <TabsContent value="for-others" className="m-0">
-                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} />
+                    <TaskList tasks={currentTasks} isLoading={isLoading} error={error} sortConfig={sortConfig}/>
                   </TabsContent>
                 </div>
 
-                {!isLoading && !error && filteredTasks.length > 0 && (
+                {!isLoading && !error && sortedAndFilteredTasks.length > 0 && (
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="text-sm text-muted-foreground">
-                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+                      Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredTasks.length)} of {sortedAndFilteredTasks.length} tasks
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button
@@ -373,7 +381,7 @@ export default function TaskCenterPage() {
   );
 }
 
-function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boolean, error: any }) {
+function TaskList({ tasks, isLoading, error, sortConfig }: { tasks: Task[], isLoading: boolean, error: any, sortConfig: {key: string, direction: 'asc' | 'desc'} }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const { toast } = useToast();
 
@@ -411,8 +419,6 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
 
   const formatTaskTitle = (task: Task) => {
     if (task.taskType === 'user_onboarding') {
-      // Extract company name from description using regex
-      // Pattern: "to join {companyName} on the platform"
       const companyMatch = task.description?.match(/to join (.*?) on the platform/);
       const companyName = companyMatch ? companyMatch[1] : 'Unknown';
 
@@ -439,9 +445,33 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
         <TableHeader>
           <TableRow>
             <TableHead className="w-[300px]">Task</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>
+              <button
+                onClick={() => handleSort('status')}
+                className="flex items-center space-x-1 hover:text-primary transition-colors"
+              >
+                Status
+                {sortConfig.key === 'status' ? (
+                  sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                ) : (
+                  <ArrowUpDown className="h-4 w-4" />
+                )}
+              </button>
+            </TableHead>
             <TableHead>Progress</TableHead>
-            <TableHead className="hidden md:table-cell">Due In</TableHead>
+            <TableHead className="hidden md:table-cell">
+              <button
+                onClick={() => handleSort('dueDate')}
+                className="flex items-center space-x-1 hover:text-primary transition-colors"
+              >
+                Due In
+                {sortConfig.key === 'dueDate' ? (
+                  sortConfig.direction === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />
+                ) : (
+                  <ArrowUpDown className="h-4 w-4" />
+                )}
+              </button>
+            </TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -542,7 +572,6 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
         </TableBody>
       </Table>
 
-      {/* Task Details Modal */}
       <Dialog open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -555,7 +584,6 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
           <div className="space-y-6">
             {selectedTask && (
               <>
-                {/* Basic Information */}
                 <div className="rounded-lg border bg-card p-4">
                   <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <AlertCircle className="h-4 w-4 text-muted-foreground" />
@@ -573,7 +601,6 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                   </div>
                 </div>
 
-                {/* Status & Progress */}
                 <div className="rounded-lg border bg-card p-4">
                   <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <BarChart4 className="h-4 w-4 text-muted-foreground" />
@@ -613,7 +640,6 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                   </div>
                 </div>
 
-                {/* Timing Information */}
                 <div className="rounded-lg border bg-card p-4">
                   <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <Clock className="h-4 w-4 text-muted-foreground" />
