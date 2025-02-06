@@ -69,11 +69,21 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  status: text("status").notNull(),
+  taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
+  taskScope: text("task_scope").notNull(), // 'user' or 'company'
+  status: text("status").notNull().default('pending'),
+  priority: text("priority").notNull().default('medium'),
+  progress: real("progress").notNull().default(0),
   assignedTo: integer("assigned_to").references(() => users.id),
   createdBy: integer("created_by").references(() => users.id),
   companyId: integer("company_id").references(() => companies.id),
   dueDate: timestamp("due_date"),
+  completionDate: timestamp("completion_date"),
+  taskCategory: text("task_category"),
+  taskSource: text("task_source").notNull().default('user_action'),
+  filesRequested: jsonb("files_requested").$type<string[]>().default([]),
+  filesUploaded: jsonb("files_uploaded").$type<string[]>().default([]),
+  metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -111,6 +121,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [companies.id],
   }),
   files: many(files),
+  assignedTasks: many(tasks, { relationName: "assignedTasks" }),
+  createdTasks: many(tasks, { relationName: "createdTasks" }),
 }));
 
 export const companiesRelations = relations(companies, ({ many }) => ({
@@ -118,6 +130,21 @@ export const companiesRelations = relations(companies, ({ many }) => ({
   tasks: many(tasks),
   relationships: many(relationships),
   logos: many(companyLogos)
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  assignedUser: one(users, {
+    fields: [tasks.assignedTo],
+    references: [users.id],
+  }),
+  creator: one(users, {
+    fields: [tasks.createdBy],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [tasks.companyId],
+    references: [companies.id],
+  }),
 }));
 
 export const registrationSchema = z.object({
