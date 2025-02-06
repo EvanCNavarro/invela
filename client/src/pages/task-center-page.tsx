@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, ChevronDown, Download, PlusIcon } from "lucide-react";
+import { Search, ChevronDown, Download, PlusIcon, Filter, Users, User } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,12 +22,28 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 interface Task {
   id: number;
   title: string;
-  status: 'completed' | 'pending';
+  description: string;
+  taskType: 'user_onboarding' | 'file_request';
+  taskScope: 'user' | 'company';
+  status: 'pending' | 'in_progress' | 'completed' | 'failed';
+  priority: 'low' | 'medium' | 'high';
+  progress: number;
   assignedTo: string;
+  dueDate?: string;
+  completionDate?: string;
   updatedAt?: string;
   createdAt: string;
 }
@@ -92,6 +108,9 @@ export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState("Last 6 months");
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [scopeFilter, setScopeFilter] = useState("All Scopes");
+  const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({ 
     queryKey: ["/api/tasks"],
@@ -100,8 +119,13 @@ export default function TaskCenterPage() {
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All Status" || task.status === statusFilter.toLowerCase();
-    return matchesSearch && matchesStatus;
+    const matchesType = typeFilter === "All Types" || task.taskType === typeFilter.toLowerCase();
+    const matchesScope = scopeFilter === "All Scopes" || task.taskScope === scopeFilter.toLowerCase();
+    return matchesSearch && matchesStatus && matchesType && matchesScope;
   });
+
+  const myTasks = filteredTasks.filter(task => task.assignedTo === user?.id);
+  const teamTasks = filteredTasks.filter(task => task.assignedTo !== user?.id);
 
   return (
     <DashboardLayout>
@@ -115,54 +139,85 @@ export default function TaskCenterPage() {
           </p>
         </div>
 
-        <div className="bg-background rounded-md p-4 md:p-6 border">
-          <div className="flex flex-col gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-              <div className="w-full md:max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <Input
-                    placeholder="Search Tasks & Files"
-                    className="pl-9"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
+        <Tabs defaultValue="my-tasks" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="my-tasks" className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              My Tasks
+            </TabsTrigger>
+            <TabsTrigger value="team-tasks" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Team Tasks
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="bg-background rounded-md p-4 md:p-6 border">
+            <div className="flex flex-col gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-between">
+                <div className="w-full md:max-w-md">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      placeholder="Search Tasks"
+                      className="pl-9"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-              <Button>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add New Task
-              </Button>
-            </div>
-
-            <div className="flex flex-wrap gap-4">
-              <Select value={timeFilter} onValueChange={setTimeFilter}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Last 6 months">Last 6 months</SelectItem>
-                  <SelectItem value="Last year">Last year</SelectItem>
-                  <SelectItem value="All time">All time</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="whitespace-nowrap">
-                  Advanced search
-                  <ChevronDown className="ml-2 h-4 w-4" />
+                <Button>
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Create Task
                 </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <Select value={timeFilter} onValueChange={setTimeFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Last 6 months">Last 6 months</SelectItem>
+                    <SelectItem value="Last year">Last year</SelectItem>
+                    <SelectItem value="All time">All time</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Status">All Status</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="In Progress">In Progress</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Failed">Failed</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Types">All Types</SelectItem>
+                    <SelectItem value="User Onboarding">User Onboarding</SelectItem>
+                    <SelectItem value="File Request">File Request</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={scopeFilter} onValueChange={setScopeFilter}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="All Scopes">All Scopes</SelectItem>
+                    <SelectItem value="User">User</SelectItem>
+                    <SelectItem value="Company">Company</SelectItem>
+                  </SelectContent>
+                </Select>
+
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -170,87 +225,119 @@ export default function TaskCenterPage() {
                     setSearchQuery("");
                     setTimeFilter("Last 6 months");
                     setStatusFilter("All Status");
+                    setTypeFilter("All Types");
+                    setScopeFilter("All Scopes");
                   }}
                 >
-                  Clear
+                  Clear Filters
                 </Button>
               </div>
             </div>
-          </div>
 
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px]">
-                    <input type="checkbox" className="rounded-sm border-gray-300" />
-                  </TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">Last Change</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : error ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-destructive">
-                      Failed to load tasks. Please try again later.
-                    </TableCell>
-                  </TableRow>
-                ) : filteredTasks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                      No tasks found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredTasks.map((task) => (
-                    <TableRow key={task.id}>
-                      <TableCell>
-                        <input type="checkbox" className="rounded-sm border-gray-300" />
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{task.title}</div>
-                          <div className="text-xs text-muted-foreground">To: {task.assignedTo}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className={cn(
-                          "inline-flex items-center px-2 py-1 rounded-md text-xs font-medium",
-                          task.status === 'completed' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        )}>
-                          {task.status === 'completed' ? 'Completed' : 'Pending'}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm">
-                        {new Date(task.updatedAt || task.createdAt).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          <Download className="h-4 w-4 mr-2" />
-                          <span className="hidden sm:inline">Download</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+            <TabsContent value="my-tasks">
+              <TaskList tasks={myTasks} isLoading={isLoading} error={error} />
+            </TabsContent>
+
+            <TabsContent value="team-tasks">
+              <TaskList tasks={teamTasks} isLoading={isLoading} error={error} />
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boolean, error: any }) {
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[30px]">
+              <input type="checkbox" className="rounded-sm border-gray-300" />
+            </TableHead>
+            <TableHead>Task</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Progress</TableHead>
+            <TableHead className="hidden md:table-cell">Due Date</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8">
+                <div className="flex items-center justify-center">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                </div>
+              </TableCell>
+            </TableRow>
+          ) : error ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-destructive">
+                Failed to load tasks. Please try again later.
+              </TableCell>
+            </TableRow>
+          ) : tasks.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                No tasks found
+              </TableCell>
+            </TableRow>
+          ) : (
+            tasks.map((task) => (
+              <TableRow key={task.id}>
+                <TableCell>
+                  <input type="checkbox" className="rounded-sm border-gray-300" />
+                </TableCell>
+                <TableCell>
+                  <div>
+                    <div className="font-medium">{task.title}</div>
+                    <div className="text-xs text-muted-foreground">{task.description}</div>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={task.taskType === 'user_onboarding' ? 'default' : 'secondary'}>
+                    {task.taskType === 'user_onboarding' ? 'Onboarding' : 'File Request'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={
+                    task.status === 'completed' ? 'success' :
+                    task.status === 'in_progress' ? 'warning' :
+                    task.status === 'failed' ? 'destructive' :
+                    'default'
+                  }>
+                    {task.status.replace('_', ' ')}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="w-full bg-secondary rounded-full h-2">
+                    <div
+                      className="bg-primary rounded-full h-2"
+                      style={{ width: `${task.progress}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {task.progress}%
+                  </span>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    <span className="hidden sm:inline">Download</span>
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
