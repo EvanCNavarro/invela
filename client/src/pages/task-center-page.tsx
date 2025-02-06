@@ -48,6 +48,7 @@ interface Task {
   completionDate?: string;
   updatedAt?: string;
   createdAt: string;
+  createdBy?: string; // Added createdBy field
 }
 
 function ProgressTracker() {
@@ -129,10 +130,11 @@ export default function TaskCenterPage() {
 
     // For "my-tasks", show tasks where:
     // 1. The current user is assigned to the task
-    // 2. OR it's a user_onboarding task with no assignee (pending invites)
+    // 2. For file_request tasks, show tasks created by the current user
     const matchesTab = activeTab === "my-tasks"
-      ? (task.assignedTo === user?.id) || (task.taskType === 'user_onboarding' && !task.assignedTo)
-      : (task.assignedTo !== user?.id && task.assignedTo !== null);
+      ? (task.assignedTo === user?.id) || (task.taskType === 'file_request' && task.createdBy === user?.id)
+      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id) || // Show invites in "for-others"
+        (task.assignedTo !== user?.id && task.assignedTo !== null); // Show other assigned tasks
 
     return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
   });
