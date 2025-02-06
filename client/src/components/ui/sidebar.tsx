@@ -90,6 +90,7 @@ const SidebarProvider = React.forwardRef<
 
     // Helper to toggle the sidebar.
     const toggleSidebar = React.useCallback(() => {
+      // Only toggle sidebar state when explicitly triggered by the sidebar trigger button
       return isMobile
         ? setOpenMobile((open) => !open)
         : setOpen((open) => !open)
@@ -557,7 +558,10 @@ const SidebarMenuButton = React.forwardRef<
     const { isMobile, state } = useSidebar()
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-      onClick?.(e)
+      // Only handle the click event, don't change sidebar state
+      if (onClick) {
+        onClick(e)
+      }
     }
 
     const button = (
