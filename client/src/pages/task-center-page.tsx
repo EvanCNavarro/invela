@@ -149,10 +149,7 @@ export default function TaskCenterPage() {
   });
 
   const handleSort = (key: string) => {
-    setSortConfig(prevConfig => ({
-      key,
-      direction: prevConfig.key === key && prevConfig.direction === 'asc' ? 'desc' : 'asc'
-    }));
+    setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
   };
 
   const getSortedTasks = (tasks: Task[]) => {
@@ -334,12 +331,12 @@ export default function TaskCenterPage() {
                   <Button
                     variant="outline"
                     size="default"
-                    className="flex items-center gap-2 sm:w-auto w-10 h-10"
+                    className="flex items-center gap-2 sm:w-auto w-10 h-10 shrink-0"
                     onClick={clearFilters}
                     disabled={!hasActiveFilters}
                   >
                     <FilterX className="h-4 w-4" />
-                    <span className="hidden sm:inline">Clear Filters</span>
+                    <span className="hidden [@media(min-width:1016px)]:inline">Clear Filters</span>
                   </Button>
                 </div>
 
@@ -556,7 +553,7 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                     task.status === 'completed' ? 'default' :
                       task.status === 'failed' ? 'destructive' :
                         'default'
-                  } className="no-hover">
+                  } className="no-hover text-center whitespace-normal">
                     {capitalizeStatus(task.status)}
                   </Badge>
                 </TableCell>
