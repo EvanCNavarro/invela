@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
-import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4 } from "lucide-react";
+import { Search, X, PlusIcon, MoreHorizontal, User, Users2, ChevronLeft, ChevronRight, Calendar, Clock, AlertCircle, CheckCircle2, FileText, BarChart4, Info } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -57,7 +57,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { format, differenceInDays } from "date-fns";
-import { Separator } from "@/components/ui/separator";
 
 interface Task {
   id: number;
@@ -72,6 +71,7 @@ interface Task {
   createdBy: number;
   userEmail?: string;
   companyId?: number;
+  companyName?: string; // Added companyName
   dueDate?: string;
   completionDate?: string;
   updatedAt?: string;
@@ -409,12 +409,31 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
       .join(' ');
   };
 
+  const formatTaskTitle = (task: Task) => {
+    if (task.taskType === 'user_onboarding') {
+      return (
+        <>
+          <div className="font-medium">Onboarding:</div>
+          <div className="text-xs text-muted-foreground">
+            {task.userEmail} (employee of {task.companyName}) was sent a new invitation to start their onboarding on the Invela platform.
+          </div>
+        </>
+      );
+    }
+    return (
+      <>
+        <div className="font-medium truncate">{task.title}</div>
+        <div className="text-xs text-muted-foreground truncate">{task.description}</div>
+      </>
+    );
+  };
+
   return (
-    <div className="overflow-x-auto">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[200px]">Task</TableHead>
+            <TableHead className="w-[300px]">Task</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Progress</TableHead>
             <TableHead className="hidden md:table-cell">Due In</TableHead>
@@ -446,24 +465,16 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
             tasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell>
-                  <div className="group relative">
-                    <div className="truncate max-w-[180px]">
-                      <div className="font-medium truncate">{task.title}</div>
-                      <div className="text-xs text-muted-foreground truncate">{task.description}</div>
-                    </div>
-                    <div className="invisible group-hover:visible absolute z-10 p-2 bg-popover text-popover-foreground shadow-md rounded-md -top-1 left-0 w-full max-w-[300px]">
-                      <div className="font-medium">{task.title}</div>
-                      <div className="text-xs mt-1">{task.description}</div>
-                    </div>
+                  <div className="max-w-[280px] group relative">
+                    {formatTaskTitle(task)}
                   </div>
                 </TableCell>
                 <TableCell>
                   <Badge variant={
                     task.status === 'completed' ? 'default' :
                       task.status === 'failed' ? 'destructive' :
-                        task.status === 'email_sent' ? 'default' :
-                          'default'
-                  }>
+                        'default'
+                  } className="no-hover">
                     {capitalizeStatus(task.status)}
                   </Badge>
                 </TableCell>
@@ -531,24 +542,21 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
+              <Info className="h-5 w-5" />
               Task Details
             </DialogTitle>
-            <DialogDescription>
-              Detailed information about this task and its current status.
-            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
             {selectedTask && (
               <>
                 {/* Basic Information */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <AlertCircle className="h-4 w-4 text-muted-foreground" />
                     Basic Information
                   </h4>
-                  <div className="grid gap-4 pl-6">
+                  <div className="grid gap-4">
                     <div>
                       <div className="text-sm font-medium">Title</div>
                       <div className="text-sm text-muted-foreground mt-1">{selectedTask.title}</div>
@@ -560,15 +568,13 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Status & Progress */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <BarChart4 className="h-4 w-4 text-muted-foreground" />
                     Status & Progress
                   </h4>
-                  <div className="grid gap-4 pl-6">
+                  <div className="grid gap-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="text-sm font-medium">Type</div>
@@ -602,15 +608,13 @@ function TaskList({ tasks, isLoading, error }: { tasks: Task[], isLoading: boole
                   </div>
                 </div>
 
-                <Separator />
-
                 {/* Timing Information */}
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium flex items-center gap-2">
+                <div className="rounded-lg border bg-card p-4">
+                  <h4 className="text-sm font-medium flex items-center gap-2 mb-4">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     Timing Information
                   </h4>
-                  <div className="grid grid-cols-2 gap-4 pl-6">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="text-sm font-medium">Created On</div>
                       <div className="text-sm text-muted-foreground mt-1">
