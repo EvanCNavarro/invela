@@ -176,7 +176,10 @@ export default function TaskCenterPage() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="for-others"
-                  className="flex items-center gap-2"
+                  className={cn(
+                    "flex items-center gap-2 data-[state=active]:text-primary",
+                    "data-[state=active]:bg-primary/10"
+                  )}
                 >
                   <Users2 className="h-4 w-4" />
                   For Others
