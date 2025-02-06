@@ -349,7 +349,8 @@ export function registerRoutes(app: Express): Server {
           taskType: 'user_onboarding',
           createdBy: req.user!.id,
           filesRequested: [],
-          filesUploaded: []
+          filesUploaded: [],
+          metadata: {}
         };
       } else {
         // File request task logic
@@ -377,75 +378,97 @@ export function registerRoutes(app: Express): Server {
           taskScope,
           createdBy: req.user!.id,
           filesRequested: [],
-          filesUploaded: []
+          filesUploaded: [],
+          metadata: {}
         };
       }
 
-      console.log('Task data before validation:', taskData);
+      console.log('Task data before validation:', JSON.stringify(taskData, null, 2));
 
+      // Validate the task data
       const result = insertTaskSchema.safeParse(taskData);
       if (!result.success) {
         console.error("Task validation failed:", result.error);
-        return res.status(400).json({ message: "Invalid task data", errors: result.error.format() });
+        return res.status(400).json({ 
+          message: "Invalid task data", 
+          errors: result.error.format() 
+        });
       }
 
-      console.log('Validated task data:', result.data);
+      console.log('Validated task data:', JSON.stringify(result.data, null, 2));
 
       // Create the task
-      const [task] = await db.insert(tasks)
-        .values(result.data)
-        .returning();
+      try {
+        const [task] = await db.insert(tasks)
+          .values(result.data)
+          .returning();
 
-      // If it's a user onboarding task, send the invite email
-      if (taskType === 'user_onboarding' && userEmail) {
-        // Get company details for the sender
-        const [company] = await db.select()
-          .from(companies)
-          .where(eq(companies.id, companyId));
+        // If it's a user onboarding task, send the invite email
+        if (taskType === 'user_onboarding' && userEmail) {
+          // Get company details for the sender
+          const [company] = await db.select()
+            .from(companies)
+            .where(eq(companies.id, companyId));
 
-        if (!company) {
-          return res.status(400).json({ message: "Company information not found" });
+          if (!company) {
+            return res.status(400).json({ message: "Company information not found" });
+          }
+
+          // Generate invite URL
+          const inviteUrl = `${req.protocol}://${req.get('host')}`;
+
+          const emailParams: SendEmailParams = {
+            to: userEmail,
+            from: process.env.GMAIL_USER!,
+            template: 'fintech_invite',
+            templateData: {
+              recipientEmail: userEmail,
+              senderName: req.user!.fullName,
+              companyName: company.name,
+              inviteUrl: inviteUrl
+            }
+          };
+
+          const emailResult = await emailService.sendTemplateEmail(emailParams);
+
+          if (!emailResult.success) {
+            // If email fails, update task status
+            await db.update(tasks)
+              .set({ status: 'failed' })
+              .where(eq(tasks.id, task.id));
+
+            return res.status(500).json({
+              message: "Failed to send invite email",
+              error: emailResult.error
+            });
+          }
+
+          // Update task status to reflect email sent
+          await db.update(tasks)
+            .set({ status: 'email_sent' })
+            .where(eq(tasks.id, task.id));
         }
 
-        // Generate invite URL
-        const inviteUrl = `${req.protocol}://${req.get('host')}`;
-
-        const emailParams: SendEmailParams = {
-          to: userEmail,
-          from: process.env.GMAIL_USER!,
-          template: 'fintech_invite',
-          templateData: {
-            recipientEmail: userEmail,
-            senderName: req.user!.fullName,
-            companyName: company.name,
-            inviteUrl: inviteUrl
-          }
-        };
-
-        const emailResult = await emailService.sendTemplateEmail(emailParams);
-
-        if (!emailResult.success) {
-          // If email fails, update task status
-          await db.update(tasks)
-            .set({ status: 'failed' })
-            .where(eq(tasks.id, task.id));
-
-          return res.status(500).json({
-            message: "Failed to send invite email",
-            error: emailResult.error
+        res.status(201).json(task);
+      } catch (dbError: any) {
+        console.error("Database error:", dbError);
+        // Handle specific database errors
+        if (dbError.code === '23502') { // not-null violation
+          return res.status(400).json({
+            message: "Missing required fields",
+            detail: dbError.detail,
+            column: dbError.column
           });
         }
-
-        // Update task status to reflect email sent
-        await db.update(tasks)
-          .set({ status: 'email_sent' })
-          .where(eq(tasks.id, task.id));
+        throw dbError; // Re-throw other database errors
       }
-
-      res.status(201).json(task);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating task:", error);
-      res.status(500).json({ message: "Error creating task" });
+      res.status(500).json({ 
+        message: "Error creating task",
+        error: error.message,
+        detail: error.detail || 'No additional details available'
+      });
     }
   });
 
