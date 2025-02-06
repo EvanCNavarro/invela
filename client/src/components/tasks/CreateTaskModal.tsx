@@ -12,26 +12,47 @@ import { CalendarIcon, PlusIcon, Check, FileText, Send, User, Building2 } from "
 import { format, addDays } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 
-const fileRequestSchema = z.object({
-  taskType: z.literal("file_request"),
-  taskScope: z.enum(["user", "company"]),
-  userEmail: z.string().email("Valid email is required").optional(),
-  companyId: z.number().optional(),
-  dueDate: z.date().optional(),
-});
+// First define the literal types to avoid inference issues
+const TaskType = {
+  USER_ONBOARDING: "user_onboarding",
+  FILE_REQUEST: "file_request",
+} as const;
 
+const TaskScope = {
+  USER: "user",
+  COMPANY: "company",
+} as const;
+
+type TaskType = typeof TaskType[keyof typeof TaskType];
+type TaskScope = typeof TaskScope[keyof typeof TaskScope];
+
+// Define the base schema for common fields
+const baseSchema = {
+  dueDate: z.date().optional(),
+};
+
+// Define the user onboarding schema
 const userOnboardingSchema = z.object({
-  taskType: z.literal("user_onboarding"),
+  taskType: z.literal(TaskType.USER_ONBOARDING),
   userEmail: z.string().email("Valid email is required"),
   companyId: z.number({ required_error: "Company is required for user onboarding" }),
-  dueDate: z.date().optional(),
+  ...baseSchema,
 });
 
+// Define the file request schema
+const fileRequestSchema = z.object({
+  taskType: z.literal(TaskType.FILE_REQUEST),
+  taskScope: z.enum([TaskScope.USER, TaskScope.COMPANY]),
+  userEmail: z.string().email("Valid email is required").optional(),
+  companyId: z.number().optional(),
+  ...baseSchema,
+});
+
+// Combined schema using discriminated union
 const taskSchema = z.discriminatedUnion("taskType", [
   userOnboardingSchema,
   fileRequestSchema,
@@ -39,19 +60,19 @@ const taskSchema = z.discriminatedUnion("taskType", [
 
 type TaskFormData = z.infer<typeof taskSchema>;
 
-const dueDateOptions = [
-  { label: "Tomorrow", value: 1 },
-  { label: "Next Week", value: 7 },
-  { label: "Custom", value: "custom" },
-  { label: "No Due Date", value: "none" },
-] as const;
+// Default values matching the schema type
+const defaultValues: TaskFormData = {
+  taskType: TaskType.FILE_REQUEST,
+  taskScope: TaskScope.USER,
+  userEmail: "",
+  companyId: undefined,
+  dueDate: addDays(new Date(), 1),
+} as const;
 
 export function CreateTaskModal() {
   const [open, setOpen] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const tomorrow = addDays(new Date(), 1);
-  const [selectedDueDateOption, setSelectedDueDateOption] = useState(dueDateOptions[0]);
   const { toast } = useToast();
 
   const { data: companies = [] } = useQuery({
@@ -61,24 +82,16 @@ export function CreateTaskModal() {
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
-      taskType: "file_request",
-      taskScope: "user",
-      userEmail: "",
-      companyId: undefined,
-      dueDate: tomorrow,
-    } as z.infer<typeof fileRequestSchema>,
+    defaultValues,
   });
 
   const taskType = form.watch("taskType");
-
-  // Only watch taskScope if it's a file request
-  const taskScope = taskType === "file_request" ? form.watch("taskScope") : undefined;
+  const taskScope = taskType === TaskType.FILE_REQUEST ? form.watch("taskScope") : undefined;
 
   const createTaskMutation = useMutation({
     mutationFn: async (data: TaskFormData) => {
       let taskData;
-      if (data.taskType === "user_onboarding") {
+      if (data.taskType === TaskType.USER_ONBOARDING) {
         const company = companies.find((c: any) => c.id === data.companyId);
         const companyName = company ? company.name : 'the company';
         taskData = {
@@ -87,7 +100,7 @@ export function CreateTaskModal() {
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`
         };
       } else {
-        const assignee = data.taskScope === "company" 
+        const assignee = data.taskScope === TaskScope.COMPANY 
           ? companies.find((c: any) => c.id === data.companyId)?.name 
           : data.userEmail;
         taskData = {
@@ -109,18 +122,19 @@ export function CreateTaskModal() {
       }
       return response.json();
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       toast({
         title: "Success",
-        description: variables.taskType === "file_request"
+        description: taskType === TaskType.FILE_REQUEST
           ? "File request task created successfully"
           : "Invite sent successfully and task created",
       });
       setOpen(false);
+      form.reset(defaultValues);
     },
     onError: (error) => {
       toast({
-        title: "Error",
+        title: "Error creating task",
         description: error.message,
         variant: "destructive",
       });
@@ -130,16 +144,6 @@ export function CreateTaskModal() {
   const handleDateSelect = (date: Date | undefined) => {
     if (!date) return;
     form.setValue("dueDate", date);
-  };
-
-  const handleDueDateOptionClick = (option: typeof dueDateOptions[number]) => {
-    setSelectedDueDateOption(option);
-    if (option.value === "none") {
-      form.setValue("dueDate", undefined);
-    } else if (typeof option.value === "number") {
-      const date = addDays(new Date(), option.value);
-      form.setValue("dueDate", date);
-    }
   };
 
   const onSubmit = async (data: TaskFormData) => {
@@ -163,17 +167,21 @@ export function CreateTaskModal() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Task Type Selection */}
             <FormField
               control={form.control}
               name="taskType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Task Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue>
-                          {field.value === "user_onboarding" ? (
+                          {field.value === TaskType.USER_ONBOARDING ? (
                             <div className="flex items-center">
                               <Send className="h-4 w-4 mr-2" />
                               <span>Invite New FinTech User</span>
@@ -188,13 +196,13 @@ export function CreateTaskModal() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="user_onboarding">
+                      <SelectItem value={TaskType.USER_ONBOARDING}>
                         <div className="flex items-center">
                           <Send className="h-4 w-4 mr-2" />
                           <span>Invite New FinTech User</span>
                         </div>
                       </SelectItem>
-                      <SelectItem value="file_request">
+                      <SelectItem value={TaskType.FILE_REQUEST}>
                         <div className="flex items-center">
                           <FileText className="h-4 w-4 mr-2" />
                           <span>Request Files</span>
@@ -207,18 +215,22 @@ export function CreateTaskModal() {
               )}
             />
 
-            {taskType === "file_request" && (
+            {/* Task Scope - Only show for file requests */}
+            {taskType === TaskType.FILE_REQUEST && (
               <FormField
                 control={form.control}
                 name="taskScope"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Assignee Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue>
-                            {field.value === "company" ? (
+                            {field.value === TaskScope.COMPANY ? (
                               <div className="flex items-center">
                                 <Building2 className="h-4 w-4 mr-2" />
                                 <span>Company</span>
@@ -233,13 +245,13 @@ export function CreateTaskModal() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="company">
+                        <SelectItem value={TaskScope.COMPANY}>
                           <div className="flex items-center">
                             <Building2 className="h-4 w-4 mr-2" />
                             <span>Company</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="user">
+                        <SelectItem value={TaskScope.USER}>
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-2" />
                             <span>Single User</span>
@@ -253,7 +265,8 @@ export function CreateTaskModal() {
               />
             )}
 
-            {((taskType === "file_request" && taskScope === "user") || taskType === "user_onboarding") && (
+            {/* User Email Field */}
+            {((taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.USER) || taskType === TaskType.USER_ONBOARDING) && (
               <FormField
                 control={form.control}
                 name="userEmail"
@@ -261,7 +274,7 @@ export function CreateTaskModal() {
                   <FormItem>
                     <FormLabel>User Email</FormLabel>
                     <FormControl>
-                      <Input type="email" {...field} value={field.value || ""} />
+                      <Input type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -269,7 +282,8 @@ export function CreateTaskModal() {
               />
             )}
 
-            {((taskType === "file_request" && taskScope === "company") || taskType === "user_onboarding") && (
+            {/* Company Selection */}
+            {((taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.COMPANY) || taskType === TaskType.USER_ONBOARDING) && (
               <FormField
                 control={form.control}
                 name="companyId"
@@ -329,70 +343,46 @@ export function CreateTaskModal() {
               />
             )}
 
-            {taskType === "file_request" && (
-              <FormField
-                control={form.control}
-                name="dueDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Due Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Choose a Due Date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={handleDateSelect}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <Tabs
-                      value={selectedDueDateOption.label}
-                      onValueChange={(value) => {
-                        const option = dueDateOptions.find(opt => opt.label === value);
-                        if (option) handleDueDateOptionClick(option);
-                      }}
-                      className="w-full mt-2"
-                    >
-                      <TabsList className="grid grid-cols-4 w-full">
-                        {dueDateOptions.map((option) => (
-                          <TabsTrigger
-                            key={option.label}
-                            value={option.label}
-                            className={cn(
-                              "data-[state=active]:text-primary",
-                              "data-[state=active]:bg-primary/10"
-                            )}
-                          >
-                            {option.label}
-                          </TabsTrigger>
-                        ))}
-                      </TabsList>
-                    </Tabs>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {/* Due Date Selection */}
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Choose a Due Date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={handleDateSelect}
+                        disabled={(date) => date < new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex justify-between gap-4 pt-4">
               <Button
@@ -408,7 +398,7 @@ export function CreateTaskModal() {
                 className="flex-1"
                 disabled={createTaskMutation.isPending}
               >
-                {taskType === "file_request" ? (
+                {taskType === TaskType.FILE_REQUEST ? (
                   <div className="flex items-center">
                     <FileText className="h-4 w-4 mr-2" />
                     <span>Create File Task</span>

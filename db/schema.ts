@@ -163,42 +163,53 @@ export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
   taskType: z.enum(["user_onboarding", "file_request"]),
-  taskScope: z.enum(["user", "company"]),
+  taskScope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
-  userEmail: z.string().email().optional().superRefine((val, ctx) => {
-    if (ctx.parent.taskType === "user_onboarding" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for user onboarding tasks",
-      });
-    }
-    if (ctx.parent.taskType === "file_request" && 
-        ctx.parent.taskScope === "user" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Email is required for user file requests",
-      });
-    }
-  }),
-  companyId: z.number().optional().superRefine((val, ctx) => {
-    if (ctx.parent.taskType === "user_onboarding" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Company is required for user onboarding tasks",
-      });
-    }
-    if (ctx.parent.taskType === "file_request" && 
-        ctx.parent.taskScope === "company" && !val) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Company is required for company file requests",
-      });
-    }
-  }),
+  userEmail: z.string().email().optional(),
+  companyId: z.number().optional(),
   dueDate: z.date().optional(),
   priority: z.enum(["low", "medium", "high"]).optional(),
   filesRequested: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.taskType === "user_onboarding") {
+    if (!data.userEmail) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email is required for user onboarding tasks",
+        path: ["userEmail"],
+      });
+    }
+    if (!data.companyId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company is required for user onboarding tasks",
+        path: ["companyId"],
+      });
+    }
+  } else if (data.taskType === "file_request") {
+    if (!data.taskScope) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Task scope is required for file requests",
+        path: ["taskScope"],
+      });
+    }
+    if (data.taskScope === "user" && !data.userEmail) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Email is required for user file requests",
+        path: ["userEmail"],
+      });
+    }
+    if (data.taskScope === "company" && !data.companyId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company is required for company file requests",
+        path: ["companyId"],
+      });
+    }
+  }
 });
 export const selectTaskSchema = createSelectSchema(tasks);
 
