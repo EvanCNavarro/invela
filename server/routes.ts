@@ -323,11 +323,15 @@ export function registerRoutes(app: Express): Server {
     try {
       const { taskType, userEmail, companyId } = req.body;
 
-      // Set due date to 2 weeks from now for invitation tasks
-      const twoWeeksFromNow = new Date();
-      twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+      // First validate only the required fields from the modal
+      if (!taskType || !userEmail || !companyId) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          detail: "Please provide task type, user email, and company"
+        });
+      }
 
-      // Get company name for the description
+      // Get company details
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, companyId));
@@ -336,67 +340,34 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Company not found" });
       }
 
-      // Basic task data that's common for all task types
-      const baseTaskData = {
+      // Create minimal task data with sensible defaults
+      const taskData = {
+        title: taskType === 'user_onboarding'
+          ? `New User Invitation: ${userEmail}`
+          : `File Request for ${userEmail}`,
+        description: taskType === 'user_onboarding'
+          ? `Invitation sent to ${userEmail} to join ${company.name} on the platform.`
+          : `Document request task for ${userEmail}`,
+        taskType,
+        taskScope: 'user',
         status: 'pending',
-        progress: 0,
         priority: 'medium',
+        progress: 0,
         createdBy: req.user!.id,
+        userEmail,
+        companyId,
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+        assignedTo: taskType === 'user_onboarding' ? null : req.user!.id,
         filesRequested: [],
         filesUploaded: [],
         metadata: {}
       };
 
-      // Specific task data based on type
-      let specificTaskData;
-      if (taskType === 'user_onboarding') {
-        specificTaskData = {
-          title: `New User Invitation: ${userEmail}`,
-          description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
-          taskType: 'user_onboarding',
-          taskScope: 'user',
-          userEmail,
-          companyId,
-          dueDate: twoWeeksFromNow,
-          assignedTo: null
-        };
-      } else {
-        specificTaskData = {
-          title: `File Request for ${userEmail}`,
-          description: `Document request task for ${userEmail}`,
-          taskType: 'file_request',
-          taskScope: 'user',
-          userEmail,
-          companyId,
-          dueDate: twoWeeksFromNow,
-          assignedTo: req.user!.id
-        };
-      }
-
-      // Combine base and specific task data
-      const taskData = {
-        ...baseTaskData,
-        ...specificTaskData
-      };
-
-      console.log('Task data:', JSON.stringify(taskData, null, 2));
-
-      // Validate the task data
-      const result = insertTaskSchema.safeParse(taskData);
-      if (!result.success) {
-        console.error("Task validation failed:", result.error);
-        return res.status(400).json({
-          message: "Invalid task data",
-          errors: result.error.errors.map(err => ({
-            field: err.path.join('.'),
-            message: err.message
-          }))
-        });
-      }
+      console.log('Creating task with data:', JSON.stringify(taskData, null, 2));
 
       // Create the task
       const [task] = await db.insert(tasks)
-        .values(result.data)
+        .values(taskData)
         .returning();
 
       // Handle email sending for onboarding tasks
