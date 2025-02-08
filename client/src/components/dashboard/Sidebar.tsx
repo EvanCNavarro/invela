@@ -45,9 +45,19 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: () => (
         <div className="w-5 h-5 flex items-center justify-center">
           <Player
-            src="https://cdn.lordicon.com/osuxyevn.json"
+            icon={{
+              name: "home",
+              animation: {
+                type: "loop",
+                path: "https://cdn.lordicon.com/osuxyevn.json"
+              },
+              states: {
+                hover: {
+                  animation: "morph"
+                }
+              }
+            }}
             size={20}
-            colorize="#000000"
             state={hoveredIcon === "home" ? "hover" : "loop"}
           />
         </div>
