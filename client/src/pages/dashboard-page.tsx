@@ -53,6 +53,7 @@ const DEFAULT_WIDGETS = {
 };
 
 const inviteFormSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
   email: z.string().email("Please enter a valid email address")
 });
 
@@ -68,6 +69,7 @@ export default function DashboardPage() {
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
     defaultValues: {
+      companyName: "",
       email: ""
     }
   });
@@ -125,10 +127,10 @@ export default function DashboardPage() {
 
       toast({
         title: (
-          <div className="flex items-center gap-2">
+          <span className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <span>Invitation Sent</span>
-          </div>
+            Invitation Sent
+          </span>
         ),
         description: "The FinTech has been invited to join.",
         duration: 2000,
@@ -149,7 +151,6 @@ export default function DashboardPage() {
     sendInvite(data);
   };
 
-  // Clear server error when user starts typing
   const handleInputChange = () => {
     if (serverError) {
       setServerError(null);
@@ -281,7 +282,7 @@ export default function DashboardPage() {
                     onClick={() => setIsModalOpen(true)}
                     data-element="add-fintech-button"
                   >
-                    Add FinTech
+                    Add New FinTech
                   </Button>
                   <Button variant="outline" className="w-full font-medium">
                     Add User
@@ -297,23 +298,45 @@ export default function DashboardPage() {
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader className="space-y-3">
-                      <DialogTitle>Add FinTech</DialogTitle>
+                      <DialogTitle>Invite a New FinTech to Join Invela</DialogTitle>
                       <DialogDescription>
-                        Enter the email address of the FinTech representative you'd like to invite.
+                        Enter the details of the FinTech company you'd like to invite.
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
                         <FormField
                           control={form.control}
+                          name="companyName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="text-lg font-semibold mb-2">Company Name</div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="text"
+                                  className={cn(
+                                    "w-full",
+                                    serverError && "border-destructive"
+                                  )}
+                                  disabled={isPending}
+                                  aria-label="FinTech company name"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
                           name="email"
                           render={({ field }) => (
                             <FormItem>
+                              <div className="text-lg font-semibold mb-2">Email Address</div>
                               <FormControl>
                                 <Input
                                   {...field}
                                   type="email"
-                                  placeholder="Enter email address"
                                   className={cn(
                                     "w-full",
                                     serverError && "border-destructive"
