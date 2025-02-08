@@ -310,7 +310,7 @@ export default function DashboardPage() {
                           name="companyName"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="text-lg font-semibold mb-2">Company Name</div>
+                              <div className="text-base font-semibold mb-2">Company Name</div>
                               <FormControl>
                                 <Input
                                   {...field}
@@ -332,7 +332,7 @@ export default function DashboardPage() {
                           name="email"
                           render={({ field }) => (
                             <FormItem>
-                              <div className="text-lg font-semibold mb-2">Email Address</div>
+                              <div className="text-base font-semibold mb-2">Invitee Email</div>
                               <FormControl>
                                 <Input
                                   {...field}
