@@ -41,17 +41,19 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   // Get total task count
   const totalTasks = tasks.length;
 
+  const renderIcon = (icon: any, state: string) => (
+    <div className="w-5 h-5 flex items-center justify-center">
+      <Player
+        icon={icon}
+        size={20}
+        state={state}
+      />
+    </div>
+  );
+
   const menuItems = [
     { 
-      icon: () => (
-        <div className="w-5 h-5 flex items-center justify-center">
-          <Player
-            icon={homeIcon}
-            size={20}
-            state={hoveredIcon === "home" ? "hover" : "loop"}
-          />
-        </div>
-      ),
+      icon: () => renderIcon(homeIcon, hoveredIcon === "home" ? "hover" : "loop"),
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
