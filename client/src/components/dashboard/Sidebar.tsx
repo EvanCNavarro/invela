@@ -37,33 +37,30 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
     queryKey: ["/api/tasks"],
   });
 
-  // Get total task count
   const totalTasks = tasks.length;
-
-  const renderIcon = (icon: any, state: string) => (
-    <div className="flex items-center justify-center">
-      <Player
-        icon={icon}
-        size={24}
-        state={state}
-      />
-    </div>
-  );
 
   const menuItems = [
     { 
-      icon: () => renderIcon({
-        name: "home",
-        animation: {
-          type: "loop",
-          path: "https://cdn.lordicon.com/osuxyevn.json"
-        },
-        states: {
-          hover: {
-            animation: "morph"
-          }
-        }
-      }, hoveredIcon === "home" ? "hover" : "loop"),
+      icon: () => (
+        <div className="flex items-center justify-center">
+          <Player
+            size={24}
+            icon={{
+              name: "home",
+              animation: {
+                type: "loop",
+                path: "https://cdn.lordicon.com/osuxyevn.json"
+              },
+              states: {
+                hover: {
+                  animation: "hover-home-2"
+                }
+              }
+            }}
+            state={hoveredIcon === "home" ? "hover" : "loop"}
+          />
+        </div>
+      ),
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
@@ -136,7 +133,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                 onMouseLeave={() => label === "Dashboard" && setHoveredIcon(null)}
               >
                 {typeof Icon === 'function' ? (
-                  <Icon />
+                  Icon()
                 ) : (
                   <Icon className={cn(
                     "h-5 w-5",
