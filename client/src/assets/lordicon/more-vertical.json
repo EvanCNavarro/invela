@@ -2,11 +2,11 @@
   "name": "more-vertical",
   "animation": {
     "type": "loop",
-    "path": "https://cdn.lordicon.com/vxhydwji.json"
+    "path": "https://cdn.lordicon.com/hurxdnrt.json"
   },
   "states": {
     "hover": {
-      "animation": "pulse"
+      "animation": "morph"
     }
   }
 }
