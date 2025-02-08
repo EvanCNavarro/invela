@@ -48,16 +48,16 @@ export function BreadcrumbNav() {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link href="/">
-              <div className="relative w-4 h-4">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn(
-                  "h-4 w-4 hover:opacity-0",
+              <div className="relative w-3.5 h-3.5">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn(
+                  "h-3.5 w-3.5 hover:opacity-0",
                   "transition-opacity duration-200"
                 )}>
                   <path d="M2.3134 6.81482H4.54491V9.03704H2.3134V6.81482Z" fill="#64758B"/>
                   <path fillRule="evenodd" clipRule="evenodd" d="M13.7685 8C13.7685 11.191 11.1709 13.7778 7.96656 13.7778C5.11852 13.7778 2.74691 11.7323 2.25746 9.03704H0C0.510602 12.9654 3.88272 16 7.96656 16C12.4033 16 16 12.4183 16 8C16 3.58172 12.4033 0 7.96656 0C3.9342 0 0.595742 2.95856 0.0206721 6.81482H2.28637C2.83429 4.19289 5.17116 2.22222 7.96656 2.22222C11.1709 2.22222 13.7685 4.80902 13.7685 8Z" fill="#64758B"/>
                 </svg>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn(
-                  "h-4 w-4 opacity-0 hover:opacity-100",
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className={cn(
+                  "h-3.5 w-3.5 opacity-0 hover:opacity-100",
                   "transition-opacity duration-200",
                   "absolute top-0 left-0"
                 )}>
