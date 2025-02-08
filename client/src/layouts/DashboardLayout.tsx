@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
-import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
@@ -54,12 +53,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             : "left-20"
         )}>
           <TopNav />
-          <div className="px-6 py-2">
-            <BreadcrumbNav />
-          </div>
         </div>
 
-        <main className="flex-1 pt-24">
+        <main className="flex-1 pt-16">
           <div className="px-6 md:px-8 py-4 w-full overflow-x-hidden">
             {children}
           </div>
