@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 interface RouteSegment {
   label: string;
   href: string;
+  skipLink?: boolean;
 }
 
 export function BreadcrumbNav() {
@@ -35,7 +36,10 @@ export function BreadcrumbNav() {
       label = "Details";
     }
 
-    return { label, href };
+    // Skip linking for the "company" segment
+    const skipLink = segment === "company";
+
+    return { label, href, skipLink };
   });
 
   return (
@@ -47,7 +51,10 @@ export function BreadcrumbNav() {
               <img 
                 src="/invela-logo.svg" 
                 alt="Invela"
-                className="h-4 w-4"
+                className={cn(
+                  "h-4 w-4 text-muted-foreground transition-colors",
+                  "hover:text-foreground [&>path]:fill-current"
+                )}
               />
             </Link>
           </BreadcrumbLink>
@@ -56,6 +63,9 @@ export function BreadcrumbNav() {
 
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
+          const previousValidItem = breadcrumbs.slice(0, index)
+            .reverse()
+            .find(segment => !segment.skipLink);
 
           return (
             <BreadcrumbItem key={item.href}>
@@ -64,7 +74,7 @@ export function BreadcrumbNav() {
               ) : (
                 <>
                   <BreadcrumbLink asChild>
-                    <Link href={item.href}>
+                    <Link href={item.skipLink ? (previousValidItem?.href || "/") : item.href}>
                       <span className={cn(
                         "text-sm hover:underline",
                         "text-muted-foreground hover:text-foreground"
