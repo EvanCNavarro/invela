@@ -49,18 +49,21 @@ export function BreadcrumbNav() {
           <BreadcrumbLink asChild>
             <Link href="/">
               <img 
-                src="/invela-logo.svg" 
+                src="/logo_invela_gray.svg" 
                 alt="Invela"
                 className={cn(
-                  "h-4 w-4",
-                  "transition-colors duration-200"
+                  "h-4 w-4 hover:opacity-0",
+                  "transition-opacity duration-200"
                 )}
-                style={{
-                  filter: 'invert(46%) sepia(13%) saturate(654%) hue-rotate(182deg) brightness(94%) contrast(88%)',
-                  ':hover': {
-                    filter: 'brightness(0) saturate(100%)'
-                  }
-                }}
+              />
+              <img 
+                src="/logo_invela_black.svg" 
+                alt="Invela"
+                className={cn(
+                  "h-4 w-4 opacity-0 hover:opacity-100",
+                  "transition-opacity duration-200",
+                  "absolute top-0 left-0"
+                )}
               />
             </Link>
           </BreadcrumbLink>
