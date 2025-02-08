@@ -52,8 +52,8 @@ export function BreadcrumbNav() {
                 src="/invela-logo.svg" 
                 alt="Invela"
                 className={cn(
-                  "h-4 w-4 text-muted-foreground transition-colors",
-                  "hover:text-foreground [&>path]:fill-current"
+                  "h-4 w-4 text-[#64758B] transition-colors",
+                  "hover:text-[#020817] [&>path]:fill-current"
                 )}
               />
             </Link>
@@ -77,7 +77,7 @@ export function BreadcrumbNav() {
                     <Link href={item.skipLink ? (previousValidItem?.href || "/") : item.href}>
                       <span className={cn(
                         "text-sm hover:underline",
-                        "text-muted-foreground hover:text-foreground"
+                        "text-[#64758B] hover:text-[#020817]"
                       )}>
                         {item.label}
                       </span>
