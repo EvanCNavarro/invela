@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+export const CompanyType = {
+  SYSTEM_CREATOR: 'SYSTEM_CREATOR',
+  WHITE_LABEL: 'WHITE_LABEL',
+  THIRD_PARTY: 'THIRD_PARTY'
+} as const;
+
+export type CompanyType = typeof CompanyType[keyof typeof CompanyType];
+
+export const CompanyCategory = {
+  INVELA: 'INVELA',
+  BANK: 'BANK',
+  FINTECH: 'FINTECH'
+} as const;
+
+export type CompanyCategory = typeof CompanyCategory[keyof typeof CompanyCategory];
+
 export const AccreditationStatus = {
   AWAITING_INVITATION: 'AWAITING_INVITATION',
   PENDING: 'PENDING',
@@ -16,7 +32,8 @@ export type AccreditationStatus = typeof AccreditationStatus[keyof typeof Accred
 export const companySchema = z.object({
   id: z.number(),
   name: z.string(),
-  type: z.string(),
+  type: z.enum(['SYSTEM_CREATOR', 'WHITE_LABEL', 'THIRD_PARTY']),
+  category: z.enum(['INVELA', 'BANK', 'FINTECH']),
   description: z.string().nullable(),
   riskScore: z.number().optional(),
   accreditationStatus: z.enum([
