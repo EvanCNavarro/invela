@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
-  HomeIcon,
   CheckCircleIcon,
   BookIcon,
   BarChartIcon,
@@ -14,6 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { Player } from "@lordicon/react";
+import homeIcon from "@/assets/lordicon/home.json";
+import { useState } from "react";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -31,6 +33,7 @@ interface Task {
 
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
+  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
@@ -40,7 +43,13 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   const menuItems = [
     { 
-      icon: HomeIcon,
+      icon: () => (
+        <Player
+          icon={homeIcon}
+          size={20}
+          state={hoveredIcon === "home" ? "hover" : "loop"}
+        />
+      ),
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
@@ -49,7 +58,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false, // Always accessible
+      locked: false,
       count: totalTasks
     },
     { 
@@ -98,20 +107,24 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
           return (
             <Link key={href} href={isDisabled ? "#" : href}>
-              <div className={cn(
-                "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-                "transition-all duration-200 relative",
-                !isExpanded && "justify-center",
-                isActive 
-                  ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
-                  : isDisabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
-              )}>
-                <Icon className={cn(
+              <div 
+                className={cn(
+                  "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
+                  "transition-all duration-200 relative",
+                  !isExpanded && "justify-center",
+                  isActive 
+                    ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
+                    : isDisabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
+                )}
+                onMouseEnter={() => label === "Dashboard" && setHoveredIcon("home")}
+                onMouseLeave={() => setHoveredIcon(null)}
+              >
+                {typeof Icon === 'function' ? <Icon /> : <Icon className={cn(
                   "h-5 w-5",
                   isActive && "stroke-[2.5]"
-                )} />
+                )} />}
                 {isExpanded && (
                   <>
                     <span className={cn(
