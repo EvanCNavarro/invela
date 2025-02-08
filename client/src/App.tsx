@@ -13,6 +13,7 @@ import NetworkPage from "@/pages/network-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
+import CompanyProfilePage from "@/pages/company-profile-page"; // Added import
 import { ProtectedRoute } from "./lib/protected-route";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -47,6 +48,16 @@ function Router() {
           <ProtectedLayout>
             <OnboardingWrapper>
               <NetworkPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/network/company/:companySlug" 
+        component={() => (
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <CompanyProfilePage />
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 
