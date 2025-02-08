@@ -13,7 +13,7 @@ import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 
 export default function CompanyProfilePage() {
   const { companySlug } = useParams();
-  
+
   const { data: company, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies", companySlug],
   });
@@ -65,22 +65,11 @@ export default function CompanyProfilePage() {
             title={
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
-                  {company.logoId ? (
-                    <img
-                      src={`/api/companies/${company.id}/logo`}
-                      alt={`${company.name} logo`}
-                      className="w-8 h-8 object-contain"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = defaultCompanyLogo;
-                      }}
-                    />
-                  ) : (
-                    <img
-                      src={defaultCompanyLogo}
-                      alt="Default company logo"
-                      className="w-8 h-8 object-contain"
-                    />
-                  )}
+                  <img
+                    src={defaultCompanyLogo}
+                    alt="Default company logo"
+                    className="w-8 h-8 object-contain"
+                  />
                 </div>
                 {company.name}
               </div>
@@ -116,9 +105,9 @@ export default function CompanyProfilePage() {
             </CardHeader>
             <CardContent>
               <Badge 
-                variant={getAccreditationBadgeVariant(company.accreditationStatus)}
+                variant="default"
                 className={cn(
-                  "text-sm capitalize border-0",
+                  "text-sm capitalize",
                   company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
                   company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
                   company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
@@ -146,8 +135,6 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Additional company details can be added here */}
       </div>
     </DashboardLayout>
   );
