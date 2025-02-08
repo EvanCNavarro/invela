@@ -15,6 +15,43 @@ interface RouteSegment {
   skipLink?: boolean;
 }
 
+// Helper function to apply APA title case
+function toAPACase(text: string): string {
+  // Words that should remain lowercase in APA style (unless they're the first word)
+  const minorWords = new Set([
+    'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'if', 'in', 
+    'of', 'off', 'on', 'or', 'per', 'the', 'to', 'up', 'via'
+  ]);
+
+  // Split the text into words, considering spaces and hyphens
+  const words = text.split(/(?<=-)|\s+/);
+
+  return words.map((word, index) => {
+    // Skip empty strings
+    if (!word) return word;
+
+    // Preserve original casing if it contains mixed case (likely a proper noun or acronym)
+    if (word !== word.toLowerCase() && word !== word.toUpperCase()) {
+      return word;
+    }
+
+    // Convert to lowercase first
+    word = word.toLowerCase();
+
+    // Always capitalize first and last word
+    if (index === 0 || index === words.length - 1) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+
+    // Capitalize if it's not in the minor words list or if it's 4+ letters
+    if (!minorWords.has(word) || word.length >= 4) {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }
+
+    return word;
+  }).join(' ');
+}
+
 export function BreadcrumbNav() {
   const [location] = useLocation();
 
@@ -26,15 +63,17 @@ export function BreadcrumbNav() {
   const segments = location.split("/").filter(Boolean);
   const breadcrumbs: RouteSegment[] = segments.map((segment, index) => {
     const href = `/${segments.slice(0, index + 1).join("/")}`;
+
     // Convert URL-friendly format to display format
-    let label = segment.split("-").map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(" ");
+    let label = segment.split("-").join(" ");
 
     // Handle dynamic segments (those with parameters)
     if (segment.includes(":")) {
       label = "Details";
     }
+
+    // Apply APA title case
+    label = toAPACase(label);
 
     // Skip linking for the "company" segment
     const skipLink = segment === "company";
