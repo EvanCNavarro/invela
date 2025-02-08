@@ -27,6 +27,15 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 
+// Types for company data
+interface Company {
+  id: number;
+  name: string;
+  logoId: string | null;
+  riskScore?: number;
+  accreditationStatus: AccreditationStatus;
+}
+
 // Updated function to handle status groups for styling
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
   // Grey, neutral group
@@ -76,11 +85,11 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companies = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
-  const sortCompanies = (a: any, b: any) => {
+  const sortCompanies = (a: Company, b: Company) => {
     if (sortField === "name") {
       return sortDirection === "asc"
         ? a.name.localeCompare(b.name)
@@ -101,7 +110,7 @@ export default function NetworkPage() {
   };
 
   const filteredCompanies = companies
-    .filter((company: any) => {
+    .filter((company) => {
       const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
       return matchesSearch && matchesStatus;
@@ -226,7 +235,7 @@ export default function NetworkPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedCompanies.map((company: any) => (
+                paginatedCompanies.map((company) => (
                   <TableRow
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50 bg-white"
@@ -320,26 +329,23 @@ export default function NetworkPage() {
   );
 }
 
-function CompanyCell({ company, isHovered }: { company: any; isHovered: boolean }) {
+interface CompanyCellProps {
+  company: Company;
+  isHovered: boolean;
+}
+
+function CompanyCell({ company, isHovered }: CompanyCellProps) {
+  const [logoError, setLogoError] = useState(false);
+
   return (
     <div className="flex items-center gap-3">
       <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-        {company.logoId ? (
-          <img
-            src={`/api/companies/${company.id}/logo`}
-            alt={`${company.name} logo`}
-            className="w-full h-full object-contain"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = defaultCompanyLogo;
-            }}
-          />
-        ) : (
-          <img
-            src={defaultCompanyLogo}
-            alt="Default company logo"
-            className="w-full h-full object-contain"
-          />
-        )}
+        <img
+          src={logoError ? defaultCompanyLogo : `/api/companies/${company.id}/logo`}
+          alt={`${company.name} logo`}
+          className="w-full h-full object-contain"
+          onError={() => setLogoError(true)}
+        />
       </div>
       <span className={cn(
         "font-normal text-foreground",
