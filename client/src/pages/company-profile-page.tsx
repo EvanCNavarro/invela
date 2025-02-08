@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Shield, Calendar } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
@@ -23,12 +23,26 @@ export default function CompanyProfilePage() {
     queryKey: ["/api/companies"],
   });
 
+  console.debug('Company Profile Debug:', {
+    receivedSlug: companySlug,
+    companiesDataLength: companiesData.length,
+    rawCompaniesData: companiesData
+  });
+
   // Find the company that matches the slug, accounting for nested structure
   const company = companiesData.find(item => {
     const companyData = item.companies || item;
     if (!companySlug || !companyData.name) return false;
-    return generateSlug(companyData.name) === companySlug;
+    const generatedSlug = generateSlug(companyData.name);
+    console.debug('Comparing slugs:', {
+      companyName: companyData.name,
+      generatedSlug,
+      matchesTarget: generatedSlug === companySlug
+    });
+    return generatedSlug === companySlug;
   })?.companies;
+
+  console.debug('Final matched company:', company);
 
   if (isLoading) {
     return (
@@ -46,13 +60,40 @@ export default function CompanyProfilePage() {
     );
   }
 
-  if (!company) {
+  // If no companies data is available, show access restricted error
+  if (!companiesData || companiesData.length === 0) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <Ban className="h-12 w-12 text-destructive" />
+          <h2 className="text-2xl font-semibold">Access Restricted</h2>
+          <p className="text-muted-foreground max-w-md text-center">
+            You don't have permission to view this page.
+          </p>
+          <Button variant="outline" onClick={() => window.history.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
+          </Button>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // If company not found in the network
+  if (!company) {
+    // Try to find the original company name from the slug for better error message
+    const attemptedCompanyName = companySlug
+      ?.split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <AlertTriangle className="h-12 w-12 text-warning" />
           <h2 className="text-2xl font-semibold">Company Not Found</h2>
           <p className="text-muted-foreground max-w-md text-center">
-            The company you're looking for doesn't exist or you don't have permission to view it.
+            There was no '{attemptedCompanyName}' company found in your network.
           </p>
           <Button variant="outline" onClick={() => window.history.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
