@@ -15,7 +15,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Player } from "@lordicon/react";
 import { useState } from "react";
-import homeIcon from "@/assets/lordicon/home.json";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -42,10 +41,10 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   const totalTasks = tasks.length;
 
   const renderIcon = (icon: any, state: string) => (
-    <div className="w-5 h-5 flex items-center justify-center">
+    <div className="flex items-center justify-center">
       <Player
         icon={icon}
-        size={20}
+        size={24}
         state={state}
       />
     </div>
@@ -53,7 +52,18 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   const menuItems = [
     { 
-      icon: () => renderIcon(homeIcon, hoveredIcon === "home" ? "hover" : "loop"),
+      icon: () => renderIcon({
+        name: "home",
+        animation: {
+          type: "loop",
+          path: "https://cdn.lordicon.com/osuxyevn.json"
+        },
+        states: {
+          hover: {
+            animation: "morph"
+          }
+        }
+      }, hoveredIcon === "home" ? "hover" : "loop"),
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
