@@ -11,6 +11,9 @@ import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 
+// Helper function to generate consistent slugs
+const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 export default function CompanyProfilePage() {
   const { companySlug } = useParams();
 
@@ -20,9 +23,7 @@ export default function CompanyProfilePage() {
   });
 
   // Find the company that matches the slug
-  const company = companies.find(c => 
-    c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === companySlug
-  );
+  const company = companies.find(c => generateSlug(c.name) === companySlug);
 
   if (isLoading) {
     return (
