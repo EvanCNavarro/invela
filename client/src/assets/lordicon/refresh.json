@@ -1,0 +1,12 @@
+{
+  "name": "refresh",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/sihdhmit.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "rotate"
+    }
+  }
+}

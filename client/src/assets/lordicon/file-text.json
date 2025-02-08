@@ -1,0 +1,12 @@
+{
+  "name": "file-text",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/nocovwne.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "morph"
+    }
+  }
+}
