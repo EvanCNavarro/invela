@@ -2,11 +2,11 @@
   "name": "refresh",
   "animation": {
     "type": "loop",
-    "path": "https://cdn.lordicon.com/sihdhmit.json"
+    "path": "https://cdn.lordicon.com/ymrqtsej.json"
   },
   "states": {
     "hover": {
-      "animation": "rotate"
+      "animation": "boomerang"
     }
   }
 }

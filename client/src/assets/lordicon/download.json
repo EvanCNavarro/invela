@@ -2,11 +2,11 @@
   "name": "download",
   "animation": {
     "type": "loop",
-    "path": "https://cdn.lordicon.com/xhdhjyqy.json"
+    "path": "https://cdn.lordicon.com/wfadduyp.json"
   },
   "states": {
     "hover": {
-      "animation": "slide-down"
+      "animation": "in-reveal"
     }
   }
 }
