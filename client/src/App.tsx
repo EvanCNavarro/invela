@@ -54,7 +54,7 @@ function Router() {
       />
       <ProtectedRoute 
         path="/network/company/:companySlug"
-        component={() => (
+        component={({ params }) => (
           <ProtectedLayout>
             <OnboardingWrapper>
               <CompanyProfilePage />
