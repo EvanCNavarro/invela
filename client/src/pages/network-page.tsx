@@ -46,9 +46,12 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
-  const { data: companies = [], isLoading } = useQuery({
+  const { data: companiesData = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
   });
+
+  // Extract companies from the nested structure
+  const companies = companiesData.map(item => item.companies || item);
 
   const sortCompanies = (a: any, b: any) => {
     if (sortField === "name") {

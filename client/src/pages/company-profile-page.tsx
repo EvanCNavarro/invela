@@ -19,15 +19,16 @@ export default function CompanyProfilePage() {
   const companySlug = params.companySlug;
 
   // Query for all companies
-  const { data: companies = [], isLoading } = useQuery<Company[]>({
+  const { data: companiesData = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/companies"],
   });
 
-  // Find the company that matches the slug
-  const company = companies.find(c => {
-    if (!companySlug || !c.name) return false;
-    return generateSlug(c.name) === companySlug;
-  });
+  // Find the company that matches the slug, accounting for nested structure
+  const company = companiesData.find(item => {
+    const companyData = item.companies || item;
+    if (!companySlug || !companyData.name) return false;
+    return generateSlug(companyData.name) === companySlug;
+  })?.companies;
 
   if (isLoading) {
     return (
@@ -170,7 +171,6 @@ export default function CompanyProfilePage() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
