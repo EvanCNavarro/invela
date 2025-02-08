@@ -69,7 +69,7 @@ const upload = multer({
   }
 });
 
-// Update storage configuration for logos
+// Update the logo storage configuration to handle blue suffix
 const logoStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     const uploadDir = path.resolve('/home/runner/workspace/uploads/logos');
@@ -80,8 +80,6 @@ const logoStorage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const companyId = parseInt(req.params.id);
-    let filename = `logo_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
-
     db.select()
       .from(companies)
       .where(eq(companies.id, companyId))
@@ -90,9 +88,14 @@ const logoStorage = multer.diskStorage({
           const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
           const colorMatch = file.originalname.match(/_([a-z]+)\.svg$/i);
           const colorSuffix = colorMatch ? `-${colorMatch[1].toLowerCase()}` : '';
-          filename = `logo_${companySlug}${colorSuffix}.svg`;
+          // Special handling for Invela's primary blue logo
+          const filename = company.name === 'Invela' && !colorSuffix ? 
+            'logo_invela_blue.svg' : 
+            `logo_${companySlug}${colorSuffix}.svg`;
+          cb(null, filename);
+        } else {
+          cb(new Error('Company not found'));
         }
-        cb(null, filename);
       })
       .catch(err => {
         console.error('Error getting company name:', err);

@@ -19,7 +19,14 @@ async function renameLogo(logoRecord: LogoRecord, companyName: string) {
 
   // Generate new filename using hyphenated format
   const companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const newFilename = `logo_${companySlug}.svg`;
+  // Special handling for Invela logo variants
+  const isInvela = companyName === 'Invela';
+  const colorMatch = logoRecord.filePath.match(/_([a-z]+)\.svg$/i);
+  const colorSuffix = colorMatch ? 
+    `-${colorMatch[1].toLowerCase()}` : 
+    (isInvela ? '_blue' : '');
+
+  const newFilename = `logo_${companySlug}${colorSuffix}.svg`;
   const newPath = path.resolve(uploadDir, newFilename);
 
   try {
