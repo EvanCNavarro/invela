@@ -6,7 +6,7 @@
   },
   "states": {
     "hover": {
-      "animation": "morph"
+      "animation": "hover-home-2"
     }
   }
 }
