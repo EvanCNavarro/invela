@@ -66,9 +66,6 @@ export function TopNav() {
               onCloseAutoFocus={(event) => {
                 event.preventDefault();
               }}
-              onOpenAutoFocus={(event) => {
-                event.preventDefault();
-              }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-2 py-1.5">
