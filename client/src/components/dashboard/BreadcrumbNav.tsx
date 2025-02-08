@@ -53,10 +53,14 @@ export function BreadcrumbNav() {
                 alt="Invela"
                 className={cn(
                   "h-4 w-4",
-                  "[&]:brightness-0 [&]:saturate-0 [&]:opacity-40",
-                  "hover:[&]:brightness-0 hover:[&]:saturate-100 hover:[&]:opacity-100",
-                  "transition-all duration-200"
+                  "fill-[#64758B]",
+                  "hover:fill-[#020817]",
+                  "transition-colors duration-200"
                 )}
+                style={{
+                  filter: 'none',
+                  opacity: '1'
+                }}
               />
             </Link>
           </BreadcrumbLink>
