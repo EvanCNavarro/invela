@@ -8,7 +8,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   LockIcon,
-  FileIcon
+  FileIcon,
+  Network
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -52,9 +53,9 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       count: totalTasks
     },
     { 
-      icon: BookIcon,
-      label: "Registry", 
-      href: "/registry",
+      icon: Network,
+      label: "Network", 
+      href: "/network",
       locked: isNewUser 
     },
     { 
