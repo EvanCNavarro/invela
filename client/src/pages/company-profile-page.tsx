@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Shield, Calendar, Users, FileText, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
@@ -15,24 +15,19 @@ import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 export default function CompanyProfilePage() {
-  const { companySlug } = useParams();
+  const params = useParams();
+  const companySlug = params.companySlug;
 
   // Query for all companies
   const { data: companies = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
-  console.log('Debug - Company Slug:', companySlug);
-  console.log('Debug - Available Companies:', companies);
-
   // Find the company that matches the slug
   const company = companies.find(c => {
-    const genSlug = generateSlug(c.name);
-    console.log('Debug - Comparing:', genSlug, 'with', companySlug);
-    return genSlug === companySlug;
+    if (!companySlug || !c.name) return false;
+    return generateSlug(c.name) === companySlug;
   });
-
-  console.log('Debug - Found Company:', company);
 
   if (isLoading) {
     return (
@@ -54,7 +49,6 @@ export default function CompanyProfilePage() {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center py-12 space-y-4">
-          <AlertTriangle className="h-12 w-12 text-muted-foreground" />
           <h2 className="text-2xl font-semibold">Company Not Found</h2>
           <p className="text-muted-foreground max-w-md text-center">
             The company you're looking for doesn't exist or you don't have permission to view it.
@@ -134,9 +128,6 @@ export default function CompanyProfilePage() {
               >
                 {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
               </Badge>
-              <p className="text-sm text-muted-foreground mt-3">
-                Last updated: {new Date(company.updatedAt || Date.now()).toLocaleDateString()}
-              </p>
             </CardContent>
           </Card>
 
@@ -152,7 +143,6 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2">
