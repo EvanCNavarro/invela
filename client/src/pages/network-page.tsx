@@ -27,10 +27,8 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 
-// Convert company name to URL-friendly format
-const getCompanySlug = (name: string) => {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-};
+// Helper function to generate consistent slugs - must match company-profile-page.tsx
+const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -191,7 +189,7 @@ export default function NetworkPage() {
                   <TableRow
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50 bg-white"
-                    onClick={() => setLocation(`/network/company/${getCompanySlug(company.name)}`)}
+                    onClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
                     onMouseEnter={() => setHoveredRow(company.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
