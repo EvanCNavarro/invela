@@ -90,11 +90,11 @@ export const tasks = pgTable("tasks", {
 
 export const relationships = pgTable("relationships", {
   id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id),
-  relatedCompanyId: integer("related_company_id").references(() => companies.id),
-  relationshipType: text("relationship_type").notNull(),
-  status: text("status").notNull(),
-  metadata: jsonb("metadata"),
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  relatedCompanyId: integer("related_company_id").references(() => companies.id).notNull(),
+  relationshipType: text("relationship_type").notNull(), // 'network_member'
+  status: text("status").notNull(), // 'active', 'inactive'
+  metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -128,7 +128,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 export const companiesRelations = relations(companies, ({ many }) => ({
   users: many(users),
   tasks: many(tasks),
-  relationships: many(relationships),
+  networkMembers: many(relationships, { relationName: "networkMembers" }),
+  memberOfNetworks: many(relationships, { relationName: "memberOfNetworks" }),
   logos: many(companyLogos)
 }));
 

@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import {
+import { 
   companies,
   tasks,
   relationships,
@@ -10,7 +10,8 @@ import {
   insertCompanySchema,
   insertTaskSchema,
   insertFileSchema,
-  companyLogos
+  companyLogos,
+  users
 } from "@db/schema";
 import { eq, and, inArray, or } from "drizzle-orm";
 import multer from "multer";
@@ -293,18 +294,80 @@ export function registerRoutes(app: Express): Server {
 
   // Companies
   app.get("/api/companies", requireAuth, async (req, res) => {
-    const results = await db.select().from(companies);
-    res.json(results);
+    try {
+      // If the user is from Invela (System Creator), they can see all companies
+      const [userCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
+
+      if (!userCompany) {
+        return res.status(404).json({ message: "User's company not found" });
+      }
+
+      if (userCompany.type === 'SYSTEM_CREATOR') {
+        // Invela users can see all companies
+        const results = await db.select().from(companies);
+        return res.json(results);
+      }
+
+      // For other companies, get companies from their network
+      const networkCompanies = await db.select()
+        .from(companies)
+        .leftJoin(relationships, and(
+          eq(relationships.companyId, req.user!.companyId),
+          eq(relationships.status, 'active')
+        ))
+        .where(or(
+          // Include their own company
+          eq(companies.id, req.user!.companyId),
+          // Include related companies
+          eq(relationships.relatedCompanyId, companies.id)
+        ));
+
+      res.json(networkCompanies.map(({ companies: company }) => company));
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Error fetching companies" });
+    }
   });
 
   app.post("/api/companies", requireAuth, async (req, res) => {
-    const result = insertCompanySchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ message: "Invalid company data" });
-    }
+    try {
+      const result = insertCompanySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid company data" });
+      }
 
-    const company = await db.insert(companies).values(result.data).returning();
-    res.status(201).json(company[0]);
+      // Create the company
+      const [company] = await db.insert(companies)
+        .values(result.data)
+        .returning();
+
+      // Find the Invela company (System Creator)
+      const [invela] = await db.select()
+        .from(companies)
+        .where(eq(companies.type, 'SYSTEM_CREATOR'));
+
+      if (invela) {
+        // Add the new company to Invela's network
+        await db.insert(relationships)
+          .values({
+            companyId: invela.id,
+            relatedCompanyId: company.id,
+            relationshipType: 'network_member',
+            status: 'active',
+            metadata: {
+              addedAt: new Date().toISOString(),
+              addedBy: 'system'
+            }
+          });
+      }
+
+      res.status(201).json(company);
+    } catch (error) {
+      console.error("Error creating company:", error);
+      res.status(500).json({ message: "Error creating company" });
+    }
   });
 
   // Tasks
@@ -764,6 +827,53 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error sending fintech invite:", error);
       res.status(500).json({ message: "Error sending invite" });
+    }
+  });
+
+  // Add endpoint for companies to add other companies to their network
+  app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
+    try {
+      const targetCompanyId = parseInt(req.params.id);
+
+      // Verify the target company exists
+      const [targetCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, targetCompanyId));
+
+      if (!targetCompany) {
+        return res.status(404).json({ message: "Target company not found" });
+      }
+
+      // Check if relationship already exists
+      const [existingRelationship] = await db.select()
+        .from(relationships)
+        .where(and(
+          eq(relationships.companyId, req.user!.companyId),
+          eq(relationships.relatedCompanyId, targetCompanyId)
+        ));
+
+      if (existingRelationship) {
+        return res.status(400).json({ message: "Company is already in your network" });
+      }
+
+      // Create the relationship
+      const [relationship] = await db.insert(relationships)
+        .values({
+          companyId: req.user!.companyId,
+          relatedCompanyId: targetCompanyId,
+          relationshipType: 'network_member',
+          status: 'active',
+          metadata: {
+            addedAt: new Date().toISOString(),
+            addedBy: req.user!.id
+          }
+        })
+        .returning();
+
+      res.status(201).json(relationship);
+    } catch (error) {
+      console.error("Error adding company to network:", error);
+      res.status(500).json({ message: "Error adding company to network" });
     }
   });
 
