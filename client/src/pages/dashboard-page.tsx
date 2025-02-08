@@ -300,7 +300,7 @@ export default function DashboardPage() {
                     <DialogHeader className="space-y-3">
                       <DialogTitle>Invite a New FinTech to Join Invela</DialogTitle>
                       <DialogDescription>
-                        Enter the details of the FinTech company you'd like to invite.
+                        Please provide the company information to send an invitation.
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
