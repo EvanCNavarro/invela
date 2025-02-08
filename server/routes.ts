@@ -79,9 +79,30 @@ const logoStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = uuidv4();
-    const safeFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-    cb(null, `${uniqueSuffix}-${safeFilename}`);
+    // Get company name from the request
+    const companyId = parseInt(req.params.id);
+    // Default to original file naming convention if company not found
+    let filename = `logo_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+    // Async operation to get company name
+    db.select()
+      .from(companies)
+      .where(eq(companies.id, companyId))
+      .then(([company]) => {
+        if (company) {
+          // Convert company name to snake case and create filename
+          const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+          // Check if filename contains color variant
+          const colorMatch = file.originalname.match(/_([a-z]+)\.svg$/i);
+          const colorSuffix = colorMatch ? `_${colorMatch[1].toLowerCase()}` : '';
+          filename = `logo_${companySlug}${colorSuffix}.svg`;
+        }
+        cb(null, filename);
+      })
+      .catch(err => {
+        console.error('Error getting company name:', err);
+        cb(err);
+      });
   }
 });
 
@@ -695,7 +716,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Add company logo upload endpoint
+  // Update company logo upload endpoint
   app.post("/api/companies/:id/logo", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
@@ -709,6 +730,20 @@ export function registerRoutes(app: Express): Server {
 
       if (!company) {
         return res.status(404).json({ message: "Company not found" });
+      }
+
+      // If company already has a logo, delete the old file
+      if (company.logoId) {
+        const [oldLogo] = await db.select()
+          .from(companyLogos)
+          .where(eq(companyLogos.id, company.logoId));
+
+        if (oldLogo) {
+          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);
+          if (fs.existsSync(oldFilePath)) {
+            fs.unlinkSync(oldFilePath);
+          }
+        }
       }
 
       // Create logo record
