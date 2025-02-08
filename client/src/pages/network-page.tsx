@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import defaultCompanyLogo from "@/assets/default-company-logo.svg";
+import defaultCompanyLogo from "@/assets/logo_null.svg";
 import {
   Select,
   SelectContent,
@@ -200,9 +200,12 @@ export default function NetworkPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
                           <img
-                            src={defaultCompanyLogo}
-                            alt="Default company logo"
+                            src={`/api/companies/${company.id}/logo`}
+                            alt={`${company.name} logo`}
                             className="w-full h-full object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = defaultCompanyLogo;
+                            }}
                           />
                         </div>
                         <span className={cn(
