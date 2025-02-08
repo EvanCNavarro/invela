@@ -35,6 +35,16 @@ export function FileActions({
 }: FileActionsProps) {
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
 
+  const renderIcon = (icon: any, state: string) => (
+    <div className="flex items-center">
+      <Player
+        icon={icon}
+        size={24}
+        state={state}
+      />
+    </div>
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -42,14 +52,10 @@ export function FileActions({
           variant="ghost"
           size="icon"
           className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
+          onMouseEnter={() => setHoveredIcon("more")}
+          onMouseLeave={() => setHoveredIcon(null)}
         >
-          <Player
-            icon={moreVertical}
-            size={24}
-            state={hoveredIcon === "more" ? "hover" : "loop"}
-            onMouseEnter={() => setHoveredIcon("more")}
-            onMouseLeave={() => setHoveredIcon(null)}
-          />
+          {renderIcon(moreVertical, hoveredIcon === "more" ? "hover" : "loop")}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -58,13 +64,9 @@ export function FileActions({
             onClick={() => onViewDetails(file)}
             onMouseEnter={() => setHoveredIcon("file")}
             onMouseLeave={() => setHoveredIcon(null)}
+            className="gap-2"
           >
-            <Player
-              icon={fileText}
-              size={24}
-              className="mr-2"
-              state={hoveredIcon === "file" ? "hover" : "loop"}
-            />
+            {renderIcon(fileText, hoveredIcon === "file" ? "hover" : "loop")}
             View Details
           </DropdownMenuItem>
         )}
@@ -73,13 +75,9 @@ export function FileActions({
             onClick={() => onDownload(file.id)}
             onMouseEnter={() => setHoveredIcon("download")}
             onMouseLeave={() => setHoveredIcon(null)}
+            className="gap-2"
           >
-            <Player
-              icon={downloadIcon}
-              size={24}
-              className="mr-2"
-              state={hoveredIcon === "download" ? "hover" : "loop"}
-            />
+            {renderIcon(downloadIcon, hoveredIcon === "download" ? "hover" : "loop")}
             Download
           </DropdownMenuItem>
         )}
@@ -88,28 +86,19 @@ export function FileActions({
             onClick={() => onRestore(file.id)}
             onMouseEnter={() => setHoveredIcon("restore")}
             onMouseLeave={() => setHoveredIcon(null)}
+            className="gap-2"
           >
-            <Player
-              icon={refreshIcon}
-              size={24}
-              className="mr-2"
-              state={hoveredIcon === "restore" ? "hover" : "loop"}
-            />
+            {renderIcon(refreshIcon, hoveredIcon === "restore" ? "hover" : "loop")}
             Restore
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
-            className="text-destructive"
+            className="text-destructive gap-2"
             onClick={() => onDelete(file.id)}
             onMouseEnter={() => setHoveredIcon("delete")}
             onMouseLeave={() => setHoveredIcon(null)}
           >
-            <Player
-              icon={trashIcon}
-              size={24}
-              className="mr-2"
-              state={hoveredIcon === "delete" ? "hover-error" : "loop"}
-            />
+            {renderIcon(trashIcon, hoveredIcon === "delete" ? "hover-error" : "loop")}
             Delete
           </DropdownMenuItem>
         )}

@@ -1,0 +1,12 @@
+{
+  "name": "home",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/osuxyevn.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "morph"
+    }
+  }
+}
