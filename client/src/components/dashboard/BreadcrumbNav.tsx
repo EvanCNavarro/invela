@@ -49,8 +49,8 @@ export function BreadcrumbNav() {
           <BreadcrumbLink asChild>
             <Link href="/">
               <svg 
-                width="16" 
-                height="16" 
+                width="24" 
+                height="24" 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 xmlns="http://www.w3.org/2000/svg"
@@ -59,9 +59,9 @@ export function BreadcrumbNav() {
                   "text-[#64758B] hover:text-[#020817]"
                 )}
               >
-                <rect x="4" y="4" width="16" height="4" fill="currentColor" />
-                <rect x="4" y="10" width="16" height="4" fill="currentColor" />
-                <rect x="4" y="16" width="16" height="4" fill="currentColor" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M12.0001 6C12.0001 4.89543 12.8955 4 14.0001 4H18.0001C19.1047 4 20.0001 4.89543 20.0001 6V10C20.0001 11.1046 19.1047 12 18.0001 12H14.0001C12.8955 12 12.0001 11.1046 12.0001 10V6Z" fill="currentColor"/>
+                <path fillRule="evenodd" clipRule="evenodd" d="M4 6C4 4.89543 4.89543 4 6 4H10C11.1046 4 12 4.89543 12 6V10C12 11.1046 11.1046 12 10 12H6C4.89543 12 4 11.1046 4 10V6Z" fill="currentColor"/>
+                <path fillRule="evenodd" clipRule="evenodd" d="M4 14C4 12.8954 4.89543 12 6 12H10C11.1046 12 12 12.8954 12 14V18C12 19.1046 11.1046 20 10 20H6C4.89543 20 4 19.1046 4 18V14Z" fill="currentColor"/>
               </svg>
             </Link>
           </BreadcrumbLink>
