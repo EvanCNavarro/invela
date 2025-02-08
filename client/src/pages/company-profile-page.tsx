@@ -14,9 +14,15 @@ import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 export default function CompanyProfilePage() {
   const { companySlug } = useParams();
 
-  const { data: company, isLoading } = useQuery<Company>({
-    queryKey: [`/api/companies/${companySlug}`],
+  // Query for all companies and find the matching one by slug
+  const { data: companies = [], isLoading } = useQuery<Company[]>({
+    queryKey: ["/api/companies"],
   });
+
+  // Find the company that matches the slug
+  const company = companies.find(c => 
+    c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') === companySlug
+  );
 
   if (isLoading) {
     return (
@@ -58,12 +64,9 @@ export default function CompanyProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
                   <img
-                    src={company.logoUrl || defaultCompanyLogo}
+                    src={defaultCompanyLogo}
                     alt={`${company.name} logo`}
                     className="w-8 h-8 object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = defaultCompanyLogo;
-                    }}
                   />
                 </div>
                 {company.name}
