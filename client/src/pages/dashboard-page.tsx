@@ -176,9 +176,6 @@ export default function DashboardPage() {
               align="end"
               className="w-56"
               sideOffset={4}
-              onCloseAutoFocus={(event) => {
-                event.preventDefault();
-              }}
             >
               <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -296,15 +293,10 @@ export default function DashboardPage() {
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogContent 
-                    className="sm:max-w-[425px]"
-                    onOpenAutoFocus={(event) => {
-                      event.preventDefault();
-                    }}
-                  >
-                    <DialogHeader className="space-y-4">
-                      <DialogTitle>Invite a New FinTech</DialogTitle>
-                      <DialogDescription className="mb-4">
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-semibold">Invite a New FinTech</DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
                         Please provide details to send a FinTech invitation.
                       </DialogDescription>
                     </DialogHeader>
