@@ -15,16 +15,8 @@ export default function CompanyProfilePage() {
   const { companySlug } = useParams();
 
   const { data: company, isLoading } = useQuery<Company>({
-    queryKey: ["/api/companies", companySlug],
+    queryKey: ["/api/companies/bySlug", companySlug],
   });
-
-  const getAccreditationBadgeVariant = (status: string) => {
-    if (status === 'AWAITING_INVITATION' || status === 'SUSPENDED') return 'secondary';
-    if (status === 'PENDING' || status === 'IN_REVIEW') return 'warning';
-    if (status === 'APPROVED' || status === 'PROVISIONALLY_APPROVED') return 'success';
-    if (status === 'REVOKED' || status === 'EXPIRED') return 'destructive';
-    return 'secondary';
-  };
 
   if (isLoading) {
     return (
@@ -62,18 +54,7 @@ export default function CompanyProfilePage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
-            title={
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
-                  <img
-                    src={defaultCompanyLogo}
-                    alt="Default company logo"
-                    className="w-8 h-8 object-contain"
-                  />
-                </div>
-                {company.name}
-              </div>
-            }
+            title={company.name}
             description={company.description || "No description available"}
           />
           <Button variant="outline" onClick={() => window.history.back()}>
@@ -91,7 +72,7 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold">{company.type.replace(/_/g, ' ')}</div>
+              <div className="text-2xl font-semibold">{company.type?.replace(/_/g, ' ') || 'N/A'}</div>
               <p className="text-sm text-muted-foreground mt-1">{company.category}</p>
             </CardContent>
           </Card>
@@ -105,9 +86,9 @@ export default function CompanyProfilePage() {
             </CardHeader>
             <CardContent>
               <Badge 
-                variant="default"
+                variant="outline"
                 className={cn(
-                  "text-sm capitalize",
+                  "capitalize",
                   company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
                   company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
                   company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
@@ -118,7 +99,7 @@ export default function CompanyProfilePage() {
                   company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
                 )}
               >
-                {company.accreditationStatus.replace(/_/g, ' ').toLowerCase()}
+                {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
               </Badge>
             </CardContent>
           </Card>
