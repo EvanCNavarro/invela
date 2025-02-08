@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Player } from "@lordicon/react";
 import { useState } from "react";
+import homeIcon from "@/assets/lordicon/home.json";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -29,17 +30,6 @@ interface Task {
   createdBy: number;
   assignedTo: number | null;
 }
-
-// Define the home icon configuration
-const HOME_ICON = {
-  src: "https://cdn.lordicon.com/osuxyevn.json",
-  trigger: "hover",
-  colors: {
-    primary: "currentColor",
-    secondary: "currentColor",
-  },
-  stroke: "light",
-} as const;
 
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
@@ -56,7 +46,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: () => (
         <div className="w-5 h-5 flex items-center justify-center">
           <Player
-            icon={HOME_ICON}
+            icon={homeIcon}
             size={20}
             state={hoveredIcon === "home" ? "hover" : "loop"}
           />
