@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Globe, Users, DollarSign, Shield, Calendar } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
@@ -15,7 +15,7 @@ export default function CompanyProfilePage() {
   const { companySlug } = useParams();
 
   const { data: company, isLoading } = useQuery<Company>({
-    queryKey: ["/api/companies/bySlug", companySlug],
+    queryKey: [`/api/companies/${companySlug}`],
   });
 
   if (isLoading) {
@@ -54,7 +54,21 @@ export default function CompanyProfilePage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
-            title={company.name}
+            title={
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
+                  <img
+                    src={company.logoUrl || defaultCompanyLogo}
+                    alt={`${company.name} logo`}
+                    className="w-8 h-8 object-contain"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = defaultCompanyLogo;
+                    }}
+                  />
+                </div>
+                {company.name}
+              </div>
+            }
             description={company.description || "No description available"}
           />
           <Button variant="outline" onClick={() => window.history.back()}>
