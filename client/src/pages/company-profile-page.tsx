@@ -14,12 +14,13 @@ import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-export default function CompanyProfilePage() {
-  const params = useParams();
-  const companySlug = params.companySlug;
+interface CompanyProfilePageProps {
+  companySlug?: string;
+}
 
+export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
   // Query for all companies
-  const { data: companiesData = [], isLoading } = useQuery<any[]>({
+  const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
@@ -29,21 +30,19 @@ export default function CompanyProfilePage() {
     rawCompaniesData: companiesData
   });
 
-  // Find the company that matches the slug, accounting for nested structure
+  // Find the company that matches the slug
   const company = companiesData.find(item => {
-    const companyData = item.companies || item;
-    if (!companySlug || !companyData.name) return false;
-    const generatedSlug = generateSlug(companyData.name);
+    if (!companySlug || !item.name) return false;
+    const generatedSlug = generateSlug(item.name);
     console.debug('Comparing slugs:', {
-      companyName: companyData.name,
+      companyName: item.name,
       generatedSlug,
       matchesTarget: generatedSlug === companySlug
     });
     return generatedSlug === companySlug;
   });
 
-  const companyData = company?.companies || company;
-  console.debug('Final matched company:', companyData);
+  console.debug('Final matched company:', company);
 
   if (isLoading) {
     return (
@@ -81,7 +80,7 @@ export default function CompanyProfilePage() {
   }
 
   // If company not found in the network
-  if (!companyData) {
+  if (!company) {
     // Try to find the original company name from the slug for better error message
     const attemptedCompanyName = companySlug
       ?.split('-')
@@ -114,18 +113,18 @@ export default function CompanyProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
                   <img
-                    src={`/api/companies/${companyData.id}/logo`}
-                    alt={`${companyData.name} logo`}
+                    src={`/api/companies/${company.id}/logo`}
+                    alt={`${company.name} logo`}
                     className="w-8 h-8 object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultCompanyLogo;
                     }}
                   />
                 </div>
-                {companyData.name}
+                {company.name}
               </div>
             }
-            description={companyData.description || "No description available"}
+            description={company.description || "No description available"}
           />
           <Button variant="outline" onClick={() => window.history.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -142,8 +141,8 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold">{companyData.type?.replace(/_/g, ' ') || 'N/A'}</div>
-              <p className="text-sm text-muted-foreground mt-1">{companyData.category || 'N/A'}</p>
+              <div className="text-2xl font-semibold">{company.type?.replace(/_/g, ' ') || 'N/A'}</div>
+              <p className="text-sm text-muted-foreground mt-1">{company.category || 'N/A'}</p>
             </CardContent>
           </Card>
 
@@ -155,21 +154,21 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Badge 
+              <Badge
                 variant="outline"
                 className={cn(
                   "capitalize",
-                  companyData.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-                  companyData.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-                  companyData.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-                  companyData.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-                  companyData.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-                  companyData.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-                  companyData.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-                  companyData.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+                  company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+                  company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+                  company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+                  company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+                  company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+                  company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
                 )}
               >
-                {companyData.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+                {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
               </Badge>
             </CardContent>
           </Card>
@@ -182,7 +181,7 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RiskMeter score={companyData.riskScore || 0} />
+              <RiskMeter score={company.riskScore || 0} />
             </CardContent>
           </Card>
         </div>
@@ -190,13 +189,14 @@ export default function CompanyProfilePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
+                {/* Assuming Users icon is available */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H9m6 0a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 Key Contacts
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {companyData.contacts?.map((contact, index) => (
+                {company.contacts?.map((contact, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{contact.name}</p>
@@ -216,13 +216,14 @@ export default function CompanyProfilePage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                {/* Assuming FileText icon is available */}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 0l-3-3m3 3l3-3m0 0V0M12 20M7 21H4a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2h-3" /></svg>
                 Documents & Compliance
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {companyData.documents?.map((doc, index) => (
+                {company.documents?.map((doc, index) => (
                   <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
                     <span className="font-medium">{doc.name}</span>
                     <Badge variant={doc.status === 'verified' ? 'success' : 'warning'}>
