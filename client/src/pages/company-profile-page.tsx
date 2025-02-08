@@ -40,9 +40,10 @@ export default function CompanyProfilePage() {
       matchesTarget: generatedSlug === companySlug
     });
     return generatedSlug === companySlug;
-  })?.companies;
+  });
 
-  console.debug('Final matched company:', company);
+  const companyData = company?.companies || company;
+  console.debug('Final matched company:', companyData);
 
   if (isLoading) {
     return (
@@ -80,7 +81,7 @@ export default function CompanyProfilePage() {
   }
 
   // If company not found in the network
-  if (!company) {
+  if (!companyData) {
     // Try to find the original company name from the slug for better error message
     const attemptedCompanyName = companySlug
       ?.split('-')
@@ -113,18 +114,18 @@ export default function CompanyProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
                   <img
-                    src={`/api/companies/${company.id}/logo`}
-                    alt={`${company.name} logo`}
+                    src={`/api/companies/${companyData.id}/logo`}
+                    alt={`${companyData.name} logo`}
                     className="w-8 h-8 object-contain"
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = defaultCompanyLogo;
                     }}
                   />
                 </div>
-                {company.name}
+                {companyData.name}
               </div>
             }
-            description={company.description || "No description available"}
+            description={companyData.description || "No description available"}
           />
           <Button variant="outline" onClick={() => window.history.back()}>
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -141,8 +142,8 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-semibold">{company.type?.replace(/_/g, ' ') || 'N/A'}</div>
-              <p className="text-sm text-muted-foreground mt-1">{company.category || 'N/A'}</p>
+              <div className="text-2xl font-semibold">{companyData.type?.replace(/_/g, ' ') || 'N/A'}</div>
+              <p className="text-sm text-muted-foreground mt-1">{companyData.category || 'N/A'}</p>
             </CardContent>
           </Card>
 
@@ -158,17 +159,17 @@ export default function CompanyProfilePage() {
                 variant="outline"
                 className={cn(
                   "capitalize",
-                  company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-                  company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-                  company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-                  company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-                  company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-                  company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-                  company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-                  company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+                  companyData.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+                  companyData.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+                  companyData.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+                  companyData.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+                  companyData.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+                  companyData.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+                  companyData.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+                  companyData.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
                 )}
               >
-                {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+                {companyData.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
               </Badge>
             </CardContent>
           </Card>
@@ -181,7 +182,7 @@ export default function CompanyProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RiskMeter score={company.riskScore || 0} />
+              <RiskMeter score={companyData.riskScore || 0} />
             </CardContent>
           </Card>
         </div>
@@ -195,7 +196,7 @@ export default function CompanyProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {company.contacts?.map((contact, index) => (
+                {companyData.contacts?.map((contact, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{contact.name}</p>
@@ -221,7 +222,7 @@ export default function CompanyProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {company.documents?.map((doc, index) => (
+                {companyData.documents?.map((doc, index) => (
                   <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
                     <span className="font-medium">{doc.name}</span>
                     <Badge variant={doc.status === 'verified' ? 'success' : 'warning'}>
