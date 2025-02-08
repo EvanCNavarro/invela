@@ -304,9 +304,12 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "User's company not found" });
       }
 
+      console.log('User company:', userCompany);
+
       if (userCompany.type === 'SYSTEM_CREATOR') {
         // Invela users can see all companies
         const results = await db.select().from(companies);
+        console.log('All companies returned:', results);
         return res.json(results);
       }
 
@@ -324,7 +327,13 @@ export function registerRoutes(app: Express): Server {
           eq(relationships.relatedCompanyId, companies.id)
         ));
 
-      res.json(networkCompanies.map(({ companies: company }) => company));
+      console.log('Network companies:', networkCompanies);
+
+      // Fix: Return only the companies data, not the join result
+      const companyResults = networkCompanies.map(({ companies: company }) => company).filter(Boolean);
+      console.log('Filtered company results:', companyResults);
+
+      res.json(companyResults);
     } catch (error) {
       console.error("Error fetching companies:", error);
       res.status(500).json({ message: "Error fetching companies" });

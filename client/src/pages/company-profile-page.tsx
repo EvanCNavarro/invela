@@ -22,8 +22,17 @@ export default function CompanyProfilePage() {
     queryKey: ["/api/companies"],
   });
 
+  console.log('Debug - Company Slug:', companySlug);
+  console.log('Debug - Available Companies:', companies);
+
   // Find the company that matches the slug
-  const company = companies.find(c => generateSlug(c.name) === companySlug);
+  const company = companies.find(c => {
+    const genSlug = generateSlug(c.name);
+    console.log('Debug - Comparing:', genSlug, 'with', companySlug);
+    return genSlug === companySlug;
+  });
+
+  console.log('Debug - Found Company:', company);
 
   if (isLoading) {
     return (
@@ -68,7 +77,7 @@ export default function CompanyProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
                   <img
-                    src={company.logoUrl || defaultCompanyLogo}
+                    src={`/api/companies/${company.id}/logo`}
                     alt={`${company.name} logo`}
                     className="w-8 h-8 object-contain"
                     onError={(e) => {
