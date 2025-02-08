@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import defaultCompanyLogo from "@/assets/logo_null.svg";
+
 interface CompanyCellProps {
   company: Company;
   isHovered: boolean;
@@ -25,3 +29,5 @@ function CompanyCell({ company, isHovered }: CompanyCellProps) {
     </div>
   );
 }
+
+export default CompanyCell;
