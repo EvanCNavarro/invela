@@ -700,10 +700,10 @@ export function registerRoutes(app: Express): Server {
   // Add fintech invite endpoint
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
-      const { email } = req.body;
+      const { email, companyName } = req.body;
 
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
+      if (!email || !companyName) {
+        return res.status(400).json({ message: "Email and company name are required" });
       }
 
       // Get company details for the sender
@@ -738,6 +738,27 @@ export function registerRoutes(app: Express): Server {
           error: result.error
         });
       }
+
+      // Create a task for the invitation
+      const taskData = {
+        title: `New FinTech Invitation: ${companyName}`,
+        description: `Invitation sent to ${email} from ${companyName} to join the platform.`,
+        taskType: 'fintech_onboarding',
+        taskScope: 'company',
+        status: 'email_sent',
+        priority: 'medium',
+        progress: 0,
+        createdBy: req.user!.id,
+        userEmail: email,
+        companyId: req.user!.companyId,
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+        assignedTo: null,
+        filesRequested: [],
+        filesUploaded: [],
+        metadata: { invitedCompanyName: companyName }
+      };
+
+      await db.insert(tasks).values(taskData);
 
       res.json({ message: "Invite sent successfully" });
     } catch (error) {
