@@ -125,12 +125,43 @@ export function setupAuth(app: Express) {
       if (existingCompany) {
         company = existingCompany;
       } else {
-        // Create new company with type 'fintech' by default
-        // Banks are typically pre-registered in the system
+        // Determine company type and category based on the company name
+        let type, category;
+        const companyNameLower = result.data.company.toLowerCase();
+
+        if (companyNameLower === 'invela') {
+          // Check if a System Creator company already exists
+          const [systemCreator] = await db.select()
+            .from(companies)
+            .where(eq(companies.type, 'SYSTEM_CREATOR'));
+
+          if (systemCreator) {
+            return res.status(400).send("System Creator company already exists");
+          }
+          type = 'SYSTEM_CREATOR';
+          category = 'INVELA';
+        } else {
+          // For new companies, determine type based on whether they're a bank
+          const isBank = companyNameLower.includes('bank') ||
+                        companyNameLower.includes('banking') ||
+                        companyNameLower.includes('financial') ||
+                        companyNameLower.includes('credit union');
+
+          if (isBank) {
+            type = 'WHITE_LABEL';
+            category = 'BANK';
+          } else {
+            type = 'THIRD_PARTY';
+            category = 'FINTECH';
+          }
+        }
+
+        // Create new company
         [company] = await db.insert(companies)
           .values({
             name: result.data.company,
-            type: 'fintech',  // Default type for new companies
+            type,
+            category,
             description: '',  // Optional fields can be updated later
           })
           .returning();
