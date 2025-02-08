@@ -787,10 +787,12 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Logo not found" });
       }
 
-      // Use the new file path format
+      // Convert company name to snake case for filename
       const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
       const filename = `logo_${companySlug}.svg`;
       const filePath = path.resolve('/home/runner/workspace/uploads/logos', filename);
+
+      console.log('Attempting to serve logo from:', filePath);
 
       if (!fs.existsSync(filePath)) {
         console.error(`Logo file not found at path: ${filePath}`);
