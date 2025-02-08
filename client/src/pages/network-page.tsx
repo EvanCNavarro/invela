@@ -73,6 +73,25 @@ export default function NetworkPage() {
     </div>
   );
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return null;
+    return sortDirection === "asc" ? (
+      <ArrowUpIcon className="ml-2 h-4 w-4" />
+    ) : (
+      <ArrowDownIcon className="ml-2 h-4 w-4" />
+    );
+  };
+
+
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6">
@@ -109,47 +128,83 @@ export default function NetworkPage() {
           </div>
         </div>
 
-        <div className="rounded-md border">
+        <div className="bg-background rounded-lg border">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[300px]">
+                  <Button
+                    variant="ghost"
+                    className="p-0 hover:bg-transparent text-left w-full justify-start"
+                    onClick={() => handleSort("name")}
+                  >
+                    <span>Company</span>
+                    {getSortIcon("name")}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-right">
+                  <Button
+                    variant="ghost"
+                    className="p-0 hover:bg-transparent text-right w-full justify-end"
+                    onClick={() => handleSort("riskScore")}
+                  >
+                    <span>Risk Score</span>
+                    {getSortIcon("riskScore")}
+                  </Button>
+                </TableHead>
+                <TableHead className="text-center">
+                  <Button
+                    variant="ghost"
+                    className="p-0 hover:bg-transparent text-center w-full justify-center"
+                    onClick={() => handleSort("accreditationStatus")}
+                  >
+                    <span>Status</span>
+                    {getSortIcon("accreditationStatus")}
+                  </Button>
+                </TableHead>
                 <TableHead>Added Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="w-[100px] text-center"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedCompanies.map((company) => (
-                <TableRow
-                  key={company.id}
-                  onMouseEnter={() => setHoveredRow(company.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
-                >
-                  <TableCell>
-                    <CompanyCell company={company} />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{company.accreditation_status}</Badge>
-                  </TableCell>
-                  <TableCell>{company.location}</TableCell>
-                  <TableCell>{new Date(company.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      className={cn(
-                        "transition-opacity",
-                        hoveredRow === company.id ? "opacity-100" : "opacity-0"
-                      )}
-                      onClick={() => setLocation(`/companies/${company.id}`)}
-                    >
-                      View Details
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">
+                    Loading...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredAndSortedCompanies.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">
+                    No companies found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredAndSortedCompanies.map((company: any) => (
+                  <TableRow
+                    key={company.id}
+                    className="group cursor-pointer hover:bg-muted/50 bg-white"
+                    onClick={() => setLocation(`/companies/${company.id}`)}
+                    onMouseEnter={() => setHoveredRow(company.id)}
+                    onMouseLeave={() => setHoveredRow(null)}
+                  >
+                    <TableCell>
+                      <CompanyCell company={company} />
+                    </TableCell>
+                    <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant="outline">{company.accreditation_status}</Badge>
+                    </TableCell>
+                    <TableCell>{new Date(company.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="invisible group-hover:visible flex items-center justify-center text-primary">
+                        <span className="font-medium mr-2">View</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
