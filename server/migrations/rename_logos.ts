@@ -17,8 +17,8 @@ async function renameLogo(logoRecord: LogoRecord, companyName: string) {
   const uploadDir = path.resolve('/home/runner/workspace/uploads/logos');
   const oldPath = path.resolve(uploadDir, logoRecord.filePath);
 
-  // Generate new filename
-  const companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+  // Generate new filename using hyphenated format
+  const companySlug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   const newFilename = `logo_${companySlug}.svg`;
   const newPath = path.resolve(uploadDir, newFilename);
 

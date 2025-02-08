@@ -79,22 +79,17 @@ const logoStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    // Get company name from the request
     const companyId = parseInt(req.params.id);
-    // Default to original file naming convention if company not found
-    let filename = `logo_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+    let filename = `logo_${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '-')}`;
 
-    // Async operation to get company name
     db.select()
       .from(companies)
       .where(eq(companies.id, companyId))
       .then(([company]) => {
         if (company) {
-          // Convert company name to snake case and create filename
-          const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
-          // Check if filename contains color variant
+          const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
           const colorMatch = file.originalname.match(/_([a-z]+)\.svg$/i);
-          const colorSuffix = colorMatch ? `_${colorMatch[1].toLowerCase()}` : '';
+          const colorSuffix = colorMatch ? `-${colorMatch[1].toLowerCase()}` : '';
           filename = `logo_${companySlug}${colorSuffix}.svg`;
         }
         cb(null, filename);
@@ -787,8 +782,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Logo not found" });
       }
 
-      // Convert company name to snake case for filename
-      const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      // Convert company name to hyphenated slug for filename
+      const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
       const filename = `logo_${companySlug}.svg`;
       const filePath = path.resolve('/home/runner/workspace/uploads/logos', filename);
 
@@ -799,7 +794,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Logo file not found" });
       }
 
-      // Set proper content type for SVG
       res.setHeader('Content-Type', 'image/svg+xml');
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
@@ -907,7 +901,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Create the relationship
-      const [relationship] = await db.insert(relationships)
+      const[relationship] = await db.insert(relationships)
         .values({
           companyId: req.user!.companyId,
           relatedCompanyId: targetCompanyId,
