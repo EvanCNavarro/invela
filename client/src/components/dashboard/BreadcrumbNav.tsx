@@ -7,7 +7,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { HomeIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RouteSegment {
@@ -17,7 +16,7 @@ interface RouteSegment {
 
 export function BreadcrumbNav() {
   const [location] = useLocation();
-  
+
   // Don't show breadcrumbs for root or single-level routes
   if (location === "/" || location.split("/").filter(Boolean).length < 2) {
     return null;
@@ -30,12 +29,12 @@ export function BreadcrumbNav() {
     let label = segment.split("-").map(word => 
       word.charAt(0).toUpperCase() + word.slice(1)
     ).join(" ");
-    
+
     // Handle dynamic segments (those with parameters)
     if (segment.includes(":")) {
       label = "Details";
     }
-    
+
     return { label, href };
   });
 
@@ -45,26 +44,30 @@ export function BreadcrumbNav() {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link href="/">
-              <HomeIcon className="h-4 w-4" />
+              <img 
+                src="/invela-logo.svg" 
+                alt="Invela"
+                className="h-4 w-4"
+              />
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
-        
+
         {breadcrumbs.map((item, index) => {
           const isLast = index === breadcrumbs.length - 1;
-          
+
           return (
             <BreadcrumbItem key={item.href}>
               {isLast ? (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                <BreadcrumbPage className="font-semibold">{item.label}</BreadcrumbPage>
               ) : (
                 <>
                   <BreadcrumbLink asChild>
                     <Link href={item.href}>
                       <span className={cn(
-                        "text-sm",
-                        !isLast && "text-muted-foreground hover:text-foreground"
+                        "text-sm hover:underline",
+                        "text-muted-foreground hover:text-foreground"
                       )}>
                         {item.label}
                       </span>
