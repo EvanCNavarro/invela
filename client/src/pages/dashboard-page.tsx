@@ -298,9 +298,9 @@ export default function DashboardPage() {
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader className="space-y-3">
-                      <DialogTitle>Invite a New FinTech to Join Invela</DialogTitle>
+                      <DialogTitle>Invite a New FinTech</DialogTitle>
                       <DialogDescription>
-                        Please provide the company information to send an invitation.
+                        Please provide details to send a FinTech invitation.
                       </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
