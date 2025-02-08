@@ -42,15 +42,17 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
   const menuItems = [
     { 
-      icon: () => (
-        <div className="w-5 h-5 flex items-center justify-center">
-          <Player
-            icon={homeIcon}
-            size={20}
-            state={hoveredIcon === "home" ? "hover" : "loop"}
-          />
-        </div>
-      ),
+      icon: () => {
+        return (
+          <div className="w-5 h-5 flex items-center justify-center">
+            <Player
+              icon={homeIcon}
+              size={20}
+              state={hoveredIcon === "home" ? "hover" : "loop"}
+            />
+          </div>
+        );
+      },
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
@@ -124,7 +126,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
               >
                 <div className="w-5 h-5 flex items-center justify-center">
                   {typeof Icon === 'function' ? (
-                    Icon()
+                    <Icon />
                   ) : (
                     <Icon className={cn(
                       "h-5 w-5",
