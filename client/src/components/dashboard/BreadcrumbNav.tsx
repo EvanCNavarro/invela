@@ -48,23 +48,25 @@ export function BreadcrumbNav() {
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
             <Link href="/">
-              <img 
-                src="/logo_invela_gray.svg" 
-                alt="Invela"
-                className={cn(
-                  "h-4 w-4 hover:opacity-0",
-                  "transition-opacity duration-200"
-                )}
-              />
-              <img 
-                src="/logo_invela_black.svg" 
-                alt="Invela"
-                className={cn(
-                  "h-4 w-4 opacity-0 hover:opacity-100",
-                  "transition-opacity duration-200",
-                  "absolute top-0 left-0"
-                )}
-              />
+              <div className="relative w-4 h-4">
+                <img 
+                  src="/logo_invela_gray.svg" 
+                  alt="Invela"
+                  className={cn(
+                    "h-4 w-4 hover:opacity-0",
+                    "transition-opacity duration-200"
+                  )}
+                />
+                <img 
+                  src="/logo_invela_black.svg" 
+                  alt="Invela"
+                  className={cn(
+                    "h-4 w-4 opacity-0 hover:opacity-100",
+                    "transition-opacity duration-200",
+                    "absolute top-0 left-0"
+                  )}
+                />
+              </div>
             </Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
