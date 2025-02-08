@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/hooks/use-auth";
 
 // Updated function to handle status groups for styling
 function getAccreditationBadgeVariant(status: AccreditationStatus) {
@@ -59,7 +60,7 @@ const statusOrderMap: Record<AccreditationStatus, number> = {
   EXPIRED: 7
 };
 
-export default function RegistryPage() {
+export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [, setLocation] = useLocation();
@@ -67,7 +68,13 @@ export default function RegistryPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
+  const { user } = useAuth();
   const itemsPerPage = 10;
+
+  const { data: currentCompany } = useQuery({
+    queryKey: ["/api/companies/current"],
+    enabled: !!user
+  });
 
   const { data: companies = [], isLoading } = useQuery({
     queryKey: ["/api/companies"],
@@ -131,7 +138,7 @@ export default function RegistryPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-6">
         <PageHeader
-          title="Invela Registry"
+          title={`${currentCompany?.name || 'Company'}'s Network`}
           description="View and manage companies in your network."
         />
 
@@ -143,7 +150,6 @@ export default function RegistryPage() {
                   <FilterIcon className="w-4 h-4 mr-2" />
                   <SelectValue className="text-left" placeholder="Filter by status" />
                 </div>
-                
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
@@ -160,7 +166,7 @@ export default function RegistryPage() {
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search the Registry"
+                placeholder="Search the Network"
                 className="pl-9 bg-white"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -224,7 +230,7 @@ export default function RegistryPage() {
                   <TableRow
                     key={company.id}
                     className="group cursor-pointer hover:bg-muted/50 bg-white"
-                    onClick={() => setLocation(`/registry/company/${getCompanySlug(company.name)}`)}
+                    onClick={() => setLocation(`/network/company/${getCompanySlug(company.name)}`)}
                     onMouseEnter={() => setHoveredRow(company.id)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
