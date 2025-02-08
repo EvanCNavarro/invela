@@ -296,10 +296,15 @@ export default function DashboardPage() {
                 </div>
 
                 <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader className="space-y-3">
+                  <DialogContent 
+                    className="sm:max-w-[425px]"
+                    onOpenAutoFocus={(event) => {
+                      event.preventDefault();
+                    }}
+                  >
+                    <DialogHeader className="space-y-4">
                       <DialogTitle>Invite a New FinTech</DialogTitle>
-                      <DialogDescription>
+                      <DialogDescription className="mb-4">
                         Please provide details to send a FinTech invitation.
                       </DialogDescription>
                     </DialogHeader>
@@ -321,6 +326,7 @@ export default function DashboardPage() {
                                   )}
                                   disabled={isPending}
                                   aria-label="FinTech company name"
+                                  autoFocus
                                 />
                               </FormControl>
                               <FormMessage />
