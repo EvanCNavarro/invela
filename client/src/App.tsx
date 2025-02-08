@@ -4,12 +4,12 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
-import { ToastProvider } from "@/components/ui/toast"; // Add this import
+import { ToastProvider } from "@/components/ui/toast";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
-import RegistryPage from "@/pages/registry-page";
+import NetworkPage from "@/pages/network-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
@@ -42,11 +42,11 @@ function Router() {
         )} 
       />
       <ProtectedRoute 
-        path="/registry" 
+        path="/network" 
         component={() => (
           <ProtectedLayout>
             <OnboardingWrapper>
-              <RegistryPage />
+              <NetworkPage />
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 
