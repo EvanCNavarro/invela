@@ -42,24 +42,12 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   const menuItems = [
     { 
       icon: () => (
-        <div className="flex items-center justify-center">
-          <Player
-            size={24}
-            icon={{
-              name: "home",
-              animation: {
-                type: "loop",
-                path: "https://cdn.lordicon.com/osuxyevn.json"
-              },
-              states: {
-                hover: {
-                  animation: "hover-home-2"
-                }
-              }
-            }}
-            state={hoveredIcon === "home" ? "hover" : "loop"}
-          />
-        </div>
+        <Player
+          size={24}
+          src="https://cdn.lordicon.com/osuxyevn.json" 
+          trigger="hover"
+          state={hoveredIcon === "home" ? "hover-home-2" : "loop"}
+        />
       ),
       label: "Dashboard", 
       href: "/",
@@ -132,14 +120,16 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                 onMouseEnter={() => label === "Dashboard" && setHoveredIcon("home")}
                 onMouseLeave={() => label === "Dashboard" && setHoveredIcon(null)}
               >
-                {typeof Icon === 'function' ? (
-                  Icon()
-                ) : (
-                  <Icon className={cn(
-                    "h-5 w-5",
-                    isActive && "stroke-[2.5]"
-                  )} />
-                )}
+                <div className="w-5 h-5 flex items-center justify-center"> {/* Added div wrapper for better icon placement */}
+                  {typeof Icon === 'function' ? (
+                    Icon()
+                  ) : (
+                    <Icon className={cn(
+                      "h-5 w-5",
+                      isActive && "stroke-[2.5]"
+                    )} />
+                  )}
+                </div>
                 {isExpanded && (
                   <>
                     <span className={cn(
