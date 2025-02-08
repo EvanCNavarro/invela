@@ -30,6 +30,17 @@ interface Task {
   assignedTo: number | null;
 }
 
+// Define the home icon configuration
+const HOME_ICON = {
+  src: "https://cdn.lordicon.com/osuxyevn.json",
+  trigger: "hover",
+  colors: {
+    primary: "currentColor",
+    secondary: "currentColor",
+  },
+  stroke: "light",
+} as const;
+
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
   const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
@@ -45,18 +56,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: () => (
         <div className="w-5 h-5 flex items-center justify-center">
           <Player
-            icon={{
-              name: "home",
-              animation: {
-                type: "loop",
-                path: "https://cdn.lordicon.com/osuxyevn.json"
-              },
-              states: {
-                hover: {
-                  animation: "morph"
-                }
-              }
-            }}
+            icon={HOME_ICON}
             size={20}
             state={hoveredIcon === "home" ? "hover" : "loop"}
           />
