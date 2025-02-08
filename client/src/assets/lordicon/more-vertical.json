@@ -1,0 +1,12 @@
+{
+  "name": "more-vertical",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/vxhydwji.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "pulse"
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "download",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/xhdhjyqy.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "slide-down"
+    }
+  }
+}

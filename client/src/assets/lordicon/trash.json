@@ -1,0 +1,16 @@
+{
+  "name": "trash",
+  "animation": {
+    "type": "loop",
+    "path": "https://cdn.lordicon.com/gsqxdxog.json"
+  },
+  "states": {
+    "hover": {
+      "animation": "shake"
+    },
+    "hover-error": {
+      "animation": "shake",
+      "stroke": "rgb(239 68 68)"
+    }
+  }
+}
