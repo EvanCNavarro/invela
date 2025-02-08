@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { 
+  HomeIcon,
   CheckCircleIcon,
   BookIcon,
   BarChartIcon,
@@ -13,9 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
-import { Player } from "@lordicon/react";
-import { useState } from "react";
-import homeIcon from "@/assets/lordicon/home.json";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -33,26 +31,16 @@ interface Task {
 
 export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
   const [location] = useLocation();
-  const [hoveredIcon, setHoveredIcon] = useState<string | null>(null);
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
+  // Get total task count
   const totalTasks = tasks.length;
 
   const menuItems = [
     { 
-      icon: () => {
-        return (
-          <div className="w-5 h-5 flex items-center justify-center">
-            <Player
-              icon={homeIcon}
-              size={20}
-              state={hoveredIcon === "home" ? "hover" : "loop"}
-            />
-          </div>
-        );
-      },
+      icon: HomeIcon,
       label: "Dashboard", 
       href: "/",
       locked: isNewUser
@@ -61,7 +49,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false,
+      locked: false, // Always accessible
       count: totalTasks
     },
     { 
@@ -110,30 +98,20 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
 
           return (
             <Link key={href} href={isDisabled ? "#" : href}>
-              <div 
-                className={cn(
-                  "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-                  "transition-all duration-200 relative group",
-                  !isExpanded && "justify-center",
-                  isActive 
-                    ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
-                    : isDisabled
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
-                )}
-                onMouseEnter={() => label === "Dashboard" && setHoveredIcon("home")}
-                onMouseLeave={() => label === "Dashboard" && setHoveredIcon(null)}
-              >
-                <div className="w-5 h-5 flex items-center justify-center">
-                  {typeof Icon === 'function' ? (
-                    <Icon />
-                  ) : (
-                    <Icon className={cn(
-                      "h-5 w-5",
-                      isActive && "stroke-[2.5]"
-                    )} />
-                  )}
-                </div>
+              <div className={cn(
+                "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
+                "transition-all duration-200 relative",
+                !isExpanded && "justify-center",
+                isActive 
+                  ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
+                  : isDisabled
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
+              )}>
+                <Icon className={cn(
+                  "h-5 w-5",
+                  isActive && "stroke-[2.5]"
+                )} />
                 {isExpanded && (
                   <>
                     <span className={cn(
