@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,12 +6,11 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Send } from "lucide-react";
+import { Send, Building2, Mail, CheckCircle2 } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import confetti from 'canvas-confetti';
-import { CheckCircle2 } from "lucide-react";
 
 const inviteFormSchema = z.object({
   companyName: z.string().min(1, "Company name is required"),
@@ -23,11 +22,19 @@ type InviteFormData = z.infer<typeof inviteFormSchema>;
 interface InviteFinTechModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  showBorder?: boolean;
+  showIcons?: boolean;
 }
 
-export function InviteFinTechModal({ isOpen, onOpenChange }: InviteFinTechModalProps) {
+export function InviteFinTechModal({ 
+  isOpen, 
+  onOpenChange,
+  showBorder = true,
+  showIcons = true
+}: InviteFinTechModalProps) {
   const { toast } = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
@@ -74,16 +81,24 @@ export function InviteFinTechModal({ isOpen, onOpenChange }: InviteFinTechModalP
         });
       }
 
+      setIsSuccess(true);
+
       toast({
-        title: "Invitation Sent",
+        title: "Invitation Sent Successfully",
         description: "The FinTech has been invited to join.",
         duration: 2000,
-        className: "border-l-4 border-green-500",
+        className: cn(
+          "border-l-4",
+          showBorder ? "border-green-500" : "border-transparent"
+        ),
       });
 
-      form.reset();
-      setServerError(null);
-      onOpenChange(false);
+      setTimeout(() => {
+        form.reset();
+        setServerError(null);
+        setIsSuccess(false);
+        onOpenChange(false);
+      }, 1500);
     },
     onError: (error: Error) => {
       setServerError(error.message);
@@ -103,92 +118,120 @@ export function InviteFinTechModal({ isOpen, onOpenChange }: InviteFinTechModalP
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className={cn(
+        "sm:max-w-[425px]",
+        showBorder && "border-l-4 border-primary"
+      )}>
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Invite a New FinTech</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            {isSuccess ? (
+              <span className="flex items-center gap-2 text-green-500">
+                <CheckCircle2 className="h-5 w-5" />
+                Invitation Sent
+              </span>
+            ) : (
+              "Invite a New FinTech"
+            )}
+          </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
-            Please provide details to send a FinTech invitation.
+            {isSuccess 
+              ? "Your invitation has been sent successfully!"
+              : "Please provide details to send a FinTech invitation."}
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="text-sm font-semibold mb-2">Company Name</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      className={cn(
-                        "w-full",
-                        serverError && "border-destructive"
-                      )}
-                      disabled={isPending}
-                      aria-label="FinTech company name"
-                      autoFocus
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="text-sm font-semibold mb-2">Invitee Email</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="email"
-                      className={cn(
-                        "w-full",
-                        serverError && "border-destructive"
-                      )}
-                      disabled={isPending}
-                      aria-label="FinTech representative email"
-                      onChange={(e) => {
-                        field.onChange(e);
-                        handleInputChange();
-                      }}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  {serverError && (
-                    <p className="text-sm font-medium text-destructive mt-2">
-                      {serverError.includes("mailbox")
-                        ? "This email address does not exist. Please try again."
-                        : serverError}
-                    </p>
-                  )}
-                </FormItem>
-              )}
-            />
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                className="gap-2"
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <>
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    Send Invite
-                  </>
+        {!isSuccess && (
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="text-sm font-semibold mb-2">Company Name</div>
+                    <FormControl>
+                      <div className="relative">
+                        {showIcons && (
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        )}
+                        <Input
+                          {...field}
+                          type="text"
+                          className={cn(
+                            "w-full",
+                            showIcons && "pl-9",
+                            serverError && "border-destructive"
+                          )}
+                          disabled={isPending}
+                          aria-label="FinTech company name"
+                          autoFocus
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="text-sm font-semibold mb-2">Invitee Email</div>
+                    <FormControl>
+                      <div className="relative">
+                        {showIcons && (
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        )}
+                        <Input
+                          {...field}
+                          type="email"
+                          className={cn(
+                            "w-full",
+                            showIcons && "pl-9",
+                            serverError && "border-destructive"
+                          )}
+                          disabled={isPending}
+                          aria-label="FinTech representative email"
+                          onChange={(e) => {
+                            field.onChange(e);
+                            handleInputChange();
+                          }}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                    {serverError && (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        {serverError.includes("mailbox")
+                          ? "This email address does not exist. Please try again."
+                          : serverError}
+                      </p>
+                    )}
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  className="gap-2"
+                  disabled={isPending}
+                >
+                  {isPending ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Invite
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   );
