@@ -105,10 +105,7 @@ const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange, search
           company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
         )}
       >
-        <HighlightText 
-          text={company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'} 
-          searchTerm={searchTerm} 
-        />
+        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
       </Badge>
     </TableCell>
     <TableCell className="text-center">
@@ -149,7 +146,7 @@ export default function NetworkPage() {
 
   // Initialize Fuse instance for fuzzy search
   const fuse = useMemo(() => new Fuse(companies, {
-    keys: ['name', 'accreditationStatus'],
+    keys: ['name'],
     threshold: 0.3,
     includeMatches: true,
   }), [companies]);
@@ -168,7 +165,7 @@ export default function NetworkPage() {
     return 0;
   };
 
-  // Use fuzzy search for filtering
+  // Use fuzzy search for filtering company names only
   const filteredCompanies = useMemo(() => {
     let results = companies;
 
@@ -178,10 +175,9 @@ export default function NetworkPage() {
     }
 
     return results
-      .filter((company: Company) => {
-        const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
-        return matchesStatus;
-      })
+      .filter((company: Company) => 
+        statusFilter === "ALL" || company.accreditationStatus === statusFilter
+      )
       .sort(sortCompanies);
   }, [companies, searchQuery, statusFilter, sortField, sortDirection, fuse]);
 
