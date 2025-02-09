@@ -754,8 +754,16 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/companies/:id/logo", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
+        console.log('Debug - No logo file in request');
         return res.status(400).json({ message: "No logo uploaded" });
       }
+
+      console.log('Debug - Received logo upload:', {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      });
 
       const companyId = parseInt(req.params.id);
       const [company] = await db.select()
@@ -763,6 +771,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(companies.id, companyId));
 
       if (!company) {
+        console.log('Debug - Company not found:', companyId);
         return res.status(404).json({ message: "Company not found" });
       }
 
@@ -774,8 +783,12 @@ export function registerRoutes(app: Express): Server {
 
         if (oldLogo) {
           const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);
+          console.log('Debug - Attempting to delete old logo:', oldFilePath);
           if (fs.existsSync(oldFilePath)) {
             fs.unlinkSync(oldFilePath);
+            console.log('Debug - Successfully deleted old logo');
+          } else {
+            console.log('Debug - Old logo file not found on disk');
           }
         }
       }
@@ -790,10 +803,20 @@ export function registerRoutes(app: Express): Server {
         })
         .returning();
 
+      console.log('Debug - Created new logo record:', logo);
+
       // Update company with logo reference
       await db.update(companies)
         .set({ logoId: logo.id })
         .where(eq(companies.id, companyId));
+
+      // Verify file exists in the correct location
+      const uploadedFilePath = path.resolve('/home/runner/workspace/uploads/logos', req.file.filename);
+      console.log('Debug - Verifying uploaded file exists:', uploadedFilePath);
+      if (!fs.existsSync(uploadedFilePath)) {
+        console.error('Debug - Logo file not found after upload!');
+        throw new Error('Logo file not found after upload');
+      }
 
       res.json(logo);
     } catch (error) {
@@ -810,6 +833,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(companies.id, parseInt(req.params.id)));
 
       if (!company || !company.logoId) {
+        console.log('Debug - No logo found for company:', req.params.id);
         return res.status(404).json({ message: "Logo not found" });
       }
 
@@ -818,21 +842,31 @@ export function registerRoutes(app: Express): Server {
         .where(eq(companyLogos.id, company.logoId));
 
       if (!logo) {
+        console.log('Debug - Logo record not found:', company.logoId);
         return res.status(404).json({ message: "Logo not found" });
       }
 
       // Use the actual file path from the database
       const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
-
-      console.log('Attempting to serve logo from:', filePath);
+      console.log('Debug - Attempting to serve logo from:', filePath);
 
       if (!fs.existsSync(filePath)) {
         console.error(`Logo file not found at path: ${filePath}`);
         return res.status(404).json({ message: "Logo file not found" });
       }
 
+      // Add Content-Type and Cache-Control headers
       res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+
       const fileStream = fs.createReadStream(filePath);
+      fileStream.on('error', (error) => {
+        console.error('Error streaming logo file:', error);
+        if (!res.headersSent) {
+          res.status(500).json({ message: "Error serving logo file" });
+        }
+      });
+
       fileStream.pipe(res);
 
     } catch (error) {
