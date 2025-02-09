@@ -1,4 +1,4 @@
-import { useState, memo, useMemo } from "react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
@@ -94,8 +94,21 @@ export default function NetworkPage() {
   // Simplified query for current company
   const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    enabled: !!user
+    enabled: !!user,
+    onSuccess: (data) => {
+      console.log('Debug - Current company data:', data);
+    },
+    onError: (error) => {
+      console.error('Debug - Error fetching company:', error);
+    }
   });
+
+  // Log when company data changes
+  useEffect(() => {
+    console.log('Debug - Current user:', user);
+    console.log('Debug - Company loading:', isCurrentCompanyLoading);
+    console.log('Debug - Current company:', currentCompany);
+  }, [user, currentCompany, isCurrentCompanyLoading]);
 
   const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
@@ -234,7 +247,7 @@ export default function NetworkPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-6">
         <PageHeader
-          title={isCurrentCompanyLoading ? "Network" : `${currentCompany?.name || ''}'s Network`}
+          title={`${currentCompany?.name || 'Loading...'}'s Network`}
           description="View and manage companies in your network."
         />
 
