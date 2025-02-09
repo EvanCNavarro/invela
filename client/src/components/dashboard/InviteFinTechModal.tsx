@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,12 +75,7 @@ export function InviteFinTechModal({ isOpen, onOpenChange }: InviteFinTechModalP
       }
 
       toast({
-        title: (
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            Invitation Sent
-          </span>
-        ),
+        title: "Invitation Sent",
         description: "The FinTech has been invited to join.",
         duration: 2000,
         className: "border-l-4 border-green-500",
