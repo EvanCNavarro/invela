@@ -90,7 +90,7 @@ export function FileUploadPreview({
     <>
       <div className={cn(
         "relative px-4 py-3 rounded-lg",
-        isComplete ? "bg-[#E5F6F1]/30 shadow-[0_2px_8px_rgba(0,0,0,0.08)]" : "bg-muted/30",
+        isComplete ? "bg-[#E5F6F1]/30 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border-2 border-[#D0EAE5]" : "bg-muted/30",
         error ? "border-destructive/50 bg-destructive/5" : "",
         className
       )}>
@@ -220,9 +220,9 @@ export function FileUploadPreview({
         {/* Bottom section: Progress bar */}
         {typeof progress === 'number' && !error && !isComplete && (
           <div className="mt-2">
-            <Progress 
-              value={progress} 
-              className="h-1 bg-primary/20" 
+            <Progress
+              value={progress}
+              className="h-1 bg-primary/20"
             />
           </div>
         )}
