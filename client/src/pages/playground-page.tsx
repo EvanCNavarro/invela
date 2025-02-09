@@ -1236,6 +1236,17 @@ export default function PlaygroundPage() {
                 </Card>
               )}
 
+              {currentComponent.id === "unified-dropdown" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <DropdownPlayground />
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Usage Examples section second */}
               <Card>
                 <CardHeader>
