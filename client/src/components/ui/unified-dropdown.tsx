@@ -149,7 +149,8 @@ export const UnifiedDropdown = React.forwardRef<
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                   "transition-colors focus:bg-accent focus:text-accent-foreground",
-                  "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+                  !item.selected && "text-muted-foreground"
                 )}
               >
                 <div className="flex items-center w-full">
@@ -161,7 +162,10 @@ export const UnifiedDropdown = React.forwardRef<
                     </div>
                   )}
                   {ItemIcon && (
-                    <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
+                    <ItemIcon className={cn(
+                      "mr-2 h-4 w-4",
+                      !item.selected && "text-muted-foreground"
+                    )} />
                   )}
                   <span className="flex-grow whitespace-nowrap">{item.label}</span>
                 </div>
