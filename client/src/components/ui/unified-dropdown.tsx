@@ -55,10 +55,14 @@ export const UnifiedDropdown = React.forwardRef<
   }, [trigger.dynamicText, trigger.text, trigger.leftIcon, items, multiSelect])
 
   // Handle menu item selection
-  const handleSelect = (item: UnifiedDropdownProps['items'][number]) => {
+  const handleSelect = (item: UnifiedDropdownProps['items'][number], event: React.MouseEvent) => {
+    // Prevent the event from bubbling up to avoid closing the dropdown
+    event.preventDefault()
+    event.stopPropagation()
+
     if (item.onClick) {
       item.onClick()
-      // Close only for single-select
+      // Only close for single-select
       if (!multiSelect) {
         setOpen(false)
       }
@@ -138,7 +142,10 @@ export const UnifiedDropdown = React.forwardRef<
             return (
               <DropdownMenuPrimitive.Item
                 key={item.id}
-                onClick={() => handleSelect(item)}
+                onSelect={(event) => {
+                  event.preventDefault()
+                }}
+                onClick={(event) => handleSelect(item, event)}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                   "transition-colors focus:bg-accent focus:text-accent-foreground",
