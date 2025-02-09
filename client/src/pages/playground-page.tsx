@@ -14,12 +14,29 @@ import {
 } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, Copy, Download, XCircle } from "lucide-react";
+import { 
+  ArrowUpRight, 
+  Copy, 
+  Download, 
+  XCircle,
+  Columns as ColumnsIcon,
+  List as ListIcon,
+  RefreshCw
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Define status badge variants once
 const getStatusBadgeVariant = (status: string) => {
@@ -330,11 +347,19 @@ export default function PlaygroundPage() {
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
-  const [tableData, setTableData] = useState([
-    { id: 1, name: "Acme Corp", status: "Active", date: "2025-02-09", logo: "" },
-    { id: 2, name: "TechStart", status: "Pending", date: "2025-02-08", logo: "" },
-    { id: 3, name: "Global Inc", status: "Completed", date: "2025-02-07", logo: "" }
-  ]);
+
+  // Generate more sample data for pagination testing
+  const generateSampleData = (count: number) => {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i + 1,
+      name: `Company ${i + 1}`,
+      status: ['Active', 'Pending', 'Completed', 'Error'][i % 4],
+      date: new Date(2025, 1, 9 - i).toISOString().split('T')[0],
+      logo: ""
+    }));
+  };
+
+  const [tableData, setTableData] = useState(generateSampleData(100));
   const [tableSortConfig, setTableSortConfig] = useState<{
     key: string;
     direction: 'asc' | 'desc';
@@ -377,6 +402,8 @@ export default function PlaygroundPage() {
       setSelectedRows(new Set(tableData.map(row => row.id)));
     }
   };
+
+  const enabledColumnCount = Object.values(enabledColumns).filter(Boolean).length;
 
   const currentComponent = components.find(c => c.id === selectedComponent);
 
@@ -446,6 +473,74 @@ export default function PlaygroundPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
                     <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <ColumnsIcon className="h-4 w-4 mr-2" />
+                            {enabledColumnCount} Columns
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-[200px]">
+                          <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuCheckboxItem
+                            checked={enabledColumns.checkbox}
+                            onCheckedChange={(checked) =>
+                              setEnabledColumns(prev => ({ ...prev, checkbox: checked }))
+                            }
+                          >
+                            Selection
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem
+                            checked={enabledColumns.icon}
+                            onCheckedChange={(checked) =>
+                              setEnabledColumns(prev => ({ ...prev, icon: checked }))
+                            }
+                          >
+                            Icon Column
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem
+                            checked={enabledColumns.status}
+                            onCheckedChange={(checked) =>
+                              setEnabledColumns(prev => ({ ...prev, status: checked }))
+                            }
+                          >
+                            Status
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem
+                            checked={enabledColumns.actions}
+                            onCheckedChange={(checked) =>
+                              setEnabledColumns(prev => ({ ...prev, actions: checked }))
+                            }
+                          >
+                            Actions
+                          </DropdownMenuCheckboxItem>
+                          <DropdownMenuCheckboxItem
+                            checked={enabledColumns.view}
+                            onCheckedChange={(checked) =>
+                              setEnabledColumns(prev => ({ ...prev, view: checked }))
+                            }
+                          >
+                            View
+                          </DropdownMenuCheckboxItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <Select value={itemCount} onValueChange={setItemCount}>
+                        <SelectTrigger className="w-[130px]">
+                          <ListIcon className="h-4 w-4 mr-2" />
+                          <SelectValue placeholder="Show items" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">No items</SelectItem>
+                          <SelectItem value="5">5 items</SelectItem>
+                          <SelectItem value="10">10 items</SelectItem>
+                          <SelectItem value="25">25 items</SelectItem>
+                          <SelectItem value="50">50 items</SelectItem>
+                          <SelectItem value="100">100 items</SelectItem>
+                        </SelectContent>
+                      </Select>
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -454,100 +549,37 @@ export default function PlaygroundPage() {
                           setTableSortConfig({ key: 'name', direction: 'asc' });
                         }}
                       >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Clear Filters
+                        <RefreshCw className="h-4 w-4" />
                       </Button>
-                      <Select value={itemCount} onValueChange={setItemCount}>
-                        <SelectTrigger className="w-[100px]">
-                          <SelectValue placeholder="Show items" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">All</SelectItem>
-                          <SelectItem value="5">5 items</SelectItem>
-                          <SelectItem value="10">10 items</SelectItem>
-                          <SelectItem value="25">25 items</SelectItem>
-                          <SelectItem value="50">50 items</SelectItem>
-                          <SelectItem value="100">100 items</SelectItem>
-                        </SelectContent>
-                      </Select>
+
                       <Button 
                         variant="outline"
                         size="sm"
                         onClick={() => setIsTableLoading(!isTableLoading)}
                       >
-                        Toggle Loading
+                        {isTableLoading ? "Stop Loading" : "Show Loading"}
                       </Button>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      <label className="flex items-center gap-2">
-                        <Checkbox 
-                          checked={enabledColumns.checkbox}
-                          onCheckedChange={(checked) => 
-                            setEnabledColumns(prev => ({ ...prev, checkbox: !!checked }))
-                          }
-                        />
-                        <span className="text-sm">Checkbox</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <Checkbox
-                          checked={enabledColumns.icon}
-                          onCheckedChange={(checked) =>
-                            setEnabledColumns(prev => ({ ...prev, icon: !!checked }))
-                          }
-                        />
-                        <span className="text-sm">Icon Column</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <Checkbox
-                          checked={enabledColumns.status}
-                          onCheckedChange={(checked) =>
-                            setEnabledColumns(prev => ({ ...prev, status: !!checked }))
-                          }
-                        />
-                        <span className="text-sm">Status</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <Checkbox
-                          checked={enabledColumns.actions}
-                          onCheckedChange={(checked) =>
-                            setEnabledColumns(prev => ({ ...prev, actions: !!checked }))
-                          }
-                        />
-                        <span className="text-sm">Actions</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <Checkbox
-                          checked={enabledColumns.view}
-                          onCheckedChange={(checked) =>
-                            setEnabledColumns(prev => ({ ...prev, view: !!checked }))
-                          }
-                        />
-                        <span className="text-sm">View</span>
-                      </label>
-                    </div>
-
-                    <DataTable
-                      data={Number(itemCount) === 0 ? tableData : tableData.slice(0, Number(itemCount))}
-                      columns={[
-                        ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
-                        ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
-                        ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
-                        { key: 'date', header: 'Date', sortable: true },
-                        ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
-                        ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
-                      ]}
-                      isLoading={isTableLoading}
-                      sortConfig={tableSortConfig}
-                      onSort={handleTableSort}
-                      selectedRows={selectedRows}
-                      onRowSelect={handleRowSelect}
-                      onSelectAll={handleSelectAll}
-                    />
-                  </div>
+                  <DataTable
+                    data={Number(itemCount) === 0 ? [] : tableData.slice(0, Number(itemCount))}
+                    columns={[
+                      ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
+                      ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
+                      ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
+                      { key: 'date', header: 'Date', sortable: true },
+                      ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
+                      ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
+                    ]}
+                    isLoading={isTableLoading}
+                    sortConfig={tableSortConfig}
+                    onSort={handleTableSort}
+                    selectedRows={selectedRows}
+                    onRowSelect={handleRowSelect}
+                    onSelectAll={handleSelectAll}
+                  />
                 </CardContent>
               </Card>
             </div>
