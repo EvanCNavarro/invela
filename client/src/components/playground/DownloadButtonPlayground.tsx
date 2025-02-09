@@ -2,7 +2,6 @@ import React from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -114,7 +113,7 @@ export const DownloadButton = ({
 // Playground component to showcase different display modes
 export const DownloadButtonPlayground = () => {
   const [displayMode, setDisplayMode] = React.useState("both"); // "both", "icon", "text"
-  const [useRealDownload, setUseRealDownload] = React.useState(false);
+  const [useRealDownload, setUseRealDownload] = React.useState(true);
 
   const getButtonProps = () => {
     switch (displayMode) {
@@ -129,9 +128,16 @@ export const DownloadButtonPlayground = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-8">
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium">Display Mode</Label>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="real-download"
+            checked={useRealDownload}
+            onCheckedChange={setUseRealDownload}
+          />
+          <Label htmlFor="real-download">Enable File</Label>
+        </div>
+        <div>
           <ToggleGroup
             type="single"
             value={displayMode}
@@ -144,30 +150,16 @@ export const DownloadButtonPlayground = () => {
             <ToggleGroupItem value="icon" aria-label="Icon only">
               Icon Only
             </ToggleGroupItem>
-            <ToggleGroupItem value="text" aria-label="Text only">
-              Text Only
-            </ToggleGroupItem>
           </ToggleGroup>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="real-download"
-            checked={useRealDownload}
-            onCheckedChange={setUseRealDownload}
-          />
-          <Label htmlFor="real-download">Enable File</Label>
         </div>
       </div>
 
-      <Card className="p-4">
-        <div className="space-y-4">
-          <DownloadButton
-            useRealDownload={useRealDownload}
-            {...getButtonProps()}
-          />
-        </div>
-      </Card>
+      <div className="space-y-4">
+        <DownloadButton
+          useRealDownload={useRealDownload}
+          {...getButtonProps()}
+        />
+      </div>
     </div>
   );
 };
