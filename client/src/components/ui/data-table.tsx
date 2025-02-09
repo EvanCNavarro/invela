@@ -6,9 +6,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon, XCircle, MoreHorizontal, ExternalLink } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon, MoreHorizontal, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -41,7 +40,6 @@ interface DataTableProps<T> {
   selectedRows?: Set<number>;
   onRowSelect?: (id: number) => void;
   onSelectAll?: () => void;
-  showActions?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({ 
@@ -53,7 +51,6 @@ export function DataTable<T extends Record<string, any>>({
   selectedRows = new Set(),
   onRowSelect,
   onSelectAll,
-  showActions = true
 }: DataTableProps<T>) {
   const getSortIcon = (key: string) => {
     if (!sortConfig || sortConfig.key !== key) {
@@ -64,17 +61,18 @@ export function DataTable<T extends Record<string, any>>({
       : <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
-  const getStatusVariant = (status: string) => {
-    const lowercaseStatus = status.toLowerCase();
-    switch (lowercaseStatus) {
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status?.toLowerCase()) {
       case 'active':
         return 'default';
       case 'pending':
         return 'secondary';
       case 'completed':
-        return 'outline';
+        return 'success';
+      case 'error':
+        return 'destructive';
       default:
-        return 'secondary';
+        return 'outline';
     }
   };
 
@@ -92,20 +90,20 @@ export function DataTable<T extends Record<string, any>>({
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <div className="bg-primary/10 text-primary rounded-full w-full h-full flex items-center justify-center">
-                {value.charAt(0).toUpperCase()}
+                {String(value || '?').charAt(0).toUpperCase()}
               </div>
             </Avatar>
             <span>{value}</span>
           </div>
         );
       case 'status':
-        return (
-          <Badge variant={getStatusVariant(value)}>
+        return value ? (
+          <Badge variant={getStatusBadgeVariant(value)}>
             {value}
           </Badge>
-        );
+        ) : null;
       case 'actions':
-        return showActions ? (
+        return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
@@ -124,7 +122,7 @@ export function DataTable<T extends Record<string, any>>({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : null;
+        );
       case 'view':
         return (
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -132,7 +130,7 @@ export function DataTable<T extends Record<string, any>>({
           </Button>
         );
       default:
-        return value;
+        return value ?? '-';
     }
   };
 
@@ -191,10 +189,10 @@ export function DataTable<T extends Record<string, any>>({
       </TableHeader>
       <TableBody>
         {data.map((row, index) => (
-          <TableRow key={index}>
+          <TableRow key={row.id || index} className={selectedRows.has(row.id || index) ? 'bg-primary/5' : undefined}>
             {columns.map((column) => (
               <TableCell key={column.key}>
-                {renderCell(column, row[column.key], index)}
+                {renderCell(column, row[column.key], row.id || index)}
               </TableCell>
             ))}
           </TableRow>
