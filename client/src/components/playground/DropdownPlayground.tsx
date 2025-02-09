@@ -1,9 +1,10 @@
 import React from 'react'
 import { UnifiedDropdown } from '@/components/ui/unified-dropdown'
-import { Settings, FileText, Layout, Bell, Edit, Trash2, Archive } from 'lucide-react'
+import { Settings, FileText, Layout, Bell, Edit, Trash2, Archive, Download, Eye } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 
 export const DropdownPlayground = () => {
   // State for regular dropdown
@@ -15,6 +16,7 @@ export const DropdownPlayground = () => {
 
   // State for action dropdown
   const [selectedAction, setSelectedAction] = React.useState<string | null>(null)
+  const { toast } = useToast()
 
   const widgetItems = [
     { id: 'updates', label: 'Updates', leftIcon: showIcons ? Bell : undefined },
@@ -35,14 +37,67 @@ export const DropdownPlayground = () => {
   }))
 
   const actionItems = [
-    { id: 'edit', label: 'Edit', leftIcon: Edit },
-    { id: 'delete', label: 'Delete', leftIcon: Trash2 },
-    { id: 'archive', label: 'Archive', leftIcon: Archive },
-  ].map(item => ({
-    ...item,
-    selected: selectedAction === item.id,
-    onClick: () => setSelectedAction(item.id)
-  }))
+    { 
+      id: 'view', 
+      label: 'View Details', 
+      leftIcon: Eye,
+      onClick: () => {
+        toast({
+          title: "View Details",
+          description: "Opening details modal...",
+          duration: 2000,
+        })
+      }
+    },
+    { 
+      id: 'edit', 
+      label: 'Edit', 
+      leftIcon: Edit,
+      onClick: () => {
+        toast({
+          title: "Edit",
+          description: "Opening edit modal...",
+          duration: 2000,
+        })
+      }
+    },
+    { 
+      id: 'download', 
+      label: 'Download', 
+      leftIcon: Download,
+      onClick: () => {
+        toast({
+          title: "Download",
+          description: "Starting download...",
+          duration: 2000,
+        })
+      }
+    },
+    { 
+      id: 'delete', 
+      label: 'Delete', 
+      leftIcon: Trash2,
+      onClick: () => {
+        toast({
+          title: "Delete",
+          description: "Opening delete confirmation modal...",
+          duration: 2000,
+        })
+      }
+    },
+    { 
+      id: 'archive', 
+      label: 'Archive', 
+      leftIcon: Archive,
+      onClick: () => {
+        toast({
+          title: "Archive",
+          description: "Opening archive confirmation modal...",
+          duration: 2000,
+        })
+      }
+    },
+  ]
 
   return (
     <div className="space-y-6">
