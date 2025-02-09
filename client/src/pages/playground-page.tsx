@@ -199,6 +199,30 @@ export function Example() {
 }
 `,
   },
+  {
+    id: "unified-dropdown",
+    name: "Unified Dropdown",
+    code: `import { UnifiedDropdown } from "@/components/ui/unified-dropdown";
+import { Settings } from "lucide-react";
+
+export function Example() {
+  return (
+    <UnifiedDropdown
+      trigger={{
+        text: "Customize Dashboard",
+        leftIcon: Settings
+      }}
+      title="Visible Widgets"
+      items={[
+        { id: 'announcements', label: 'Announcements', selected: true },
+        { id: 'quick_actions', label: 'Quick Actions', selected: true },
+        { id: 'company_score', label: 'Company Score' },
+        { id: 'network', label: 'Network Visualization' },
+      ]}
+    />
+  );
+}`,
+  },
 ];
 
 // Update availableIcons mapping to include all options in sidebar order with proper labels
@@ -263,7 +287,7 @@ export default function PlaygroundPage() {
   );
   const [tabLabel, setTabLabel] = useState("Dashboard");
   const [isTabActive, setIsTabActive] = useState(false);
-  const [tabVariant, setTabVariant] = useState<'default' | 'invela' | 'standard' | 'global'>('default');
+  const [tabVariant, setTabVariant] = useState<'default' | 'invela'>('default');
   const [isTabDisabled, setIsTabDisabled] = useState(false);
   const [tabPulsingDot, setTabPulsingDot] = useState(false);
   const [tabNotifications, setTabNotifications] = useState(false);
@@ -1008,7 +1032,7 @@ export default function PlaygroundPage() {
                           className={cn(
                             "text-sm font-medium",
                             isTabDisabled
-                              ?                              "text-muted-foreground"
+                              ? "text-muted-foreground"
                               : "text-foreground"
                           )}
                         >
