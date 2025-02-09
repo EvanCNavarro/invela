@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Copy, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const components = [
@@ -77,8 +77,29 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
 export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState(components[0].id);
   const [isTableLoading, setIsTableLoading] = useState(true);
+  const [selectedLine, setSelectedLine] = useState<number | null>(null);
 
   const currentComponent = components.find(c => c.id === selectedComponent);
+
+  const handleCopyCode = () => {
+    if (currentComponent?.code) {
+      navigator.clipboard.writeText(currentComponent.code);
+    }
+  };
+
+  const handleDownloadCode = () => {
+    if (currentComponent?.code) {
+      const blob = new Blob([currentComponent.code], { type: 'text/plain' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${currentComponent.id}.tsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -206,10 +227,48 @@ export default function PlaygroundPage() {
                       </div>
                     </TabsContent>
                     <TabsContent value="code" className="mt-4">
-                      <div className="rounded-lg bg-muted p-4 overflow-auto max-h-[400px]">
-                        <pre className="text-sm font-mono whitespace-pre">
-                          {currentComponent.code}
-                        </pre>
+                      <div className="relative rounded-lg bg-muted">
+                        <div className="absolute right-2 top-2 flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCopyCode}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleDownloadCode}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="overflow-auto max-h-[400px]">
+                          <table className="w-full border-collapse">
+                            <tbody>
+                              {currentComponent.code.split('\n').map((line, index) => (
+                                <tr 
+                                  key={index}
+                                  className={selectedLine === index ? "bg-accent" : ""}
+                                >
+                                  <td 
+                                    className="select-none pr-4 text-right text-xs text-muted-foreground border-r cursor-pointer hover:text-foreground"
+                                    onClick={() => setSelectedLine(index)}
+                                    style={{ minWidth: '3rem' }}
+                                  >
+                                    {index + 1}
+                                  </td>
+                                  <td className="pl-4 font-mono text-sm whitespace-pre-wrap">
+                                    {line}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
                     </TabsContent>
                   </Tabs>
@@ -222,7 +281,7 @@ export default function PlaygroundPage() {
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {currentComponent.usageLocations.map((location, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="min-w-0 flex-1">
