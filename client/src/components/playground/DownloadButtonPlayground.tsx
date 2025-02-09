@@ -129,10 +129,15 @@ export const DownloadButtonPlayground = () => {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4">
-        <div>
-          <Label className="text-sm font-medium mb-2 block">Display Mode</Label>
-          <ToggleGroup type="single" value={displayMode} onValueChange={(value) => value && setDisplayMode(value)}>
+      <div className="flex items-center justify-between gap-8">
+        <div className="space-y-1.5">
+          <Label className="text-sm font-medium">Display Mode</Label>
+          <ToggleGroup
+            type="single"
+            value={displayMode}
+            onValueChange={(value) => value && setDisplayMode(value)}
+            className="flex"
+          >
             <ToggleGroupItem value="both" aria-label="Both icon and text">
               Icon & Text
             </ToggleGroupItem>
@@ -146,18 +151,18 @@ export const DownloadButtonPlayground = () => {
         </div>
 
         <div className="flex items-center space-x-2">
-          <Switch 
-            id="real-download" 
-            checked={useRealDownload} 
+          <Switch
+            id="real-download"
+            checked={useRealDownload}
             onCheckedChange={setUseRealDownload}
           />
-          <Label htmlFor="real-download">Enable Real File Download</Label>
+          <Label htmlFor="real-download">Enable File</Label>
         </div>
       </div>
 
       <Card className="p-4">
         <div className="space-y-4">
-          <DownloadButton 
+          <DownloadButton
             useRealDownload={useRealDownload}
             {...getButtonProps()}
           />
