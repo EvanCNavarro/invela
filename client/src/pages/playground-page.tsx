@@ -45,6 +45,10 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarTab } from "@/components/dashboard/SidebarTab";
+import { HomeIcon, LockIcon as LockIcon2, MousePointer2Icon, NetworkIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+
 
 // Define status badge variants once
 const getStatusBadgeVariant = (status: string) => {
@@ -107,7 +111,8 @@ export function DataTable<T extends Record<string, any>>({
       </TableBody>
     </Table>
   );
-}`
+}
+`
   },
   {
     id: "loading-spinner",
@@ -139,7 +144,8 @@ export function LoadingSpinner({
       {/* SVG implementation */}
     </div>
   );
-}`
+}
+`
   },
   {
     id: "page-header",
@@ -174,7 +180,8 @@ export function PageHeader({
       )}
     </div>
   );
-}`
+}
+`
   },
   {
     id: "risk-meter",
@@ -208,7 +215,8 @@ export function RiskMeter({
       {/* Implementation */}
     </div>
   );
-}`
+}
+`
   },
   {
     id: "sidebar-menu",
@@ -242,7 +250,8 @@ export function Sidebar({
       {/* Implementation */}
     </div>
   );
-}`
+}
+`
   },
   {
     id: "sidebar-tab",
@@ -363,7 +372,8 @@ export function SidebarTab({
       {content}
     </Link>
   );
-}`
+}
+`
   }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
@@ -380,6 +390,23 @@ export default function PlaygroundPage() {
   const [pulsingDot, setPulsingDot] = useState(false);
   const [showInvelaTabs, setShowInvelaTabs] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // SidebarTab preview states
+  const [selectedIcon, setSelectedIcon] = useState<React.ElementType>(HomeIcon);
+  const [tabLabel, setTabLabel] = useState("Dashboard");
+  const [isTabActive, setIsTabActive] = useState(false);
+  const [tabVariant, setTabVariant] = useState<'default' | 'invela'>('default');
+  const [isTabDisabled, setIsTabDisabled] = useState(false);
+  const [tabPulsingDot, setTabPulsingDot] = useState(false);
+  const [tabNotifications, setTabNotifications] = useState(false);
+
+  // Icon mapping for the preview
+  const availableIcons = {
+    HomeIcon,
+    NetworkIcon,
+    LockIcon2,
+    MousePointer2Icon
+  };
 
   // Generate sample data for pagination testing
   const generateSampleData = (count: number) => {
@@ -883,6 +910,160 @@ export default function PlaygroundPage() {
                 </Card>
               )}
 
+              {currentComponent.id === "sidebar-tab" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-8">
+                      {/* Preview container */}
+                      <div className="w-[300px] h-[400px] bg-background rounded-lg border">
+                        <div className="p-4">
+                          <SidebarTab
+                            icon={selectedIcon}
+                            label={tabLabel}
+                            href="#"
+                            isActive={isTabActive}
+                            isExpanded={true}
+                            isDisabled={isTabDisabled}
+                            notificationCount={tabNotifications ? 5 : 0}
+                            showPulsingDot={tabPulsingDot}
+                            variant={tabVariant}
+                            isPlayground={true}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex-1 space-y-6">
+                        <div className="space-y-4">
+                          {/* Icon Selection */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Icon</p>
+                            <Select 
+                              value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
+                              onValueChange={(value: keyof typeof availableIcons) => {
+                                setSelectedIcon(availableIcons[value]);
+                              }}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Select icon" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="HomeIcon">Home Icon</SelectItem>
+                                <SelectItem value="NetworkIcon">Network Icon</SelectItem>
+                                <SelectItem value="LockIcon2">Lock Icon</SelectItem>
+                                <SelectItem value="MousePointer2Icon">Mouse Pointer Icon</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Tab Label Input */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Label</p>
+                            <Input
+                              placeholder="Tab Label"
+                              value={tabLabel}
+                              onChange={(e) => setTabLabel(e.target.value)}
+                              className="w-[200px]"
+                            />
+                          </div>
+
+                          {/* Tab State */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">State</p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className={cn(
+                                "w-[200px] justify-start",
+                                isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              )}
+                              onClick={() => setIsTabActive(!isTabActive)}
+                            >
+                              {isTabActive ? "Active" : "Inactive"}
+                            </Button>
+                          </div>
+
+                          {/* Tab Variant */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Variant</p>
+                            <Select 
+                              value={tabVariant} 
+                              onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Select variant" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="default">Standard</SelectItem>
+                                <SelectItem value="invela">Invela Only</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Tab State (Enabled/Disabled) */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Access</p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className={cn(
+                                "w-[200px] justify-start",
+                                isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              )}
+                              onClick={() => setIsTabDisabled(!isTabDisabled)}
+                            >
+                              {isTabDisabled ? "Disabled (Locked)" : "Enabled"}
+                            </Button>
+                          </div>
+
+                          {/* Notification Count Toggle */}
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">Indicators</p>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className={cn(
+                                "w-[200px] justify-start",
+                                tabNotifications ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              )}
+                              onClick={() => setTabNotifications(!tabNotifications)}
+                            >
+                              <Badge 
+                                variant="secondary"
+                                className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                              >
+                                {tabNotifications ? 5 : 0}
+                              </Badge>
+                              <span>Show Notifications</span>
+                            </Button>
+
+                            {/* Pulsing Dot Toggle */}
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className={cn(
+                                "w-[200px] justify-start",
+                                tabPulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              )}
+                              onClick={() => setTabPulsingDot(!tabPulsingDot)}
+                            >
+                              <span className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                tabPulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                              )} />
+                              <span>Show Pulsing Dot</span>
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Usage Examples section second */}
               <Card>
                 <CardHeader>
@@ -942,7 +1123,7 @@ export default function PlaygroundPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <pre className="p-4 rounded-lg bgmuted overflow-x-auto">
+                  <pre className="p-4 rounded-lg bg-muted overflow-x-auto">
                     <code className="text-sm whitespace-pre-wrap break-words font-mono">
                       {currentComponent.code}
                     </code>
