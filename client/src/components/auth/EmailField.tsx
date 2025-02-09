@@ -18,12 +18,12 @@ interface EmailFieldProps {
   autoFocus?: boolean;
 }
 
-export function EmailField({ 
-  field, 
-  setRedirectEmail, 
-  isLogin, 
-  onValidEmail, 
-  showError, 
+export function EmailField({
+  field,
+  setRedirectEmail,
+  isLogin,
+  onValidEmail,
+  showError,
   isLoading,
   onExtractData,
   autoFocus
@@ -75,6 +75,12 @@ export function EmailField({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
+
+      if (!response.ok) {
+        console.error('Error checking email:', response.statusText);
+        return false;
+      }
+
       const exists = await response.json();
       setEmailExists(exists);
       return exists;
@@ -138,17 +144,17 @@ export function EmailField({
         <FormLabel>{isLogin ? "Email" : "Work Email"}</FormLabel>
         <div className="relative">
           <FormControl>
-            <Input 
-              type="email" 
-              {...field} 
+            <Input
+              type="email"
+              {...field}
               onBlur={handleBlur}
               autoFocus={autoFocus}
               className={cn(
                 "pr-10",
                 !isLogin && (!touched && !showError ? '' :
-                ((field.value && !isValidFormat) || (!field.value && showError)) 
-                  ? 'border-[#E56047] focus-visible:ring-[#E56047]' 
-                  : field.value && isValidFormat && !emailExists ? 'border-green-500' : '')
+                  ((field.value && !isValidFormat) || (!field.value && showError))
+                    ? 'border-[#E56047] focus-visible:ring-[#E56047]'
+                    : field.value && isValidFormat && !emailExists ? 'border-green-500' : '')
               )}
               aria-label={isLogin ? "Email address" : "Work email address"}
             />

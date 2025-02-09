@@ -30,8 +30,6 @@ async function comparePasswords(supplied: string, stored: string) {
     const [hashedStored, salt] = stored.split(".");
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuf = Buffer.from(hashedStored, "hex");
-
-    // Now both buffers should be the same length (64 bytes)
     return timingSafeEqual(storedBuf, suppliedBuf);
   } catch (error) {
     console.error("Password comparison error:", error);
@@ -102,19 +100,38 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Add email check endpoint
+  app.post("/api/check-email", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ exists: false });
+      }
+
+      const [existingUser] = await getUserByEmail(email);
+      return res.json(!!existingUser);
+    } catch (error) {
+      console.error("Email check error:", error);
+      return res.status(500).json({ error: "Failed to check email" });
+    }
+  });
+
   app.post("/api/register", async (req, res, next) => {
     try {
       const result = registrationSchema.safeParse(req.body);
       if (!result.success) {
         const error = fromZodError(result.error);
-        return res.status(400).send(error.toString());
+        return res.status(400).json({ error: error.toString() });
       }
 
       const normalizedEmail = result.data.email.toLowerCase();
       const [existingUser] = await getUserByEmail(normalizedEmail);
       if (existingUser) {
-        return res.status(400).send("Email already registered");
+        return res.status(400).json({ error: "Email already registered" });
       }
+
+      // Handle Invela users specially
+      const isInvelaEmail = normalizedEmail.endsWith('@invela.com');
 
       // First check if company exists (case-insensitive)
       const [existingCompany] = await db.select()
@@ -125,49 +142,29 @@ export function setupAuth(app: Express) {
       if (existingCompany) {
         company = existingCompany;
       } else {
-        // Determine company type and category based on the company name
-        let type, category;
-        const companyNameLower = result.data.company.toLowerCase();
-
-        if (companyNameLower === 'invela') {
-          // Check if a System Creator company already exists
-          const [systemCreator] = await db.select()
+        // For Invela users, automatically set company to Invela
+        if (isInvelaEmail) {
+          [company] = await db.select()
             .from(companies)
-            .where(eq(companies.type, 'SYSTEM_CREATOR'));
+            .where(eq(companies.category, 'Invela'));
 
-          if (systemCreator) {
-            return res.status(400).send("System Creator company already exists");
+          if (!company) {
+            return res.status(400).json({ error: "Invela company not found in the system" });
           }
-          type = 'SYSTEM_CREATOR';
-          category = 'INVELA';
         } else {
-          // For new companies, determine type based on whether they're a bank
-          const isBank = companyNameLower.includes('bank') ||
-                        companyNameLower.includes('banking') ||
-                        companyNameLower.includes('financial') ||
-                        companyNameLower.includes('credit union');
-
-          if (isBank) {
-            type = 'WHITE_LABEL';
-            category = 'BANK';
-          } else {
-            type = 'THIRD_PARTY';
-            category = 'FINTECH';
-          }
+          // For other users, create their company as specified
+          [company] = await db.insert(companies)
+            .values({
+              name: result.data.company,
+              category: result.data.company.toLowerCase().includes('bank') ? 'Bank' : 'FinTech',
+              description: '',  // Optional fields can be updated later
+            })
+            .returning();
         }
-
-        // Create new company
-        [company] = await db.insert(companies)
-          .values({
-            name: result.data.company,
-            type,
-            category,
-            description: '',  // Optional fields can be updated later
-          })
-          .returning();
       }
 
-      // Then create the user with the company ID and normalized email
+      // Create the user with the company ID and normalized email
+      // For Invela users, automatically set onboardingCompleted to true
       const [user] = await db
         .insert(users)
         .values({
@@ -177,6 +174,7 @@ export function setupAuth(app: Express) {
           lastName: result.data.lastName,
           password: await hashPassword(result.data.password),
           companyId: company.id,
+          onboardingCompleted: isInvelaEmail, // Set to true for Invela users, false otherwise
         })
         .returning();
 
@@ -186,7 +184,7 @@ export function setupAuth(app: Express) {
       });
     } catch (error) {
       console.error("Registration error:", error);
-      res.status(500).send("Internal server error during registration");
+      res.status(500).json({ error: "Internal server error during registration" });
     }
   });
 
