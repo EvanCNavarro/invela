@@ -46,19 +46,24 @@ export const UnifiedDropdown = React.forwardRef<
   const handleSelect = (onClick?: () => void) => {
     if (onClick) {
       onClick()
-      // Only close the menu for single-select dropdowns
-      if (!multiSelect) {
+      // Only close the menu for single-select dropdowns and icon button dropdowns
+      if (!multiSelect || isIconOnly) {
         setOpen(false)
       }
     }
   }
 
-  // Get dynamic button text for single-select dropdowns
-  const buttonText = React.useMemo(() => {
-    if (!trigger.dynamicText || multiSelect) return trigger.text
+  // Get dynamic button text and icon for single-select dropdowns
+  const buttonContent = React.useMemo(() => {
+    if (!trigger.dynamicText || multiSelect) {
+      return { text: trigger.text, icon: trigger.leftIcon }
+    }
     const selectedItem = items.find(item => item.selected)
-    return selectedItem?.label || trigger.text
-  }, [trigger.dynamicText, trigger.text, items, multiSelect])
+    return { 
+      text: selectedItem?.label || trigger.text,
+      icon: selectedItem?.leftIcon || trigger.leftIcon
+    }
+  }, [trigger.dynamicText, trigger.text, trigger.leftIcon, items, multiSelect])
 
   // Check if any items have icons to enforce consistency
   const hasIcons = items.some(item => item.leftIcon)
@@ -85,8 +90,8 @@ export const UnifiedDropdown = React.forwardRef<
         ) : (
           <>
             <span className="flex items-center gap-2">
-              {LeftIcon && <LeftIcon className="h-4 w-4" />}
-              {buttonText}
+              {buttonContent.icon && <buttonContent.icon className="h-4 w-4" />}
+              {buttonContent.text}
             </span>
             <ChevronDown className={cn(
               "h-4 w-4 transition-transform duration-200",
