@@ -128,16 +128,24 @@ export function registerRoutes(app: Express): Server {
   // Update the current company endpoint
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
+      console.log('Debug - Current user:', req.user);
+      console.log('Debug - User company ID:', req.user?.companyId);
+
       if (!req.user?.companyId) {
+        console.log('Debug - No company ID associated with user');
         return res.status(404).json({ message: "No company associated with user" });
       }
 
+      // Find the company and join with its logo
       const [company] = await db.select()
         .from(companies)
         .leftJoin(companyLogos, eq(companies.logoId, companyLogos.id))
         .where(eq(companies.id, req.user.companyId));
 
+      console.log('Debug - Found company:', company);
+
       if (!company) {
+        console.log('Debug - Company not found for ID:', req.user.companyId);
         return res.status(404).json({ message: "Company not found" });
       }
 
@@ -150,6 +158,7 @@ export function registerRoutes(app: Express): Server {
         } : null
       };
 
+      console.log('Debug - Sending company data:', companyData);
       res.json(companyData);
     } catch (error) {
       console.error("Error fetching current company:", error);
@@ -900,7 +909,6 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error sending invite" });
     }
   });
-
 
   // Add endpoint for companies to add other companies to their network
   app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
