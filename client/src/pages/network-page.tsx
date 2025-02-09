@@ -86,7 +86,7 @@ export default function NetworkPage() {
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
 
-  const { data: currentCompany } = useQuery({
+  const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user
   });
