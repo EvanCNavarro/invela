@@ -43,6 +43,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { InviteFinTechModal } from "@/components/dashboard/InviteFinTechModal";
+import { WidgetLoadingState } from "@/components/dashboard/widget-content/WidgetLoadingState";
+import { WidgetEmptyState } from "@/components/dashboard/widget-content/WidgetEmptyState";
+import { WidgetButtonGrid } from "@/components/dashboard/widget-content/WidgetButtonGrid";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -272,115 +276,33 @@ export default function DashboardPage() {
                   }
                 ]}
               >
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    className="w-full pulse-border font-medium"
-                    onClick={() => setIsModalOpen(true)}
-                    data-element="add-fintech-button"
-                  >
-                    Add New FinTech
-                  </Button>
-                  <Button variant="outline" className="w-full font-medium">
-                    Add User
-                  </Button>
-                  <Button variant="outline" className="w-full font-medium">
-                    Set Risk Tracker
-                  </Button>
-                  <Button variant="outline" className="w-full font-medium">
-                    View Reports
-                  </Button>
-                </div>
+                <WidgetButtonGrid
+                  actions={[
+                    {
+                      label: "Add New FinTech",
+                      onClick: () => setIsModalOpen(true),
+                      className: "pulse-border",
+                      dataElement: "add-fintech-button"
+                    },
+                    {
+                      label: "Add User",
+                      onClick: () => console.log("Add user clicked")
+                    },
+                    {
+                      label: "Set Risk Tracker",
+                      onClick: () => console.log("Set risk tracker clicked")
+                    },
+                    {
+                      label: "View Reports",
+                      onClick: () => console.log("View reports clicked")
+                    }
+                  ]}
+                />
 
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-semibold">Invite a New FinTech</DialogTitle>
-                      <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
-                        Please provide details to send a FinTech invitation.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="companyName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="text-sm font-semibold mb-2">Company Name</div>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  className={cn(
-                                    "w-full",
-                                    serverError && "border-destructive"
-                                  )}
-                                  disabled={isPending}
-                                  aria-label="FinTech company name"
-                                  autoFocus
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="text-sm font-semibold mb-2">Invitee Email</div>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="email"
-                                  className={cn(
-                                    "w-full",
-                                    serverError && "border-destructive"
-                                  )}
-                                  disabled={isPending}
-                                  aria-label="FinTech representative email"
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                    handleInputChange();
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              {serverError && (
-                                <p className="text-sm font-medium text-destructive mt-2">
-                                  {serverError.includes("mailbox")
-                                    ? "This email address does not exist. Please try again."
-                                    : serverError}
-                                </p>
-                              )}
-                            </FormItem>
-                          )}
-                        />
-                        <div className="flex justify-end">
-                          <Button
-                            type="submit"
-                            className="gap-2"
-                            disabled={isPending}
-                          >
-                            {isPending ? (
-                              <>
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="h-4 w-4" />
-                                Send Invite
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                <InviteFinTechModal 
+                  isOpen={isModalOpen}
+                  onOpenChange={setIsModalOpen}
+                />
               </Widget>
             )}
 
@@ -392,9 +314,7 @@ export default function DashboardPage() {
                 isVisible={visibleWidgets.companyScore}
               >
                 {isLoading ? (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">Loading company data...</p>
-                  </div>
+                  <WidgetLoadingState message="Loading company data..." />
                 ) : (
                   <div className="space-y-1">
                     <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
@@ -431,11 +351,9 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('networkVisualization')}
                 isVisible={visibleWidgets.networkVisualization}
               >
-                <div className="flex items-center justify-center min-h-[200px]">
-                  <p className="text-sm text-muted-foreground">
-                    Network visualization coming soon
-                  </p>
-                </div>
+                <WidgetEmptyState
+                  message="Network visualization coming soon"
+                />
               </Widget>
             )}
           </div>
