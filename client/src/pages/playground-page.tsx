@@ -52,30 +52,153 @@ import {
   ChevronsRight,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  ArrowUpRight,
 } from "lucide-react";
 
+// Define the Component interface
+interface PlaygroundComponent {
+  id: string;
+  name: string;
+  code?: string;
+  usageLocations?: { path: string; description: string; viewInApp?: boolean }[];
+  referencedAs?: string;
+}
+
+// Define available components
+const components: PlaygroundComponent[] = [
+  {
+    id: "loading-spinner",
+    name: "Loading Spinner",
+    code: `import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+export function Example() {
+  return (
+    <div className="flex gap-4">
+      <LoadingSpinner size="sm" />
+      <LoadingSpinner size="md" />
+      <LoadingSpinner size="lg" />
+    </div>
+  );
+}`,
+  },
+  {
+    id: "risk-meter",
+    name: "Risk Meter",
+    code: `import { RiskMeter } from "@/components/dashboard/RiskMeter";
+
+export function Example() {
+  return (
+    <div className="w-48">
+      <RiskMeter score={750} />
+    </div>
+  );
+}`,
+  },
+  {
+    id: "page-header",
+    name: "Page Header",
+    code: `import { PageHeader } from "@/components/ui/page-header";
+
+export function Example() {
+  return (
+    <PageHeader
+      title="Example Header"
+      description="This is an example description that provides additional context."
+    />
+  );
+}`,
+  },
+  {
+    id: "data-table",
+    name: "Data Table",
+    code: `import { DataTable } from "@/components/ui/data-table";
+
+export function Example() {
+  const data = [
+    { id: 1, name: "Example 1", status: "Active", date: "2025-02-09" },
+    { id: 2, name: "Example 2", status: "Pending", date: "2025-02-08" }
+  ];
+
+  return (
+    <DataTable
+      data={data}
+      columns={[
+        { key: 'name', header: 'Name', type: 'icon', sortable: true },
+        { key: 'status', header: 'Status', type: 'status', sortable: true },
+        { key: 'date', header: 'Date', sortable: true }
+      ]}
+    />
+  );
+}`,
+  },
+  {
+    id: "sidebar-menu",
+    name: "Sidebar Menu",
+    code: `import { Sidebar } from "@/components/dashboard/Sidebar";
+
+export function Example() {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <Sidebar
+      isExpanded={isExpanded}
+      onToggleExpanded={() => setIsExpanded(!isExpanded)}
+      isNewUser={false}
+      notificationCount={5}
+    />
+  );
+}`,
+  },
+  {
+    id: "sidebar-tab",
+    name: "Sidebar Tab",
+    code: `import { SidebarTab } from "@/components/dashboard/SidebarTab";
+import { HomeIcon } from "lucide-react";
+
+export function Example() {
+  return (
+    <SidebarTab
+      icon={HomeIcon}
+      label="Dashboard"
+      href="/"
+      isActive={true}
+      isExpanded={true}
+    />
+  );
+}`,
+  }
+];
+
 // Update availableIcons mapping to include all options in sidebar order with proper labels
-const availableIcons: Record<string, { icon: React.ElementType, label: string }> = {
+const availableIcons: Record<string, { icon: React.ElementType; label: string }> = {
   Dashboard: { icon: HomeIcon, label: "Dashboard" },
   TaskCenter: { icon: ListTodoIcon, label: "Task Center" },
   Network: { icon: NetworkIcon, label: "Network" },
   FileVault: { icon: FolderIcon, label: "File Vault" },
   Insights: { icon: BarChartIcon, label: "Insights" },
   Playground: { icon: MousePointer2Icon, label: "Playground" },
-  Locked: { icon: LockIcon, label: "Locked" }
+  Locked: { icon: LockIcon, label: "Locked" },
 };
 
 // Add helper functions for handling lock state
 const handleLockState = (locked: boolean, setters: {
-  setIsTabDisabled: (value: boolean) => void,
-  setSelectedIcon: (icon: React.ElementType) => void,
-  setTabLabel: (value: string) => void,
-  setIsTabActive: (value: boolean) => void,
-  setTabVariant: (value: 'default' | 'invela') => void,
-  setTabNotifications: (value: boolean) => void,
-  setTabPulsingDot: (value: boolean) => void,
+  setIsTabDisabled: React.Dispatch<React.SetStateAction<boolean>>;
+  setSelectedIcon: React.Dispatch<React.SetStateAction<React.ElementType>>;
+  setTabLabel: React.Dispatch<React.SetStateAction<string>>;
+  setIsTabActive: React.Dispatch<React.SetStateAction<boolean>>;
+  setTabVariant: React.Dispatch<React.SetStateAction<'default' | 'invela'>>;
+  setTabNotifications: React.Dispatch<React.SetStateAction<boolean>>;
+  setTabPulsingDot: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
-  const { setIsTabDisabled, setSelectedIcon, setTabLabel, setIsTabActive, setTabVariant, setTabNotifications, setTabPulsingDot } = setters;
+  const {
+    setIsTabDisabled,
+    setSelectedIcon,
+    setTabLabel,
+    setIsTabActive,
+    setTabVariant,
+    setTabNotifications,
+    setTabPulsingDot,
+  } = setters;
 
   setIsTabDisabled(locked);
   if (locked) {
@@ -103,7 +226,9 @@ export default function PlaygroundPage() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // SidebarTab preview states
-  const [selectedIcon, setSelectedIcon] = useState<React.ElementType>(availableIcons.Dashboard.icon);
+  const [selectedIcon, setSelectedIcon] = useState<React.ElementType>(
+    availableIcons.Dashboard.icon
+  );
   const [tabLabel, setTabLabel] = useState("Dashboard");
   const [isTabActive, setIsTabActive] = useState(false);
   const [tabVariant, setTabVariant] = useState<'default' | 'invela'>('default');
@@ -131,7 +256,7 @@ export default function PlaygroundPage() {
       setIsTabActive,
       setTabVariant,
       setTabNotifications,
-      setTabPulsingDot
+      setTabPulsingDot,
     });
   };
 
@@ -140,19 +265,21 @@ export default function PlaygroundPage() {
     return Array.from({ length: count }, (_, i) => ({
       id: i + 1,
       name: `Company ${i + 1}`,
-      status: ['Active', 'Pending', 'Completed', 'Error'][i % 4],
-      date: new Date(2025, 1, 9 - i).toISOString().split('T')[0],
-      logo: ""
+      status: ["Active", "Pending", "Completed", "Error"][i % 4],
+      date: new Date(2025, 1, 9 - i)
+        .toISOString()
+        .split("T")[0],
+      logo: "",
     }));
   };
 
   const [tableData, setTableData] = useState(generateSampleData(100));
   const [tableSortConfig, setTableSortConfig] = useState<{
     key: string;
-    direction: 'asc' | 'desc';
+    direction: "asc" | "desc";
   }>({
-    key: 'name',
-    direction: 'asc'
+    key: "name",
+    direction: "asc",
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -165,7 +292,7 @@ export default function PlaygroundPage() {
     icon: true,
     status: true,
     actions: true,
-    view: true
+    view: true,
   });
 
   const defaultFilters = {
@@ -173,21 +300,22 @@ export default function PlaygroundPage() {
     icon: true,
     status: true,
     actions: true,
-    view: true
+    view: true,
   };
 
   const handleClearFilters = () => {
     setEnabledColumns(defaultFilters);
-    setTableSortConfig({ key: 'name', direction: 'asc' });
+    setTableSortConfig({ key: "name", direction: "asc" });
     setSelectedRows(new Set());
     setCurrentPage(1);
     setItemCount("5"); // Reset to default 5 items
   };
 
   const handleTableSort = (key: string) => {
-    setTableSortConfig(prev => ({
+    setTableSortConfig((prev) => ({
       key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+      direction:
+        prev.key === key && prev.direction === "asc" ? "desc" : "asc",
     }));
   };
 
@@ -205,7 +333,7 @@ export default function PlaygroundPage() {
     if (selectedRows.size === tableData.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(tableData.map(row => row.id)));
+      setSelectedRows(new Set(tableData.map((row) => row.id)));
     }
   };
 
@@ -217,7 +345,9 @@ export default function PlaygroundPage() {
 
   const enabledColumnCount = Object.values(enabledColumns).filter(Boolean).length;
 
-  const currentComponent = components.find(c => c.id === selectedComponent);
+  const currentComponent = components.find(
+    (c) => c.id === selectedComponent
+  );
 
   const handleCopyCode = () => {
     if (currentComponent?.code) {
@@ -232,9 +362,9 @@ export default function PlaygroundPage() {
   const handleDownloadCode = () => {
     if (currentComponent?.code) {
       const fileName = `invela_app_code_${currentComponent.id}.tsx`;
-      const blob = new Blob([currentComponent.code], { type: 'text/plain' });
+      const blob = new Blob([currentComponent.code], { type: "text/plain" });
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = fileName;
       document.body.appendChild(a);
@@ -249,7 +379,6 @@ export default function PlaygroundPage() {
       });
     }
   };
-
 
   return (
     <DashboardLayout>
@@ -267,10 +396,22 @@ export default function PlaygroundPage() {
               onValueChange={setSelectedComponent}
             >
               <SelectTrigger className="w-[280px]">
-                <SelectValue placeholder="Select a component" />
+                <SelectValue placeholder="Select a component">
+                  {(props: { value: string }) => {
+                    const iconData = availableIcons[props.value as keyof typeof availableIcons];
+                    if (!iconData) return "Select icon";
+                    const IconComponent = iconData.icon;
+                    return (
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="h-4 w-4" />
+                        <span>{iconData.label}</span>
+                      </div>
+                    );
+                  }}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {components.map(component => (
+                {components.map((component) => (
                   <SelectItem key={component.id} value={component.id}>
                     {component.name}
                   </SelectItem>
@@ -289,15 +430,21 @@ export default function PlaygroundPage() {
                   <CardContent className="flex flex-col items-center gap-8">
                     <div className="flex items-center gap-8">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Small</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Small
+                        </p>
                         <LoadingSpinner size="sm" />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Medium</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Medium
+                        </p>
                         <LoadingSpinner size="md" />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Large</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Large
+                        </p>
                         <LoadingSpinner size="lg" />
                       </div>
                     </div>
@@ -314,15 +461,21 @@ export default function PlaygroundPage() {
                     <div className="flex flex-col items-center gap-8">
                       <div className="flex flex-wrap justify-center gap-8">
                         <div className="w-48">
-                          <p className="text-sm text-muted-foreground mb-2 text-center">Low Risk</p>
+                          <p className="text-sm text-muted-foreground mb-2 text-center">
+                            Low Risk
+                          </p>
                           <RiskMeter score={250} />
                         </div>
                         <div className="w-48">
-                          <p className="text-sm text-muted-foreground mb-2 text-center">Medium Risk</p>
+                          <p className="text-sm text-muted-foreground mb-2 text-center">
+                            Medium Risk
+                          </p>
                           <RiskMeter score={750} />
                         </div>
                         <div className="w-48">
-                          <p className="text-sm text-muted-foreground mb-2 text-center">High Risk</p>
+                          <p className="text-sm text-muted-foreground mb-2 text-center">
+                            High Risk
+                          </p>
                           <RiskMeter score={1200} />
                         </div>
                       </div>
@@ -339,14 +492,18 @@ export default function PlaygroundPage() {
                   <CardContent>
                     <div className="space-y-8">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-4">With Description</p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          With Description
+                        </p>
                         <PageHeader
                           title="Example Header"
                           description="This is an example description that provides additional context."
                         />
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-4">Without Description</p>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Without Description
+                        </p>
                         <PageHeader title="Example Header" />
                       </div>
                     </div>
@@ -358,7 +515,9 @@ export default function PlaygroundPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
+                      <CardTitle className="text-sm font-bold">
+                        Interactive Table
+                      </CardTitle>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -375,14 +534,20 @@ export default function PlaygroundPage() {
                               {enabledColumnCount} Columns
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-[200px]">
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-[200px]"
+                          >
                             <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuCheckboxItem
                               className="flex items-center py-2"
                               checked={enabledColumns.checkbox}
                               onCheckedChange={(checked) =>
-                                setEnabledColumns(prev => ({ ...prev, checkbox: checked }))
+                                setEnabledColumns((prev) => ({
+                                  ...prev,
+                                  checkbox: checked,
+                                }))
                               }
                             >
                               <span className="font-medium">Selection</span>
@@ -391,7 +556,10 @@ export default function PlaygroundPage() {
                               className="flex items-center py-2"
                               checked={enabledColumns.icon}
                               onCheckedChange={(checked) =>
-                                setEnabledColumns(prev => ({ ...prev, icon: checked }))
+                                setEnabledColumns((prev) => ({
+                                  ...prev,
+                                  icon: checked,
+                                }))
                               }
                             >
                               <span className="font-medium">Icon Column</span>
@@ -400,7 +568,10 @@ export default function PlaygroundPage() {
                               className="flex items-center py-2"
                               checked={enabledColumns.status}
                               onCheckedChange={(checked) =>
-                                setEnabledColumns(prev => ({ ...prev, status: checked }))
+                                setEnabledColumns((prev) => ({
+                                  ...prev,
+                                  status: checked,
+                                }))
                               }
                             >
                               <span className="font-medium">Status</span>
@@ -409,7 +580,10 @@ export default function PlaygroundPage() {
                               className="flex items-center py-2"
                               checked={enabledColumns.actions}
                               onCheckedChange={(checked) =>
-                                setEnabledColumns(prev => ({ ...prev, actions: checked }))
+                                setEnabledColumns((prev) => ({
+                                  ...prev,
+                                  actions: checked,
+                                }))
                               }
                             >
                               <span className="font-medium">Actions</span>
@@ -418,7 +592,10 @@ export default function PlaygroundPage() {
                               className="flex items-center py-2"
                               checked={enabledColumns.view}
                               onCheckedChange={(checked) =>
-                                setEnabledColumns(prev => ({ ...prev, view: checked }))
+                                setEnabledColumns((prev) => ({
+                                  ...prev,
+                                  view: checked,
+                                }))
                               }
                             >
                               <span className="font-medium">View</span>
@@ -429,7 +606,19 @@ export default function PlaygroundPage() {
                         <Select value={itemCount} onValueChange={setItemCount}>
                           <SelectTrigger className="w-[130px]">
                             <ListIcon className="h-4 w-4 mr-2" />
-                            <SelectValue placeholder="Show items" />
+                            <SelectValue placeholder="Show items">
+                              {(props: { value: string }) => {
+                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
+                                if (!iconData) return "Select icon";
+                                const IconComponent = iconData.icon;
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>{iconData.label}</span>
+                                  </div>
+                                );
+                              }}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="5">5 items</SelectItem>
@@ -454,14 +643,27 @@ export default function PlaygroundPage() {
                   <CardContent>
                     <div className="space-y-4">
                       <DataTable
-                        data={tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
+                        data={tableData.slice(
+                          (currentPage - 1) * Number(itemCount),
+                          currentPage * Number(itemCount)
+                        )}
                         columns={[
-                          ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
-                          ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
-                          ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
-                          { key: 'date', header: 'Date', sortable: true },
-                          ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
-                          ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
+                          ...(enabledColumns.checkbox
+                            ? [{ key: "select", header: "", type: "checkbox" as const }]
+                            : []),
+                          ...(enabledColumns.icon
+                            ? [{ key: "name", header: "Name", type: "icon" as const, sortable: true }]
+                            : []),
+                          ...(enabledColumns.status
+                            ? [{ key: "status", header: "Status", type: "status" as const, sortable: true }]
+                            : []),
+                          { key: "date", header: "Date", sortable: true },
+                          ...(enabledColumns.actions
+                            ? [{ key: "actions", header: "", type: "actions" as const }]
+                            : []),
+                          ...(enabledColumns.view
+                            ? [{ key: "view", header: "", type: "view" as const }]
+                            : []),
                         ]}
                         isLoading={isTableLoading}
                         sortConfig={tableSortConfig}
@@ -474,8 +676,17 @@ export default function PlaygroundPage() {
                       {tableData.length > 5 && (
                         <div className="flex items-center justify-between px-2">
                           <div className="flex-1 text-sm text-muted-foreground">
-                            Showing {Math.min((currentPage - 1) * Number(itemCount) + 1, tableData.length)} to{" "}
-                            {Math.min(currentPage * Number(itemCount), tableData.length)} of {tableData.length} entries
+                            Showing{" "}
+                            {Math.min(
+                              (currentPage - 1) * Number(itemCount) + 1,
+                              tableData.length
+                            )}{" "}
+                            to{" "}
+                            {Math.min(
+                              currentPage * Number(itemCount),
+                              tableData.length
+                            )}{" "}
+                            of {tableData.length} entries
                           </div>
                           <div className="flex items-center space-x-2">
                             <Button
@@ -531,15 +742,21 @@ export default function PlaygroundPage() {
                       {/* Preview container */}
                       <div className="w-[300px] h-[600px] bg-muted/50 rounded-lg p-4 overflow-hidden">
                         <div className="relative h-full">
-                          <div className={cn(
-                            "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                            isExpanded ? "w-64" : "w-20"
-                          )}>
+                          <div
+                            className={cn(
+                              "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                              isExpanded ? "w-64" : "w-20"
+                            )}
+                          >
                             <Sidebar
                               isExpanded={isExpanded}
-                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                              onToggleExpanded={() =>
+                                setIsExpanded(!isExpanded)
+                              }
                               isNewUser={false}
-                              notificationCount={showNotifications ? notificationCount : 0}
+                              notificationCount={
+                                showNotifications ? notificationCount : 0
+                              }
                               showPulsingDot={pulsingDot}
                               showInvelaTabs={showInvelaTabs}
                               isPlayground={true}
@@ -551,12 +768,14 @@ export default function PlaygroundPage() {
                       {/* Controls */}
                       <div className="flex-1 space-y-6">
                         <div className="space-y-4">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              isExpanded ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              isExpanded
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setIsExpanded(!isExpanded)}
                           >
@@ -573,12 +792,14 @@ export default function PlaygroundPage() {
                             )}
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              showNotifications ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              showNotifications
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => {
                               setShowNotifications(!showNotifications);
@@ -589,7 +810,7 @@ export default function PlaygroundPage() {
                               }
                             }}
                           >
-                            <Badge 
+                            <Badge
                               variant="secondary"
                               className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
@@ -598,28 +819,34 @@ export default function PlaygroundPage() {
                             <span>Task Notifications</span>
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              pulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              pulsingDot
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setPulsingDot(!pulsingDot)}
                           >
-                            <span className={cn(
-                              "h-2 w-2 rounded-full mr-2",
-                              pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
-                            )} />
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                              )}
+                            />
                             <span>Pulsing Dot</span>
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              showInvelaTabs ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              showInvelaTabs
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setShowInvelaTabs(!showInvelaTabs)}
                           >
@@ -640,7 +867,9 @@ export default function PlaygroundPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                      <CardTitle className="text-sm font-bold">
+                        Preview
+                      </CardTitle>
                       <Button
                         variant="outline"
                         size="sm"
@@ -656,13 +885,17 @@ export default function PlaygroundPage() {
                     <div className="flex flex-wrap gap-4 pb-6 border-b">
                       {/* Access Control */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className="text-sm font-medium text-foreground">Access</p>
-                        <Button 
-                          variant="outline" 
+                        <p className="text-sm font-medium text-foreground">
+                          Access
+                        </p>
+                        <Button
+                          variant="outline"
                           size="sm"
                           className={cn(
                             "w-full justify-start",
-                            isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            isTabDisabled
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
                           )}
                           onClick={handleAccessToggle}
                         >
@@ -672,17 +905,26 @@ export default function PlaygroundPage() {
 
                       {/* Icon Selection */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Icon</p>
-                        <Select 
-                          value={Object.keys(availableIcons).find(
-                            key => availableIcons[key].icon === selectedIcon
-                          ) || 'Dashboard'}
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
+                          )}
+                        >
+                          Icon
+                        </p>
+                        <Select
+                          value={
+                            Object.keys(availableIcons).find(
+                              (key) =>
+                                availableIcons[key].icon === selectedIcon
+                            ) || "Dashboard"
+                          }
                           onValueChange={(value) => {
-                            const iconData = availableIcons[value as keyof typeof availableIcons];
-                            if (value === 'Locked') {
+                            const iconData = availableIcons[
+                              value as keyof typeof availableIcons
+                            ];
+                            if (value === "Locked") {
                               handleLockState(true, {
                                 setIsTabDisabled,
                                 setSelectedIcon,
@@ -690,19 +932,22 @@ export default function PlaygroundPage() {
                                 setIsTabActive,
                                 setTabVariant,
                                 setTabNotifications,
-                                setTabPulsingDot
+                                setTabPulsingDot,
                               });
                             } else {
                               setSelectedIcon(iconData.icon);
                               setTabLabel(iconData.label);
                             }
                           }}
-                          disabled={isTabDisabled && selectedIcon !== availableIcons.Locked.icon}
+                          disabled={
+                            isTabDisabled &&
+                            selectedIcon !== availableIcons.Locked.icon
+                          }
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue>
-                              {({ value }: { value: string }) => {
-                                const iconData = availableIcons[value as keyof typeof availableIcons];
+                              {(props: { value: string }) => {
+                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
                                 if (!iconData) return "Select icon";
                                 const IconComponent = iconData.icon;
                                 return (
@@ -715,21 +960,25 @@ export default function PlaygroundPage() {
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(availableIcons).map(([key, { icon: Icon, label }]) => (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  <Icon className="h-4 w-4" />
-                                  <span>{label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {Object.entries(availableIcons).map(
+                              ([key, { icon: Icon, label }]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    <span>{label}</span>
+                                  </div>
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Label Input */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className="text-sm font-medium text-foreground">Label</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Label
+                        </p>
                         <Input
                           placeholder="Tab Label"
                           value={tabLabel}
@@ -741,13 +990,21 @@ export default function PlaygroundPage() {
 
                       {/* Tab Variant */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Variant</p>
-                        <Select 
-                          value={tabVariant} 
-                          onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "textmuted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Variant
+                        </p>
+                        <Select
+                          value={tabVariant}
+                          onValueChange={(
+                            value: "default" | "invela"
+                          ) => setTabVariant(value)}
                           disabled={isTabDisabled}
                         >
                           <SelectTrigger className="w-full">
@@ -762,16 +1019,23 @@ export default function PlaygroundPage() {
 
                       {/* Tab State */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>State</p>
-                        <Button 
-                          variant="outline" 
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          State</p>
+                        <Button
+                          variant="outline"
                           size="sm"
                           className={cn(
                             "w-full justify-start",
-                            isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            isTabActive
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
                           )}
                           onClick={() => setIsTabActive(!isTabActive)}
                           disabled={isTabDisabled}
@@ -782,18 +1046,24 @@ export default function PlaygroundPage() {
 
                       {/* Indicators */}
                       <div className="space-y-2 min-w-[300px] flex-2">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Indicators</p>
-                        <ToggleGroup 
-                          type="single" 
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Indicators
+                        </p>
+                        <ToggleGroup
+                          type="single"
                           value={
-                            tabNotifications 
-                              ? "notifications" 
-                              : tabPulsingDot 
-                                ? "pulse" 
-                                : "none"
+                            tabNotifications
+                              ? "notifications"
+                              : tabPulsingDot
+                              ? "pulse"
+                              : "none"
                           }
                           onValueChange={(value) => {
                             if (!isTabDisabled) {
@@ -824,7 +1094,7 @@ export default function PlaygroundPage() {
                               "hover:bg-background/50"
                             )}
                           >
-                            <Badge 
+                            <Badge
                               variant="secondary"
                               className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
@@ -841,10 +1111,12 @@ export default function PlaygroundPage() {
                               "hover:bg-background/50"
                             )}
                           >
-                            <span className={cn(
-                              "h-2 w-2 rounded-full mr-2",
-                              "bg-primary"
-                            )} />
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                "bg-primary"
+                              )}
+                            />
                             Pulse
                           </ToggleGroupItem>
                         </ToggleGroup>
@@ -876,7 +1148,6 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               )}
-
               {currentComponent.id === "sidebar-menu" && (
                 <Card>
                   <CardHeader>
@@ -887,15 +1158,21 @@ export default function PlaygroundPage() {
 
                       <div className="w-[300px] h-[600px] bg-muted/50 rounded-lg p-4 overflow-hidden">
                         <div className="relative h-full">
-                          <div className={cn(
-                            "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                            isExpanded ? "w-64" : "w-20"
-                          )}>
+                          <div
+                            className={cn(
+                              "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                              isExpanded ? "w-64" : "w-20"
+                            )}
+                          >
                             <Sidebar
                               isExpanded={isExpanded}
-                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                              onToggleExpanded={() =>
+                                setIsExpanded(!isExpanded)
+                              }
                               isNewUser={false}
-                              notificationCount={showNotifications ? notificationCount : 0}
+                              notificationCount={
+                                showNotifications ? notificationCount : 0
+                              }
                               showPulsingDot={pulsingDot}
                               showInvelaTabs={showInvelaTabs}
                               isPlayground={true}
@@ -906,12 +1183,14 @@ export default function PlaygroundPage() {
 
                       <div className="flex-1 space-y-6">
                         <div className="space-y-4">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              isExpanded ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              isExpanded
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setIsExpanded(!isExpanded)}
                           >
@@ -928,12 +1207,14 @@ export default function PlaygroundPage() {
                             )}
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              showNotifications ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              showNotifications
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => {
                               setShowNotifications(!showNotifications);
@@ -944,7 +1225,7 @@ export default function PlaygroundPage() {
                               }
                             }}
                           >
-                            <Badge 
+                            <Badge
                               variant="secondary"
                               className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
@@ -953,28 +1234,34 @@ export default function PlaygroundPage() {
                             <span>Task Notifications</span>
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              pulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              pulsingDot
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setPulsingDot(!pulsingDot)}
                           >
-                            <span className={cn(
-                              "h-2 w-2 rounded-full mr-2",
-                              pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
-                            )} />
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                              )}
+                            />
                             <span>Pulsing Dot</span>
                           </Button>
 
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             className={cn(
                               "w-[200px] justify-start",
-                              showInvelaTabs ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              showInvelaTabs
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
                             )}
                             onClick={() => setShowInvelaTabs(!showInvelaTabs)}
                           >
@@ -995,7 +1282,9 @@ export default function PlaygroundPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                      <CardTitle className="text-sm font-bold">
+                        Preview
+                      </CardTitle>
                       <Button
                         variant="outline"
                         size="sm"
@@ -1011,13 +1300,17 @@ export default function PlaygroundPage() {
                     <div className="flex flex-wrap gap-4 pb-6 border-b">
                       {/* Access Control */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className="text-sm font-medium text-foreground">Access</p>
-                        <Button 
-                          variant="outline" 
+                        <p className="text-sm font-medium text-foreground">
+                          Access
+                        </p>
+                        <Button
+                          variant="outline"
                           size="sm"
                           className={cn(
                             "w-full justify-start",
-                            isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            isTabDisabled
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
                           )}
                           onClick={handleAccessToggle}
                         >
@@ -1027,17 +1320,26 @@ export default function PlaygroundPage() {
 
                       {/* Icon Selection */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Icon</p>
-                        <Select 
-                          value={Object.keys(availableIcons).find(
-                            key => availableIcons[key].icon === selectedIcon
-                          ) || 'Dashboard'}
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
+                          )}
+                        >
+                          Icon
+                        </p>
+                        <Select
+                          value={
+                            Object.keys(availableIcons).find(
+                              (key) =>
+                                availableIcons[key].icon === selectedIcon
+                            ) || "Dashboard"
+                          }
                           onValueChange={(value) => {
-                            const iconData = availableIcons[value as keyof typeof availableIcons];
-                            if (value === 'Locked') {
+                            const iconData = availableIcons[
+                              value as keyof typeof availableIcons
+                            ];
+                            if (value === "Locked") {
                               handleLockState(true, {
                                 setIsTabDisabled,
                                 setSelectedIcon,
@@ -1045,19 +1347,22 @@ export default function PlaygroundPage() {
                                 setIsTabActive,
                                 setTabVariant,
                                 setTabNotifications,
-                                setTabPulsingDot
+                                setTabPulsingDot,
                               });
                             } else {
                               setSelectedIcon(iconData.icon);
                               setTabLabel(iconData.label);
                             }
                           }}
-                          disabled={isTabDisabled && selectedIcon !== availableIcons.Locked.icon}
+                          disabled={
+                            isTabDisabled &&
+                            selectedIcon !== availableIcons.Locked.icon
+                          }
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue>
-                              {({ value }: { value: string }) => {
-                                const iconData = availableIcons[value as keyof typeof availableIcons];
+                              {(props: { value: string }) => {
+                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
                                 if (!iconData) return "Select icon";
                                 const IconComponent = iconData.icon;
                                 return (
@@ -1070,21 +1375,25 @@ export default function PlaygroundPage() {
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(availableIcons).map(([key, { icon: Icon, label }]) => (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  <Icon className="h-4 w-4" />
-                                  <span>{label}</span>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {Object.entries(availableIcons).map(
+                              ([key, { icon: Icon, label }]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    <span>{label}</span>
+                                  </div>
+                                </SelectItem>
+                              )
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
 
                       {/* Label Input */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className="text-sm font-medium text-foreground">Label</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Label
+                        </p>
                         <Input
                           placeholder="Tab Label"
                           value={tabLabel}
@@ -1096,13 +1405,21 @@ export default function PlaygroundPage() {
 
                       {/* Tab Variant */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Variant</p>
-                        <Select 
-                          value={tabVariant} 
-                          onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Variant
+                        </p>
+                        <Select
+                          value={tabVariant}
+                          onValueChange={(
+                            value: "default" | "invela"
+                          ) => setTabVariant(value)}
                           disabled={isTabDisabled}
                         >
                           <SelectTrigger className="w-full">
@@ -1117,16 +1434,23 @@ export default function PlaygroundPage() {
 
                       {/* Tab State */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>State</p>
-                        <Button 
-                          variant="outline" 
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          State</p>
+                        <Button
+                          variant="outline"
                           size="sm"
                           className={cn(
                             "w-full justify-start",
-                            isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            isTabActive
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
                           )}
                           onClick={() => setIsTabActive(!isTabActive)}
                           disabled={isTabDisabled}
@@ -1137,18 +1461,24 @@ export default function PlaygroundPage() {
 
                       {/* Indicators */}
                       <div className="space-y-2 min-w-[300px] flex-2">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Indicators</p>
-                        <ToggleGroup 
-                          type="single" 
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Indicators
+                        </p>
+                        <ToggleGroup
+                          type="single"
                           value={
-                            tabNotifications 
-                              ? "notifications" 
-                              : tabPulsingDot 
-                                ? "pulse" 
-                                : "none"
+                            tabNotifications
+                              ? "notifications"
+                              : tabPulsingDot
+                              ? "pulse"
+                              : "none"
                           }
                           onValueChange={(value) => {
                             if (!isTabDisabled) {
@@ -1179,7 +1509,7 @@ export default function PlaygroundPage() {
                               "hover:bg-background/50"
                             )}
                           >
-                            <Badge 
+                            <Badge
                               variant="secondary"
                               className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
@@ -1196,10 +1526,12 @@ export default function PlaygroundPage() {
                               "hover:bg-background/50"
                             )}
                           >
-                            <span className={cn(
-                              "h-2 w-2 rounded-full mr-2",
-                              "bg-primary"
-                            )} />
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                "bg-primary"
+                              )}
+                            />
                             Pulse
                           </ToggleGroupItem>
                         </ToggleGroup>
@@ -1239,9 +1571,9 @@ export default function PlaygroundPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {currentComponent.usageLocations.map((location, index) => (
-                      <div 
-                        key={index} 
+                    {currentComponent.usageLocations?.map((location, index) => (
+                      <div
+                        key={index}
                         className="flex items-center justify-between bg-muted/50 rounded-lg p-4"
                       >
                         <div>
