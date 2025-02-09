@@ -81,9 +81,10 @@ interface SidebarProps {
   isNewUser?: boolean;
   notificationCount?: number;
   showPulsingDot?: boolean;
+  showInvelaTabs?: boolean;
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false }: SidebarProps) {
+export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false, showInvelaTabs = false }: SidebarProps) {
   const menuItems = [
     { 
       icon: HomeIcon,
@@ -415,6 +416,8 @@ export default function PlaygroundPage() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [pulsingDot, setPulsingDot] = useState(false);
+  const [showInvelaTabs, setShowInvelaTabs] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Generate sample data for pagination testing
   const generateSampleData = (count: number) => {
@@ -809,68 +812,9 @@ export default function PlaygroundPage() {
                     <CardTitle className="text-sm font-bold">Preview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      {/* Control buttons */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className={cn(
-                            "gap-2",
-                            isExpanded ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-                          )}
-                          onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                          {isExpanded ? (
-                            <>
-                              <ChevronLeftIcon className="h-4 w-4" />
-                              <span>Collapsed</span>
-                            </>
-                          ) : (
-                            <>
-                              <ChevronRightIcon className="h-4 w-4" />
-                              <span>Expanded</span>
-                            </>
-                          )}
-                        </Button>
-
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className={cn(
-                            "gap-2",
-                            notificationCount > 0 ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-                          )}
-                          onClick={() => setNotificationCount(prev => prev > 0 ? 0 : 5)}
-                        >
-                          <Badge 
-                            variant="secondary"
-                            className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
-                          >
-                            {notificationCount}
-                          </Badge>
-                          <span>Task Notifications</span>
-                        </Button>
-
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className={cn(
-                            "gap-2",
-                            pulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-                          )}
-                          onClick={() => setPulsingDot(!pulsingDot)}
-                        >
-                          <span className={cn(
-                            "h-2 w-2 rounded-full",
-                            pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
-                          )} />
-                          <span>Pulsing Dot</span>
-                        </Button>
-                      </div>
-
+                    <div className="flex gap-8">
                       {/* Preview container */}
-                      <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
+                      <div className="w-[300px] h-[600px] bg-muted/50 rounded-lg p-4 overflow-hidden">
                         <div className="relative h-full">
                           <div className={cn(
                             "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
@@ -880,10 +824,95 @@ export default function PlaygroundPage() {
                               isExpanded={isExpanded}
                               onToggleExpanded={() => setIsExpanded(!isExpanded)}
                               isNewUser={false}
-                              notificationCount={notificationCount}
+                              notificationCount={showNotifications ? notificationCount : 0}
                               showPulsingDot={pulsingDot}
+                              showInvelaTabs={showInvelaTabs}
                             />
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Controls */}
+                      <div className="flex-1 space-y-6">
+                        <div className="space-y-4">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              isExpanded ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            )}
+                            onClick={() => setIsExpanded(!isExpanded)}
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronLeftIcon className="h-4 w-4 mr-2" />
+                                <span>Collapse</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronRightIcon className="h-4 w-4 mr-2" />
+                                <span>Expand</span>
+                              </>
+                            )}
+                          </Button>
+
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showNotifications ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            )}
+                            onClick={() => {
+                              setShowNotifications(!showNotifications);
+                              if (!showNotifications) {
+                                setNotificationCount(5);
+                              } else {
+                                setNotificationCount(0);
+                              }
+                            }}
+                          >
+                            <Badge 
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            >
+                              {showNotifications ? 5 : 0}
+                            </Badge>
+                            <span>Task Notifications</span>
+                          </Button>
+
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              pulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            )}
+                            onClick={() => setPulsingDot(!pulsingDot)}
+                          >
+                            <span className={cn(
+                              "h-2 w-2 rounded-full mr-2",
+                              pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                            )} />
+                            <span>Pulsing Dot</span>
+                          </Button>
+
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showInvelaTabs ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            )}
+                            onClick={() => setShowInvelaTabs(!showInvelaTabs)}
+                          >
+                            {showInvelaTabs ? (
+                              <span>Hide Invela-Only Tabs</span>
+                            ) : (
+                              <span>Show Invela-Only Tabs</span>
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </div>

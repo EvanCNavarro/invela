@@ -24,6 +24,7 @@ interface SidebarProps {
   isNewUser?: boolean;
   notificationCount?: number;
   showPulsingDot?: boolean;
+  showInvelaTabs?: boolean;
 }
 
 interface Task {
@@ -39,7 +40,8 @@ export function Sidebar({
   onToggleExpanded, 
   isNewUser = false,
   notificationCount = 0,
-  showPulsingDot = false 
+  showPulsingDot = false,
+  showInvelaTabs = false
 }: SidebarProps) {
   const [location] = useLocation();
   const { data: tasks = [] } = useQuery<Task[]>({
@@ -62,7 +64,7 @@ export function Sidebar({
       label: "Task Center", 
       href: "/task-center",
       locked: false,
-      count: notificationCount || tasks.length
+      count: notificationCount
     },
     { 
       icon: Network,
@@ -88,7 +90,7 @@ export function Sidebar({
   // Admin menu items (only for Invela users)
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
-  if (company?.category === 'Invela' && showPlayground) {
+  if (showInvelaTabs && company?.category === 'Invela' && showPlayground) {
     adminMenuItems.push({
       icon: MousePointer2Icon,
       label: "Playground",
