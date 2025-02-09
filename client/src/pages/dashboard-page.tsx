@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -68,7 +68,6 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
-  const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
@@ -92,74 +91,6 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
-  const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (data: InviteFormData) => {
-      const response = await fetch('/api/fintech/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send invitation');
-      }
-
-      return result;
-    },
-    onSuccess: () => {
-      const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
-      if (addFinTechButton) {
-        const rect = addFinTechButton.getBoundingClientRect();
-        confetti({
-          particleCount: 75,
-          spread: 52,
-          origin: {
-            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-            y: rect.top / window.innerHeight
-          },
-          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-          ticks: 200,
-          gravity: 0.8,
-          scalar: 0.8,
-          shapes: ["circle"]
-        });
-      }
-
-      toast({
-        title: (
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            Invitation Sent
-          </span>
-        ),
-        description: "The FinTech has been invited to join.",
-        duration: 2000,
-        className: "border-l-4 border-green-500",
-      });
-
-      form.reset();
-      setServerError(null);
-      setIsModalOpen(false);
-    },
-    onError: (error: Error) => {
-      setServerError(error.message);
-    },
-  });
-
-  const handleSendInvite = (data: InviteFormData) => {
-    setServerError(null);
-    sendInvite(data);
-  };
-
-  const handleInputChange = () => {
-    if (serverError) {
-      setServerError(null);
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -262,7 +193,6 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
-                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
@@ -315,30 +245,20 @@ export default function DashboardPage() {
               >
                 {isLoading ? (
                   <WidgetLoadingState message="Loading company data..." />
-                ) : (
+                ) : companyData ? (
                   <div className="space-y-1">
                     <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                      {companyData?.logoId ? (
-                        <img
-                          src={`/api/companies/${companyData.id}/logo`}
-                          alt={`${companyData.name} logo`}
-                          className="w-6 h-6 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            console.debug(`Failed to load logo for company: ${companyData.name}`);
-                          }}
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">
-                            {companyData.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-xs font-medium text-primary">
+                          {companyData.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
                       <span className="text-sm font-medium">{companyData.name}</span>
                     </div>
                     <RiskMeter score={companyData.riskScore || 0} />
                   </div>
+                ) : (
+                  <WidgetEmptyState message="No company data available" />
                 )}
               </Widget>
             )}
