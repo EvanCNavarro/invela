@@ -116,11 +116,13 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           {/* Company header section */}
           <div className="flex items-center gap-6">
             <div className="relative w-20 h-20">
-              <CompanyLogo
-                companyId={company.id}
-                companyName={company.name}
-                className="w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)]"
-              />
+              <div className="absolute inset-0 flex items-center justify-center p-3">
+                <img
+                  src={`/api/companies/${company.id}/logo`}
+                  alt={`${company.name} logo`}
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
             <div>
               <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
