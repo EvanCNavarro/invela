@@ -103,9 +103,9 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           {/* Back to Network button moved above company header */}
           <div className="flex items-center justify-start mb-6">
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
-              className="text-sm font-medium"
+              className="text-sm font-medium bg-white border-muted-foreground/20"
               onClick={() => window.history.back()}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -119,7 +119,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               <CompanyLogo
                 companyId={company.id}
                 companyName={company.name}
-                className="w-20 h-20 rounded-lg"
+                className="w-20 h-20 rounded-lg border border-muted-foreground/20"
               />
             </div>
             <div>
