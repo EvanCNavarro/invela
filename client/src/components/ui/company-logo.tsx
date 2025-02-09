@@ -65,11 +65,15 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
   // If we have a valid logo URL
   if (logoResult && 'url' in logoResult) {
     return (
-      <div className={cn(sizeClasses[size], "flex items-center justify-center overflow-hidden", className)}>
+      <div className={cn(
+        sizeClasses[size],
+        "flex items-center justify-center overflow-hidden rounded-lg",
+        className
+      )}>
         <img
           src={logoResult.url}
           alt={`${companyName} logo`}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain rounded-lg"
           loading="lazy"
           onError={(e) => {
             console.debug(`Image load error for ${companyName} logo`);
