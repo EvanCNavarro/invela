@@ -60,6 +60,60 @@ const getStatusBadgeVariant = (status: string) => {
 
 const components = [
   {
+    id: "sidebar-menu",
+    name: "Navigation Sidebar",
+    usageLocations: [
+      { path: "/", description: "Main dashboard navigation" },
+      { path: "/network", description: "Network view navigation" },
+      { path: "/insights", description: "Analytics navigation" }
+    ],
+    references: "Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarFooter",
+    code: `import { Link } from "wouter";
+import { cn } from "@/lib/utils";
+import { HomeIcon, CheckCircleIcon, Network, FileIcon, BarChartIcon } from "lucide-react";
+
+interface SidebarProps {
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
+  isNewUser?: boolean;
+}
+
+export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
+  const menuItems = [
+    { 
+      icon: HomeIcon,
+      label: "Dashboard", 
+      href: "/",
+      locked: isNewUser
+    },
+    { 
+      icon: CheckCircleIcon,
+      label: "Task Center", 
+      href: "/task-center",
+      locked: false,
+      count: 5
+    },
+    { 
+      icon: Network,
+      label: "Network", 
+      href: "/network",
+      locked: isNewUser,
+      pulsingDot: true
+    }
+  ];
+
+  return (
+    <aside className={cn(
+      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+      isExpanded ? "w-64" : "w-20"
+    )}>
+      {/* Sidebar implementation */}
+    </aside>
+  );
+}
+`
+  },
+  {
     id: "loading-spinner",
     name: "Invela Logo Loading Spinner",
     usageLocations: [
@@ -104,7 +158,8 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       </svg>
     </div>
   );
-}`
+}
+`
   },
   {
     id: "risk-meter",
@@ -154,7 +209,8 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
       </div>
     </div>
   );
-}`
+}
+`
   },
   {
     id: "page-header",
@@ -184,7 +240,8 @@ export function PageHeader({ title, description, className }: PageHeaderProps) {
       )}
     </div>
   );
-}`
+}
+`
   },
   {
     id: "data-table",
@@ -349,6 +406,11 @@ export default function PlaygroundPage() {
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
 
+  // Add new state for sidebar playground
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [pulsingDot, setPulsingDot] = useState(false);
+
   // Generate sample data for pagination testing
   const generateSampleData = (count: number) => {
     return Array.from({ length: count }, (_, i) => ({
@@ -463,6 +525,7 @@ export default function PlaygroundPage() {
       });
     }
   };
+
 
   return (
     <DashboardLayout>
@@ -730,6 +793,66 @@ export default function PlaygroundPage() {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "sidebar-menu" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-8">
+                      <Tabs defaultValue="default" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="default">Standard Navigation</TabsTrigger>
+                          <TabsTrigger value="invela">Invela-Only Navigation</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="default" className="min-h-[400px] relative">
+                          <div className="w-full h-full bg-muted/50 rounded-lg p-4">
+                            <Sidebar
+                              isExpanded={isExpanded}
+                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                              isNewUser={false}
+                            />
+                          </div>
+                        </TabsContent>
+                        <TabsContent value="invela" className="min-h-[400px] relative">
+                          <div className="w-full h-full bg-muted/50 rounded-lg p-4">
+                            <Sidebar
+                              isExpanded={isExpanded}
+                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                              isNewUser={false}
+                              //company={{ category: 'Invela' }}  //This line was causing an error because company prop wasn't defined in Sidebar
+                            />
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setIsExpanded(!isExpanded)}
+                          >
+                            Toggle Expanded
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setNotificationCount(prev => prev + 1)}
+                          >
+                            Add Notification
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setPulsingDot(!pulsingDot)}
+                          >
+                            Toggle Pulsing Dot
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
