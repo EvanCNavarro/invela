@@ -32,11 +32,16 @@ const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g,
 
 const itemsPerPage = 5;
 
+// Update the company interface to include logo information
 interface Company {
   id: number;
   name: string;
   riskScore?: number;
   accreditationStatus: AccreditationStatus;
+  logo?: {
+    id: string;
+    filePath: string;
+  } | null;
 }
 
 // Create a memoized component for company logo
@@ -86,7 +91,7 @@ export default function NetworkPage() {
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
 
-  const { data: currentCompany } = useQuery<Company>({
+  const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user
   });
@@ -113,7 +118,7 @@ export default function NetworkPage() {
   };
 
   // Memoize the filtered and sorted companies to prevent unnecessary recalculations
-  const filteredCompanies = useMemo(() => 
+  const filteredCompanies = useMemo(() =>
     companies
       .filter((company: Company) => {
         const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -223,8 +228,9 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6">
+        {/* Update the PageHeader component */}
         <PageHeader
-          title={currentCompany?.name ? `${currentCompany.name}'s Network` : 'Network'}
+          title={isCurrentCompanyLoading ? 'Network' : currentCompany?.name ? `${currentCompany.name}'s Network` : 'Network'}
           description="View and manage companies in your network."
         />
 

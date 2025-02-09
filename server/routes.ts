@@ -134,13 +134,23 @@ export function registerRoutes(app: Express): Server {
 
       const [company] = await db.select()
         .from(companies)
+        .leftJoin(companyLogos, eq(companies.logoId, companyLogos.id))
         .where(eq(companies.id, req.user.companyId));
 
       if (!company) {
         return res.status(404).json({ message: "Company not found" });
       }
 
-      res.json(company);
+      // Transform the joined result to include logo information
+      const companyData = {
+        ...company.companies,
+        logo: company.company_logos ? {
+          id: company.company_logos.id,
+          filePath: company.company_logos.filePath
+        } : null
+      };
+
+      res.json(companyData);
     } catch (error) {
       console.error("Error fetching current company:", error);
       res.status(500).json({ message: "Error fetching company data" });
