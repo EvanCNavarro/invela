@@ -7,6 +7,9 @@ import {
   LogOutIcon,
   SettingsIcon,
   UserIcon,
+  EyeIcon,
+  EyeOffIcon,
+  MousePointer2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +21,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { useState } from "react";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const [showPlayground, setShowPlayground] = useState(true);
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -87,7 +92,31 @@ export function TopNav() {
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              {user?.companyId === 0 && ( // Only show for Invela users
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={(e) => {
+                      e.preventDefault();
+                      setShowPlayground(!showPlayground);
+                    }}
+                    className="cursor-pointer"
+                  >
+                    {showPlayground ? (
+                      <>
+                        <EyeOffIcon className="mr-2 h-4 w-4" />
+                        <span>Hide Playground</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeIcon className="mr-2 h-4 w-4" />
+                        <span>Show Playground</span>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuSeparator className="sm:hidden" />
               <div className="sm:hidden px-2 py-1.5">
                 <Button variant="ghost" size="sm" className="w-full justify-start">
                   <HelpCircleIcon className="mr-2 h-4 w-4" />
@@ -98,7 +127,7 @@ export function TopNav() {
                   Notifications
                 </Button>
               </div>
-              <DropdownMenuSeparator className="sm:hidden" />
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onSelect={(e) => {
                   e.preventDefault();
