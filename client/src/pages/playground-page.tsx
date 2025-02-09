@@ -61,7 +61,7 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
-// Sort components alphabetically
+// Sort components alphabetically and set LoadingSpinner as default
 const components = [
   {
     id: "data-table",
@@ -72,6 +72,7 @@ const components = [
       { path: "/insights", description: "Analytics data grid", viewInApp: true }
     ],
     references: "Table, TableHeader, TableBody, TableRow, TableCell",
+    referencedAs: "@/components/ui/data-table",
     code: `// Data Table component code example
 interface DataTableProps<T> {
   data: T[];
@@ -116,6 +117,7 @@ export function DataTable<T extends Record<string, any>>({
       { path: "/network", description: "Company list loading", viewInApp: true }
     ],
     references: "LoadingSpinner",
+    referencedAs: "@/components/ui/loading-spinner",
     code: `interface LoadingSpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -147,6 +149,7 @@ export function LoadingSpinner({
       { path: "/network", description: "Network view header", viewInApp: true }
     ],
     references: "PageHeader",
+    referencedAs: "@/components/ui/page-header",
     code: `interface PageHeaderProps {
   title: string;
   description?: string;
@@ -181,6 +184,7 @@ export function PageHeader({
       { path: "/insights", description: "Risk analytics", viewInApp: true }
     ],
     references: "RiskMeter",
+    referencedAs: "@/components/dashboard/RiskMeter",
     code: `interface RiskMeterProps {
   score: number;
   className?: string;
@@ -214,6 +218,7 @@ export function RiskMeter({
       { path: "/insights", description: "Analytics navigation", viewInApp: true }
     ],
     references: "Sidebar",
+    referencedAs: "@/components/dashboard/Sidebar",
     code: `interface SidebarProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
@@ -241,7 +246,8 @@ export function Sidebar({
 ].sort((a, b) => a.name.localeCompare(b.name));
 
 export default function PlaygroundPage() {
-  const [selectedComponent, setSelectedComponent] = useState(components[0].id);
+  // Set LoadingSpinner as default component
+  const [selectedComponent, setSelectedComponent] = useState("loading-spinner");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
@@ -399,66 +405,7 @@ export default function PlaygroundPage() {
 
           {currentComponent && (
             <>
-              {/* Usage Examples */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {currentComponent.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{location.path}</p>
-                          <p className="text-sm text-muted-foreground">{location.description}</p>
-                        </div>
-                        {location.viewInApp && (
-                          <Link href={location.path}>
-                            <Button variant="outline" size="sm">
-                              View in App
-                              <ArrowUpRight className="ml-2 h-4 w-4" />
-                            </Button>
-                          </Link>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Code Example */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-sm font-bold">Code Example</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyCode}
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleDownloadCode}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <pre className="p-4 rounded-lg bg-muted overflow-x-auto">
-                    <code className="text-sm whitespace-pre-wrap break-words font-mono">
-                      {currentComponent.code}
-                    </code>
-                  </pre>
-                </CardContent>
-              </Card>
-
-              {/* Component Preview */}
+              {/* Preview section first */}
               {currentComponent.id === "loading-spinner" && (
                 <Card>
                   <CardHeader>
@@ -813,6 +760,70 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* Usage Examples section second */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {currentComponent.usageLocations.map((location, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{location.path}</p>
+                          <p className="text-sm text-muted-foreground">{location.description}</p>
+                        </div>
+                        {location.viewInApp && (
+                          <Link href={location.path}>
+                            <Button variant="outline" size="sm">
+                              View in App
+                              <ArrowUpRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Code Example section last */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-sm font-bold">Code Example</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Referenced As: <code className="bg-muted px-1 py-0.5 rounded">{currentComponent.referencedAs}</code>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyCode}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadCode}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <pre className="p-4 rounded-lg bg-muted overflow-x-auto">
+                    <code className="text-sm whitespace-pre-wrap break-words font-mono">
+                      {currentComponent.code}
+                    </code>
+                  </pre>
+                </CardContent>
+              </Card>
             </>
           )}
         </div>
