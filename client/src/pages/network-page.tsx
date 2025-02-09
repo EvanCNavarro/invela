@@ -1,7 +1,7 @@
-import { useState, memo } from "react";
+import { useState, memo, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, FilterIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import defaultCompanyLogo from "@/assets/logo_null.svg";
+import logoNull from "@/assets/logo_null.svg";
 import {
   Select,
   SelectContent,
@@ -38,6 +38,43 @@ interface Company {
   riskScore?: number;
   accreditationStatus: AccreditationStatus;
 }
+
+// Create a memoized component for company logo
+const CompanyLogo = memo(({ company }: { company: Company }) => {
+  const { data: logoUrl } = useQuery({
+    queryKey: [`company-logo-${company.id}`],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/companies/${company.id}/logo`);
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        return null;
+      }
+    },
+    staleTime: Infinity, // Never mark the data as stale
+    cacheTime: Infinity, // Keep the data cached indefinitely
+    retry: false, // Don't retry failed requests
+  });
+
+  return (
+    <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
+      <img
+        src={logoUrl || logoNull}
+        alt={`${company.name} logo`}
+        className="w-full h-full object-contain"
+        loading="lazy"
+        onError={() => {
+          // If there's an error loading the logo, it will fall back to logoNull
+          // No need to set src explicitly as we're using the || operator above
+        }}
+      />
+    </div>
+  );
+});
+
+CompanyLogo.displayName = 'CompanyLogo';
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -75,13 +112,17 @@ export default function NetworkPage() {
     return 0;
   };
 
-  const filteredCompanies = companies
-    .filter((company: Company) => {
-      const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort(sortCompanies);
+  // Memoize the filtered and sorted companies to prevent unnecessary recalculations
+  const filteredCompanies = useMemo(() => 
+    companies
+      .filter((company: Company) => {
+        const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
+        return matchesSearch && matchesStatus;
+      })
+      .sort(sortCompanies),
+    [companies, searchQuery, statusFilter, sortField, sortDirection]
+  );
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -104,30 +145,25 @@ export default function NetworkPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
 
-  // Create a memoized component for company logo to prevent unnecessary re-renders
-  const CompanyLogo = memo(({ company }: { company: Company }) => {
-    // Use TanStack Query for caching the logo
-    const { data: logoUrl } = useQuery({
-      queryKey: [`/api/companies/${company.id}/logo`],
-      // This query will be automatically cached by TanStack Query
-      enabled: !!company.id,
-      staleTime: Infinity, // Logo URLs don't change often
-      cacheTime: 1000 * 60 * 60, // Cache for 1 hour
-    });
-
-    return (
-      <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-        <img
-          src={logoUrl || `/api/companies/${company.id}/logo`}
-          alt={`${company.name} logo`}
-          className="w-full h-full object-contain"
-          loading="lazy"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = defaultCompanyLogo;
-          }}
-        />
-      </div>
-    );
+  // Prefetch all company logos for visible companies
+  useQueries({
+    queries: paginatedCompanies.map(company => ({
+      queryKey: [`company-logo-${company.id}`],
+      queryFn: async () => {
+        try {
+          const response = await fetch(`/api/companies/${company.id}/logo`);
+          if (!response.ok) return null;
+          const blob = await response.blob();
+          return URL.createObjectURL(blob);
+        } catch (error) {
+          return null;
+        }
+      },
+      staleTime: Infinity,
+      cacheTime: Infinity,
+      retry: false,
+      enabled: !!company.id, // Only prefetch if company ID exists
+    }))
   });
 
   // Update the company row to use the memoized logo component
@@ -182,6 +218,7 @@ export default function NetworkPage() {
     </TableRow>
   ));
 
+  CompanyRow.displayName = 'CompanyRow';
 
   return (
     <DashboardLayout>
