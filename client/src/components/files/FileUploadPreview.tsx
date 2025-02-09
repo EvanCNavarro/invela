@@ -90,7 +90,7 @@ export function FileUploadPreview({
     <>
       <div className={cn(
         "relative px-4 py-3 rounded-lg",
-        isComplete ? "bg-[#E5F6F1]/30 shadow-[0_8px_24px_rgba(0,0,0,0.15)]" : "bg-muted/30",
+        isComplete ? "bg-[#E5F6F1]/30 shadow-[0_2px_8px_rgba(0,0,0,0.08)]" : "bg-muted/30",
         error ? "border-destructive/50 bg-destructive/5" : "",
         className
       )}>
