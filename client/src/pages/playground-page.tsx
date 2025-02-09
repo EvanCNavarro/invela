@@ -15,22 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  ArrowUpRight,
-  Copy,
-  Download,
-  XCircle,
-  Columns as ColumnsIcon,
-  List as ListIcon,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
-  LockIcon
-} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -46,9 +30,29 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarTab } from "@/components/dashboard/SidebarTab";
-import { HomeIcon, MousePointer2Icon, NetworkIcon, ListTodoIcon, FolderIcon, BarChartIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  HomeIcon,
+  ListTodoIcon,
+  NetworkIcon,
+  FolderIcon,
+  BarChartIcon,
+  MousePointer2Icon,
+  LockIcon,
+  Copy,
+  Download,
+  XCircle,
+  Columns as ColumnsIcon,
+  List as ListIcon,
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "lucide-react";
 
 
 // Define status badge variants once
@@ -378,16 +382,15 @@ export function SidebarTab({
   }
 ].sort((a, b) => a.name.localeCompare(b.name));
 
-// Update icon imports
-// Update availableIcons mapping to include all options
-const availableIcons: Record<string, React.ElementType> = {
-  HomeIcon: HomeIcon,
-  NetworkIcon: NetworkIcon,
-  MousePointer2Icon: MousePointer2Icon,
-  ListTodoIcon: ListTodoIcon,
-  FolderIcon: FolderIcon,
-  BarChartIcon: BarChartIcon,
-  LockIcon: LockIcon
+// Update availableIcons mapping to include all options in sidebar order
+const availableIcons: Record<string, { icon: React.ElementType, label: string }> = {
+  Dashboard: { icon: HomeIcon, label: "Dashboard" },
+  TaskCenter: { icon: ListTodoIcon, label: "Task Center" },
+  Network: { icon: NetworkIcon, label: "Network" },
+  FileVault: { icon: FolderIcon, label: "File Vault" },
+  Insights: { icon: BarChartIcon, label: "Insights" },
+  Playground: { icon: MousePointer2Icon, label: "Playground" },
+  Locked: { icon: LockIcon, label: "Locked" }
 };
 
 export default function PlaygroundPage() {
@@ -405,7 +408,7 @@ export default function PlaygroundPage() {
   const [showNotifications, setShowNotifications] = useState(false);
 
   // SidebarTab preview states
-  const [selectedIcon, setSelectedIcon] = useState<React.ElementType>(HomeIcon);
+  const [selectedIcon, setSelectedIcon] = useState<React.ElementType>(availableIcons.Dashboard.icon);
   const [tabLabel, setTabLabel] = useState("Dashboard");
   const [isTabActive, setIsTabActive] = useState(false);
   const [tabVariant, setTabVariant] = useState<'default' | 'invela'>('default');
@@ -924,16 +927,17 @@ export default function PlaygroundPage() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
-                          setSelectedIcon(HomeIcon);
-                          setTabLabel("Dashboard");
-                          setIsTabActive(false);
-                          setTabVariant('default');
                           setIsTabDisabled(false);
-                          setTabPulsingDot(false);
+                          setSelectedIcon(availableIcons.Dashboard.icon);
+                          setTabLabel("Dashboard");
+                          setIsTabActive(false);`
+                          setTabVariant('default');
                           setTabNotifications(false);
+                          setTabPulsingDot(false);
                         }}
                       >
-                        <RotateCcw className="h-4 w-4" />
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset
                       </Button>
                     </div>
                   </CardHeader>
@@ -944,7 +948,7 @@ export default function PlaygroundPage() {
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p className={cn(
                           "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
+                          "text-foreground"
                         )}>Access</p>
                         <Button 
                           variant="outline" 
@@ -966,24 +970,42 @@ export default function PlaygroundPage() {
                           isTabDisabled ? "text-muted-foreground" : "text-foreground"
                         )}>Icon</p>
                         <Select 
-                          value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
+                          value={Object.keys(availableIcons).find(
+                            key => availableIcons[key].icon === selectedIcon
+                          ) || 'Dashboard'}
                           onValueChange={(value) => {
-                            setSelectedIcon(availableIcons[value]);
-                            if (value === 'LockIcon') {
+                            const iconData = availableIcons[value as keyof typeof availableIcons];
+                            setSelectedIcon(iconData.icon);
+                            setTabLabel(iconData.label);
+                            if (value === 'Locked') {
                               setIsTabDisabled(true);
                             }
                           }}
-                          disabled={isTabDisabled && selectedIcon !== LockIcon}
+                          disabled={isTabDisabled && selectedIcon !== availableIcons.Locked.icon}
                         >
                           <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Select icon" />
+                            <SelectValue>
+                              {(props: any) => {
+                                const value = props.value as keyof typeof availableIcons;
+                                const iconData = availableIcons[value];
+                                if (!iconData) return "Select icon";
+
+                                const IconComponent = iconData.icon;
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>{iconData.label}</span>
+                                  </div>
+                                );
+                              }}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent className="min-w-[200px]">
-                            {Object.entries(availableIcons).map(([key, Icon]) => (
+                            {Object.entries(availableIcons).map(([key, { icon: Icon, label }]) => (
                               <SelectItem key={key} value={key}>
                                 <div className="flex items-center gap-2">
                                   <Icon className="h-4 w-4" />
-                                  <span>{key.replace(/([A-Z])/g, ' $1').replace('Icon', '').trim()}</span>
+                                  <span>{label}</span>
                                 </div>
                               </SelectItem>
                             ))}
@@ -1002,6 +1024,7 @@ export default function PlaygroundPage() {
                           value={tabLabel}
                           onChange={(e) => setTabLabel(e.target.value)}
                           className="w-full"
+                          disabled={isTabDisabled}
                         />
                       </div>
 
@@ -1119,7 +1142,7 @@ export default function PlaygroundPage() {
                     <div className="w-[300px] mx-auto bg-background rounded-lg border">
                       <div className="p-4">
                         <SidebarTab
-                          icon={isTabDisabled ? LockIcon : selectedIcon}
+                          icon={selectedIcon}
                           label={tabLabel}
                           href="#"
                           isActive={isTabActive}
