@@ -36,6 +36,7 @@ export const UnifiedDropdown = React.forwardRef<
   const handleSelect = (onClick?: () => void) => {
     if (onClick) {
       onClick()
+      // Only close the menu for single-select dropdowns
       if (!multiSelect) {
         setOpen(false)
       }
@@ -44,7 +45,7 @@ export const UnifiedDropdown = React.forwardRef<
 
   // Check if any items have icons to enforce consistency
   const hasIcons = items.some(item => item.leftIcon)
-  if (hasIcons) {
+  if (hasIcons && !items.every(item => item.leftIcon)) {
     console.warn('All items must have icons if any item has an icon')
   }
 
@@ -108,10 +109,12 @@ export const UnifiedDropdown = React.forwardRef<
                   "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 )}
               >
-                <div className="flex items-center w-full" style={{ paddingLeft: "1.5rem" }}>
-                  {item.selected && (
-                    <Check className="absolute left-2 h-4 w-4 text-primary" />
-                  )}
+                <div className="flex items-center w-full">
+                  <div className="w-6 flex justify-center">
+                    {item.selected && (
+                      <Check className="h-4 w-4 text-primary" />
+                    )}
+                  </div>
                   {ItemIcon && (
                     <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
                   )}
