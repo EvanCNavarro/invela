@@ -125,7 +125,7 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
-  // Add the current company endpoint
+  // Update the current company endpoint
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       if (!req.user?.companyId) {
@@ -337,14 +337,27 @@ export function registerRoutes(app: Express): Server {
 
       // Invela users can see all companies
       if (userCompany.category === 'Invela') {
-        const results = await db.select().from(companies);
-        console.log('All companies returned:', results);
-        return res.json(results);
+        const results = await db.select()
+          .from(companies)
+          .leftJoin(companyLogos, eq(companies.logoId, companyLogos.id))
+          .orderBy(companies.name);
+
+        // Transform results to include logo information
+        const companiesWithLogos = results.map(result => ({
+          ...result.companies,
+          logo: result.company_logos ? {
+            id: result.company_logos.id,
+            filePath: result.company_logos.filePath
+          } : null
+        }));
+
+        return res.json(companiesWithLogos);
       }
 
       // For other companies, get companies from their network
       const networkCompanies = await db.select()
         .from(companies)
+        .leftJoin(companyLogos, eq(companies.logoId, companyLogos.id))
         .leftJoin(relationships, and(
           eq(relationships.companyId, req.user!.companyId),
           eq(relationships.status, 'active')
@@ -356,13 +369,16 @@ export function registerRoutes(app: Express): Server {
           eq(relationships.relatedCompanyId, companies.id)
         ));
 
-      console.log('Network companies:', networkCompanies);
+      // Transform results to include logo information
+      const companiesWithLogos = networkCompanies.map(result => ({
+        ...result.companies,
+        logo: result.company_logos ? {
+          id: result.company_logos.id,
+          filePath: result.company_logos.filePath
+        } : null
+      }));
 
-      // Fix: Return only the companies data, not the join result
-      const companyResults = networkCompanies.map(({ companies: company }) => company).filter(Boolean);
-      console.log('Filtered company results:', companyResults);
-
-      res.json(companyResults);
+      res.json(companiesWithLogos);
     } catch (error) {
       console.error("Error fetching companies:", error);
       res.status(500).json({ message: "Error fetching companies" });
@@ -884,6 +900,7 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error sending invite" });
     }
   });
+
 
   // Add endpoint for companies to add other companies to their network
   app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
