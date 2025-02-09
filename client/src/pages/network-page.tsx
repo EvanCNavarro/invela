@@ -91,6 +91,7 @@ export default function NetworkPage() {
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
 
+  // Simplified query for current company
   const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user
@@ -102,7 +103,7 @@ export default function NetworkPage() {
   });
 
   // Extract companies from the nested structure
-  const companies = useMemo(() => 
+  const companies = useMemo(() =>
     companiesData.map((item: any) => item.companies || item),
     [companiesData]
   );
@@ -232,9 +233,8 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6">
-        {/* Update the PageHeader component */}
         <PageHeader
-          title={isCurrentCompanyLoading ? 'Network' : currentCompany?.name ? `${currentCompany.name}'s Network` : 'Network'}
+          title={isCurrentCompanyLoading ? "Network" : `${currentCompany?.name || ''}'s Network`}
           description="View and manage companies in your network."
         />
 
