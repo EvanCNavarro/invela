@@ -795,10 +795,8 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: "Logo not found" });
       }
 
-      // Convert company name to hyphenated slug for filename
-      const companySlug = company.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const filename = `logo_${companySlug}.svg`;
-      const filePath = path.resolve('/home/runner/workspace/uploads/logos', filename);
+      // Use the actual file path from the database
+      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
 
       console.log('Attempting to serve logo from:', filePath);
 
