@@ -155,10 +155,14 @@ export function Sidebar({
                       Invela Only
                     </span>
                   </div>
-                  <Separator className="px-5 mb-2 bg-border/60" />
+                  <div className="mx-5">
+                    <Separator className="mb-2 bg-border/60" />
+                  </div>
                 </>
               ) : (
-                <Separator className="px-5 my-4 bg-border/60" />
+                <div className="mx-5">
+                  <Separator className="my-4 bg-border/60" />
+                </div>
               )}
               <div className="pt-2">
                 {adminMenuItems.map((item) => (
