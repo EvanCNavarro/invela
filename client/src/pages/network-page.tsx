@@ -129,7 +129,6 @@ export default function NetworkPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
-  const [isLoadingData,setIsLoading] = useState(true); // Added isLoading state
 
   // Load filters from URL on mount
   useEffect(() => {
@@ -165,22 +164,10 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
-  const { data: companiesData = [], isLoading: isLoadingDataTemp } = useQuery<Company[]>({
+  const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
     enabled: !!user
   });
-
-  // Add timeout for testing loading spinner - TO BE REMOVED
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Force loading state for 5 seconds to review spinner
-  const isLoading = isLoadingDataTemp;
-
 
   const companies = useMemo(() =>
     companiesData.map((item: any) => item.companies || item),
