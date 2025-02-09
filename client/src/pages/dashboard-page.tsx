@@ -37,16 +37,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
-import { InviteFinTechModal } from "@/components/dashboard/InviteFinTechModal";
-import { WidgetLoadingState } from "@/components/dashboard/widget-content/WidgetLoadingState";
-import { WidgetEmptyState } from "@/components/dashboard/widget-content/WidgetEmptyState";
-import { WidgetButtonGrid } from "@/components/dashboard/widget-content/WidgetButtonGrid";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -68,6 +64,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
@@ -91,6 +88,74 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
+  const { mutate: sendInvite, isPending } = useMutation({
+    mutationFn: async (data: InviteFormData) => {
+      const response = await fetch('/api/fintech/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Failed to send invitation');
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
+      if (addFinTechButton) {
+        const rect = addFinTechButton.getBoundingClientRect();
+        confetti({
+          particleCount: 75,
+          spread: 52,
+          origin: {
+            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+            y: rect.top / window.innerHeight
+          },
+          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+          ticks: 200,
+          gravity: 0.8,
+          scalar: 0.8,
+          shapes: ["circle"]
+        });
+      }
+
+      toast({
+        title: (
+          <span className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+            Invitation Sent
+          </span>
+        ),
+        description: "The FinTech has been invited to join.",
+        duration: 2000,
+        className: "border-l-4 border-green-500",
+      });
+
+      form.reset();
+      setServerError(null);
+      setIsModalOpen(false);
+    },
+    onError: (error: Error) => {
+      setServerError(error.message);
+    },
+  });
+
+  const handleSendInvite = (data: InviteFormData) => {
+    setServerError(null);
+    sendInvite(data);
+  };
+
+  const handleInputChange = () => {
+    if (serverError) {
+      setServerError(null);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -193,6 +258,7 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
+                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
@@ -206,33 +272,115 @@ export default function DashboardPage() {
                   }
                 ]}
               >
-                <WidgetButtonGrid
-                  actions={[
-                    {
-                      label: "Add New FinTech",
-                      onClick: () => setIsModalOpen(true),
-                      className: "pulse-border",
-                      dataElement: "add-fintech-button"
-                    },
-                    {
-                      label: "Add User",
-                      onClick: () => console.log("Add user clicked")
-                    },
-                    {
-                      label: "Set Risk Tracker",
-                      onClick: () => console.log("Set risk tracker clicked")
-                    },
-                    {
-                      label: "View Reports",
-                      onClick: () => console.log("View reports clicked")
-                    }
-                  ]}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full pulse-border font-medium"
+                    onClick={() => setIsModalOpen(true)}
+                    data-element="add-fintech-button"
+                  >
+                    Add New FinTech
+                  </Button>
+                  <Button variant="outline" className="w-full font-medium">
+                    Add User
+                  </Button>
+                  <Button variant="outline" className="w-full font-medium">
+                    Set Risk Tracker
+                  </Button>
+                  <Button variant="outline" className="w-full font-medium">
+                    View Reports
+                  </Button>
+                </div>
 
-                <InviteFinTechModal 
-                  isOpen={isModalOpen}
-                  onOpenChange={setIsModalOpen}
-                />
+                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-semibold">Invite a New FinTech</DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
+                        Please provide details to send a FinTech invitation.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                      <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="companyName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="text-sm font-semibold mb-2">Company Name</div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="text"
+                                  className={cn(
+                                    "w-full",
+                                    serverError && "border-destructive"
+                                  )}
+                                  disabled={isPending}
+                                  aria-label="FinTech company name"
+                                  autoFocus
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <div className="text-sm font-semibold mb-2">Invitee Email</div>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="email"
+                                  className={cn(
+                                    "w-full",
+                                    serverError && "border-destructive"
+                                  )}
+                                  disabled={isPending}
+                                  aria-label="FinTech representative email"
+                                  onChange={(e) => {
+                                    field.onChange(e);
+                                    handleInputChange();
+                                  }}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                              {serverError && (
+                                <p className="text-sm font-medium text-destructive mt-2">
+                                  {serverError.includes("mailbox")
+                                    ? "This email address does not exist. Please try again."
+                                    : serverError}
+                                </p>
+                              )}
+                            </FormItem>
+                          )}
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            type="submit"
+                            className="gap-2"
+                            disabled={isPending}
+                          >
+                            {isPending ? (
+                              <>
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4" />
+                                Send Invite
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
               </Widget>
             )}
 
@@ -244,21 +392,33 @@ export default function DashboardPage() {
                 isVisible={visibleWidgets.companyScore}
               >
                 {isLoading ? (
-                  <WidgetLoadingState message="Loading company data..." />
-                ) : companyData ? (
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">Loading company data...</p>
+                  </div>
+                ) : (
                   <div className="space-y-1">
                     <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-xs font-medium text-primary">
-                          {companyData.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {companyData?.logoId ? (
+                        <img
+                          src={`/api/companies/${companyData.id}/logo`}
+                          alt={`${companyData.name} logo`}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            console.debug(`Failed to load logo for company: ${companyData.name}`);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">
+                            {companyData.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <span className="text-sm font-medium">{companyData.name}</span>
                     </div>
                     <RiskMeter score={companyData.riskScore || 0} />
                   </div>
-                ) : (
-                  <WidgetEmptyState message="No company data available" />
                 )}
               </Widget>
             )}
@@ -271,9 +431,11 @@ export default function DashboardPage() {
                 onVisibilityToggle={() => toggleWidget('networkVisualization')}
                 isVisible={visibleWidgets.networkVisualization}
               >
-                <WidgetEmptyState
-                  message="Network visualization coming soon"
-                />
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <p className="text-sm text-muted-foreground">
+                    Network visualization coming soon
+                  </p>
+                </div>
               </Widget>
             )}
           </div>
