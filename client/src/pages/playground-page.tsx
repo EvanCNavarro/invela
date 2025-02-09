@@ -913,11 +913,28 @@ export default function PlaygroundPage() {
               {currentComponent.id === "sidebar-tab" && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedIcon(HomeIcon);
+                          setTabLabel("Dashboard");
+                          setIsTabActive(false);
+                          setTabVariant('default');
+                          setIsTabDisabled(false);
+                          setTabPulsingDot(false);
+                          setTabNotifications(false);
+                        }}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-8">
                     {/* Controls Panel */}
-                    <div className="grid grid-cols-6 gap-4 pb-6 border-b">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 pb-6 border-b">
                       {/* Access Control */}
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Access</p>
@@ -934,122 +951,125 @@ export default function PlaygroundPage() {
                         </Button>
                       </div>
 
-                      {/* Icon Selection */}
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Icon</p>
-                        <Select 
-                          value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
-                          onValueChange={(value: keyof typeof availableIcons) => {
-                            setSelectedIcon(availableIcons[value]);
-                          }}
-                          disabled={isTabDisabled}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select icon" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="HomeIcon">Home Icon</SelectItem>
-                            <SelectItem value="NetworkIcon">Network Icon</SelectItem>
-                            <SelectItem value="MousePointer2Icon">Mouse Pointer Icon</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Tab Label Input */}
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Label</p>
-                        <Input
-                          placeholder="Tab Label"
-                          value={tabLabel}
-                          onChange={(e) => setTabLabel(e.target.value)}
-                          className="w-full"
-                          disabled={isTabDisabled}
-                        />
-                      </div>
-
-                      {/* Tab Variant */}
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Variant</p>
-                        <Select 
-                          value={tabVariant} 
-                          onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
-                          disabled={isTabDisabled}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select variant" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="default">Standard</SelectItem>
-                            <SelectItem value="invela">Invela Only</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Tab State */}
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">State</p>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start",
-                            isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
-                          )}
-                          onClick={() => setIsTabActive(!isTabActive)}
-                          disabled={isTabDisabled}
-                        >
-                          {isTabActive ? "Active" : "Inactive"}
-                        </Button>
-                      </div>
-
-                      {/* Indicators */}
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">Indicators</p>
-                        <ToggleGroup 
-                          type="single" 
-                          value={
-                            tabNotifications 
-                              ? "notifications" 
-                              : tabPulsingDot 
-                                ? "pulse" 
-                                : "none"
-                          }
-                          onValueChange={(value) => {
-                            setTabNotifications(value === "notifications");
-                            setTabPulsingDot(value === "pulse");
-                          }}
-                          disabled={isTabDisabled}
-                          className="flex flex-col gap-2"
-                        >
-                          <ToggleGroupItem value="none" className="w-full justify-start" disabled={isTabDisabled}>
-                            None
-                          </ToggleGroupItem>
-                          <ToggleGroupItem 
-                            value="notifications" 
-                            className="w-full justify-start"
-                            disabled={isTabDisabled}
+                      {/* Icon Selection - Only show if not disabled */}
+                      {!isTabDisabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">Icon</p>
+                          <Select 
+                            value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
+                            onValueChange={(value: keyof typeof availableIcons) => {
+                              setSelectedIcon(availableIcons[value]);
+                            }}
                           >
-                            <Badge 
-                              variant="secondary"
-                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select icon" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="HomeIcon">Home Icon</SelectItem>
+                              <SelectItem value="NetworkIcon">Network Icon</SelectItem>
+                              <SelectItem value="MousePointer2Icon">Mouse Pointer Icon</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Tab Label Input - Only show if not disabled */}
+                      {!isTabDisabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">Label</p>
+                          <Input
+                            placeholder="Tab Label"
+                            value={tabLabel}
+                            onChange={(e) => setTabLabel(e.target.value)}
+                            className="w-full"
+                          />
+                        </div>
+                      )}
+
+                      {/* Tab Variant - Only show if not disabled */}
+                      {!isTabDisabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">Variant</p>
+                          <Select 
+                            value={tabVariant} 
+                            onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select variant" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="default">Standard</SelectItem>
+                              <SelectItem value="invela">Invela Only</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* Tab State - Only show if not disabled */}
+                      {!isTabDisabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">State</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className={cn(
+                              "w-full justify-start",
+                              isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                            )}
+                            onClick={() => setIsTabActive(!isTabActive)}
+                          >
+                            {isTabActive ? "Active" : "Inactive"}
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Indicators - Only show if not disabled */}
+                      {!isTabDisabled && (
+                        <div className="space-y-2">
+                          <p className="text-sm text-muted-foreground">Indicators</p>
+                          <ToggleGroup 
+                            type="single" 
+                            value={
+                              tabNotifications 
+                                ? "notifications" 
+                                : tabPulsingDot 
+                                  ? "pulse" 
+                                  : "none"
+                            }
+                            onValueChange={(value) => {
+                              setTabNotifications(value === "notifications");
+                              setTabPulsingDot(value === "pulse");
+                            }}
+                            className="flex flex-col gap-2"
+                          >
+                            <ToggleGroupItem value="none" className="w-full justify-start">
+                              None
+                            </ToggleGroupItem>
+                            <ToggleGroupItem 
+                              value="notifications" 
+                              className="w-full justify-start"
                             >
-                              5
-                            </Badge>
-                            Task Count
-                          </ToggleGroupItem>
-                          <ToggleGroupItem 
-                            value="pulse" 
-                            className="w-full justify-start"
-                            disabled={isTabDisabled}
-                          >
-                            <span className={cn(
-                              "h-2 w-2 rounded-full mr-2",
-                              "bg-primary"
-                            )} />
-                            Pulse Dot
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </div>
+                              <Badge 
+                                variant="secondary"
+                                className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                              >
+                                5
+                              </Badge>
+                              Task Count
+                            </ToggleGroupItem>
+                            <ToggleGroupItem 
+                              value="pulse" 
+                              className="w-full justify-start"
+                            >
+                              <span className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                "bg-primary"
+                              )} />
+                              Pulse Dot
+                            </ToggleGroupItem>
+                          </ToggleGroup>
+                        </div>
+                      )}
                     </div>
 
                     {/* Preview Area */}
@@ -1066,6 +1086,11 @@ export default function PlaygroundPage() {
                           showPulsingDot={tabPulsingDot}
                           variant={tabVariant}
                           isPlayground={true}
+                          onClick={() => {
+                            if (!isTabDisabled) {
+                              setIsTabActive(true);
+                            }
+                          }}
                         />
                       </div>
                     </div>
