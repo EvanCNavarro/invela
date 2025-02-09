@@ -2,6 +2,8 @@ import React from 'react';
 import { Upload } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { useToast } from '@/hooks/use-toast';
 
 export interface FileUploadZoneProps {
   // Core props
@@ -9,12 +11,12 @@ export interface FileUploadZoneProps {
   acceptedFileTypes?: string[];
   maxFiles?: number;
   maxSize?: number;
-  
+
   // Display props
   variant?: 'box' | 'row';
   className?: string;
   disabled?: boolean;
-  
+
   // Custom content
   children?: React.ReactNode;
   customPrompt?: React.ReactNode;
@@ -50,6 +52,7 @@ export function FileUploadZone({
   customPrompt,
   showAcceptedFormats = true,
 }: FileUploadZoneProps) {
+  const { toast } = useToast();
   const {
     getRootProps,
     getInputProps,
@@ -68,13 +71,36 @@ export function FileUploadZone({
     maxFiles,
     maxSize,
     disabled,
-    onDrop: onFilesAccepted,
+    onDrop: (acceptedFiles) => {
+      const uploadToast = toast({
+        title: "Uploading Files",
+        description: (
+          <div className="flex items-center gap-2">
+            <LoadingSpinner size="sm" />
+            <span>Processing files...</span>
+          </div>
+        ),
+        duration: 0,
+      });
+
+      // Simulate upload delay
+      setTimeout(() => {
+        toast.dismiss(uploadToast);
+        toast({
+          title: "Upload Complete",
+          description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
+          duration: 3000,
+        });
+        onFilesAccepted(acceptedFiles);
+      }, 2000);
+    },
   });
 
   const dropzoneClasses = cn(
     'transition-colors duration-200 ease-in-out',
     'border-2 border-dashed rounded-lg',
     'flex items-center justify-center',
+    'cursor-pointer',
     {
       'hover:border-primary/50 hover:bg-primary/5': !disabled,
       'border-primary/30 bg-primary/10': isDragActive && !isDragReject,
@@ -101,19 +127,22 @@ export function FileUploadZone({
       className={dropzoneClasses}
     >
       <input {...getInputProps()} />
-      
+
       {children || (
         <>
           {variant === 'box' ? (
             // Box variant content
             <div className="flex flex-col items-center gap-2 text-center">
-              <Upload className="h-10 w-10 text-muted-foreground" />
+              <div className={cn(
+                "p-3 rounded-full transition-colors",
+                isDragActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              )}>
+                <Upload className="h-10 w-10" />
+              </div>
               {customPrompt || (
                 <>
                   <p className="text-sm font-medium">
-                    {isDragActive
-                      ? "Drop files here..."
-                      : "Drag and drop files here, or click to select"}
+                    {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
                   </p>
                   {showAcceptedFormats && (
                     <p className="text-xs text-muted-foreground">
@@ -126,13 +155,16 @@ export function FileUploadZone({
           ) : (
             // Row variant content
             <div className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-muted-foreground" />
+              <div className={cn(
+                "p-2 rounded-full transition-colors",
+                isDragActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              )}>
+                <Upload className="h-5 w-5" />
+              </div>
               {customPrompt || (
                 <div>
                   <p className="text-sm">
-                    {isDragActive
-                      ? "Drop files here..."
-                      : "Drag and drop files here, or click to select"}
+                    {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
                   </p>
                   {showAcceptedFormats && (
                     <p className="text-xs text-muted-foreground">

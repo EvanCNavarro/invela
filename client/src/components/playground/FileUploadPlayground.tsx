@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { FileUploadZone } from '../files/FileUploadZone';
 import { DragDropProvider } from '../files/DragDropProvider';
 import { FileUploadPreview } from '../files/FileUploadPreview';
-import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 
@@ -85,6 +84,7 @@ export function FileUploadPlayground() {
             progress={file.progress}
             error={file.error}
             onRemove={() => handleRemoveFile(file.id)}
+            variant={variant === 'row' ? 'compact' : 'default'}
           />
         ))}
       </div>
@@ -102,7 +102,7 @@ export function FileUploadPlayground() {
           <div className="relative">
             {isDragActive && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <p className="text-lg font-medium">Drop files here...</p>
+                <p className="text-lg font-medium">Drop files here</p>
               </div>
             )}
             {content}
