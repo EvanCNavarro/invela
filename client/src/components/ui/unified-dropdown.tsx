@@ -58,13 +58,11 @@ export const UnifiedDropdown = React.forwardRef<
   const handleSelect = (item: UnifiedDropdownProps['items'][number]) => {
     if (item.onClick) {
       item.onClick()
-      //Do not close the dropdown on multiselect
+      // Never close on selection for multi-select
+      if (!multiSelect) {
+        setOpen(false)
+      }
     }
-  }
-
-  // Handle open state changes - No change needed here
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
   }
 
   // Check if any items have icons to enforce consistency
@@ -82,7 +80,16 @@ export const UnifiedDropdown = React.forwardRef<
   const contentWidth = Math.max(200, maxLabelLength * 8 + 96) // Increased padding
 
   return (
-    <DropdownMenuPrimitive.Root open={open} onOpenChange={handleOpenChange}>
+    <DropdownMenuPrimitive.Root 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        // Always allow opening
+        // For closing: allow if it's not multi-select or if clicking outside
+        if (newOpen || !multiSelect) {
+          setOpen(newOpen)
+        }
+      }}
+    >
       <DropdownMenuPrimitive.Trigger
         className={cn(
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
