@@ -14,6 +14,7 @@ import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
+import PlaygroundPage from "@/pages/playground-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -88,6 +89,16 @@ function Router() {
           <ProtectedLayout>
             <OnboardingWrapper>
               <InsightsPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        )} 
+      />
+      <ProtectedRoute 
+        path="/playground" 
+        component={() => (
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <PlaygroundPage />
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 
