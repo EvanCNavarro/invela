@@ -2,13 +2,14 @@ import * as React from "react"
 import { Search as SearchIcon, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { cn } from "@/lib/utils"
 
 export interface SearchBarProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onSearch?: (value: string) => void
   isLoading?: boolean
-  showClearButton?: boolean
-  iconPosition?: 'left' | 'right'
+  isGlobalSearch?: boolean
+  contextualType?: string
   debounceMs?: number
   containerClassName?: string
 }
@@ -16,13 +17,14 @@ export interface SearchBarProps extends React.InputHTMLAttributes<HTMLInputEleme
 export function SearchBar({
   onSearch,
   isLoading = false,
-  showClearButton = true,
-  iconPosition = 'left',
+  isGlobalSearch = false,
+  contextualType,
   debounceMs = 300,
   containerClassName,
   className,
   value: controlledValue,
   onChange: controlledOnChange,
+  placeholder,
   ...props
 }: SearchBarProps) {
   const [value, setValue] = React.useState('')
@@ -31,10 +33,10 @@ export function SearchBar({
 
   // Handle controlled vs uncontrolled input
   const inputValue = controlledValue !== undefined ? controlledValue : value
-  
+
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
-    
+
     // Handle controlled input
     if (controlledOnChange) {
       controlledOnChange(event)
@@ -75,34 +77,34 @@ export function SearchBar({
     }
   }, [])
 
+  // Determine placeholder text
+  const getPlaceholder = () => {
+    if (isLoading) return "Loading..."
+    if (isGlobalSearch) return "Search Invela"
+    if (contextualType) return `Search for ${contextualType}`
+    return placeholder || "Search..."
+  }
+
   return (
     <div className={cn("relative flex w-full items-center", containerClassName)}>
-      {iconPosition === 'left' && (
-        <SearchIcon 
-          className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
-        />
-      )}
+      <SearchIcon 
+        className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
+      />
       <Input
         type="text"
         value={inputValue}
         onChange={handleChange}
+        placeholder={getPlaceholder()}
         className={cn(
-          iconPosition === 'left' ? "pl-9" : "pr-9",
-          ((showClearButton && inputValue) || isLoading) && "pr-[70px]",
+          "pl-9 pr-[70px]",
           className
         )}
         {...props}
       />
-      {iconPosition === 'right' && !isLoading && !(showClearButton && inputValue) && (
-        <SearchIcon 
-          className="absolute right-3 h-4 w-4 text-muted-foreground pointer-events-none"
-        />
-      )}
       <div className="absolute right-3 flex items-center gap-2">
-        {isLoading && (
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        )}
-        {showClearButton && inputValue && !isLoading && (
+        {isLoading ? (
+          <LoadingSpinner size="sm" />
+        ) : (
           <Button
             variant="ghost"
             size="icon"
