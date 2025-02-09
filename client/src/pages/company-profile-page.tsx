@@ -100,18 +100,32 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     <DashboardLayout>
       <PageContainer>
         <div className="space-y-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
-              <div>
-                <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
-                <p className="text-muted-foreground">{company.description || "No description available"}</p>
-              </div>
-            </div>
-            <Button variant="outline" onClick={() => window.history.back()}>
+          {/* Back to Network button moved above company header */}
+          <div className="flex items-center justify-start mb-6">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="text-sm font-medium"
+              onClick={() => window.history.back()}
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Network
             </Button>
+          </div>
+
+          {/* Company header section */}
+          <div className="flex items-center gap-6">
+            <div className="relative w-20 h-20">
+              <CompanyLogo
+                companyId={company.id}
+                companyName={company.name}
+                className="w-20 h-20 rounded-lg"
+              />
+            </div>
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
+              <p className="text-muted-foreground">{company.description || "No description available"}</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
