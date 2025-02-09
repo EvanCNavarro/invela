@@ -58,7 +58,7 @@ export const UnifiedDropdown = React.forwardRef<
   const handleSelect = (item: UnifiedDropdownProps['items'][number]) => {
     if (item.onClick) {
       item.onClick()
-      // Never close on selection for multi-select
+      // Close only for single-select
       if (!multiSelect) {
         setOpen(false)
       }
@@ -82,13 +82,7 @@ export const UnifiedDropdown = React.forwardRef<
   return (
     <DropdownMenuPrimitive.Root 
       open={open} 
-      onOpenChange={(newOpen) => {
-        // Always allow opening
-        // For closing: allow if it's not multi-select or if clicking outside
-        if (newOpen || !multiSelect) {
-          setOpen(newOpen)
-        }
-      }}
+      onOpenChange={setOpen}
     >
       <DropdownMenuPrimitive.Trigger
         className={cn(
