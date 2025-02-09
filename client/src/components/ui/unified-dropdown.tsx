@@ -8,7 +8,7 @@ interface UnifiedDropdownProps {
     text?: string
     leftIcon?: LucideIcon
     className?: string
-    variant?: 'default' | 'icon' | 'outline'
+    variant?: 'default' | 'icon'
   }
   title?: string
   items: {
@@ -28,18 +28,35 @@ export const UnifiedDropdown = React.forwardRef<
   UnifiedDropdownProps
 >((props, ref) => {
   const { trigger, title, items, className, align = 'start', multiSelect = true } = props
+  const [open, setOpen] = React.useState(false)
   const LeftIcon = trigger.leftIcon
   const isIconOnly = trigger.variant === 'icon'
 
+  // Force the menu to stay open for multi-select until clicking outside
+  const handleSelect = (onClick?: () => void) => {
+    if (onClick) {
+      onClick()
+      if (!multiSelect) {
+        setOpen(false)
+      }
+    }
+  }
+
+  // Check if any items have icons to enforce consistency
+  const hasIcons = items.some(item => item.leftIcon)
+  if (hasIcons) {
+    console.warn('All items must have icons if any item has an icon')
+  }
+
   return (
-    <DropdownMenuPrimitive.Root>
+    <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen}>
       <DropdownMenuPrimitive.Trigger
         className={cn(
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[200px]",
           isIconOnly 
             ? "h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
             : cn(
-                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
+                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium",
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
                 trigger.className
               )
@@ -49,9 +66,14 @@ export const UnifiedDropdown = React.forwardRef<
           <MoreHorizontal className="h-4 w-4" />
         ) : (
           <>
-            {LeftIcon && <LeftIcon className="h-4 w-4" />}
-            {trigger.text}
-            <ChevronDown className="h-4 w-4 transition-transform duration-200 ease-in-out group-data-[state=open]:rotate-180" />
+            <span className="flex items-center gap-2">
+              {LeftIcon && <LeftIcon className="h-4 w-4" />}
+              {trigger.text}
+            </span>
+            <ChevronDown className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              open ? "rotate-180" : ""
+            )} />
           </>
         )}
       </DropdownMenuPrimitive.Trigger>
@@ -61,7 +83,7 @@ export const UnifiedDropdown = React.forwardRef<
           ref={ref}
           align={align}
           className={cn(
-            "z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+            "z-50 min-w-[200px] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -79,20 +101,22 @@ export const UnifiedDropdown = React.forwardRef<
             return (
               <DropdownMenuPrimitive.Item
                 key={item.id}
-                onClick={item.onClick}
+                onClick={() => handleSelect(item.onClick)}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                   "transition-colors focus:bg-accent focus:text-accent-foreground",
                   "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 )}
               >
-                {item.selected && (
-                  <Check className="mr-2 h-4 w-4 text-primary" />
-                )}
-                {ItemIcon && (
-                  <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
-                )}
-                <span className="flex-grow">{item.label}</span>
+                <div className="flex items-center w-full" style={{ paddingLeft: "1.5rem" }}>
+                  {item.selected && (
+                    <Check className="absolute left-2 h-4 w-4 text-primary" />
+                  )}
+                  {ItemIcon && (
+                    <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
+                  )}
+                  <span className="flex-grow">{item.label}</span>
+                </div>
               </DropdownMenuPrimitive.Item>
             )
           })}
