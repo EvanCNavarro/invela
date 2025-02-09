@@ -150,15 +150,15 @@ export function Sidebar({
             <>
               {isExpanded ? (
                 <>
-                  <div className="px-6 pt-4 pb-2">
+                  <div className="px-5 pt-4 pb-2">
                     <span className="text-[#707F95] text-xs font-medium tracking-wider uppercase">
                       Invela Only
                     </span>
                   </div>
-                  <Separator className="mx-4 mb-2 bg-border/60" />
+                  <Separator className="px-5 mb-2 bg-border/60" />
                 </>
               ) : (
-                <Separator className="mx-4 my-4 bg-border/60" />
+                <Separator className="px-5 my-4 bg-border/60" />
               )}
               <div className="pt-2">
                 {adminMenuItems.map((item) => (
