@@ -75,11 +75,11 @@ export const UnifiedDropdown = React.forwardRef<
     <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen}>
       <DropdownMenuPrimitive.Trigger
         className={cn(
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring min-w-[200px]",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isIconOnly 
             ? "h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
             : cn(
-                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium",
+                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium w-[200px]",
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
                 trigger.className
               )
