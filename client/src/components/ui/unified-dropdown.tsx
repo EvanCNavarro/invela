@@ -42,14 +42,24 @@ export const UnifiedDropdown = React.forwardRef<
   const LeftIcon = trigger.leftIcon
   const isIconOnly = trigger.variant === 'icon'
 
-  // Force the menu to stay open for multi-select until clicking outside
+  // Handle menu item selection
   const handleSelect = (onClick?: () => void) => {
     if (onClick) {
       onClick()
-      // Only close the menu for single-select dropdowns and icon button dropdowns
+      // Only close if it's single select or icon variant
       if (!multiSelect || isIconOnly) {
         setOpen(false)
       }
+    }
+  }
+
+  // Handle open state changes
+  const handleOpenChange = (newOpen: boolean) => {
+    // Only allow closing if:
+    // 1. It's not a multi-select dropdown
+    // 2. User is actually trying to close the menu (newOpen is false)
+    if (!multiSelect || newOpen) {
+      setOpen(newOpen)
     }
   }
 
@@ -71,19 +81,29 @@ export const UnifiedDropdown = React.forwardRef<
     console.warn('All items must have icons if any item has an icon')
   }
 
+  // Calculate max content width
+  const maxLabelLength = Math.max(
+    ...[buttonContent.text, ...items.map(item => item.label)]
+      .filter(Boolean)
+      .map(text => text?.length || 0)
+  )
+  const minWidth = Math.max(200, maxLabelLength * 8) // 8px per character as rough estimate
+
   return (
-    <DropdownMenuPrimitive.Root open={open} onOpenChange={setOpen}>
+    <DropdownMenuPrimitive.Root open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuPrimitive.Trigger
         className={cn(
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           isIconOnly 
             ? "h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
             : cn(
-                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium w-[200px]",
+                "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium",
                 "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                "whitespace-nowrap",
                 trigger.className
               )
         )}
+        style={{ minWidth: isIconOnly ? undefined : minWidth }}
       >
         {isIconOnly ? (
           <MoreHorizontal className="h-4 w-4" />
@@ -105,8 +125,9 @@ export const UnifiedDropdown = React.forwardRef<
         <DropdownMenuPrimitive.Content
           ref={ref}
           align={align}
+          style={{ minWidth: isIconOnly ? 200 : minWidth }}
           className={cn(
-            "z-50 min-w-[200px] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
+            "z-50 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
             "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
@@ -142,7 +163,7 @@ export const UnifiedDropdown = React.forwardRef<
                   {ItemIcon && (
                     <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
                   )}
-                  <span className="flex-grow">{item.label}</span>
+                  <span className="flex-grow whitespace-nowrap">{item.label}</span>
                 </div>
               </DropdownMenuPrimitive.Item>
             )
