@@ -4,13 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { UnifiedDropdown } from '@/components/ui/unified-dropdown';
 import { useMutation } from '@tanstack/react-query';
 
 interface DownloadButtonProps {
@@ -121,6 +115,27 @@ export const DownloadButtonPlayground = () => {
   const [displayMode, setDisplayMode] = React.useState("both"); // "both", "icon", "text"
   const [useRealDownload, setUseRealDownload] = React.useState(true);
 
+  const displayItems = [
+    { 
+      id: 'both', 
+      label: 'Icon & Text',
+      selected: displayMode === 'both',
+      onClick: () => setDisplayMode('both')
+    },
+    { 
+      id: 'icon', 
+      label: 'Icon Only',
+      selected: displayMode === 'icon',
+      onClick: () => setDisplayMode('icon')
+    },
+    { 
+      id: 'text', 
+      label: 'Text Only',
+      selected: displayMode === 'text',
+      onClick: () => setDisplayMode('text')
+    }
+  ];
+
   const getButtonProps = () => {
     switch (displayMode) {
       case "icon":
@@ -144,16 +159,15 @@ export const DownloadButtonPlayground = () => {
           <Label htmlFor="real-download">Enable File</Label>
         </div>
 
-        <Select value={displayMode} onValueChange={setDisplayMode}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select display mode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="both">Icon & Text</SelectItem>
-            <SelectItem value="icon">Icon Only</SelectItem>
-            <SelectItem value="text">Text Only</SelectItem>
-          </SelectContent>
-        </Select>
+        <UnifiedDropdown
+          trigger={{
+            text: displayItems.find(item => item.selected)?.label || "Select Display Mode",
+            variant: 'outline'
+          }}
+          items={displayItems}
+          multiSelect={false}
+          showCheckmarks={true}
+        />
       </div>
 
       <div className="space-y-4">
