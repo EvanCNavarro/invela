@@ -36,7 +36,7 @@ export function TopNav() {
   };
 
   const handlePlaygroundToggle = () => {
-    if (!showPlayground && location === '/playground') {
+    if (showPlayground && location === '/playground') {
       setLocation('/');
     }
     togglePlayground();

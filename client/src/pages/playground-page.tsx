@@ -20,7 +20,7 @@ export default function PlaygroundPage() {
       <div className="space-y-8">
         <PageHeader
           title="Component Playground"
-          description="Test and preview UI components in different states"
+          description="Test and preview UI components in different states."
         />
 
         <div className="space-y-8">
@@ -54,7 +54,7 @@ export default function PlaygroundPage() {
                 Toggle Loading State
               </Button>
             </div>
-            
+
             <div className="bg-background rounded-lg border">
               <Table>
                 <TableHeader>
