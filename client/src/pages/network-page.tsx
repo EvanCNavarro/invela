@@ -1,4 +1,4 @@
-import { useState, memo, useMemo } from "react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
@@ -120,14 +120,43 @@ interface Company {
 }
 
 export default function NetworkPage() {
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-  const [, setLocation] = useLocation();
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
+
+  // Load filters from URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    const search = params.get('search');
+    const status = params.get('status');
+    const sort = params.get('sort');
+    const direction = params.get('direction');
+
+    if (page) setCurrentPage(parseInt(page));
+    if (search) setSearchQuery(search);
+    if (status) setStatusFilter(status as AccreditationStatus | "ALL");
+    if (sort) setSortField(sort);
+    if (direction) setSortDirection(direction as "asc" | "desc");
+  }, []);
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (currentPage !== 1) params.set('page', currentPage.toString());
+    if (searchQuery) params.set('search', searchQuery);
+    if (statusFilter !== "ALL") params.set('status', statusFilter);
+    if (sortField !== "name") params.set('sort', sortField);
+    if (sortDirection !== "asc") params.set('direction', sortDirection);
+
+    const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [currentPage, searchQuery, statusFilter, sortField, sortDirection]);
 
   const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -246,7 +275,7 @@ export default function NetworkPage() {
               disabled={!hasActiveFilters}
               className={cn(
                 "h-10 w-10",
-                hasActiveFilters ? "bg-primary hover:bg-primary/90 text-white" : "bg-white border border-input rounded-md",
+                hasActiveFilters ? "bg-primary hover:bg-primary/90 text-white hover:text-white" : "bg-white border border-input rounded-md",
                 !hasActiveFilters && "opacity-50 cursor-not-allowed"
               )}
             >

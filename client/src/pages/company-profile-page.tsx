@@ -19,6 +19,10 @@ interface CompanyProfilePageProps {
 }
 
 export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
+  const handleBackClick = () => {
+    window.history.back(); // This will maintain the URL parameters from the network page
+  };
+
   const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
@@ -101,7 +105,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               variant="outline"
               size="sm"
               className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={() => window.history.back()}
+              onClick={handleBackClick}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Network
