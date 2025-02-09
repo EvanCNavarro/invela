@@ -22,11 +22,12 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
+import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [, setLocation] = useLocation();
-  const [showPlayground, setShowPlayground] = useState(true);
+  const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -92,13 +93,13 @@ export function TopNav() {
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {user?.companyId === 0 && ( // Only show for Invela users
+              {user?.companyId === 0 && ( 
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();
-                      setShowPlayground(!showPlayground);
+                      togglePlayground();
                     }}
                     className="cursor-pointer"
                   >
