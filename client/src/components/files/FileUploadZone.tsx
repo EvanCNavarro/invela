@@ -129,7 +129,7 @@ export function FileUploadZone({
   };
 
   const acceptedFormatsText = (
-    <p className="text-xs text-muted-foreground max-w-sm whitespace-pre-line">
+    <p className="text-xs text-muted-foreground max-w-[320px] whitespace-pre-line">
       Accepted formats: {formatFileTypes()}
     </p>
   );
@@ -140,7 +140,7 @@ export function FileUploadZone({
         <TooltipTrigger>
           <Info className="h-4 w-4 text-muted-foreground hover:text-primary" />
         </TooltipTrigger>
-        <TooltipContent className="max-w-sm whitespace-pre-line">
+        <TooltipContent className="max-w-[320px] whitespace-pre-line">
           <p className="text-xs">Accepted formats: {formatFileTypes()}</p>
         </TooltipContent>
       </Tooltip>
