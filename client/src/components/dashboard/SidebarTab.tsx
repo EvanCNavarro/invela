@@ -36,12 +36,12 @@ export function SidebarTab({
         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
         "transition-all duration-200 relative",
         !isExpanded && "justify-center",
-        isActive
+        isActive && !isDisabled
           ? variant === 'invela'
             ? "bg-[#E6F5F3] text-[#079669] dark:bg-emerald-500/20 dark:text-emerald-300"
             : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
           : isDisabled
-            ? "opacity-50 cursor-not-allowed"
+            ? "opacity-50 cursor-not-allowed bg-muted/50"
             : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
       )}
       onClick={(e) => {
@@ -51,27 +51,31 @@ export function SidebarTab({
         }
       }}
     >
-      <Icon 
-        className={cn(
-          "h-5 w-5",
-          isActive && variant === 'invela'
-            ? "stroke-[2.5] text-[#079669]"
-            : isActive && "stroke-[2.5]"
-        )} 
-      />
+      {isDisabled ? (
+        <LockIcon className="h-5 w-5 text-muted-foreground" />
+      ) : (
+        <Icon 
+          className={cn(
+            "h-5 w-5",
+            isActive && variant === 'invela'
+              ? "stroke-[2.5] text-[#079669]"
+              : isActive && "stroke-[2.5]"
+          )} 
+        />
+      )}
       {isExpanded && (
         <>
           <span className={cn(
             "ml-3 flex-1",
-            isActive && variant === 'invela'
+            isActive && !isDisabled && variant === 'invela'
               ? "font-semibold text-[#079669] dark:text-emerald-300"
-              : isActive
+              : isActive && !isDisabled
                 ? "font-semibold"
                 : "text-foreground/90 dark:text-foreground/80"
           )}>
             {label}
           </span>
-          {notificationCount > 0 && (
+          {!isDisabled && notificationCount > 0 && (
             <Badge
               variant={isActive ? "default" : "secondary"}
               className={cn(
@@ -85,7 +89,7 @@ export function SidebarTab({
               {notificationCount}
             </Badge>
           )}
-          {showPulsingDot && (
+          {!isDisabled && showPulsingDot && (
             <span className={cn(
               "ml-2 h-5 w-5 flex items-center justify-center",
               "before:absolute before:h-2 before:w-2",
@@ -94,9 +98,6 @@ export function SidebarTab({
               "after:rounded-full after:bg-primary/40",
               "after:animate-ping"
             )} />
-          )}
-          {isDisabled && (
-            <LockIcon className="h-4 w-4 text-muted-foreground" />
           )}
         </>
       )}
