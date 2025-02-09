@@ -102,7 +102,7 @@ export function FileUploadPreview({
 
           {typeof progress === 'number' && (
             <p className="text-xs text-muted-foreground">
-              {progress}%
+              {progress.toFixed(2)}%
             </p>
           )}
         </div>
