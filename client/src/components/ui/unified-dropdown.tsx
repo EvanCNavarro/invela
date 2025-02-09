@@ -42,22 +42,6 @@ export const UnifiedDropdown = React.forwardRef<
   const LeftIcon = trigger.leftIcon
   const isIconOnly = trigger.variant === 'icon'
 
-  // Handle menu item selection
-  const handleSelect = (onClick?: () => void) => {
-    if (onClick) {
-      onClick()
-      // Only close if it's single select or icon variant
-      if (!multiSelect || isIconOnly) {
-        setOpen(false)
-      }
-    }
-  }
-
-  // Handle open state changes
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen)
-  }
-
   // Get dynamic button text and icon for single-select dropdowns
   const buttonContent = React.useMemo(() => {
     if (!trigger.dynamicText || multiSelect) {
@@ -70,19 +54,32 @@ export const UnifiedDropdown = React.forwardRef<
     }
   }, [trigger.dynamicText, trigger.text, trigger.leftIcon, items, multiSelect])
 
+  // Handle menu item selection
+  const handleSelect = (item: UnifiedDropdownProps['items'][number]) => {
+    if (item.onClick) {
+      item.onClick()
+      //Do not close the dropdown on multiselect
+    }
+  }
+
+  // Handle open state changes - No change needed here
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+  }
+
   // Check if any items have icons to enforce consistency
   const hasIcons = items.some(item => item.leftIcon)
   if (hasIcons && !items.every(item => item.leftIcon)) {
     console.warn('All items must have icons if any item has an icon')
   }
 
-  // Calculate max content width
+  // Calculate max content width with additional padding for icons
   const maxLabelLength = Math.max(
     ...[buttonContent.text, ...items.map(item => item.label)]
       .filter(Boolean)
       .map(text => text?.length || 0)
   )
-  const contentWidth = Math.max(200, maxLabelLength * 8) // 8px per character as rough estimate
+  const contentWidth = Math.max(200, maxLabelLength * 8 + 96) // Increased padding
 
   return (
     <DropdownMenuPrimitive.Root open={open} onOpenChange={handleOpenChange}>
@@ -140,7 +137,7 @@ export const UnifiedDropdown = React.forwardRef<
             return (
               <DropdownMenuPrimitive.Item
                 key={item.id}
-                onClick={() => handleSelect(item.onClick)}
+                onClick={() => handleSelect(item)}
                 className={cn(
                   "relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none",
                   "transition-colors focus:bg-accent focus:text-accent-foreground",
