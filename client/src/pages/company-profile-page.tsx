@@ -119,7 +119,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               <CompanyLogo
                 companyId={company.id}
                 companyName={company.name}
-                className="w-20 h-20 rounded-lg border border-muted-foreground/20"
+                className="w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)]"
               />
             </div>
             <div>
