@@ -56,6 +56,7 @@ import {
 } from "lucide-react";
 import { SearchBar } from "@/components/playground/SearchBar";
 import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; // Import the new component
+import { DropdownPlayground } from "@/components/playground/DropdownPlayground";
 
 
 // Define the Component interface
@@ -221,7 +222,8 @@ export function Example() {
       ]}
     />
   );
-}`,
+}
+`,
   },
 ];
 
