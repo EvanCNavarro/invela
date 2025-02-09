@@ -6,23 +6,42 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
+import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon, XCircle, MoreHorizontal, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+type ColumnType = 'checkbox' | 'icon' | 'status' | 'actions' | 'view' | 'text';
+
+interface Column {
+  key: string;
+  header: string;
+  type?: ColumnType;
+  sortable?: boolean;
+}
 
 interface DataTableProps<T> {
   data: T[];
-  columns: {
-    key: string;
-    header: string;
-    sortable?: boolean;
-  }[];
+  columns: Column[];
   isLoading?: boolean;
   sortConfig?: {
     key: string;
     direction: 'asc' | 'desc';
   };
   onSort?: (key: string) => void;
+  selectedRows?: Set<number>;
+  onRowSelect?: (id: number) => void;
+  onSelectAll?: () => void;
+  showActions?: boolean;
 }
 
 export function DataTable<T extends Record<string, any>>({ 
@@ -30,7 +49,11 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   isLoading,
   sortConfig,
-  onSort
+  onSort,
+  selectedRows = new Set(),
+  onRowSelect,
+  onSelectAll,
+  showActions = true
 }: DataTableProps<T>) {
   const getSortIcon = (key: string) => {
     if (!sortConfig || sortConfig.key !== key) {
@@ -39,6 +62,78 @@ export function DataTable<T extends Record<string, any>>({
     return sortConfig.direction === 'asc' 
       ? <ArrowUpIcon className="h-4 w-4 text-primary" />
       : <ArrowDownIcon className="h-4 w-4 text-primary" />;
+  };
+
+  const getStatusVariant = (status: string) => {
+    const lowercaseStatus = status.toLowerCase();
+    switch (lowercaseStatus) {
+      case 'active':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'completed':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const renderCell = (column: Column, value: any, rowId: number) => {
+    switch (column.type) {
+      case 'checkbox':
+        return (
+          <Checkbox
+            checked={selectedRows.has(rowId)}
+            onCheckedChange={() => onRowSelect?.(rowId)}
+          />
+        );
+      case 'icon':
+        return (
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <div className="bg-primary/10 text-primary rounded-full w-full h-full flex items-center justify-center">
+                {value.charAt(0).toUpperCase()}
+              </div>
+            </Avatar>
+            <span>{value}</span>
+          </div>
+        );
+      case 'status':
+        return (
+          <Badge variant={getStatusVariant(value)}>
+            {value}
+          </Badge>
+        );
+      case 'actions':
+        return showActions ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                View details
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive">
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null;
+      case 'view':
+        return (
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <ExternalLink className="h-4 w-4" />
+          </Button>
+        );
+      default:
+        return value;
+    }
   };
 
   if (isLoading) {
@@ -72,7 +167,12 @@ export function DataTable<T extends Record<string, any>>({
         <TableRow>
           {columns.map((column) => (
             <TableHead key={column.key}>
-              {column.sortable ? (
+              {column.type === 'checkbox' ? (
+                <Checkbox
+                  checked={selectedRows.size === data.length}
+                  onCheckedChange={onSelectAll}
+                />
+              ) : column.sortable ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -94,7 +194,7 @@ export function DataTable<T extends Record<string, any>>({
           <TableRow key={index}>
             {columns.map((column) => (
               <TableCell key={column.key}>
-                {row[column.key]}
+                {renderCell(column, row[column.key], index)}
               </TableCell>
             ))}
           </TableRow>

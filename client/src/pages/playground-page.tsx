@@ -12,21 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, Copy, Download } from "lucide-react";
+import { ArrowUpRight, Copy, Download, XCircle } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const components = [
   {
@@ -186,6 +178,7 @@ interface DataTableProps<T> {
     key: string;
     header: string;
     sortable?: boolean;
+    type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
   }[];
   isLoading?: boolean;
   sortConfig?: {
@@ -193,6 +186,9 @@ interface DataTableProps<T> {
     direction: 'asc' | 'desc';
   };
   onSort?: (key: string) => void;
+  selectedRows?: Set<number>;
+  onRowSelect?: (id: number) => void;
+  onSelectAll?: () => void;
 }
 
 export function DataTable<T extends Record<string, any>>({ 
@@ -200,7 +196,10 @@ export function DataTable<T extends Record<string, any>>({
   columns,
   isLoading,
   sortConfig,
-  onSort
+  onSort,
+  selectedRows,
+  onRowSelect,
+  onSelectAll
 }: DataTableProps<T>) {
   const getSortIcon = (key: string) => {
     if (!sortConfig || sortConfig.key !== key) {
@@ -261,12 +260,42 @@ export function DataTable<T extends Record<string, any>>({
       </TableHeader>
       <TableBody>
         {data.map((row, index) => (
-          <TableRow key={index}>
-            {columns.map((column) => (
-              <TableCell key={column.key}>
-                {row[column.key]}
-              </TableCell>
-            ))}
+          <TableRow key={index} className={selectedRows?.has(row.id) ? 'bg-primary/10' : ''}>
+            {columns.map((column) => {
+              if (column.type === 'checkbox') {
+                return (
+                  <TableCell key={column.key}>
+                    <Checkbox checked={selectedRows?.has(row.id)} onCheckedChange={() => onRowSelect?.(row.id)} />
+                  </TableCell>
+                );
+              }
+              if (column.type === 'icon') {
+                return <TableCell key={column.key}><img src={row.logo} alt={row.name} className="h-6 w-6 rounded-full" /></TableCell>
+              }
+              if (column.type === 'status') {
+                return (
+                  <TableCell key={column.key} className={`text-${row.status.toLowerCase()}`}>
+                    {row.status}
+                  </TableCell>
+                );
+              }
+              if (column.type === 'actions') {
+                return (
+                  <TableCell key={column.key}>
+                    <Button variant="ghost" size="sm">Edit</Button>
+                    <Button variant="ghost" size="sm" className="ml-2">Delete</Button>
+                  </TableCell>
+                )
+              }
+              if (column.type === 'view') {
+                return (
+                  <TableCell key={column.key}>
+                    <Button variant="ghost" size="sm">View</Button>
+                  </TableCell>
+                )
+              }
+              return <TableCell key={column.key}>{row[column.key]}</TableCell>;
+            })}
           </TableRow>
         ))}
       </TableBody>
@@ -279,14 +308,13 @@ export function DataTable<T extends Record<string, any>>({
 
 export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState(components[0].id);
-  const [isTableLoading, setIsTableLoading] = useState(true);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
-  const [tableData] = useState([
-    { id: 1, name: "Document A", status: "Active", date: "2025-02-09" },
-    { id: 2, name: "Document B", status: "Pending", date: "2025-02-08" },
-    { id: 3, name: "Document C", status: "Completed", date: "2025-02-07" }
+  const [tableData, setTableData] = useState([
+    { id: 1, name: "Acme Corp", status: "Active", date: "2025-02-09" },
+    { id: 2, name: "TechStart", status: "Pending", date: "2025-02-08" },
+    { id: 3, name: "Global Inc", status: "Completed", date: "2025-02-07" }
   ]);
   const [tableSortConfig, setTableSortConfig] = useState<{
     key: string;
@@ -295,12 +323,40 @@ export default function PlaygroundPage() {
     key: 'name',
     direction: 'asc'
   });
+  const [selectedRows, setSelectedRows] = useState(new Set<number>());
+  const [itemCount, setItemCount] = useState("10");
+  const [isTableLoading, setIsTableLoading] = useState(false);
+  const [enabledColumns, setEnabledColumns] = useState({
+    checkbox: true,
+    icon: true,
+    status: true,
+    actions: true,
+    view: true
+  });
 
   const handleTableSort = (key: string) => {
     setTableSortConfig(prev => ({
       key,
       direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
     }));
+  };
+
+  const handleRowSelect = (id: number) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRows.size === tableData.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(tableData.map(row => row.id)));
+    }
   };
 
   const currentComponent = components.find(c => c.id === selectedComponent);
@@ -365,37 +421,37 @@ export default function PlaygroundPage() {
             </Select>
           </div>
 
-          {currentComponent?.id === "loading-spinner" && (
+          {currentComponent?.id === "data-table" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Sizes Section */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Sizes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center gap-8">
-                      <div className="flex flex-col items-center gap-2">
-                        <LoadingSpinner size="sm" />
-                        <span className="text-sm text-muted-foreground">Small</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <LoadingSpinner size="md" />
-                        <span className="text-sm text-muted-foreground">Medium</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <LoadingSpinner size="lg" />
-                        <span className="text-sm text-muted-foreground">Large</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Loading Table Example */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold">Interactive Example</CardTitle>
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedRows(new Set());
+                          setTableSortConfig({ key: 'name', direction: 'asc' });
+                        }}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Clear Filters
+                      </Button>
+                      <Select value={itemCount} onValueChange={setItemCount}>
+                        <SelectTrigger className="w-[100px]">
+                          <SelectValue placeholder="Show items" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">All</SelectItem>
+                          <SelectItem value="5">5 items</SelectItem>
+                          <SelectItem value="10">10 items</SelectItem>
+                          <SelectItem value="25">25 items</SelectItem>
+                          <SelectItem value="50">50 items</SelectItem>
+                          <SelectItem value="100">100 items</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button 
                         variant="outline"
                         size="sm"
@@ -404,210 +460,78 @@ export default function PlaygroundPage() {
                         Toggle Loading
                       </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Date</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {isTableLoading ? (
-                            <TableRow>
-                              <TableCell colSpan={3} className="h-[120px]">
-                                <div className="flex items-center justify-center w-full h-full">
-                                  <LoadingSpinner size="lg" />
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ) : (
-                            <>
-                              <TableRow>
-                                <TableCell>John Doe</TableCell>
-                                <TableCell>Active</TableCell>
-                                <TableCell>2025-02-09</TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell>Jane Smith</TableCell>
-                                <TableCell>Pending</TableCell>
-                                <TableCell>2025-02-08</TableCell>
-                              </TableRow>
-                            </>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          {currentComponent?.id === "risk-meter" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Risk Levels Section */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Risk Levels</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col items-center gap-2">
-                        <RiskMeter score={0} />
-                        <span className="text-sm text-muted-foreground">No Risk</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <RiskMeter score={250} />
-                        <span className="text-sm text-muted-foreground">Low Risk</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <RiskMeter score={750} />
-                        <span className="text-sm text-muted-foreground">Medium Risk</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                        <RiskMeter score={1250} />
-                        <span className="text-sm text-muted-foreground">High Risk</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Interactive Risk Meter */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-sm font-bold">Interactive Example</CardTitle>
-                      <Select
-                        value={String(riskScore)}
-                        onValueChange={(value) => setRiskScore(Number(value))}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select risk score" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">No Risk (0)</SelectItem>
-                          <SelectItem value="250">Low Risk (250)</SelectItem>
-                          <SelectItem value="750">Medium Risk (750)</SelectItem>
-                          <SelectItem value="1250">High Risk (1250)</SelectItem>
-                          <SelectItem value="1500">Critical Risk (1500)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex justify-center">
-                      <RiskMeter score={riskScore} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
-
-          {currentComponent?.id === "page-header" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Basic Examples */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Basic Examples</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <PageHeader 
-                        title="Simple Header" 
-                      />
-                    </div>
-                    <div className="pt-6 border-t">
-                      <PageHeader 
-                        title="With Description" 
-                        description="A detailed explanation of this section."
-                      />
-                    </div>
-                    <div className="pt-6 border-t">
-                      <PageHeader 
-                        title="Custom Styling" 
-                        description="Header with custom text colors."
-                        className="text-primary"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Responsive Design */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Responsive Design</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <div className="w-full md:w-2/3">
-                          <PageHeader 
-                            title="Responsive Width"
-                            description="This header adjusts its width based on screen size."
-                          />
-                        </div>
-                      </div>
-                      <div className="pt-6 border-t">
-                        <PageHeader 
-                          title="Mobile Friendly"
-                          description="The text and spacing automatically adjust for smaller screens."
-                          className="text-center md:text-left"
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      <label className="flex items-center gap-2">
+                        <Checkbox 
+                          checked={enabledColumns.checkbox}
+                          onCheckedChange={(checked) => 
+                            setEnabledColumns(prev => ({ ...prev, checkbox: !!checked }))
+                          }
                         />
-                      </div>
+                        <span className="text-sm">Checkbox</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={enabledColumns.icon}
+                          onCheckedChange={(checked) =>
+                            setEnabledColumns(prev => ({ ...prev, icon: !!checked }))
+                          }
+                        />
+                        <span className="text-sm">Icon Column</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={enabledColumns.status}
+                          onCheckedChange={(checked) =>
+                            setEnabledColumns(prev => ({ ...prev, status: !!checked }))
+                          }
+                        />
+                        <span className="text-sm">Status</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={enabledColumns.actions}
+                          onCheckedChange={(checked) =>
+                            setEnabledColumns(prev => ({ ...prev, actions: !!checked }))
+                          }
+                        />
+                        <span className="text-sm">Actions</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <Checkbox
+                          checked={enabledColumns.view}
+                          onCheckedChange={(checked) =>
+                            setEnabledColumns(prev => ({ ...prev, view: !!checked }))
+                          }
+                        />
+                        <span className="text-sm">View</span>
+                      </label>
                     </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          )}
 
-          {currentComponent?.id === "data-table" && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Loading State */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Loading State</CardTitle>
-                  </CardHeader>
-                  <CardContent>
                     <DataTable
-                      data={[]}
+                      data={Number(itemCount) === 0 ? tableData : tableData.slice(0, Number(itemCount))}
                       columns={[
-                        { key: 'name', header: 'Name', sortable: true },
-                        { key: 'status', header: 'Status', sortable: true },
-                        { key: 'date', header: 'Date', sortable: true }
+                        ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
+                        ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
+                        ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
+                        { key: 'date', header: 'Date', sortable: true, type: 'text' as const },
+                        ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
+                        ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
                       ]}
-                      isLoading={true}
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Interactive Example */}
-                <Card>
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-bold">Sortable Table</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <DataTable
-                      data={tableData}
-                      columns={[
-                        { key: 'name', header: 'Name', sortable: true },
-                        { key: 'status', header: 'Status', sortable: true },
-                        { key: 'date', header: 'Date', sortable: true }
-                      ]}
+                      isLoading={isTableLoading}
                       sortConfig={tableSortConfig}
                       onSort={handleTableSort}
+                      selectedRows={selectedRows}
+                      onRowSelect={handleRowSelect}
+                      onSelectAll={handleSelectAll}
                     />
-                  </CardContent>
-                </Card>
-              </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
 
@@ -689,22 +613,19 @@ export default function PlaygroundPage() {
                           <table className="w-full border-collapse">
                             <tbody>
                               {currentComponent.code.split('\n').map((line, index) => (
-                                <tr 
+                                <tr
                                   key={index}
                                   className={cn(
-                                    "transition-colors hover:bg-accent/50",
-                                    selectedLine === index && "bg-emerald-950/5"
+                                    "hover:bg-muted/50",
+                                    selectedLine === index && "bg-muted"
                                   )}
+                                  onClick={() => setSelectedLine(index)}
                                 >
-                                  <td 
-                                    className="select-none pr-4 text-right text-xs text-muted-foreground border-r cursor-pointer hover:text-foreground"
-                                    onClick={() => setSelectedLine(index)}
-                                    style={{ minWidth: '3rem' }}
-                                  >
+                                  <td className="py-1 pr-4 text-sm text-muted-foreground select-none text-right">
                                     {index + 1}
                                   </td>
-                                  <td className="pl-4 font-mono text-sm whitespace-pre-wrap text-foreground/90">
-                                    {line}
+                                  <td className="py-1 font-mono text-sm">
+                                    <pre className="text-left">{line}</pre>
                                   </td>
                                 </tr>
                               ))}
