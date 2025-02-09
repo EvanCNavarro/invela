@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, Copy, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const components = [
   {
@@ -70,7 +71,8 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       </svg>
     </div>
   );
-}`
+}
+`
   },
   // Add more components here
 ];
@@ -259,7 +261,10 @@ export default function PlaygroundPage() {
                               {currentComponent.code.split('\n').map((line, index) => (
                                 <tr 
                                   key={index}
-                                  className={selectedLine === index ? "bg-accent" : ""}
+                                  className={cn(
+                                    "transition-colors hover:bg-accent/50",
+                                    selectedLine === index && "bg-emerald-950/10"
+                                  )}
                                 >
                                   <td 
                                     className="select-none pr-4 text-right text-xs text-muted-foreground border-r cursor-pointer hover:text-foreground"

@@ -5,6 +5,8 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
+import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -26,6 +28,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
+  const [location] = useLocation();
   return (
     <Switch>
       <Route path="/auth">
@@ -98,7 +101,12 @@ function Router() {
         component={() => (
           <ProtectedLayout>
             <OnboardingWrapper>
-              <PlaygroundPage />
+              <div className={cn(
+                "min-h-screen",
+                location === "/playground" && "bg-emerald-950/5"
+              )}>
+                <PlaygroundPage />
+              </div>
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 

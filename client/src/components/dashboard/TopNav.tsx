@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
-import { 
-  SearchIcon, 
+import {
+  SearchIcon,
   HelpCircleIcon,
   BellIcon,
   LogOutIcon,
@@ -27,7 +27,7 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [location, setLocation] = useLocation();
-  const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
+  const { isVisible: showPlayground, toggle: togglePlayground, active } = usePlaygroundVisibility(); // Added active state
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
@@ -50,8 +50,8 @@ export function TopNav() {
       <div className="h-14 px-6 flex items-center">
         <div className="relative w-full max-w-md">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input 
-            placeholder="Search..." 
+          <Input
+            placeholder="Search..."
             className="pl-9 h-8 w-full"
           />
         </div>
@@ -75,8 +75,8 @@ export function TopNav() {
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
+            <DropdownMenuContent
+              align="end"
               className="w-56"
               sideOffset={4}
               onCloseAutoFocus={(event) => {
@@ -89,27 +89,27 @@ export function TopNav() {
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
                 className="cursor-pointer"
               >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}
                 className="cursor-pointer"
               >
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {user?.companyId === 0 && ( 
+              {user?.companyId === 0 && (
                 <>
                   <DropdownMenuSeparator />
-                  <div 
+                  <div
                     role="menuitem"
                     onClick={handlePlaygroundToggle}
-                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                    className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-green-500 hover:text-white focus:bg-green-500 focus:text-white ${active ? 'bg-green-500 text-white' : ''}`} // Updated class for active state and green color scheme
                   >
                     {showPlayground ? (
                       <>
