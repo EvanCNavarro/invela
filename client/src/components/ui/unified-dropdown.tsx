@@ -90,7 +90,7 @@ export const UnifiedDropdown = React.forwardRef<
     >
       <DropdownMenuPrimitive.Trigger
         className={cn(
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           isIconOnly 
             ? "h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
             : cn(
