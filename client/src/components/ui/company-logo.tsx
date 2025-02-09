@@ -67,13 +67,13 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
     return (
       <div className={cn(
         sizeClasses[size],
-        "flex items-center justify-center overflow-hidden rounded-lg",
+        "flex items-center justify-center overflow-hidden rounded-md",
         className
       )}>
         <img
           src={logoResult.url}
           alt={`${companyName} logo`}
-          className="w-full h-full object-contain rounded-lg"
+          className="w-full h-full object-contain rounded-md"
           loading="lazy"
           onError={(e) => {
             console.debug(`Image load error for ${companyName} logo`);
@@ -82,7 +82,7 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
             if (parent) {
               const fallback = document.createElement('div');
               fallback.className = cn(
-                "w-full h-full flex items-center justify-center rounded-lg bg-primary/10"
+                "w-full h-full flex items-center justify-center rounded-md bg-primary/10"
               );
               fallback.innerHTML = `
                 <span class="text-xs font-medium text-primary">${companyName.charAt(0).toUpperCase()}</span>
