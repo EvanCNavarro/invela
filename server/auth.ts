@@ -94,8 +94,14 @@ export function setupAuth(app: Express) {
         .where(eq(users.id, id))
         .limit(1);
 
+      if (!user) {
+        // If user not found, return false instead of error
+        return done(null, false);
+      }
+
       done(null, user);
     } catch (error) {
+      console.error("Error deserializing user:", error);
       done(error);
     }
   });
