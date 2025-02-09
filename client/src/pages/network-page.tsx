@@ -1,9 +1,9 @@
-import { useState, memo, useMemo, useEffect } from "react";
+import { useState, memo, useMemo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, FilterIcon } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -32,17 +32,6 @@ const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g,
 
 const itemsPerPage = 5;
 
-interface Company {
-  id: number;
-  name: string;
-  riskScore?: number;
-  accreditationStatus: AccreditationStatus;
-  logo?: {
-    id: string;
-    filePath: string;
-  } | null;
-}
-
 // Highlight matching text helper function
 const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string }) => {
   if (!searchTerm) return <>{text}</>;
@@ -52,7 +41,7 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
     <>
       {parts.map((part, i) => (
         part.toLowerCase() === searchTerm.toLowerCase() ? (
-          <span key={i} className="bg-yellow-100 text-yellow-900">{part}</span>
+          <span key={i} className="bg-primary/10 text-primary">{part}</span>
         ) : (
           <span key={i}>{part}</span>
         )
@@ -76,8 +65,8 @@ const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange, search
   >
     <TableCell>
       <div className="flex items-center gap-3">
-        <CompanyLogo 
-          companyId={company.id} 
+        <CompanyLogo
+          companyId={company.id}
           companyName={company.name}
           size="sm"
         />
@@ -118,6 +107,17 @@ const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange, search
 ));
 
 CompanyRow.displayName = 'CompanyRow';
+
+interface Company {
+  id: number;
+  name: string;
+  riskScore?: number;
+  accreditationStatus: AccreditationStatus;
+  logo?: {
+    id: string;
+    filePath: string;
+  } | null;
+}
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,7 +175,7 @@ export default function NetworkPage() {
     }
 
     return results
-      .filter((company: Company) => 
+      .filter((company: Company) =>
         statusFilter === "ALL" || company.accreditationStatus === statusFilter
       )
       .sort(sortCompanies);
@@ -221,6 +221,14 @@ export default function NetworkPage() {
     }))
   });
 
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("ALL");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== "ALL";
+
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6">
@@ -231,12 +239,19 @@ export default function NetworkPage() {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                onClick={clearFilters}
+                className="w-[130px] bg-white"
+              >
+                Clear Filters
+              </Button>
+            )}
+
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
               <SelectTrigger className="w-[200px] justify-between bg-white">
-                <div className="flex items-center">
-                  <FilterIcon className="w-4 h-4 mr-2" />
-                  <SelectValue className="text-left" placeholder="Filter by status" />
-                </div>
+                <SelectValue className="text-left" placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
@@ -250,17 +265,31 @@ export default function NetworkPage() {
                 <SelectItem value="EXPIRED">Expired</SelectItem>
               </SelectContent>
             </Select>
+
             <div className="relative flex-1">
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search Network"
-                className="pl-9 bg-white"
+                className="pl-9 pr-9 bg-white"
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  setCurrentPage(1); // Reset to first page when searching
+                  setCurrentPage(1);
                 }}
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 hover:bg-transparent"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
