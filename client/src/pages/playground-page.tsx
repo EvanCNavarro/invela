@@ -69,43 +69,42 @@ const components = [
     ],
     references: "LoadingSpinner",
     code: `import { cn } from "@/lib/utils";
-      
-      interface LoadingSpinnerProps {
-        className?: string;
-        size?: "sm" | "md" | "lg";
-      }
-      
-      export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
-        return (
-          <div className={cn(
-            "flex items-center justify-center",
-            size === "sm" && "h-4 w-4",
-            size === "md" && "h-8 w-8",
-            size === "lg" && "h-12 w-12",
-            className
-          )}>
-            <svg 
-              viewBox="0 0 28 28" 
-              fill="none" 
-              xmlns="http://www.w3.org/2000/svg" 
-              xmlns:anim="http://www.w3.org/2000/anim" 
-              anim="" 
-              anim:transform-origin="50% 50%" 
-              anim:duration="1" 
-              anim:ease="ease-in-out"
-              className="animate-spin"
-            >
-              <g id="Frame 427319720">
-                <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
-                  <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
-                </g>
-              </g>
-            </svg>
-          </div>
-        );
-      }
-      `
+
+interface LoadingSpinnerProps {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}
+
+export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
+  return (
+    <div className={cn(
+      "flex items-center justify-center",
+      size === "sm" && "h-4 w-4",
+      size === "md" && "h-8 w-8",
+      size === "lg" && "h-12 w-12",
+      className
+    )}>
+      <svg 
+        viewBox="0 0 28 28" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg" 
+        xmlns:anim="http://www.w3.org/2000/anim" 
+        anim="" 
+        anim:transform-origin="50% 50%" 
+        anim:duration="1" 
+        anim:ease="ease-in-out"
+        className="animate-spin"
+      >
+        <g id="Frame 427319720">
+          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
+            <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
+            <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}`
   },
   {
     id: "risk-meter",
@@ -117,46 +116,45 @@ const components = [
     ],
     references: "RiskMeter",
     code: `import { motion } from "framer-motion";
-      import { cn } from "@/lib/utils";
-      
-      interface RiskMeterProps {
-        score: number;
-        className?: string;
-      }
-      
-      export function RiskMeter({ score = 0, className }: RiskMeterProps) {
-        const normalizedScore = Math.min(Math.max(0, score), 1500);
-        
-        const getRiskLevel = (score: number) => {
-          if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
-          if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
-          if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
-          if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
-          return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
-        };
-        
-        const { level, color } = getRiskLevel(normalizedScore);
-        
-        return (
-          <div className={cn("flex flex-col items-center justify-center py-4", className)}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-              className="text-6xl font-bold mb-2"
-            >
-              {normalizedScore}
-            </motion.div>
-            <div className={cn(
-              "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
-              color
-            )}>
-              {level}
-            </div>
-          </div>
-        );
-      }
-      `
+import { cn } from "@/lib/utils";
+
+interface RiskMeterProps {
+  score: number;
+  className?: string;
+}
+
+export function RiskMeter({ score = 0, className }: RiskMeterProps) {
+  const normalizedScore = Math.min(Math.max(0, score), 1500);
+
+  const getRiskLevel = (score: number) => {
+    if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
+    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
+    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
+    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
+    return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
+  };
+
+  const { level, color } = getRiskLevel(normalizedScore);
+
+  return (
+    <div className={cn("flex flex-col items-center justify-center py-4", className)}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="text-6xl font-bold mb-2"
+      >
+        {normalizedScore}
+      </motion.div>
+      <div className={cn(
+        "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+        color
+      )}>
+        {level}
+      </div>
+    </div>
+  );
+}`
   },
   {
     id: "page-header",
@@ -168,26 +166,25 @@ const components = [
     ],
     references: "PageHeader",
     code: `import { cn } from "@/lib/utils";
-      
-      interface PageHeaderProps {
-        title: string;
-        description?: string;
-        className?: string;
-      }
-      
-      export function PageHeader({ title, description, className }: PageHeaderProps) {
-        return (
-          <div className={cn("flex flex-col", className)}>
-            <h1 className="text-2xl font-semibold mb-1">{title}</h1>
-            {description && (
-              <p className="text-sm text-muted-foreground">
-                {description}
-              </p>
-            )}
-          </div>
-        );
-      }
-      `
+
+interface PageHeaderProps {
+  title: string;
+  description?: string;
+  className?: string;
+}
+
+export function PageHeader({ title, description, className }: PageHeaderProps) {
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <h1 className="text-2xl font-semibold mb-1">{title}</h1>
+      {description && (
+        <p className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}`
   },
   {
     id: "data-table",
@@ -352,7 +349,7 @@ export default function PlaygroundPage() {
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
 
-  // Generate more sample data for pagination testing
+  // Generate sample data for pagination testing
   const generateSampleData = (count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: i + 1,
@@ -495,177 +492,250 @@ export default function PlaygroundPage() {
             </Select>
           </div>
 
-          {currentComponent?.id === "data-table" && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleClearFilters}
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                      </Button>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <ColumnsIcon className="h-4 w-4 mr-2" />
-                            {enabledColumnCount} Columns
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-[200px]">
-                          <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuCheckboxItem
-                            className="flex items-center py-2"
-                            checked={enabledColumns.checkbox}
-                            onCheckedChange={(checked) =>
-                              setEnabledColumns(prev => ({ ...prev, checkbox: checked }))
-                            }
-                          >
-                            <span className="font-medium">Selection</span>
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuCheckboxItem
-                            className="flex items-center py-2"
-                            checked={enabledColumns.icon}
-                            onCheckedChange={(checked) =>
-                              setEnabledColumns(prev => ({ ...prev, icon: checked }))
-                            }
-                          >
-                            <span className="font-medium">Icon Column</span>
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuCheckboxItem
-                            className="flex items-center py-2"
-                            checked={enabledColumns.status}
-                            onCheckedChange={(checked) =>
-                              setEnabledColumns(prev => ({ ...prev, status: checked }))
-                            }
-                          >
-                            <span className="font-medium">Status</span>
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuCheckboxItem
-                            className="flex items-center py-2"
-                            checked={enabledColumns.actions}
-                            onCheckedChange={(checked) =>
-                              setEnabledColumns(prev => ({ ...prev, actions: checked }))
-                            }
-                          >
-                            <span className="font-medium">Actions</span>
-                          </DropdownMenuCheckboxItem>
-                          <DropdownMenuCheckboxItem
-                            className="flex items-center py-2"
-                            checked={enabledColumns.view}
-                            onCheckedChange={(checked) =>
-                              setEnabledColumns(prev => ({ ...prev, view: checked }))
-                            }
-                          >
-                            <span className="font-medium">View</span>
-                          </DropdownMenuCheckboxItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
-                      <Select value={itemCount} onValueChange={setItemCount}>
-                        <SelectTrigger className="w-[130px]">
-                          <ListIcon className="h-4 w-4 mr-2" />
-                          <SelectValue placeholder="Show items" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="5">5 items</SelectItem>
-                          <SelectItem value="10">10 items</SelectItem>
-                          <SelectItem value="25">25 items</SelectItem>
-                          <SelectItem value="50">50 items</SelectItem>
-                          <SelectItem value="100">100 items</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-[120px]"
-                        onClick={() => setIsTableLoading(!isTableLoading)}
-                      >
-                        {isTableLoading ? "Stop Loading" : "Show Loading"}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <DataTable
-                      data={tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
-                      columns={[
-                        ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
-                        ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
-                        ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
-                        { key: 'date', header: 'Date', sortable: true },
-                        ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
-                        ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
-                      ]}
-                      isLoading={isTableLoading}
-                      sortConfig={tableSortConfig}
-                      onSort={handleTableSort}
-                      selectedRows={selectedRows}
-                      onRowSelect={handleRowSelect}
-                      onSelectAll={handleSelectAll}
-                    />
-
-                    {tableData.length > 5 && (
-                      <div className="flex items-center justify-between px-2">
-                        <div className="flex-1 text-sm text-muted-foreground">
-                          Showing {Math.min((currentPage - 1) * Number(itemCount) + 1, tableData.length)} to{" "}
-                          {Math.min(currentPage * Number(itemCount), tableData.length)} of {tableData.length} entries
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(1)}
-                            disabled={currentPage === 1}
-                          >
-                            <ChevronsLeft className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                          >
-                            <ChevronLeft className="h-4 w-4" />
-                          </Button>
-                          <span className="text-sm font-medium">
-                            Page {currentPage} of {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(totalPages)}
-                            disabled={currentPage === totalPages}
-                          >
-                            <ChevronsRight className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {currentComponent && (
             <>
+              {/* Preview section */}
+              {currentComponent.id === "loading-spinner" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center gap-8">
+                    <div className="flex items-center gap-8">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Small</p>
+                        <LoadingSpinner size="sm" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Medium</p>
+                        <LoadingSpinner size="md" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Large</p>
+                        <LoadingSpinner size="lg" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "risk-meter" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col items-center gap-8">
+                      <div className="flex flex-wrap justify-center gap-8">
+                        <div className="w-48">
+                          <p className="text-sm text-muted-foreground mb-2 text-center">Low Risk</p>
+                          <RiskMeter score={250} />
+                        </div>
+                        <div className="w-48">
+                          <p className="text-sm text-muted-foreground mb-2 text-center">Medium Risk</p>
+                          <RiskMeter score={750} />
+                        </div>
+                        <div className="w-48">
+                          <p className="text-sm text-muted-foreground mb-2 text-center">High Risk</p>
+                          <RiskMeter score={1200} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "page-header" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-8">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-4">With Description</p>
+                        <PageHeader
+                          title="Example Header"
+                          description="This is an example description that provides additional context."
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-4">Without Description</p>
+                        <PageHeader title="Example Header" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "data-table" && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleClearFilters}
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <ColumnsIcon className="h-4 w-4 mr-2" />
+                              {enabledColumnCount} Columns
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-[200px]">
+                            <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuCheckboxItem
+                              className="flex items-center py-2"
+                              checked={enabledColumns.checkbox}
+                              onCheckedChange={(checked) =>
+                                setEnabledColumns(prev => ({ ...prev, checkbox: checked }))
+                              }
+                            >
+                              <span className="font-medium">Selection</span>
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                              className="flex items-center py-2"
+                              checked={enabledColumns.icon}
+                              onCheckedChange={(checked) =>
+                                setEnabledColumns(prev => ({ ...prev, icon: checked }))
+                              }
+                            >
+                              <span className="font-medium">Icon Column</span>
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                              className="flex items-center py-2"
+                              checked={enabledColumns.status}
+                              onCheckedChange={(checked) =>
+                                setEnabledColumns(prev => ({ ...prev, status: checked }))
+                              }
+                            >
+                              <span className="font-medium">Status</span>
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                              className="flex items-center py-2"
+                              checked={enabledColumns.actions}
+                              onCheckedChange={(checked) =>
+                                setEnabledColumns(prev => ({ ...prev, actions: checked }))
+                              }
+                            >
+                              <span className="font-medium">Actions</span>
+                            </DropdownMenuCheckboxItem>
+                            <DropdownMenuCheckboxItem
+                              className="flex items-center py-2"
+                              checked={enabledColumns.view}
+                              onCheckedChange={(checked) =>
+                                setEnabledColumns(prev => ({ ...prev, view: checked }))
+                              }
+                            >
+                              <span className="font-medium">View</span>
+                            </DropdownMenuCheckboxItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Select value={itemCount} onValueChange={setItemCount}>
+                          <SelectTrigger className="w-[130px]">
+                            <ListIcon className="h-4 w-4 mr-2" />
+                            <SelectValue placeholder="Show items" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5 items</SelectItem>
+                            <SelectItem value="10">10 items</SelectItem>
+                            <SelectItem value="25">25 items</SelectItem>
+                            <SelectItem value="50">50 items</SelectItem>
+                            <SelectItem value="100">100 items</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-[120px]"
+                          onClick={() => setIsTableLoading(!isTableLoading)}
+                        >
+                          {isTableLoading ? "Stop Loading" : "Show Loading"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <DataTable
+                        data={tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
+                        columns={[
+                          ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
+                          ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
+                          ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
+                          { key: 'date', header: 'Date', sortable: true },
+                          ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
+                          ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
+                        ]}
+                        isLoading={isTableLoading}
+                        sortConfig={tableSortConfig}
+                        onSort={handleTableSort}
+                        selectedRows={selectedRows}
+                        onRowSelect={handleRowSelect}
+                        onSelectAll={handleSelectAll}
+                      />
+
+                      {tableData.length > 5 && (
+                        <div className="flex items-center justify-between px-2">
+                          <div className="flex-1 text-sm text-muted-foreground">
+                            Showing {Math.min((currentPage - 1) * Number(itemCount) + 1, tableData.length)} to{" "}
+                            {Math.min(currentPage * Number(itemCount), tableData.length)} of {tableData.length} entries
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(1)}
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronsLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(currentPage - 1)}
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <span className="text-sm font-medium">
+                              Page {currentPage} of {totalPages}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(currentPage + 1)}
+                              disabled={currentPage === totalPages}
+                            >
+                              <ChevronRight className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handlePageChange(totalPages)}
+                              disabled={currentPage === totalPages}
+                            >
+                              <ChevronsRight className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Usage Examples section */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
@@ -679,7 +749,7 @@ export default function PlaygroundPage() {
                           <p className="text-xs text-muted-foreground truncate">{location.path}</p>
                         </div>
                         <Link href={location.path}>
-                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap hover:bg-accent/50">
+                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap">
                             <span>View Within App</span>
                             <ArrowUpRight className="ml-1 h-3 w-3" />
                           </Button>
@@ -690,6 +760,7 @@ export default function PlaygroundPage() {
                 </CardContent>
               </Card>
 
+              {/* Code section */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold">Code</CardTitle>
@@ -735,28 +806,25 @@ export default function PlaygroundPage() {
                             <Download className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="overflow-auto max-h-[400px] pt-16 px-4 pb-4">
-                          <table className="w-full border-collapse">
-                            <tbody>
+                        <div className="overflow-x-auto max-h-[400px] pt-16 px-4 pb-4">
+                          <pre className="text-sm">
+                            <code className="grid">
                               {currentComponent.code.split('\n').map((line, index) => (
-                                <tr
+                                <div
                                   key={index}
                                   className={cn(
-                                    "hover:bg-muted/50",
-                                    selectedLine === index && "bg-muted"
+                                    "px-2 py-0.5",
+                                    selectedLine === index && "bg-muted",
+                                    "hover:bg-muted/50 cursor-pointer"
                                   )}
                                   onClick={() => setSelectedLine(index)}
                                 >
-                                  <td className="py-1 pr-4 text-sm text-muted-foreground select-none text-right">
-                                    {index + 1}
-                                  </td>
-                                  <td className="py-1 font-mono text-sm">
-                                    <pre className="text-left">{line}</pre>
-                                  </td>
-                                </tr>
+                                  <span className="select-none text-mutedforeground mr-4">{index + 1}</span>
+                                  {line}
+                                </div>
                               ))}
-                            </tbody>
-                          </table>
+                            </code>
+                          </pre>
                         </div>
                       </div>
                     </TabsContent>
