@@ -21,7 +21,11 @@ import {
   XCircle,
   Columns as ColumnsIcon,
   List as ListIcon,
-  RefreshCw
+  RotateCcw,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -367,6 +371,9 @@ export default function PlaygroundPage() {
     key: 'name',
     direction: 'asc'
   });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [selectedRows, setSelectedRows] = useState(new Set<number>());
   const [itemCount, setItemCount] = useState("10");
   const [isTableLoading, setIsTableLoading] = useState(false);
@@ -377,6 +384,22 @@ export default function PlaygroundPage() {
     actions: true,
     view: true
   });
+
+  const defaultFilters = {
+    checkbox: true,
+    icon: true,
+    status: true,
+    actions: true,
+    view: true
+  };
+
+  const handleClearFilters = () => {
+    setEnabledColumns(defaultFilters);
+    setTableSortConfig({ key: 'name', direction: 'asc' });
+    setSelectedRows(new Set());
+    setCurrentPage(1);
+    setItemCount("10");
+  };
 
   const handleTableSort = (key: string) => {
     setTableSortConfig(prev => ({
@@ -401,6 +424,12 @@ export default function PlaygroundPage() {
     } else {
       setSelectedRows(new Set(tableData.map(row => row.id)));
     }
+  };
+
+  const totalPages = Math.ceil(tableData.length / Number(itemCount));
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   const enabledColumnCount = Object.values(enabledColumns).filter(Boolean).length;
@@ -473,6 +502,14 @@ export default function PlaygroundPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-bold">Interactive Table</CardTitle>
                     <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleClearFilters}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" size="sm">
@@ -484,44 +521,49 @@ export default function PlaygroundPage() {
                           <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuCheckboxItem
+                            className="flex items-center py-2"
                             checked={enabledColumns.checkbox}
                             onCheckedChange={(checked) =>
                               setEnabledColumns(prev => ({ ...prev, checkbox: checked }))
                             }
                           >
-                            Selection
+                            <span className="font-medium">Selection</span>
                           </DropdownMenuCheckboxItem>
                           <DropdownMenuCheckboxItem
+                            className="flex items-center py-2"
                             checked={enabledColumns.icon}
                             onCheckedChange={(checked) =>
                               setEnabledColumns(prev => ({ ...prev, icon: checked }))
                             }
                           >
-                            Icon Column
+                            <span className="font-medium">Icon Column</span>
                           </DropdownMenuCheckboxItem>
                           <DropdownMenuCheckboxItem
+                            className="flex items-center py-2"
                             checked={enabledColumns.status}
                             onCheckedChange={(checked) =>
                               setEnabledColumns(prev => ({ ...prev, status: checked }))
                             }
                           >
-                            Status
+                            <span className="font-medium">Status</span>
                           </DropdownMenuCheckboxItem>
                           <DropdownMenuCheckboxItem
+                            className="flex items-center py-2"
                             checked={enabledColumns.actions}
                             onCheckedChange={(checked) =>
                               setEnabledColumns(prev => ({ ...prev, actions: checked }))
                             }
                           >
-                            Actions
+                            <span className="font-medium">Actions</span>
                           </DropdownMenuCheckboxItem>
                           <DropdownMenuCheckboxItem
+                            className="flex items-center py-2"
                             checked={enabledColumns.view}
                             onCheckedChange={(checked) =>
                               setEnabledColumns(prev => ({ ...prev, view: checked }))
                             }
                           >
-                            View
+                            <span className="font-medium">View</span>
                           </DropdownMenuCheckboxItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -544,17 +586,7 @@ export default function PlaygroundPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setSelectedRows(new Set());
-                          setTableSortConfig({ key: 'name', direction: 'asc' });
-                        }}
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-
-                      <Button 
-                        variant="outline"
-                        size="sm"
+                        className="w-[120px]"
                         onClick={() => setIsTableLoading(!isTableLoading)}
                       >
                         {isTableLoading ? "Stop Loading" : "Show Loading"}
@@ -563,23 +595,71 @@ export default function PlaygroundPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <DataTable
-                    data={Number(itemCount) === 0 ? [] : tableData.slice(0, Number(itemCount))}
-                    columns={[
-                      ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
-                      ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
-                      ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
-                      { key: 'date', header: 'Date', sortable: true },
-                      ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
-                      ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
-                    ]}
-                    isLoading={isTableLoading}
-                    sortConfig={tableSortConfig}
-                    onSort={handleTableSort}
-                    selectedRows={selectedRows}
-                    onRowSelect={handleRowSelect}
-                    onSelectAll={handleSelectAll}
-                  />
+                  <div className="space-y-4">
+                    <DataTable
+                      data={Number(itemCount) === 0 ? [] : tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
+                      columns={[
+                        ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
+                        ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
+                        ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
+                        { key: 'date', header: 'Date', sortable: true },
+                        ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
+                        ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
+                      ]}
+                      isLoading={isTableLoading}
+                      sortConfig={tableSortConfig}
+                      onSort={handleTableSort}
+                      selectedRows={selectedRows}
+                      onRowSelect={handleRowSelect}
+                      onSelectAll={handleSelectAll}
+                    />
+
+                    {Number(itemCount) > 0 && tableData.length > 0 && (
+                      <div className="flex items-center justify-between px-2">
+                        <div className="flex-1 text-sm text-muted-foreground">
+                          Showing {Math.min((currentPage - 1) * Number(itemCount) + 1, tableData.length)} to{" "}
+                          {Math.min(currentPage * Number(itemCount), tableData.length)} of {tableData.length} entries
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(1)}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronsLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-sm font-medium">
+                            Page {currentPage} of {totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(totalPages)}
+                            disabled={currentPage === totalPages}
+                          >
+                            <ChevronsRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
