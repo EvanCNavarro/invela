@@ -50,12 +50,12 @@ export function Sidebar({
   // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    enabled: !isPlayground, // Don't fetch if in playground
+    enabled: !isPlayground,
   });
 
   const { data: company } = useQuery({
     queryKey: ["/api/companies/current"],
-    enabled: !isPlayground, // Don't fetch if in playground
+    enabled: !isPlayground,
   });
 
   const menuItems = [
@@ -70,7 +70,6 @@ export function Sidebar({
       label: "Task Center", 
       href: "/task-center",
       locked: false,
-      // Use playground notification count if in playground, otherwise use real task count
       count: isPlayground ? notificationCount : tasks.length
     },
     { 
@@ -176,7 +175,13 @@ export function Sidebar({
                           </Badge>
                         )}
                         {pulsingDot && (
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary animate-pulse" />
+                          <span className={cn(
+                            "absolute right-2 top-1/2 -translate-y-1/2",
+                            "h-2 w-2 rounded-full bg-primary",
+                            "before:absolute before:inset-0",
+                            "before:animate-ping before:rounded-full",
+                            "before:bg-primary/40 before:-z-10"
+                          )} />
                         )}
                       </>
                     )}
