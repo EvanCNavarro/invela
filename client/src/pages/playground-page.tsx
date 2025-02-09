@@ -232,9 +232,19 @@ export default function PlaygroundPage() {
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="references" className="w-full">
-                    <TabsList className="w-full">
-                      <TabsTrigger value="references" className="flex-1">References</TabsTrigger>
-                      <TabsTrigger value="code" className="flex-1">Code</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 h-11 bg-muted/50 p-1 mb-2">
+                      <TabsTrigger 
+                        value="references" 
+                        className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
+                      >
+                        References
+                      </TabsTrigger>
+                      <TabsTrigger 
+                        value="code" 
+                        className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
+                      >
+                        Code
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="references" className="mt-4">
                       <div className="rounded-lg bg-muted/50 p-4">
