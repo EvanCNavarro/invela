@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle, Pencil, Eye, Trash2, CheckCircle2 } from 'lucide-react';
+import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle, Pencil, Eye, Trash2, CheckCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -90,7 +90,7 @@ export function FileUploadPreview({
     <>
       <div className={cn(
         "relative px-4 py-3 rounded-lg",
-        isComplete ? "bg-[#E5F6F1]/12" : "bg-muted/30",
+        isComplete ? "bg-[#E5F6F1]/30" : "bg-muted/30",
         error ? "border-destructive/50 bg-destructive/5" : "",
         className
       )}>
@@ -160,7 +160,7 @@ export function FileUploadPreview({
               {/* Success message when upload is complete */}
               {isComplete && (
                 <div className="flex items-center gap-2 mt-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <CheckCircle className="h-4 w-4 text-[#22c55e] fill-[#22c55e]" />
                   <span className="text-sm">Upload Complete</span>
                 </div>
               )}
