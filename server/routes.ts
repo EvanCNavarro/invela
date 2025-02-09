@@ -825,16 +825,29 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Update the company logo endpoint to properly serve SVG files
+  // Update the company logo endpoint to properly handle missing logos
   app.get("/api/companies/:id/logo", requireAuth, async (req, res) => {
     try {
+      console.log(`Debug - Logo request for company ID: ${req.params.id}`);
+
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, parseInt(req.params.id)));
 
-      if (!company || !company.logoId) {
-        console.log('Debug - No logo found for company:', req.params.id);
-        return res.status(404).json({ message: "Logo not found" });
+      if (!company) {
+        console.log(`Debug - Company not found: ${req.params.id}`);
+        return res.status(404).json({ 
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND" 
+        });
+      }
+
+      if (!company.logoId) {
+        console.log(`Debug - No logo assigned for company: ${company.name} (${company.id})`);
+        return res.status(404).json({ 
+          message: "No logo assigned to company",
+          code: "LOGO_NOT_ASSIGNED"
+        });
       }
 
       const [logo] = await db.select()
@@ -842,52 +855,77 @@ export function registerRoutes(app: Express): Server {
         .where(eq(companyLogos.id, company.logoId));
 
       if (!logo) {
-        console.log('Debug - Logo record not found:', company.logoId);
-        return res.status(404).json({ message: "Logo not found" });
+        console.log(`Debug - Logo record not found for company ${company.name} (${company.id}), logoId: ${company.logoId}`);
+        return res.status(404).json({ 
+          message: "Logo record not found",
+          code: "LOGO_RECORD_NOT_FOUND"
+        });
       }
 
       // Use the actual file path from the database
       const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
-      console.log('Debug - Attempting to serve logo from:', filePath);
+      console.log(`Debug - Attempting to serve logo from: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
-        console.error(`Logo file not found at path: ${filePath}`);
+        console.error(`Logo file missing for company ${company.name} (${company.id}): ${filePath}`);
         // Log directory contents to help debug
         const dir = path.resolve('/home/runner/workspace/uploads/logos');
-        console.log('Debug - Logo directory contents:', fs.readdirSync(dir));
-        return res.status(404).json({ message: "Logo file not found" });
+        const dirContents = fs.readdirSync(dir);
+        console.log('Debug - Logo directory contents:', dirContents);
+
+        return res.status(404).json({ 
+          message: "Logo file not found on disk",
+          code: "LOGO_FILE_MISSING"
+        });
       }
 
       try {
         // Try to read and validate SVG content
         const content = fs.readFileSync(filePath, 'utf8');
         if (!content.includes('<?xml') && !content.includes('<svg')) {
-          console.error('Debug - Invalid SVG content:', content);
-          return res.status(400).json({ message: "Invalid SVG file" });
+          console.error(`Debug - Invalid SVG content for company ${company.name}:`, content.slice(0, 100));
+          return res.status(400).json({ 
+            message: "Invalid SVG file",
+            code: "INVALID_SVG_CONTENT"
+          });
         }
+
+        // Add Content-Type and security headers
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+
+        // Stream the file with proper error handling
+        const fileStream = fs.createReadStream(filePath);
+
+        fileStream.on('error', (error) => {
+          console.error(`Error streaming logo file for company ${company.name}:`, error);
+          if (!res.headersSent) {
+            res.status(500).json({ 
+              message: "Error serving logo file",
+              code: "LOGO_STREAM_ERROR"
+            });
+          }
+        });
+
+        fileStream.pipe(res);
+
       } catch (readError) {
-        console.error('Debug - Error reading SVG file:', readError);
-        return res.status(500).json({ message: "Error reading logo file" });
+        console.error(`Debug - Error reading SVG file for company ${company.name}:`, readError);
+        return res.status(500).json({ 
+          message: "Error reading logo file",
+          code: "LOGO_READ_ERROR"
+        });
       }
 
-      // Add Content-Type and security headers
-      res.setHeader('Content-Type', 'image/svg+xml');
-      res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-
-      const fileStream = fs.createReadStream(filePath);
-      fileStream.on('error', (error) => {
-        console.error('Error streaming logo file:', error);
-        if (!res.headersSent) {
-          res.status(500).json({ message: "Error serving logo file" });
-        }
-      });
-
-      fileStream.pipe(res);
-
     } catch (error) {
-      console.error("Error serving company logo:", error);
-      res.status(500).json({ message: "Error serving company logo" });
+      console.error(`Error serving company logo for ID ${req.params.id}:`, error);
+      if (!res.headersSent) {
+        res.status(500).json({ 
+          message: "Error serving company logo",
+          code: "LOGO_SERVER_ERROR"
+        });
+      }
     }
   });
 
