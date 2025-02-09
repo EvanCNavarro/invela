@@ -28,6 +28,7 @@ export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [location, setLocation] = useLocation();
   const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -35,7 +36,9 @@ export function TopNav() {
     });
   };
 
-  const handlePlaygroundToggle = () => {
+  const handlePlaygroundToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (showPlayground && location === '/playground') {
       setLocation('/');
     }
@@ -64,7 +67,7 @@ export function TopNav() {
             </Button>
           </div>
 
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Avatar className="h-8 w-8 cursor-pointer bg-white">
                 <AvatarFallback className="text-sm">
@@ -103,12 +106,10 @@ export function TopNav() {
               {user?.companyId === 0 && ( 
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      handlePlaygroundToggle();
-                    }}
-                    className="cursor-pointer"
+                  <div 
+                    role="menuitem"
+                    onClick={handlePlaygroundToggle}
+                    className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                   >
                     {showPlayground ? (
                       <>
@@ -121,7 +122,7 @@ export function TopNav() {
                         <span>Show Playground</span>
                       </>
                     )}
-                  </DropdownMenuItem>
+                  </div>
                 </>
               )}
               <DropdownMenuSeparator className="sm:hidden" />
