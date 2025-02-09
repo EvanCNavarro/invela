@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { CompanyLogo } from "@/components/ui/company-logo";
 
 // Helper function to generate consistent slugs - must match company-profile-page.tsx
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -44,73 +45,64 @@ interface Company {
   } | null;
 }
 
-// Update the CompanyLogo component with better error handling
-const CompanyLogo = memo(({ company }: { company: Company }) => {
-  const { data: logoUrl, error } = useQuery({
-    queryKey: [`company-logo-${company.id}`],
-    queryFn: async () => {
-      try {
-        console.log(`Debug - Fetching logo for company ${company.id} (${company.name})`);
-        const response = await fetch(`/api/companies/${company.id}/logo`);
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.debug(`Logo fetch failed for ${company.name}:`, {
-            status: response.status,
-            code: errorData.code,
-            message: errorData.message
-          });
-          return null;
-        }
-
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-      } catch (error) {
-        console.error(`Error fetching logo for ${company.name}:`, error);
-        return null;
-      }
-    },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 10,   // Keep in cache for 10 minutes
-    retry: false,              // Don't retry failed requests
-  });
-
-  // If we have an error or no logo URL, show a fallback
-  if (error || !logoUrl) {
-    return (
-      <div className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10">
-        <span className="text-xs font-medium text-primary">
-          {company.name.charAt(0).toUpperCase()}
+// Update the CompanyRow component to use new CompanyLogo
+const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
+  company: Company;
+  isHovered: boolean;
+  onRowClick: () => void;
+  onHoverChange: (isHovered: boolean) => void;
+}) => (
+  <TableRow
+    className="group cursor-pointer hover:bg-muted/50 bg-white"
+    onClick={onRowClick}
+    onMouseEnter={() => onHoverChange(true)}
+    onMouseLeave={() => onHoverChange(false)}
+  >
+    <TableCell>
+      <div className="flex items-center gap-3">
+        <CompanyLogo 
+          companyId={company.id} 
+          companyName={company.name}
+          size="sm"
+        />
+        <span className={cn(
+          "font-normal text-foreground",
+          isHovered && "underline"
+        )}>
+          {company.name}
         </span>
       </div>
-    );
-  }
+    </TableCell>
+    <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+    <TableCell className="text-center">
+      <Badge
+        variant="outline"
+        className={cn(
+          "capitalize",
+          company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+          company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+          company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+          company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+          company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+          company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+        )}
+      >
+        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+      </Badge>
+    </TableCell>
+    <TableCell className="text-center">
+      <div className="invisible group-hover:visible flex items-center justify-center text-primary">
+        <span className="font-medium mr-2">View</span>
+        <ArrowRight className="h-4 w-4" />
+      </div>
+    </TableCell>
+  </TableRow>
+));
 
-  return (
-    <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-      <img
-        src={logoUrl}
-        alt={`${company.name} logo`}
-        className="w-full h-full object-contain"
-        loading="lazy"
-        onError={(e) => {
-          console.debug(`Image load error for ${company.name} logo`);
-          const img = e.target as HTMLImageElement;
-          // Replace the img element with a fallback
-          const parent = img.parentElement;
-          if (parent) {
-            const fallback = document.createElement('div');
-            fallback.className = 'w-full h-full flex items-center justify-center rounded-full bg-primary/10';
-            fallback.innerHTML = `<span class="text-xs font-medium text-primary">${company.name.charAt(0).toUpperCase()}</span>`;
-            parent.replaceChild(fallback, img);
-          }
-        }}
-      />
-    </div>
-  );
-});
-
-CompanyLogo.displayName = 'CompanyLogo';
+CompanyRow.displayName = 'CompanyRow';
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -221,58 +213,6 @@ export default function NetworkPage() {
   });
 
   // Update the company row to use the memoized logo component
-  const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
-    company: Company;
-    isHovered: boolean;
-    onRowClick: () => void;
-    onHoverChange: (isHovered: boolean) => void;
-  }) => (
-    <TableRow
-      className="group cursor-pointer hover:bg-muted/50 bg-white"
-      onClick={onRowClick}
-      onMouseEnter={() => onHoverChange(true)}
-      onMouseLeave={() => onHoverChange(false)}
-    >
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <CompanyLogo company={company} />
-          <span className={cn(
-            "font-normal text-foreground",
-            isHovered && "underline"
-          )}>
-            {company.name}
-          </span>
-        </div>
-      </TableCell>
-      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
-      <TableCell className="text-center">
-        <Badge
-          variant="outline"
-          className={cn(
-            "capitalize",
-            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
-          )}
-        >
-          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-center">
-        <div className="invisible group-hover:visible flex items-center justify-center text-primary">
-          <span className="font-medium mr-2">View</span>
-          <ArrowRight className="h-4 w-4" />
-        </div>
-      </TableCell>
-    </TableRow>
-  ));
-
-  CompanyRow.displayName = 'CompanyRow';
 
   return (
     <DashboardLayout>
