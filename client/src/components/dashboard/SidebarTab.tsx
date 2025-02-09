@@ -47,7 +47,9 @@ export function SidebarTab({
       onClick={(e) => {
         if (isPlayground) {
           e.preventDefault();
-          onClick?.();
+          if (!isDisabled && onClick) {
+            onClick();
+          }
         }
       }}
     >
