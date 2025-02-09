@@ -119,12 +119,12 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <ToastProvider>
           <Router />
           <Toaster />
-        </AuthProvider>
-      </ToastProvider>
+        </ToastProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
