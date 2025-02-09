@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 import { CompanyLogo } from "@/components/ui/company-logo";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -359,8 +360,10 @@ export default function NetworkPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">
-                    Loading...
+                  <TableCell colSpan={4} className="h-[400px]">
+                    <div className="flex items-center justify-center w-full h-full">
+                      <LoadingSpinner size="lg" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : filteredCompanies.length === 0 ? (
