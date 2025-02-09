@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Users2, Target, Award } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
@@ -182,6 +182,131 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               </CardContent>
             </Card>
           </div>
+
+          {/* Company Overview Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Building className="h-5 w-5 text-muted-foreground" />
+                Company Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Website</div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  <a href={`https://${company.websiteUrl}`} target="_blank" rel="noopener noreferrer" 
+                     className="text-primary hover:underline">
+                    {company.websiteUrl || 'N/A'}
+                  </a>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Legal Structure</div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.legalStructure || 'N/A'}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Headquarters</div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.hqAddress || 'N/A'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Details Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-muted-foreground" />
+                Business Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Incorporation Year</div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.incorporationYear || 'N/A'}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Number of Employees</div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.numEmployees || 'N/A'}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.productsServices || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Investors</div>
+                <div className="flex items-start gap-2">
+                  <Award className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.investors || 'No investor information available'}</span>
+                </div>
+              </div>
+
+              {company.fundingStage && (
+                <div className="space-y-2">
+                  <div className="text-sm font-medium text-muted-foreground">Funding Stage</div>
+                  <span>{company.fundingStage}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Key Relationships Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users2 className="h-5 w-5 text-muted-foreground" />
+                Key Relationships
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Key Clients & Partners</div>
+                <div className="flex items-start gap-2">
+                  <Briefcase className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.keyClientsPartners || 'No client/partner information available'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Leadership Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                Leadership & Team
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Founders & Leadership</div>
+                <div className="flex items-start gap-2">
+                  <Users2 className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.foundersAndLeadership || 'No leadership information available'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2">
