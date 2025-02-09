@@ -812,21 +812,35 @@ export default function PlaygroundPage() {
                           <TabsTrigger value="invela">Invela-Only Navigation</TabsTrigger>
                         </TabsList>
                         <TabsContent value="default" className="min-h-[400px] relative">
-                          <div className="w-full h-full bg-muted/50 rounded-lg p-4">
-                            <Sidebar
-                              isExpanded={isExpanded}
-                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
-                              isNewUser={false}
-                            />
+                          <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
+                            <div className="relative h-full">
+                              <div className={cn(
+                                "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                                isExpanded ? "w-64" : "w-20"
+                              )}>
+                                <Sidebar
+                                  isExpanded={isExpanded}
+                                  onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                                  isNewUser={false}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </TabsContent>
                         <TabsContent value="invela" className="min-h-[400px] relative">
-                          <div className="w-full h-full bg-muted/50 rounded-lg p-4">
-                            <Sidebar
-                              isExpanded={isExpanded}
-                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
-                              isNewUser={false}
-                            />
+                          <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
+                            <div className="relative h-full">
+                              <div className={cn(
+                                "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                                isExpanded ? "w-64" : "w-20"
+                              )}>
+                                <Sidebar
+                                  isExpanded={isExpanded}
+                                  onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                                  isNewUser={false}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </TabsContent>
                       </Tabs>
