@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUpRight } from "lucide-react";
 
 const components = [
   {
@@ -50,28 +51,24 @@ export default function PlaygroundPage() {
 
         <div className="space-y-6">
           {/* Component Selector */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Select Component</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select
-                value={selectedComponent}
-                onValueChange={setSelectedComponent}
-              >
-                <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Select a component" />
-                </SelectTrigger>
-                <SelectContent>
-                  {components.map(component => (
-                    <SelectItem key={component.id} value={component.id}>
-                      {component.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
+          <div className="px-1">
+            <h3 className="text-sm font-medium mb-2">Select Component</h3>
+            <Select
+              value={selectedComponent}
+              onValueChange={setSelectedComponent}
+            >
+              <SelectTrigger className="w-[280px]">
+                <SelectValue placeholder="Select a component" />
+              </SelectTrigger>
+              <SelectContent>
+                {components.map(component => (
+                  <SelectItem key={component.id} value={component.id}>
+                    {component.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {currentComponent?.id === "loading-spinner" && (
             <div className="space-y-6">
@@ -79,7 +76,7 @@ export default function PlaygroundPage() {
                 {/* Sizes Section */}
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-medium">Sizes</CardTitle>
+                    <CardTitle className="text-sm font-bold">Sizes</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center gap-8">
@@ -103,7 +100,7 @@ export default function PlaygroundPage() {
                 <Card>
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-medium">Interactive Example</CardTitle>
+                      <CardTitle className="text-sm font-bold">Interactive Example</CardTitle>
                       <Button 
                         variant="outline"
                         size="sm"
@@ -156,18 +153,21 @@ export default function PlaygroundPage() {
               {/* Usage Examples */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Usage Examples</CardTitle>
+                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {currentComponent.usageLocations.map((location, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div>
-                          <h4 className="text-sm font-medium">{location.description}</h4>
-                          <p className="text-xs text-muted-foreground">{location.path}</p>
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-medium truncate">{location.description}</h4>
+                          <p className="text-xs text-muted-foreground truncate">{location.path}</p>
                         </div>
                         <Link href={location.path}>
-                          <Button variant="outline" size="sm">View Live</Button>
+                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap">
+                            <span>View Within App</span>
+                            <ArrowUpRight className="ml-1 h-3 w-3" />
+                          </Button>
                         </Link>
                       </div>
                     ))}
