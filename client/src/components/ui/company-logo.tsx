@@ -42,17 +42,16 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
         return { error: { message: "Network error", code: "FETCH_ERROR" } };
       }
     },
-    staleTime: 1000 * 30, // Reduced to 30 seconds for quicker refreshes
-    gcTime: 1000 * 60 * 5, // Reduced to 5 minutes
-    retry: false,          // Don't retry failed requests
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+    retry: false,
   });
 
-  // Handle various error cases with appropriate fallbacks
   if (error || (logoResult && 'error' in logoResult)) {
     return (
       <div className={cn(
         sizeClasses[size],
-        "flex items-center justify-center rounded-lg bg-primary/10",
+        "flex items-center justify-center rounded-md bg-primary/10",
         className
       )}>
         <span className="text-xs font-medium text-primary">
@@ -62,7 +61,6 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
     );
   }
 
-  // If we have a valid logo URL
   if (logoResult && 'url' in logoResult) {
     return (
       <div className={cn(
@@ -95,11 +93,10 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
     );
   }
 
-  // Loading state
   return (
     <div className={cn(
       sizeClasses[size],
-      "flex items-center justify-center rounded-lg bg-muted animate-pulse",
+      "flex items-center justify-center rounded-md bg-muted animate-pulse",
       className
     )}>
       <span className="sr-only">Loading {companyName} logo...</span>
