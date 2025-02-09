@@ -193,22 +193,22 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                         "transition-all duration-200 relative",
                         !isExpanded && "justify-center",
                         isActive 
-                          ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
+                          ? "bg-emerald-950/5 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300"
                           : isDisabled
                             ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-indigo-50/60 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300 cursor-pointer"
+                            : "hover:bg-emerald-50/60 hover:text-emerald-600 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300 cursor-pointer"
                       )}>
                         <Icon className={cn(
                           "h-5 w-5",
                           isActive 
-                            ? "stroke-[2.5] text-indigo-500"
+                            ? "stroke-[2.5] text-emerald-500"
                             : "text-foreground/90 dark:text-foreground/80"
                         )} />
                         {isExpanded && (
                           <span className={cn(
                             "ml-3 flex-1",
                             isActive 
-                              ? "font-semibold text-indigo-600 dark:text-indigo-300"
+                              ? "font-semibold text-emerald-600 dark:text-emerald-300"
                               : "text-foreground/90 dark:text-foreground/80"
                           )}>
                             {label}
