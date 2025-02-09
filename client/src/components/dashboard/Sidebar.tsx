@@ -150,13 +150,13 @@ export function Sidebar({
             <>
               {isExpanded ? (
                 <>
-                  <div className="px-5 pt-4 pb-2">
+                  <div className="mx-5">
+                    <Separator className="mt-4 bg-border/60" />
+                  </div>
+                  <div className="px-5 pt-2 pb-2">
                     <span className="text-[#707F95] text-xs font-medium tracking-wider uppercase">
                       Invela Only
                     </span>
-                  </div>
-                  <div className="mx-5">
-                    <Separator className="mb-2 bg-border/60" />
                   </div>
                 </>
               ) : (
