@@ -862,8 +862,8 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Use the actual file path from the database
-      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
+      // Fix path resolution - remove extra 'uploads/logos' from the path
+      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath.replace('uploads/logos/', ''));
       console.log(`Debug - Attempting to serve logo from: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
