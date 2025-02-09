@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import {
@@ -71,16 +72,65 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       </svg>
     </div>
   );
-}
-`
+}`
   },
-  // Add more components here
+  {
+    id: "risk-meter",
+    name: "Risk Assessment Meter",
+    usageLocations: [
+      { path: "/", description: "Company risk overview" },
+      { path: "/network/company/:id", description: "Detailed company risk" },
+      { path: "/insights", description: "Risk analytics" }
+    ],
+    references: "RiskMeter",
+    code: `import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+
+interface RiskMeterProps {
+  score: number;
+  className?: string;
+}
+
+export function RiskMeter({ score = 0, className }: RiskMeterProps) {
+  const normalizedScore = Math.min(Math.max(0, score), 1500);
+
+  const getRiskLevel = (score: number) => {
+    if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
+    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
+    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
+    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
+    return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
+  };
+
+  const { level, color } = getRiskLevel(normalizedScore);
+
+  return (
+    <div className={cn("flex flex-col items-center justify-center py-4", className)}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="text-6xl font-bold mb-2"
+      >
+        {normalizedScore}
+      </motion.div>
+      <div className={cn(
+        "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+        color
+      )}>
+        {level}
+      </div>
+    </div>
+  );
+}`
+  }
 ];
 
 export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState(components[0].id);
   const [isTableLoading, setIsTableLoading] = useState(true);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
 
   const currentComponent = components.find(c => c.id === selectedComponent);
@@ -224,11 +274,103 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          )}
 
-              {/* In the Code Section */}
+          {currentComponent?.id === "risk-meter" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Risk Levels Section */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-bold">Risk Levels</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col items-center gap-2">
+                        <RiskMeter score={0} />
+                        <span className="text-sm text-muted-foreground">No Risk</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <RiskMeter score={250} />
+                        <span className="text-sm text-muted-foreground">Low Risk</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <RiskMeter score={750} />
+                        <span className="text-sm text-muted-foreground">Medium Risk</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-2">
+                        <RiskMeter score={1250} />
+                        <span className="text-sm text-muted-foreground">High Risk</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Interactive Risk Meter */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold">Interactive Example</CardTitle>
+                      <Select
+                        value={String(riskScore)}
+                        onValueChange={(value) => setRiskScore(Number(value))}
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select risk score" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="0">No Risk (0)</SelectItem>
+                          <SelectItem value="250">Low Risk (250)</SelectItem>
+                          <SelectItem value="750">Medium Risk (750)</SelectItem>
+                          <SelectItem value="1250">High Risk (1250)</SelectItem>
+                          <SelectItem value="1500">Critical Risk (1500)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-center">
+                      <RiskMeter score={riskScore} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {/* Code Section */}
+          {currentComponent && (
+            <>
+              {/* Usage Examples */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold">In the Code</CardTitle>
+                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3 max-w-2xl">
+                    {currentComponent.usageLocations.map((location, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-medium text-foreground truncate">{location.description}</h4>
+                          <p className="text-xs text-muted-foreground truncate">{location.path}</p>
+                        </div>
+                        <Link href={location.path}>
+                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap hover:bg-accent/50">
+                            <span>View Within App</span>
+                            <ArrowUpRight className="ml-1 h-3 w-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Code Display */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold">Code</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="references" className="w-full">
@@ -302,32 +444,7 @@ export default function PlaygroundPage() {
                   </Tabs>
                 </CardContent>
               </Card>
-
-              {/* Usage Examples */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-w-2xl">
-                    {currentComponent.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-medium text-foreground truncate">{location.description}</h4>
-                          <p className="text-xs text-muted-foreground truncate">{location.path}</p>
-                        </div>
-                        <Link href={location.path}>
-                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap hover:bg-accent/50">
-                            <span>View Within App</span>
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          </Button>
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            </>
           )}
         </div>
       </div>
