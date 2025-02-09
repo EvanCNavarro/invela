@@ -46,41 +46,63 @@ interface Company {
 
 // Update the CompanyLogo component with better error handling
 const CompanyLogo = memo(({ company }: { company: Company }) => {
-  const { data: logoUrl } = useQuery({
+  const { data: logoUrl, error } = useQuery({
     queryKey: [`company-logo-${company.id}`],
     queryFn: async () => {
       try {
         console.log(`Debug - Fetching logo for company ${company.id} (${company.name})`);
         const response = await fetch(`/api/companies/${company.id}/logo`);
-        console.log(`Debug - Logo response status:`, response.status);
+
         if (!response.ok) {
-          console.error(`Debug - Failed to fetch logo: ${response.statusText}`);
+          const errorData = await response.json().catch(() => ({}));
+          console.debug(`Logo fetch failed for ${company.name}:`, {
+            status: response.status,
+            code: errorData.code,
+            message: errorData.message
+          });
           return null;
         }
+
         const blob = await response.blob();
         return URL.createObjectURL(blob);
       } catch (error) {
-        console.error(`Debug - Error fetching logo for ${company.name}:`, error);
+        console.error(`Error fetching logo for ${company.name}:`, error);
         return null;
       }
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes instead of infinity
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
     gcTime: 1000 * 60 * 10,   // Keep in cache for 10 minutes
-    retry: 1,                  // Only retry once
+    retry: false,              // Don't retry failed requests
   });
+
+  // If we have an error or no logo URL, show a fallback
+  if (error || !logoUrl) {
+    return (
+      <div className="w-6 h-6 flex items-center justify-center rounded-full bg-primary/10">
+        <span className="text-xs font-medium text-primary">
+          {company.name.charAt(0).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
       <img
-        src={logoUrl || logoNull}
+        src={logoUrl}
         alt={`${company.name} logo`}
         className="w-full h-full object-contain"
         loading="lazy"
         onError={(e) => {
-          console.error(`Debug - Image error for ${company.name} logo`);
+          console.debug(`Image load error for ${company.name} logo`);
           const img = e.target as HTMLImageElement;
-          if (img.src !== logoNull) {
-            img.src = logoNull;
+          // Replace the img element with a fallback
+          const parent = img.parentElement;
+          if (parent) {
+            const fallback = document.createElement('div');
+            fallback.className = 'w-full h-full flex items-center justify-center rounded-full bg-primary/10';
+            fallback.innerHTML = `<span class="text-xs font-medium text-primary">${company.name.charAt(0).toUpperCase()}</span>`;
+            parent.replaceChild(fallback, img);
           }
         }}
       />
