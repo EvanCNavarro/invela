@@ -170,11 +170,18 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
           {adminMenuItems.length > 0 && (
             <>
               {isExpanded ? (
-                <Separator className="my-4 mx-2 bg-border/40" />
+                <>
+                  <div className="px-4 pt-4 pb-2">
+                    <span className="text-[#707F95] text-xs font-medium tracking-wider uppercase">
+                      Invela Only
+                    </span>
+                  </div>
+                  <Separator className="mx-2 bg-border/60" />
+                </>
               ) : (
-                <div className="my-4" />
+                <Separator className="mx-2 my-4 bg-border/60" />
               )}
-              <div>
+              <div className="pt-2">
                 {adminMenuItems.map(({ icon: Icon, label, href, locked, isPlayground }) => {
                   const isActive = location === href;
                   const isDisabled = locked;
@@ -186,10 +193,10 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                         "transition-all duration-200 relative",
                         !isExpanded && "justify-center",
                         isActive 
-                          ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
+                          ? "bg-indigo-50/80 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
                           : isDisabled
                             ? "opacity-50 cursor-not-allowed"
-                            : "hover:bg-indigo-100/80 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300 cursor-pointer"
+                            : "hover:bg-indigo-50/60 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300 cursor-pointer"
                       )}>
                         <Icon className={cn(
                           "h-5 w-5",

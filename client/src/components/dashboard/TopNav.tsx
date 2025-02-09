@@ -26,13 +26,20 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
       onSuccess: () => setLocation('/login')
     });
+  };
+
+  const handlePlaygroundToggle = () => {
+    if (!showPlayground && location === '/playground') {
+      setLocation('/');
+    }
+    togglePlayground();
   };
 
   return (
@@ -99,7 +106,7 @@ export function TopNav() {
                   <DropdownMenuItem
                     onSelect={(e) => {
                       e.preventDefault();
-                      togglePlayground();
+                      handlePlaygroundToggle();
                     }}
                     className="cursor-pointer"
                   >
