@@ -3,64 +3,54 @@ import { SearchBar } from "./SearchBar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function SearchBarPlayground() {
+  const [isLoadingGlobal, setIsLoadingGlobal] = React.useState(false)
+  const [isLoadingContextual, setIsLoadingContextual] = React.useState(false)
   const [searchResults, setSearchResults] = React.useState<string[]>([])
-  const [isLoading, setIsLoading] = React.useState(false)
 
   // Simulate a search API call
-  const handleSearch = async (value: string) => {
-    setIsLoading(true)
+  const handleSearch = async (value: string, setLoading: (loading: boolean) => void) => {
+    setLoading(true)
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 1000))
     setSearchResults(value ? [`Results for "${value}"`, "Item 1", "Item 2"] : [])
-    setIsLoading(false)
+    setLoading(false)
   }
 
   return (
     <div className="space-y-8">
       <Card>
         <CardHeader>
-          <CardTitle>Default Search Bar</CardTitle>
+          <CardTitle>Global Search</CardTitle>
           <CardDescription>
-            Basic search bar with left icon and clear button
+            Application-wide search component for the top navigation bar
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent>
           <SearchBar 
-            placeholder="Search..." 
-            onSearch={console.log}
+            isGlobalSearch
+            isLoading={isLoadingGlobal}
+            onSearch={(value) => handleSearch(value, setIsLoadingGlobal)}
           />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Right Icon Search Bar</CardTitle>
+          <CardTitle>Contextual Search</CardTitle>
           <CardDescription>
-            Search bar with right-aligned icon
+            Context-specific search for tables and filtered views
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <SearchBar 
-            placeholder="Search..."
-            iconPosition="right"
-            onSearch={console.log}
-          />
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-sm text-muted-foreground mb-4">Company Search</p>
+            <SearchBar 
+              contextualType="companies"
+              isLoading={isLoadingContextual}
+              onSearch={(value) => handleSearch(value, setIsLoadingContextual)}
+            />
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Loading State Search Bar</CardTitle>
-          <CardDescription>
-            Search bar with simulated API loading state
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SearchBar 
-            placeholder="Type to search..."
-            onSearch={handleSearch}
-            isLoading={isLoading}
-          />
           <div className="mt-4">
             {searchResults.map((result, index) => (
               <div key={index} className="py-2 px-4">
@@ -68,38 +58,6 @@ export function SearchBarPlayground() {
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Without Clear Button</CardTitle>
-          <CardDescription>
-            Search bar without the clear button functionality
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SearchBar 
-            placeholder="Search..."
-            showClearButton={false}
-            onSearch={console.log}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Controlled Search Bar</CardTitle>
-          <CardDescription>
-            Search bar with external state control
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <SearchBar 
-            placeholder="Controlled input..."
-            value="Controlled value"
-            onChange={(e) => console.log('Changed:', e.target.value)}
-          />
         </CardContent>
       </Card>
     </div>
