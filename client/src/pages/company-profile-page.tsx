@@ -10,6 +10,7 @@ import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban } from "luci
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import defaultCompanyLogo from "@/assets/default-company-logo.svg";
+import logoNull from "@/assets/logo_null.svg";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -108,7 +109,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
                   alt={`${company.name} logo`}
                   className="w-8 h-8 object-contain"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultCompanyLogo;
+                    (e.target as HTMLImageElement).src = logoNull;
                   }}
                 />
               </div>
