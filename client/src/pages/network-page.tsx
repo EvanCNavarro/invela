@@ -44,23 +44,29 @@ interface Company {
   } | null;
 }
 
-// Create a memoized component for company logo
+// Update the CompanyLogo component with better error handling
 const CompanyLogo = memo(({ company }: { company: Company }) => {
   const { data: logoUrl } = useQuery({
     queryKey: [`company-logo-${company.id}`],
     queryFn: async () => {
       try {
+        console.log(`Debug - Fetching logo for company ${company.id} (${company.name})`);
         const response = await fetch(`/api/companies/${company.id}/logo`);
-        if (!response.ok) return null;
+        console.log(`Debug - Logo response status:`, response.status);
+        if (!response.ok) {
+          console.error(`Debug - Failed to fetch logo: ${response.statusText}`);
+          return null;
+        }
         const blob = await response.blob();
         return URL.createObjectURL(blob);
       } catch (error) {
+        console.error(`Debug - Error fetching logo for ${company.name}:`, error);
         return null;
       }
     },
-    staleTime: Infinity, // Never mark the data as stale
-    cacheTime: Infinity, // Keep the data cached indefinitely
-    retry: false, // Don't retry failed requests
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes instead of infinity
+    gcTime: 1000 * 60 * 10,   // Keep in cache for 10 minutes
+    retry: 1,                  // Only retry once
   });
 
   return (
@@ -70,9 +76,12 @@ const CompanyLogo = memo(({ company }: { company: Company }) => {
         alt={`${company.name} logo`}
         className="w-full h-full object-contain"
         loading="lazy"
-        onError={() => {
-          // If there's an error loading the logo, it will fall back to logoNull
-          // No need to set src explicitly as we're using the || operator above
+        onError={(e) => {
+          console.error(`Debug - Image error for ${company.name} logo`);
+          const img = e.target as HTMLImageElement;
+          if (img.src !== logoNull) {
+            img.src = logoNull;
+          }
         }}
       />
     </div>
