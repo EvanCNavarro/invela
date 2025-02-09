@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
-import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X } from "lucide-react";
+import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import {
   Table,
@@ -239,15 +239,19 @@ export default function NetworkPage() {
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            {hasActiveFilters && (
-              <Button
-                variant="outline"
-                onClick={clearFilters}
-                className="w-[130px] bg-white"
-              >
-                Clear Filters
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={clearFilters}
+              disabled={!hasActiveFilters}
+              className={cn(
+                "h-10 w-10",
+                !hasActiveFilters && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <FilterX className="h-4 w-4" />
+              <span className="sr-only">Clear filters</span>
+            </Button>
 
             <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
               <SelectTrigger className="w-[200px] justify-between bg-white">

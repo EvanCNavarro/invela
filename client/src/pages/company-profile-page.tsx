@@ -190,10 +190,18 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
                   <div className="text-sm font-medium text-muted-foreground mb-1">Website</div>
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    <a href={`https://${company.websiteUrl}`} target="_blank" rel="noopener noreferrer" 
-                       className="text-primary hover:underline">
-                      {company.websiteUrl || 'N/A'}
-                    </a>
+                    {company.websiteUrl && company.websiteUrl !== 'N/A' ? (
+                      <a 
+                        href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-primary hover:underline"
+                      >
+                        {company.websiteUrl}
+                      </a>
+                    ) : (
+                      <span>N/A</span>
+                    )}
                   </div>
                 </div>
                 <div>
