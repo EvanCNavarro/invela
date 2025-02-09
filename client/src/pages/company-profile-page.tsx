@@ -115,7 +115,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
 
           {/* Company header section */}
           <div className="flex items-center gap-6">
-            <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] bg-white aspect-square">
+            <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
               <div className="absolute inset-0 flex items-center justify-center p-3">
                 <img
                   src={`/api/companies/${company.id}/logo`}
