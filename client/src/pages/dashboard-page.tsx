@@ -164,47 +164,49 @@ export default function DashboardPage() {
           <PageHeader
             title="Dashboard"
             description="Get an overview of your company's performance and recent activities."
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-56 justify-start">
-                <Settings className="h-4 w-4 mr-2" />
-                <span>Customize Dashboard</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-56"
-              sideOffset={4}
-            >
-              <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                <DropdownMenuItem
-                  key={key}
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
-                  }}
-                  className="flex items-center gap-2"
+            actions={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-56 justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    <span>Customize Dashboard</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  sideOffset={4}
                 >
-                  <div className="w-4">
-                    {isVisible ? (
-                      <Check className="h-4 w-4 text-primary" />
-                    ) : (
-                      <div className="h-4 w-4" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    "flex-1",
-                    isVisible ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                    <DropdownMenuItem
+                      key={key}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="w-4">
+                        {isVisible ? (
+                          <Check className="h-4 w-4 text-primary" />
+                        ) : (
+                          <div className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span className={cn(
+                        "flex-1",
+                        isVisible ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
+          />
         </div>
 
         {allWidgetsHidden ? (

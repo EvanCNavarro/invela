@@ -1,19 +1,54 @@
 import { cn } from "@/lib/utils";
+import { ReactNode } from "react";
 
 interface PageHeaderProps {
   title: string;
   description?: string;
   className?: string;
+  actions?: ReactNode;
+  icon?: ReactNode;
+  meta?: ReactNode;
 }
 
-export function PageHeader({ title, description, className }: PageHeaderProps) {
+export function PageHeader({ 
+  title, 
+  description, 
+  className,
+  actions,
+  icon,
+  meta 
+}: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col", className)}>
-      <h1 className="text-2xl font-semibold mb-1">{title}</h1>
-      {description && (
-        <p className="text-sm text-muted-foreground">
-          {description}
-        </p>
+    <div className={cn(
+      "flex flex-col space-y-2",
+      className
+    )}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {icon && (
+            <div className="flex-shrink-0">
+              {icon}
+            </div>
+          )}
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+            {description && (
+              <p className="text-sm text-muted-foreground">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
+        {actions && (
+          <div className="flex items-center gap-2">
+            {actions}
+          </div>
+        )}
+      </div>
+      {meta && (
+        <div className="mt-2">
+          {meta}
+        </div>
       )}
     </div>
   );
