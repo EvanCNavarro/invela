@@ -4,6 +4,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { DataTable } from "@/components/ui/data-table";
 import {
   Select,
   SelectContent,
@@ -271,7 +272,8 @@ export function DataTable<T extends Record<string, any>>({
       </TableBody>
     </Table>
   );
-}`
+}
+`
   }
 ];
 
