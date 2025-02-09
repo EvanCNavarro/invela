@@ -247,7 +247,7 @@ export default function NetworkPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-6">
         <PageHeader
-          title={`${currentCompany?.name || 'Loading...'}'s Network`}
+          title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
           description="View and manage companies in your network."
         />
 

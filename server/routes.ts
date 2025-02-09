@@ -131,7 +131,8 @@ export function registerRoutes(app: Express): Server {
       console.log('Debug - Current user:', req.user);
       console.log('Debug - User company ID:', req.user?.companyId);
 
-      if (!req.user?.companyId) {
+      // Handle companyId including 0 for Invela
+      if (typeof req.user?.companyId !== 'number') {
         console.log('Debug - No company ID associated with user');
         return res.status(404).json({ message: "No company associated with user" });
       }
