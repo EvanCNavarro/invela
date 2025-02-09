@@ -769,7 +769,10 @@ export default function PlaygroundPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {currentComponent.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between">
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between bg-muted/50 rounded-lg p-4"
+                      >
                         <div>
                           <p className="font-medium">{location.path}</p>
                           <p className="text-sm text-muted-foreground">{location.description}</p>
