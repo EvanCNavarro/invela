@@ -4,7 +4,13 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useMutation } from '@tanstack/react-query';
 
 interface DownloadButtonProps {
@@ -128,7 +134,7 @@ export const DownloadButtonPlayground = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="flex items-center gap-4">
         <div className="flex items-center space-x-2">
           <Switch
             id="real-download"
@@ -137,21 +143,17 @@ export const DownloadButtonPlayground = () => {
           />
           <Label htmlFor="real-download">Enable File</Label>
         </div>
-        <div>
-          <ToggleGroup
-            type="single"
-            value={displayMode}
-            onValueChange={(value) => value && setDisplayMode(value)}
-            className="flex"
-          >
-            <ToggleGroupItem value="both" aria-label="Both icon and text">
-              Icon & Text
-            </ToggleGroupItem>
-            <ToggleGroupItem value="icon" aria-label="Icon only">
-              Icon Only
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+
+        <Select value={displayMode} onValueChange={setDisplayMode}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select display mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="both">Icon & Text</SelectItem>
+            <SelectItem value="icon">Icon Only</SelectItem>
+            <SelectItem value="text">Text Only</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="space-y-4">
