@@ -934,7 +934,7 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent className="space-y-8">
                     {/* Controls Panel */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 pb-6 border-b">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4pb-6 border-b">
                       {/* Access Control */}
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">Access</p>
@@ -946,130 +946,141 @@ export default function PlaygroundPage() {
                             isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
                           )}
                           onClick={() => setIsTabDisabled(!isTabDisabled)}
+                          disabled={isTabDisabled}
                         >
                           {isTabDisabled ? "Locked" : "Enabled"}
                         </Button>
                       </div>
 
-                      {/* Icon Selection - Only show if not disabled */}
-                      {!isTabDisabled && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">Icon</p>
-                          <Select 
-                            value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
-                            onValueChange={(value: keyof typeof availableIcons) => {
-                              setSelectedIcon(availableIcons[value]);
-                            }}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select icon" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="HomeIcon">Home Icon</SelectItem>
-                              <SelectItem value="NetworkIcon">Network Icon</SelectItem>
-                              <SelectItem value="MousePointer2Icon">Mouse Pointer Icon</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
+                      {/* Icon Selection */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Icon</p>
+                        <Select 
+                          value={Object.keys(availableIcons).find(key => availableIcons[key] === selectedIcon) || 'HomeIcon'}
+                          onValueChange={(value: keyof typeof availableIcons) => {
+                            setSelectedIcon(availableIcons[value]);
+                          }}
+                          disabled={isTabDisabled}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select icon" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="HomeIcon">Home Icon</SelectItem>
+                            <SelectItem value="NetworkIcon">Network Icon</SelectItem>
+                            <SelectItem value="MousePointer2Icon">Mouse Pointer Icon</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                      {/* Tab Label Input - Only show if not disabled */}
-                      {!isTabDisabled && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">Label</p>
-                          <Input
-                            placeholder="Tab Label"
-                            value={tabLabel}
-                            onChange={(e) => setTabLabel(e.target.value)}
-                            className="w-full"
-                          />
-                        </div>
-                      )}
+                      {/* Tab Label Input */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Label</p>
+                        <Input
+                          placeholder="Tab Label"
+                          value={tabLabel}
+                          onChange={(e) => setTabLabel(e.target.value)}
+                          className="w-full"
+                          disabled={isTabDisabled}
+                        />
+                      </div>
 
-                      {/* Tab Variant - Only show if not disabled */}
-                      {!isTabDisabled && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">Variant</p>
-                          <Select 
-                            value={tabVariant} 
-                            onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select variant" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="default">Standard</SelectItem>
-                              <SelectItem value="invela">Invela Only</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
+                      {/* Tab Variant */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Variant</p>
+                        <Select 
+                          value={tabVariant} 
+                          onValueChange={(value: 'default' | 'invela') => setTabVariant(value)}
+                          disabled={isTabDisabled}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select variant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">Standard</SelectItem>
+                            <SelectItem value="invela">Invela Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                      {/* Tab State - Only show if not disabled */}
-                      {!isTabDisabled && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">State</p>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
+                      {/* Tab State */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">State</p>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start",
+                            isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                          )}
+                          onClick={() => setIsTabActive(!isTabActive)}
+                          disabled={isTabDisabled}
+                        >
+                          {isTabActive ? "Active" : "Inactive"}
+                        </Button>
+                      </div>
+
+                      {/* Indicators */}
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Indicators</p>
+                        <ToggleGroup 
+                          type="single" 
+                          value={
+                            tabNotifications 
+                              ? "notifications" 
+                              : tabPulsingDot 
+                                ? "pulse" 
+                                : "none"
+                          }
+                          onValueChange={(value) => {
+                            setTabNotifications(value === "notifications");
+                            setTabPulsingDot(value === "pulse");
+                          }}
+                          disabled={isTabDisabled}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
+                        >
+                          <ToggleGroupItem
+                            value="none"
+                            aria-label="Toggle none"
                             className={cn(
-                              "w-full justify-start",
-                              isTabActive ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
                             )}
-                            onClick={() => setIsTabActive(!isTabActive)}
                           >
-                            {isTabActive ? "Active" : "Inactive"}
-                          </Button>
-                        </div>
-                      )}
-
-                      {/* Indicators - Only show if not disabled */}
-                      {!isTabDisabled && (
-                        <div className="space-y-2">
-                          <p className="text-sm text-muted-foreground">Indicators</p>
-                          <ToggleGroup 
-                            type="single" 
-                            value={
-                              tabNotifications 
-                                ? "notifications" 
-                                : tabPulsingDot 
-                                  ? "pulse" 
-                                  : "none"
-                            }
-                            onValueChange={(value) => {
-                              setTabNotifications(value === "notifications");
-                              setTabPulsingDot(value === "pulse");
-                            }}
-                            className="flex flex-col gap-2"
+                            None
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="notifications"
+                            aria-label="Toggle notifications"
+                            className={cn(
+                              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                            )}
                           >
-                            <ToggleGroupItem value="none" className="w-full justify-start">
-                              None
-                            </ToggleGroupItem>
-                            <ToggleGroupItem 
-                              value="notifications" 
-                              className="w-full justify-start"
+                            <Badge 
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
-                              <Badge 
-                                variant="secondary"
-                                className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
-                              >
-                                5
-                              </Badge>
-                              Task Count
-                            </ToggleGroupItem>
-                            <ToggleGroupItem 
-                              value="pulse" 
-                              className="w-full justify-start"
-                            >
-                              <span className={cn(
-                                "h-2 w-2 rounded-full mr-2",
-                                "bg-primary"
-                              )} />
-                              Pulse Dot
-                            </ToggleGroupItem>
-                          </ToggleGroup>
-                        </div>
-                      )}
+                              5
+                            </Badge>
+                            Tasks
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="pulse"
+                            aria-label="Toggle pulse"
+                            className={cn(
+                              "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                            )}
+                          >
+                            <span className={cn(
+                              "h-2 w-2 rounded-full mr-2",
+                              "bg-primary"
+                            )} />
+                            Pulse
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
                     </div>
 
                     {/* Preview Area */}
@@ -1094,6 +1105,7 @@ export default function PlaygroundPage() {
                         />
                       </div>
                     </div>
+
                   </CardContent>
                 </Card>
               )}
