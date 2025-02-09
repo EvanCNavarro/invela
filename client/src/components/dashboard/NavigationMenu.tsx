@@ -32,7 +32,7 @@ export function NavigationMenu() {
             variant="ghost"
             className={cn(
               "w-full justify-start gap-4",
-              location === href && "bg-muted"
+              location === href && "bg-emerald-950/5"
             )}
           >
             <Icon className="h-5 w-5" />
