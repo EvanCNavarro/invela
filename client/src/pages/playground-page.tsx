@@ -26,7 +26,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
-  ChevronsRight
+  ChevronsRight,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -77,9 +79,11 @@ interface SidebarProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
   isNewUser?: boolean;
+  notificationCount?: number;
+  showPulsingDot?: boolean;
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
+export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false }: SidebarProps) {
   const menuItems = [
     { 
       icon: HomeIcon,
@@ -805,66 +809,81 @@ export default function PlaygroundPage() {
                     <CardTitle className="text-sm font-bold">Preview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-8">
-                      <Tabs defaultValue="default" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="default">Standard Navigation</TabsTrigger>
-                          <TabsTrigger value="invela">Invela-Only Navigation</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="default" className="min-h-[400px] relative">
-                          <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
-                            <div className="relative h-full">
-                              <div className={cn(
-                                "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                                isExpanded ? "w-64" : "w-20"
-                              )}>
-                                <Sidebar
-                                  isExpanded={isExpanded}
-                                  onToggleExpanded={() => setIsExpanded(!isExpanded)}
-                                  isNewUser={false}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </TabsContent>
-                        <TabsContent value="invela" className="min-h-[400px] relative">
-                          <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
-                            <div className="relative h-full">
-                              <div className={cn(
-                                "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                                isExpanded ? "w-64" : "w-20"
-                              )}>
-                                <Sidebar
-                                  isExpanded={isExpanded}
-                                  onToggleExpanded={() => setIsExpanded(!isExpanded)}
-                                  isNewUser={false}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
+                    <div className="space-y-6">
+                      {/* Control buttons */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className={cn(
+                            "gap-2",
+                            isExpanded ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                          )}
+                          onClick={() => setIsExpanded(!isExpanded)}
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronLeftIcon className="h-4 w-4" />
+                              <span>Collapsed</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronRightIcon className="h-4 w-4" />
+                              <span>Expanded</span>
+                            </>
+                          )}
+                        </Button>
 
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setIsExpanded(!isExpanded)}
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className={cn(
+                            "gap-2",
+                            notificationCount > 0 ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                          )}
+                          onClick={() => setNotificationCount(prev => prev > 0 ? 0 : 5)}
+                        >
+                          <Badge 
+                            variant="secondary"
+                            className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
                           >
-                            Toggle Expanded
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setNotificationCount(prev => prev + 1)}
-                          >
-                            Add Notification
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setPulsingDot(!pulsingDot)}
-                          >
-                            Toggle Pulsing Dot
-                          </Button>
+                            {notificationCount}
+                          </Badge>
+                          <span>Task Notifications</span>
+                        </Button>
+
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className={cn(
+                            "gap-2",
+                            pulsingDot ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
+                          )}
+                          onClick={() => setPulsingDot(!pulsingDot)}
+                        >
+                          <span className={cn(
+                            "h-2 w-2 rounded-full",
+                            pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                          )} />
+                          <span>Pulsing Dot</span>
+                        </Button>
+                      </div>
+
+                      {/* Preview container */}
+                      <div className="w-full h-[400px] bg-muted/50 rounded-lg p-4 overflow-hidden">
+                        <div className="relative h-full">
+                          <div className={cn(
+                            "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                            isExpanded ? "w-64" : "w-20"
+                          )}>
+                            <Sidebar
+                              isExpanded={isExpanded}
+                              onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                              isNewUser={false}
+                              notificationCount={notificationCount}
+                              showPulsingDot={pulsingDot}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
