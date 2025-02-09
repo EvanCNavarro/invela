@@ -10,7 +10,7 @@ import {
   LockIcon,
   FileIcon,
   Network,
-  EyeOffIcon
+  MousePointer2Icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -80,7 +80,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   // Add Playground menu item only for Invela users
   if (company?.category === 'Invela') {
     menuItems.push({
-      icon: EyeOffIcon,
+      icon: MousePointer2Icon,
       label: "Playground",
       href: "/playground",
       locked: false,
@@ -121,18 +121,18 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                   !isExpanded && "justify-center",
                   isActive 
                     ? isPlayground
-                      ? "bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300"
+                      ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-300"
                       : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
                     : isDisabled
                       ? "opacity-50 cursor-not-allowed"
                       : isPlayground
-                        ? "hover:bg-purple-50/80 hover:text-purple-600 dark:hover:bg-purple-500/10 dark:hover:text-purple-300 cursor-pointer"
+                        ? "hover:bg-indigo-50/80 hover:text-indigo-600 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300 cursor-pointer"
                         : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
                 )}>
                   <Icon className={cn(
                     "h-5 w-5",
                     isActive && "stroke-[2.5]",
-                    isPlayground && "text-purple-500 dark:text-purple-400"
+                    isPlayground && "text-indigo-500 dark:text-indigo-400"
                   )} />
                   {isExpanded && (
                     <>
@@ -140,7 +140,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
                         "ml-3 flex-1",
                         isActive 
                           ? isPlayground
-                            ? "font-semibold text-purple-600 dark:text-purple-300"
+                            ? "font-semibold text-indigo-600 dark:text-indigo-300"
                             : "font-semibold"
                           : "text-foreground/90 dark:text-foreground/80"
                       )}>
