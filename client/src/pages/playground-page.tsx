@@ -52,336 +52,7 @@ import {
   ChevronsRight,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  ArrowUpRight
 } from "lucide-react";
-
-
-// Define status badge variants once
-const getStatusBadgeVariant = (status: string) => {
-  switch (status?.toLowerCase()) {
-    case 'active':
-      return 'default';
-    case 'pending':
-      return 'secondary';
-    case 'completed':
-      return 'success';
-    case 'error':
-      return 'destructive';
-    default:
-      return 'outline';
-  }
-};
-
-// Sort components alphabetically and set LoadingSpinner as default
-const components = [
-  {
-    id: "data-table",
-    name: "Data Table",
-    usageLocations: [
-      { path: "/file-vault", description: "File management list", viewInApp: true },
-      { path: "/network", description: "Company network table", viewInApp: true },
-      { path: "/insights", description: "Analytics data grid", viewInApp: true }
-    ],
-    references: "Table, TableHeader, TableBody, TableRow, TableCell",
-    referencedAs: "@/components/ui/data-table",
-    code: `// Data Table component code example
-interface DataTableProps<T> {
-  data: T[];
-  columns: {
-    key: string;
-    header: string;
-    sortable?: boolean;
-    type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
-  }[];
-  isLoading?: boolean;
-  // ... other props
-}
-
-export function DataTable<T extends Record<string, any>>({ 
-  data,
-  columns,
-  isLoading,
-  // ... other props
-}: DataTableProps<T>) {
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        {/* Header implementation */}
-      </TableHeader>
-      <TableBody>
-        {/* Body implementation */}
-      </TableBody>
-    </Table>
-  );
-}
-`
-  },
-  {
-    id: "loading-spinner",
-    name: "Loading Spinner",
-    usageLocations: [
-      { path: "/", description: "During data fetch", viewInApp: true },
-      { path: "/insights", description: "Chart loading states", viewInApp: true },
-      { path: "/network", description: "Company list loading", viewInApp: true }
-    ],
-    references: "LoadingSpinner",
-    referencedAs: "@/components/ui/loading-spinner",
-    code: `interface LoadingSpinnerProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-}
-
-export function LoadingSpinner({ 
-  className, 
-  size = "md" 
-}: LoadingSpinnerProps) {
-  return (
-    <div className={cn(
-      "flex items-center justify-center",
-      size === "sm" && "h-4 w-4",
-      size === "md" && "h-8 w-8",
-      size === "lg" && "h-12 w-12",
-      className
-    )}>
-      {/* SVG implementation */}
-    </div>
-  );
-}
-`
-  },
-  {
-    id: "page-header",
-    name: "Page Header",
-    usageLocations: [
-      { path: "/file-vault", description: "File management header", viewInApp: true },
-      { path: "/insights", description: "Analytics dashboard header", viewInApp: true },
-      { path: "/network", description: "Network view header", viewInApp: true }
-    ],
-    references: "PageHeader",
-    referencedAs: "@/components/ui/page-header",
-    code: `interface PageHeaderProps {
-  title: string;
-  description?: string;
-  className?: string;
-}
-
-export function PageHeader({ 
-  title, 
-  description, 
-  className 
-}: PageHeaderProps) {
-  return (
-    <div className={cn("flex flex-col", className)}>
-      <h1 className="text-2xl font-semibold mb-1">
-        {title}
-      </h1>
-      {description && (
-        <p className="text-sm text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-`
-  },
-  {
-    id: "risk-meter",
-    name: "Risk Meter",
-    usageLocations: [
-      { path: "/", description: "Company risk overview", viewInApp: true },
-      { path: "/network/company/:id", description: "Detailed company risk", viewInApp: true },
-      { path: "/insights", description: "Risk analytics", viewInApp: true }
-    ],
-    references: "RiskMeter",
-    referencedAs: "@/components/dashboard/RiskMeter",
-    code: `interface RiskMeterProps {
-  score: number;
-  className?: string;
-}
-
-export function RiskMeter({ 
-  score = 0, 
-  className 
-}: RiskMeterProps) {
-  const normalizedScore = Math.min(
-    Math.max(0, score), 
-    1500
-  );
-
-  return (
-    <div className={cn(
-      "flex flex-col items-center justify-center py-4",
-      className
-    )}>
-      {/* Implementation */}
-    </div>
-  );
-}
-`
-  },
-  {
-    id: "sidebar-menu",
-    name: "Sidebar Menu",
-    usageLocations: [
-      { path: "/", description: "Main dashboard navigation", viewInApp: true },
-      { path: "/network", description: "Network view navigation", viewInApp: true },
-      { path: "/insights", description: "Analytics navigation", viewInApp: true }
-    ],
-    references: "Sidebar",
-    referencedAs: "@/components/dashboard/Sidebar",
-    code: `interface SidebarProps {
-  isExpanded: boolean;
-  onToggleExpanded: () => void;
-  isNewUser?: boolean;
-  notificationCount?: number;
-  showPulsingDot?: boolean;
-  showInvelaTabs?: boolean;
-}
-
-export function Sidebar({ 
-  isExpanded,
-  onToggleExpanded,
-  // ... other props
-}: SidebarProps) {
-  return (
-    <div className={cn(
-      "h-full bg-background/95",
-      isExpanded ? "w-64" : "w-20"
-    )}>
-      {/* Implementation */}
-    </div>
-  );
-}
-`
-  },
-  {
-    id: "sidebar-tab",
-    name: "Sidebar Tab",
-    usageLocations: [
-      { path: "/", description: "Main navigation menu items", viewInApp: true },
-      { path: "/network", description: "Network navigation items", viewInApp: true },
-      { path: "/insights", description: "Analytics navigation items", viewInApp: true }
-    ],
-    references: "SidebarTab",
-    referencedAs: "@/components/dashboard/SidebarTab",
-    code: `interface SidebarTabProps {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  isActive: boolean;
-  isExpanded: boolean;
-  isDisabled?: boolean;
-  notificationCount?: number;
-  showPulsingDot?: boolean;
-  variant?: 'default' | 'invela';
-  isPlayground?: boolean;
-  onClick?: () => void;
-}
-
-export function SidebarTab({
-  icon: Icon,
-  label,
-  href,
-  isActive,
-  isExpanded,
-  isDisabled = false,
-  notificationCount = 0,
-  showPulsingDot = false,
-  variant = 'default',
-  isPlayground = false,
-  onClick
-}: SidebarTabProps) {
-  const content = (
-    <div
-      className={cn(
-        "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-        "transition-all duration-200 relative",
-        !isExpanded && "justify-center",
-        isActive
-          ? variant === 'invela'
-            ? "bg-[#E6F5F3] text-[#079669] dark:bg-emerald-500/20 dark:text-emerald-300"
-            : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
-          : isDisabled
-            ? "opacity-50 cursor-not-allowed"
-            : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
-      )}
-      onClick={(e) => {
-        if (isPlayground) {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-    >
-      <Icon 
-        className={cn(
-          "h-5 w-5",
-          isActive && variant === 'invela'
-            ? "stroke-[2.5] text-[#079669]"
-            : isActive && "stroke-[2.5]"
-        )} 
-      />
-      {isExpanded && (
-        <>
-          <span className={cn(
-            "ml-3 flex-1",
-            isActive && variant === 'invela'
-              ? "font-semibold text-[#079669] dark:text-emerald-300"
-              : isActive
-                ? "font-semibold"
-                : "text-foreground/90 dark:text-foreground/80"
-          )}>
-            {label}
-          </span>
-          {notificationCount > 0 && (
-            <Badge
-              variant={isActive ? "default" : "secondary"}
-              className={cn(
-                "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
-                "rounded-md text-xs font-medium",
-                isActive
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              )}
-            >
-              {notificationCount}
-            </Badge>
-          )}
-          {showPulsingDot && (
-            <span className={cn(
-              "ml-2 h-5 w-5 flex items-center justify-center",
-              "before:absolute before:h-2 before:w-2",
-              "before:rounded-full before:bg-primary",
-              "after:absolute after:h-2 after:w-2",
-              "after:rounded-full after:bg-primary/40",
-              "after:animate-ping"
-            )} />
-          )}
-          {isDisabled && (
-            <LockIcon className="h-4 w-4 text-muted-foreground" />
-          )}
-        </>
-      )}
-    </div>
-  );
-
-  if (isPlayground) {
-    return <div>{content}</div>;
-  }
-
-  return (
-    <Link href={isDisabled ? "#" : href}>
-      {content}
-    </Link>
-  );
-}
-`
-  }
-].sort((a, b) => a.name.localeCompare(b.name));
 
 // Update availableIcons mapping to include all options in sidebar order with proper labels
 const availableIcons: Record<string, { icon: React.ElementType, label: string }> = {
@@ -394,14 +65,37 @@ const availableIcons: Record<string, { icon: React.ElementType, label: string }>
   Locked: { icon: LockIcon, label: "Locked" }
 };
 
+// Add helper functions for handling lock state
+const handleLockState = (locked: boolean, setters: {
+  setIsTabDisabled: (value: boolean) => void,
+  setSelectedIcon: (icon: React.ElementType) => void,
+  setTabLabel: (value: string) => void,
+  setIsTabActive: (value: boolean) => void,
+  setTabVariant: (value: 'default' | 'invela') => void,
+  setTabNotifications: (value: boolean) => void,
+  setTabPulsingDot: (value: boolean) => void,
+}) => {
+  const { setIsTabDisabled, setSelectedIcon, setTabLabel, setIsTabActive, setTabVariant, setTabNotifications, setTabPulsingDot } = setters;
+
+  setIsTabDisabled(locked);
+  if (locked) {
+    setSelectedIcon(availableIcons.Locked.icon);
+    setTabLabel("Locked");
+    setIsTabActive(false);
+    setTabVariant('default');
+    setTabNotifications(false);
+    setTabPulsingDot(false);
+  }
+};
+
 export default function PlaygroundPage() {
-  // Set LoadingSpinner as default component
+  // Component state management
   const [selectedComponent, setSelectedComponent] = useState("loading-spinner");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
 
-  // Add new state for sidebar playground
+  // Sidebar playground state
   const [isExpanded, setIsExpanded] = useState(true);
   const [notificationCount, setNotificationCount] = useState(0);
   const [pulsingDot, setPulsingDot] = useState(false);
@@ -417,7 +111,31 @@ export default function PlaygroundPage() {
   const [tabPulsingDot, setTabPulsingDot] = useState(false);
   const [tabNotifications, setTabNotifications] = useState(false);
 
-  // Generate sample data for pagination testing
+  // Handle functions for SidebarTab controls
+  const handleReset = () => {
+    setIsTabDisabled(false);
+    setSelectedIcon(availableIcons.Dashboard.icon);
+    setTabLabel("Dashboard");
+    setIsTabActive(false);
+    setTabVariant('default');
+    setTabNotifications(false);
+    setTabPulsingDot(false);
+  };
+
+  const handleAccessToggle = () => {
+    const newLockedState = !isTabDisabled;
+    handleLockState(newLockedState, {
+      setIsTabDisabled,
+      setSelectedIcon,
+      setTabLabel,
+      setIsTabActive,
+      setTabVariant,
+      setTabNotifications,
+      setTabPulsingDot
+    });
+  };
+
+  // When rendering the sidebar tab preview section
   const generateSampleData = (count: number) => {
     return Array.from({ length: count }, (_, i) => ({
       id: i + 1,
@@ -922,19 +640,11 @@ export default function PlaygroundPage() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="textsm font-bold">Preview</CardTitle>
+                      <CardTitle className="text-sm font-bold">Preview</CardTitle>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setIsTabDisabled(false);
-                          setSelectedIcon(availableIcons.Dashboard.icon);
-                          setTabLabel("Dashboard");
-                          setIsTabActive(false);
-                          setTabVariant('default');
-                          setTabNotifications(false);
-                          setTabPulsingDot(false);
-                        }}
+                        onClick={handleReset}
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reset
@@ -954,7 +664,7 @@ export default function PlaygroundPage() {
                             "w-full justify-start",
                             isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
                           )}
-                          onClick={() => setIsTabDisabled(!isTabDisabled)}
+                          onClick={handleAccessToggle}
                         >
                           {isTabDisabled ? "Locked" : "Enabled"}
                         </Button>
@@ -972,10 +682,19 @@ export default function PlaygroundPage() {
                           ) || 'Dashboard'}
                           onValueChange={(value) => {
                             const iconData = availableIcons[value as keyof typeof availableIcons];
-                            setSelectedIcon(iconData.icon);
-                            setTabLabel(iconData.label);
                             if (value === 'Locked') {
-                              setIsTabDisabled(true);
+                              handleLockState(true, {
+                                setIsTabDisabled,
+                                setSelectedIcon,
+                                setTabLabel,
+                                setIsTabActive,
+                                setTabVariant,
+                                setTabNotifications,
+                                setTabPulsingDot
+                              });
+                            } else {
+                              setSelectedIcon(iconData.icon);
+                              setTabLabel(iconData.label);
                             }
                           }}
                           disabled={isTabDisabled && selectedIcon !== availableIcons.Locked.icon}
@@ -995,7 +714,7 @@ export default function PlaygroundPage() {
                               }}
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="min-w-[200px]">
+                          <SelectContent>
                             {Object.entries(availableIcons).map(([key, { icon: Icon, label }]) => (
                               <SelectItem key={key} value={key}>
                                 <div className="flex items-center gap-2">
@@ -1008,12 +727,9 @@ export default function PlaygroundPage() {
                         </Select>
                       </div>
 
-                      {/* Tab Label Input */}
+                      {/* Label Input */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Label</p>
+                        <p className="text-sm font-medium text-foreground">Label</p>
                         <Input
                           placeholder="Tab Label"
                           value={tabLabel}
@@ -1080,8 +796,10 @@ export default function PlaygroundPage() {
                                 : "none"
                           }
                           onValueChange={(value) => {
-                            setTabNotifications(value === "notifications");
-                            setTabPulsingDot(value === "pulse");
+                            if (!isTabDisabled) {
+                              setTabNotifications(value === "notifications");
+                              setTabPulsingDot(value === "pulse");
+                            }
                           }}
                           disabled={isTabDisabled}
                           className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full"
@@ -1281,15 +999,7 @@ export default function PlaygroundPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => {
-                          setIsTabDisabled(false);
-                          setSelectedIcon(availableIcons.Dashboard.icon);
-                          setTabLabel("Dashboard");
-                          setIsTabActive(false);
-                          setTabVariant('default');
-                          setTabNotifications(false);
-                          setTabPulsingDot(false);
-                        }}
+                        onClick={handleReset}
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reset
@@ -1309,7 +1019,7 @@ export default function PlaygroundPage() {
                             "w-full justify-start",
                             isTabDisabled ? "bg-primary/10 text-primary hover:bg-primary/20" : ""
                           )}
-                          onClick={() => setIsTabDisabled(!isTabDisabled)}
+                          onClick={handleAccessToggle}
                         >
                           {isTabDisabled ? "Locked" : "Enabled"}
                         </Button>
@@ -1327,10 +1037,19 @@ export default function PlaygroundPage() {
                           ) || 'Dashboard'}
                           onValueChange={(value) => {
                             const iconData = availableIcons[value as keyof typeof availableIcons];
-                            setSelectedIcon(iconData.icon);
-                            setTabLabel(iconData.label);
                             if (value === 'Locked') {
-                              setIsTabDisabled(true);
+                              handleLockState(true, {
+                                setIsTabDisabled,
+                                setSelectedIcon,
+                                setTabLabel,
+                                setIsTabActive,
+                                setTabVariant,
+                                setTabNotifications,
+                                setTabPulsingDot
+                              });
+                            } else {
+                              setSelectedIcon(iconData.icon);
+                              setTabLabel(iconData.label);
                             }
                           }}
                           disabled={isTabDisabled && selectedIcon !== availableIcons.Locked.icon}
@@ -1350,7 +1069,7 @@ export default function PlaygroundPage() {
                               }}
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="min-w-[200px]">
+                          <SelectContent>
                             {Object.entries(availableIcons).map(([key, { icon: Icon, label }]) => (
                               <SelectItem key={key} value={key}>
                                 <div className="flex items-center gap-2">
@@ -1363,12 +1082,9 @@ export default function PlaygroundPage() {
                         </Select>
                       </div>
 
-                      {/* Tab Label Input */}
+                      {/* Label Input */}
                       <div className="space-y-2 min-w-[200px] flex-1">
-                        <p className={cn(
-                          "text-sm font-medium",
-                          isTabDisabled ? "text-muted-foreground" : "text-foreground"
-                        )}>Label</p>
+                        <p className="text-sm font-medium text-foreground">Label</p>
                         <Input
                           placeholder="Tab Label"
                           value={tabLabel}
@@ -1435,8 +1151,10 @@ export default function PlaygroundPage() {
                                 : "none"
                           }
                           onValueChange={(value) => {
-                            setTabNotifications(value === "notifications");
-                            setTabPulsingDot(value === "pulse");
+                            if (!isTabDisabled) {
+                              setTabNotifications(value === "notifications");
+                              setTabPulsingDot(value === "pulse");
+                            }
                           }}
                           disabled={isTabDisabled}
                           className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full"
