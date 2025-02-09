@@ -397,17 +397,7 @@ export default function PlaygroundPage() {
             >
               <SelectTrigger className="w-[280px]">
                 <SelectValue placeholder="Select a component">
-                  {(props: { value: string }) => {
-                    const iconData = availableIcons[props.value as keyof typeof availableIcons];
-                    if (!iconData) return "Select icon";
-                    const IconComponent = iconData.icon;
-                    return (
-                      <div className="flex items-center gap-2">
-                        <IconComponent className="h-4 w-4" />
-                        <span>{iconData.label}</span>
-                      </div>
-                    );
-                  }}
+                  {components.find(c => c.id === selectedComponent)?.name || "Select a component"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
@@ -607,17 +597,7 @@ export default function PlaygroundPage() {
                           <SelectTrigger className="w-[130px]">
                             <ListIcon className="h-4 w-4 mr-2" />
                             <SelectValue placeholder="Show items">
-                              {(props: { value: string }) => {
-                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
-                                if (!iconData) return "Select icon";
-                                const IconComponent = iconData.icon;
-                                return (
-                                  <div className="flex items-center gap-2">
-                                    <IconComponent className="h-4 w-4" />
-                                    <span>{iconData.label}</span>
-                                  </div>
-                                );
-                              }}
+                              {`${itemCount} items`}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -946,9 +926,11 @@ export default function PlaygroundPage() {
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue>
-                              {(props: { value: string }) => {
-                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
-                                if (!iconData) return "Select icon";
+                              {(() => {
+                                const iconKey = Object.keys(availableIcons).find(
+                                  key => availableIcons[key].icon === selectedIcon
+                                ) || 'Dashboard';
+                                const iconData = availableIcons[iconKey as keyof typeof availableIcons];
                                 const IconComponent = iconData.icon;
                                 return (
                                   <div className="flex items-center gap-2">
@@ -956,7 +938,7 @@ export default function PlaygroundPage() {
                                     <span>{iconData.label}</span>
                                   </div>
                                 );
-                              }}
+                              })()}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -1361,9 +1343,11 @@ export default function PlaygroundPage() {
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue>
-                              {(props: { value: string }) => {
-                                const iconData = availableIcons[props.value as keyof typeof availableIcons];
-                                if (!iconData) return "Select icon";
+                              {(() => {
+                                const iconKey = Object.keys(availableIcons).find(
+                                  key => availableIcons[key].icon === selectedIcon
+                                ) || 'Dashboard';
+                                const iconData = availableIcons[iconKey as keyof typeof availableIcons];
                                 const IconComponent = iconData.icon;
                                 return (
                                   <div className="flex items-center gap-2">
@@ -1371,7 +1355,7 @@ export default function PlaygroundPage() {
                                     <span>{iconData.label}</span>
                                   </div>
                                 );
-                              }}
+                              })()}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -1563,7 +1547,840 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               )}
+              {currentComponent.id === "sidebar-menu" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-8">
 
+                      <div className="w-[300px] h-[600px] bg-muted/50 rounded-lg p-4 overflow-hidden">
+                        <div className="relative h-full">
+                          <div
+                            className={cn(
+                              "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                              isExpanded ? "w-64" : "w-20"
+                            )}
+                          >
+                            <Sidebar
+                              isExpanded={isExpanded}
+                              onToggleExpanded={() =>
+                                setIsExpanded(!isExpanded)
+                              }
+                              isNewUser={false}
+                              notificationCount={
+                                showNotifications ? notificationCount : 0
+                              }
+                              showPulsingDot={pulsingDot}
+                              showInvelaTabs={showInvelaTabs}
+                              isPlayground={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-6">
+                        <div className="space-y-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              isExpanded
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setIsExpanded(!isExpanded)}
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronLeftIcon className="h-4 w-4 mr-2" />
+                                <span>Collapse</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronRightIcon className="h-4 w-4 mr-2" />
+                                <span>Expand</span>
+                              </>
+                            )}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showNotifications
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => {
+                              setShowNotifications(!showNotifications);
+                              if (!showNotifications) {
+                                setNotificationCount(5);
+                              } else {
+                                setNotificationCount(0);
+                              }
+                            }}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            >
+                              {showNotifications ? 5 : 0}
+                            </Badge>
+                            <span>Task Notifications</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              pulsingDot
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setPulsingDot(!pulsingDot)}
+                          >
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                              )}
+                            />
+                            <span>Pulsing Dot</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showInvelaTabs
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setShowInvelaTabs(!showInvelaTabs)}
+                          >
+                            {showInvelaTabs ? (
+                              <span>Hide Invela-Only Tabs</span>
+                            ) : (
+                              <span>Show Invela-Only Tabs</span>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "sidebar-tab" && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold">
+                        Preview
+                      </CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReset}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    {/* Controls Panel */}
+                    <div className="flex flex-wrap gap-4 pb-6 border-b">
+                      {/* Access Control */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Access
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start",
+                            isTabDisabled
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
+                          )}
+                          onClick={handleAccessToggle}
+                        >
+                          {isTabDisabled ? "Locked" : "Enabled"}
+                        </Button>
+                      </div>
+
+                      {/* Icon Selection */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
+                          )}
+                        >
+                          Icon
+                        </p>
+                        <Select
+                          value={
+                            Object.keys(availableIcons).find(
+                              (key) =>
+                                availableIcons[key].icon === selectedIcon
+                            ) || "Dashboard"
+                          }
+                          onValueChange={(value) => {
+                            const iconData = availableIcons[
+                              value as keyof typeof availableIcons
+                            ];
+                            if (value === "Locked") {
+                              handleLockState(true, {
+                                setIsTabDisabled,
+                                setSelectedIcon,
+                                setTabLabel,
+                                setIsTabActive,
+                                setTabVariant,
+                                setTabNotifications,
+                                setTabPulsingDot,
+                              });
+                            } else {
+                              setSelectedIcon(iconData.icon);
+                              setTabLabel(iconData.label);
+                            }
+                          }}
+                          disabled={
+                            isTabDisabled &&
+                            selectedIcon !== availableIcons.Locked.icon
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {(() => {
+                                const iconKey = Object.keys(availableIcons).find(
+                                  key => availableIcons[key].icon === selectedIcon
+                                ) || 'Dashboard';
+                                const iconData = availableIcons[iconKey as keyof typeof availableIcons];
+                                const IconComponent = iconData.icon;
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>{iconData.label}</span>
+                                  </div>
+                                );
+                              })()}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(availableIcons).map(
+                              ([key, { icon: Icon, label }]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    <span>{label}</span>
+                                  </div>
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Label Input */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Label
+                        </p>
+                        <Input
+                          placeholder="Tab Label"
+                          value={tabLabel}
+                          onChange={(e) => setTabLabel(e.target.value)}
+                          className="w-full"
+                          disabled={isTabDisabled}
+                        />
+                      </div>
+
+                      {/* Tab Variant */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Variant
+                        </p>
+                        <Select
+                          value={tabVariant}
+                          onValueChange={(
+                            value: "default" | "invela"
+                          ) => setTabVariant(value)}
+                          disabled={isTabDisabled}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select variant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">Standard</SelectItem>
+                            <SelectItem value="invela">Invela Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Tab State */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          State</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start",
+                            isTabActive
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
+                          )}
+                          onClick={() => setIsTabActive(!isTabActive)}
+                          disabled={isTabDisabled}
+                        >
+                          {isTabActive ? "Active" : "Inactive"}
+                        </Button>
+                      </div>
+
+                      {/* Indicators */}
+                      <div className="space-y-2 min-w-[300px] flex-2">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Indicators
+                        </p>
+                        <ToggleGroup
+                          type="single"
+                          value={
+                            tabNotifications
+                              ? "notifications"
+                              : tabPulsingDot
+                              ? "pulse"
+                              : "none"
+                          }
+                          onValueChange={(value) => {
+                            if (!isTabDisabled) {
+                              setTabNotifications(value === "notifications");
+                              setTabPulsingDot(value === "pulse");
+                            }
+                          }}
+                          disabled={isTabDisabled}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full"
+                        >
+                          <ToggleGroupItem
+                            value="none"
+                            aria-label="Toggle none"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            None
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="notifications"
+                            aria-label="Toggle notifications"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            >
+                              5
+                            </Badge>
+                            Tasks
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="pulse"
+                            aria-label="Toggle pulse"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                "bg-primary"
+                              )}
+                            />
+                            Pulse
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
+                    </div>
+
+                    {/* Preview Area */}
+                    <div className="w-[300px] mx-auto bg-background rounded-lg border">
+                      <div className="p-4">
+                        <SidebarTab
+                          icon={selectedIcon}
+                          label={tabLabel}
+                          href="#"
+                          isActive={isTabActive}
+                          isExpanded={true}
+                          isDisabled={isTabDisabled}
+                          notificationCount={tabNotifications ? 5 : 0}
+                          showPulsingDot={tabPulsingDot}
+                          variant={tabVariant}
+                          isPlayground={true}
+                          onClick={() => {
+                            if (!isTabDisabled) {
+                              setIsTabActive(true);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              {currentComponent.id === "sidebar-menu" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-8">
+
+                      <div className="w-[300px] h-[600px] bg-muted/50rounded-lg p-4 overflow-hidden">
+                        <div className="relative h-full">
+                          <div
+                            className={cn(
+                              "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                              isExpanded ? "w-64" : "w-20"
+                            )}
+                          >
+                            <Sidebar
+                              isExpanded={isExpanded}
+                              onToggleExpanded={() =>
+                                setIsExpanded(!isExpanded)
+                              }
+                              isNewUser={false}
+                              notificationCount={
+                                showNotifications ? notificationCount : 0
+                              }
+                              showPulsingDot={pulsingDot}
+                              showInvelaTabs={showInvelaTabs}
+                              isPlayground={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 space-y-6">
+                        <div className="space-y-4">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              isExpanded
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setIsExpanded(!isExpanded)}
+                          >
+                            {isExpanded ? (
+                              <>
+                                <ChevronLeftIcon className="h-4 w-4 mr-2" />
+                                <span>Collapse</span>
+                              </>
+                            ) : (
+                              <>
+                                <ChevronRightIcon className="h-4 w-4 mr-2" />
+                                <span>Expand</span>
+                              </>
+                            )}
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showNotifications
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => {
+                              setShowNotifications(!showNotifications);
+                              if (!showNotifications) {
+                                setNotificationCount(5);
+                              } else {
+                                setNotificationCount(0);
+                              }
+                            }}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            >
+                              {showNotifications ? 5 : 0}
+                            </Badge>
+                            <span>Task Notifications</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              pulsingDot
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setPulsingDot(!pulsingDot)}
+                          >
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
+                              )}
+                            />
+                            <span>Pulsing Dot</span>
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-[200px] justify-start",
+                              showInvelaTabs
+                                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                                : ""
+                            )}
+                            onClick={() => setShowInvelaTabs(!showInvelaTabs)}
+                          >
+                            {showInvelaTabs ? (
+                              <span>Hide Invela-Only Tabs</span>
+                            ) : (
+                              <span>Show Invela-Only Tabs</span>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "sidebar-tab" && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-bold">
+                        Preview
+                      </CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleReset}
+                      >
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Reset
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-8">
+                    {/* Controls Panel */}
+                    <div className="flex flex-wrap gap-4 pb-6 border-b">
+                      {/* Access Control */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Access
+                        </p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start",
+                            isTabDisabled
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
+                          )}
+                          onClick={handleAccessToggle}
+                        >
+                          {isTabDisabled ? "Locked" : "Enabled"}
+                        </Button>
+                      </div>
+
+                      {/* Icon Selection */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
+                          )}
+                        >
+                          Icon
+                        </p>
+                        <Select
+                          value={
+                            Object.keys(availableIcons).find(
+                              (key) =>
+                                availableIcons[key].icon === selectedIcon
+                            ) || "Dashboard"
+                          }
+                          onValueChange={(value) => {
+                            const iconData = availableIcons[
+                              value as keyof typeof availableIcons
+                            ];
+                            if (value === "Locked") {
+                              handleLockState(true, {
+                                setIsTabDisabled,
+                                setSelectedIcon,
+                                setTabLabel,
+                                setIsTabActive,
+                                setTabVariant,
+                                setTabNotifications,
+                                setTabPulsingDot,
+                              });
+                            } else {
+                              setSelectedIcon(iconData.icon);
+                              setTabLabel(iconData.label);
+                            }
+                          }}
+                          disabled={
+                            isTabDisabled &&
+                            selectedIcon !== availableIcons.Locked.icon
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {(() => {
+                                const iconKey = Object.keys(availableIcons).find(
+                                  key => availableIcons[key].icon === selectedIcon
+                                ) || 'Dashboard';
+                                const iconData = availableIcons[iconKey as keyof typeof availableIcons];
+                                const IconComponent = iconData.icon;
+                                return (
+                                  <div className="flex items-center gap-2">
+                                    <IconComponent className="h-4 w-4" />
+                                    <span>{iconData.label}</span>
+                                  </div>
+                                );
+                              })()}
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(availableIcons).map(
+                              ([key, { icon: Icon, label }]) => (
+                                <SelectItem key={key} value={key}>
+                                  <div className="flex items-center gap-2">
+                                    <Icon className="h-4 w-4" />
+                                    <span>{label}</span>
+                                  </div>
+                                </SelectItem>
+                              )
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Label Input */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Label
+                        </p>
+                        <Input
+                          placeholder="Tab Label"
+                          value={tabLabel}
+                          onChange={(e) => setTabLabel(e.target.value)}
+                          className="w-full"
+                          disabled={isTabDisabled}
+                        />
+                      </div>
+
+                      {/* Tab Variant */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Variant
+                        </p>
+                        <Select
+                          value={tabVariant}
+                          onValueChange={(
+                            value: "default" | "invela"
+                          ) => setTabVariant(value)}
+                          disabled={isTabDisabled}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select variant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">Standard</SelectItem>
+                            <SelectItem value="invela">Invela Only</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Tab State */}
+                      <div className="space-y-2 min-w-[200px] flex-1">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          State</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start",
+                            isTabActive
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : ""
+                          )}
+                          onClick={() => setIsTabActive(!isTabActive)}
+                          disabled={isTabDisabled}
+                        >
+                          {isTabActive ? "Active" : "Inactive"}
+                        </Button>
+                      </div>
+
+                      {/* Indicators */}
+                      <div className="space-y-2 min-w-[300px] flex-2">
+                        <p
+                          className={cn(
+                            "text-sm font-medium",
+                            isTabDisabled
+                              ? "text-muted-foreground"
+                              : "text-foreground"
+                          )}
+                        >
+                          Indicators
+                        </p>
+                        <ToggleGroup
+                          type="single"
+                          value={
+                            tabNotifications
+                              ? "notifications"
+                              : tabPulsingDot
+                              ? "pulse"
+                              : "none"
+                          }
+                          onValueChange={(value) => {
+                            if (!isTabDisabled) {
+                              setTabNotifications(value === "notifications");
+                              setTabPulsingDot(value === "pulse");
+                            }
+                          }}
+                          disabled={isTabDisabled}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-full"
+                        >
+                          <ToggleGroupItem
+                            value="none"
+                            aria-label="Toggle none"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            None
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="notifications"
+                            aria-label="Toggle notifications"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            <Badge
+                              variant="secondary"
+                              className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
+                            >
+                              5
+                            </Badge>
+                            Tasks
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="pulse"
+                            aria-label="Toggle pulse"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "h-2 w-2 rounded-full mr-2",
+                                "bg-primary"
+                              )}
+                            />
+                            Pulse
+                          </ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
+                    </div>
+
+                    {/* Preview Area */}
+                    <div className="w-[300px] mx-auto bg-background rounded-lg border">
+                      <div className="p-4">
+                        <SidebarTab
+                          icon={selectedIcon}
+                          label={tabLabel}
+                          href="#"
+                          isActive={isTabActive}
+                          isExpanded={true}
+                          isDisabled={isTabDisabled}
+                          notificationCount={tabNotifications ? 5 : 0}
+                          showPulsingDot={tabPulsingDot}
+                          variant={tabVariant}
+                          isPlayground={true}
+                          onClick={() => {
+                            if (!isTabDisabled) {
+                              setIsTabActive(true);
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {/* Usage Examples section second */}
               <Card>
                 <CardHeader>
