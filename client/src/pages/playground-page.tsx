@@ -107,6 +107,12 @@ export default function PlaygroundPage() {
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Code Downloaded",
+        description: `File saved as ${fileName}`,
+        duration: 3000,
+      });
     }
   };
 
