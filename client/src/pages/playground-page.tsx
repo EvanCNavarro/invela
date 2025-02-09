@@ -189,7 +189,7 @@ export default function PlaygroundPage() {
                     <div className="rounded-lg border">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-muted/50">
+                          <TableRow>
                             <TableHead>Name</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead>Date</TableHead>
@@ -237,18 +237,18 @@ export default function PlaygroundPage() {
                       <TabsTrigger value="code" className="flex-1">Code</TabsTrigger>
                     </TabsList>
                     <TabsContent value="references" className="mt-4">
-                      <div className="rounded-lg bg-muted p-4">
+                      <div className="rounded-lg bg-muted/50 p-4">
                         <code className="text-sm font-mono">{currentComponent.references}</code>
                       </div>
                     </TabsContent>
                     <TabsContent value="code" className="mt-4">
-                      <div className="relative rounded-lg bg-muted">
+                      <div className="relative rounded-lg bg-muted/50">
                         <div className="absolute right-4 top-4 flex gap-2 p-2 rounded-lg bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleCopyCode}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-accent/50"
                           >
                             <Copy className="h-4 w-4" />
                           </Button>
@@ -256,7 +256,7 @@ export default function PlaygroundPage() {
                             variant="ghost"
                             size="sm"
                             onClick={handleDownloadCode}
-                            className="h-8 w-8 p-0"
+                            className="h-8 w-8 p-0 hover:bg-accent/50"
                           >
                             <Download className="h-4 w-4" />
                           </Button>
@@ -269,7 +269,7 @@ export default function PlaygroundPage() {
                                   key={index}
                                   className={cn(
                                     "transition-colors hover:bg-accent/50",
-                                    selectedLine === index && "bg-emerald-950/10"
+                                    selectedLine === index && "bg-emerald-950/5"
                                   )}
                                 >
                                   <td 
@@ -279,7 +279,7 @@ export default function PlaygroundPage() {
                                   >
                                     {index + 1}
                                   </td>
-                                  <td className="pl-4 font-mono text-sm whitespace-pre-wrap">
+                                  <td className="pl-4 font-mono text-sm whitespace-pre-wrap text-foreground/90">
                                     {line}
                                   </td>
                                 </tr>
@@ -301,13 +301,13 @@ export default function PlaygroundPage() {
                 <CardContent>
                   <div className="space-y-3 max-w-2xl">
                     {currentComponent.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                         <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-medium truncate">{location.description}</h4>
+                          <h4 className="text-sm font-medium text-foreground truncate">{location.description}</h4>
                           <p className="text-xs text-muted-foreground truncate">{location.path}</p>
                         </div>
                         <Link href={location.path}>
-                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap">
+                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap hover:bg-accent/50">
                             <span>View Within App</span>
                             <ArrowUpRight className="ml-1 h-3 w-3" />
                           </Button>
