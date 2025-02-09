@@ -852,12 +852,28 @@ export function registerRoutes(app: Express): Server {
 
       if (!fs.existsSync(filePath)) {
         console.error(`Logo file not found at path: ${filePath}`);
+        // Log directory contents to help debug
+        const dir = path.resolve('/home/runner/workspace/uploads/logos');
+        console.log('Debug - Logo directory contents:', fs.readdirSync(dir));
         return res.status(404).json({ message: "Logo file not found" });
       }
 
-      // Add Content-Type and Cache-Control headers
+      try {
+        // Try to read and validate SVG content
+        const content = fs.readFileSync(filePath, 'utf8');
+        if (!content.includes('<?xml') && !content.includes('<svg')) {
+          console.error('Debug - Invalid SVG content:', content);
+          return res.status(400).json({ message: "Invalid SVG file" });
+        }
+      } catch (readError) {
+        console.error('Debug - Error reading SVG file:', readError);
+        return res.status(500).json({ message: "Error reading logo file" });
+      }
+
+      // Add Content-Type and security headers
       res.setHeader('Content-Type', 'image/svg+xml');
       res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+      res.setHeader('X-Content-Type-Options', 'nosniff');
 
       const fileStream = fs.createReadStream(filePath);
       fileStream.on('error', (error) => {
