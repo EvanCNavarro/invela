@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import logoNull from "@/assets/logo_null.svg";
+import Fuse from 'fuse.js';
 import {
   Select,
   SelectContent,
@@ -28,12 +28,10 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { CompanyLogo } from "@/components/ui/company-logo";
 
-// Helper function to generate consistent slugs - must match company-profile-page.tsx
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 const itemsPerPage = 5;
 
-// Update the company interface to include logo information
 interface Company {
   id: number;
   name: string;
@@ -45,13 +43,30 @@ interface Company {
   } | null;
 }
 
+// Highlight matching text helper function
+const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string }) => {
+  if (!searchTerm) return <>{text}</>;
 
-// Update the CompanyRow component to use new CompanyLogo
-const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
+  const parts = text.split(new RegExp(`(${searchTerm})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) => (
+        part.toLowerCase() === searchTerm.toLowerCase() ? (
+          <span key={i} className="bg-yellow-100 text-yellow-900">{part}</span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      ))}
+    </>
+  );
+};
+
+const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange, searchTerm }: {
   company: Company;
   isHovered: boolean;
   onRowClick: () => void;
   onHoverChange: (isHovered: boolean) => void;
+  searchTerm: string;
 }) => (
   <TableRow
     className="group cursor-pointer hover:bg-muted/50 bg-white"
@@ -70,7 +85,7 @@ const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
           "font-normal text-foreground",
           isHovered && "underline"
         )}>
-          {company.name}
+          <HighlightText text={company.name} searchTerm={searchTerm} />
         </span>
       </div>
     </TableCell>
@@ -90,7 +105,10 @@ const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
           company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
         )}
       >
-        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+        <HighlightText 
+          text={company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'} 
+          searchTerm={searchTerm} 
+        />
       </Badge>
     </TableCell>
     <TableCell className="text-center">
@@ -114,35 +132,27 @@ export default function NetworkPage() {
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
 
-  // Simplified query for current company
   const { data: currentCompany, isLoading: isCurrentCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    enabled: !!user,
-    onSuccess: (data) => {
-      console.log('Debug - Current company data:', data);
-    },
-    onError: (error) => {
-      console.error('Debug - Error fetching company:', error);
-    }
+    enabled: !!user
   });
-
-  // Log when company data changes
-  useEffect(() => {
-    console.log('Debug - Current user:', user);
-    console.log('Debug - Company loading:', isCurrentCompanyLoading);
-    console.log('Debug - Current company:', currentCompany);
-  }, [user, currentCompany, isCurrentCompanyLoading]);
 
   const { data: companiesData = [], isLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
     enabled: !!user
   });
 
-  // Extract companies from the nested structure
   const companies = useMemo(() =>
     companiesData.map((item: any) => item.companies || item),
     [companiesData]
   );
+
+  // Initialize Fuse instance for fuzzy search
+  const fuse = useMemo(() => new Fuse(companies, {
+    keys: ['name', 'accreditationStatus'],
+    threshold: 0.3,
+    includeMatches: true,
+  }), [companies]);
 
   const sortCompanies = (a: Company, b: Company) => {
     if (sortField === "name") {
@@ -158,17 +168,22 @@ export default function NetworkPage() {
     return 0;
   };
 
-  // Memoize the filtered and sorted companies to prevent unnecessary recalculations
-  const filteredCompanies = useMemo(() =>
-    companies
+  // Use fuzzy search for filtering
+  const filteredCompanies = useMemo(() => {
+    let results = companies;
+
+    if (searchQuery) {
+      const fuseResults = fuse.search(searchQuery);
+      results = fuseResults.map(result => result.item);
+    }
+
+    return results
       .filter((company: Company) => {
-        const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
-        return matchesSearch && matchesStatus;
+        return matchesStatus;
       })
-      .sort(sortCompanies),
-    [companies, searchQuery, statusFilter, sortField, sortDirection]
-  );
+      .sort(sortCompanies);
+  }, [companies, searchQuery, statusFilter, sortField, sortDirection, fuse]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -186,12 +201,10 @@ export default function NetworkPage() {
       <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
-  // Pagination
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
 
-  // Prefetch all company logos for visible companies
   useQueries({
     queries: paginatedCompanies.map(company => ({
       queryKey: [`company-logo-${company.id}`],
@@ -208,11 +221,9 @@ export default function NetworkPage() {
       staleTime: Infinity,
       cacheTime: Infinity,
       retry: false,
-      enabled: !!company.id, // Only prefetch if company ID exists
+      enabled: !!company.id,
     }))
   });
-
-  // Update the company row to use the memoized logo component
 
   return (
     <DashboardLayout>
@@ -249,7 +260,10 @@ export default function NetworkPage() {
                 placeholder="Search Network"
                 className="pl-9 bg-white"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page when searching
+                }}
               />
             </div>
           </div>
@@ -279,16 +293,7 @@ export default function NetworkPage() {
                     {getSortIcon("riskScore")}
                   </Button>
                 </TableHead>
-                <TableHead className="text-center">
-                  <Button
-                    variant="ghost"
-                    className="p-0 hover:bg-transparent text-center w-full justify-center"
-                    onClick={() => handleSort("accreditationStatus")}
-                  >
-                    <span>Status</span>
-                    {getSortIcon("accreditationStatus")}
-                  </Button>
-                </TableHead>
+                <TableHead className="text-center">Status</TableHead>
                 <TableHead className="w-[100px] text-center"></TableHead>
               </TableRow>
             </TableHeader>
@@ -313,15 +318,14 @@ export default function NetworkPage() {
                     isHovered={hoveredRow === company.id}
                     onRowClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
                     onHoverChange={(isHovered) => setHoveredRow(isHovered ? company.id : null)}
+                    searchTerm={searchQuery}
                   />
                 ))
               )}
             </TableBody>
           </Table>
 
-          {/* Table footer with details and pagination */}
           <div className="flex items-center justify-between px-4 py-4 border-t">
-            {/* Table details */}
             <div className="text-sm text-muted-foreground">
               {isLoading ? (
                 "Loading results..."
@@ -334,7 +338,6 @@ export default function NetworkPage() {
               )}
             </div>
 
-            {/* Pagination controls - only show if more than itemsPerPage items and not loading */}
             {!isLoading && filteredCompanies.length > itemsPerPage && (
               <div className="flex items-center space-x-2">
                 <Button
