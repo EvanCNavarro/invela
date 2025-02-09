@@ -72,7 +72,8 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       </svg>
     </div>
   );
-}`
+}
+`
   },
   {
     id: "risk-meter",
@@ -122,7 +123,8 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
       </div>
     </div>
   );
-}`
+}
+`
   },
   {
     id: "page-header",
@@ -152,7 +154,8 @@ export function PageHeader({ title, description, className }: PageHeaderProps) {
       )}
     </div>
   );
-}`
+}
+`
   }
 ];
 
@@ -378,21 +381,21 @@ export default function PlaygroundPage() {
                     <CardTitle className="text-sm font-bold">Basic Examples</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="p-4 border rounded-lg">
+                    <div>
                       <PageHeader 
                         title="Simple Header" 
                       />
                     </div>
-                    <div className="p-4 border rounded-lg">
+                    <div className="pt-6 border-t">
                       <PageHeader 
                         title="With Description" 
                         description="A detailed explanation of this section."
                       />
                     </div>
-                    <div className="p-4 border rounded-lg bg-muted">
+                    <div className="pt-6 border-t">
                       <PageHeader 
-                        title="Custom Background" 
-                        description="Header with a different background color."
+                        title="Custom Styling" 
+                        description="Header with custom text colors."
                         className="text-primary"
                       />
                     </div>
@@ -405,8 +408,8 @@ export default function PlaygroundPage() {
                     <CardTitle className="text-sm font-bold">Responsive Design</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div className="p-4 border rounded-lg">
+                    <div className="space-y-6">
+                      <div>
                         <div className="w-full md:w-2/3">
                           <PageHeader 
                             title="Responsive Width"
@@ -414,7 +417,7 @@ export default function PlaygroundPage() {
                           />
                         </div>
                       </div>
-                      <div className="p-4 border rounded-lg">
+                      <div className="pt-6 border-t">
                         <PageHeader 
                           title="Mobile Friendly"
                           description="The text and spacing automatically adjust for smaller screens."
