@@ -47,28 +47,14 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
 
   // Handle various error cases with appropriate fallbacks
   if (error || (logoResult && 'error' in logoResult)) {
-    const errorCode = logoResult?.error?.code;
-    const tooltipText = errorCode === 'LOGO_NOT_ASSIGNED' ? 
-      'Logo not yet assigned' : 
-      errorCode === 'LOGO_FILE_MISSING' ? 
-        'Logo file unavailable' : 
-        'Error loading logo';
-
     return (
-      <div 
-        className={cn(
-          sizeClasses[size],
-          "flex items-center justify-center rounded-lg bg-primary/10",
-          "relative group cursor-help",
-          className
-        )}
-        title={tooltipText}
-      >
+      <div className={cn(
+        sizeClasses[size],
+        "flex items-center justify-center rounded-lg bg-primary/10",
+        className
+      )}>
         <span className="text-xs font-medium text-primary">
           {companyName.charAt(0).toUpperCase()}
-        </span>
-        <span className="absolute invisible group-hover:visible bg-black/75 text-white text-xs px-2 py-1 rounded -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-          {tooltipText}
         </span>
       </div>
     );
@@ -90,14 +76,10 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
             if (parent) {
               const fallback = document.createElement('div');
               fallback.className = cn(
-                "w-full h-full flex items-center justify-center rounded-lg bg-primary/10",
-                "relative group cursor-help"
+                "w-full h-full flex items-center justify-center rounded-lg bg-primary/10"
               );
               fallback.innerHTML = `
                 <span class="text-xs font-medium text-primary">${companyName.charAt(0).toUpperCase()}</span>
-                <span class="absolute invisible group-hover:visible bg-black/75 text-white text-xs px-2 py-1 rounded -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  Error loading logo
-                </span>
               `;
               parent.replaceChild(fallback, img);
             }
