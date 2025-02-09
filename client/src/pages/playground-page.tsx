@@ -22,6 +22,7 @@ import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight, Copy, Download } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 const components = [
   {
@@ -78,22 +79,28 @@ export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState(components[0].id);
   const [isTableLoading, setIsTableLoading] = useState(true);
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
+  const { toast } = useToast();
 
   const currentComponent = components.find(c => c.id === selectedComponent);
 
   const handleCopyCode = () => {
     if (currentComponent?.code) {
       navigator.clipboard.writeText(currentComponent.code);
+      toast({
+        description: "Code copied to clipboard",
+        duration: 2000,
+      });
     }
   };
 
   const handleDownloadCode = () => {
     if (currentComponent?.code) {
+      const fileName = `invela_app_code_${currentComponent.id}.tsx`;
       const blob = new Blob([currentComponent.code], { type: 'text/plain' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${currentComponent.id}.tsx`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -228,7 +235,7 @@ export default function PlaygroundPage() {
                     </TabsContent>
                     <TabsContent value="code" className="mt-4">
                       <div className="relative rounded-lg bg-muted">
-                        <div className="absolute right-2 top-2 flex gap-2">
+                        <div className="absolute right-4 top-4 flex gap-2 p-2 rounded-lg bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -246,7 +253,7 @@ export default function PlaygroundPage() {
                             <Download className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div className="overflow-auto max-h-[400px]">
+                        <div className="overflow-auto max-h-[400px] pt-16 px-4 pb-4">
                           <table className="w-full border-collapse">
                             <tbody>
                               {currentComponent.code.split('\n').map((line, index) => (
@@ -281,7 +288,7 @@ export default function PlaygroundPage() {
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-3 max-w-2xl">
                     {currentComponent.usageLocations.map((location, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="min-w-0 flex-1">
