@@ -1,6 +1,6 @@
 import React from 'react'
 import { UnifiedDropdown } from '@/components/ui/unified-dropdown'
-import { Settings, FileText, Layout, Bell } from 'lucide-react'
+import { Settings, FileText, Layout, Bell, Edit, Trash2, Archive } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -19,8 +19,8 @@ export const DropdownPlayground = () => {
     { id: 'updates', label: 'Updates', leftIcon: showIcons ? Bell : undefined },
     { id: 'announcements', label: 'Announcements', leftIcon: showIcons ? FileText : undefined },
     { id: 'quick_actions', label: 'Quick Actions', leftIcon: showIcons ? Layout : undefined },
-    { id: 'company_score', label: 'Company Score' },
-    { id: 'network', label: 'Network Visualization' },
+    { id: 'company_score', label: 'Company Score', leftIcon: showIcons ? Settings : undefined },
+    { id: 'network', label: 'Network Visualization', leftIcon: showIcons ? Layout : undefined },
   ].map(item => ({
     ...item,
     selected: selectedWidgets.includes(item.id),
@@ -34,9 +34,9 @@ export const DropdownPlayground = () => {
   }))
 
   const actionItems = [
-    { id: 'edit', label: 'Edit' },
-    { id: 'delete', label: 'Delete' },
-    { id: 'archive', label: 'Archive' },
+    { id: 'edit', label: 'Edit', leftIcon: Edit },
+    { id: 'delete', label: 'Delete', leftIcon: Trash2 },
+    { id: 'archive', label: 'Archive', leftIcon: Archive },
   ].map(item => ({
     ...item,
     selected: selectedAction === item.id,
@@ -45,6 +45,7 @@ export const DropdownPlayground = () => {
 
   return (
     <div className="space-y-6">
+      {/* Controls for regular button dropdown only */}
       <div className="grid grid-cols-2 gap-4">
         <div className="flex items-center space-x-2">
           <Switch 
@@ -92,7 +93,7 @@ export const DropdownPlayground = () => {
 
         <Card className="p-4 space-y-2">
           <h3 className="text-lg font-semibold">Icon Button Dropdown</h3>
-          <p className="text-sm text-muted-foreground mb-4">Actions menu with ellipsis trigger</p>
+          <p className="text-sm text-muted-foreground mb-4">Single-select actions menu with icons</p>
           <UnifiedDropdown
             trigger={{
               variant: 'icon'
@@ -100,6 +101,7 @@ export const DropdownPlayground = () => {
             items={actionItems}
             align="end"
             multiSelect={false}
+            title="Actions"
           />
         </Card>
       </div>
