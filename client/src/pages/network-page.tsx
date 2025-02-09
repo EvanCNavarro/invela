@@ -246,6 +246,7 @@ export default function NetworkPage() {
               disabled={!hasActiveFilters}
               className={cn(
                 "h-10 w-10",
+                hasActiveFilters ? "bg-primary hover:bg-primary/90 text-white" : "bg-white border border-input rounded-md",
                 !hasActiveFilters && "opacity-50 cursor-not-allowed"
               )}
             >
