@@ -19,6 +19,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+
+// Define status badge variants once
+const getStatusBadgeVariant = (status: string) => {
+  switch (status?.toLowerCase()) {
+    case 'active':
+      return 'default';
+    case 'pending':
+      return 'secondary';
+    case 'completed':
+      return 'success';
+    case 'error':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};
 
 const components = [
   {
@@ -31,43 +48,43 @@ const components = [
     ],
     references: "LoadingSpinner",
     code: `import { cn } from "@/lib/utils";
-
-interface LoadingSpinnerProps {
-  className?: string;
-  size?: "sm" | "md" | "lg";
-}
-
-export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
-  return (
-    <div className={cn(
-      "flex items-center justify-center",
-      size === "sm" && "h-4 w-4",
-      size === "md" && "h-8 w-8",
-      size === "lg" && "h-12 w-12",
-      className
-    )}>
-      <svg 
-        viewBox="0 0 28 28" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg" 
-        xmlns:anim="http://www.w3.org/2000/anim" 
-        anim="" 
-        anim:transform-origin="50% 50%" 
-        anim:duration="1" 
-        anim:ease="ease-in-out"
-        className="animate-spin"
-      >
-        <g id="Frame 427319720">
-          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
-            <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
-            <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
-          </g>
-        </g>
-      </svg>
-    </div>
-  );
-}
-`
+      
+      interface LoadingSpinnerProps {
+        className?: string;
+        size?: "sm" | "md" | "lg";
+      }
+      
+      export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
+        return (
+          <div className={cn(
+            "flex items-center justify-center",
+            size === "sm" && "h-4 w-4",
+            size === "md" && "h-8 w-8",
+            size === "lg" && "h-12 w-12",
+            className
+          )}>
+            <svg 
+              viewBox="0 0 28 28" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg" 
+              xmlns:anim="http://www.w3.org/2000/anim" 
+              anim="" 
+              anim:transform-origin="50% 50%" 
+              anim:duration="1" 
+              anim:ease="ease-in-out"
+              className="animate-spin"
+            >
+              <g id="Frame 427319720">
+                <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
+                  <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
+                </g>
+              </g>
+            </svg>
+          </div>
+        );
+      }
+      `
   },
   {
     id: "risk-meter",
@@ -79,46 +96,46 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
     ],
     references: "RiskMeter",
     code: `import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-
-interface RiskMeterProps {
-  score: number;
-  className?: string;
-}
-
-export function RiskMeter({ score = 0, className }: RiskMeterProps) {
-  const normalizedScore = Math.min(Math.max(0, score), 1500);
-
-  const getRiskLevel = (score: number) => {
-    if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
-    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
-    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
-    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
-    return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
-  };
-
-  const { level, color } = getRiskLevel(normalizedScore);
-
-  return (
-    <div className={cn("flex flex-col items-center justify-center py-4", className)}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-6xl font-bold mb-2"
-      >
-        {normalizedScore}
-      </motion.div>
-      <div className={cn(
-        "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
-        color
-      )}>
-        {level}
-      </div>
-    </div>
-  );
-}
-`
+      import { cn } from "@/lib/utils";
+      
+      interface RiskMeterProps {
+        score: number;
+        className?: string;
+      }
+      
+      export function RiskMeter({ score = 0, className }: RiskMeterProps) {
+        const normalizedScore = Math.min(Math.max(0, score), 1500);
+        
+        const getRiskLevel = (score: number) => {
+          if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
+          if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
+          if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
+          if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
+          return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
+        };
+        
+        const { level, color } = getRiskLevel(normalizedScore);
+        
+        return (
+          <div className={cn("flex flex-col items-center justify-center py-4", className)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-6xl font-bold mb-2"
+            >
+              {normalizedScore}
+            </motion.div>
+            <div className={cn(
+              "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
+              color
+            )}>
+              {level}
+            </div>
+          </div>
+        );
+      }
+      `
   },
   {
     id: "page-header",
@@ -130,26 +147,26 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
     ],
     references: "PageHeader",
     code: `import { cn } from "@/lib/utils";
-
-interface PageHeaderProps {
-  title: string;
-  description?: string;
-  className?: string;
-}
-
-export function PageHeader({ title, description, className }: PageHeaderProps) {
-  return (
-    <div className={cn("flex flex-col", className)}>
-      <h1 className="text-2xl font-semibold mb-1">{title}</h1>
-      {description && (
-        <p className="text-sm text-muted-foreground">
-          {description}
-        </p>
-      )}
-    </div>
-  );
-}
-`
+      
+      interface PageHeaderProps {
+        title: string;
+        description?: string;
+        className?: string;
+      }
+      
+      export function PageHeader({ title, description, className }: PageHeaderProps) {
+        return (
+          <div className={cn("flex flex-col", className)}>
+            <h1 className="text-2xl font-semibold mb-1">{title}</h1>
+            {description && (
+              <p className="text-sm text-muted-foreground">
+                {description}
+              </p>
+            )}
+          </div>
+        );
+      }
+      `
   },
   {
     id: "data-table",
@@ -161,148 +178,150 @@ export function PageHeader({ title, description, className }: PageHeaderProps) {
     ],
     references: "Table, TableHeader, TableBody, TableRow, TableCell",
     code: `import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-interface DataTableProps<T> {
-  data: T[];
-  columns: {
-    key: string;
-    header: string;
-    sortable?: boolean;
-    type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
-  }[];
-  isLoading?: boolean;
-  sortConfig?: {
-    key: string;
-    direction: 'asc' | 'desc';
-  };
-  onSort?: (key: string) => void;
-  selectedRows?: Set<number>;
-  onRowSelect?: (id: number) => void;
-  onSelectAll?: () => void;
-}
-
-export function DataTable<T extends Record<string, any>>({ 
-  data,
-  columns,
-  isLoading,
-  sortConfig,
-  onSort,
-  selectedRows,
-  onRowSelect,
-  onSelectAll
-}: DataTableProps<T>) {
-  const getSortIcon = (key: string) => {
-    if (!sortConfig || sortConfig.key !== key) {
-      return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
-    }
-    return sortConfig.direction === 'asc' 
-      ? <ArrowUpIcon className="h-4 w-4 text-primary" />
-      : <ArrowDownIcon className="h-4 w-4 text-primary" />;
-  };
-
-  if (isLoading) {
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {columns.map((column) => (
-              <TableHead key={column.key}>{column.header}</TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <TableRow key={index} className="animate-pulse">
-              {columns.map((column) => (
-                <TableCell key={column.key}>
-                  <div className="h-4 bg-muted rounded w-full" />
-                </TableCell>
+        Table,
+        TableBody,
+        TableCell,
+        TableHead,
+        TableHeader,
+        TableRow,
+      } from "@/components/ui/table";
+      import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
+      import { Button } from "@/components/ui/button";
+      import { LoadingSpinner } from "@/components/ui/loading-spinner";
+      
+      interface DataTableProps<T> {
+        data: T[];
+        columns: {
+          key: string;
+          header: string;
+          sortable?: boolean;
+          type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
+        }[];
+        isLoading?: boolean;
+        sortConfig?: {
+          key: string;
+          direction: 'asc' | 'desc';
+        };
+        onSort?: (key: string) => void;
+        selectedRows?: Set<number>;
+        onRowSelect?: (id: number) => void;
+        onSelectAll?: () => void;
+      }
+      
+      export function DataTable<T extends Record<string, any>>({ 
+        data,
+        columns,
+        isLoading,
+        sortConfig,
+        onSort,
+        selectedRows,
+        onRowSelect,
+        onSelectAll
+      }: DataTableProps<T>) {
+        const getSortIcon = (key: string) => {
+          if (!sortConfig || sortConfig.key !== key) {
+            return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
+          }
+          return sortConfig.direction === 'asc' 
+            ? <ArrowUpIcon className="h-4 w-4 text-primary" />
+            : <ArrowDownIcon className="h-4 w-4 text-primary" />;
+        };
+        
+        if (isLoading) {
+          return (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableHead key={column.key}>{column.header}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <TableRow key={index} className="animate-pulse">
+                    {columns.map((column) => (
+                      <TableCell key={column.key}>
+                        <div className="h-4 bg-muted rounded w-full" />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          );
+        }
+        
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                {columns.map((column) => (
+                  <TableHead key={column.key}>
+                    {column.sortable ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="-ml-3 h-8 data-[state=open]:bg-accent"
+                        onClick={() => onSort?.(column.key)}
+                      >
+                        {column.header}
+                        {getSortIcon(column.key)}
+                      </Button>
+                    ) : (
+                      column.header
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((row, index) => (
+                <TableRow key={index} className={selectedRows?.has(row.id) ? 'bg-primary/10' : ''}>
+                  {columns.map((column) => {
+                    if (column.type === 'checkbox') {
+                      return (
+                        <TableCell key={column.key}>
+                          <Checkbox checked={selectedRows?.has(row.id)} onCheckedChange={() => onRowSelect?.(row.id)} />
+                        </TableCell>
+                      );
+                    }
+                    if (column.type === 'icon') {
+                      return <TableCell key={column.key}><img src={row.logo} alt={row.name} className="h-6 w-6 rounded-full" /></TableCell>
+                    }
+                    if (column.type === 'status') {
+                      return (
+                        <TableCell key={column.key}>
+                          <Badge variant={getStatusBadgeVariant(row.status)}>
+                            {row.status}
+                          </Badge>
+                        </TableCell>
+                      );
+                    }
+                    if (column.type === 'actions') {
+                      return (
+                        <TableCell key={column.key}>
+                          <Button variant="ghost" size="sm">Edit</Button>
+                          <Button variant="ghost" size="sm" className="ml-2">Delete</Button>
+                        </TableCell>
+                      )
+                    }
+                    if (column.type === 'view') {
+                      return (
+                        <TableCell key={column.key}>
+                          <Button variant="ghost" size="sm">View</Button>
+                        </TableCell>
+                      )
+                    }
+                    return <TableCell key={column.key}>{row[column.key]}</TableCell>;
+                  })}
+                </TableRow>
               ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
-  }
-
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          {columns.map((column) => (
-            <TableHead key={column.key}>
-              {column.sortable ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-3 h-8 data-[state=open]:bg-accent"
-                  onClick={() => onSort?.(column.key)}
-                >
-                  {column.header}
-                  {getSortIcon(column.key)}
-                </Button>
-              ) : (
-                column.header
-              )}
-            </TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((row, index) => (
-          <TableRow key={index} className={selectedRows?.has(row.id) ? 'bg-primary/10' : ''}>
-            {columns.map((column) => {
-              if (column.type === 'checkbox') {
-                return (
-                  <TableCell key={column.key}>
-                    <Checkbox checked={selectedRows?.has(row.id)} onCheckedChange={() => onRowSelect?.(row.id)} />
-                  </TableCell>
-                );
-              }
-              if (column.type === 'icon') {
-                return <TableCell key={column.key}><img src={row.logo} alt={row.name} className="h-6 w-6 rounded-full" /></TableCell>
-              }
-              if (column.type === 'status') {
-                return (
-                  <TableCell key={column.key} className={`text-${row.status.toLowerCase()}`}>
-                    {row.status}
-                  </TableCell>
-                );
-              }
-              if (column.type === 'actions') {
-                return (
-                  <TableCell key={column.key}>
-                    <Button variant="ghost" size="sm">Edit</Button>
-                    <Button variant="ghost" size="sm" className="ml-2">Delete</Button>
-                  </TableCell>
-                )
-              }
-              if (column.type === 'view') {
-                return (
-                  <TableCell key={column.key}>
-                    <Button variant="ghost" size="sm">View</Button>
-                  </TableCell>
-                )
-              }
-              return <TableCell key={column.key}>{row[column.key]}</TableCell>;
-            })}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
-}
-`
+            </TableBody>
+          </Table>
+        );
+      }
+      `
   }
 ];
 
@@ -312,9 +331,9 @@ export default function PlaygroundPage() {
   const [riskScore, setRiskScore] = useState(250);
   const { toast } = useToast();
   const [tableData, setTableData] = useState([
-    { id: 1, name: "Acme Corp", status: "Active", date: "2025-02-09" },
-    { id: 2, name: "TechStart", status: "Pending", date: "2025-02-08" },
-    { id: 3, name: "Global Inc", status: "Completed", date: "2025-02-07" }
+    { id: 1, name: "Acme Corp", status: "Active", date: "2025-02-09", logo: "" },
+    { id: 2, name: "TechStart", status: "Pending", date: "2025-02-08", logo: "" },
+    { id: 3, name: "Global Inc", status: "Completed", date: "2025-02-07", logo: "" }
   ]);
   const [tableSortConfig, setTableSortConfig] = useState<{
     key: string;
@@ -401,7 +420,6 @@ export default function PlaygroundPage() {
         />
 
         <div className="space-y-6">
-          {/* Component Selector */}
           <div className="px-1">
             <h3 className="text-sm font-bold mb-2">Select Component</h3>
             <Select
@@ -518,7 +536,7 @@ export default function PlaygroundPage() {
                         ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
                         ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
                         ...(enabledColumns.status ? [{ key: 'status', header: 'Status', type: 'status' as const, sortable: true }] : []),
-                        { key: 'date', header: 'Date', sortable: true, type: 'text' as const },
+                        { key: 'date', header: 'Date', sortable: true },
                         ...(enabledColumns.actions ? [{ key: 'actions', header: '', type: 'actions' as const }] : []),
                         ...(enabledColumns.view ? [{ key: 'view', header: '', type: 'view' as const }] : [])
                       ]}
@@ -535,10 +553,8 @@ export default function PlaygroundPage() {
             </div>
           )}
 
-          {/* Code Section */}
           {currentComponent && (
             <>
-              {/* Usage Examples */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
@@ -563,7 +579,6 @@ export default function PlaygroundPage() {
                 </CardContent>
               </Card>
 
-              {/* Code Display */}
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold">Code</CardTitle>
