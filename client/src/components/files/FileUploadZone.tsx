@@ -1,9 +1,15 @@
 import React from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Info } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { useToast } from '@/hooks/use-toast';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface FileUploadZoneProps {
   // Core props
@@ -77,7 +83,7 @@ export function FileUploadZone({
         description: (
           <div className="flex items-center gap-2">
             <LoadingSpinner size="sm" />
-            <span>Processing files...</span>
+            <span>Processing {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''}...</span>
           </div>
         ),
         duration: 0,
@@ -123,6 +129,19 @@ export function FileUploadZone({
       .join(', ');
   };
 
+  const acceptedFormatsTooltip = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <Info className="h-4 w-4 text-muted-foreground hover:text-primary" />
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">Accepted formats: {formatFileTypes()}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
   return (
     <div
       {...getRootProps()}
@@ -143,14 +162,12 @@ export function FileUploadZone({
               </div>
               {customPrompt || (
                 <>
-                  <p className="text-sm font-medium">
-                    {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
-                  </p>
-                  {showAcceptedFormats && (
-                    <p className="text-xs text-muted-foreground">
-                      Accepted formats: {formatFileTypes()}
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">
+                      {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
                     </p>
-                  )}
+                    {showAcceptedFormats && acceptedFormatsTooltip}
+                  </div>
                 </>
               )}
             </div>
@@ -164,15 +181,11 @@ export function FileUploadZone({
                 <Upload className="h-5 w-5" />
               </div>
               {customPrompt || (
-                <div>
+                <div className="flex items-center gap-2">
                   <p className="text-sm">
                     {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
                   </p>
-                  {showAcceptedFormats && (
-                    <p className="text-xs text-muted-foreground">
-                      Accepted formats: {formatFileTypes()}
-                    </p>
-                  )}
+                  {showAcceptedFormats && acceptedFormatsTooltip}
                 </div>
               )}
             </div>

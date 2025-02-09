@@ -37,71 +37,74 @@ export function FileUploadPreview({
   const FileTypeIcon = getFileIcon(file?.type);
   const fileSize = file ? (file.size / 1024 / 1024).toFixed(2) : '0';
 
-  const fileInfo = (
-    <>
-      <p className="text-sm font-medium truncate">{file?.name}</p>
-      <p className="text-xs text-muted-foreground">
-        {fileSize} MB
-      </p>
-    </>
-  );
-
   return (
     <div className={cn(
-      "relative flex items-center gap-3 p-3 rounded-lg border",
-      error ? "border-destructive/50 bg-destructive/5" : "border-border",
+      "relative px-4 py-3 rounded-lg bg-muted/30",
+      error ? "border-destructive/50 bg-destructive/5" : "",
       className
     )}>
-      <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+      <div className="flex items-start gap-3">
+        <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <div className="truncate">
-            {variant === 'compact' ? (
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium truncate">{file?.name}</p>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">{fileSize} MB</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            ) : (
-              fileInfo
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="truncate">
+              {variant === 'compact' ? (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium truncate">{file?.name}</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{fileSize} MB</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-medium truncate">{file?.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {fileSize} MB
+                  </p>
+                </>
+              )}
+            </div>
+
+            {onRemove && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 -mr-2"
+                onClick={onRemove}
+              >
+                <X className="h-4 w-4" />
+              </Button>
             )}
           </div>
 
-          {onRemove && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={onRemove}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+          {typeof progress === 'number' && !error && (
+            <div className="mt-2">
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-muted-foreground">
+                  {progress}% uploaded
+                </p>
+              </div>
+              <Progress 
+                value={progress} 
+                className="h-1 bg-primary/20" 
+              />
+            </div>
+          )}
+
+          {error && (
+            <p className="mt-1 text-xs text-destructive">
+              {error}
+            </p>
           )}
         </div>
-
-        {typeof progress === 'number' && !error && (
-          <div className="mt-2 space-y-1">
-            <Progress value={progress} className="h-1" />
-            <p className="text-xs text-muted-foreground">
-              {progress}% uploaded
-            </p>
-          </div>
-        )}
-
-        {error && (
-          <p className="mt-1 text-xs text-destructive">
-            {error}
-          </p>
-        )}
       </div>
     </div>
   );
