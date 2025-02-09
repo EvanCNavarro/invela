@@ -21,7 +21,9 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
     queryFn: async () => {
       try {
         console.log(`Debug - Fetching logo for company ${companyId} (${companyName})`);
-        const response = await fetch(`/api/companies/${companyId}/logo`);
+        // Add cache-busting timestamp parameter
+        const timestamp = new Date().getTime();
+        const response = await fetch(`/api/companies/${companyId}/logo?t=${timestamp}`);
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
@@ -40,9 +42,9 @@ export const CompanyLogo = memo(({ companyId, companyName, size = "sm", classNam
         return { error: { message: "Network error", code: "FETCH_ERROR" } };
       }
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
-    gcTime: 1000 * 60 * 10,   // Keep in cache for 10 minutes
-    retry: false,              // Don't retry failed requests
+    staleTime: 1000 * 30, // Reduced to 30 seconds for quicker refreshes
+    gcTime: 1000 * 60 * 5, // Reduced to 5 minutes
+    retry: false,          // Don't retry failed requests
   });
 
   // Handle various error cases with appropriate fallbacks
