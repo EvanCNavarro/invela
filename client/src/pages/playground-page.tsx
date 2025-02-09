@@ -5,6 +5,7 @@ import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTable } from "@/components/ui/data-table";
+import { Sidebar } from "@/components/dashboard/Sidebar";
 import {
   Select,
   SelectContent,
@@ -825,7 +826,6 @@ export default function PlaygroundPage() {
                               isExpanded={isExpanded}
                               onToggleExpanded={() => setIsExpanded(!isExpanded)}
                               isNewUser={false}
-                              //company={{ category: 'Invela' }}  //This line was causing an error because company prop wasn't defined in Sidebar
                             />
                           </div>
                         </TabsContent>
@@ -865,18 +865,13 @@ export default function PlaygroundPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3 max-w-2xl">
-                    {currentComponent.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-sm font-medium text-foreground truncate">{location.description}</h4>
-                          <p className="text-xs text-muted-foreground truncate">{location.path}</p>
+                    {currentComponent?.usageLocations.map((location, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <ArrowUpRight className="h-4 w-4 mt-1 text-muted-foreground" />
+                        <div>
+                          <code className="text-sm font-mono text-muted-foreground">{location.path}</code>
+                          <p className="text-sm">{location.description}</p>
                         </div>
-                        <Link href={location.path}>
-                          <Button variant="outline" size="sm" className="ml-3 whitespace-nowrap">
-                            <span>View Within App</span>
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          </Button>
-                        </Link>
                       </div>
                     ))}
                   </div>
