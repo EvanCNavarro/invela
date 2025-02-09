@@ -61,82 +61,70 @@ const getStatusBadgeVariant = (status: string) => {
   }
 };
 
+// Sort components alphabetically
 const components = [
   {
-    id: "sidebar-menu",
-    name: "Navigation Sidebar",
+    id: "data-table",
+    name: "Data Table",
     usageLocations: [
-      { path: "/", description: "Main dashboard navigation" },
-      { path: "/network", description: "Network view navigation" },
-      { path: "/insights", description: "Analytics navigation" }
+      { path: "/file-vault", description: "File management list", viewInApp: true },
+      { path: "/network", description: "Company network table", viewInApp: true },
+      { path: "/insights", description: "Analytics data grid", viewInApp: true }
     ],
-    references: "Sidebar, SidebarProvider, SidebarHeader, SidebarContent, SidebarFooter",
-    code: `import { Link } from "wouter";
-import { cn } from "@/lib/utils";
-import { HomeIcon, CheckCircleIcon, Network, FileIcon, BarChartIcon } from "lucide-react";
-
-interface SidebarProps {
-  isExpanded: boolean;
-  onToggleExpanded: () => void;
-  isNewUser?: boolean;
-  notificationCount?: number;
-  showPulsingDot?: boolean;
-  showInvelaTabs?: boolean;
-  isPlayground?: boolean; // Added isPlayground prop
+    references: "Table, TableHeader, TableBody, TableRow, TableCell",
+    code: `// Data Table component code example
+interface DataTableProps<T> {
+  data: T[];
+  columns: {
+    key: string;
+    header: string;
+    sortable?: boolean;
+    type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
+  }[];
+  isLoading?: boolean;
+  // ... other props
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false, showInvelaTabs = false, isPlayground = false }: SidebarProps) {
-  const menuItems = [
-    { 
-      icon: HomeIcon,
-      label: "Dashboard", 
-      href: "/",
-      locked: isNewUser
-    },
-    { 
-      icon: CheckCircleIcon,
-      label: "Task Center", 
-      href: "/task-center",
-      locked: false,
-      count: 5
-    },
-    { 
-      icon: Network,
-      label: "Network", 
-      href: "/network",
-      locked: isNewUser,
-      pulsingDot: true
-    }
-  ];
+export function DataTable<T extends Record<string, any>>({ 
+  data,
+  columns,
+  isLoading,
+  // ... other props
+}: DataTableProps<T>) {
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-      isExpanded ? "w-64" : "w-20"
-    )}>
-      {/* Sidebar implementation */}
-    </aside>
+    <Table>
+      <TableHeader>
+        {/* Header implementation */}
+      </TableHeader>
+      <TableBody>
+        {/* Body implementation */}
+      </TableBody>
+    </Table>
   );
-}
-`
+}`
   },
   {
     id: "loading-spinner",
-    name: "Invela Logo Loading Spinner",
+    name: "Loading Spinner",
     usageLocations: [
-      { path: "/", description: "During data fetch" },
-      { path: "/insights", description: "Chart loading states" },
-      { path: "/network", description: "Company list loading" }
+      { path: "/", description: "During data fetch", viewInApp: true },
+      { path: "/insights", description: "Chart loading states", viewInApp: true },
+      { path: "/network", description: "Company list loading", viewInApp: true }
     ],
     references: "LoadingSpinner",
-    code: `import { cn } from "@/lib/utils";
-
-interface LoadingSpinnerProps {
+    code: `interface LoadingSpinnerProps {
   className?: string;
   size?: "sm" | "md" | "lg";
 }
 
-export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
+export function LoadingSpinner({ 
+  className, 
+  size = "md" 
+}: LoadingSpinnerProps) {
   return (
     <div className={cn(
       "flex items-center justify-center",
@@ -145,101 +133,36 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       size === "lg" && "h-12 w-12",
       className
     )}>
-      <svg 
-        viewBox="0 0 28 28" 
-        fill="none" 
-        xmlns="http://www.w3.org/2000/svg" 
-        xmlns:anim="http://www.w3.org/2000/anim" 
-        anim="" 
-        anim:transform-origin="50% 50%" 
-        anim:duration="1" 
-        anim:ease="ease-in-out"
-        className="animate-spin"
-      >
-        <g id="Frame 427319720">
-          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
-            <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
-            <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
-          </g>
-        </g>
-      </svg>
+      {/* SVG implementation */}
     </div>
   );
-}
-`
-  },
-  {
-    id: "risk-meter",
-    name: "Risk Assessment Meter",
-    usageLocations: [
-      { path: "/", description: "Company risk overview" },
-      { path: "/network/company/:id", description: "Detailed company risk" },
-      { path: "/insights", description: "Risk analytics" }
-    ],
-    references: "RiskMeter",
-    code: `import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-
-interface RiskMeterProps {
-  score: number;
-  className?: string;
-}
-
-export function RiskMeter({ score = 0, className }: RiskMeterProps) {
-  const normalizedScore = Math.min(Math.max(0, score), 1500);
-
-  const getRiskLevel = (score: number) => {
-    if (score === 0) return { level: 'No Risk', color: 'bg-gray-100 text-gray-800' };
-    if (score <= 499) return { level: 'Low Risk', color: 'bg-[hsl(209,99%,50%)] text-white' };
-    if (score <= 999) return { level: 'Medium Risk', color: 'bg-yellow-100 text-yellow-800' };
-    if (score <= 1449) return { level: 'High Risk', color: 'bg-red-100 text-red-800' };
-    return { level: 'Critical Risk', color: 'bg-red-100 text-red-800' };
-  };
-
-  const { level, color } = getRiskLevel(normalizedScore);
-
-  return (
-    <div className={cn("flex flex-col items-center justify-center py-4", className)}>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="text-6xl font-bold mb-2"
-      >
-        {normalizedScore}
-      </motion.div>
-      <div className={cn(
-        "inline-flex items-center px-3 py-1 rounded-full text-sm font-medium",
-        color
-      )}>
-        {level}
-      </div>
-    </div>
-  );
-}
-`
+}`
   },
   {
     id: "page-header",
     name: "Page Header",
     usageLocations: [
-      { path: "/file-vault", description: "File management header" },
-      { path: "/insights", description: "Analytics dashboard header" },
-      { path: "/network", description: "Network view header" }
+      { path: "/file-vault", description: "File management header", viewInApp: true },
+      { path: "/insights", description: "Analytics dashboard header", viewInApp: true },
+      { path: "/network", description: "Network view header", viewInApp: true }
     ],
     references: "PageHeader",
-    code: `import { cn } from "@/lib/utils";
-
-interface PageHeaderProps {
+    code: `interface PageHeaderProps {
   title: string;
   description?: string;
   className?: string;
 }
 
-export function PageHeader({ title, description, className }: PageHeaderProps) {
+export function PageHeader({ 
+  title, 
+  description, 
+  className 
+}: PageHeaderProps) {
   return (
     <div className={cn("flex flex-col", className)}>
-      <h1 className="text-2xl font-semibold mb-1">{title}</h1>
+      <h1 className="text-2xl font-semibold mb-1">
+        {title}
+      </h1>
       {description && (
         <p className="text-sm text-muted-foreground">
           {description}
@@ -247,165 +170,75 @@ export function PageHeader({ title, description, className }: PageHeaderProps) {
       )}
     </div>
   );
-}
-`
+}`
   },
   {
-    id: "data-table",
-    name: "Data Table",
+    id: "risk-meter",
+    name: "Risk Meter",
     usageLocations: [
-      { path: "/file-vault", description: "File management list" },
-      { path: "/network", description: "Company network table" },
-      { path: "/insights", description: "Analytics data grid" }
+      { path: "/", description: "Company risk overview", viewInApp: true },
+      { path: "/network/company/:id", description: "Detailed company risk", viewInApp: true },
+      { path: "/insights", description: "Risk analytics", viewInApp: true }
     ],
-    references: "Table, TableHeader, TableBody, TableRow, TableCell",
-    code: `import {
-        Table,
-        TableBody,
-        TableCell,
-        TableHead,
-        TableHeader,
-        TableRow,
-      } from "@/components/ui/table";
-      import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
-      import { Button } from "@/components/ui/button";
-      import { LoadingSpinner } from "@/components/ui/loading-spinner";
-      
-      interface DataTableProps<T> {
-        data: T[];
-        columns: {
-          key: string;
-          header: string;
-          sortable?: boolean;
-          type?: 'checkbox' | 'icon' | 'status' | 'actions' | 'text';
-        }[];
-        isLoading?: boolean;
-        sortConfig?: {
-          key: string;
-          direction: 'asc' | 'desc';
-        };
-        onSort?: (key: string) => void;
-        selectedRows?: Set<number>;
-        onRowSelect?: (id: number) => void;
-        onSelectAll?: () => void;
-      }
-      
-      export function DataTable<T extends Record<string, any>>({ 
-        data,
-        columns,
-        isLoading,
-        sortConfig,
-        onSort,
-        selectedRows,
-        onRowSelect,
-        onSelectAll
-      }: DataTableProps<T>) {
-        const getSortIcon = (key: string) => {
-          if (!sortConfig || sortConfig.key !== key) {
-            return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
-          }
-          return sortConfig.direction === 'asc' 
-            ? <ArrowUpIcon className="h-4 w-4 text-primary" />
-            : <ArrowDownIcon className="h-4 w-4 text-primary" />;
-        };
-        
-        if (isLoading) {
-          return (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {columns.map((column) => (
-                    <TableHead key={column.key}>{column.header}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <TableRow key={index} className="animate-pulse">
-                    {columns.map((column) => (
-                      <TableCell key={column.key}>
-                        <div className="h-4 bg-muted rounded w-full" />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          );
-        }
-        
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableHead key={column.key}>
-                    {column.sortable ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="-ml-3 h-8 data-[state=open]:bg-accent"
-                        onClick={() => onSort?.(column.key)}
-                      >
-                        {column.header}
-                        {getSortIcon(column.key)}
-                      </Button>
-                    ) : (
-                      column.header
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row, index) => (
-                <TableRow key={index} className={selectedRows?.has(row.id) ? 'bg-primary/10' : ''}>
-                  {columns.map((column) => {
-                    if (column.type === 'checkbox') {
-                      return (
-                        <TableCell key={column.key}>
-                          <Checkbox checked={selectedRows?.has(row.id)} onCheckedChange={() => onRowSelect?.(row.id)} />
-                        </TableCell>
-                      );
-                    }
-                    if (column.type === 'icon') {
-                      return <TableCell key={column.key}><img src={row.logo} alt={row.name} className="h-6 w-6 rounded-full" /></TableCell>
-                    }
-                    if (column.type === 'status') {
-                      return (
-                        <TableCell key={column.key}>
-                          <Badge variant={getStatusBadgeVariant(row.status)}>
-                            {row.status}
-                          </Badge>
-                        </TableCell>
-                      );
-                    }
-                    if (column.type === 'actions') {
-                      return (
-                        <TableCell key={column.key}>
-                          <Button variant="ghost" size="sm">Edit</Button>
-                          <Button variant="ghost" size="sm" className="ml-2">Delete</Button>
-                        </TableCell>
-                      )
-                    }
-                    if (column.type === 'view') {
-                      return (
-                        <TableCell key={column.key}>
-                          <Button variant="ghost" size="sm">View</Button>
-                        </TableCell>
-                      )
-                    }
-                    return <TableCell key={column.key}>{row[column.key]}</TableCell>;
-                  })}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-      }
-      `
+    references: "RiskMeter",
+    code: `interface RiskMeterProps {
+  score: number;
+  className?: string;
+}
+
+export function RiskMeter({ 
+  score = 0, 
+  className 
+}: RiskMeterProps) {
+  const normalizedScore = Math.min(
+    Math.max(0, score), 
+    1500
+  );
+
+  return (
+    <div className={cn(
+      "flex flex-col items-center justify-center py-4",
+      className
+    )}>
+      {/* Implementation */}
+    </div>
+  );
+}`
+  },
+  {
+    id: "sidebar-menu",
+    name: "Sidebar Menu",
+    usageLocations: [
+      { path: "/", description: "Main dashboard navigation", viewInApp: true },
+      { path: "/network", description: "Network view navigation", viewInApp: true },
+      { path: "/insights", description: "Analytics navigation", viewInApp: true }
+    ],
+    references: "Sidebar",
+    code: `interface SidebarProps {
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
+  isNewUser?: boolean;
+  notificationCount?: number;
+  showPulsingDot?: boolean;
+  showInvelaTabs?: boolean;
+}
+
+export function Sidebar({ 
+  isExpanded,
+  onToggleExpanded,
+  // ... other props
+}: SidebarProps) {
+  return (
+    <div className={cn(
+      "h-full bg-background/95",
+      isExpanded ? "w-64" : "w-20"
+    )}>
+      {/* Implementation */}
+    </div>
+  );
+}`
   }
-];
+].sort((a, b) => a.name.localeCompare(b.name));
 
 export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState(components[0].id);
@@ -566,7 +399,66 @@ export default function PlaygroundPage() {
 
           {currentComponent && (
             <>
-              {/* Preview section */}
+              {/* Usage Examples */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {currentComponent.usageLocations.map((location, index) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{location.path}</p>
+                          <p className="text-sm text-muted-foreground">{location.description}</p>
+                        </div>
+                        {location.viewInApp && (
+                          <Link href={location.path}>
+                            <Button variant="outline" size="sm">
+                              View in App
+                              <ArrowUpRight className="ml-2 h-4 w-4" />
+                            </Button>
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Code Example */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="text-sm font-bold">Code Example</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyCode}
+                    >
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownloadCode}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <pre className="p-4 rounded-lg bg-muted overflow-x-auto">
+                    <code className="text-sm whitespace-pre-wrap break-words font-mono">
+                      {currentComponent.code}
+                    </code>
+                  </pre>
+                </CardContent>
+              </Card>
+
+              {/* Component Preview */}
               {currentComponent.id === "loading-spinner" && (
                 <Card>
                   <CardHeader>
@@ -828,7 +720,7 @@ export default function PlaygroundPage() {
                               notificationCount={showNotifications ? notificationCount : 0}
                               showPulsingDot={pulsingDot}
                               showInvelaTabs={showInvelaTabs}
-                              isPlayground={true} // Add this prop
+                              isPlayground={true}
                             />
                           </div>
                         </div>
@@ -921,98 +813,6 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               )}
-
-              {/* Usage Examples section */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 max-w-2xl">
-                    {currentComponent?.usageLocations.map((location, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <ArrowUpRight className="h-4 w-4 mt-1 text-muted-foreground" />
-                        <div>
-                          <code className="text-sm font-mono text-muted-foreground">{location.path}</code>
-                          <p className="text-sm">{location.description}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Code section */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-bold">Code</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="references" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 h-11 bg-muted/50 p-1 mb-2">
-                      <TabsTrigger
-                        value="references"
-                        className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
-                      >
-                        References
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="code"
-                        className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
-                      >
-                        Code
-                      </TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="references" className="mt-4">
-                      <div className="rounded-lg bg-muted/50 p-4">
-                        <code className="text-sm font-mono">{currentComponent.references}</code>
-                      </div>
-                    </TabsContent>
-                    <TabsContent value="code" className="mt-4">
-                      <div className="relative rounded-lg bg-muted/50">
-                        <div className="absolute right-4 top-4 flex gap-2 p-2 rounded-lg bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleCopyCode}
-                            className="h-8 w-8 p-0 hover:bg-accent/50"
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleDownloadCode}
-                            className="h-8 w-8 p-0 hover:bg-accent/50"
-                          >
-                            <Download className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        <div className="overflow-x-auto max-h-[400px] pt-16 px-4 pb-4">
-                          <pre className="text-sm">
-                            <code className="grid">
-                              {currentComponent.code.split('\n').map((line, index) => (
-                                <div
-                                  key={index}
-                                  className={cn(
-                                    "px-2 py-0.5",
-                                    selectedLine === index && "bg-muted",
-                                    "hover:bg-muted/50 cursor-pointer"
-                                  )}
-                                  onClick={() => setSelectedLine(index)}
-                                >
-                                  <span className="select-none text-mutedforeground mr-4">{index + 1}</span>
-                                  {line}
-                                </div>
-                              ))}
-                            </code>
-                          </pre>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
             </>
           )}
         </div>
