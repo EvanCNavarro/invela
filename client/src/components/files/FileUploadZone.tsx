@@ -113,17 +113,17 @@ export function FileUploadZone({
       .map(type => type.toUpperCase())
       .join(', ');
 
-    // Split into groups of 4 for better readability
+    // Split into groups of 6 for better readability with less wrapping
     const typeArray = types.split(', ');
     const groups = [];
-    for (let i = 0; i < typeArray.length; i += 4) {
-      groups.push(typeArray.slice(i, i + 4).join(', '));
+    for (let i = 0; i < typeArray.length; i += 6) {
+      groups.push(typeArray.slice(i, i + 6).join(', '));
     }
     return groups.join(',\n');
   };
 
   const acceptedFormatsText = (
-    <p className="text-xs text-muted-foreground max-w-[320px] w-full whitespace-pre-line">
+    <p className="text-xs text-muted-foreground max-w-[280px] w-full whitespace-pre-line">
       Accepted formats: {formatFileTypes()}
     </p>
   );
@@ -134,7 +134,7 @@ export function FileUploadZone({
         <TooltipTrigger>
           <Info className="h-4 w-4 text-muted-foreground hover:text-primary" />
         </TooltipTrigger>
-        <TooltipContent className="max-w-[320px] w-full whitespace-pre-line">
+        <TooltipContent className="max-w-[280px] w-full whitespace-pre-line">
           <p className="text-xs">Accepted formats: {formatFileTypes()}</p>
         </TooltipContent>
       </Tooltip>
