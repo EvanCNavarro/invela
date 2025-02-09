@@ -1,14 +1,14 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
-import { Check, ChevronDown, LucideIcon } from "lucide-react"
+import { Check, ChevronDown, MoreHorizontal, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface UnifiedDropdownProps {
   trigger: {
-    text: string
+    text?: string
     leftIcon?: LucideIcon
     className?: string
-    variant?: 'default' | 'outline' | 'ghost'
+    variant?: 'default' | 'icon' | 'outline'
   }
   title?: string
   items: {
@@ -20,28 +20,40 @@ interface UnifiedDropdownProps {
   }[]
   className?: string
   align?: 'start' | 'center' | 'end'
+  multiSelect?: boolean
 }
 
 export const UnifiedDropdown = React.forwardRef<
   HTMLDivElement,
   UnifiedDropdownProps
 >((props, ref) => {
-  const { trigger, title, items, className, align = 'start' } = props
+  const { trigger, title, items, className, align = 'start', multiSelect = true } = props
   const LeftIcon = trigger.leftIcon
+  const isIconOnly = trigger.variant === 'icon'
 
   return (
     <DropdownMenuPrimitive.Root>
       <DropdownMenuPrimitive.Trigger
         className={cn(
-          "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
-          "bg-background hover:bg-accent hover:text-accent-foreground",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          trigger.className
+          isIconOnly 
+            ? "h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent"
+            : cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium",
+                "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+                trigger.className
+              )
         )}
       >
-        {LeftIcon && <LeftIcon className="h-4 w-4" />}
-        {trigger.text}
-        <ChevronDown className="h-4 w-4 opacity-50" />
+        {isIconOnly ? (
+          <MoreHorizontal className="h-4 w-4" />
+        ) : (
+          <>
+            {LeftIcon && <LeftIcon className="h-4 w-4" />}
+            {trigger.text}
+            <ChevronDown className="h-4 w-4 transition-transform duration-200 ease-in-out group-data-[state=open]:rotate-180" />
+          </>
+        )}
       </DropdownMenuPrimitive.Trigger>
 
       <DropdownMenuPrimitive.Portal>
@@ -57,7 +69,7 @@ export const UnifiedDropdown = React.forwardRef<
           )}
         >
           {title && (
-            <div className="px-2 py-1.5 text-sm font-semibold text-foreground/70">
+            <div className="px-2 py-1.5 text-sm font-semibold">
               {title}
             </div>
           )}
@@ -74,13 +86,13 @@ export const UnifiedDropdown = React.forwardRef<
                   "data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
                 )}
               >
+                {item.selected && (
+                  <Check className="mr-2 h-4 w-4 text-primary" />
+                )}
                 {ItemIcon && (
                   <ItemIcon className="mr-2 h-4 w-4 text-foreground/50" />
                 )}
                 <span className="flex-grow">{item.label}</span>
-                {item.selected && (
-                  <Check className="ml-2 h-4 w-4 text-primary" />
-                )}
               </DropdownMenuPrimitive.Item>
             )
           })}
