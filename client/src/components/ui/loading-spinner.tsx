@@ -17,58 +17,20 @@ export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) 
       <svg 
         viewBox="0 0 28 28" 
         fill="none" 
-        xmlns="http://www.w3.org/2000/svg"
+        xmlns="http://www.w3.org/2000/svg" 
+        xmlns:anim="http://www.w3.org/2000/anim" 
+        anim="" 
+        anim:transform-origin="50% 50%" 
+        anim:duration="1" 
+        anim:ease="ease-in-out"
         className="animate-spin"
       >
-        <g>
-          <rect 
-            x="-2" 
-            y="-2" 
-            width="24" 
-            height="24" 
-            rx="12" 
-            transform="matrix(1.19249e-08 -1 -1 -1.19249e-08 23.9979 23.999)" 
-            stroke="#DEE2F1" 
-            strokeWidth="4" 
-          />
-          <rect 
-            x="-2" 
-            y="-2" 
-            width="24" 
-            height="24" 
-            rx="12" 
-            transform="matrix(-4.37114e-08 -1 -1 4.37114e-08 24 24.001)" 
-            stroke="url(#paint0_angular)" 
-            strokeWidth="4" 
-          />
-          <path 
-            fillRule="evenodd" 
-            clipRule="evenodd" 
-            d="M4.198 11.999H0.139586C0.0488603 12.6333 0.000646812 13.2812 -0.0020752 13.9399V14.0581C0.000646806 14.7168 0.0488601 15.3648 0.139586 15.999H4.198C4.06682 15.3528 3.99795 14.684 3.99795 13.999C3.99795 13.3141 4.06682 12.6452 4.198 11.999Z" 
-            fill="white"
-          />
-          <rect 
-            x="3.99805" 
-            y="11.999" 
-            width="4" 
-            height="4" 
-            rx="0.25" 
-            fill="#4965EC"
-          />
+        <g id="Frame 427319720">
+          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
+            <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
+            <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
+          </g>
         </g>
-        <defs>
-          <radialGradient 
-            id="paint0_angular" 
-            cx="0" 
-            cy="0" 
-            r="1" 
-            gradientUnits="userSpaceOnUse" 
-            gradientTransform="translate(14 14) scale(14)"
-          >
-            <stop stopColor="#4965EC"/>
-            <stop offset="1" stopColor="#E7E8EB" stopOpacity="0"/>
-          </radialGradient>
-        </defs>
       </svg>
     </div>
   );
