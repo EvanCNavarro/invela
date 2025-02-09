@@ -30,6 +30,8 @@ import { useAuth } from "@/hooks/use-auth";
 // Helper function to generate consistent slugs - must match company-profile-page.tsx
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+const itemsPerPage = 5; // Changed from 10 to 5
+
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -39,7 +41,6 @@ export default function NetworkPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
   const { user } = useAuth();
-  const itemsPerPage = 10;
 
   const { data: currentCompany } = useQuery({
     queryKey: ["/api/companies/current"],
@@ -100,7 +101,7 @@ export default function NetworkPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-6">
         <PageHeader
-          title={`${currentCompany?.name || 'Company'}'s Network`}
+          title={currentCompany?.name ? `${currentCompany.name}'s Network` : 'Network'}
           description="View and manage companies in your network."
         />
 
@@ -246,6 +247,31 @@ export default function NetworkPage() {
               )}
             </TableBody>
           </Table>
+
+          {/* Add pagination controls */}
+          {filteredCompanies.length > itemsPerPage && (
+            <div className="flex items-center justify-center space-x-2 py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>
