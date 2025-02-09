@@ -22,6 +22,8 @@ interface SidebarProps {
   isExpanded: boolean;
   onToggleExpanded: () => void;
   isNewUser?: boolean;
+  notificationCount?: number;
+  showPulsingDot?: boolean;
 }
 
 interface Task {
@@ -32,7 +34,13 @@ interface Task {
   assignedTo: number | null;
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: SidebarProps) {
+export function Sidebar({ 
+  isExpanded, 
+  onToggleExpanded, 
+  isNewUser = false,
+  notificationCount = 0,
+  showPulsingDot = false 
+}: SidebarProps) {
   const [location] = useLocation();
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
@@ -41,9 +49,6 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   const { data: company } = useQuery({
     queryKey: ["/api/companies/current"],
   });
-
-  // Get total task count
-  const totalTasks = tasks.length;
 
   const menuItems = [
     { 
@@ -56,14 +61,15 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       icon: CheckCircleIcon,
       label: "Task Center", 
       href: "/task-center",
-      locked: false, // Always accessible
-      count: totalTasks
+      locked: false,
+      count: notificationCount || tasks.length
     },
     { 
       icon: Network,
       label: "Network", 
       href: "/network",
-      locked: isNewUser 
+      locked: isNewUser,
+      pulsingDot: showPulsingDot
     },
     { 
       icon: FileIcon,
@@ -114,7 +120,7 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
       <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
         <div className="space-y-1">
           <div>
-            {menuItems.map(({ icon: Icon, label, href, locked, count }) => {
+            {menuItems.map(({ icon: Icon, label, href, locked, count, pulsingDot }) => {
               const isActive = location === href;
               const isDisabled = locked;
 
