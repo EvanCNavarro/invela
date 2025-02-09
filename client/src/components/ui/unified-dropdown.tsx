@@ -55,12 +55,7 @@ export const UnifiedDropdown = React.forwardRef<
 
   // Handle open state changes
   const handleOpenChange = (newOpen: boolean) => {
-    // Only allow closing if:
-    // 1. It's not a multi-select dropdown
-    // 2. User is actually trying to close the menu (newOpen is false)
-    if (!multiSelect || newOpen) {
-      setOpen(newOpen)
-    }
+    setOpen(newOpen)
   }
 
   // Get dynamic button text and icon for single-select dropdowns
@@ -87,7 +82,7 @@ export const UnifiedDropdown = React.forwardRef<
       .filter(Boolean)
       .map(text => text?.length || 0)
   )
-  const minWidth = Math.max(200, maxLabelLength * 8) // 8px per character as rough estimate
+  const contentWidth = Math.max(200, maxLabelLength * 8) // 8px per character as rough estimate
 
   return (
     <DropdownMenuPrimitive.Root open={open} onOpenChange={handleOpenChange}>
@@ -103,7 +98,7 @@ export const UnifiedDropdown = React.forwardRef<
                 trigger.className
               )
         )}
-        style={{ minWidth: isIconOnly ? undefined : minWidth }}
+        style={{ width: isIconOnly ? undefined : `${contentWidth}px` }}
       >
         {isIconOnly ? (
           <MoreHorizontal className="h-4 w-4" />
@@ -125,7 +120,7 @@ export const UnifiedDropdown = React.forwardRef<
         <DropdownMenuPrimitive.Content
           ref={ref}
           align={align}
-          style={{ minWidth: isIconOnly ? 200 : minWidth }}
+          style={{ width: isIconOnly ? '200px' : `${contentWidth}px` }}
           className={cn(
             "z-50 overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
