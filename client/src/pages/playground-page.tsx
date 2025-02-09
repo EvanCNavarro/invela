@@ -123,6 +123,36 @@ export function RiskMeter({ score = 0, className }: RiskMeterProps) {
     </div>
   );
 }`
+  },
+  {
+    id: "page-header",
+    name: "Page Header",
+    usageLocations: [
+      { path: "/file-vault", description: "File management header" },
+      { path: "/insights", description: "Analytics dashboard header" },
+      { path: "/network", description: "Network view header" }
+    ],
+    references: "PageHeader",
+    code: `import { cn } from "@/lib/utils";
+
+interface PageHeaderProps {
+  title: string;
+  description?: string;
+  className?: string;
+}
+
+export function PageHeader({ title, description, className }: PageHeaderProps) {
+  return (
+    <div className={cn("flex flex-col", className)}>
+      <h1 className="text-2xl font-semibold mb-1">{title}</h1>
+      {description && (
+        <p className="text-sm text-muted-foreground">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}`
   }
 ];
 
@@ -332,6 +362,65 @@ export default function PlaygroundPage() {
                   <CardContent>
                     <div className="flex justify-center">
                       <RiskMeter score={riskScore} />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {currentComponent?.id === "page-header" && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Basic Examples */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-bold">Basic Examples</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="p-4 border rounded-lg">
+                      <PageHeader 
+                        title="Simple Header" 
+                      />
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <PageHeader 
+                        title="With Description" 
+                        description="A detailed explanation of this section."
+                      />
+                    </div>
+                    <div className="p-4 border rounded-lg bg-muted">
+                      <PageHeader 
+                        title="Custom Background" 
+                        description="Header with a different background color."
+                        className="text-primary"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Responsive Design */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-bold">Responsive Design</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="p-4 border rounded-lg">
+                        <div className="w-full md:w-2/3">
+                          <PageHeader 
+                            title="Responsive Width"
+                            description="This header adjusts its width based on screen size."
+                          />
+                        </div>
+                      </div>
+                      <div className="p-4 border rounded-lg">
+                        <PageHeader 
+                          title="Mobile Friendly"
+                          description="The text and spacing automatically adjust for smaller screens."
+                          className="text-center md:text-left"
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
