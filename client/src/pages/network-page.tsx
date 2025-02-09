@@ -329,7 +329,9 @@ export default function NetworkPage() {
           <div className="flex items-center justify-between px-4 py-4 border-t">
             {/* Table details */}
             <div className="text-sm text-muted-foreground">
-              {filteredCompanies.length > 0 ? (
+              {isLoading ? (
+                "Loading results..."
+              ) : filteredCompanies.length > 0 ? (
                 <>
                   Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} results
                 </>
@@ -338,8 +340,8 @@ export default function NetworkPage() {
               )}
             </div>
 
-            {/* Pagination controls - only show if more than itemsPerPage items */}
-            {filteredCompanies.length > itemsPerPage && (
+            {/* Pagination controls - only show if more than itemsPerPage items and not loading */}
+            {!isLoading && filteredCompanies.length > itemsPerPage && (
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
