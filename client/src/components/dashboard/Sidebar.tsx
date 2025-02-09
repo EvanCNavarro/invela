@@ -9,7 +9,8 @@ import {
   ChevronRightIcon,
   LockIcon,
   FileIcon,
-  Network
+  Network,
+  EyeOffIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -33,6 +34,10 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   const [location] = useLocation();
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+  });
+
+  const { data: company } = useQuery({
+    queryKey: ["/api/companies/current"],
   });
 
   // Get total task count
@@ -72,6 +77,17 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
     }
   ];
 
+  // Add Playground menu item only for Invela users
+  if (company?.category === 'Invela') {
+    menuItems.push({
+      icon: EyeOffIcon,
+      label: "Playground",
+      href: "/playground",
+      locked: false,
+      isPlayground: true // Special flag for styling
+    });
+  }
+
   return (
     <aside className={cn(
       "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200 z-50",
@@ -91,68 +107,79 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
         )}
       </div>
 
-      <nav className="mt-8">
-        {menuItems.map(({ icon: Icon, label, href, locked, count }) => {
-          const isActive = location === href;
-          const isDisabled = locked;
+      <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
+        <div>
+          {menuItems.map(({ icon: Icon, label, href, locked, count, isPlayground }) => {
+            const isActive = location === href;
+            const isDisabled = locked;
 
-          return (
-            <Link key={href} href={isDisabled ? "#" : href}>
-              <div className={cn(
-                "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
-                "transition-all duration-200 relative",
-                !isExpanded && "justify-center",
-                isActive 
-                  ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20" 
-                  : isDisabled
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
-              )}>
-                <Icon className={cn(
-                  "h-5 w-5",
-                  isActive && "stroke-[2.5]"
-                )} />
-                {isExpanded && (
-                  <>
-                    <span className={cn(
-                      "ml-3 flex-1",
-                      isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
-                    )}>
-                      {label}
-                    </span>
-                    {count !== undefined && (
-                      <Badge 
-                        variant={isActive ? "default" : "secondary"}
-                        className={cn(
-                          "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
-                          "rounded-md text-xs font-medium",
-                          isActive 
-                            ? "bg-primary/10 text-primary hover:bg-primary/20" 
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        )}
-                      >
-                        {count}
-                      </Badge>
-                    )}
-                  </>
-                )}
-                {isDisabled && isExpanded && (
-                  <LockIcon className="h-4 w-4 text-muted-foreground" />
-                )}
-              </div>
-            </Link>
-          );
-        })}
+            return (
+              <Link key={href} href={isDisabled ? "#" : href}>
+                <div className={cn(
+                  "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
+                  "transition-all duration-200 relative",
+                  !isExpanded && "justify-center",
+                  isActive 
+                    ? isPlayground
+                      ? "bg-purple-50 text-purple-600 dark:bg-purple-500/20 dark:text-purple-300"
+                      : "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
+                    : isDisabled
+                      ? "opacity-50 cursor-not-allowed"
+                      : isPlayground
+                        ? "hover:bg-purple-50/80 hover:text-purple-600 dark:hover:bg-purple-500/10 dark:hover:text-purple-300 cursor-pointer"
+                        : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
+                )}>
+                  <Icon className={cn(
+                    "h-5 w-5",
+                    isActive && "stroke-[2.5]",
+                    isPlayground && "text-purple-500 dark:text-purple-400"
+                  )} />
+                  {isExpanded && (
+                    <>
+                      <span className={cn(
+                        "ml-3 flex-1",
+                        isActive 
+                          ? isPlayground
+                            ? "font-semibold text-purple-600 dark:text-purple-300"
+                            : "font-semibold"
+                          : "text-foreground/90 dark:text-foreground/80"
+                      )}>
+                        {label}
+                      </span>
+                      {count !== undefined && (
+                        <Badge 
+                          variant={isActive ? "default" : "secondary"}
+                          className={cn(
+                            "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
+                            "rounded-md text-xs font-medium",
+                            isActive 
+                              ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          )}
+                        >
+                          {count}
+                        </Badge>
+                      )}
+                    </>
+                  )}
+                  {isDisabled && isExpanded && (
+                    <LockIcon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleExpanded}
+          className="mx-4 mb-4 text-foreground/80 hover:text-foreground dark:text-foreground/60 dark:hover:text-foreground"
+        >
+          {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+        </Button>
       </nav>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onToggleExpanded}
-        className="absolute bottom-4 right-4 text-foreground/80 hover:text-foreground dark:text-foreground/60 dark:hover:text-foreground"
-      >
-        {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-      </Button>
     </aside>
   );
 }
