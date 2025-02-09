@@ -9,7 +9,6 @@ import {
   UserIcon,
   EyeIcon,
   EyeOffIcon,
-  MousePointer2Icon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,7 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 export function TopNav() {
   const { user, logoutMutation } = useAuth();
   const [location, setLocation] = useLocation();
-  const { isVisible: showPlayground, toggle: togglePlayground, active } = usePlaygroundVisibility(); // Added active state
+  const { isVisible: showPlayground, toggle: togglePlayground } = usePlaygroundVisibility();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
@@ -106,10 +105,9 @@ export function TopNav() {
               {user?.companyId === 0 && (
                 <>
                   <DropdownMenuSeparator />
-                  <div
-                    role="menuitem"
-                    onClick={handlePlaygroundToggle}
-                    className={`relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-green-500 hover:text-white focus:bg-green-500 focus:text-white ${active ? 'bg-green-500 text-white' : ''}`} // Updated class for active state and green color scheme
+                  <DropdownMenuItem
+                    onSelect={handlePlaygroundToggle}
+                    className="cursor-pointer"
                   >
                     {showPlayground ? (
                       <>
@@ -122,7 +120,7 @@ export function TopNav() {
                         <span>Show Playground</span>
                       </>
                     )}
-                  </div>
+                  </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator className="sm:hidden" />
