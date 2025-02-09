@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  ArrowUpRight, 
-  Copy, 
-  Download, 
+import {
+  ArrowUpRight,
+  Copy,
+  Download,
   XCircle,
   Columns as ColumnsIcon,
   List as ListIcon,
@@ -373,9 +373,9 @@ export default function PlaygroundPage() {
   });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(5);
   const [selectedRows, setSelectedRows] = useState(new Set<number>());
-  const [itemCount, setItemCount] = useState("10");
+  const [itemCount, setItemCount] = useState("5"); // Default to 5 items
   const [isTableLoading, setIsTableLoading] = useState(false);
   const [enabledColumns, setEnabledColumns] = useState({
     checkbox: true,
@@ -398,7 +398,7 @@ export default function PlaygroundPage() {
     setTableSortConfig({ key: 'name', direction: 'asc' });
     setSelectedRows(new Set());
     setCurrentPage(1);
-    setItemCount("10");
+    setItemCount("5"); // Reset to default 5 items
   };
 
   const handleTableSort = (key: string) => {
@@ -574,7 +574,6 @@ export default function PlaygroundPage() {
                           <SelectValue placeholder="Show items" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="0">No items</SelectItem>
                           <SelectItem value="5">5 items</SelectItem>
                           <SelectItem value="10">10 items</SelectItem>
                           <SelectItem value="25">25 items</SelectItem>
@@ -597,7 +596,7 @@ export default function PlaygroundPage() {
                 <CardContent>
                   <div className="space-y-4">
                     <DataTable
-                      data={Number(itemCount) === 0 ? [] : tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
+                      data={tableData.slice((currentPage - 1) * Number(itemCount), currentPage * Number(itemCount))}
                       columns={[
                         ...(enabledColumns.checkbox ? [{ key: 'select', header: '', type: 'checkbox' as const }] : []),
                         ...(enabledColumns.icon ? [{ key: 'name', header: 'Name', type: 'icon' as const, sortable: true }] : []),
@@ -614,7 +613,7 @@ export default function PlaygroundPage() {
                       onSelectAll={handleSelectAll}
                     />
 
-                    {Number(itemCount) > 0 && tableData.length > 0 && (
+                    {tableData.length > 5 && (
                       <div className="flex items-center justify-between px-2">
                         <div className="flex-1 text-sm text-muted-foreground">
                           Showing {Math.min((currentPage - 1) * Number(itemCount) + 1, tableData.length)} to{" "}
@@ -698,14 +697,14 @@ export default function PlaygroundPage() {
                 <CardContent>
                   <Tabs defaultValue="references" className="w-full">
                     <TabsList className="grid w-full grid-cols-2 h-11 bg-muted/50 p-1 mb-2">
-                      <TabsTrigger 
-                        value="references" 
+                      <TabsTrigger
+                        value="references"
                         className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
                       >
                         References
                       </TabsTrigger>
-                      <TabsTrigger 
-                        value="code" 
+                      <TabsTrigger
+                        value="code"
                         className="data-[state=active]:bg-[#E6EBFF] data-[state=active]:text-primary data-[state=active]:shadow-none"
                       >
                         Code
