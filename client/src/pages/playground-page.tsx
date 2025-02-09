@@ -57,7 +57,7 @@ import {
 import { SearchBar } from "@/components/playground/SearchBar";
 import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; // Import the new component
 import { DropdownPlayground } from "@/components/playground/DropdownPlayground";
-
+import { DownloadButtonPlayground } from "@/components/playground/DownloadButtonPlayground";
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -83,8 +83,7 @@ export function Example() {
       <LoadingSpinner size="lg" />
     </div>
   );
-}
-`,
+}`,
   },
   {
     id: "risk-meter",
@@ -97,8 +96,7 @@ export function Example() {
       <RiskMeter score={750} />
     </div>
   );
-}
-`,
+}`,
   },
   {
     id: "page-header",
@@ -112,8 +110,7 @@ export function Example() {
       description="This is an example description that provides additional context."
     />
   );
-}
-`,
+}`,
   },
   {
     id: "data-table",
@@ -136,8 +133,7 @@ export function Example() {
       ]}
     />
   );
-}
-`,
+}`,
   },
   {
     id: "sidebar-menu",
@@ -155,8 +151,7 @@ export function Example() {
       notificationCount={5}
     />
   );
-}
-`,
+}`,
   },
   {
     id: "sidebar-tab",
@@ -174,8 +169,7 @@ export function Example() {
       isExpanded={true}
     />
   );
-}
-`,
+}`,
   },
   {
     id: "search-bar",
@@ -197,8 +191,7 @@ export function Example() {
       />
     </div>
   );
-}
-`,
+}`,
   },
   {
     id: "unified-dropdown",
@@ -222,8 +215,29 @@ export function Example() {
       ]}
     />
   );
-}
-`,
+}`,
+  },
+  {
+    id: "download-button",
+    name: "Download Button",
+    code: `import { DownloadButton } from "@/components/ui/download-button";
+
+export function Example() {
+  return (
+    <div className="space-y-4">
+      <DownloadButton
+        fileIds={['example-file-1']}
+        showToast={true}
+        text="Download File"
+      />
+      <DownloadButton
+        fileIds={['file-1', 'file-2']}
+        isBulkDownload={true}
+        text="Download All"
+      />
+    </div>
+  );
+}`,
   },
 ];
 
@@ -1033,9 +1047,7 @@ export default function PlaygroundPage() {
                         <p
                           className={cn(
                             "text-sm font-medium",
-                            isTabDisabled
-                              ? "text-muted-foreground"
-                              : "text-foreground"
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
                           )}
                         >
                           Variant
@@ -1243,6 +1255,17 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <DropdownPlayground />
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "download-button" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <DownloadButtonPlayground />
                   </CardContent>
                 </Card>
               )}
