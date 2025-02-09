@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, File as FileIcon, Image as ImageIcon, FileText, Info } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,14 @@ const getFileIcon = (type: string | undefined) => {
   return FileIcon;
 };
 
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
 export function FileUploadPreview({
   file,
   progress,
@@ -35,7 +43,17 @@ export function FileUploadPreview({
   variant = 'default'
 }: FileUploadPreviewProps) {
   const FileTypeIcon = getFileIcon(file?.type);
-  const fileSize = file ? (file.size / 1024 / 1024).toFixed(2) : '0';
+  const fileSize = formatFileSize(file?.size || 0);
+
+  useEffect(() => {
+    // Debug logging
+    console.log('File Upload Preview - File Details:', {
+      name: file?.name,
+      type: file?.type,
+      size: fileSize,
+      lastModified: new Date(file?.lastModified || 0).toLocaleString(),
+    });
+  }, [file]);
 
   return (
     <div className={cn(
@@ -51,20 +69,19 @@ export function FileUploadPreview({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium truncate">{file?.name}</p>
-              {variant === 'compact' && (
+              {variant === 'compact' ? (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
                       <Info className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="text-xs">{fileSize} MB</p>
+                      <p className="text-xs">{fileSize}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              )}
-              {variant === 'default' && (
-                <p className="text-xs text-muted-foreground">{fileSize} MB</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{fileSize}</p>
               )}
             </div>
           </div>

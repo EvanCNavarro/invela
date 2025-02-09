@@ -115,13 +115,21 @@ export function FileUploadZone({
   );
 
   const formatFileTypes = () => {
-    return acceptedFileTypes
+    const types = acceptedFileTypes
       .map(type => type.toUpperCase())
       .join(', ');
+
+    // Split into groups of 4 for better readability
+    const typeArray = types.split(', ');
+    const groups = [];
+    for (let i = 0; i < typeArray.length; i += 4) {
+      groups.push(typeArray.slice(i, i + 4).join(', '));
+    }
+    return groups.join(',\n');
   };
 
   const acceptedFormatsText = (
-    <p className="text-xs text-muted-foreground">
+    <p className="text-xs text-muted-foreground max-w-sm whitespace-pre-line">
       Accepted formats: {formatFileTypes()}
     </p>
   );
@@ -132,7 +140,7 @@ export function FileUploadZone({
         <TooltipTrigger>
           <Info className="h-4 w-4 text-muted-foreground hover:text-primary" />
         </TooltipTrigger>
-        <TooltipContent>
+        <TooltipContent className="max-w-sm whitespace-pre-line">
           <p className="text-xs">Accepted formats: {formatFileTypes()}</p>
         </TooltipContent>
       </Tooltip>

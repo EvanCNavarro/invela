@@ -4,6 +4,7 @@ import { DragDropProvider } from '../files/DragDropProvider';
 import { FileUploadPreview } from '../files/FileUploadPreview';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadingFile extends File {
   id: string;
@@ -15,8 +16,16 @@ export function FileUploadPlayground() {
   const [variant, setVariant] = useState<'box' | 'row'>('box');
   const [files, setFiles] = useState<UploadingFile[]>([]);
   const [isDragDropEnabled, setIsDragDropEnabled] = useState(false);
+  const { toast } = useToast();
 
   const handleFilesAccepted = (acceptedFiles: File[]) => {
+    console.log('Accepted files:', acceptedFiles.map(file => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: new Date(file.lastModified).toLocaleString()
+    })));
+
     const newFiles = acceptedFiles.map(file => ({
       ...file,
       id: Math.random().toString(36).slice(2),
@@ -33,14 +42,33 @@ export function FileUploadPlayground() {
         if (progress >= 100) {
           progress = 100;
           clearInterval(interval);
+
+          // Check if all files are at 100%
+          setFiles(prev => {
+            const updatedFiles = prev.map(f => 
+              f.id === file.id ? { ...f, progress } : f
+            );
+
+            // If all files are at 100%, show success toast
+            if (updatedFiles.every(f => f.progress === 100)) {
+              toast({
+                title: "Upload Complete",
+                description: `Successfully uploaded ${updatedFiles.length} file${updatedFiles.length !== 1 ? 's' : ''}.`,
+                duration: 3000,
+              });
+            }
+
+            return updatedFiles;
+          });
+        } else {
+          setFiles(prev => 
+            prev.map(f => 
+              f.id === file.id 
+                ? { ...f, progress } 
+                : f
+            )
+          );
         }
-        setFiles(prev => 
-          prev.map(f => 
-            f.id === file.id 
-              ? { ...f, progress } 
-              : f
-          )
-        );
       }, 500);
     });
   };
