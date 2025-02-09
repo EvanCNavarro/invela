@@ -25,6 +25,7 @@ interface SidebarProps {
   notificationCount?: number;
   showPulsingDot?: boolean;
   showInvelaTabs?: boolean;
+  isPlayground?: boolean;
 }
 
 interface Task {
@@ -41,15 +42,20 @@ export function Sidebar({
   isNewUser = false,
   notificationCount = 0,
   showPulsingDot = false,
-  showInvelaTabs = false
+  showInvelaTabs = false,
+  isPlayground = false
 }: SidebarProps) {
   const [location] = useLocation();
+
+  // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+    enabled: !isPlayground, // Don't fetch if in playground
   });
 
   const { data: company } = useQuery({
     queryKey: ["/api/companies/current"],
+    enabled: !isPlayground, // Don't fetch if in playground
   });
 
   const menuItems = [
@@ -64,7 +70,8 @@ export function Sidebar({
       label: "Task Center", 
       href: "/task-center",
       locked: false,
-      count: notificationCount
+      // Use playground notification count if in playground, otherwise use real task count
+      count: isPlayground ? notificationCount : tasks.length
     },
     { 
       icon: Network,
@@ -90,7 +97,11 @@ export function Sidebar({
   // Admin menu items (only for Invela users)
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
-  if (showInvelaTabs && company?.category === 'Invela' && showPlayground) {
+
+  // In playground mode, use the showInvelaTabs prop, otherwise use real company data
+  const isInvelaUser = isPlayground ? showInvelaTabs : (company?.category === 'Invela');
+
+  if (isInvelaUser && (isPlayground || showPlayground)) {
     adminMenuItems.push({
       icon: MousePointer2Icon,
       label: "Playground",
@@ -150,7 +161,7 @@ export function Sidebar({
                         )}>
                           {label}
                         </span>
-                        {count !== undefined && (
+                        {count > 0 && (
                           <Badge 
                             variant={isActive ? "default" : "secondary"}
                             className={cn(
@@ -163,6 +174,9 @@ export function Sidebar({
                           >
                             {count}
                           </Badge>
+                        )}
+                        {pulsingDot && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-primary animate-pulse" />
                         )}
                       </>
                     )}
@@ -185,7 +199,7 @@ export function Sidebar({
                     </span>
                   </div>
                   <Separator className="mx-2 bg-border/60" />
-                </>
+                </> 
               ) : (
                 <Separator className="mx-2 my-4 bg-border/60" />
               )}

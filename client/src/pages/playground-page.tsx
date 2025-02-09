@@ -82,9 +82,10 @@ interface SidebarProps {
   notificationCount?: number;
   showPulsingDot?: boolean;
   showInvelaTabs?: boolean;
+  isPlayground?: boolean; // Added isPlayground prop
 }
 
-export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false, showInvelaTabs = false }: SidebarProps) {
+export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false, notificationCount = 0, showPulsingDot = false, showInvelaTabs = false, isPlayground = false }: SidebarProps) {
   const menuItems = [
     { 
       icon: HomeIcon,
@@ -827,6 +828,7 @@ export default function PlaygroundPage() {
                               notificationCount={showNotifications ? notificationCount : 0}
                               showPulsingDot={pulsingDot}
                               showInvelaTabs={showInvelaTabs}
+                              isPlayground={true} // Add this prop
                             />
                           </div>
                         </div>
