@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { useQuery } from "@tanstack/react-query";
@@ -30,7 +30,14 @@ import { useAuth } from "@/hooks/use-auth";
 // Helper function to generate consistent slugs - must match company-profile-page.tsx
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-const itemsPerPage = 5; // Changed from 10 to 5
+const itemsPerPage = 5;
+
+interface Company {
+  id: number;
+  name: string;
+  riskScore?: number;
+  accreditationStatus: AccreditationStatus;
+}
 
 export default function NetworkPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,7 +61,7 @@ export default function NetworkPage() {
   // Extract companies from the nested structure
   const companies = companiesData.map(item => item.companies || item);
 
-  const sortCompanies = (a: any, b: any) => {
+  const sortCompanies = (a: Company, b: Company) => {
     if (sortField === "name") {
       return sortDirection === "asc"
         ? a.name.localeCompare(b.name)
@@ -69,7 +76,7 @@ export default function NetworkPage() {
   };
 
   const filteredCompanies = companies
-    .filter((company: any) => {
+    .filter((company: Company) => {
       const matchesSearch = company.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = statusFilter === "ALL" || company.accreditationStatus === statusFilter;
       return matchesSearch && matchesStatus;
@@ -96,6 +103,85 @@ export default function NetworkPage() {
   const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
+
+  // Create a memoized component for company logo to prevent unnecessary re-renders
+  const CompanyLogo = memo(({ company }: { company: Company }) => {
+    // Use TanStack Query for caching the logo
+    const { data: logoUrl } = useQuery({
+      queryKey: [`/api/companies/${company.id}/logo`],
+      // This query will be automatically cached by TanStack Query
+      enabled: !!company.id,
+      staleTime: Infinity, // Logo URLs don't change often
+      cacheTime: 1000 * 60 * 60, // Cache for 1 hour
+    });
+
+    return (
+      <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
+        <img
+          src={logoUrl || `/api/companies/${company.id}/logo`}
+          alt={`${company.name} logo`}
+          className="w-full h-full object-contain"
+          loading="lazy"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = defaultCompanyLogo;
+          }}
+        />
+      </div>
+    );
+  });
+
+  // Update the company row to use the memoized logo component
+  const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange }: {
+    company: Company;
+    isHovered: boolean;
+    onRowClick: () => void;
+    onHoverChange: (isHovered: boolean) => void;
+  }) => (
+    <TableRow
+      className="group cursor-pointer hover:bg-muted/50 bg-white"
+      onClick={onRowClick}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <CompanyLogo company={company} />
+          <span className={cn(
+            "font-normal text-foreground",
+            isHovered && "underline"
+          )}>
+            {company.name}
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+      <TableCell className="text-center">
+        <Badge
+          variant="outline"
+          className={cn(
+            "capitalize",
+            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+          )}
+        >
+          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-center">
+        <div className="invisible group-hover:visible flex items-center justify-center text-primary">
+          <span className="font-medium mr-2">View</span>
+          <ArrowRight className="h-4 w-4" />
+        </div>
+      </TableCell>
+    </TableRow>
+  ));
+
 
   return (
     <DashboardLayout>
@@ -189,89 +275,57 @@ export default function NetworkPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedCompanies.map((company: any) => (
-                  <TableRow
+                paginatedCompanies.map((company: Company) => (
+                  <CompanyRow
                     key={company.id}
-                    className="group cursor-pointer hover:bg-muted/50 bg-white"
-                    onClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
-                    onMouseEnter={() => setHoveredRow(company.id)}
-                    onMouseLeave={() => setHoveredRow(null)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 flex items-center justify-center overflow-hidden">
-                          <img
-                            src={`/api/companies/${company.id}/logo`}
-                            alt={`${company.name} logo`}
-                            className="w-full h-full object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = defaultCompanyLogo;
-                            }}
-                          />
-                        </div>
-                        <span className={cn(
-                          "font-normal text-foreground",
-                          hoveredRow === company.id && "underline"
-                        )}>
-                          {company.name}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "capitalize",
-                          company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-                          company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-                          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-                          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-                          company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-                          company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-                          company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-                          company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
-                        )}
-                      >
-                        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="invisible group-hover:visible flex items-center justify-center text-primary">
-                        <span className="font-medium mr-2">View</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                    company={company}
+                    isHovered={hoveredRow === company.id}
+                    onRowClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
+                    onHoverChange={(isHovered) => setHoveredRow(isHovered ? company.id : null)}
+                  />
                 ))
               )}
             </TableBody>
           </Table>
 
-          {/* Add pagination controls */}
-          {filteredCompanies.length > itemsPerPage && (
-            <div className="flex items-center justify-center space-x-2 py-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
+          {/* Table footer with details and pagination */}
+          <div className="flex items-center justify-between px-4 py-4 border-t">
+            {/* Table details */}
+            <div className="text-sm text-muted-foreground">
+              {filteredCompanies.length > 0 ? (
+                <>
+                  Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} results
+                </>
+              ) : (
+                "No results found"
+              )}
             </div>
-          )}
+
+            {/* Pagination controls - only show if more than itemsPerPage items */}
+            {filteredCompanies.length > itemsPerPage && (
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </DashboardLayout>
