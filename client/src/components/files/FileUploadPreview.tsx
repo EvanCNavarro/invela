@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle, Pencil, Eye, Trash2, CheckCircle } from 'lucide-react';
+import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle, Pencil, Eye, Trash2, CheckCircle2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -90,14 +90,18 @@ export function FileUploadPreview({
     <>
       <div className={cn(
         "relative px-4 py-3 rounded-lg",
-        isComplete ? "bg-[#E5F6F1]/30" : "bg-muted/30",
+        isComplete ? "bg-[#E5F6F1]/30 shadow-[0_8px_24px_rgba(0,0,0,0.15)]" : "bg-muted/30",
         error ? "border-destructive/50 bg-destructive/5" : "",
         className
       )}>
         <div className="flex items-start gap-3">
           {/* Left section: Icon and file details */}
           <div className="flex gap-3 flex-1 min-w-0">
-            <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+            <FileTypeIcon className={cn(
+              "h-8 w-8",
+              isComplete ? "text-black" : "text-muted-foreground",
+              "flex-shrink-0"
+            )} />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
@@ -160,7 +164,7 @@ export function FileUploadPreview({
               {/* Success message when upload is complete */}
               {isComplete && (
                 <div className="flex items-center gap-2 mt-2">
-                  <CheckCircle className="h-4 w-4 text-[#22c55e] fill-[#22c55e]" />
+                  <CheckCircle2 className="h-4 w-4 text-[#079669]" />
                   <span className="text-sm">Upload Complete</span>
                 </div>
               )}
