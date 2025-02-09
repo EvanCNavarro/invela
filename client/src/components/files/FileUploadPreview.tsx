@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { X, File as FileIcon, Image as ImageIcon, FileText, Info } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,6 +9,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 interface FileUploadPreviewProps {
   file: File;
@@ -17,6 +24,7 @@ interface FileUploadPreviewProps {
   error?: string;
   className?: string;
   variant?: 'default' | 'compact';
+  onRename?: (newName: string) => void;
 }
 
 const getFileIcon = (type: string | undefined) => {
@@ -40,10 +48,14 @@ export function FileUploadPreview({
   onRemove,
   error,
   className,
-  variant = 'default'
+  variant = 'default',
+  onRename
 }: FileUploadPreviewProps) {
   const FileTypeIcon = getFileIcon(file?.type);
   const fileSize = formatFileSize(file?.size || 0);
+  const isComplete = progress === 100;
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(file?.name || '');
 
   useEffect(() => {
     // Debug logging
@@ -55,9 +67,22 @@ export function FileUploadPreview({
     });
   }, [file]);
 
+  const handleRename = () => {
+    if (onRename) {
+      onRename(editedName);
+      setIsEditing(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedName(file?.name || '');
+    setIsEditing(false);
+  };
+
   return (
     <div className={cn(
-      "relative px-4 py-3 rounded-lg bg-muted/30",
+      "relative px-4 py-3 rounded-lg",
+      isComplete ? "bg-[#E5F6F1]" : "bg-muted/30",
       error ? "border-destructive/50 bg-destructive/5" : "",
       className
     )}>
@@ -68,7 +93,46 @@ export function FileUploadPreview({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-sm font-medium truncate">{file?.name}</p>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editedName}
+                    onChange={(e) => setEditedName(e.target.value)}
+                    className="h-7 text-sm"
+                    autoFocus
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleRename}
+                  >
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={handleCancelEdit}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-medium truncate">{file?.name}</p>
+                  {isComplete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </>
+              )}
               {variant === 'compact' ? (
                 <TooltipProvider>
                   <Tooltip>
@@ -87,9 +151,31 @@ export function FileUploadPreview({
           </div>
         </div>
 
-        {/* Right section: Remove button and progress */}
+        {/* Right section: Remove button/menu and progress */}
         <div className="flex flex-col items-end gap-2">
-          {onRemove && (
+          {isComplete ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => console.log('View details')}>
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={onRemove}
+                >
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : onRemove ? (
             <Button
               variant="ghost"
               size="icon"
@@ -98,18 +184,18 @@ export function FileUploadPreview({
             >
               <X className="h-4 w-4" />
             </Button>
-          )}
+          ) : null}
 
-          {typeof progress === 'number' && (
+          {typeof progress === 'number' && !isComplete && (
             <p className="text-xs text-muted-foreground">
-              {progress.toFixed(2)}%
+              {progress === 100 ? '100%' : progress.toFixed(0) + '%'}
             </p>
           )}
         </div>
       </div>
 
       {/* Bottom section: Progress bar */}
-      {typeof progress === 'number' && !error && (
+      {typeof progress === 'number' && !error && !isComplete && (
         <div className="mt-2">
           <Progress 
             value={progress} 
