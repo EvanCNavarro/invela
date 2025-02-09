@@ -54,6 +54,7 @@ export function FileUploadZone({
   showAcceptedFormats = true,
 }: FileUploadZoneProps) {
   const { toast } = useToast();
+
   const {
     getRootProps,
     getInputProps,
@@ -87,14 +88,11 @@ export function FileUploadZone({
       // Process files first
       onFilesAccepted(acceptedFiles);
 
-      // Show success toast after files are processed
+      // Success toast will be shown by the parent component when files reach 100%
       if (toastRef) {
-        toastRef.dismiss();
-        toast({
-          title: "Upload Complete",
-          description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
-          duration: 3000,
-        });
+        setTimeout(() => {
+          toastRef.dismiss();
+        }, 500);
       }
     },
   });
@@ -121,6 +119,12 @@ export function FileUploadZone({
       .map(type => type.toUpperCase())
       .join(', ');
   };
+
+  const acceptedFormatsText = (
+    <p className="text-xs text-muted-foreground">
+      Accepted formats: {formatFileTypes()}
+    </p>
+  );
 
   const acceptedFormatsTooltip = (
     <TooltipProvider>
@@ -154,12 +158,10 @@ export function FileUploadZone({
               </div>
               {customPrompt || (
                 <>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">
-                      {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
-                    </p>
-                    {showAcceptedFormats && acceptedFormatsTooltip}
-                  </div>
+                  <p className="text-sm font-medium">
+                    {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
+                  </p>
+                  {showAcceptedFormats && acceptedFormatsText}
                 </>
               )}
             </div>

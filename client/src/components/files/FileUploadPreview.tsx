@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 
 interface FileUploadPreviewProps {
-  file: File | undefined;
+  file: File;
   progress?: number;
   onRemove?: () => void;
   error?: string;
@@ -49,9 +49,9 @@ export function FileUploadPreview({
           <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
 
           <div className="flex-1 min-w-0">
-            {variant === 'compact' ? (
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium truncate">{file?.name}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium truncate">{file?.name}</p>
+              {variant === 'compact' && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -62,13 +62,11 @@ export function FileUploadPreview({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-              </div>
-            ) : (
-              <div>
-                <p className="text-sm font-medium truncate">{file?.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{fileSize} MB</p>
-              </div>
-            )}
+              )}
+              {variant === 'default' && (
+                <p className="text-xs text-muted-foreground">{fileSize} MB</p>
+              )}
+            </div>
           </div>
         </div>
 
