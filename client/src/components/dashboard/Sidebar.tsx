@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { 
+import {
   HomeIcon,
   CheckCircleIcon,
   BookIcon,
@@ -36,9 +36,9 @@ interface Task {
   assignedTo: number | null;
 }
 
-export function Sidebar({ 
-  isExpanded, 
-  onToggleExpanded, 
+export function Sidebar({
+  isExpanded,
+  onToggleExpanded,
   isNewUser = false,
   notificationCount = 0,
   showPulsingDot = false,
@@ -59,35 +59,35 @@ export function Sidebar({
   });
 
   const menuItems = [
-    { 
+    {
       icon: HomeIcon,
-      label: "Dashboard", 
+      label: "Dashboard",
       href: "/",
       locked: isNewUser
     },
-    { 
+    {
       icon: CheckCircleIcon,
-      label: "Task Center", 
+      label: "Task Center",
       href: "/task-center",
       locked: false,
       count: isPlayground ? notificationCount : tasks.length
     },
-    { 
+    {
       icon: Network,
-      label: "Network", 
+      label: "Network",
       href: "/network",
       locked: isNewUser,
       pulsingDot: showPulsingDot
     },
-    { 
+    {
       icon: FileIcon,
-      label: "File Vault", 
+      label: "File Vault",
       href: "/file-vault",
-      locked: isNewUser 
+      locked: isNewUser
     },
-    { 
+    {
       icon: BarChartIcon,
-      label: "Insights", 
+      label: "Insights",
       href: "/insights",
       locked: isNewUser
     }
@@ -119,8 +119,8 @@ export function Sidebar({
         "flex items-center h-16",
         isExpanded ? "px-4" : "justify-center"
       )}>
-        <img 
-          src="/invela-logo.svg" 
+        <img
+          src="/invela-logo.svg"
           alt="Invela"
           className="h-6 w-6"
         />
@@ -137,59 +137,65 @@ export function Sidebar({
               const isDisabled = locked;
 
               return (
-                <Link key={href} href={isDisabled ? "#" : href}>
-                  <div className={cn(
+                <div
+                  key={href}
+                  onClick={(e) => {
+                    if (isPlayground) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className={cn(
                     "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
                     "transition-all duration-200 relative",
                     !isExpanded && "justify-center",
-                    isActive 
+                    isActive
                       ? "bg-[hsl(228,89%,96%)] text-primary dark:bg-primary/20"
                       : isDisabled
                         ? "opacity-50 cursor-not-allowed"
                         : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
                   )}>
-                    <Icon className={cn(
-                      "h-5 w-5",
-                      isActive && "stroke-[2.5]"
-                    )} />
-                    {isExpanded && (
-                      <>
+                  <Icon className={cn(
+                    "h-5 w-5",
+                    isActive && "stroke-[2.5]"
+                  )} />
+                  {isExpanded && (
+                    <>
+                      <span className={cn(
+                        "ml-3 flex-1",
+                        isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
+                      )}>
+                        {label}
+                      </span>
+                      {count > 0 && (
+                        <Badge
+                          variant={isActive ? "default" : "secondary"}
+                          className={cn(
+                            "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
+                            "rounded-md text-xs font-medium",
+                            isActive
+                              ? "bg-primary/10 text-primary hover:bg-primary/20"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          )}
+                        >
+                          {count}
+                        </Badge>
+                      )}
+                      {pulsingDot && (
                         <span className={cn(
-                          "ml-3 flex-1",
-                          isActive ? "font-semibold" : "text-foreground/90 dark:text-foreground/80"
-                        )}>
-                          {label}
-                        </span>
-                        {count > 0 && (
-                          <Badge 
-                            variant={isActive ? "default" : "secondary"}
-                            className={cn(
-                              "ml-2 px-1.5 h-5 min-w-[20px] flex items-center justify-center",
-                              "rounded-md text-xs font-medium",
-                              isActive 
-                                ? "bg-primary/10 text-primary hover:bg-primary/20" 
-                                : "bg-muted text-muted-foreground hover:bg-muted/80"
-                            )}
-                          >
-                            {count}
-                          </Badge>
-                        )}
-                        {pulsingDot && (
-                          <span className={cn(
-                            "absolute right-2 top-1/2 -translate-y-1/2",
-                            "h-2 w-2 rounded-full bg-primary",
-                            "before:absolute before:inset-0",
-                            "before:animate-ping before:rounded-full",
-                            "before:bg-primary/40 before:-z-10"
-                          )} />
-                        )}
-                      </>
-                    )}
-                    {isDisabled && isExpanded && (
-                      <LockIcon className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </div>
-                </Link>
+                          "ml-2 h-5 w-5 flex items-center justify-center",
+                          "before:absolute before:h-2 before:w-2",
+                          "before:rounded-full before:bg-primary",
+                          "after:absolute after:h-2 after:w-2",
+                          "after:rounded-full after:bg-primary/40",
+                          "after:animate-ping"
+                        )} />
+                      )}
+                    </>
+                  )}
+                  {isDisabled && isExpanded && (
+                    <LockIcon className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </div>
               );
             })}
           </div>
@@ -204,45 +210,50 @@ export function Sidebar({
                     </span>
                   </div>
                   <Separator className="mx-2 bg-border/60" />
-                </> 
+                </>
               ) : (
                 <Separator className="mx-2 my-4 bg-border/60" />
               )}
               <div className="pt-2">
-                {adminMenuItems.map(({ icon: Icon, label, href, locked, isPlayground }) => {
+                {adminMenuItems.map(({ icon: Icon, label, href, locked }) => {
                   const isActive = location === href;
                   const isDisabled = locked;
 
                   return (
-                    <Link key={href} href={isDisabled ? "#" : href}>
-                      <div className={cn(
+                    <div
+                      key={href}
+                      onClick={(e) => {
+                        if (isPlayground) {
+                          e.preventDefault();
+                        }
+                      }}
+                      className={cn(
                         "flex items-center h-12 px-4 rounded-lg mx-2 mb-1",
                         "transition-all duration-200 relative",
                         !isExpanded && "justify-center",
-                        isActive 
+                        isActive
                           ? "bg-[#E6F5F3] text-[#079669] dark:bg-emerald-500/20 dark:text-emerald-300"
                           : isDisabled
                             ? "opacity-50 cursor-not-allowed"
                             : "hover:bg-muted hover:text-foreground dark:hover:bg-primary/10 dark:hover:text-primary-foreground cursor-pointer"
                       )}>
-                        <Icon className={cn(
-                          "h-5 w-5",
-                          isActive 
-                            ? "stroke-[2.5] text-[#079669]"
+                      <Icon className={cn(
+                        "h-5 w-5",
+                        isActive
+                          ? "stroke-[2.5] text-[#079669]"
+                          : "text-foreground/90 dark:text-foreground/80"
+                      )} />
+                      {isExpanded && (
+                        <span className={cn(
+                          "ml-3 flex-1",
+                          isActive
+                            ? "font-semibold text-[#079669] dark:text-emerald-300"
                             : "text-foreground/90 dark:text-foreground/80"
-                        )} />
-                        {isExpanded && (
-                          <span className={cn(
-                            "ml-3 flex-1",
-                            isActive 
-                              ? "font-semibold text-[#079669] dark:text-emerald-300"
-                              : "text-foreground/90 dark:text-foreground/80"
-                          )}>
-                            {label}
-                          </span>
-                        )}
-                      </div>
-                    </Link>
+                        )}>
+                          {label}
+                        </span>
+                      )}
+                    </div>
                   );
                 })}
               </div>
