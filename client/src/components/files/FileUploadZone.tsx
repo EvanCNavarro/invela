@@ -72,7 +72,7 @@ export function FileUploadZone({
     maxSize,
     disabled,
     onDrop: (acceptedFiles) => {
-      const uploadToast = toast({
+      const toastRef = toast({
         title: "Uploading Files",
         description: (
           <div className="flex items-center gap-2">
@@ -85,12 +85,14 @@ export function FileUploadZone({
 
       // Simulate upload delay
       setTimeout(() => {
-        toast.dismiss(uploadToast);
-        toast({
-          title: "Upload Complete",
-          description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
-          duration: 3000,
-        });
+        if (toastRef) {
+          toastRef.dismiss();
+          toast({
+            title: "Upload Complete",
+            description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
+            duration: 3000,
+          });
+        }
         onFilesAccepted(acceptedFiles);
       }, 2000);
     },
