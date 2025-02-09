@@ -9,46 +9,10 @@ import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
-import logoNull from "@/assets/logo_null.svg";
-import { memo } from "react";
+import { CompanyLogo } from "@/components/ui/company-logo";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-// Memoized company logo component
-const CompanyLogo = memo(({ company }: { company: Company }) => {
-  const { data: logoUrl } = useQuery({
-    queryKey: [`company-logo-${company.id}`],
-    queryFn: async () => {
-      try {
-        const response = await fetch(`/api/companies/${company.id}/logo`);
-        if (!response.ok) return null;
-        const blob = await response.blob();
-        return URL.createObjectURL(blob);
-      } catch (error) {
-        return null;
-      }
-    },
-    staleTime: Infinity, // Never mark the data as stale
-    cacheTime: Infinity, // Keep the data cached indefinitely
-    retry: false, // Don't retry failed requests
-  });
-
-  return (
-    <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
-      <img
-        src={logoUrl || logoNull}
-        alt={`${company.name} logo`}
-        className="w-8 h-8 object-contain"
-        onError={() => {
-          // Using logoNull as fallback, no need to set explicitly due to || operator
-        }}
-      />
-    </div>
-  );
-});
-
-CompanyLogo.displayName = 'CompanyLogo';
 
 interface CompanyProfilePageProps {
   companySlug?: string;
@@ -138,7 +102,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CompanyLogo company={company} />
+              <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
                 <p className="text-muted-foreground">{company.description || "No description available"}</p>
@@ -155,12 +119,11 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <Building2 className="h-4 w-4 text-muted-foreground" />
-                  Company Type
+                  Company Category
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-semibold">{company.type?.replace(/_/g, ' ') || 'N/A'}</div>
-                <p className="text-sm text-muted-foreground mt-1">{company.category || 'N/A'}</p>
+                <div className="text-2xl font-semibold capitalize">{company.category?.toLowerCase() || 'N/A'}</div>
               </CardContent>
             </Card>
 
