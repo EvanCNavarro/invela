@@ -55,6 +55,8 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { SearchBar } from "@/components/playground/SearchBar";
+import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; // Import the new component
+
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -80,7 +82,8 @@ export function Example() {
       <LoadingSpinner size="lg" />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "risk-meter",
@@ -93,7 +96,8 @@ export function Example() {
       <RiskMeter score={750} />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "page-header",
@@ -107,7 +111,8 @@ export function Example() {
       description="This is an example description that provides additional context."
     />
   );
-}`,
+}
+`,
   },
   {
     id: "data-table",
@@ -130,7 +135,8 @@ export function Example() {
       ]}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "sidebar-menu",
@@ -148,7 +154,8 @@ export function Example() {
       notificationCount={5}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "sidebar-tab",
@@ -166,7 +173,8 @@ export function Example() {
       isExpanded={true}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "search-bar",
@@ -188,7 +196,8 @@ export function Example() {
       />
     </div>
   );
-}`,
+}
+`,
   },
 ];
 
@@ -999,7 +1008,7 @@ export default function PlaygroundPage() {
                           className={cn(
                             "text-sm font-medium",
                             isTabDisabled
-                              ? "text-muted-foreground"
+                              ?                              "text-muted-foreground"
                               : "text-foreground"
                           )}
                         >
@@ -1160,64 +1169,44 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-8">
+                      {/* Global Search Examples */}
                       <div className="space-y-4">
-                        <p className="text-sm font-medium">Search Type</p>
-                        <ToggleGroup
-                          type="single"
-                          value={tabVariant}
-                          onValueChange={(value) => setTabVariant(value as 'standard' | 'global')}
-                          className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
-                        >
-                          <ToggleGroupItem
-                            value="standard"
-                            aria-label="Standard Search"
-                            className={cn(
-                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
-                              "hover:bg-background/50"
-                            )}
-                          >
-                            Standard Search
-                          </ToggleGroupItem>
-                          <ToggleGroupItem
-                            value="global"
-                            aria-label="Global Search"
-                            className={cn(
-                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
-                              "hover:bg-background/50"
-                            )}
-                          >
-                            Global App Search
-                          </ToggleGroupItem>
-                        </ToggleGroup>
-                      </div>
-
-                      <div>
-                        {tabVariant === 'standard' ? (
-                          <>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Contextual Search
-                            </p>
-                            <SearchBar
-                              contextualType="companies"
-                              onSearch={console.log}
-                            />
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm text-muted-foreground mb-4">
-                              Global Application Search
-                            </p>
+                        <p className="text-sm font-medium">Global Application Search</p>
+                        <p className="text-sm text-muted-foreground">
+                          Used in the top navigation bar for application-wide search functionality
+                        </p>
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">Default State</p>
                             <SearchBar
                               isGlobalSearch
                               onSearch={console.log}
                             />
-                          </>
-                        )}
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-2">Loading State</p>
+                            <SearchBar
+                              isGlobalSearch
+                              isLoading={true}
+                              onSearch={console.log}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Contextual Search Example */}
+                      <div className="border-t pt-8">
+                        <div className="space-y-4">
+                          <p className="text-sm font-medium">Contextual Search</p>
+                          <p className="text-sm text-muted-foreground">
+                            Context-specific search with fuzzy matching for tables and filtered views
+                          </p>
+                          <SearchBarPlayground />
+                        </div>
                       </div>
                     </div>
                   </CardContent>
+
                 </Card>
               )}
 
