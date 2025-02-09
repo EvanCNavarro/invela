@@ -254,7 +254,7 @@ export default function PlaygroundPage() {
   );
   const [tabLabel, setTabLabel] = useState("Dashboard");
   const [isTabActive, setIsTabActive] = useState(false);
-  const [tabVariant, setTabVariant] = useState<'default' | 'invela'>('default');
+  const [tabVariant, setTabVariant] = useState<'default' | 'invela' | 'standard' | 'global'>('default');
   const [isTabDisabled, setIsTabDisabled] = useState(false);
   const [tabPulsingDot, setTabPulsingDot] = useState(false);
   const [tabNotifications, setTabNotifications] = useState(false);
@@ -1160,52 +1160,67 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-8">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Default Search (Left Icon)
-                        </p>
-                        <SearchBar
-                          placeholder="Search..."
-                          onSearch={console.log}
-                        />
+                      <div className="space-y-4">
+                        <p className="text-sm font-medium">Search Type</p>
+                        <ToggleGroup
+                          type="single"
+                          value={tabVariant}
+                          onValueChange={(value) => setTabVariant(value as 'standard' | 'global')}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground"
+                        >
+                          <ToggleGroupItem
+                            value="standard"
+                            aria-label="Standard Search"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            Standard Search
+                          </ToggleGroupItem>
+                          <ToggleGroupItem
+                            value="global"
+                            aria-label="Global Search"
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+                              "data-[state=on]:bg-white data-[state=on]:text-foreground data-[state=on]:shadow",
+                              "hover:bg-background/50"
+                            )}
+                          >
+                            Global App Search
+                          </ToggleGroupItem>
+                        </ToggleGroup>
                       </div>
 
                       <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Right Icon Search
-                        </p>
-                        <SearchBar
-                          placeholder="Search with right icon..."
-                          iconPosition="right"
-                          onSearch={console.log}
-                        />
-                      </div>
-
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Loading State
-                        </p>
-                        <SearchBar
-                          placeholder="Loading state..."
-                          isLoading={true}
-                          onSearch={console.log}
-                        />
-                      </div>
-
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Without Clear Button
-                        </p>
-                        <SearchBar
-                          placeholder="No clear button..."
-                          showClearButton={false}
-                          onSearch={console.log}
-                        />
+                        {tabVariant === 'standard' ? (
+                          <>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Contextual Search
+                            </p>
+                            <SearchBar
+                              contextualType="companies"
+                              onSearch={console.log}
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-muted-foreground mb-4">
+                              Global Application Search
+                            </p>
+                            <SearchBar
+                              isGlobalSearch
+                              onSearch={console.log}
+                            />
+                          </>
+                        )}
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               )}
+
               {/* Usage Examples section second */}
               <Card>
                 <CardHeader>

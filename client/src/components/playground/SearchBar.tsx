@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { cn } from "@/lib/utils"
+import Fuse from 'fuse.js'
 
 export interface SearchBarProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onSearch?: (value: string) => void
@@ -12,6 +13,9 @@ export interface SearchBarProps extends React.InputHTMLAttributes<HTMLInputEleme
   contextualType?: string
   debounceMs?: number
   containerClassName?: string
+  data?: any[]
+  keys?: string[]
+  onResults?: (results: any[]) => void
 }
 
 export function SearchBar({
@@ -25,11 +29,24 @@ export function SearchBar({
   value: controlledValue,
   onChange: controlledOnChange,
   placeholder,
+  data,
+  keys,
+  onResults,
   ...props
 }: SearchBarProps) {
   const [value, setValue] = React.useState('')
   const [debouncedValue, setDebouncedValue] = React.useState('')
   const debounceTimeout = React.useRef<NodeJS.Timeout>()
+  const fuse = React.useMemo(() => {
+    if (data && keys) {
+      return new Fuse(data, {
+        keys,
+        threshold: 0.3,
+        includeMatches: true
+      })
+    }
+    return null
+  }, [data, keys])
 
   // Handle controlled vs uncontrolled input
   const inputValue = controlledValue !== undefined ? controlledValue : value
@@ -51,9 +68,15 @@ export function SearchBar({
 
     debounceTimeout.current = setTimeout(() => {
       setDebouncedValue(newValue)
+      if (fuse && newValue) {
+        const results = fuse.search(newValue)
+        onResults?.(results)
+      } else if (!newValue) {
+        onResults?.([])
+      }
       onSearch?.(newValue)
     }, debounceMs)
-  }, [controlledOnChange, debounceMs, onSearch])
+  }, [controlledOnChange, debounceMs, onSearch, fuse, onResults])
 
   const handleClear = React.useCallback(() => {
     if (controlledOnChange) {
@@ -65,8 +88,9 @@ export function SearchBar({
       setValue('')
     }
     setDebouncedValue('')
+    onResults?.([])
     onSearch?.('')
-  }, [controlledOnChange, onSearch])
+  }, [controlledOnChange, onSearch, onResults])
 
   // Cleanup timeout on unmount
   React.useEffect(() => {
@@ -117,4 +141,25 @@ export function SearchBar({
       </div>
     </div>
   )
+}
+
+// Utility function to highlight matched text
+export function highlightMatch(text: string, matches: Fuse.FuseResultMatch[]) {
+  if (!matches?.length) return text
+
+  const indices = matches.reduce((acc: [number, number][], match) => {
+    return [...acc, ...(match.indices || [])]
+  }, []).sort((a, b) => a[0] - b[0])
+
+  let result = ''
+  let lastIndex = 0
+
+  indices.forEach(([start, end]) => {
+    result += text.slice(lastIndex, start)
+    result += `<span class="bg-blue-100 dark:bg-blue-900">${text.slice(start, end + 1)}</span>`
+    lastIndex = end + 1
+  })
+
+  result += text.slice(lastIndex)
+  return result
 }
