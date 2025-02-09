@@ -93,8 +93,8 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
   }
 
   return (
-    <aside className={cn(
-      "fixed left-0 top-0 h-screen bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200 z-50",
+    <div className={cn(
+      "h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-200",
       isExpanded ? "w-64" : "w-20"
     )}>
       <div className={cn(
@@ -232,6 +232,6 @@ export function Sidebar({ isExpanded, onToggleExpanded, isNewUser = false }: Sid
           {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </Button>
       </nav>
-    </aside>
+    </div>
   );
 }
