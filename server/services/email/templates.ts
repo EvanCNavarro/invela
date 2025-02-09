@@ -119,14 +119,6 @@ const templates = {
               margin: 0 6px;
               color: #9ca3af;
             }
-            @media (max-width: 480px) {
-              .container {
-                padding: 24px;
-              }
-              .getting-started {
-                padding: 20px;
-              }
-            }
           </style>
         </head>
         <body>
