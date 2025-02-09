@@ -9,11 +9,46 @@ import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
-import defaultCompanyLogo from "@/assets/default-company-logo.svg";
 import logoNull from "@/assets/logo_null.svg";
+import { memo } from "react";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+// Memoized company logo component
+const CompanyLogo = memo(({ company }: { company: Company }) => {
+  const { data: logoUrl } = useQuery({
+    queryKey: [`company-logo-${company.id}`],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/companies/${company.id}/logo`);
+        if (!response.ok) return null;
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+      } catch (error) {
+        return null;
+      }
+    },
+    staleTime: Infinity, // Never mark the data as stale
+    cacheTime: Infinity, // Keep the data cached indefinitely
+    retry: false, // Don't retry failed requests
+  });
+
+  return (
+    <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
+      <img
+        src={logoUrl || logoNull}
+        alt={`${company.name} logo`}
+        className="w-8 h-8 object-contain"
+        onError={() => {
+          // Using logoNull as fallback, no need to set explicitly due to || operator
+        }}
+      />
+    </div>
+  );
+});
+
+CompanyLogo.displayName = 'CompanyLogo';
 
 interface CompanyProfilePageProps {
   companySlug?: string;
@@ -103,16 +138,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg border flex items-center justify-center bg-white">
-                <img
-                  src={`/api/companies/${company.id}/logo`}
-                  alt={`${company.name} logo`}
-                  className="w-8 h-8 object-contain"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = logoNull;
-                  }}
-                />
-              </div>
+              <CompanyLogo company={company} />
               <div>
                 <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
                 <p className="text-muted-foreground">{company.description || "No description available"}</p>
