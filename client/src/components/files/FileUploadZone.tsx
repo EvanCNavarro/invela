@@ -12,18 +12,13 @@ import {
 } from "@/components/ui/tooltip";
 
 export interface FileUploadZoneProps {
-  // Core props
   onFilesAccepted: (files: File[]) => void;
   acceptedFileTypes?: string[];
   maxFiles?: number;
   maxSize?: number;
-
-  // Display props
   variant?: 'box' | 'row';
   className?: string;
   disabled?: boolean;
-
-  // Custom content
   children?: React.ReactNode;
   customPrompt?: React.ReactNode;
   showAcceptedFormats?: boolean;
@@ -50,7 +45,7 @@ export function FileUploadZone({
   onFilesAccepted,
   acceptedFileTypes = Object.values(DEFAULT_ACCEPTED_FORMATS).flat(),
   maxFiles = 10,
-  maxSize = 5 * 1024 * 1024, // 5MB default
+  maxSize = 5 * 1024 * 1024,
   variant = 'box',
   className,
   disabled = false,
@@ -89,18 +84,18 @@ export function FileUploadZone({
         duration: 0,
       });
 
-      // Simulate upload delay
-      setTimeout(() => {
-        if (toastRef) {
-          toastRef.dismiss();
-          toast({
-            title: "Upload Complete",
-            description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
-            duration: 3000,
-          });
-        }
-        onFilesAccepted(acceptedFiles);
-      }, 2000);
+      // Process files first
+      onFilesAccepted(acceptedFiles);
+
+      // Show success toast after files are processed
+      if (toastRef) {
+        toastRef.dismiss();
+        toast({
+          title: "Upload Complete",
+          description: `Successfully uploaded ${acceptedFiles.length} file${acceptedFiles.length !== 1 ? 's' : ''}.`,
+          duration: 3000,
+        });
+      }
     },
   });
 
@@ -115,9 +110,7 @@ export function FileUploadZone({
       'border-destructive/30 bg-destructive/10': isDragReject,
       'border-muted-foreground/25': !isDragActive && !isDragReject,
       'opacity-50 cursor-not-allowed': disabled,
-      // Box variant
       'min-h-[200px] p-6 flex-col': variant === 'box',
-      // Row variant
       'h-16 px-4': variant === 'row',
     },
     className
@@ -152,7 +145,6 @@ export function FileUploadZone({
       {children || (
         <>
           {variant === 'box' ? (
-            // Box variant content
             <div className="flex flex-col items-center gap-2 text-center">
               <div className={cn(
                 "p-3 rounded-full transition-colors",
@@ -172,7 +164,6 @@ export function FileUploadZone({
               )}
             </div>
           ) : (
-            // Row variant content
             <div className="flex items-center gap-2">
               <div className={cn(
                 "p-2 rounded-full transition-colors",
