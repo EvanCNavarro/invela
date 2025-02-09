@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, File as FileIcon, Image as ImageIcon, FileText, Info, MoreVertical, Edit2, Check, XCircle, Pencil, Eye, Trash2, CheckCircle2 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -16,6 +16,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface FileUploadPreviewProps {
   file: File;
@@ -56,19 +63,10 @@ export function FileUploadPreview({
   const isComplete = progress === 100;
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(file?.name || '');
-
-  useEffect(() => {
-    // Debug logging
-    console.log('File Upload Preview - File Details:', {
-      name: file?.name,
-      type: file?.type,
-      size: fileSize,
-      lastModified: new Date(file?.lastModified || 0).toLocaleString(),
-    });
-  }, [file]);
+  const [showDetails, setShowDetails] = useState(false);
 
   const handleRename = () => {
-    if (onRename) {
+    if (onRename && editedName.trim()) {
       onRename(editedName);
       setIsEditing(false);
     }
@@ -79,136 +77,177 @@ export function FileUploadPreview({
     setIsEditing(false);
   };
 
-  return (
-    <div className={cn(
-      "relative px-4 py-3 rounded-lg",
-      isComplete ? "bg-[#E5F6F1]" : "bg-muted/30",
-      error ? "border-destructive/50 bg-destructive/5" : "",
-      className
-    )}>
-      <div className="flex items-start gap-3">
-        {/* Left section: Icon and file details */}
-        <div className="flex gap-3 flex-1 min-w-0">
-          <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+  const fileDetails = {
+    "File Name": file?.name,
+    "File Type": file?.type || "Unknown",
+    "File Size": fileSize,
+    "Last Modified": new Date(file?.lastModified || 0).toLocaleString(),
+    "Upload Status": isComplete ? "Complete" : "In Progress",
+    "Upload Progress": isComplete ? "100%" : `${progress?.toFixed(0)}%`
+  };
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <Input
-                    value={editedName}
-                    onChange={(e) => setEditedName(e.target.value)}
-                    className="h-7 text-sm"
-                    autoFocus
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={handleRename}
-                  >
-                    <Check className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={handleCancelEdit}
-                  >
-                    <XCircle className="h-4 w-4" />
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  <p className="text-sm font-medium truncate">{file?.name}</p>
-                  {isComplete && (
+  return (
+    <>
+      <div className={cn(
+        "relative px-4 py-3 rounded-lg",
+        isComplete ? "bg-[#E5F6F1]/12" : "bg-muted/30",
+        error ? "border-destructive/50 bg-destructive/5" : "",
+        className
+      )}>
+        <div className="flex items-start gap-3">
+          {/* Left section: Icon and file details */}
+          <div className="flex gap-3 flex-1 min-w-0">
+            <FileTypeIcon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="h-7 text-sm"
+                      autoFocus
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6"
-                      onClick={() => setIsEditing(true)}
+                      onClick={handleRename}
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <Check className="h-4 w-4" />
                     </Button>
-                  )}
-                </>
-              )}
-              {variant === 'compact' ? (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="text-xs">{fileSize}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ) : (
-                <p className="text-xs text-muted-foreground">{fileSize}</p>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={handleCancelEdit}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium truncate">{file?.name}</p>
+                    {isComplete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </>
+                )}
+                {variant === 'compact' ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="text-xs">{fileSize}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : (
+                  <p className="text-xs text-muted-foreground">{fileSize}</p>
+                )}
+              </div>
+
+              {/* Success message when upload is complete */}
+              {isComplete && (
+                <div className="flex items-center gap-2 mt-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">Upload Complete</span>
+                </div>
               )}
             </div>
           </div>
+
+          {/* Right section: Remove button/menu and progress */}
+          <div className="flex items-center">
+            {isComplete ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Rename
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowDetails(true)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={onRemove}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : onRemove ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={onRemove}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            ) : null}
+
+            {typeof progress === 'number' && !isComplete && (
+              <p className="text-xs text-muted-foreground ml-2">
+                {progress === 100 ? '100%' : progress.toFixed(0) + '%'}
+              </p>
+            )}
+          </div>
         </div>
 
-        {/* Right section: Remove button/menu and progress */}
-        <div className="flex flex-col items-end gap-2">
-          {isComplete ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => console.log('View details')}>
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={onRemove}
-                >
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : onRemove ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={onRemove}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          ) : null}
+        {/* Bottom section: Progress bar */}
+        {typeof progress === 'number' && !error && !isComplete && (
+          <div className="mt-2">
+            <Progress 
+              value={progress} 
+              className="h-1 bg-primary/20" 
+            />
+          </div>
+        )}
 
-          {typeof progress === 'number' && !isComplete && (
-            <p className="text-xs text-muted-foreground">
-              {progress === 100 ? '100%' : progress.toFixed(0) + '%'}
-            </p>
-          )}
-        </div>
+        {error && (
+          <p className="mt-1 text-xs text-destructive">
+            {error}
+          </p>
+        )}
       </div>
 
-      {/* Bottom section: Progress bar */}
-      {typeof progress === 'number' && !error && !isComplete && (
-        <div className="mt-2">
-          <Progress 
-            value={progress} 
-            className="h-1 bg-primary/20" 
-          />
-        </div>
-      )}
-
-      {error && (
-        <p className="mt-1 text-xs text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+      {/* File Details Modal */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>File Details</DialogTitle>
+            <DialogDescription>
+              <div className="mt-4 space-y-3">
+                {Object.entries(fileDetails).map(([key, value]) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">{key}:</span>
+                    <span className="text-sm font-medium">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

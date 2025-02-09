@@ -77,6 +77,14 @@ export function FileUploadPlayground() {
     setFiles(prev => prev.filter(f => f.id !== fileId));
   };
 
+  const handleRenameFile = (fileId: string, newName: string) => {
+    setFiles(prev => prev.map(f => 
+      f.id === fileId
+        ? { ...f, name: newName }
+        : f
+    ));
+  };
+
   const content = (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
@@ -112,6 +120,7 @@ export function FileUploadPlayground() {
             progress={file.progress}
             error={file.error}
             onRemove={() => handleRemoveFile(file.id)}
+            onRename={(newName) => handleRenameFile(file.id, newName)}
             variant={variant === 'row' ? 'compact' : 'default'}
           />
         ))}
