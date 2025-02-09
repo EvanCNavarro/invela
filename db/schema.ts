@@ -26,8 +26,7 @@ export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  type: text("type").notNull(), // 'SYSTEM_CREATOR', 'WHITE_LABEL', or 'THIRD_PARTY'
-  category: text("category").notNull(), // 'INVELA', 'BANK', or 'FINTECH'
+  category: text("category").notNull(), // 'Invela', 'Bank', or 'FinTech'
   logoId: uuid("logo_id").references(() => companyLogos.id),
   stockTicker: text("stock_ticker"),
   websiteUrl: text("website_url"),

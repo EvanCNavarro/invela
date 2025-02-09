@@ -314,7 +314,7 @@ export function registerRoutes(app: Express): Server {
   // Companies
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
-      // If the user is from Invela (System Creator), they can see all companies
+      // If the user is from Invela, they can see all companies
       const [userCompany] = await db.select()
         .from(companies)
         .where(eq(companies.id, req.user!.companyId));
@@ -325,8 +325,8 @@ export function registerRoutes(app: Express): Server {
 
       console.log('User company:', userCompany);
 
-      if (userCompany.type === 'SYSTEM_CREATOR') {
-        // Invela users can see all companies
+      // Invela users can see all companies
+      if (userCompany.category === 'Invela') {
         const results = await db.select().from(companies);
         console.log('All companies returned:', results);
         return res.json(results);
@@ -374,7 +374,7 @@ export function registerRoutes(app: Express): Server {
       // Find the Invela company (System Creator)
       const [invela] = await db.select()
         .from(companies)
-        .where(eq(companies.type, 'SYSTEM_CREATOR'));
+        .where(eq(companies.category, 'Invela')); // Changed from companies.type
 
       if (invela) {
         // Add the new company to Invela's network
