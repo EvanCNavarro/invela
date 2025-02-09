@@ -58,6 +58,7 @@ import { SearchBar } from "@/components/playground/SearchBar";
 import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; // Import the new component
 import { DropdownPlayground } from "@/components/playground/DropdownPlayground";
 import { DownloadButtonPlayground } from "@/components/playground/DownloadButtonPlayground";
+import { FileUploadPlayground } from '@/components/playground/FileUploadPlayground';
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -234,6 +235,32 @@ export function Example() {
         fileIds={['file-1', 'file-2']}
         isBulkDownload={true}
         text="Download All"
+      />
+    </div>
+  );
+}`,
+  },
+  {
+    id: "file-upload",
+    name: "File Upload",
+    code: `import { FileUploadZone } from '@/components/files/FileUploadZone';
+import { FileUploadPreview } from '@/components/files/FileUploadPreview';
+
+export function Example() {
+  const handleFilesAccepted = (files: File[]) => {
+    console.log('Files accepted:', files);
+  };
+
+  return (
+    <div className="space-y-4">
+      <FileUploadZone
+        onFilesAccepted={handleFilesAccepted}
+        variant="box"
+      />
+      {/* Preview example */}
+      <FileUploadPreview
+        file={new File([''], 'example.pdf', { type: 'application/pdf' })}
+        progress={65}
       />
     </div>
   );
@@ -977,8 +1004,7 @@ export default function PlaygroundPage() {
                               value as keyof typeof availableIcons
                             ];
                             if (value === "Locked") {
-                              handleLockState(true, {
-                                setIsTabDisabled,
+                              handleLockState(true, {                              setIsTabDisabled,
                                 setSelectedIcon,
                                 setTabLabel,
                                 setIsTabActive,
@@ -1266,6 +1292,16 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <DownloadButtonPlayground />
+                  </CardContent>
+                </Card>
+              )}
+              {currentComponent.id === "file-upload" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <FileUploadPlayground />
                   </CardContent>
                 </Card>
               )}
