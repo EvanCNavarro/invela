@@ -74,7 +74,8 @@ export function FileUploadZone({
     maxSize,
     disabled,
     onDrop: (acceptedFiles) => {
-      const toastRef = toast({
+      // Show uploading toast
+      toast({
         title: "Uploading Files",
         description: (
           <div className="flex items-center gap-2">
@@ -82,18 +83,11 @@ export function FileUploadZone({
             <span>Processing {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''}...</span>
           </div>
         ),
-        duration: 0,
+        duration: 2000,
       });
 
-      // Process files first
+      // Process files
       onFilesAccepted(acceptedFiles);
-
-      // Success toast will be shown by the parent component when files reach 100%
-      if (toastRef) {
-        setTimeout(() => {
-          toastRef.dismiss();
-        }, 500);
-      }
     },
   });
 
