@@ -21,6 +21,7 @@ import {
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUpRight } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const components = [
   {
@@ -30,7 +31,45 @@ const components = [
       { path: "/", description: "During data fetch" },
       { path: "/insights", description: "Chart loading states" },
       { path: "/network", description: "Company list loading" }
-    ]
+    ],
+    references: "LoadingSpinner",
+    code: `import { cn } from "@/lib/utils";
+
+interface LoadingSpinnerProps {
+  className?: string;
+  size?: "sm" | "md" | "lg";
+}
+
+export function LoadingSpinner({ className, size = "md" }: LoadingSpinnerProps) {
+  return (
+    <div className={cn(
+      "flex items-center justify-center",
+      size === "sm" && "h-4 w-4",
+      size === "md" && "h-8 w-8",
+      size === "lg" && "h-12 w-12",
+      className
+    )}>
+      <svg 
+        viewBox="0 0 28 28" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg" 
+        xmlns:anim="http://www.w3.org/2000/anim" 
+        anim="" 
+        anim:transform-origin="50% 50%" 
+        anim:duration="1" 
+        anim:ease="ease-in-out"
+        className="animate-spin"
+      >
+        <g id="Frame 427319720">
+          <g id="Invela Icon" anim:rotation="0[0:1:360:ease-in-out]">
+            <path d="M4.11091 11.9259H7.96489V15.8148H4.11091V11.9259Z" fill="#4965EC" fillOpacity="0.5"></path>
+            <path fillRule="evenodd" clipRule="evenodd" d="M23.8947 14C23.8947 19.5842 19.4084 24.1111 13.8743 24.1111C8.95555 24.1111 4.85962 20.5316 4.01429 15.8148H0.115504C0.99735 22.6895 6.82123 28 13.8743 28C21.5369 28 27.7486 21.732 27.7486 14C27.7486 6.26801 21.5369 0 13.8743 0C6.91015 0 1.14439 5.17749 0.151206 11.9259H4.06422C5.01052 7.33757 9.04646 3.88889 13.8743 3.88889C19.4084 3.88889 23.8947 8.41579 23.8947 14ZM8.50022e-05 13.9505C2.83495e-05 13.967 0 13.9835 0 14C0 14.0165 2.83495e-05 14.033 8.50022e-05 14.0495V13.9505Z" fill="#4965EC" fillOpacity="0.5"></path>
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}`
   },
   // Add more components here
 ];
@@ -52,7 +91,7 @@ export default function PlaygroundPage() {
         <div className="space-y-6">
           {/* Component Selector */}
           <div className="px-1">
-            <h3 className="text-sm font-medium mb-2">Select Component</h3>
+            <h3 className="text-sm font-bold mb-2">Select Component</h3>
             <Select
               value={selectedComponent}
               onValueChange={setSelectedComponent}
@@ -149,6 +188,33 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* In the Code Section */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-bold">In the Code</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="references" className="w-full">
+                    <TabsList className="w-full">
+                      <TabsTrigger value="references" className="flex-1">References</TabsTrigger>
+                      <TabsTrigger value="code" className="flex-1">Code</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="references" className="mt-4">
+                      <div className="rounded-lg bg-muted p-4">
+                        <code className="text-sm font-mono">{currentComponent.references}</code>
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="code" className="mt-4">
+                      <div className="rounded-lg bg-muted p-4 overflow-auto max-h-[400px]">
+                        <pre className="text-sm font-mono whitespace-pre">
+                          {currentComponent.code}
+                        </pre>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
 
               {/* Usage Examples */}
               <Card>
