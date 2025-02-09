@@ -11,6 +11,7 @@ export const DropdownPlayground = () => {
   const [showIcons, setShowIcons] = React.useState(false)
   const [multiSelect, setMultiSelect] = React.useState(true)
   const [showTriggerIcon, setShowTriggerIcon] = React.useState(true)
+  const [dynamicText, setDynamicText] = React.useState(false)
 
   // State for action dropdown
   const [selectedAction, setSelectedAction] = React.useState<string | null>(null)
@@ -71,6 +72,15 @@ export const DropdownPlayground = () => {
           />
           <Label htmlFor="trigger-icon">Show Trigger Icon</Label>
         </div>
+        <div className="flex items-center space-x-2">
+          <Switch 
+            id="dynamic-text" 
+            checked={dynamicText} 
+            onCheckedChange={setDynamicText}
+            disabled={multiSelect}
+          />
+          <Label htmlFor="dynamic-text">Dynamic Button Text</Label>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-8">
@@ -83,7 +93,8 @@ export const DropdownPlayground = () => {
             trigger={{
               text: "Customize Dashboard",
               leftIcon: showTriggerIcon ? Settings : undefined,
-              variant: 'default'
+              variant: 'default',
+              dynamicText: dynamicText
             }}
             title="Visible Widgets"
             items={widgetItems}
@@ -101,6 +112,7 @@ export const DropdownPlayground = () => {
             items={actionItems}
             align="end"
             multiSelect={false}
+            showCheckmarks={false}
             title="Actions"
           />
         </Card>
