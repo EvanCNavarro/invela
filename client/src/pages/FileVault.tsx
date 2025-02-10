@@ -378,6 +378,7 @@ export default function FileVault() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
 
   // Get visible columns using the previously defined function
   const visibleColumns = getVisibleColumns(breakpoint, isSidebarCollapsed);
@@ -811,7 +812,12 @@ export default function FileVault() {
   const filteredAndSortedFiles = useMemo(() => {
     let result = [...allFiles];
 
-    if (searchQuery) {
+    if (searchQuery && searchResults.length > 0) {
+      // Use fuzzy search results when available
+      const matchedIds = new Set(searchResults.map(result => result.item.id));
+      result = result.filter(file => matchedIds.has(file.id));
+    } else if (searchQuery) {
+      // Fallback to basic filtering if no fuzzy results
       const query = searchQuery.toLowerCase();
       result = result.filter(file =>
         file.name.toLowerCase().includes(query) ||
@@ -840,7 +846,7 @@ export default function FileVault() {
     });
 
     return result;
-  }, [allFiles, statusFilter, sortConfig, searchQuery]);
+  }, [allFiles, statusFilter, sortConfig, searchQuery, searchResults]);
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -906,8 +912,7 @@ export default function FileVault() {
     }
   };
 
-  const canRestore = useMemo(() => {
-    return Array.from(selectedFiles).some(fileId => {
+  const canRestore = useMemo(() => {    return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
       return file?.status === 'deleted';
     });
@@ -1086,20 +1091,31 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
     setSearchQuery(value);
   };
 
+  const highlightMatch = (text: string, matches: any[]) => {
+    if (!matches || matches.length === 0) return text;
+    let highlightedText = text;
+    matches.forEach(match => {
+      const startIndex = match.indices[0][0];
+      const endIndex = match.indices[0][1];
+      highlightedText = highlightedText.substring(0, startIndex) +
+                        `<mark>${highlightedText.substring(startIndex, endIndex)}</mark>` +
+                        highlightedText.substring(endIndex);
+    });
+    return highlightedText;
+  };
+
   return (
     <DashboardLayout>
       <TooltipProvider>
-        <div className="space-y-4">
-          <PageHeader
-            title="File Vault"
-            description="Securely store and manage your company's files"
-          />
+        <PageHeader
+          title="File Vault"
+          description="Securely store and manage your files"
+        />
 
-          <DragDropProvider
-            onFilesAccepted={onDrop}
+        <div className="space-y-4">
+          <DragDropProvider onFilesAccepted={onDrop}
             className="min-h-[200px] rounded-lg transition-colors duration-200"
-            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
-          >
+            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30">
             {({ isDragActive }) => (
               <div className="relative">
                 {isDragActive && (
@@ -1125,6 +1141,9 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
               onSearch={handleSearch}
               containerClassName="w-full max-w-md"
               placeholder="Search files..."
+              data={allFiles}
+              keys={['name', 'type', 'status']}
+              onResults={setSearchResults}
             />
             <Select
               value={statusFilter}
@@ -1225,52 +1244,70 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
                           </TableCell>
                         </TableRow>
                       ) : (
-                        paginatedFiles.map((currentFile) => (
-                          <TableRow key={currentFile.id}>
-                            <TableCell className="w-[40px]">
-                              <Checkbox
-                                checked={selectedFiles.has(currentFile.id)}
-                                onCheckedChange={() => toggleFileSelection(currentFile.id)}
-                                aria-label={`Select ${currentFile.name}`}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <FileNameCell file={currentFile} />
-                            </TableCell>
-                            {visibleColumns.has('size') && (
-                              <TableCell className="text-right">
-                                {formatFileSize(currentFile.size)}
+                        paginatedFiles.map((file) => {
+                          const searchResult = searchResults.find(
+                            result => result.item.id === file.id
+                          );
+
+                          return (
+                            <TableRow key={file.id}>
+                              <TableCell className="w-[40px]">
+                                <Checkbox
+                                  checked={selectedFiles.has(file.id)}
+                                  onCheckedChange={() => toggleFileSelection(file.id)}
+                                  aria-label={`Select ${file.name}`}
+                                />
                               </TableCell>
-                            )}
-                            {visibleColumns.has('uploadDate') && (
-                              <TableCell className="text-right">
-                                {new Date(currentFile.createdAt).toLocaleDateString()}
-                              </TableCell>
-                            )}
-                            {visibleColumns.has('uploadTime') && (
-                              <TableCell className="text-right">
-                                {formatTimeWithZone(new Date(currentFile.uploadTime))}
-                              </TableCell>
-                            )}
-                            {visibleColumns.has('version') && (
-                              <TableCell className="text-center">
-                                v{(currentFile.version || 1.0).toFixed(1)}
-                              </TableCell>
-                            )}
-                            {visibleColumns.has('status') && (
                               <TableCell>
-                                <div className="flex justify-center">
-                                  <span className={getStatusStyles(currentFile.status)}>
-                                    {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
-                                  </span>
-                                </div>
+                                {searchResult ? (
+                                  <div
+                                    className="flex items-center gap-2 min-w-0 max-w-[14rem]"
+                                    dangerouslySetInnerHTML={{
+                                      __html: highlightMatch(
+                                        file.name,
+                                        searchResult.matches.filter(m => m.key === 'name')
+                                      )
+                                    }}
+                                  />
+                                ) : (
+                                  <FileNameCell file={file} />
+                                )}
                               </TableCell>
-                            )}
-                            <TableCell>
-                              <FileActions file={currentFile} onDelete={handleDelete} />
-                            </TableCell>
-                          </TableRow>
-                        ))
+                              {visibleColumns.has('size') && (
+                                <TableCell className="text-right">
+                                  {formatFileSize(file.size)}
+                                </TableCell>
+                              )}
+                              {visibleColumns.has('uploadDate') && (
+                                <TableCell className="text-right">
+                                  {new Date(file.createdAt).toLocaleDateString()}
+                                </TableCell>
+                              )}
+                              {visibleColumns.has('uploadTime') && (
+                                <TableCell className="text-right">
+                                  {formatTimeWithZone(new Date(file.uploadTime))}
+                                </TableCell>
+                              )}
+                              {visibleColumns.has('version') && (
+                                <TableCell className="text-center">
+                                  v{(file.version || 1.0).toFixed(1)}
+                                </TableCell>
+                              )}
+                              {visibleColumns.has('status') && (
+                                <TableCell>
+                                  <div className="flex justify-center">
+                                    <span className={getStatusStyles(file.status)}>
+                                      {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                              )}
+                              <TableCell>
+                                <FileActions file={file} onDelete={handleDelete} />
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       )}
                     </TableBody>
                   </Table>
