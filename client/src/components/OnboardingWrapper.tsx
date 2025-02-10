@@ -11,15 +11,6 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {!user?.onboardingCompleted && (
-        <Alert className="mx-4 md:mx-6 mt-4">
-          <Info className="h-4 w-4" />
-          <AlertTitle className="text-sm font-medium">Welcome to Invela</AlertTitle>
-          <AlertDescription className="text-sm text-muted-foreground">
-            Complete your tasks in the Task Center to unlock all features.
-          </AlertDescription>
-        </Alert>
-      )}
       <div className="flex-1">
         {children}
       </div>
