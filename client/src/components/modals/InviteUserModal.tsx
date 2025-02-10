@@ -18,12 +18,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { cn } from "@/lib/utils";
 
-// Define the exact shape of data expected by the server
+// Simple schema with only required user inputs
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  invitee_name: z.string().min(1, "Full name is required"),
+  fullName: z.string().min(1, "Full name is required"),
 });
 
 type InviteUserData = z.infer<typeof inviteUserSchema>;
@@ -44,59 +43,31 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
-      invitee_name: "",
+      fullName: "",
     }
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
       try {
-        const payload = {
-          email: data.email,
-          invitee_name: data.invitee_name,
-          invitee_company: companyName,
-          company_id: companyId,
-          sender_name: user?.fullName,
-          sender_company: companyName
-        };
-
-        // Validate all required fields before sending
-        const requiredFields = [
-          'email',
-          'invitee_name',
-          'invitee_company',
-          'company_id',
-          'sender_name',
-          'sender_company'
-        ];
-
-        const missingFields = requiredFields.filter(field => {
-          const value = payload[field as keyof typeof payload];
-          return !value || (typeof value === 'string' && !value.trim());
-        });
-
-        if (missingFields.length > 0) {
-          console.error('Missing required fields:', missingFields);
-          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-        }
-
-        console.log('Sending invitation with payload:', payload);
-
         const response = await fetch('/api/users/invite', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({
+            email: data.email,
+            invitee_name: data.fullName,
+            company_id: companyId, //Adding company ID
+            sender_name: user?.fullName //Adding sender name
+          })
         });
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Failed to send invitation' }));
-          console.error('Invitation failed:', errorData);
+          const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to send invitation');
         }
 
-        console.log('Invitation sent successfully');
         return await response.json();
       } catch (error) {
         console.error('Error sending invitation:', error);
@@ -104,6 +75,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       }
     },
     onSuccess: () => {
+      // Trigger confetti effect
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -171,28 +143,20 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                     <Input
                       {...field}
                       type="email"
-                      className={cn(
-                        "w-full",
-                        serverError && "border-destructive"
-                      )}
+                      className="w-full"
                       disabled={isPending}
                       aria-label="User's email address"
                       autoFocus
                     />
                   </FormControl>
                   <FormMessage />
-                  {serverError && (
-                    <p className="text-sm text-destructive mt-2">
-                      {serverError}
-                    </p>
-                  )}
                 </FormItem>
               )}
             />
 
             <FormField
               control={form.control}
-              name="invitee_name"
+              name="fullName"
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Full Name</div>
