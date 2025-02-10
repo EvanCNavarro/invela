@@ -184,25 +184,33 @@ export default function TaskCenterPage() {
 
   const itemsPerPage = 10;
   const filteredTasks = tasks.map(processTaskStatus).filter((task) => {
-    // If we have search results, use those instead of doing a basic filter
+    // First check if this task belongs to the current tab
+    const matchesTab = activeTab === "my-tasks"
+      ? (task.assignedTo === user?.id || task.taskType === 'file_request' && task.createdBy === user?.id)
+      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id);
+
+    if (!matchesTab) return false;
+
+    // Then apply search filter if we have search results
     if (searchQuery && searchResults.length > 0) {
       return searchResults.some(result => result.id === task.id);
     }
 
-    // Otherwise, fall back to basic filtering
+    // Otherwise apply basic filters
     const matchesSearch = searchQuery === "" ||
       task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       task.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase().replace(/ /g, '_');
+
+    const matchesStatus = statusFilter === "All Statuses" ||
+      task.status === statusFilter.toLowerCase().replace(/ /g, '_');
+
     const matchesType = typeFilter === "All Task Types" ||
       task.taskType === typeFilter.toLowerCase().replace(/ /g, '_');
-    const matchesScope = scopeFilter === "All Assignee Types" || task.taskScope === scopeFilter.toLowerCase();
 
-    const matchesTab = activeTab === "my-tasks"
-      ? (task.assignedTo === user?.id) || (task.taskType === 'file_request' && task.createdBy === user?.id)
-      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id);
+    const matchesScope = scopeFilter === "All Assignee Types" ||
+      task.taskScope === scopeFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesType && matchesScope && matchesTab;
+    return matchesSearch && matchesStatus && matchesType && matchesScope;
   });
 
   const sortedAndFilteredTasks = getSortedTasks(filteredTasks);
