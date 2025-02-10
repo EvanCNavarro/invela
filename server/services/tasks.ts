@@ -1,11 +1,10 @@
 import { db } from "@db";
 import { tasks } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 export async function updateOnboardingTaskStatus(userEmail: string) {
   try {
-    // Find and update the onboarding task for this user
-    // Note: We use LOWER() to make the email search case-insensitive
+    // Find and update the onboarding task for this user using case-insensitive comparison
     const result = await db
       .update(tasks)
       .set({
@@ -17,7 +16,7 @@ export async function updateOnboardingTaskStatus(userEmail: string) {
         and(
           eq(tasks.taskType, 'user_onboarding'),
           eq(tasks.status, 'pending'),
-          eq(db.fn.lower(tasks.userEmail), userEmail.toLowerCase())
+          sql`LOWER(${tasks.userEmail}) = LOWER(${userEmail})`
         )
       )
       .returning();

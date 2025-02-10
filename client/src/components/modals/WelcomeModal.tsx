@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -49,26 +49,19 @@ export function WelcomeModal() {
       // First complete user onboarding
       const userRes = await apiRequest("POST", "/api/users/complete-onboarding");
       if (!userRes.ok) {
-        throw new Error("Failed to complete onboarding");
-      }
-
-      // Then update task status if it exists
-      if (onboardingTask?.id) {
-        const taskRes = await apiRequest("PATCH", `/api/tasks/${onboardingTask.id}`, {
-          status: "completed",
-          progress: 100,
-          completionDate: new Date().toISOString(),
-        });
-        if (!taskRes.ok) {
-          throw new Error("Failed to update onboarding task");
-        }
+        const error = await userRes.json();
+        throw new Error(error.message || "Failed to complete onboarding");
       }
 
       return userRes.json();
     },
     onSuccess: () => {
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    },
+    onError: (error) => {
+      console.error("Error completing onboarding:", error);
     },
   });
 
@@ -103,6 +96,10 @@ export function WelcomeModal() {
       setOpen(isOpen);
     }}>
       <DialogContent className="sm:max-w-xl">
+        <DialogTitle>{carouselImages[currentSlide].title}</DialogTitle>
+        <DialogDescription>
+          {carouselImages[currentSlide].description}
+        </DialogDescription>
         <div className="relative px-4 pb-8 pt-6">
           <button
             onClick={() => setOpen(false)}
@@ -118,15 +115,6 @@ export function WelcomeModal() {
               alt={carouselImages[currentSlide].alt}
               className="absolute inset-0 h-full w-full object-cover"
             />
-          </div>
-
-          <div className="mt-4 text-center">
-            <h3 className="text-lg font-semibold">
-              {carouselImages[currentSlide].title}
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {carouselImages[currentSlide].description}
-            </p>
           </div>
 
           <div className="mt-6 flex items-center justify-between gap-2">
