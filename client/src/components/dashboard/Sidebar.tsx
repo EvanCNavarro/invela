@@ -59,7 +59,7 @@ export function Sidebar({
       icon: CheckCircleIcon,
       label: "Task Center",
       href: "/task-center",
-      locked: false,
+      locked: false, // Task Center is never locked
       count: isPlayground ? notificationCount : tasks.length
     },
     {
