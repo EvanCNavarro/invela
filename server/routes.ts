@@ -14,7 +14,7 @@ import {
   users,
   invitations
 } from "@db/schema";
-import { eq, and, inArray, or, gt, sql, ilike } from "drizzle-orm"; // Added ilike import
+import { eq, and, inArray, or, gt, sql, ilike } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -545,7 +545,7 @@ export function registerRoutes(app: Express): Server {
       // Find the Invela company (System Creator)
       const [invela] = await db.select()
         .from(companies)
-        .where(eq(companies.category, 'Invela')); // Changed from companies.type
+        .where(eq(companies.category, 'Invela'));
 
       if (invela) {
         // Add the new company to Invela's network
@@ -634,9 +634,9 @@ export function registerRoutes(app: Express): Server {
           taskScope: 'user',
           status: 'email_sent',
           priority: 'medium',
-          progress: 50,
+          progress: 25,
           createdBy: req.user!.id,
-          userEmail,
+          userEmail: userEmail.toLowerCase(), // Store email in lowercase
           companyId,
           dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
           assignedTo: null,
@@ -645,7 +645,8 @@ export function registerRoutes(app: Express): Server {
           metadata: {
             emailSentAt: new Date().toISOString(),
             senderName: req.user!.fullName,
-            senderCompany: company.name
+            senderCompany: company.name,
+            statusFlow: ['email_sent']
           }
         };
 
