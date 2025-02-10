@@ -45,6 +45,7 @@ export const companies = pgTable("companies", {
   certificationsCompliance: text("certifications_compliance"),
   riskScore: integer("risk_score"),
   accreditationStatus: text("accreditation_status"),
+  onboardingCompanyCompleted: boolean("onboarding_company_completed").notNull().default(true),
   registryDate: timestamp("registry_date").notNull().defaultNow(),
   filesPublic: jsonb("files_public").$type<string[]>().default([]),
   filesPrivate: jsonb("files_private").$type<string[]>().default([]),
@@ -60,7 +61,7 @@ export const users = pgTable("users", {
   lastName: text("last_name"),
   password: text("password").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
-  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  onboardingUserCompleted: boolean("onboarding_user_completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

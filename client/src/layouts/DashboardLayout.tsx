@@ -1,33 +1,41 @@
-import { useLocation, useRoute, useNavigate } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center');
   const isTaskCenter = taskCenterParams !== null;
+  const queryClient = useQueryClient();
 
   // Fetch tasks for notification count
   const { data: tasks = [] } = useQuery({
     queryKey: ["/api/tasks"],
   });
 
-  // New user who hasn't completed onboarding
-  const isNewUser = user?.onboardingCompleted === false;
+  // Fetch current company data
+  const { data: currentCompany } = useQuery({
+    queryKey: ["/api/companies/current"],
+    staleTime: 0, // Don't cache this data
+    cacheTime: 0, // Remove from cache immediately
+  });
 
-  // Handle navigation for new users
+  // Company hasn't completed onboarding
+  const isCompanyLocked = currentCompany?.onboardingCompanyCompleted === false;
+
+  // Handle navigation for locked companies
   useEffect(() => {
-    if (isNewUser) {
-      // List of locked routes for new users
+    if (isCompanyLocked) {
+      // List of locked routes for companies that haven't completed onboarding
       const lockedRoutes = ['/', '/network', '/file-vault', '/insights'];
 
       // If user is on a locked route, redirect to task center
@@ -40,17 +48,17 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         navigate('/task-center');
       }
     }
-  }, [isNewUser, location, navigate]);
+  }, [isCompanyLocked, location]);
 
-  // Only allow task center for new users
-  if (isNewUser && !isTaskCenter) {
+  // Only allow task center for locked companies
+  if (isCompanyLocked && !isTaskCenter) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4 px-4">
           <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-semibold">Section Locked</h1>
           <p className="text-muted-foreground max-w-md">
-            Complete your onboarding tasks in the Task Center to unlock all features.
+            Complete your company onboarding tasks in the Task Center to unlock all features.
           </p>
         </div>
       </div>
@@ -66,7 +74,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <Sidebar 
           isExpanded={isExpanded}
           onToggleExpanded={toggleExpanded}
-          isNewUser={isNewUser}
+          isCompanyLocked={isCompanyLocked}
           notificationCount={tasks.length}
           showInvelaTabs={false}
           isPlayground={false}

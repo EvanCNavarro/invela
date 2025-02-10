@@ -109,7 +109,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     },
     onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], null);
+      // Clear all queries from the cache to prevent stale data
+      queryClient.clear();
       setLocation("/login");
     },
     onError: (error: Error) => {
