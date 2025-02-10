@@ -896,7 +896,7 @@ const FileVault = () => {
       console.error(`Bulk ${action} error:`, error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : `Failed to ${action} selected files. Please try again.`,
+        description: error instanceof Error ? error.message : `Failed to ${action}d selected files. Please try again.`,
         variant: "destructive",
         duration: 3000,
       });
@@ -1125,11 +1125,39 @@ const FileVault = () => {
         <PageHeader
           title="File Vault"
           description="Securely store and manage your files"
+          className="px-6"
         />
 
-        <div className="flex-1 flex flex-col min-h-0 space-y-4 p-6">
+        <div className="flex-1 flex flex-col min-h-0 space-y-4 px-6">
+          {/* Upload Area */}
+          <div className="w-full">
+            <DragDropProvider
+              onFilesAccepted={onDrop}
+              className="min-h-[200px] rounded-lg transition-colors duration-200"
+              activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
+            >
+              {({ isDragActive }) => (
+                <div className="relative">
+                  {isDragActive && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                      <div className="flex items-center gap-2 text-lg font-medium">
+                        <UploadIcon className="h-5 w-5" />
+                        Drop files to upload
+                      </div>
+                    </div>
+                  )}
+                  <FileUploadZone
+                    onFilesSelected={async (files: File[]) => await onDrop(files)}
+                    ref={fileInputRef}
+                  />
+                </div>
+              )}
+            </DragDropProvider>
+          </div>
+
+          {/* Search and Filter Controls */}
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div className="w-full max-w-md">
+            <div className="w-full sm:max-w-md">
               <SearchBar
                 data={allFiles}
                 keys={['name', 'type', 'status']}
@@ -1157,35 +1185,38 @@ const FileVault = () => {
 
               <Button onClick={handleUploadClick}>
                 <UploadIcon className="w-4 h-4 mr-2" />
-                Upload
+                <span className="hidden sm:inline">Upload</span>
               </Button>
             </div>
           </div>
 
-          <div className="flex-1 min-h-0">
-            <div className="border rounded-lg overflow-hidden">
-              <Table
-                data={paginatedFiles}
-                columns={columns}
-                searchResults={searchResults}
-                selectable
-                selectedItems={selectedFiles}
-                onSelectionChange={setSelectedFiles}
-                onSort={handleSort}
-                sortField={sortConfig.field}
-                sortDirection={sortConfig.order}
-                className="w-full"
-              />
+          {/* Table Container */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
+              <div className="min-w-[800px]">
+                <Table
+                  data={paginatedFiles}
+                  columns={columns}
+                  searchResults={searchResults}
+                  selectable
+                  selectedItems={selectedFiles}
+                  onSelectionChange={setSelectedFiles}
+                  onSort={handleSort}
+                  sortField={sortConfig.field}
+                  sortDirection={sortConfig.order}
+                  className="w-full"
+                />
+              </div>
             </div>
 
             {/* Pagination controls */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground order-2 sm:order-1">
                 Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
                 {filteredAndSortedFiles.length} files
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 order-1 sm:order-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -1203,7 +1234,7 @@ const FileVault = () => {
                   <ChevronLeftIcon className="h-4 w-4" />
                 </Button>
 
-                <span className="text-sm">
+                <span className="text-sm whitespace-nowrap">
                   Page {currentPage} of {totalPages}
                 </span>
 
@@ -1229,7 +1260,7 @@ const FileVault = () => {
         </div>
       </div>
 
-      {/* File input for uploads */}
+      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -1242,7 +1273,7 @@ const FileVault = () => {
         }}
       />
 
-      {/* File conflict modal */}
+      {/* Modals */}
       {showConflictModal && (
         <FileConflictModal
           conflicts={conflictFiles}
@@ -1260,7 +1291,6 @@ const FileVault = () => {
         />
       )}
 
-      {/* File details modal */}
       {selectedFileDetails && (
         <FileDetails
           file={selectedFileDetails}
