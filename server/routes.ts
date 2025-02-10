@@ -234,17 +234,22 @@ export function registerRoutes(app: Express): Server {
       if (pendingTask) {
         console.log(`[Register] Found pending onboarding task ${pendingTask.id} for user ${user.id}`);
 
-        // Update the task with the user ID
+        // Update the task with the user ID and progress
         await db.update(tasks)
           .set({
             assignedTo: user.id,
             status: 'in_progress',
             progress: 50,
-            updatedAt: new Date()
+            updatedAt: new Date(),
+            metadata: {
+              ...pendingTask.metadata,
+              registrationCompleted: true,
+              registrationTime: new Date().toISOString()
+            }
           })
           .where(eq(tasks.id, pendingTask.id));
 
-        console.log(`[Register] Updated task ${pendingTask.id} with user ID ${user.id}`);
+        console.log(`[Register] Updated task ${pendingTask.id} with user ID ${user.id} and 50% progress`);
       } else {
         console.log(`[Register] No pending onboarding task found for email ${email}`);
       }
@@ -256,6 +261,8 @@ export function registerRoutes(app: Express): Server {
           usedAt: new Date(),
         })
         .where(eq(invitations.id, invitation.id));
+
+      console.log(`[Register] Updated invitation ${invitation.id} to used status`);
 
       // Log the user in
       req.login(user, (err) => {
@@ -1393,9 +1400,9 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Add users by company endpoint
-  app.get("/api/users/by-company/:id", requireAuth, async (req, res) => {
+  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
     try {
-      const companyId = parseInt(req.params.id);
+      const companyId = parseInt(req.params.companyId);
       console.log('Debug - Fetching users for company:', companyId);
       console.log('Debug - Company ID type:', typeof companyId);
 
