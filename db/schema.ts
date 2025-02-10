@@ -115,12 +115,14 @@ export const files = pgTable("files", {
 });
 
 export const invitations = pgTable("invitations", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: serial("id").primaryKey(),
   email: text("email").notNull(),
-  code: text("code").notNull().unique(),
+  code: text("code").notNull().unique(), // 6-digit hex code
   status: text("status").notNull().default('pending'), // pending, used, expired
   companyId: integer("company_id").references(() => companies.id).notNull(),
   taskId: integer("task_id").references(() => tasks.id),
+  inviteeName: text("invitee_name").notNull(),
+  inviteeCompany: text("invitee_company").notNull(),
   expiresAt: timestamp("expires_at").notNull(),
   usedAt: timestamp("used_at"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -241,7 +243,12 @@ export const selectTaskSchema = createSelectSchema(tasks);
 export const insertFileSchema = createInsertSchema(files);
 export const selectFileSchema = createSelectSchema(files);
 
-export const insertInvitationSchema = createInsertSchema(invitations);
+export const insertInvitationSchema = createInsertSchema(invitations, {
+  code: z.string().length(6).regex(/^[0-9A-F]+$/, "Must be a 6-digit hex code"),
+  email: z.string().email(),
+  inviteeName: z.string().min(1, "Invitee name is required"),
+  inviteeCompany: z.string().min(1, "Invitee company is required"),
+});
 export const selectInvitationSchema = createSelectSchema(invitations);
 
 export type InsertUser = typeof users.$inferInsert;
