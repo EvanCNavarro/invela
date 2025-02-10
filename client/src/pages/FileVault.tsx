@@ -915,38 +915,37 @@ export default function FileVault() {
     deleteMutation.mutate(fileId);
   };
 
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString();
+  };const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-muted/30 rounded-md p-4 space-y-3">
+      <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+
+  const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+    <div className="flex justify-between items-center text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{value}</span>
+    </div>
+  );
+
   const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
     // Fetch fresh file data
     const { data: freshFileData } = useQuery({
       queryKey: ['/api/files', file.id],
-      queryFn: async () => {        const response = await fetch(`/api/files/${file.id}`);
+      queryFn: async () => {
+        const response = await fetch(`/api/files/${file.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch file details');        }
+          throw new Error('Failed to fetch file details');
+        }
         return response.json();
       },
     });
 
     const currentFile = freshFileData || file;
-
-    // Helper function for formatting dates
-    const formatDate = (dateString?: string) => {
-      if (!dateString) return 'N/A';
-      return new Date(dateString).toLocaleString();
-    };
-
-    const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-      <div className="bg-muted/30 rounded-md p-4 space-y-3">
-        <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-        <div className="space-y-2">{children}</div>
-      </div>
-    );
-
-    const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium">{value}</span>
-      </div>
-    );
 
     return (
       <Dialog open onOpenChange={onClose}>
@@ -962,11 +961,14 @@ export default function FileVault() {
               <MetricItem label="Size" value={formatFileSize(currentFile.size)} />
               <MetricItem label="Type" value={currentFile.type || 'Unknown'} />
               <MetricItem label="Version" value={`v${currentFile.version?.toFixed(1) || '1.0'}`} />
-              <MetricItem label="Status" value={
-                <span className={getStatusStyles(currentFile.status)}>
-                  {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
-                </span>
-              } />
+              <MetricItem
+                label="Status"
+                value={
+                  <span className={getStatusStyles(currentFile.status)}>
+                    {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
+                  </span>
+                }
+              />
             </MetricBox>
 
             {/* Usage Statistics */}
@@ -1080,87 +1082,91 @@ export default function FileVault() {
   return (
     <DashboardLayout>
       <TooltipProvider>
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <PageHeader
               title="File Vault"
-              description="Securely manage and share your company's files."
+              description="Securely store and manage your company's files"
+              className="flex-1"
             />
-            <Button
-              onClick={handleUploadClick}
-              className="gap-2"
-            >
-              <UploadIcon className="h-4 w-4" />
-              Upload Files
-            </Button>
+            <div className="flex items-center gap-2">
+              <FileUpload
+                onDrop={onDrop}
+                fileInputRef={fileInputRef}
+                render={({ openFileDialog }) => (
+                  <Button
+                    onClick={openFileDialog}
+                    className="gap-2"
+                  >
+                    <UploadIcon className="h-4 w-4" />
+                    Upload Files
+                  </Button>
+                )}
+              />
+            </div>
           </div>
 
-          <FileUpload onDrop={onDrop} className="bg-muted/50" />
+          <div className="flex items-center gap-4">
+            <Select
+              value={statusFilter}
+              onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="uploaded">Uploaded</SelectItem>
+                <SelectItem value="restored">Restored</SelectItem>
+                <SelectItem value="uploading">Uploading</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+                <SelectItem value="canceled">Canceled</SelectItem>
+                <SelectItem value="deleted">Deleted</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap w-full">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
-                aria-label="Filter files by status"
-              >
-                <SelectTrigger className="w-[150px] bg-white">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="uploaded">Uploaded</SelectItem>
-                  <SelectItem value="restored">Restored</SelectItem>
-                  <SelectItem value="uploading">Uploading</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="canceled">Canceled</SelectItem>
-                  <SelectItem value="deleted">Deleted</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <div className="relative flex-1">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search files..."
-                  className="pl-9 bg-white"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search files"
-                />
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant={selectedFiles.size > 0 ? "default" : "outline"}
-                    disabled={selectedFiles.size === 0}
-                    className="min-w-[100px]"
-                  >
-                    Bulk Actions
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
-                    disabled={selectedFiles.size === 0}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Selected
-                  </DropdownMenuItem>
-                  {canRestore ? (
-                    <DropdownMenuItem onClick={() => handleBulkAction('restore')}>
-                      <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                      Restore Selected
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem onClick={() => handleBulkAction('delete')}>
-                      <Trash2Icon className="w-4 h-4 mr-2" />
-                      Delete Selected
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <div className="relative flex-1">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search files..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
+
+            {selectedFiles.size > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
+                  disabled={bulkDownloadMutation.isPending}
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Download Selected
+                </Button>
+                {canRestore ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleBulkAction('restore')}
+                    className="gap-2"
+                  >
+                    <RefreshCcwIcon className="h-4 w-4" />
+                    Restore Selected
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="text-destructive hover:text-destructive gap-2"
+                    onClick={() => handleBulkAction('delete')}
+                  >
+                    <Trash2Icon className="h-4 w-4" />
+                    Delete Selected
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
