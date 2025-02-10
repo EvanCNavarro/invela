@@ -45,6 +45,24 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     }
   });
 
+  // Helper function to extract and format name from email
+  const extractNameFromEmail = (email: string): string => {
+    const [localPart] = email.split('@');
+    return localPart
+      .split(/[._-]/)
+      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Handle email field change
+  const handleEmailChange = (email: string) => {
+    if (email && !form.getValues('fullName')) {
+      const extractedName = extractNameFromEmail(email);
+      form.setValue('fullName', extractedName);
+    }
+    form.setValue('email', email);
+  };
+
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
       const response = await fetch('/api/users/invite', {
@@ -119,29 +137,14 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => sendInvite(data))} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="text-sm font-semibold mb-2">Full Name</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      className={cn(
-                        "w-full",
-                        serverError && "border-destructive"
-                      )}
-                      disabled={isPending}
-                      aria-label="User's full name"
-                      autoFocus
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Company Information (Locked) */}
+            <div>
+              <div className="text-sm font-semibold mb-2">Company</div>
+              <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+                {companyName}
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="email"
@@ -159,9 +162,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                       disabled={isPending}
                       aria-label="User's email address"
                       onChange={(e) => {
-                        field.onChange(e);
+                        handleEmailChange(e.target.value);
                         handleInputChange();
                       }}
+                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
@@ -175,13 +179,30 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                 </FormItem>
               )}
             />
-            {/* Company Information (Locked) */}
-            <div>
-              <div className="text-sm font-semibold mb-2">Company</div>
-              <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
-                {companyName}
-              </div>
-            </div>
+
+            <FormField
+              control={form.control}
+              name="fullName"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="text-sm font-semibold mb-2">Full Name</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      className={cn(
+                        "w-full",
+                        serverError && "border-destructive"
+                      )}
+                      disabled={isPending}
+                      aria-label="User's full name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="flex justify-end">
               <Button
                 type="submit"

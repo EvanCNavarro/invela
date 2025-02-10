@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, UserPlus, FileUp } from "lucide-react";
-import type { Company } from "@/types/company";
+import type { Company, User } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
@@ -38,28 +38,27 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
 
   const company = companiesData.find(item => {
     if (!companySlug || !item.name) return false;
-    return generateSlug(item.name) === companySlug;
+    return generateSlug(item.name) === companySlug.toLowerCase();
   });
 
   // Fetch users for the company
-  const { data: companyUsers = [] } = useQuery({
+  const { data: companyUsers = [] } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     enabled: !!company?.id,
   });
 
   // Filter users based on search
-  const filteredUsers = companyUsers.filter((user: any) => {
+  const filteredUsers = companyUsers.filter((user) => {
     if (!userSearchQuery) return true;
     const searchLower = userSearchQuery.toLowerCase();
     return (
       user.fullName?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower) ||
-      user.role?.toLowerCase().includes(searchLower)
+      user.email?.toLowerCase().includes(searchLower)
     );
   });
 
   // Filter files based on search
-  const filteredFiles = company?.documents?.filter((doc: any) => {
+  const filteredFiles = company?.documents?.filter((doc) => {
     if (!fileSearchQuery) return true;
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   }) || [];
@@ -200,10 +199,10 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
                 <div className="flex items-center gap-2">
                   <Globe className="h-4 w-4 text-muted-foreground" />
                   {company.websiteUrl && company.websiteUrl !== 'N/A' ? (
-                    <a 
+                    <a
                       href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="text-primary hover:underline"
                     >
                       {company.websiteUrl}
@@ -328,9 +327,10 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex-1 max-w-md">
-            <SearchBar 
+            <SearchBar
               placeholder="Search users..."
-              onChange={setUserSearchQuery}
+              value={userSearchQuery}
+              onChange={(e) => setUserSearchQuery(e.target.value)}
             />
           </div>
           <Button onClick={() => setShowInviteModal(true)}>
@@ -345,18 +345,22 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </CardHeader>
           <CardContent>
             {filteredUsers.length > 0 ? (
-              filteredUsers.map((user: any) => (
-                <div key={user.id} className="flex items-center justify-between py-4 border-b last:border-0">
-                  <div>
-                    <p className="font-medium">{user.fullName || `${user.firstName} ${user.lastName}`}</p>
-                    <p className="text-sm text-muted-foreground">{user.role || 'Member'}</p>
+              <div className="divide-y divide-border">
+                {filteredUsers.map((user) => (
+                  <div key={user.id} className="flex flex-col md:flex-row md:items-center justify-between py-4">
+                    <div>
+                      <p className="font-medium">{user.fullName}</p>
+                      <p className="text-sm text-muted-foreground">Member</p>
+                    </div>
+                    <div className="text-right mt-2 md:mt-0">
+                      <p className="text-sm">{user.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {user.onboardingCompleted ? 'Active' : 'Pending'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm">{user.email}</p>
-                    <p className="text-sm text-muted-foreground">{user.phone || 'No phone'}</p>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
               <p className="text-muted-foreground">No users found</p>
             )}
@@ -478,12 +482,12 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <div className="flex items-center gap-6">
               <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
                 <div className="absolute inset-0 flex items-center justify-center p-3">
-                  <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+                  <CompanyLogo companyId={company?.id} companyName={company?.name} size="lg" />
                 </div>
               </div>
               <PageHeader
-                title={company.name}
-                description={company.description || "No description available"}
+                title={company?.name}
+                description={company?.description || "No description available"}
               />
             </div>
           </div>
@@ -491,10 +495,10 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           {/* Navigation Tabs */}
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="w-full">
-              <TabsTrigger value="overview" icon={Building2}>Overview</TabsTrigger>
-              <TabsTrigger value="users" icon={Users}>Users</TabsTrigger>
-              <TabsTrigger value="files" icon={FileUp}>Files</TabsTrigger>
-              <TabsTrigger value="risk" icon={Target}>Risk</TabsTrigger>
+              <TabsTrigger value="overview" className="px-4">Overview</TabsTrigger>
+              <TabsTrigger value="users" className="px-4">Users</TabsTrigger>
+              <TabsTrigger value="files" className="px-4">Files</TabsTrigger>
+              <TabsTrigger value="risk" className="px-4">Risk</TabsTrigger>
             </TabsList>
 
             <div className="mt-6">
@@ -521,8 +525,8 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           <InviteUserModal
             open={showInviteModal}
             onOpenChange={setShowInviteModal}
-            companyId={company.id}
-            companyName={company.name}
+            companyId={company?.id || 0}
+            companyName={company?.name || ''}
           />
         )}
       </PageContainer>

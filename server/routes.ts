@@ -883,7 +883,7 @@ export function registerRoutes(app: Express): Server {
         // Try to read and validate SVG content
         const content = fs.readFileSync(filePath, 'utf8');
         if (!content.includes('<?xml') && !content.includes('<svg')) {
-          console.error(`Debug - Invalid SVG content for company ${company.name}:`, content.slice(0, 100));
+          console.error(`Debug - Invalid SVG content for company`company.name}:`, content.slice(0, 100));
           return res.status(400).json({ 
             message: "Invalid SVG file",
             code: "INVALID_SVG_CONTENT"
@@ -1054,6 +1054,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Invalid company ID" });
       }
 
+      // Get all users for the company
       const companyUsers = await db.select()
         .from(users)
         .where(eq(users.companyId, companyId));
@@ -1065,7 +1066,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // User invitation endpoint
+  // Update the user invitation endpoint to include sender details
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
       const { email, fullName, companyId, companyName } = req.body;
@@ -1077,7 +1078,16 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Create an onboarding task for the user
+      // Get sender's company information
+      const [senderCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
+
+      if (!senderCompany) {
+        return res.status(400).json({ message: "Sender's company information not found" });
+      }
+
+      // Create task for the invitation
       const taskData = {
         title: `New User Invitation: ${email}`,
         description: `Invitation sent to ${fullName} (${email}) to join ${companyName}.`,
@@ -1111,6 +1121,7 @@ export function registerRoutes(app: Express): Server {
         templateData: {
           recipientEmail: email,
           senderName: req.user!.fullName,
+          senderCompany: senderCompany.name,
           companyName,
           inviteUrl
         }
@@ -1144,7 +1155,6 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
   return httpServer;
 }
-
 
 function formatTimestampForFilename() {
   const now = new Date();
