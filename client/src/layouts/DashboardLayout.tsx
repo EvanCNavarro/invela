@@ -1,4 +1,4 @@
-import { useLocation, useRoute } from "wouter";
+import { useLocation, useRoute, useNavigate } from "wouter";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
@@ -6,13 +6,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
+import { useEffect } from "react";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
-  const [, params] = useRoute('/task-center');
-  const isTaskCenter = params !== null;
+  const [, taskCenterParams] = useRoute('/task-center');
+  const isTaskCenter = taskCenterParams !== null;
 
   // Fetch tasks for notification count
   const { data: tasks = [] } = useQuery({
@@ -21,6 +22,24 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // New user who hasn't completed onboarding
   const isNewUser = user?.onboardingCompleted === false;
+
+  // Handle navigation for new users
+  useEffect(() => {
+    if (isNewUser) {
+      // List of locked routes for new users
+      const lockedRoutes = ['/', '/network', '/file-vault', '/insights'];
+
+      // If user is on a locked route, redirect to task center
+      if (lockedRoutes.includes(location)) {
+        navigate('/task-center');
+      }
+
+      // If user just logged in and lands on dashboard (root), redirect to task center
+      if (location === '/') {
+        navigate('/task-center');
+      }
+    }
+  }, [isNewUser, location, navigate]);
 
   // Only allow task center for new users
   if (isNewUser && !isTaskCenter) {
