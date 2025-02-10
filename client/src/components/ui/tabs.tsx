@@ -12,7 +12,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-background p-1",
+      "inline-flex h-10 items-center justify-center bg-background p-1 relative border-b-4 border-gray-200",
       className
     )}
     {...props}
@@ -22,17 +22,18 @@ TabsList.displayName = TabsPrimitive.List.displayName
 
 interface TabsTriggerProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> {
   locked?: boolean
+  icon?: React.ElementType
 }
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   TabsTriggerProps
->(({ className, locked, children, disabled, ...props }, ref) => (
+>(({ className, locked, icon: Icon, children, disabled, ...props }, ref) => (
   <TabsPrimitive.Trigger
     ref={ref}
     disabled={locked || disabled}
     className={cn(
-      "inline-flex items-center justify-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-4 border-transparent",
+      "inline-flex items-center justify-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-4 border-transparent relative",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       "disabled:pointer-events-none disabled:opacity-50",
       locked ? "bg-muted text-muted-foreground cursor-not-allowed" : 
@@ -42,6 +43,7 @@ const TabsTrigger = React.forwardRef<
     )}
     {...props}
   >
+    {Icon && <Icon className="h-4 w-4" />}
     {children}
     {locked && <Lock className="h-3.5 w-3.5" />}
   </TabsPrimitive.Trigger>

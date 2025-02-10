@@ -5,22 +5,18 @@ import { HomeIcon, FolderIcon, BarChartIcon, LockIcon } from "lucide-react"
 export default function TabsDemo() {
   return (
     <div className="w-full">
-      <Tabs defaultValue="tab1" className="w-full max-w-3xl border-b-4 border-gray-200">
+      <Tabs defaultValue="tab1" className="w-full max-w-3xl">
         <TabsList className="grid w-full grid-cols-4 gap-4">
-          <TabsTrigger value="tab1" className="flex items-center gap-2">
-            <HomeIcon className="h-4 w-4" />
+          <TabsTrigger value="tab1" icon={HomeIcon}>
             Overview
           </TabsTrigger>
-          <TabsTrigger value="tab2" className="flex items-center gap-2">
-            <FolderIcon className="h-4 w-4" />
+          <TabsTrigger value="tab2" icon={FolderIcon}>
             Documents
           </TabsTrigger>
-          <TabsTrigger value="tab3" className="flex items-center gap-2">
-            <BarChartIcon className="h-4 w-4" />
+          <TabsTrigger value="tab3" icon={BarChartIcon}>
             Analytics
           </TabsTrigger>
-          <TabsTrigger value="tab4" locked className="flex items-center gap-2">
-            <LockIcon className="h-4 w-4" />
+          <TabsTrigger value="tab4" locked>
             Settings
           </TabsTrigger>
         </TabsList>
