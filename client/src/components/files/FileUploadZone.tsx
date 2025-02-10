@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Upload, Info } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils';
@@ -11,13 +11,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-export interface FileUploadZoneProps {
+export interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement> {
   onFilesAccepted: (files: File[]) => void;
   acceptedFileTypes?: string[];
   maxFiles?: number;
   maxSize?: number;
   variant?: 'box' | 'row';
-  className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
   customPrompt?: React.ReactNode;
@@ -41,7 +40,7 @@ const DEFAULT_ACCEPTED_FORMATS = {
   'image/svg+xml': ['.svg']
 };
 
-export function FileUploadZone({
+export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
   onFilesAccepted,
   acceptedFileTypes = Object.values(DEFAULT_ACCEPTED_FORMATS).flat(),
   maxFiles = 10,
@@ -52,7 +51,8 @@ export function FileUploadZone({
   children,
   customPrompt,
   showAcceptedFormats = true,
-}: FileUploadZoneProps) {
+  ...props
+}, ref) => {
   const { toast } = useToast();
 
   const {
@@ -144,7 +144,9 @@ export function FileUploadZone({
   return (
     <div
       {...getRootProps()}
+      ref={ref}
       className={dropzoneClasses}
+      {...props}
     >
       <input {...getInputProps()} />
 
@@ -189,4 +191,6 @@ export function FileUploadZone({
       )}
     </div>
   );
-}
+});
+
+FileUploadZone.displayName = 'FileUploadZone';
