@@ -1364,7 +1364,7 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error fetching company users" });
     }
   });
-  // Add the user invite endpoint after the existing registration endpoint
+  // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
       const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
@@ -1383,9 +1383,9 @@ export function registerRoutes(app: Express): Server {
       // Create the invitation record
       const [invitation] = await db.insert(invitations)
         .values({
-          email,
           code,
           companyId,
+          email,
           status: 'pending',
           expiresAt,
           metadata: {
@@ -1402,8 +1402,9 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Send invitation email
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&work_email=${encodeURIComponent(email)}`;
+      // Generate the correct registration URL (without duplicate /register)
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const inviteUrl = baseUrl;
 
       const emailParams = {
         to: email,
