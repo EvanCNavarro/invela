@@ -10,7 +10,8 @@ import { useLocation } from "wouter";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
-import AuthPage from "@/pages/auth-page";
+import LoginPage from "@/pages/login-page";
+import RegisterPage from "@/pages/register-page";
 import NetworkPage from "@/pages/network-page";
 import TaskCenterPage from "@/pages/task-center-page";
 import InsightsPage from "@/pages/insights-page";
@@ -31,23 +32,20 @@ function Router() {
   const [location] = useLocation();
   return (
     <Switch>
-      <Route path="/auth">
-        <Redirect to="/login" />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/">
+        <ProtectedRoute 
+          path="/" 
+          component={() => (
+            <ProtectedLayout>
+              <OnboardingWrapper>
+                <DashboardPage />
+              </OnboardingWrapper>
+            </ProtectedLayout>
+          )} 
+        />
       </Route>
-      <Route path="/login" component={AuthPage} />
-      <Route path="/register">
-        <Redirect to="/login" />
-      </Route>
-      <ProtectedRoute 
-        path="/" 
-        component={() => (
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <DashboardPage />
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        )} 
-      />
       <ProtectedRoute 
         path="/network" 
         component={() => (
