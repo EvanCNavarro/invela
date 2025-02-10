@@ -143,7 +143,6 @@ const templates = {
       </html>
     `.trim(),
   }),
-
   fintech_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",
     text: `

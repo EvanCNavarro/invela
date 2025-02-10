@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { Eye, EyeOff, Check, AlertTriangle } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -39,10 +39,10 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const invitationCode = searchParams.get('code')?.split('/')[0]; 
+
+  const invitationCode = searchParams.get('code')?.split('/')[0];
   const workEmail = searchParams.get('work_email');
 
-  // Validate invitation code if present
   const { data: invitationData, isLoading: isValidatingCode } = useQuery({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
@@ -85,16 +85,10 @@ export default function AuthPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Only redirect to home if:
-  // 1. User is logged in AND
-  // 2. No invitation code is present OR invitation is invalid
   if (user && (!invitationCode || (invitationData && !invitationData.valid))) {
     return <Redirect to="/" />;
   }
 
-  // Show registration form if:
-  // 1. We have an invitation code AND
-  // 2. Either we're still validating OR the invitation is valid and emails match
   const showRegistrationForm = invitationCode && 
     (isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail));
 
@@ -129,7 +123,6 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
-  // Show registration form if we have a valid invitation
   if (showRegistrationForm) {
     return (
       <div className="min-h-screen flex">
@@ -290,7 +283,6 @@ export default function AuthPage() {
     );
   }
 
-  // Default to login form
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
@@ -303,6 +295,12 @@ export default function AuthPage() {
             />
             <h1 className="text-2xl font-bold">Log in to Invela</h1>
           </div>
+          {!showRegistrationForm && invitationCode && (
+            <div className="mb-4 flex items-center gap-2 text-amber-500 bg-amber-50 p-4 rounded-lg">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <span className="font-semibold">Warning:</span> Invalid or expired invitation code
+            </div>
+          )}
 
           <Form {...loginForm}>
             <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
