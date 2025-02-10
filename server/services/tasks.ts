@@ -61,7 +61,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
         updatedAt: new Date(),
         assignedTo: userId, // Ensure the task is linked to the user
         metadata: {
-          ...taskToUpdate.metadata,
+          ...(taskToUpdate.metadata || {}),
           onboardingCompleted: true,
           completionTime: new Date().toISOString()
         }
@@ -115,7 +115,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
         progress: 50,
         updatedAt: new Date(),
         metadata: {
-          ...task.metadata || {},
+          ...(task.metadata || {}),
           registrationCompleted: true,
           registrationTime: new Date().toISOString()
         }
