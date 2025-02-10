@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { FileUpload } from "@/components/ui/file-upload";
+import { FileUploadZone } from "@/components/files/FileUploadZone";
+import { DragDropProvider } from "@/components/files/DragDropProvider";
 import {
   Table,
   TableBody,
@@ -1089,10 +1090,29 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
             description="Securely store and manage your company's files"
           />
 
-          <FileUpload
-            onFilesAdded={onDrop}
-            className="w-full"
-          />
+          <DragDropProvider
+            onFilesAccepted={onDrop}
+            className="min-h-[200px] rounded-lg transition-colors duration-200"
+            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
+          >
+            {({ isDragActive }) => (
+              <div className="relative">
+                {isDragActive && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <p className="text-lg font-medium">Drop files here</p>
+                  </div>
+                )}
+                <FileUploadZone
+                  onFilesAccepted={onDrop}
+                  variant="box"
+                  className="w-full"
+                  maxFiles={10}
+                  maxSize={5 * 1024 * 1024} // 5MB
+                  disabled={false}
+                />
+              </div>
+            )}
+          </DragDropProvider>
 
           <div className="flex items-center gap-4">
             <Select
