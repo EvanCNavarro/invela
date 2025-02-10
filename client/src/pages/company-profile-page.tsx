@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, UserPlus, FileUp } from "lucide-react";
-import type { Company, User } from "@/types/company";
+import type { Company, User, Document } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,7 +32,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     window.history.back();
   };
 
-  const { data: companiesData = [], isLoading } = useQuery<Company[]>({
+  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
   });
 
@@ -41,8 +41,8 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     return generateSlug(item.name) === companySlug.toLowerCase();
   });
 
-  // Fetch users for the company
-  const { data: companyUsers = [] } = useQuery<User[]>({
+  // Update the useQuery for users to use the correct endpoint
+  const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     enabled: !!company?.id,
   });
@@ -58,12 +58,13 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   });
 
   // Filter files based on search
-  const filteredFiles = company?.documents?.filter((doc) => {
+  const filteredFiles = (company?.documents || []).filter((doc) => {
     if (!fileSearchQuery) return true;
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
-  }) || [];
+  });
 
-  if (isLoading) {
+  // Loading states
+  if (companiesLoading) {
     return (
       <DashboardLayout>
         <PageContainer>
@@ -130,7 +131,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     return (
       <div className="space-y-6">
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -170,7 +171,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="sm:col-span-2 lg:col-span-1">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <Target className="h-4 w-4 text-muted-foreground" />
@@ -184,7 +185,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         </div>
 
         {/* Company Details Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Company Overview Section */}
           <Card>
             <CardHeader>
@@ -331,9 +332,13 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               placeholder="Search users..."
               value={userSearchQuery}
               onChange={(e) => setUserSearchQuery(e.target.value)}
+              className="w-full"
             />
           </div>
-          <Button onClick={() => setShowInviteModal(true)}>
+          <Button
+            onClick={() => setShowInviteModal(true)}
+            className="w-full md:w-auto whitespace-nowrap"
+          >
             <UserPlus className="h-4 w-4 mr-2" />
             Invite User
           </Button>
@@ -347,12 +352,12 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             {filteredUsers.length > 0 ? (
               <div className="divide-y divide-border">
                 {filteredUsers.map((user) => (
-                  <div key={user.id} className="flex flex-col md:flex-row md:items-center justify-between py-4">
+                  <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4">
                     <div>
                       <p className="font-medium">{user.fullName}</p>
                       <p className="text-sm text-muted-foreground">Member</p>
                     </div>
-                    <div className="text-right mt-2 md:mt-0">
+                    <div className="text-left sm:text-right mt-2 sm:mt-0">
                       <p className="text-sm">{user.email}</p>
                       <p className="text-sm text-muted-foreground">
                         {user.onboardingCompleted ? 'Active' : 'Pending'}
@@ -377,10 +382,12 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           <div className="flex-1 max-w-md">
             <SearchBar
               placeholder="Search files..."
-              onChange={setFileSearchQuery}
+              value={fileSearchQuery}
+              onChange={(e) => setFileSearchQuery(e.target.value)}
+              className="w-full"
             />
           </div>
-          <Button className="whitespace-nowrap">
+          <Button className="w-full md:w-auto whitespace-nowrap">
             <FileUp className="h-4 w-4 mr-2" />
             File Request
           </Button>
@@ -392,14 +399,16 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </CardHeader>
           <CardContent>
             {filteredFiles.length > 0 ? (
-              filteredFiles.map((doc: any, index: number) => (
-                <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
-                  <span className="font-medium">{doc.name}</span>
-                  <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'}>
-                    {doc.status}
-                  </Badge>
-                </div>
-              ))
+              <div className="divide-y divide-border">
+                {filteredFiles.map((doc: Document, index: number) => (
+                  <div key={`${doc.documentId || index}`} className="flex flex-col sm:flex-row sm:items-center justify-between py-4">
+                    <span className="font-medium">{doc.name}</span>
+                    <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'} className="mt-2 sm:mt-0">
+                      {doc.status}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-muted-foreground">No files found</p>
             )}
@@ -507,7 +516,18 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               </TabsContent>
 
               <TabsContent value="users">
-                {renderUsersTab()}
+                {usersLoading ? (
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-10 bg-muted rounded w-full max-w-md"></div>
+                    <div className="space-y-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="h-20 bg-muted rounded"></div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  renderUsersTab()
+                )}
               </TabsContent>
 
               <TabsContent value="files">
@@ -521,6 +541,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </Tabs>
         </div>
 
+        {/* Update the InviteUserModal to include company information */}
         {showInviteModal && (
           <InviteUserModal
             open={showInviteModal}

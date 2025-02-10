@@ -126,12 +126,10 @@ export default function DashboardPage() {
       }
 
       toast({
-        title: (
-          <span className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            Invitation Sent
-          </span>
-        ),
+        title: <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          Invitation Sent
+        </div>,
         description: "The FinTech has been invited to join.",
         duration: 2000,
         className: "border-l-4 border-green-500",
@@ -258,7 +256,6 @@ export default function DashboardPage() {
 
             {visibleWidgets.quickActions && (
               <Widget
-                id="quick-actions-widget"
                 title="Quick Actions"
                 icon={<Zap className="h-5 w-5" />}
                 size="double"
@@ -384,7 +381,7 @@ export default function DashboardPage() {
               </Widget>
             )}
 
-            {visibleWidgets.companyScore && (
+            {visibleWidgets.companyScore && companyData && (
               <Widget
                 title="Company Score"
                 icon={<AlertTriangle className="h-5 w-5" />}
@@ -398,7 +395,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="space-y-1">
                     <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                      {companyData?.logoId ? (
+                      {companyData.logoId ? (
                         <img
                           src={`/api/companies/${companyData.id}/logo`}
                           alt={`${companyData.name} logo`}
