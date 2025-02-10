@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { users, tasks } from "@db/schema";
+import { users, tasks, TaskStatus } from "@db/schema";
 import { eq, and, or, sql } from "drizzle-orm";
 
 const router = Router();
@@ -31,8 +31,8 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${req.user.email})`,
           or(
-            eq(tasks.status, 'email_sent'),
-            eq(tasks.status, 'in_progress')
+            eq(tasks.status, TaskStatus.EMAIL_SENT),
+            eq(tasks.status, TaskStatus.IN_PROGRESS)
           )
         )
       )
@@ -54,7 +54,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        status: 'completed',
+        status: TaskStatus.COMPLETED,
         progress: 100,
         completionDate: new Date(),
         updatedAt: new Date(),
@@ -66,7 +66,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
           previousStatus: task.status,
           userId: req.user.id,
           userEmail: req.user.email.toLowerCase(),
-          statusFlow: [...(task.metadata?.statusFlow || []), 'completed']
+          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
         }
       })
       .where(eq(tasks.id, task.id))

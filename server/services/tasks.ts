@@ -1,5 +1,5 @@
 import { db } from "@db";
-import { tasks, users } from "@db/schema";
+import { tasks, users, TaskStatus } from "@db/schema";
 import { eq, and, sql, or } from "drizzle-orm";
 
 export async function updateOnboardingTaskStatus(userId: number) {
@@ -28,8 +28,8 @@ export async function updateOnboardingTaskStatus(userId: number) {
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`,
           or(
-            eq(tasks.status, 'email_sent'),
-            eq(tasks.status, 'in_progress')
+            eq(tasks.status, TaskStatus.EMAIL_SENT),
+            eq(tasks.status, TaskStatus.IN_PROGRESS)
           )
         )
       )
@@ -47,7 +47,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        status: 'completed',
+        status: TaskStatus.COMPLETED,
         progress: 100,
         completionDate: new Date(),
         updatedAt: new Date(),
@@ -59,7 +59,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
           previousStatus: taskToUpdate.status,
           userId: userId,
           userEmail: user.email.toLowerCase(),
-          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), 'completed']
+          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), TaskStatus.COMPLETED]
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
@@ -85,7 +85,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
         and(
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
-          eq(tasks.status, 'email_sent')
+          eq(tasks.status, TaskStatus.EMAIL_SENT)
         )
       )
       .orderBy(sql`created_at DESC`)
@@ -103,7 +103,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
       .update(tasks)
       .set({
         assignedTo: userId,
-        status: 'in_progress',
+        status: TaskStatus.IN_PROGRESS,
         progress: 50,
         updatedAt: new Date(),
         metadata: {
@@ -113,7 +113,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
           previousStatus: taskToUpdate.status,
           userId: userId,
           userEmail: email.toLowerCase(),
-          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), 'in_progress']
+          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), TaskStatus.IN_PROGRESS]
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
