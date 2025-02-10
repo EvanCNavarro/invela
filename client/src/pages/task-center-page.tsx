@@ -88,8 +88,8 @@ export default function TaskCenterPage() {
       const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
       return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
     } else if (sortConfig.key === 'status') {
-      return sortConfig.direction === 'asc' ? 
-        (a.status || '').localeCompare(b.status || '') : 
+      return sortConfig.direction === 'asc' ?
+        (a.status || '').localeCompare(b.status || '') :
         (b.status || '').localeCompare(a.status || '');
     } else if (sortConfig.key === 'progress') {
       return sortConfig.direction === 'asc' ? a.progress - b.progress : b.progress - a.progress;
@@ -285,7 +285,6 @@ export default function TaskCenterPage() {
                       <SelectItem value="All Statuses">All Statuses</SelectItem>
                       <SelectItem value="Email Sent">Email Sent</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>
                     </SelectContent>
