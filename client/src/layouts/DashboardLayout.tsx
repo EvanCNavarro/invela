@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { TopNav } from "@/components/dashboard/TopNav";
@@ -6,9 +5,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const { isExpanded, toggleExpanded } = useSidebarStore();
   const [location] = useLocation();
   const { user } = useAuth();
   const [, params] = useRoute('/task-center');
@@ -41,11 +41,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-[hsl(220,33%,97%)]">
       <aside className={cn(
         "shrink-0 sticky top-0 z-40 h-screen transition-all duration-300 ease-in-out",
-        isSidebarExpanded ? "w-64" : "w-20"
+        isExpanded ? "w-64" : "w-20"
       )}>
         <Sidebar 
-          isExpanded={isSidebarExpanded}
-          onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          isExpanded={isExpanded}
+          onToggleExpanded={toggleExpanded}
           isNewUser={isNewUser}
           notificationCount={tasks.length}
           showInvelaTabs={false}
@@ -57,7 +57,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className={cn(
           "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80",
           "transition-all duration-300 ease-in-out",
-          isSidebarExpanded 
+          isExpanded 
             ? "left-64" 
             : "left-20"
         )}>
