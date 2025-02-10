@@ -30,6 +30,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -365,6 +366,9 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-xl">File Details</DialogTitle>
+          <DialogDescription>
+            Detailed information about {currentFile.name}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
