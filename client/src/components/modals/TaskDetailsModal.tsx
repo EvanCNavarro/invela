@@ -1,13 +1,21 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDate } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { TaskStatus } from "@db/schema";
 
 interface TaskDetailsModalProps {
   task: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+const taskStatusMap = {
+  [TaskStatus.EMAIL_SENT]: 'Invitation Sent',
+  [TaskStatus.IN_PROGRESS]: 'In Progress',
+  [TaskStatus.COMPLETED]: 'Completed',
+  pending: 'Invitation Sent', // Backward compatibility for existing tasks
+};
 
 export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
   if (!task) return null;
@@ -18,7 +26,7 @@ export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalP
     { label: "Description", value: task.description },
     { label: "Type", value: task.taskType },
     { label: "Scope", value: task.taskScope },
-    { label: "Status", value: task.status },
+    { label: "Status", value: taskStatusMap[task.status] || task.status },
     { label: "Priority", value: task.priority },
     { label: "Progress", value: `${task.progress}%` },
     { label: "Created By", value: task.createdBy },
