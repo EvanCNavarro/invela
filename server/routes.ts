@@ -1364,6 +1364,88 @@ export function registerRoutes(app: Express): Server {
       res.status(500).json({ message: "Error fetching company users" });
     }
   });
+  // Add the user invite endpoint after the existing registration endpoint
+  app.post("/api/users/invite", requireAuth, async (req, res) => {
+    try {
+      const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
+
+      if (!email || !fullName || !companyId || !companyName) {
+        return res.status(400).json({
+          message: "Missing required fields"
+        });
+      }
+
+      // Generate a unique invitation code
+      const code = uuidv4();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // Expire in 7 days
+
+      // Create the invitation record
+      const [invitation] = await db.insert(invitations)
+        .values({
+          email,
+          code,
+          companyId,
+          status: 'pending',
+          expiresAt,
+          metadata: {
+            fullName,
+            senderName,
+            senderCompany
+          }
+        })
+        .returning();
+
+      if (!invitation) {
+        return res.status(500).json({
+          message: "Failed to create invitation"
+        });
+      }
+
+      // Send invitation email
+      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&work_email=${encodeURIComponent(email)}`;
+
+      const emailParams = {
+        to: email,
+        from: process.env.GMAIL_USER!,
+        template: 'user_invite',
+        templateData: {
+          recipientName: fullName,
+          recipientEmail: email,
+          senderName,
+          senderCompany,
+          inviteUrl,
+          code
+        }
+      };
+
+      const emailResult = await emailService.sendTemplateEmail(emailParams);
+
+      if (!emailResult.success) {
+        // Rollback invitation if email fails
+        await db.update(invitations)
+          .set({ status: 'failed' })
+          .where(eq(invitations.id, invitation.id));
+
+        return res.status(500).json({
+          message: "Failed to send invitation email",
+          error: emailResult.error
+        });
+      }
+
+      res.status(200).json({
+        message: "Invitation sent successfully",
+        invitation
+      });
+
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      res.status(500).json({
+        message: "Failed to process invitation",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
