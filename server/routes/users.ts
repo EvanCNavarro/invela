@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
-import { users } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { users, tasks } from "@db/schema";
+import { eq, and, or, sql, ilike } from "drizzle-orm";
 import { updateOnboardingTaskStatus } from "../services/tasks";
 
 const router = Router();
@@ -12,7 +12,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log(`[User Routes] Starting onboarding completion for user ID: ${req.user.id}`);
+    console.log(`[User Routes] Starting onboarding completion for user ID: ${req.user.id}, email: ${req.user.email}`);
 
     // Update user onboarding status
     const [updatedUser] = await db
@@ -23,7 +23,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Update the corresponding onboarding task using user ID
+    // Update the corresponding onboarding task
     const updatedTask = await updateOnboardingTaskStatus(req.user.id);
 
     if (!updatedTask) {
