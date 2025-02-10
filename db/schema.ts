@@ -13,6 +13,38 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
+// First define the TaskStatus enum for consistent usage
+export const TaskStatus = {
+  EMAIL_SENT: 'email_sent',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+} as const;
+
+export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
+
+// Update the tasks table definition
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
+  taskScope: text("task_scope").notNull(), // 'user' or 'company'
+  status: text("status").notNull().default('email_sent'),
+  priority: text("priority").notNull().default('medium'),
+  progress: real("progress").notNull().default(25),
+  assignedTo: integer("assigned_to").references(() => users.id),
+  createdBy: integer("created_by").references(() => users.id),
+  companyId: integer("company_id").references(() => companies.id),
+  userEmail: text("user_email"),
+  dueDate: timestamp("due_date"),
+  completionDate: timestamp("completion_date"),
+  filesRequested: jsonb("files_requested").$type<string[]>().default([]),
+  filesUploaded: jsonb("files_uploaded").$type<string[]>().default([]),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const companyLogos = pgTable("company_logos", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
@@ -62,28 +94,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
   onboardingUserCompleted: boolean("onboarding_user_completed").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const tasks = pgTable("tasks", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
-  taskScope: text("task_scope").notNull(), // 'user' or 'company'
-  status: text("status").notNull().default('email_sent'),
-  priority: text("priority").notNull().default('medium'),
-  progress: real("progress").notNull().default(25),
-  assignedTo: integer("assigned_to").references(() => users.id),
-  createdBy: integer("created_by").references(() => users.id),
-  companyId: integer("company_id").references(() => companies.id),
-  userEmail: text("user_email"),
-  dueDate: timestamp("due_date"),
-  completionDate: timestamp("completion_date"),
-  filesRequested: jsonb("files_requested").$type<string[]>().default([]),
-  filesUploaded: jsonb("files_uploaded").$type<string[]>().default([]),
-  metadata: jsonb("metadata").default({}),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
