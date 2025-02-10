@@ -34,6 +34,13 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/auth">
+        {(params) => {
+          const searchParams = new URLSearchParams(window.location.search);
+          const code = searchParams.get('code');
+          return <Redirect to={`/register${code ? `?code=${code}` : ''}`} />;
+        }}
+      </Route>
       <Route path="/">
         <ProtectedRoute 
           path="/" 
