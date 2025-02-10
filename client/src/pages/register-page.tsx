@@ -46,6 +46,7 @@ export default function RegisterPage() {
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
     company: string;
+    companyId: number;
     fullName: string;
   } | null>(null);
 
@@ -93,19 +94,22 @@ export default function RegisterPage() {
         setValidatedInvitation({
           email: result.data.email,
           company: result.data.company,
-          fullName: result.data.fullName,
+          companyId: result.data.companyId,
+          fullName: result.data.fullName || '',
         });
 
         // Pre-fill registration form
         registrationForm.setValue("invitationCode", values.invitationCode);
         registrationForm.setValue("email", result.data.email);
         registrationForm.setValue("company", result.data.company);
-        registrationForm.setValue("fullName", result.data.fullName);
 
-        // Split full name into first and last name
-        const nameParts = result.data.fullName.split(" ");
-        registrationForm.setValue("firstName", nameParts[0] || "");
-        registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
+        // Split full name if provided
+        if (result.data.fullName) {
+          registrationForm.setValue("fullName", result.data.fullName);
+          const nameParts = result.data.fullName.split(" ");
+          registrationForm.setValue("firstName", nameParts[0] || "");
+          registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
+        }
       }
     } catch (error) {
       invitationForm.setError("invitationCode", {
@@ -117,7 +121,12 @@ export default function RegisterPage() {
 
   // Handle full registration
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
-    registerMutation.mutate(values);
+    if (!validatedInvitation?.companyId) return;
+
+    registerMutation.mutate({
+      ...values,
+      companyId: validatedInvitation.companyId,
+    });
   };
 
   // Redirect if already logged in
@@ -208,6 +217,21 @@ export default function RegisterPage() {
                       <FormControl>
                         <Input {...field} type="email" disabled />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={registrationForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" disabled />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -241,20 +265,6 @@ export default function RegisterPage() {
                     )}
                   />
                 </div>
-
-                <FormField
-                  control={registrationForm.control}
-                  name="company"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="text" disabled />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={registrationForm.control}

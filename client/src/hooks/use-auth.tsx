@@ -27,6 +27,10 @@ type RegisterData = {
   email: string;
   password: string;
   fullName: string;
+  firstName: string;
+  lastName: string;
+  company: string;
+  companyId: number;
   invitationCode: string;
 };
 
