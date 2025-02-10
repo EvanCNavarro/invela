@@ -35,6 +35,9 @@ const registrationSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
   fullName: z.string().min(1, "Full name is required."),
+  firstName: z.string().min(1, "First name is required."),
+  lastName: z.string().min(1, "Last name is required."),
+  company: z.string().min(1, "Company is required."),
 });
 
 export default function RegisterPage() {
@@ -62,6 +65,9 @@ export default function RegisterPage() {
       email: "",
       password: "",
       fullName: "",
+      firstName: "",
+      lastName: "",
+      company: "",
     },
   });
 
@@ -93,7 +99,13 @@ export default function RegisterPage() {
         // Pre-fill registration form
         registrationForm.setValue("invitationCode", values.invitationCode);
         registrationForm.setValue("email", result.data.email);
+        registrationForm.setValue("company", result.data.company);
         registrationForm.setValue("fullName", result.data.fullName);
+
+        // Split full name into first and last name
+        const nameParts = result.data.fullName.split(" ");
+        registrationForm.setValue("firstName", nameParts[0] || "");
+        registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
       }
     } catch (error) {
       invitationForm.setError("invitationCode", {
@@ -200,14 +212,44 @@ export default function RegisterPage() {
                   )}
                 />
 
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={registrationForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="text" placeholder="First name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={registrationForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="text" placeholder="Last name" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <FormField
                   control={registrationForm.control}
-                  name="fullName"
+                  name="company"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel>Company</FormLabel>
                       <FormControl>
-                        <Input {...field} type="text" placeholder="Enter your full name" />
+                        <Input {...field} type="text" disabled />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
