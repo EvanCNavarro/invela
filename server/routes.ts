@@ -226,6 +226,7 @@ export function registerRoutes(app: Express): Server {
           eq(tasks.userEmail, email.toLowerCase()),
           or(
             eq(tasks.status, 'pending'),
+            eq(tasks.status, 'email_sent'),
             sql`${tasks.status} IS NULL`
           )
         ));
@@ -242,6 +243,10 @@ export function registerRoutes(app: Express): Server {
             updatedAt: new Date()
           })
           .where(eq(tasks.id, pendingTask.id));
+
+        console.log(`[Register] Updated task ${pendingTask.id} with user ID ${user.id}`);
+      } else {
+        console.log(`[Register] No pending onboarding task found for email ${email}`);
       }
 
       // Update invitation status
