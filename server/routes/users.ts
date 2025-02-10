@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
 import { users, tasks } from "@db/schema";
-import { eq, and, or, sql, ilike } from "drizzle-orm";
-import { updateOnboardingTaskStatus } from "../services/tasks";
+import { eq, and, or, sql } from "drizzle-orm";
 
 const router = Router();
 
