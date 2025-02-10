@@ -6,6 +6,7 @@ import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
+import { useAuth } from "@/hooks/use-auth";
 
 import {
   Dialog,
@@ -36,6 +37,7 @@ interface InviteUserModalProps {
 export function InviteUserModal({ open, onOpenChange, companyId, companyName }: InviteUserModalProps) {
   const { toast } = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const form = useForm<InviteUserData>({
     resolver: zodResolver(inviteUserSchema),
@@ -73,7 +75,9 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         body: JSON.stringify({
           ...data,
           companyId,
-          companyName
+          companyName,
+          senderName: user?.fullName,
+          senderCompany: companyName
         })
       });
 

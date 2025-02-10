@@ -883,8 +883,8 @@ export function registerRoutes(app: Express): Server {
         // Try to read and validate SVG content
         const content = fs.readFileSync(filePath, 'utf8');
         if (!content.includes('<?xml') && !content.includes('<svg')) {
-          console.error(`Debug - Invalid SVG content for company`company.name}:`, content.slice(0, 100));
-          return res.status(400).json({ 
+          console.error(`Debug - Invalid SVG content for company ${company.name}:`, content.slice(0, 100));
+          returnres.status(400).json({ 
             message: "Invalid SVG file",
             code: "INVALID_SVG_CONTENT"
           });
@@ -1054,12 +1054,43 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Invalid company ID" });
       }
 
-      // Get all users for the company
-      const companyUsers = await db.select()
-        .from(users)
-        .where(eq(users.companyId, companyId));
+      // Get the user's company to check permissions
+      const [userCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
 
-      res.json(companyUsers);
+      if (!userCompany) {
+        return res.status(404).json({ message: "User's company not found" });
+      }
+
+      // If user is from Invela, they can see all users
+      // Otherwise, they can only see users from their own company or companies in their network
+      let companyUsers;
+      if (userCompany.category === 'Invela') {
+        companyUsers = await db.select()
+          .from(users)
+          .where(eq(users.companyId, companyId));
+      } else {
+        // First check if the requested company is in the user's network
+        const [relationship] = await db.select()
+          .from(relationships)
+          .where(and(
+            eq(relationships.companyId, req.user!.companyId),
+            eq(relationships.relatedCompanyId, companyId),
+            eq(relationships.status, 'active')
+          ));
+
+        // Only allow access if it's the user's own company or a company in their network
+        if (companyId === req.user!.companyId || relationship) {
+          companyUsers = await db.select()
+            .from(users)
+            .where(eq(users.companyId, companyId));
+        } else {
+          return res.status(403).json({ message: "Not authorized to view users for this company" });
+        }
+      }
+
+      res.json(companyUsers || []);
     } catch (error) {
       console.error("Error fetching company users:", error);
       res.status(500).json({ message: "Error fetching company users" });
@@ -1149,6 +1180,32 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error sending user invitation:", error);
       res.status(500).json({ message: "Error sending invitation" });
+    }
+  });
+
+  // Update the users by company endpoint
+  app.get("/api/users/by-company/:id", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
+      }
+
+      // Get all users for the company, including pending invitations
+      const companyUsers = await db.select()
+        .from(users)
+        .where(eq(users.companyId, companyId));
+
+      console.log('Debug - Fetched users for company:', { 
+        companyId, 
+        userCount: companyUsers.length,
+        users: companyUsers.map(u => ({ id: u.id, email: u.email })) 
+      });
+
+      res.json(companyUsers);
+    } catch (error) {
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ message: "Error fetching company users" });
     }
   });
 

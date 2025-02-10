@@ -33,6 +33,15 @@ export const userSchema = z.object({
   updatedAt: z.string().datetime(),
 });
 
+export const documentSchema = z.object({
+  name: z.string(),
+  status: z.string(),
+  documentId: z.string().optional(),
+  uploadedAt: z.string().datetime().optional(),
+  verifiedAt: z.string().datetime().optional(),
+  type: z.string().optional(),
+});
+
 export const companySchema = z.object({
   id: z.number(),
   name: z.string(),
@@ -60,11 +69,10 @@ export const companySchema = z.object({
     'REVOKED',
     'EXPIRED'
   ]).default('AWAITING_INVITATION'),
-  documents: z.array(z.object({
-    name: z.string(),
-    status: z.string()
-  })).optional(),
+  documents: z.array(documentSchema).optional(),
+  logoId: z.string().optional(),
 });
 
 export type User = z.infer<typeof userSchema>;
 export type Company = z.infer<typeof companySchema>;
+export type Document = z.infer<typeof documentSchema>;
