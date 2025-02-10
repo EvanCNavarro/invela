@@ -900,12 +900,12 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
   </div>
 );
 
-  const MetricItem = ({ label, value}: { label: string; value: React.ReactNode }) => (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-muted-foreground{label}</span>
-      <span className="font-medium">{value}</span>
-    </div>
-  );
+const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-medium">{value}</span>
+  </div>
+);
 
   const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
     // Fetch fresh file data
