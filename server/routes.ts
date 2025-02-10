@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { 
+import {
   companies,
   tasks,
   relationships,
@@ -92,8 +92,8 @@ const logoStorage = multer.diskStorage({
           const colorMatch = file.originalname.match(/_([a-z]+)\.svg$/i);
           const colorSuffix = colorMatch ? `-${colorMatch[1].toLowerCase()}` : '';
           // Special handling for Invela's primary blue logo
-          const filename = company.name === 'Invela' && !colorSuffix ? 
-            'logo_invela_blue.svg' : 
+          const filename = company.name === 'Invela' && !colorSuffix ?
+            'logo_invela_blue.svg' :
             `logo_${companySlug}${colorSuffix}.svg`;
           cb(null, filename);
         } else {
@@ -141,13 +141,13 @@ export function registerRoutes(app: Express): Server {
         ));
 
       if (!invitation) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Invalid or expired invitation code",
-          valid: false 
+          valid: false
         });
       }
 
-      res.json({ 
+      res.json({
         valid: true,
         email: invitation.email,
         companyId: invitation.companyId
@@ -174,8 +174,8 @@ export function registerRoutes(app: Express): Server {
         ));
 
       if (!invitation) {
-        return res.status(400).json({ 
-          message: "Invalid invitation code or email mismatch" 
+        return res.status(400).json({
+          message: "Invalid invitation code or email mismatch"
         });
       }
 
@@ -202,7 +202,7 @@ export function registerRoutes(app: Express): Server {
 
       // Update invitation status
       await db.update(invitations)
-        .set({ 
+        .set({
           status: 'used',
           usedAt: new Date(),
         })
@@ -211,7 +211,7 @@ export function registerRoutes(app: Express): Server {
       // If there's an associated task, update its status
       if (invitation.taskId) {
         await db.update(tasks)
-          .set({ 
+          .set({
             status: 'completed',
             completionDate: new Date(),
             progress: 100
@@ -909,7 +909,7 @@ export function registerRoutes(app: Express): Server {
           fileName: req.file.originalname,
           filePath: req.file.filename,
           fileType: req.file.mimetype,
-        })
+                })
         .returning();
 
       console.log('Debug - Created new logo record:', logo);
@@ -945,15 +945,15 @@ export function registerRoutes(app: Express): Server {
 
       if (!company) {
         console.log(`Debug - Company not found: ${req.params.id}`);
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Company not found",
-          code: "COMPANY_NOT_FOUND" 
+          code: "COMPANY_NOT_FOUND"
         });
       }
 
       if (!company.logoId) {
         console.log(`Debug - No logo assigned for company: ${company.name} (${company.id})`);
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "No logo assigned to company",
           code: "LOGO_NOT_ASSIGNED"
         });
@@ -965,7 +965,7 @@ export function registerRoutes(app: Express): Server {
 
       if (!logo) {
         console.log(`Debug - Logo record not found for company ${company.name} (${company.id}), logoId: ${company.logoId}`);
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Logo record not found",
           code: "LOGO_RECORD_NOT_FOUND"
         });
@@ -982,7 +982,7 @@ export function registerRoutes(app: Express): Server {
         const dirContents = fs.readdirSync(dir);
         console.log('Debug - Logo directory contents:', dirContents);
 
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Logo file not found on disk",
           code: "LOGO_FILE_MISSING"
         });
@@ -993,7 +993,7 @@ export function registerRoutes(app: Express): Server {
         const content = fs.readFileSync(filePath, 'utf8');
         if (!content.includes('<?xml') && !content.includes('<svg')) {
           console.error(`Debug - Invalid SVG content for company ${company.name}:`, content.slice(0, 100));
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Invalid SVG file",
             code: "INVALID_SVG_CONTENT"
           });
@@ -1010,7 +1010,7 @@ export function registerRoutes(app: Express): Server {
         fileStream.on('error', (error) => {
           console.error(`Error streaming logo file for company ${company.name}:`, error);
           if (!res.headersSent) {
-            res.status(500).json({ 
+            res.status(500).json({
               message: "Error serving logo file",
               code: "LOGO_STREAM_ERROR"
             });
@@ -1021,7 +1021,7 @@ export function registerRoutes(app: Express): Server {
 
       } catch (readError) {
         console.error(`Debug - Error reading SVG file for company ${company.name}:`, readError);
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Error reading logo file",
           code: "LOGO_READ_ERROR"
         });
@@ -1030,7 +1030,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error(`Error serving company logo for ID ${req.params.id}:`, error);
       if (!res.headersSent) {
-        res.status(500).json({ 
+        res.status(500).json({
           message: "Error serving company logo",
           code: "LOGO_SERVER_ERROR"
         });
@@ -1135,7 +1135,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Create the relationship
-      const[relationship] = await db.insert(relationships)
+      const [relationship] = await db.insert(relationships)
         .values({
           companyId: req.user!.companyId,
           relatedCompanyId: targetCompanyId,
@@ -1207,55 +1207,55 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Update the user invitation endpoint to include sender details
-  app.post("/api/users/invite", requireAuth, async (req, res) => {
+  app.post("/api/invitations", requireAuth, async (req, res) => {
     try {
-      const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
-      console.log('Debug - Processing invitation request:', { email, fullName, companyName });
+      const { email, name: recipientName } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
 
-      // Title case the full name for the greeting
-      const formattedName = toTitleCase(fullName);
+      // Format the recipient's name
+      const formattedName = recipientName
+        ?.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ') || email.split('@')[0];
 
-      // Generate unique invitation code
+      // Get sender's full name and company
+      const [sender] = await db.select()
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(eq(users.id, req.user!.id));
+
+      if (!sender || !sender.companies) {
+        return res.status(400).json({ message: "Sender company information not found" });
+      }
+
+      const senderName = sender.users.fullName;
+      const senderCompany = sender.companies.name;
+
+      // Generate invitation code
       const code = uuidv4();
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
-      console.log('Debug - Creating invitation task');
-      // Create invitation task
-      const [task] = await db.insert(tasks)
-        .values({
-          title: `New User Invitation: ${email}`,
-          description: `Invitation sent to ${email} to join ${companyName} on the platform.`,
-          taskType: 'user_onboarding',
-          taskScope: 'user',
-          status: 'pending',
-          priority: 'medium',
-          createdBy: req.user!.id,
-          userEmail: email,
-          companyId,
-          dueDate: expiresAt,
-          filesRequested: [],
-          filesUploaded: [],
-          metadata: {}
-        })
-        .returning();
+      console.log('Debug - Creating invitation with details:', {
+        senderName,
+        senderCompany,
+        recipientName: formattedName,
+        email
+      });
 
-      console.log('Debug - Creating invitation record');
       // Create invitation record
       const [invitation] = await db.insert(invitations)
         .values({
           email,
           code,
           status: 'pending',
-          taskId: task.id,
-          companyId,
-          expiresAt,
-          metadata: { sender: senderName, company: senderCompany }
+          companyId: req.user!.companyId,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          createdBy: req.user!.id
         })
         .returning();
 
-      // Generate invitation URL with code
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}`;
+      const inviteUrl = `${req.protocol}://${req.get('host')}`;
 
       console.log('Debug - Preparing to send invitation email');
       // Send invitation email with formatted name and company details
@@ -1285,11 +1285,10 @@ export function registerRoutes(app: Express): Server {
       console.log('Debug - Email service response:', emailResult);
 
       if (!emailResult.success) {
-        console.error('Debug - Email sending failed:', emailResult.error);
-        throw new Error(emailResult.error || 'Failed to send invitation email');
+        throw new Error(`Failed to send email: ${emailResult.error}`);
       }
 
-      // Update task status after successful email send
+      // Update task status
       await db.update(tasks)
         .set({ status: 'email_sent' })
         .where(eq(tasks.id, task.id));
@@ -1298,10 +1297,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error sending invitation:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ 
-        message: "Error sending invitation",
-        error: errorMessage
-      });
+      res.status(500).json({ message: `Error sending invitation: ${errorMessage}` });
     }
   });
 
@@ -1318,10 +1314,10 @@ export function registerRoutes(app: Express): Server {
         .from(users)
         .where(eq(users.companyId, companyId));
 
-      console.log('Debug - Fetched users for company:', { 
-        companyId, 
+      console.log('Debug - Fetched users for company:', {
+        companyId,
         userCount: companyUsers.length,
-        users: companyUsers.map(u => ({ id: u.id, email: u.email })) 
+        users: companyUsers.map(u => ({ id: u.id, email: u.email }))
       });
 
       res.json(companyUsers);
