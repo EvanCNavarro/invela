@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { PageHeader } from "@/components/ui/page-header";
 
 const visualizationTypes = [
   { value: "risk_trends", label: "Risk Score Trends" },
@@ -65,11 +66,15 @@ export default function InsightsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-semibold mb-1">Insights</h1>
-          <p className="text-sm text-muted-foreground">
-            Analyze and visualize your company's data and relationships.
-          </p>
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title="Insights"
+            description="Analyze and visualize your company's data and relationships."
+          />
+          <Button variant="outline" onClick={exportData} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
         </div>
 
         <div className="flex justify-between items-center">
@@ -88,11 +93,6 @@ export default function InsightsPage() {
               ))}
             </SelectContent>
           </Select>
-
-          <Button variant="outline" onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
         </div>
 
         <Widget title="Data Visualization" className="h-[600px]">

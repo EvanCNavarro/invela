@@ -167,9 +167,9 @@ export default function DashboardPage() {
           />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-56 justify-start">
-                <Settings className="h-4 w-4 mr-2" />
-                <span>Customize Dashboard</span>
+              <Button variant="outline" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Customize Dashboard
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
