@@ -6,7 +6,7 @@ export default function TabsDemo() {
   return (
     <div className="w-full">
       <Tabs defaultValue="tab1" className="w-full max-w-3xl">
-        <TabsList className="grid w-full grid-cols-4 gap-4">
+        <TabsList className="w-full">
           <TabsTrigger value="tab1" icon={HomeIcon}>
             Overview
           </TabsTrigger>
