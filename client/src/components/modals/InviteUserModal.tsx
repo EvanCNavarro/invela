@@ -75,6 +75,14 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         console.debug('Server response:', JSON.stringify(responseData, null, 2));
 
         if (!response.ok) {
+          if (responseData.details) {
+            // Handle detailed validation errors
+            const errorMessages = Object.entries(responseData.details)
+              .filter(([_, message]) => message)
+              .map(([field, message]) => `${field}: ${message}`)
+              .join('\n');
+            throw new Error(errorMessages);
+          }
           throw new Error(responseData.message || 'Failed to send invitation');
         }
 

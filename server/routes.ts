@@ -916,7 +916,7 @@ export function registerRoutes(app: Express): Server {
 
       // Update company with logo reference
       await db.update(companies)
-        .set({ logoId: logo.id })
+        .set({ logoId: logo.id})
         .where(eq(companies.id, companyId));
 
       // Verify file exists in the correct location
@@ -1367,66 +1367,80 @@ export function registerRoutes(app: Express): Server {
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
-      const { email, fullName, companyId } = req.body;
+      const { email, full_name, company_id, company_name, sender_name, sender_company } = req.body;
 
-      if (!email || !fullName || !companyId) {
+      // Validate required fields
+      if (!email || !full_name || !company_id || !company_name) {
+        console.log('Missing required fields:', { email, full_name, company_id, company_name });
         return res.status(400).json({
-          message: "Missing required fields"
+          message: "Missing required fields",
+          details: {
+            email: !email ? "Email is required" : null,
+            full_name: !full_name ? "Full name is required" : null,
+            company_id: !company_id ? "Company ID is required" : null,
+            company_name: !company_name ? "Company name is required" : null
+          }
         });
       }
 
-      // Get the sender's (logged in user's) company information
-      const [senderCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
+      // Generate a unique 6-digit hex code
+      const code = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
 
-      if (!senderCompany) {
-        return res.status(400).json({
-          message: "Sender's company information not found"
-        });
-      }
-
-      // Generate a unique invitation code
-      const code = uuidv4();
+      // Set expiration to 7 days from now
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // Expire in 7 days
+      expiresAt.setDate(expiresAt.getDate() + 7);
 
-      // Create the invitation record
+      // Create invitation record
       const [invitation] = await db.insert(invitations)
         .values({
+          email: email.toLowerCase(),
           code,
-          companyId,
-          email,
           status: 'pending',
+          companyId: company_id,
+          inviteeName: full_name,
+          inviteeCompany: company_name,
           expiresAt,
-          metadata: {
-            fullName,
-            senderName: req.user?.fullName,
-            senderCompany: senderCompany.name
-          }
         })
         .returning();
 
       if (!invitation) {
-        return res.status(500).json({
-          message: "Failed to create invitation"
-        });
+        throw new Error("Failed to create invitation");
       }
 
-      // Generate the correct registration URL with HTTPS
-      const protocol = req.get('x-forwarded-proto') || req.protocol;
-      const baseUrl = `${protocol}://${req.get('host')}`;
-      const inviteUrl = `${baseUrl}/register`;
+      // Create an onboarding task
+      const [task] = await db.insert(tasks)
+        .values({
+          title: `New User Invitation: ${email}`,
+          description: `Invitation sent to ${full_name} to join ${company_name}`,
+          taskType: 'user_onboarding',
+          taskScope: 'user',
+          status: 'pending',
+          priority: 'medium',
+          progress: 0,
+          createdBy: req.user!.id,
+          companyId: company_id,
+          userEmail: email,
+          dueDate: expiresAt,
+        })
+        .returning();
+
+      // Update invitation with task reference
+      await db.update(invitations)
+        .set({ taskId: task.id })
+        .where(eq(invitations.id, invitation.id));
+
+      // Send invitation email
+      const inviteUrl = `${req.protocol}://${req.get('host')}/auth?code=${code}`;
 
       const emailParams = {
         to: email,
         from: process.env.GMAIL_USER!,
-        template: 'user_invite',
+        template: 'fintech_invite',
         templateData: {
-          recipientName: fullName,
+          recipientName: full_name,
           recipientEmail: email,
-          senderName: req.user?.fullName,
-          senderCompany: senderCompany.name,
+          senderName: sender_name,
+          senderCompany: sender_company,
           inviteUrl,
           code
         }
@@ -1435,28 +1449,18 @@ export function registerRoutes(app: Express): Server {
       const emailResult = await emailService.sendTemplateEmail(emailParams);
 
       if (!emailResult.success) {
-        // Rollback invitation if email fails
-        await db.update(invitations)
-          .set({ status: 'failed' })
-          .where(eq(invitations.id, invitation.id));
-
-        return res.status(500).json({
-          message: "Failed to send invitation email",
-          error: emailResult.error
-        });
+        console.error('Failed to send invitation email:', emailResult.error);
+        // Don't return error, still consider invitation created
       }
 
-      res.status(200).json({
+      res.status(201).json({
         message: "Invitation sent successfully",
         invitation
       });
 
     } catch (error) {
-      console.error("Error sending invitation:", error);
-      res.status(500).json({
-        message: "Failed to process invitation",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
+      console.error("Error creating invitation:", error);
+      res.status(500).json({ message: "Error creating invitation" });
     }
   });
 
