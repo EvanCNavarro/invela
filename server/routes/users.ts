@@ -49,7 +49,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       });
     }
 
-    // Update the task status
+    // Update the task status with proper metadata
     const [updatedTask] = await db
       .update(tasks)
       .set({
