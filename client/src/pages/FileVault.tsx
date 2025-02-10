@@ -336,7 +336,19 @@ const MetricItem = ({ label, value }: { label: string; value: React.ReactNode })
   </div>
 );
 
+const formatDate = (dateString?: string) => {
+  if (!dateString) return 'N/A';
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+};
+
 const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
+  // Import formatFileSize from FileTableColumns
+  const { formatFileSize } = require('./FileTableColumns');
+
   // Fetch fresh file data
   const { data: freshFileData } = useQuery({
     queryKey: ['/api/files', file.id],
@@ -365,7 +377,7 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Name</span>
-                <span className="font-medium truncate ml-2">{currentFile.name}</span>
+                <span className="font-medium truncate ml-2 max-w-[200px]">{currentFile.name}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">Size</span>
@@ -865,7 +877,7 @@ const FileVault = () => {
     if (sortConfig.field !== field) return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
     return sortConfig.order === 'asc' ?
       <ArrowUpIcon className="h-4 w-4 text-primary" /> :
-      <ArrowDownIcon className="h-4 w-4 text-primary" />;
+      <ArrowDownIcon className="h-4 w-4text-primary" />;
   };
 
   const allFiles = useMemo(() => {
@@ -991,7 +1003,11 @@ const FileVault = () => {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
   };
 
   const handleSearch = (value: string) => {
