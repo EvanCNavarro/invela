@@ -115,7 +115,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
         progress: 50,
         updatedAt: new Date(),
         metadata: {
-          ...task.metadata,
+          ...task.metadata || {},
           registrationCompleted: true,
           registrationTime: new Date().toISOString()
         }
