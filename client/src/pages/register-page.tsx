@@ -34,7 +34,6 @@ const registrationSchema = z.object({
     .regex(/^[0-9A-F]+$/, "Code must be a valid hexadecimal value"),
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
-  fullName: z.string().min(1, "Full name is required."),
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
   company: z.string().min(1, "Company is required."),
@@ -65,7 +64,6 @@ export default function RegisterPage() {
       invitationCode: "",
       email: "",
       password: "",
-      fullName: "",
       firstName: "",
       lastName: "",
       company: "",
@@ -90,28 +88,37 @@ export default function RegisterPage() {
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
     try {
       const result = await validateInvitation();
-      if (result.data?.valid) {
+      console.log("Invitation validation result:", result); // Debug log
+
+      // The response comes directly without .data nesting
+      if (result?.valid) {
         setValidatedInvitation({
-          email: result.data.email,
-          company: result.data.company,
-          companyId: result.data.companyId,
-          fullName: result.data.fullName || '',
+          email: result.email,
+          company: result.company,
+          companyId: result.companyId,
+          fullName: result.fullName || '',
         });
 
         // Pre-fill registration form
         registrationForm.setValue("invitationCode", values.invitationCode);
-        registrationForm.setValue("email", result.data.email);
-        registrationForm.setValue("company", result.data.company);
+        registrationForm.setValue("email", result.email);
+        registrationForm.setValue("company", result.company);
 
         // Split full name if provided
-        if (result.data.fullName) {
-          registrationForm.setValue("fullName", result.data.fullName);
-          const nameParts = result.data.fullName.split(" ");
+        if (result.fullName) {
+          const nameParts = result.fullName.split(" ");
           registrationForm.setValue("firstName", nameParts[0] || "");
           registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
         }
+      } else {
+        console.error("Invalid invitation code from server response:", result);
+        invitationForm.setError("invitationCode", {
+          type: "manual",
+          message: "Invalid invitation code",
+        });
       }
     } catch (error) {
+      console.error("Invitation validation error:", error); // Debug log
       invitationForm.setError("invitationCode", {
         type: "manual",
         message: "Invalid invitation code",
@@ -123,8 +130,11 @@ export default function RegisterPage() {
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     if (!validatedInvitation?.companyId) return;
 
+    const fullName = `${values.firstName} ${values.lastName}`.trim();
+
     registerMutation.mutate({
       ...values,
+      fullName,
       companyId: validatedInvitation.companyId,
     });
   };
