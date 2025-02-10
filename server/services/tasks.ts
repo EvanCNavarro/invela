@@ -20,6 +20,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
     console.log(`[Task Service] Found user ${userId} with email ${user.email}`);
 
     // Search for task using either assigned user ID or email (case insensitive)
+    // Include in_progress status in the search
     const [taskToUpdate] = await db
       .select()
       .from(tasks)
@@ -45,7 +46,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
       return null;
     }
 
-    console.log(`[Task Service] Updating task ID: ${taskToUpdate.id}`);
+    console.log(`[Task Service] Found task ${taskToUpdate.id} with status ${taskToUpdate.status}`);
 
     // Update the task with completion status
     const [updatedTask] = await db
@@ -59,17 +60,18 @@ export async function updateOnboardingTaskStatus(userId: number) {
         metadata: {
           ...(taskToUpdate.metadata || {}),
           onboardingCompleted: true,
-          completionTime: new Date().toISOString()
+          completionTime: new Date().toISOString(),
+          previousStatus: taskToUpdate.status // Track status transition
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log('[Task Service] Updated task:', updatedTask);
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} from ${taskToUpdate.status} to completed`);
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task status:', error);
-    throw error; // Propagate error to caller
+    throw error;
   }
 }
 
@@ -99,7 +101,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
       return null;
     }
 
-    console.log(`[Task Service] Found task ${taskToUpdate.id}, updating with user ID ${userId}`);
+    console.log(`[Task Service] Found task ${taskToUpdate.id} with status ${taskToUpdate.status}`);
 
     // Update the task with registration progress
     const [updatedTask] = await db
@@ -112,16 +114,17 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
         metadata: {
           ...(taskToUpdate.metadata || {}),
           registrationCompleted: true,
-          registrationTime: new Date().toISOString()
+          registrationTime: new Date().toISOString(),
+          previousStatus: taskToUpdate.status // Track status transition
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log(`[Task Service] Successfully updated task ${updatedTask.id} with registration progress`);
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} from ${taskToUpdate.status} to in_progress`);
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task:', error);
-    throw error; // Propagate error to caller
+    throw error;
   }
 }
