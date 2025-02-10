@@ -43,6 +43,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import Fuse from 'fuse.js'
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -59,12 +61,48 @@ const inviteFormSchema = z.object({
 
 type InviteFormData = z.infer<typeof inviteFormSchema>;
 
+// Helper function to title case a string
+const toTitleCase = (str: string) => {
+  return str.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+// Helper function to extract and format name from email
+const extractNameFromEmail = (email: string): { companyName: string; email: string } => {
+  const [localPart, domain] = email.split('@');
+  const domainParts = domain?.split('.') || [];
+  const companyPart = domainParts[0] || '';
+
+  return {
+    companyName: toTitleCase(companyPart),
+    email: email
+  };
+};
+
+// Function to check company name similarity
+const checkCompanyDomainMatch = (email: string, companyName: string) => {
+  const domain = email.split('@')[1]?.split('.')[0];
+  if (!domain) return false;
+
+  const fuse = new Fuse([companyName], {
+    threshold: 0.4,
+    location: 0,
+    distance: 100,
+    minMatchCharLength: 1,
+  });
+
+  return fuse.search(domain).length === 0;
+};
+
+
 export default function DashboardPage() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [companyMismatchWarning, setCompanyMismatchWarning] = useState<string | null>(null);
 
   const form = useForm<InviteFormData>({
     resolver: zodResolver(inviteFormSchema),
@@ -153,6 +191,24 @@ export default function DashboardPage() {
     if (serverError) {
       setServerError(null);
     }
+  };
+
+  // Helper function for email change
+  const handleEmailChange = (email: string) => {
+    if (email) {
+      const { companyName: derivedCompanyName } = extractNameFromEmail(email);
+      form.setValue('companyName', derivedCompanyName);
+
+      const hasMismatch = checkCompanyDomainMatch(email, derivedCompanyName);
+      if (hasMismatch) {
+        setCompanyMismatchWarning(
+          `Email domain doesn't match company name "${derivedCompanyName}"`
+        );
+      } else {
+        setCompanyMismatchWarning(null);
+      }
+    }
+    form.setValue('email', email);
   };
 
   return (
@@ -311,7 +367,8 @@ export default function DashboardPage() {
                                   type="text"
                                   className={cn(
                                     "w-full",
-                                    serverError && "border-destructive"
+                                    serverError && "border-destructive",
+                                    field.value && !form.formState.errors.companyName && "border-green-500"
                                   )}
                                   disabled={isPending}
                                   aria-label="FinTech company name"
@@ -319,9 +376,22 @@ export default function DashboardPage() {
                                 />
                               </FormControl>
                               <FormMessage />
+                              {field.value && !form.formState.errors.companyName && (
+                                <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                                  <Check className="h-4 w-4" />
+                                  Company name looks good
+                                </p>
+                              )}
                             </FormItem>
                           )}
                         />
+                        {companyMismatchWarning && (
+                          <Alert variant="warning" className="bg-yellow-50/50">
+                            <AlertDescription className="text-yellow-800">
+                              {companyMismatchWarning}
+                            </AlertDescription>
+                          </Alert>
+                        )}
                         <FormField
                           control={form.control}
                           name="email"
@@ -334,12 +404,14 @@ export default function DashboardPage() {
                                   type="email"
                                   className={cn(
                                     "w-full",
-                                    serverError && "border-destructive"
+                                    serverError && "border-destructive",
+                                    field.value && !form.formState.errors.email && "border-green-500"
                                   )}
                                   disabled={isPending}
                                   aria-label="FinTech representative email"
                                   onChange={(e) => {
                                     field.onChange(e);
+                                    handleEmailChange(e.target.value);
                                     handleInputChange();
                                   }}
                                 />
@@ -350,6 +422,12 @@ export default function DashboardPage() {
                                   {serverError.includes("mailbox")
                                     ? "This email address does not exist. Please try again."
                                     : serverError}
+                                </p>
+                              )}
+                              {field.value && !form.formState.errors.email && (
+                                <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                                  <Check className="h-4 w-4" />
+                                  Valid email address
                                 </p>
                               )}
                             </FormItem>

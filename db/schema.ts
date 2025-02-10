@@ -114,6 +114,19 @@ export const files = pgTable("files", {
   version: real("version").notNull().default(1.0),
 });
 
+export const invitations = pgTable("invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull(),
+  code: text("code").notNull().unique(),
+  status: text("status").notNull().default('pending'), // pending, used, expired
+  companyId: integer("company_id").references(() => companies.id).notNull(),
+  taskId: integer("task_id").references(() => tasks.id),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.companyId],
@@ -147,6 +160,17 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   }),
 }));
 
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  company: one(companies, {
+    fields: [invitations.companyId],
+    references: [companies.id],
+  }),
+  task: one(tasks, {
+    fields: [invitations.taskId],
+    references: [tasks.id],
+  }),
+}));
+
 export const registrationSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1),
@@ -154,6 +178,7 @@ export const registrationSchema = z.object({
   lastName: z.string().nullable(),
   password: z.string().min(6),
   company: z.string().min(1),
+  invitationCode: z.string().min(1),
 });
 
 export const insertUserSchema = createInsertSchema(users);
@@ -216,6 +241,9 @@ export const selectTaskSchema = createSelectSchema(tasks);
 export const insertFileSchema = createInsertSchema(files);
 export const selectFileSchema = createSelectSchema(files);
 
+export const insertInvitationSchema = createInsertSchema(invitations);
+export const selectInvitationSchema = createSelectSchema(invitations);
+
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertCompany = typeof companies.$inferInsert;
@@ -225,3 +253,5 @@ export type SelectTask = typeof tasks.$inferSelect;
 export type InsertFile = typeof files.$inferInsert;
 export type SelectFile = typeof files.$inferSelect;
 export type RegistrationData = z.infer<typeof registrationSchema>;
+export type InsertInvitation = typeof invitations.$inferInsert;
+export type SelectInvitation = typeof invitations.$inferSelect;
