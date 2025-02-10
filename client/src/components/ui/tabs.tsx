@@ -28,26 +28,28 @@ interface TabsTriggerProps extends React.ComponentPropsWithoutRef<typeof TabsPri
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   TabsTriggerProps
->(({ className, locked, icon: Icon, children, disabled, ...props }, ref) => (
-  <TabsPrimitive.Trigger
-    ref={ref}
-    disabled={locked || disabled}
-    className={cn(
-      "inline-flex items-center justify-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-4 border-transparent relative",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      "disabled:pointer-events-none disabled:opacity-50",
-      locked ? "bg-muted text-muted-foreground cursor-not-allowed" : 
-        "text-gray-600 hover:text-gray-900 hover:border-gray-300",
-      "data-[state=active]:bg-blue-50 data-[state=active]:text-gray-900 data-[state=active]:border-blue-500 data-[state=active]:font-semibold",
-      className
-    )}
-    {...props}
-  >
-    {Icon && <Icon className="h-4 w-4" />}
-    {children}
-    {locked && <Lock className="h-3.5 w-3.5" />}
-  </TabsPrimitive.Trigger>
-))
+>(({ className, locked, icon: Icon, children, disabled, ...props }, ref) => {
+  return (
+    <TabsPrimitive.Trigger
+      ref={ref}
+      disabled={locked || disabled}
+      className={cn(
+        "inline-flex items-center justify-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-4 border-transparent relative",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        "disabled:pointer-events-none disabled:opacity-50",
+        locked ? "bg-muted text-muted-foreground cursor-not-allowed" : 
+          "text-gray-600 hover:text-gray-900 hover:border-gray-300",
+        "data-[state=active]:bg-blue-50 data-[state=active]:text-gray-900 data-[state=active]:border-blue-500 data-[state=active]:font-semibold",
+        className
+      )}
+      {...props}
+    >
+      {Icon && <Icon className="h-4 w-4" />}
+      {children}
+      {locked && <Lock className="h-3.5 w-3.5" />}
+    </TabsPrimitive.Trigger>
+  )
+})
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
 const TabsContent = React.forwardRef<
