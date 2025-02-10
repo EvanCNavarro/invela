@@ -147,10 +147,25 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
+      // Get company information
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, invitation.companyId));
+
+      if (!company) {
+        return res.status(404).json({
+          message: "Company not found",
+          valid: false
+        });
+      }
+
       res.json({
         valid: true,
         email: invitation.email,
-        companyId: invitation.companyId
+        companyId: invitation.companyId,
+        company: company.name,
+        fullName: invitation.inviteeName,
+        inviteeCompany: invitation.inviteeCompany
       });
     } catch (error) {
       console.error("Error validating invitation:", error);
@@ -900,7 +915,7 @@ export function registerRoutes(app: Express): Server {
             console.log('Debug - Old logo file not found on disk');
           }
         }
-      }
+      }      }
 
       // Create logo record
       const [logo] = await db.insert(companyLogos)
@@ -916,7 +931,7 @@ export function registerRoutes(app: Express): Server {
 
       // Update company with logo reference
       await db.update(companies)
-        .set({ logoId: logo.id})
+        .set({ logoId: logo.id })
         .where(eq(companies.id, companyId));
 
       // Verify file exists in the correct location
