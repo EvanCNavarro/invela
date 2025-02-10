@@ -38,7 +38,7 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [searchParams] = useState(new URLSearchParams(window.location.search));
+  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const invitationCode = searchParams.get('code');
   const workEmail = searchParams.get('work_email');
 
@@ -65,7 +65,7 @@ export default function AuthPage() {
   const registrationForm = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      email: workEmail || invitationData?.email || "",
+      email: workEmail || "",
       password: "",
       fullName: "",
       firstName: "",
@@ -85,10 +85,16 @@ export default function AuthPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Only redirect to home if user is logged in and we're not in registration with a valid code
-  if (user && (!invitationCode || !invitationData?.valid)) {
+  // Only redirect to home if:
+  // 1. User is logged in AND
+  // 2. Either there's no invitation code OR the invitation is invalid/expired
+  if (user && (!invitationCode || (invitationData && !invitationData.valid))) {
     return <Redirect to="/" />;
   }
+
+  // Show registration form if we have an invitation code and are waiting for validation
+  // or if the invitation is valid
+  const showRegistrationForm = invitationCode && (isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail));
 
   if (isPageLoading || isValidatingCode) {
     return (
@@ -121,8 +127,8 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
-  // Show registration form if we have a valid invitation code
-  if (invitationCode && invitationData?.valid) {
+  // Show registration form if we have a valid invitation
+  if (showRegistrationForm) {
     return (
       <div className="min-h-screen flex">
         <div className="flex-1 flex items-center justify-center">

@@ -21,14 +21,14 @@ const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",
     text: `
-      You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.
+      Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.
 
       Getting Started:
       1. Click the button below to Create Your Account.
       2. Finish updating your Profile.
       3. Access your company's dashboard and resources.
 
-      Click here to get started: ${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}
+      Click here to get started: ${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -123,7 +123,7 @@ const templates = {
         <body>
           <div class="container">
             <h1 class="company-name">Invela</h1>
-            <h2 class="title">You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.</h2>
+            <h2 class="title">Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.</h2>
 
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
@@ -134,7 +134,7 @@ const templates = {
               </ol>
             </div>
 
-            <a href="${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
+            <a href="${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
