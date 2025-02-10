@@ -50,6 +50,7 @@ export function SearchBar({
 
   // Handle controlled vs uncontrolled input
   const inputValue = controlledValue !== undefined ? controlledValue : value
+  const hasValue = inputValue !== '';
 
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
@@ -128,7 +129,7 @@ export function SearchBar({
       <div className="absolute right-3 flex items-center gap-2">
         {isLoading ? (
           <LoadingSpinner size="sm" />
-        ) : (
+        ) : hasValue && (
           <Button
             variant="ghost"
             size="icon"
@@ -147,7 +148,7 @@ export function SearchBar({
 export function highlightMatch(text: string, matches: Fuse.FuseResultMatch[]) {
   if (!matches?.length) return text
 
-  const indices = matches.reduce((acc: [number, number][], match) => {
+  const indices = matches.reduce<[number, number][]>((acc, match) => {
     return [...acc, ...(match.indices || [])]
   }, []).sort((a, b) => a[0] - b[0])
 
