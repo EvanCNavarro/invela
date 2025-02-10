@@ -47,13 +47,20 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: () => {
-      if (!company?.id) throw new Error("No company ID");
+      if (!company?.id && company?.id !== 0) throw new Error("No company ID");
       console.log("Debug - Fetching users for company ID:", company.id);
-      return fetch(`/api/users/by-company/${company.id}`).then(res => res.json());
+      console.log("Debug - Company data:", company);
+      return fetch(`/api/users/by-company/${company.id}`).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      });
     },
-    enabled: !!company?.id,
+    enabled: company?.id !== undefined,
     onSuccess: (data) => {
       console.log("Debug - Successfully fetched users:", data);
+      console.log("Debug - Number of users fetched:", data.length);
     },
     onError: (error) => {
       console.error("Debug - Error fetching users:", error);
