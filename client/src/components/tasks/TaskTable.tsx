@@ -9,10 +9,10 @@ import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 
 const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Invitation Sent',
+  [TaskStatus.EMAIL_SENT]: 'Email Sent',
   [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
-  pending: 'Invitation Sent', // Backward compatibility for existing tasks
+  pending: 'Email Sent', // Backward compatibility for existing tasks
 };
 
 interface Task {
