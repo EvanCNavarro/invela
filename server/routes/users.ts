@@ -31,9 +31,8 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${req.user.email})`,
           or(
-            eq(tasks.status, 'pending'),
-            eq(tasks.status, 'in_progress'),
-            eq(tasks.status, 'email_sent')
+            eq(tasks.status, 'email_sent'),
+            eq(tasks.status, 'in_progress')
           )
         )
       )
@@ -41,17 +40,17 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       .limit(1);
 
     if (!task) {
-      console.warn(`[User Routes] No pending onboarding task found for user ID ${req.user.id}`);
+      console.warn(`[User Routes] No active onboarding task found for user ID ${req.user.id}`);
       return res.json({ 
         user: updatedUser,
         task: null,
-        message: "User onboarding completed, but no pending task was found to update"
+        message: "User onboarding completed, but no active task was found to update"
       });
     }
 
     console.log(`[User Routes] Found task ${task.id} with status ${task.status}`);
 
-    // Update the task status with proper metadata
+    // Update the task status with proper metadata and status flow
     const [updatedTask] = await db
       .update(tasks)
       .set({
@@ -66,7 +65,8 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
           completionTime: new Date().toISOString(),
           previousStatus: task.status,
           userId: req.user.id,
-          userEmail: req.user.email.toLowerCase()
+          userEmail: req.user.email.toLowerCase(),
+          statusFlow: [...(task.metadata?.statusFlow || []), 'completed']
         }
       })
       .where(eq(tasks.id, task.id))
