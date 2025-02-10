@@ -459,7 +459,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
 
           {/* Navigation Tabs */}
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="w-full border-b space-x-8">
+            <TabsList className="w-full">
               <TabsTrigger value="overview" icon={Building2}>Overview</TabsTrigger>
               <TabsTrigger value="users" icon={Users}>Users</TabsTrigger>
               <TabsTrigger value="files" icon={FileUp}>Files</TabsTrigger>

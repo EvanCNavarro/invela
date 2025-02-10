@@ -12,7 +12,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center bg-background p-1 relative border-b-3 border-gray-200",
+      "inline-flex h-10 items-center justify-start bg-background relative border-b border-gray-200",
       className
     )}
     {...props}
@@ -39,7 +39,7 @@ const TabsTrigger = React.forwardRef<
         "disabled:pointer-events-none disabled:opacity-50",
         locked ? "bg-muted text-muted-foreground cursor-not-allowed" : 
           "text-gray-600 hover:text-gray-900 hover:border-gray-300",
-        "data-[state=active]:bg-blue-50 data-[state=active]:text-gray-900 data-[state=active]:border-blue-500 data-[state=active]:font-semibold",
+        "data-[state=active]:bg-blue-50 data-[state=active]:text-gray-900 data-[state=active]:border-blue-500 data-[state=active]:font-semibold mr-8",
         className
       )}
       {...props}
