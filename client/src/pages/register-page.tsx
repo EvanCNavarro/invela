@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { z } from "zod";
@@ -70,19 +70,35 @@ export default function RegisterPage() {
     },
   });
 
-  // Query to validate invitation code
+  // Update the validateInvitation query
   const { data: invitationData, refetch: validateInvitation } = useQuery({
     queryKey: ["validateInvitation", invitationForm.watch("invitationCode")],
     queryFn: async () => {
-      const code = invitationForm.watch("invitationCode");
+      const code = invitationForm.watch("invitationCode")?.toUpperCase();
       if (!code || code.length !== 6) return null;
 
       const response = await fetch(`/api/invitations/${code}/validate`);
-      if (!response.ok) throw new Error("Invalid invitation code");
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Invalid invitation code");
+      }
       return response.json();
     },
     enabled: false, // Don't run automatically
+    retry: false, // Don't retry on failure
   });
+
+  // Add URL parameter handling with improved error handling
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    if (code) {
+      const formattedCode = code.toUpperCase();
+      invitationForm.setValue('invitationCode', formattedCode);
+      // Trigger validation after setting the code
+      validateInvitation();
+    }
+  }, []);
 
   // Handle invitation code validation
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
