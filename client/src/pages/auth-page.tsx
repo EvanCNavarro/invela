@@ -40,7 +40,6 @@ export default function AuthPage() {
       email: "",
       password: "",
     },
-    mode: "onBlur"
   });
 
   if (user) {
@@ -103,7 +102,9 @@ export default function AuthPage() {
                         autoFocus
                       />
                     </FormControl>
-                    <FormMessage />
+                    {field.value && form.formState.errors.email && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />
@@ -136,7 +137,9 @@ export default function AuthPage() {
                         )}
                       </Button>
                     </div>
-                    <FormMessage />
+                    {field.value && form.formState.errors.password && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />
