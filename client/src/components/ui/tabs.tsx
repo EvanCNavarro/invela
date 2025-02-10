@@ -32,12 +32,12 @@ const TabsTrigger = React.forwardRef<
     ref={ref}
     disabled={locked || disabled}
     className={cn(
-      "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all",
+      "inline-flex items-center justify-center gap-2 whitespace-nowrap px-3 py-1.5 text-sm font-medium ring-offset-background transition-all border-b-4 border-transparent",
       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       "disabled:pointer-events-none disabled:opacity-50",
       locked ? "bg-muted text-muted-foreground cursor-not-allowed" : 
-        "data-[state=active]:bg-blue-600 data-[state=active]:text-white",
-      !locked && "hover:bg-accent/80",
+        "text-gray-600 hover:text-gray-900 hover:border-gray-300",
+      "data-[state=active]:bg-blue-50 data-[state=active]:text-gray-900 data-[state=active]:border-blue-500 data-[state=active]:font-semibold",
       className
     )}
     {...props}
