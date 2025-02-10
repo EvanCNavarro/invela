@@ -41,10 +41,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import React from 'react';
 import { SearchBar } from "@/components/playground/SearchBar";
-import { Table, type Column } from "@/components/playground/Table";
+import { Table } from "@/components/playground/Table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Checkbox } from "@/components/ui/checkbox"; // Added import
-import { MoreVerticalIcon } from "lucide-react"; // Added import
+import { Checkbox } from "@/components/ui/checkbox";
+import { MoreVerticalIcon } from "lucide-react";
+import { TableCell, TableRow } from "@/components/ui/table";
+import { getFileColumns } from "@/components/files/FileTableColumns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
+
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -327,6 +337,20 @@ const FileConflictModal = ({
     </Dialog>
   );
 };
+
+const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <div className="bg-muted/30 rounded-md p-4 space-y-3">
+    <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+    <div className="space-y-2">{children}</div>
+  </div>
+);
+
+const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div className="flex justify-between items-center text-sm">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-medium">{value}</span>
+  </div>
+);
 
 const FileVault = () => {
   const { toast } = useToast();
@@ -879,9 +903,10 @@ const FileVault = () => {
     }
   };
 
-  const canRestore = useMemo(() => {    return Array.from(selectedFiles).some(fileId => {
+  const canRestore = useMemo(() => {
+    return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
-      return file?.status=== 'deleted';
+      return file?.status === 'deleted';
     });
   }, [selectedFiles, allFiles]);
 
@@ -893,8 +918,9 @@ const FileVault = () => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
   };
+
 const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-muted/30 rounded-mdp4 space-y-3">
+  <div className="bg-muted/30 rounded-md p-4 space-y-3">
     <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
     <div className="space-y-2">{children}</div>
   </div>
@@ -1071,56 +1097,22 @@ const MetricItem = ({ label, value }: { label: string; value: React.ReactNode })
     return highlightedText;
   };
 
-  const columns: Column<FileItem | UploadingFile>[] = [
-    {
-      id: 'name',
-      header: 'Name',
-      cell: (file) => <FileNameCell file={file} />,
-      sortable: true,
-      className: 'w-[300px]'
-    },
-    {
-      id: 'size',
-      header: 'Size',
-      cell: (file) => formatFileSize(file.size),
-      sortable: true,
-      className: 'text-right'
-    },
-    {
-      id: 'uploadDate',
-      header: 'Upload Date',
-      cell: (file) => new Date(file.createdAt).toLocaleDateString(),
-      sortable: true
-    },
-    {
-      id: 'uploadTime',
-      header: 'Upload Time',
-      cell: (file) => formatTimeWithZone(new Date(file.uploadTime)),
-      sortable: true
-    },
-    {
-      id: 'version',
-      header: 'Version',
-      cell: (file) => `v${(file.version || 1.0).toFixed(1)}`,
-      className: 'text-center'
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: (file) => (
-        <div className="flex justify-center">
-          <span className={getStatusStyles(file.status)}>
-            {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-          </span>
-        </div>
-      ),
-      sortable: true
-    }
-  ];
-
-  const handleSort = (field: string, direction: 'asc' | 'desc') => {
-    setSortConfig({ field: field as SortField, order: direction });
-  };
+  const columns = useMemo(() => {
+    return [
+      ...getFileColumns(),
+      {
+        id: 'actions',
+        header: '',
+        cell: (item: FileItem) => (
+          <FileActions
+            file={item}
+            onDelete={handleDelete}
+          />
+        ),
+        className: 'w-[48px]'
+      }
+    ];
+  }, [handleDelete]);
 
   return (
     <DashboardLayout>
@@ -1131,7 +1123,7 @@ const MetricItem = ({ label, value }: { label: string; value: React.ReactNode })
         />
 
         <div className="space-y-4">
-          <DragDropProvider 
+          <DragDropProvider
             onFilesAccepted={onDrop}
             className="min-h-[200px] rounded-lg transition-colors duration-200"
             activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
