@@ -1,11 +1,11 @@
 import React from "react"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
-export function TabsDemo() {
+export default function TabsDemo() {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Tabs Component Demo</h2>
-      
+
       <Tabs defaultValue="tab1" className="w-full max-w-3xl">
         <TabsList className="grid w-full grid-cols-4 gap-4">
           <TabsTrigger value="tab1">
@@ -21,7 +21,7 @@ export function TabsDemo() {
             LockedTab
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="tab1">
           <div className="p-4 rounded-lg border mt-4">
             Content for Active Tab

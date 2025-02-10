@@ -59,6 +59,8 @@ import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; /
 import { DropdownPlayground } from "@/components/playground/DropdownPlayground";
 import { DownloadButtonPlayground } from "@/components/playground/DownloadButtonPlayground";
 import { FileUploadPlayground } from '@/components/playground/FileUploadPlayground';
+import TabsDemo from "@/components/playground/TabsDemo";
+
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -275,6 +277,45 @@ export function Example() {
   );
 }
 `,
+  },
+  {
+    id: "tabs",
+    name: "Tabs",
+    code: `import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
+export function Example() {
+  return (
+    <Tabs defaultValue="tab1" className="w-full max-w-3xl">
+      <TabsList className="grid w-full grid-cols-4 gap-4">
+        <TabsTrigger value="tab1">ActiveTab</TabsTrigger>
+        <TabsTrigger value="tab2">DefaultTab</TabsTrigger>
+        <TabsTrigger value="tab3">HoverTab</TabsTrigger>
+        <TabsTrigger value="tab4" locked>LockedTab</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="tab1">
+        <div className="p-4 rounded-lg border mt-4">
+          Content for Active Tab
+        </div>
+      </TabsContent>
+      <TabsContent value="tab2">
+        <div className="p-4 rounded-lg border mt-4">
+          Content for Default Tab
+        </div>
+      </TabsContent>
+      <TabsContent value="tab3">
+        <div className="p-4 rounded-lg border mt-4">
+          Content for Hover Tab
+        </div>
+      </TabsContent>
+      <TabsContent value="tab4">
+        <div className="p-4 rounded-lg border mt-4">
+          Content for Locked Tab (Not accessible)
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
+}`,
   },
 ];
 
@@ -966,8 +1007,7 @@ export default function PlaygroundPage() {
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reset
-                      </Button>
-                    </div>
+                      </Button>                    </div>
                   </CardHeader>
                   <CardContent className="space-y-8">
                     {/* Controls Panel */}
@@ -1014,7 +1054,8 @@ export default function PlaygroundPage() {
                               value as keyof typeof availableIcons
                             ];
                             if (value === "Locked") {
-                              handleLockState(true, {                              setIsTabDisabled,
+                              handleLockState(true, {
+                                setIsTabDisabled,
                                 setSelectedIcon,
                                 setTabLabel,
                                 setIsTabActive,
@@ -1312,6 +1353,19 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <FileUploadPlayground />
+                  </CardContent>
+                </Card>
+              )}
+
+              {currentComponent.id === "tabs" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-8">
+                      <TabsDemo />
+                    </div>
                   </CardContent>
                 </Card>
               )}
