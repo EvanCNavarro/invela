@@ -18,10 +18,18 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TaskStatus } from "@db/schema";
+
+const taskStatusMap = {
+  [TaskStatus.EMAIL_SENT]: 'Invitation Sent',
+  [TaskStatus.IN_PROGRESS]: 'In Progress',
+  [TaskStatus.COMPLETED]: 'Completed',
+  pending: 'Invitation Sent', // Backward compatibility for existing tasks
+};
 
 interface Task {
   id: number;
@@ -164,7 +172,7 @@ export default function TaskCenterPage() {
         <TableCell className="font-medium">{task.title}</TableCell>
         <TableCell>
           <Badge variant="secondary">
-            {task.status.replace(/_/g, ' ')}
+            {taskStatusMap[task.status] || task.status.replace(/_/g, ' ')}
           </Badge>
         </TableCell>
         <TableCell>
