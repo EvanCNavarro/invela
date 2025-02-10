@@ -27,7 +27,7 @@ const templates = {
       2. Finish updating your Profile.
       3. Access your company's dashboard and resources.
 
-      Click here to get started: ${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
+      Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -133,7 +133,7 @@ const templates = {
               </ol>
             </div>
 
-            <a href="${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
+            <a href="${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
