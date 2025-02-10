@@ -46,7 +46,7 @@ export default function AuthPage() {
   const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
-  // Validate invitation code
+  // Validate invitation code when present
   const { data: invitationData, isLoading: isValidatingCode } = useQuery({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
@@ -92,19 +92,17 @@ export default function AuthPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Determine if we should show the registration form based on URL path and invitation code
-  const isRegistrationPath = location.startsWith('/register');
+  // Determine current page and form to show
+  const isLoginPath = location === '/login';
+  const isRegistrationPath = location === '/register';
+
+  // Show registration form if:
+  // 1. On /register path AND
+  // 2. Has invitation code AND
+  // 3. Either validating code OR code is valid and email matches
   const showRegistrationForm = isRegistrationPath && invitationCode && (
     isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail)
   );
-
-  // Only redirect to login if:
-  // 1. User is not logged in AND
-  // 2. Not on registration path OR no valid invitation
-  // 3. Not currently validating the code
-  if (!user && !showRegistrationForm && !isValidatingCode && !isRegistrationPath) {
-    return <Redirect to="/login" />;
-  }
 
   // Redirect logged-in users to home unless they have a valid invitation
   if (user && !showRegistrationForm) {
@@ -144,7 +142,7 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
-  // Registration form view
+  // Show registration form when applicable
   if (showRegistrationForm) {
     return (
       <div className="min-h-screen flex">
@@ -323,7 +321,7 @@ export default function AuthPage() {
     );
   }
 
-  // Login form view
+  // Show login form by default or when on /login path
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
