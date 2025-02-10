@@ -57,7 +57,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           company_id: companyId,
           company_name: companyName,
           sender_name: user?.fullName || '',
-          sender_company: companyName,
+          sender_company: "Invela", // Hardcoded for now since this is the parent company
         };
 
         // Debug log the exact payload being sent
