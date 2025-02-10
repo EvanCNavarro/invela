@@ -106,35 +106,34 @@ export default function RegisterPage() {
       const result = await validateInvitation();
       console.log("Invitation validation result:", result); // Debug log
 
-      // The response comes directly without .data nesting
-      if (result?.valid) {
+      // The response comes directly from result.data
+      if (result?.data?.valid) {
         setValidatedInvitation({
-          email: result.email,
-          company: result.company,
-          companyId: result.companyId,
-          fullName: result.fullName || '',
+          email: result.data.email,
+          company: result.data.company,
+          companyId: result.data.companyId,
+          fullName: result.data.fullName || '',
         });
 
         // Pre-fill registration form
         registrationForm.setValue("invitationCode", values.invitationCode);
-        registrationForm.setValue("email", result.email);
-        registrationForm.setValue("company", result.company);
+        registrationForm.setValue("email", result.data.email);
+        registrationForm.setValue("company", result.data.company);
 
         // Split full name if provided
-        if (result.fullName) {
-          const nameParts = result.fullName.split(" ");
+        if (result.data.fullName) {
+          const nameParts = result.data.fullName.split(" ");
           registrationForm.setValue("firstName", nameParts[0] || "");
           registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
         }
       } else {
-        console.error("Invalid invitation code from server response:", result);
         invitationForm.setError("invitationCode", {
           type: "manual",
           message: "Invalid invitation code",
         });
       }
     } catch (error) {
-      console.error("Invitation validation error:", error); // Debug log
+      console.error("Invitation validation error:", error);
       invitationForm.setError("invitationCode", {
         type: "manual",
         message: "Invalid invitation code",
