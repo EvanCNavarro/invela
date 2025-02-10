@@ -110,7 +110,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       const hasMismatch = checkCompanyDomainMatch(email, companyName);
       if (hasMismatch) {
         setCompanyMismatchWarning(
-          `Note: The email domain doesn't match the company name "${companyName}". You can still proceed if this is intended.`
+          `Email domain doesn't match company "${companyName}"`
         );
       } else {
         setCompanyMismatchWarning(null);

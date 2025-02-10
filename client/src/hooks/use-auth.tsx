@@ -15,7 +15,7 @@ type AuthContextType = {
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
 };
 
 type LoginData = {
@@ -23,7 +23,17 @@ type LoginData = {
   password: string;
 };
 
+type RegisterData = {
+  email: string;
+  password: string;
+  fullName: string;
+  firstName: string;
+  lastName: string | null;
+  invitationCode: string;
+};
+
 export const AuthContext = React.createContext<AuthContextType | null>(null);
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -56,13 +66,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (newUser: InsertUser) => {
+    mutationFn: async (newUser: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", newUser);
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
       setLocation("/");
+
+      toast({
+        title: "Registration successful",
+        description: "Welcome to Invela! Your account has been created.",
+        variant: "default",
+        className: "border-l-4 border-green-500",
+      });
     },
     onError: (error: Error) => {
       toast({

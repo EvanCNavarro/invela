@@ -11,9 +11,10 @@ import {
   insertTaskSchema,
   insertFileSchema,
   companyLogos,
-  users
+  users,
+  invitations
 } from "@db/schema";
-import { eq, and, inArray, or } from "drizzle-orm";
+import { eq, and, inArray, or, gt } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -22,6 +23,8 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import { emailService } from "./services/email/service.ts";
 import type { SendEmailParams } from "./services/email/service.ts";
+import bcrypt from 'bcrypt';
+
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -124,6 +127,112 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Check invitation validity
+  app.get("/api/invitations/:code/validate", async (req, res) => {
+    try {
+      const code = req.params.code;
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, code),
+          eq(invitations.status, 'pending'),
+          gt(invitations.expiresAt, new Date())
+        ));
+
+      if (!invitation) {
+        return res.status(404).json({ 
+          message: "Invalid or expired invitation code",
+          valid: false 
+        });
+      }
+
+      res.json({ 
+        valid: true,
+        email: invitation.email,
+        companyId: invitation.companyId
+      });
+    } catch (error) {
+      console.error("Error validating invitation:", error);
+      res.status(500).json({ message: "Error validating invitation" });
+    }
+  });
+
+  // Update the registration endpoint to validate invitation
+  app.post("/api/register", async (req, res) => {
+    try {
+      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+
+      // Validate invitation
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, invitationCode),
+          eq(invitations.status, 'pending'),
+          eq(invitations.email, email),
+          gt(invitations.expiresAt, new Date())
+        ));
+
+      if (!invitation) {
+        return res.status(400).json({ 
+          message: "Invalid invitation code or email mismatch" 
+        });
+      }
+
+      // Check if user already exists
+      const existingUser = await db.select()
+        .from(users)
+        .where(eq(users.email, email));
+
+      if (existingUser.length > 0) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      // Create the user
+      const [user] = await db.insert(users)
+        .values({
+          email,
+          password: await bcrypt.hash(password, 10),
+          fullName,
+          firstName,
+          lastName,
+          companyId: invitation.companyId,
+        })
+        .returning();
+
+      // Update invitation status
+      await db.update(invitations)
+        .set({ 
+          status: 'used',
+          usedAt: new Date(),
+        })
+        .where(eq(invitations.id, invitation.id));
+
+      // If there's an associated task, update its status
+      if (invitation.taskId) {
+        await db.update(tasks)
+          .set({ 
+            status: 'completed',
+            completionDate: new Date(),
+            progress: 100
+          })
+          .where(eq(tasks.id, invitation.taskId));
+      }
+
+      // Log the user in
+      req.login(user, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.status(500).json({ message: "Error logging in" });
+        }
+        res.json(user);
+      });
+
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Error registering user" });
+    }
+  });
 
   // Update the current company endpoint
   app.get("/api/companies/current", requireAuth, async (req, res) => {
@@ -884,7 +993,7 @@ export function registerRoutes(app: Express): Server {
         const content = fs.readFileSync(filePath, 'utf8');
         if (!content.includes('<?xml') && !content.includes('<svg')) {
           console.error(`Debug - Invalid SVG content for company ${company.name}:`, content.slice(0, 100));
-          returnres.status(400).json({ 
+          return res.status(400).json({ 
             message: "Invalid SVG file",
             code: "INVALID_SVG_CONTENT"
           });
@@ -1100,75 +1209,61 @@ export function registerRoutes(app: Express): Server {
   // Update the user invitation endpoint to include sender details
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
-      const { email, fullName, companyId, companyName } = req.body;
+      const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
 
-      if (!email || !fullName || !companyId || !companyName) {
-        return res.status(400).json({
-          message: "Missing required fields",
-          detail: "Please provide email, full name, and company information"
-        });
-      }
+      // Generate unique invitation code
+      const code = uuidv4();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
-      // Get sender's company information
-      const [senderCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
-
-      if (!senderCompany) {
-        return res.status(400).json({ message: "Sender's company information not found" });
-      }
-
-      // Create task for the invitation
-      const taskData = {
-        title: `New User Invitation: ${email}`,
-        description: `Invitation sent to ${fullName} (${email}) to join ${companyName}.`,
-        taskType: 'user_onboarding',
-        taskScope: 'user',
-        status: 'pending',
-        priority: 'medium',
-        progress: 0,
-        createdBy: req.user!.id,
-        userEmail: email,
-        companyId,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-        assignedTo: null,
-        metadata: {
-          invitedUserName: fullName
-        }
-      };
-
-      // Create the task
+      // Create invitation task
       const [task] = await db.insert(tasks)
-        .values(taskData)
+        .values({
+          title: `New User Invitation: ${email}`,
+          description: `Invitation sent to ${email} to join ${companyName}`,
+          taskType: 'user_onboarding',
+          taskScope: 'user',
+          status: 'pending',
+          priority: 'medium',
+          createdBy: req.user!.id,
+          userEmail: email,
+          companyId,
+          dueDate: expiresAt,
+        })
         .returning();
 
-      // Send invitation email
-      const inviteUrl = `${req.protocol}://${req.get('host')}`;
+      // Create invitation record
+      const [invitation] = await db.insert(invitations)
+        .values({
+          email,
+          code,
+          companyId,
+          taskId: task.id,
+          expiresAt,
+        })
+        .returning();
 
-      const emailParams: SendEmailParams = {
+      // Generate invitation URL with code
+      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}`;
+
+      // Send invitation email
+      const emailParams = {
         to: email,
         from: process.env.GMAIL_USER!,
-        template: 'fintech_invite',
+        template: 'user_invite',
         templateData: {
           recipientEmail: email,
-          senderName: req.user!.fullName,
-          senderCompany: senderCompany.name,
+          senderName,
           companyName,
-          inviteUrl
+          inviteUrl,
+          greeting: `Hello ${fullName}, you've been invited`
         }
       };
 
       const emailResult = await emailService.sendTemplateEmail(emailParams);
 
       if (!emailResult.success) {
-        await db.update(tasks)
-          .set({ status: 'failed' })
-          .where(eq(tasks.id, task.id));
-
-        return res.status(500).json({
-          message: "Failed to send invite email",
-          error: emailResult.error
-        });
+        throw new Error(emailResult.error || 'Failed to send invitation email');
       }
 
       // Update task status
@@ -1176,9 +1271,9 @@ export function registerRoutes(app: Express): Server {
         .set({ status: 'email_sent' })
         .where(eq(tasks.id, task.id));
 
-      res.status(200).json({ message: "Invitation sent successfully" });
+      res.json({ message: "Invitation sent successfully" });
     } catch (error) {
-      console.error("Error sending user invitation:", error);
+      console.error("Error sending invitation:", error);
       res.status(500).json({ message: "Error sending invitation" });
     }
   });
