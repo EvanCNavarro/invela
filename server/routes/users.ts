@@ -49,6 +49,8 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       });
     }
 
+    console.log(`[User Routes] Found task ${task.id} with status ${task.status}`);
+
     // Update the task status with proper metadata
     const [updatedTask] = await db
       .update(tasks)
@@ -61,13 +63,14 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
         metadata: {
           ...(task.metadata || {}),
           onboardingCompleted: true,
-          completionTime: new Date().toISOString()
+          completionTime: new Date().toISOString(),
+          previousStatus: task.status // Track status transition
         }
       })
       .where(eq(tasks.id, task.id))
       .returning();
 
-    console.log(`[User Routes] Successfully updated task ${updatedTask.id} for user ${req.user.id}`);
+    console.log(`[User Routes] Successfully updated task ${updatedTask.id} from ${task.status} to completed`);
     res.json({ 
       user: updatedUser, 
       task: updatedTask,
