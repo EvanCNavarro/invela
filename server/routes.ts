@@ -219,10 +219,17 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`[Register] Created new user with ID: ${user.id}`);
 
-      // Update the onboarding task
-      const updatedTask = await findAndUpdateOnboardingTask(email, user.id);
-      if (updatedTask) {
-        console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
+      // Update the onboarding task - now with explicit error handling
+      try {
+        const updatedTask = await findAndUpdateOnboardingTask(email, user.id);
+        if (updatedTask) {
+          console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
+        } else {
+          console.warn(`[Register] No task found to update for user ${user.id}`);
+        }
+      } catch (taskError) {
+        console.error('[Register] Error updating task:', taskError);
+        // Continue with registration even if task update fails
       }
 
       // Update invitation status
@@ -902,7 +909,7 @@ export function registerRoutes(app: Express): Server {
       console.log('Debug - Received logo upload:', {
         originalname: req.file.originalname,
         filename: req.file.filename,
-        mimetype: req.file.mimetype,
+        mimetype:        req.file.mimetype,
         size: req.file.size
       });
 
