@@ -146,15 +146,15 @@ const templates = {
   fintech_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",
     text: `
-      You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.
+      Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.
 
       Getting Started:
       1. Click the button below to Create Your Account.
-      2. Finish updated your Company's Profile.
+      2. Finish updating your Company's Profile.
       3. Upload the requested files to our secure system.
       4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Click here to get started: ${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}
+      Click here to get started: ${data.inviteUrl}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -249,19 +249,19 @@ const templates = {
         <body>
           <div class="container">
             <h1 class="company-name">Invela</h1>
-            <h2 class="title">You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.</h2>
+            <h2 class="title">Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.</h2>
 
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
               <ol>
                 <li>Click the button below to Create Your Account.</li>
-                <li>Finish updated your Company's Profile.</li>
+                <li>Finish updating your Company's Profile.</li>
                 <li>Upload the requested files to our secure system.</li>
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
             </div>
 
-            <a href="${data.inviteUrl}/register?work_email=${encodeURIComponent(data.recipientEmail || '')}" class="button">Create Your Account</a>
+            <a href="${data.inviteUrl}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>

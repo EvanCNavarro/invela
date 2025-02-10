@@ -385,13 +385,23 @@ export default function DashboardPage() {
                             </FormItem>
                           )}
                         />
+
                         {companyMismatchWarning && (
-                          <Alert variant="warning" className="bg-yellow-50/50">
-                            <AlertDescription className="text-yellow-800">
-                              {companyMismatchWarning}
-                            </AlertDescription>
-                          </Alert>
+                          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                            <div className="flex items-start gap-3">
+                              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-amber-700">
+                                  Email domain doesn't match company
+                                </p>
+                                <p className="text-sm text-amber-600 mt-1">
+                                  {companyMismatchWarning}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         )}
+
                         <FormField
                           control={form.control}
                           name="email"
@@ -418,11 +428,13 @@ export default function DashboardPage() {
                               </FormControl>
                               <FormMessage />
                               {serverError && (
-                                <p className="text-sm font-medium text-destructive mt-2">
-                                  {serverError.includes("mailbox")
-                                    ? "This email address does not exist. Please try again."
-                                    : serverError}
-                                </p>
+                                <div className="p-3 mt-2 bg-destructive/10 rounded-lg border border-destructive/20">
+                                  <p className="text-sm font-medium text-destructive">
+                                    {serverError.includes("mailbox") 
+                                      ? "This email address does not exist. Please try again."
+                                      : "Failed to send invitation. Please try again."}
+                                  </p>
+                                </div>
                               )}
                               {field.value && !form.formState.errors.email && (
                                 <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
