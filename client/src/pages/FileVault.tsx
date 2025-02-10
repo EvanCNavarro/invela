@@ -66,6 +66,7 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
+import { SearchBar } from "@/components/playground/SearchBar";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -921,7 +922,7 @@ export default function FileVault() {
     return new Date(dateString).toLocaleDateString();
   };
 const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-muted/30 rounded-md p4 space-y-3">
+    <div className="bg-muted/30 rounded-mdp4 space-y-3">
       <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
@@ -1081,6 +1082,10 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
     );
   };
 
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+  };
+
   return (
     <DashboardLayout>
       <TooltipProvider>
@@ -1114,7 +1119,13 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
             )}
           </DragDropProvider>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 mb-4">
+            <SearchBar
+              contextualType="files"
+              onSearch={handleSearch}
+              containerClassName="w-full max-w-md"
+              placeholder="Search files..."
+            />
             <Select
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
@@ -1132,49 +1143,6 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
                 <SelectItem value="deleted">Deleted</SelectItem>
               </SelectContent>
             </Select>
-
-            <div className="relative flex-1">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search files..."
-                className="pl-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {selectedFiles.size > 0 && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
-                  disabled={bulkDownloadMutation.isPending}
-                  className="gap-2"
-                >
-                  <Download className="h-4 w-4" />
-                  Download Selected
-                </Button>
-                {canRestore ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleBulkAction('restore')}
-                    className="gap-2"
-                  >
-                    <RefreshCcwIcon className="h-4 w-4" />
-                    Restore Selected
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="text-destructive hover:text-destructive gap-2"
-                    onClick={() => handleBulkAction('delete')}
-                  >
-                    <Trash2Icon className="h-4 w-4" />
-                    Delete Selected
-                  </Button>
-                )}
-              </div>
-            )}
           </div>
 
           <div>
