@@ -33,8 +33,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
           or(
             eq(tasks.status, 'pending'),
             eq(tasks.status, 'in_progress'),
-            eq(tasks.status, 'email_sent'),
-            sql`${tasks.status} IS NULL`
+            eq(tasks.status, 'email_sent')
           )
         )
       )
@@ -59,7 +58,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
         progress: 100,
         completionDate: new Date(),
         updatedAt: new Date(),
-        assignedTo: userId, // Ensure the task is linked to the user
+        assignedTo: userId,
         metadata: {
           ...(taskToUpdate.metadata || {}),
           onboardingCompleted: true,
@@ -92,7 +91,8 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
           sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
           or(
             eq(tasks.status, 'pending'),
-            eq(tasks.status, 'email_sent')
+            eq(tasks.status, 'email_sent'),
+            eq(tasks.status, 'in_progress')
           )
         )
       )
