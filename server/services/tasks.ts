@@ -19,18 +19,14 @@ export async function updateOnboardingTaskStatus(userId: number) {
 
     console.log(`[Task Service] Found user ${userId} with email ${user.email}`);
 
-    // Search for task using either assigned user ID or email (case insensitive)
-    // Include in_progress status in the search
+    // Search for task using email (case insensitive)
     const [taskToUpdate] = await db
       .select()
       .from(tasks)
       .where(
         and(
           eq(tasks.taskType, 'user_onboarding'),
-          or(
-            eq(tasks.assignedTo, userId),
-            sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`
-          ),
+          sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`,
           or(
             eq(tasks.status, 'pending'),
             eq(tasks.status, 'in_progress'),
@@ -42,7 +38,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
       .limit(1);
 
     if (!taskToUpdate) {
-      console.log(`[Task Service] No pending onboarding task found for user ID: ${userId}`);
+      console.log(`[Task Service] No pending onboarding task found for user ID: ${userId} with email ${user.email}`);
       return null;
     }
 
@@ -61,7 +57,9 @@ export async function updateOnboardingTaskStatus(userId: number) {
           ...(taskToUpdate.metadata || {}),
           onboardingCompleted: true,
           completionTime: new Date().toISOString(),
-          previousStatus: taskToUpdate.status // Track status transition
+          previousStatus: taskToUpdate.status,
+          userId: userId,
+          userEmail: user.email.toLowerCase()
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
@@ -97,7 +95,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
       .limit(1);
 
     if (!taskToUpdate) {
-      console.log(`[Task Service] No pending onboarding task found for email: ${email}`);
+      console.warn(`[Task Service] No pending onboarding task found for email: ${email}`);
       return null;
     }
 
@@ -115,7 +113,9 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
           ...(taskToUpdate.metadata || {}),
           registrationCompleted: true,
           registrationTime: new Date().toISOString(),
-          previousStatus: taskToUpdate.status // Track status transition
+          previousStatus: taskToUpdate.status,
+          userId: userId,
+          userEmail: email.toLowerCase()
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))

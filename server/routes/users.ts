@@ -22,7 +22,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Find and update the corresponding onboarding task using user's email
+    // Find and update the corresponding onboarding task using case-insensitive email comparison
     const [task] = await db
       .select()
       .from(tasks)
@@ -64,7 +64,9 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
           ...(task.metadata || {}),
           onboardingCompleted: true,
           completionTime: new Date().toISOString(),
-          previousStatus: task.status // Track status transition
+          previousStatus: task.status,
+          userId: req.user.id,
+          userEmail: req.user.email.toLowerCase()
         }
       })
       .where(eq(tasks.id, task.id))
