@@ -24,6 +24,7 @@ import sharp from 'sharp';
 import { emailService } from "./services/email/service.ts";
 import type { SendEmailParams } from "./services/email/service.ts";
 import bcrypt from 'bcrypt';
+import { findAndUpdateOnboardingTask } from "./services/tasks";
 
 
 // Configure multer for file upload
@@ -178,13 +179,13 @@ export function registerRoutes(app: Express): Server {
     try {
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
 
-      // Validate invitation
+      // Validate invitation with case-insensitive email check
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
           eq(invitations.code, invitationCode),
           eq(invitations.status, 'pending'),
-          eq(invitations.email, email),
+          sql`LOWER(${invitations.email}) = LOWER(${email})`,
           gt(invitations.expiresAt, new Date())
         ));
 
@@ -194,10 +195,10 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Check if user already exists
+      // Check if user already exists with case-insensitive check
       const existingUser = await db.select()
         .from(users)
-        .where(eq(users.email, email));
+        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
 
       if (existingUser.length > 0) {
         return res.status(400).json({ message: "User already exists" });
@@ -206,7 +207,7 @@ export function registerRoutes(app: Express): Server {
       // Create the user
       const [user] = await db.insert(users)
         .values({
-          email,
+          email: email.toLowerCase(), // Store email in lowercase
           password: await bcrypt.hash(password, 10),
           fullName,
           firstName,
@@ -218,40 +219,10 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`[Register] Created new user with ID: ${user.id}`);
 
-      // Find and update the corresponding onboarding task using case-insensitive email match
-      const [pendingTask] = await db.select()
-        .from(tasks)
-        .where(and(
-          eq(tasks.taskType, 'user_onboarding'),
-          sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
-          or(
-            eq(tasks.status, 'pending'),
-            eq(tasks.status, 'email_sent'),
-            sql`${tasks.status} IS NULL`
-          )
-        ));
-
-      if (pendingTask) {
-        console.log(`[Register] Found pending onboarding task ${pendingTask.id} for user ${user.id}`);
-
-        // Update the task with the user ID and progress
-        await db.update(tasks)
-          .set({
-            assignedTo: user.id,
-            status: 'in_progress',
-            progress: 50,
-            updatedAt: new Date(),
-            metadata: {
-              ...pendingTask.metadata,
-              registrationCompleted: true,
-              registrationTime: new Date().toISOString()
-            }
-          })
-          .where(eq(tasks.id, pendingTask.id));
-
-        console.log(`[Register] Updated task ${pendingTask.id} with user ID ${user.id} and 50% progress`);
-      } else {
-        console.log(`[Register] No pending onboarding task found for email ${email}`);
+      // Update the onboarding task
+      const updatedTask = await findAndUpdateOnboardingTask(email, user.id);
+      if (updatedTask) {
+        console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
       }
 
       // Update invitation status
@@ -272,7 +243,6 @@ export function registerRoutes(app: Express): Server {
         }
         res.json(user);
       });
-
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ message: "Error registering user" });
@@ -937,7 +907,7 @@ export function registerRoutes(app: Express): Server {
       });
 
       const companyId = parseInt(req.params.id);
-      const [company] = await db.select()
+      const [company] =await db.select()
         .from(companies)
         .where(eq(companies.id, companyId));
 
