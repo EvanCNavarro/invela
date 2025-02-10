@@ -359,25 +359,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         sortable: true,
       },
       {
-        key: "onboardingCompleted",
-        header: "Status",
-        cell: ({ row }) => {
-          const isActive = row.onboardingUserCompleted;
-          return (
-            <span
-              className={cn(
-                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                isActive
-                  ? "bg-green-100 text-green-800"
-                  : "bg-gray-100 text-gray-800"
-              )}
-            >
-              {isActive ? "Active" : "Onboarding"}
-            </span>
-          );
-        },
-      },
-      {
         key: "actions",
         header: "",
         type: "actions" as const,
