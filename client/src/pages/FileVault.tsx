@@ -919,19 +919,19 @@ const FileVault = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-muted/30 rounded-md p-4 space-y-3">
-    <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-    <div className="space-y-2">{children}</div>
-  </div>
-);
+  const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-muted/30 rounded-md p-4 space-y-3">
+      <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
 
-const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="flex justify-between items-center text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium">{value}</span>
-  </div>
-);
+  const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+    <div className="flex justify-between items-center text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium">{value}</span>
+    </div>
+  );
 
   const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
     // Fetch fresh file data
@@ -1098,203 +1098,175 @@ const MetricItem = ({ label, value }: { label: string; value: React.ReactNode })
   };
 
   const columns = useMemo(() => {
+    const baseColumns = getFileColumns();
+
+    // Add actions column as the last column
     return [
-      ...getFileColumns(),
+      ...baseColumns,
       {
         id: 'actions',
         header: '',
         cell: (item: FileItem) => (
-          <FileActions
-            file={item}
-            onDelete={handleDelete}
-          />
+          <div className="flex justify-end">
+            <FileActions
+              file={item}
+              onDelete={handleDelete}
+            />
+          </div>
         ),
-        className: 'w-[48px]'
+        className: 'w-[48px] sticky right-0 bg-background'
       }
     ];
   }, [handleDelete]);
 
   return (
     <DashboardLayout>
-      <TooltipProvider>
+      <div className="h-full flex flex-col min-h-0">
         <PageHeader
           title="File Vault"
           description="Securely store and manage your files"
         />
 
-        <div className="space-y-4">
-          <DragDropProvider
-            onFilesAccepted={onDrop}
-            className="min-h-[200px] rounded-lg transition-colors duration-200"
-            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
-          >
-            {({ isDragActive }) => (
-              <div className="relative">
-                {isDragActive && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-                    <div className="flex items-center gap-2 text-lg font-medium">
-                      <UploadIcon className="h-5 w-5" />
-                      Drop files to upload
-                    </div>
-                  </div>
-                )}
-                <FileUploadZone
-                  onFilesSelected={async (files: File[]) => await onDrop(files)}
-                  ref={fileInputRef}
-                />
-              </div>
-            )}
-          </DragDropProvider>
-
-          <div className="flex items-center justify-between gap-4">
-            <SearchBar
-              contextualType="files"
-              onSearch={handleSearch}
-              containerClassName="w-full max-w-md"
-              placeholder="Search files..."
-              data={allFiles}
-              keys={['name', 'type', 'status']}
-              onResults={setSearchResults}
-            />
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Files</SelectItem>
-                <SelectItem value="uploaded">Uploaded</SelectItem>
-                <SelectItem value="uploading">Uploading</SelectItem>
-                <SelectItem value="paused">Paused</SelectItem>
-                <SelectItem value="canceled">Canceled</SelectItem>
-                <SelectItem value="deleted">Deleted</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Table
-              data={paginatedFiles}
-              columns={columns}
-              searchResults={searchResults}
-              selectable
-              selectedItems={selectedFiles}
-              onSelectionChange={setSelectedFiles}
-              onSort={handleSort}
-              sortField={sortConfig.field}
-              sortDirection={sortConfig.order}
-              actions={[
-                {
-                  label: "View Details",
-                  icon: <FileTextIcon className="mr-2 h-4 w-4" />,
-                  onClick: (file) => setSelectedFileDetails(file as FileItem),
-                },
-                {
-                  label: "Download",
-                  icon: <Download className="mr-2 h-4 w-4" />,
-                  onClick: (file) => downloadMutation.mutate((file as FileItem).id),
-                },
-                {
-                  label: "Delete",
-                  icon: <Trash2Icon className="mr-2 h-4 w-4" />,
-                  onClick: (file) => {
-                    if ((file as FileItem).status === 'deleted') {
-                      restoreMutation.mutate((file as FileItem).id);
-                    } else {
-                      handleDelete((file as FileItem).id);
-                    }
-                  },
-                },
-              ]}
-              emptyState={
-                isLoading ? (
-                  <div className="flex items-center justify-center h-32">
-                    <LoadingSpinner className="mr-2" />
-                    <span>Loading files...</span>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-                    <FileIcon className="h-8 w-8 mb-2" />
-                    <p>No files found</p>
-                  </div>
-                )
-              }
-              className="w-full"
-            />
-          </div>
-
-          {/* Pagination */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
-              Showing {paginatedFiles.length} of {filteredAndSortedFiles.length} files
+        <div className="flex-1 flex flex-col min-h-0 space-y-4 p-6">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            <div className="w-full max-w-md">
+              <SearchBar
+                data={allFiles}
+                keys={['name', 'type', 'status']}
+                onResults={setSearchResults}
+                containerClassName="w-full"
+                placeholder="Search files..."
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
+
+            <div className="flex gap-2 items-center w-full sm:w-auto">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
               >
-                <ChevronsLeftIcon className="h-4 w-4" />
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="uploaded">Uploaded</SelectItem>
+                  <SelectItem value="uploading">Uploading</SelectItem>
+                  <SelectItem value="deleted">Deleted</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Button onClick={handleUploadClick}>
+                <UploadIcon className="w-4 h-4 mr-2" />
+                Upload
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-muted-foreground px-4">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRightIcon className="h-4 w-4" />
-              </Button>
+            </div>
+          </div>
+
+          <div className="flex-1 min-h-0">
+            <div className="border rounded-lg overflow-hidden">
+              <Table
+                data={paginatedFiles}
+                columns={columns}
+                searchResults={searchResults}
+                selectable
+                selectedItems={selectedFiles}
+                onSelectionChange={setSelectedFiles}
+                onSort={handleSort}
+                sortField={sortConfig.field}
+                sortDirection={sortConfig.order}
+                className="w-full"
+              />
+            </div>
+
+            {/* Pagination controls */}
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">
+                Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
+                {filteredAndSortedFiles.length} files
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeftIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </Button>
+
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Modals */}
-        {selectedFileDetails && (
-          <FileDetails
-            file={selectedFileDetails}
-            onClose={() => setSelectedFileDetails(null)}
-          />
-        )}
+      {/* File input for uploads */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        multiple
+        onChange={(e) => {
+          if (e.target.files) {
+            onDrop(Array.from(e.target.files));
+          }
+        }}
+      />
 
-        {showConflictModal && (
-          <FileConflictModal
-            conflicts={conflictFiles}
-            onResolve={(overrideAll) => {
-              setShowConflictModal(false);
-              if (overrideAll) {
-                uploadFiles(conflictFiles.map(c => c.file), true);
-              }
-              setConflictFiles([]);
-            }}
-            onCancel={() => {
-              setShowConflictModal(false);
-              setConflictFiles([]);
-            }}
-          />
-        )}
-      </TooltipProvider>
+      {/* File conflict modal */}
+      {showConflictModal && (
+        <FileConflictModal
+          conflicts={conflictFiles}
+          onResolve={(overrideAll) => {
+            setShowConflictModal(false);
+            if (overrideAll) {
+              uploadFiles(conflictFiles.map(c => c.file), true);
+            }
+            setConflictFiles([]);
+          }}
+          onCancel={() => {
+            setShowConflictModal(false);
+            setConflictFiles([]);
+          }}
+        />
+      )}
+
+      {/* File details modal */}
+      {selectedFileDetails && (
+        <FileDetails
+          file={selectedFileDetails}
+          onClose={() => setSelectedFileDetails(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };
