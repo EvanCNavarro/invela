@@ -19,129 +19,133 @@ export const emailTemplateSchema = z.object({
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",
-    text: `
-      Hello there, ${data.recipientName}. You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.
+    text: `Hello there, ${data.recipientName}.
 
-      Getting Started:
-      1. Click the button below to Create Your Account.
-      2. Finish updating your Profile.
-      3. Access your company's dashboard and resources.
+You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.
 
-      Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
+Getting Started:
+1. Click the button below to Create Your Account.
+2. Finish updating your Profile.
+3. Access your company's dashboard and resources.
 
-      © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
-    `.trim(),
+Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
+
+© ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
+`.trim(),
     html: `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            body { 
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-              line-height: 1.5;
-              color: #111827;
-              margin: 0;
-              padding: 32px 16px;
-              background-color: #f3f4f6;
-              -webkit-font-smoothing: antialiased;
-              -moz-osx-font-smoothing: grayscale;
-            }
-            .container {
-              max-width: 580px;
-              margin: 0 auto;
-              background: white;
-              border-radius: 8px;
-              padding: 40px;
-              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-            .company-name {
-              font-size: 24px;
-              font-weight: 600;
-              color: #111827;
-              margin: 0 0 24px 0;
-            }
-            .title {
-              font-size: 16px;
-              font-weight: 500;
-              color: #374151;
-              margin: 0 0 24px 0;
-              line-height: 1.4;
-            }
-            .getting-started {
-              background-color: #f9fafb;
-              border-radius: 8px;
-              padding: 24px;
-              margin-bottom: 24px;
-            }
-            .section-title {
-              font-weight: 600;
-              font-size: 16px;
-              margin: 0 0 16px 0;
-              color: #111827;
-            }
-            ol {
-              padding-left: 24px;
-              margin: 0;
-            }
-            li {
-              margin-bottom: 12px;
-              color: #374151;
-            }
-            li:last-child {
-              margin-bottom: 0;
-              border-bottom: 1px solid #e5e7eb;
-              padding-bottom: 12px;
-            }
-            .button {
-              background-color: #4965EC;
-              color: #ffffff !important;
-              padding: 12px 24px;
-              text-decoration: none;
-              border-radius: 6px;
-              display: inline-block;
-              font-weight: 500;
-              font-size: 14px;
-              text-align: center;
-            }
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              color: #6b7280;
-              font-size: 12px;
-              text-align: left;
-            }
-            .footer span {
-              margin: 0 6px;
-              color: #9ca3af;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1 class="company-name">Invela</h1>
-            <h2 class="title">Hello there, ${data.recipientName}. You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.</h2>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      body { 
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        line-height: 1.5;
+        color: #111827;
+        margin: 0;
+        padding: 32px 16px;
+        background-color: #f3f4f6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .container {
+        max-width: 580px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .company-name {
+        font-size: 24px;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 24px 0;
+      }
+      .greeting {
+        font-size: 16px;
+        font-weight: 500;
+        color: #374151;
+        margin: 0 0 16px 0;
+        line-height: 1.4;
+      }
+      .invitation {
+        font-size: 16px;
+        font-weight: 500;
+        color: #374151;
+        margin: 0 0 24px 0;
+        line-height: 1.4;
+      }
+      .getting-started {
+        background-color: #f9fafb;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+      }
+      .section-title {
+        font-weight: 600;
+        font-size: 16px;
+        margin: 0 0 16px 0;
+        color: #111827;
+      }
+      ol {
+        padding-left: 24px;
+        margin: 0;
+      }
+      li {
+        margin-bottom: 12px;
+        color: #374151;
+      }
+      .button {
+        background-color: #4965EC;
+        color: #ffffff !important;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 6px;
+        display: inline-block;
+        font-weight: 500;
+        font-size: 14px;
+        text-align: center;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #e5e7eb;
+        color: #6b7280;
+        font-size: 12px;
+        text-align: left;
+      }
+      .footer span {
+        margin: 0 6px;
+        color: #9ca3af;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="company-name">Invela</h1>
+      <p class="greeting">Hello there, ${data.recipientName}.</p>
+      <p class="invitation">You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.</p>
 
-            <div class="getting-started">
-              <h3 class="section-title">Getting Started:</h3>
-              <ol>
-                <li>Click the button below to Create Your Account.</li>
-                <li>Finish updating your Profile.</li>
-                <li>Access your company's dashboard and resources.</li>
-              </ol>
-            </div>
+      <div class="getting-started">
+        <h3 class="section-title">Getting Started:</h3>
+        <ol>
+          <li>Click the button below to Create Your Account.</li>
+          <li>Finish updating your Profile.</li>
+          <li>Access your company's dashboard and resources.</li>
+        </ol>
+      </div>
 
-            <a href="${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
+      <a href="${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
 
-            <div class="footer">
-              <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `.trim(),
+      <div class="footer">
+        <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
+      </div>
+    </div>
+  </body>
+</html>
+`.trim(),
   }),
   fintech_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",

@@ -36,7 +36,7 @@ const registrationSchema = z.object({
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
@@ -92,12 +92,21 @@ export default function AuthPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Updated routing logic to handle invitation codes
-  const showRegistrationForm = !!invitationCode && (
+  // Determine if we should show the registration form based on URL path and invitation code
+  const isRegistrationPath = location.startsWith('/register');
+  const showRegistrationForm = isRegistrationPath && invitationCode && (
     isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail)
   );
 
-  // Only redirect if user is logged in AND there's no valid invitation flow
+  // Only redirect to login if:
+  // 1. User is not logged in AND
+  // 2. Not on registration path OR no valid invitation
+  // 3. Not currently validating the code
+  if (!user && !showRegistrationForm && !isValidatingCode && !isRegistrationPath) {
+    return <Redirect to="/login" />;
+  }
+
+  // Redirect logged-in users to home unless they have a valid invitation
   if (user && !showRegistrationForm) {
     return <Redirect to="/" />;
   }
