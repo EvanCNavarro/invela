@@ -43,14 +43,26 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     return generateSlug(item.name) === companySlug.toLowerCase();
   });
 
-  // Update the useQuery for users to use the correct endpoint
+  // Update the useQuery for users to use the correct endpoint and add debug logs
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
+    queryFn: () => {
+      if (!company?.id) throw new Error("No company ID");
+      console.log("Debug - Fetching users for company ID:", company.id);
+      return fetch(`/api/users/by-company/${company.id}`).then(res => res.json());
+    },
     enabled: !!company?.id,
+    onSuccess: (data) => {
+      console.log("Debug - Successfully fetched users:", data);
+    },
+    onError: (error) => {
+      console.error("Debug - Error fetching users:", error);
+    }
   });
 
   // Filter users based on search
   const filteredUsers = companyUsers.filter((user) => {
+    console.log("Debug - Filtering user:", user);
     if (!userSearchQuery) return true;
     const searchLower = userSearchQuery.toLowerCase();
     return (
@@ -326,6 +338,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   };
 
   const renderUsersTab = () => {
+    console.log("Debug - Rendering users tab with data:", filteredUsers);
     const columns = [
       {
         key: "fullName",
@@ -351,10 +364,13 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     ];
 
     // Transform users data to match what DataTable expects
-    const tableData = filteredUsers.map(user => ({
-      ...user,
-      onboardingCompleted: user.onboardingCompleted ? 'Active' : 'Pending'
-    }));
+    const tableData = filteredUsers.map(user => {
+      console.log("Debug - Transforming user data:", user);
+      return {
+        ...user,
+        onboardingCompleted: user.onboardingCompleted ? 'Active' : 'Pending'
+      };
+    });
 
     return (
       <div className="space-y-6">

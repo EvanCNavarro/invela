@@ -1360,6 +1360,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add users by company endpoint
+  app.get("/api/users/by-company/:id", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      console.log('Debug - Fetching users for company:', companyId);
+
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
+      }
+
+      const companyUsers = await db.select()
+        .from(users)
+        .where(eq(users.companyId, companyId));
+
+      console.log('Debug - Found users:', companyUsers);
+      res.json(companyUsers);
+    } catch (error) {
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ message: "Error fetching company users" });
+    }
+  });
+
   // Update the users by company endpoint
   app.get("/api/users/by-company/:id", requireAuth, async (req, res) => {
     try {
