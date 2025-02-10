@@ -5,6 +5,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal } from "lucide-react";
 import { TaskDetailsModal } from "@/components/modals/TaskDetailsModal";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { TaskStatus } from "@db/schema";
+
+const taskStatusMap = {
+  [TaskStatus.EMAIL_SENT]: 'Invitation Sent',
+  [TaskStatus.IN_PROGRESS]: 'In Progress',
+  [TaskStatus.COMPLETED]: 'Completed',
+  pending: 'Invitation Sent', // Backward compatibility for existing tasks
+};
 
 interface Task {
   id: number;
@@ -12,7 +21,6 @@ interface Task {
   status: string;
   progress: number;
   dueDate?: string;
-  // ... other task fields
 }
 
 export function TaskTable({ tasks }: { tasks: Task[] }) {
@@ -37,9 +45,9 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
-                  <div className="capitalize">
-                    {task.status.replace(/_/g, ' ')}
-                  </div>
+                  <Badge variant="secondary">
+                    {taskStatusMap[task.status] || task.status.replace(/_/g, ' ')}
+                  </Badge>
                 </TableCell>
                 <TableCell>{task.progress}%</TableCell>
                 <TableCell>
