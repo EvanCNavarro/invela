@@ -10,6 +10,7 @@ import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, User
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
+import { PageHeader } from "@/components/ui/page-header";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -113,15 +114,17 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </div>
 
           {/* Company header section */}
-          <div className="flex items-center gap-6">
-            <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
-              <div className="absolute inset-0 flex items-center justify-center p-3">
-                <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
+                <div className="absolute inset-0 flex items-center justify-center p-3">
+                  <CompanyLogo companyId={company.id} companyName={company.name} size="lg" />
+                </div>
               </div>
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">{company.name}</h1>
-              <p className="text-muted-foreground">{company.description || "No description available"}</p>
+              <PageHeader
+                title={company.name}
+                description={company.description || "No description available"}
+              />
             </div>
           </div>
 
@@ -273,7 +276,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               </CardContent>
             </Card>
           </div>
-
 
           {/* Key Relationships and Leadership Section - Grid Layout */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

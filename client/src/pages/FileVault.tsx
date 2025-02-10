@@ -1087,12 +1087,11 @@ export default function FileVault() {
               description="Securely manage and share your company's files."
             />
             <Button
-              variant="outline"
-              className="w-56 justify-start"
               onClick={handleUploadClick}
+              className="gap-2"
             >
-              <UploadIcon className="h-4 w-4 mr-2" />
-              <span>Upload Files</span>
+              <UploadIcon className="h-4 w-4" />
+              Upload Files
             </Button>
           </div>
 

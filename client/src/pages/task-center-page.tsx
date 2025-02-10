@@ -57,6 +57,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { format, differenceInDays } from "date-fns";
+import { PageHeader } from "@/components/ui/page-header";
+
 
 interface Task {
   id: number;
@@ -220,12 +222,10 @@ export default function TaskCenterPage() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold mb-1">Task Center</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage and track your company's tasks and submissions.
-              </p>
-            </div>
+            <PageHeader
+              title="Task Center"
+              description="Manage and track your company's tasks and submissions."
+            />
             <CreateTaskModal />
           </div>
 
