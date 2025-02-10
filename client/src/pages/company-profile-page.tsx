@@ -15,6 +15,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SearchBar } from "@/components/playground/SearchBar";
 import { InviteUserModal } from "@/components/modals/InviteUserModal";
 import { useState } from "react";
+import { DataTable } from '@/components/ui/data-table'; // Changed to named import
+
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -324,6 +326,36 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   };
 
   const renderUsersTab = () => {
+    const columns = [
+      {
+        key: "fullName",
+        header: "Name",
+        type: "icon" as const,
+        sortable: true,
+      },
+      {
+        key: "email",
+        header: "Email",
+        sortable: true,
+      },
+      {
+        key: "onboardingCompleted",
+        header: "Status",
+        type: "status" as const,
+      },
+      {
+        key: "actions",
+        header: "",
+        type: "actions" as const,
+      },
+    ];
+
+    // Transform users data to match what DataTable expects
+    const tableData = filteredUsers.map(user => ({
+      ...user,
+      onboardingCompleted: user.onboardingCompleted ? 'Active' : 'Pending'
+    }));
+
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -349,25 +381,21 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <CardTitle>Company Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {filteredUsers.length > 0 ? (
-              <div className="divide-y divide-border">
-                {filteredUsers.map((user) => (
-                  <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4">
-                    <div>
-                      <p className="font-medium">{user.fullName}</p>
-                      <p className="text-sm text-muted-foreground">Member</p>
-                    </div>
-                    <div className="text-left sm:text-right mt-2 sm:mt-0">
-                      <p className="text-sm">{user.email}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {user.onboardingCompleted ? 'Active' : 'Pending'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+            {usersLoading ? (
+              <div className="animate-pulse space-y-4">
+                <div className="h-10 bg-muted rounded w-full max-w-md"></div>
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="h-20 bg-muted rounded"></div>
+                  ))}
+                </div>
               </div>
             ) : (
-              <p className="text-muted-foreground">No users found</p>
+              <DataTable
+                data={tableData}
+                columns={columns}
+                isLoading={usersLoading}
+              />
             )}
           </CardContent>
         </Card>
