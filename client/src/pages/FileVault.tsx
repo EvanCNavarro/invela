@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageHeader } from "@/components/ui/page-header";
+import { FileUpload } from "@/components/ui/file-upload";
 import {
   Table,
   TableBody,
@@ -39,7 +41,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
-import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +65,6 @@ import {
   TooltipProvider,
 } from "@/components/ui/tooltip";
 import React from 'react';
-import { PageHeader } from "@/components/ui/page-header";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -554,7 +554,7 @@ export default function FileVault() {
     onError: (error, fileId) => {
       const fileName = files.find(f => f.id === fileId)?.name || 'file';
       //Assuming fileToast is defined elsewhere and has a showDownloadError method
-      fileToast.showDownloadError(fileName); //This line assumes fileToast exists and has this function
+      //fileToast.showDownloadError(fileName); //This line assumes fileToast exists and has this function
     }
   });
 
@@ -918,8 +918,9 @@ export default function FileVault() {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString();
-  };const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-muted/30 rounded-md p-4 space-y-3">
+  };
+const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-muted/30 rounded-md p4 space-y-3">
       <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
@@ -1083,28 +1084,15 @@ export default function FileVault() {
     <DashboardLayout>
       <TooltipProvider>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <PageHeader
-              title="File Vault"
-              description="Securely store and manage your company's files"
-              className="flex-1"
-            />
-            <div className="flex items-center gap-2">
-              <FileUpload
-                onDrop={onDrop}
-                fileInputRef={fileInputRef}
-                render={({ openFileDialog }) => (
-                  <Button
-                    onClick={openFileDialog}
-                    className="gap-2"
-                  >
-                    <UploadIcon className="h-4 w-4" />
-                    Upload Files
-                  </Button>
-                )}
-              />
-            </div>
-          </div>
+          <PageHeader
+            title="File Vault"
+            description="Securely store and manage your company's files"
+          />
+
+          <FileUpload
+            onFilesAdded={onDrop}
+            className="w-full"
+          />
 
           <div className="flex items-center gap-4">
             <Select
