@@ -1505,7 +1505,7 @@ export function registerRoutes(app: Express): Server {
 
       if (task) {
         await db.update(tasks)
-          .set({ 
+          .set({
             status: 'completed',
             progress: 100,
             metadata: {
