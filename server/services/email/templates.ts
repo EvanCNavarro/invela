@@ -25,10 +25,11 @@ You've been invited to join Invela, by ${data.senderName} of ${data.senderCompan
 
 Getting Started:
 1. Click the button below to Create Your Account.
+   — or manually enter your unique Invitation Code: ${data.code}
 2. Finish updating your Profile.
 3. Access your company's dashboard and resources.
 
-Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}
+Click here to get started: ${data.inviteUrl}
 
 © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
 `.trim(),
@@ -97,6 +98,14 @@ Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(dat
         margin-bottom: 12px;
         color: #374151;
       }
+      .manual-code {
+        font-family: monospace;
+        padding-left: 24px;
+        margin-top: 4px;
+        margin-bottom: 12px;
+        color: #4B5563;
+        font-size: 0.9em;
+      }
       .button {
         background-color: #4965EC;
         color: #ffffff !important;
@@ -131,13 +140,16 @@ Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(dat
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
         <ol>
-          <li>Click the button below to Create Your Account.</li>
+          <li>
+            Click the button below to Create Your Account.
+            <div class="manual-code">— or manually enter your unique Invitation Code: ${data.code}</div>
+          </li>
           <li>Finish updating your Profile.</li>
           <li>Access your company's dashboard and resources.</li>
         </ol>
       </div>
 
-      <a href="${data.inviteUrl}?work_email=${encodeURIComponent(data.recipientEmail || '')}&code=${data.code}" class="button">Create Your Account</a>
+      <a href="${data.inviteUrl}" class="button">Create Your Account</a>
 
       <div class="footer">
         <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
@@ -254,7 +266,7 @@ Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(dat
           <div class="container">
             <h1 class="company-name">Invela</h1>
             <h2 class="title">Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.</h2>
-
+          
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
               <ol>
@@ -264,9 +276,9 @@ Click here to get started: ${data.inviteUrl}?work_email=${encodeURIComponent(dat
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
             </div>
-
+          
             <a href="${data.inviteUrl}" class="button">Create Your Account</a>
-
+          
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
             </div>
