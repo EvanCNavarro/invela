@@ -20,9 +20,13 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       .returning();
 
     // Update the corresponding onboarding task
-    await updateOnboardingTaskStatus(req.user.email);
+    const updatedTask = await updateOnboardingTaskStatus(req.user.email);
 
-    res.json(updatedUser);
+    if (!updatedTask) {
+      console.warn(`No pending onboarding task found for user ${req.user.email}`);
+    }
+
+    res.json({ user: updatedUser, task: updatedTask });
   } catch (error) {
     console.error("Error completing onboarding:", error);
     res.status(500).json({ message: "Failed to complete onboarding" });
