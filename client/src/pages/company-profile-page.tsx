@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, Search, UserPlus, FileUp } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -21,7 +23,7 @@ interface CompanyProfilePageProps {
 
 export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
   const handleBackClick = () => {
-    window.history.back(); // This will maintain the URL parameters from the network page
+    window.history.back();
   };
 
   const { data: companiesData = [], isLoading } = useQuery<Company[]>({
@@ -96,6 +98,333 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     );
   }
 
+  const renderOverviewTab = () => {
+    return (
+      <div className="space-y-6">
+        {/* Key Metrics Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                Company Category
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-semibold capitalize">{company.category?.toLowerCase() || 'N/A'}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Shield className="h-4 w-4 text-muted-foreground" />
+                Accreditation Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Badge
+                variant="outline"
+                className={cn(
+                  "capitalize",
+                  company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+                  company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+                  company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+                  company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+                  company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+                  company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+                )}
+              >
+                {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+              </Badge>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target className="h-4 w-4 text-muted-foreground" />
+                Risk Assessment
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <RiskMeter score={company.riskScore || 0} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Company Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Company Overview Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Building className="h-5 w-5 text-muted-foreground" />
+                Company Overview
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Website</div>
+                <div className="flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-muted-foreground" />
+                  {company.websiteUrl && company.websiteUrl !== 'N/A' ? (
+                    <a 
+                      href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="text-primary hover:underline"
+                    >
+                      {company.websiteUrl}
+                    </a>
+                  ) : (
+                    <span>N/A</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Legal Structure</div>
+                <div className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.legalStructure || 'N/A'}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Headquarters</div>
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.hqAddress || 'N/A'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Business Details Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-muted-foreground" />
+                Business Details
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Incorporation Year</div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.incorporationYear || 'N/A'}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Employees</div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span>{company.numEmployees || 'N/A'}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
+                <div className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-muted-foreground" />
+                  <span>{company.productsServices || 'N/A'}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
+                <div className="flex items-center gap-2">
+                  <Award className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.investors || 'No investor information available'}</span>
+                </div>
+              </div>
+              {company.fundingStage && (
+                <div>
+                  <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
+                  <span>{company.fundingStage}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Key Relationships and Leadership Section - Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Key Relationships Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-muted-foreground" />
+                Key Relationships
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Key Clients & Partners</div>
+                <div className="flex items-start gap-2">
+                  <Award className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.keyClientsPartners || 'No client/partner information available'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Leadership Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                Leadership
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">Founders & Leadership</div>
+                <div className="flex items-start gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground mt-1" />
+                  <span>{company.foundersAndLeadership || 'No leadership information available'}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  };
+
+  const renderUsersTab = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users..."
+              className="pl-9 pr-4"
+            />
+          </div>
+          <Button className="ml-4">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite User
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Users</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {company.contacts?.map((contact, index) => (
+              <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
+                <div>
+                  <p className="font-medium">{contact.name}</p>
+                  <p className="text-sm text-muted-foreground">{contact.role}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm">{contact.email}</p>
+                  <p className="text-sm text-muted-foreground">{contact.phone}</p>
+                </div>
+              </div>
+            )) || (
+              <p className="text-muted-foreground">No users found</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderFilesTab = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search files..."
+              className="pl-9 pr-4"
+            />
+          </div>
+          <Button className="ml-4">
+            <FileUp className="h-4 w-4 mr-2" />
+            File Request
+          </Button>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Company Files</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {company.documents?.map((doc, index) => (
+              <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
+                <span className="font-medium">{doc.name}</span>
+                <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'}>
+                  {doc.status}
+                </Badge>
+              </div>
+            )) || (
+              <p className="text-muted-foreground">No files found</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  const renderRiskTab = () => {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-muted-foreground" />
+              Risk Assessment
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Overall Risk Score</h3>
+                <div className="w-full max-w-md">
+                  <RiskMeter score={company.riskScore || 0} />
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Risk Factors</h3>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Company Age</p>
+                    <p>{company.incorporationYear ? `${new Date().getFullYear() - company.incorporationYear} years` : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Accreditation Status</p>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize mt-1",
+                        company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800"
+                      )}
+                    >
+                      {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Compliance Status</p>
+                    <p>{company.certificationsCompliance || 'No compliance information available'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout>
       <PageContainer>
@@ -128,250 +457,33 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </div>
           </div>
 
-          {/* Key Metrics Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  Company Category
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-semibold capitalize">{company.category?.toLowerCase() || 'N/A'}</div>
-              </CardContent>
-            </Card>
+          {/* Navigation Tabs */}
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="w-full border-b space-x-8">
+              <TabsTrigger value="overview" icon={Building2}>Overview</TabsTrigger>
+              <TabsTrigger value="users" icon={Users}>Users</TabsTrigger>
+              <TabsTrigger value="files" icon={FileUp}>Files</TabsTrigger>
+              <TabsTrigger value="risk" icon={Target}>Risk</TabsTrigger>
+            </TabsList>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-muted-foreground" />
-                  Accreditation Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "capitalize",
-                    company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-                    company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-                    company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-                    company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-                    company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-                    company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-                    company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-                    company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
-                  )}
-                >
-                  {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
-                </Badge>
-              </CardContent>
-            </Card>
+            <div className="mt-6">
+              <TabsContent value="overview">
+                {renderOverviewTab()}
+              </TabsContent>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Target className="h-4 w-4 text-muted-foreground" />
-                  Risk Assessment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RiskMeter score={company.riskScore || 0} />
-              </CardContent>
-            </Card>
-          </div>
+              <TabsContent value="users">
+                {renderUsersTab()}
+              </TabsContent>
 
-          {/* Company Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Company Overview Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building className="h-5 w-5 text-muted-foreground" />
-                  Company Overview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Website</div>
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-muted-foreground" />
-                    {company.websiteUrl && company.websiteUrl !== 'N/A' ? (
-                      <a 
-                        href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-primary hover:underline"
-                      >
-                        {company.websiteUrl}
-                      </a>
-                    ) : (
-                      <span>N/A</span>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Legal Structure</div>
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
-                    <span>{company.legalStructure || 'N/A'}</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Headquarters</div>
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span>{company.hqAddress || 'N/A'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              <TabsContent value="files">
+                {renderFilesTab()}
+              </TabsContent>
 
-            {/* Business Details Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-muted-foreground" />
-                  Business Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Incorporation Year</div>
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span>{company.incorporationYear || 'N/A'}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Employees</div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span>{company.numEmployees || 'N/A'}</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
-                  <div className="flex items-center gap-2">
-                    <Target className="h-4 w-4 text-muted-foreground" />
-                    <span>{company.productsServices || 'N/A'}</span>
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Investors</div>
-                  <div className="flex items-center gap-2">
-                    <Award className="h-4 w-4 text-muted-foreground mt-1" />
-                    <span>{company.investors || 'No investor information available'}</span>
-                  </div>
-                </div>
-                {company.fundingStage && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground mb-1">Funding Stage</div>
-                    <span>{company.fundingStage}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Key Relationships and Leadership Section - Grid Layout */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Key Relationships Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-muted-foreground" />
-                  Key Relationships
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-1">Key Clients & Partners</div>
-                  <div className="flex items-start gap-2">
-                    <Award className="h-4 w-4 text-muted-foreground mt-1" />
-                    <span>{company.keyClientsPartners || 'No client/partner information available'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Leadership Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Users className="h-5 w-5 text-muted-foreground" />
-                  Leadership
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-sm font-medium text-muted-foreground">Founders & Leadership</div>
-                  <div className="flex items-start gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground mt-1" />
-                    <span>{company.foundersAndLeadership || 'No leadership information available'}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Contacts and Documents Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  Key Contacts
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {company.contacts?.map((contact, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{contact.name}</p>
-                        <p className="text-sm text-muted-foreground">{contact.role}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm">{contact.email}</p>
-                        <p className="text-sm text-muted-foreground">{contact.phone}</p>
-                      </div>
-                    </div>
-                  )) || (
-                    <p className="text-muted-foreground">No contacts available</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Documents & Compliance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {company.documents?.map((doc, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <span className="font-medium">{doc.name}</span>
-                      <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'}>
-                        {doc.status}
-                      </Badge>
-                    </div>
-                  )) || (
-                    <p className="text-muted-foreground">No documents available</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              <TabsContent value="risk">
+                {renderRiskTab()}
+              </TabsContent>
+            </div>
+          </Tabs>
         </div>
       </PageContainer>
     </DashboardLayout>
