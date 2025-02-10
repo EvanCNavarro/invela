@@ -58,7 +58,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { format, differenceInDays } from "date-fns";
 import { PageHeader } from "@/components/ui/page-header";
-
+import { SearchBar } from "@/components/playground/SearchBar"
 
 interface Task {
   id: number;
@@ -144,6 +144,7 @@ export default function TaskCenterPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
   const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
+  const [searchResults, setSearchResults] = useState<Task[]>([]); // Added state for search results
   const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
@@ -182,7 +183,7 @@ export default function TaskCenterPage() {
 
   const itemsPerPage = 10;
   const filteredTasks = tasks.map(processTaskStatus).filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.description.toLowerCase().includes(searchQuery.toLowerCase()); //Improved search
     const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase().replace(/ /g, '_');
     const matchesType = typeFilter === "All Task Types" ||
       task.taskType === typeFilter.toLowerCase().replace(/ /g, '_');
@@ -212,6 +213,7 @@ export default function TaskCenterPage() {
     setStatusFilter("All Statuses");
     setTypeFilter("All Task Types");
     setScopeFilter("All Assignee Types");
+    setSearchResults([]); // Clear search results on filter clear
   };
 
   // Component render
@@ -292,12 +294,19 @@ export default function TaskCenterPage() {
               </TabsList>
 
               <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
+                <SearchBar
+                  contextualType="tasks"
+                  data={tasks}
+                  keys={['title', 'description']}
+                  onResults={(results) => {
+                    // Map the fuzzy search results back to tasks
+                    const filteredTasks = results.map(result => result.item);
+                    setSearchResults(filteredTasks);
+                  }}
+                  onSearch={(value) => setSearchQuery(value)}
+                  isLoading={isLoading}
                   placeholder="Search Tasks"
-                  className="pl-9 w-full sm:w-[300px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-[300px]"
                 />
               </div>
             </div>
