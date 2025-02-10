@@ -54,7 +54,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
-
+import { useColumnVisibility } from "@/components/files/useColumnVisibility";
+import { useSidebarContext } from "@/hooks/use-sidebar";
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -274,23 +275,6 @@ const formatTimestampForFilename = () => {
   return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
 };
 
-const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
-  const sidebarWidth = isSidebarCollapsed ? 64 : 256; // Account for both states
-  const availableSpace = Math.max(0, breakpoint - sidebarWidth - 48); // 48px for padding
-
-  // Always show priority 0 columns
-  const visibleColumns = new Set(['fileName', 'actions']);
-
-  // Add columns based on available space
-  if (availableSpace > 500) visibleColumns.add('size');
-  if (availableSpace > 700) visibleColumns.add('status');
-  if (availableSpace > 900) visibleColumns.add('uploadDate');
-  if (availableSpace > 1100) visibleColumns.add('version');
-  if (availableSpace > 1300) visibleColumns.add('uploadTime');
-
-  return visibleColumns;
-};
-
 const FileConflictModal = ({
   conflicts,
   onResolve,
@@ -352,6 +336,98 @@ const MetricItem = ({ label, value }: { label: string; value: React.ReactNode })
   </div>
 );
 
+const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
+  // Fetch fresh file data
+  const { data: freshFileData } = useQuery({
+    queryKey: ['/api/files', file.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/files/${file.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch file details');
+      }
+      return response.json();
+    },
+  });
+
+  const currentFile = freshFileData || file;
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl">File Details</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Basic Information */}
+          <div className="bg-muted/30 rounded-md p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground">File Information</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Name</span>
+                <span className="font-medium truncate ml-2">{currentFile.name}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Size</span>
+                <span className="font-medium">{formatFileSize(currentFile.size)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Type</span>
+                <span className="font-medium">{currentFile.type || 'Unknown'}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Version</span>
+                <span className="font-medium">v{currentFile.version?.toFixed(1) || '1.0'}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Status</span>
+                <span className={getStatusStyles(currentFile.status)}>
+                  {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Upload Information */}
+          <div className="bg-muted/30 rounded-md p-4 space-y-3">
+            <h3 className="font-semibold text-sm text-muted-foreground">Upload Information</h3>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Upload Date</span>
+                <span className="font-medium">{formatDate(currentFile.createdAt)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Last Modified</span>
+                <span className="font-medium">{formatDate(currentFile.updatedAt)}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-muted-foreground">Downloads</span>
+                <span className="font-medium">{currentFile.downloadCount || 0}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button
+            variant="default"
+            onClick={() => {
+              downloadMutation.mutate(currentFile.id);
+              onClose();
+            }}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const FileVault = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -369,13 +445,12 @@ const FileVault = () => {
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
   const breakpoint = useBreakpoint();
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const { isCollapsed } = useSidebarContext();
+  const sidebarWidth = isCollapsed ? 64 : 256; // Sidebar widths
+  const visibleColumns = useColumnVisibility(sidebarWidth);
   const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
-
-  // Get visible columns using the previously defined function
-  const visibleColumns = getVisibleColumns(breakpoint, isSidebarCollapsed);
 
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
     return (
@@ -919,167 +994,6 @@ const FileVault = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-muted/30 rounded-md p-4 space-y-3">
-      <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
-
-  const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
-    </div>
-  );
-
-  const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
-    // Fetch fresh file data
-    const { data: freshFileData } = useQuery({
-      queryKey: ['/api/files', file.id],
-      queryFn: async () => {
-        const response = await fetch(`/api/files/${file.id}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch file details');
-        }
-        return response.json();
-      },
-    });
-
-    const currentFile = freshFileData || file;
-
-    return (
-      <Dialog open onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl">File Details</DialogTitle>
-          </DialogHeader>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Basic Information */}
-            <MetricBox title="File Information">
-              <MetricItem label="Name" value={currentFile.name} />
-              <MetricItem label="Size" value={formatFileSize(currentFile.size)} />
-              <MetricItem label="Type" value={currentFile.type || 'Unknown'} />
-              <MetricItem label="Version" value={`v${currentFile.version?.toFixed(1) || '1.0'}`} />
-              <MetricItem
-                label="Status"
-                value={
-                  <span className={getStatusStyles(currentFile.status)}>
-                    {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
-                  </span>
-                }
-              />
-            </MetricBox>
-
-            {/* Usage Statistics */}
-            <MetricBox title="Usage Statistics">
-              <MetricItem label="Downloads" value={currentFile.downloadCount || 0} />
-              <MetricItem label="Last Accessed" value={formatDate(currentFile.lastAccessed)} />
-              <MetricItem label="Unique Viewers" value={currentFile.uniqueViewers || 0} />
-              <MetricItem
-                label="Avg. View Duration"
-                value={
-                  currentFile.averageViewDuration
-                    ? `${currentFile.averageViewDuration.toFixed(1)}s`
-                    : 'N/A'
-                }
-              />
-              <MetricItem
-                label="Collaborators"
-                value={currentFile.collaboratorCount || 0}
-              />
-            </MetricBox>
-
-            {/* Security & Compliance */}
-            <MetricBox title="Security & Compliance">
-              <MetricItem
-                label="Access Level"
-                value={
-                  <span className={cn(
-                    "px-2 py-1 rounded-md text-xs font-medium",
-                    {
-                      'bg-red-100 text-red-800': currentFile.accessLevel === 'private',
-                      'bg-yellow-100 text-yellow-800': currentFile.accessLevel === 'restricted',
-                      'bg-green-100 text-green-800': !currentFile.accessLevel || currentFile.accessLevel === 'public'
-                    }
-                  )}>
-                    {(currentFile.accessLevel || 'public').charAt(0).toUpperCase() +
-                     (currentFile.accessLevel || 'public').slice(1)}
-                  </span>
-                }
-              />
-              <MetricItem
-                label="Encryption"
-                value={currentFile.encryptionStatus ? 'Enabled' : 'Disabled'}
-              />
-              <MetricItem
-                label="Classification"
-                value={currentFile.classificationType || 'Unclassified'}
-              />
-              <MetricItem
-                label="Compliance Tags"
-                value={currentFile.complianceTags?.join(', ') || 'None'}
-              />
-              <MetricItem
-                label="Retention Period"
-                value={currentFile.retentionPeriod ? `${currentFile.retentionPeriod} days` : 'N/A'}
-              />
-            </MetricBox>
-
-            {/* Storage & Performance */}
-            <MetricBox title="Storage & Performance">
-              <MetricItem
-                label="Upload Time"
-                value={formatDate(currentFile.uploadTime)}
-              />
-              <MetricItem
-                label="Storage Location"
-                value={currentFile.storageLocation || 'Standard Storage'}
-              />
-              <MetricItem
-                label="Compression Ratio"
-                value={
-                  currentFile.compressionRatio
-                    ? `${(currentFile.compressionRatio * 100).toFixed(1)}%`
-                    : 'N/A'
-                }
-              />
-              <MetricItem
-                label="Duplicate Count"
-                value={currentFile.duplicateCount || 0}
-              />
-              <MetricItem
-                label="Checksum"
-                value={
-                  <span className="font-mono text-xs">
-                    {currentFile.checksum?.slice(0, 8) || 'N/A'}
-                  </span>
-                }
-              />
-            </MetricBox>
-          </div>
-
-          <div className="mt-4 flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => {
-                downloadMutation.mutate(currentFile.id);
-                onClose();
-              }}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  };
-
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
@@ -1098,26 +1012,30 @@ const FileVault = () => {
   };
 
   const columns = useMemo(() => {
-    const baseColumns = getFileColumns();
+    const baseColumns = getFileColumns(visibleColumns);
 
-    // Add actions column as the last column
-    return [
-      ...baseColumns,
-      {
-        id: 'actions',
-        header: '',
-        cell: (item: FileItem) => (
-          <div className="flex justify-end">
-            <FileActions
-              file={item}
-              onDelete={handleDelete}
-            />
-          </div>
-        ),
-        className: 'w-[48px] sticky right-0 bg-background'
-      }
-    ];
-  }, [handleDelete]);
+    // Only add actions column if it's visible
+    if (visibleColumns.has('actions')) {
+      return [
+        ...baseColumns.filter(col => col.id !== 'actions'),
+        {
+          id: 'actions',
+          header: '',
+          cell: (item: FileItem) => (
+            <div className="flex justify-end">
+              <FileActions
+                file={item}
+                onDelete={handleDelete}
+              />
+            </div>
+          ),
+          className: 'w-[48px]'
+        }
+      ];
+    }
+
+    return baseColumns;
+  }, [visibleColumns, handleDelete]);
 
   return (
     <DashboardLayout>
@@ -1125,15 +1043,15 @@ const FileVault = () => {
         <PageHeader
           title="File Vault"
           description="Securely store and manage your files"
-          className="px-6"
+          className="px-4 sm:px-6"
         />
 
-        <div className="flex-1 flex flex-col min-h-0 space-y-4 px-6">
+        <div className="flex-1 flex flex-col min-h-0 space-y-4 p-4 sm:px-6">
           {/* Upload Area */}
           <div className="w-full">
             <DragDropProvider
               onFilesAccepted={onDrop}
-              className="min-h-[200px] rounded-lg transition-colors duration-200"
+              className="min-h-[120px] sm:min-h-[200px] rounded-lg transition-colors duration-200"
               activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
             >
               {({ isDragActive }) => (
@@ -1155,7 +1073,7 @@ const FileVault = () => {
             </DragDropProvider>
           </div>
 
-          {/* Search and Filter Controls */}
+          {/* Controls */}
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="w-full sm:max-w-md">
               <SearchBar
@@ -1172,8 +1090,8 @@ const FileVault = () => {
                 value={statusFilter}
                 onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
               >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
@@ -1190,10 +1108,10 @@ const FileVault = () => {
             </div>
           </div>
 
-          {/* Table Container */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <div className="border rounded-lg overflow-x-auto">
-              <div className="min-w-[800px]">
+          {/* Table */}
+          <div className="flex-1 min-h-0">
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
                 <Table
                   data={paginatedFiles}
                   columns={columns}
@@ -1209,7 +1127,7 @@ const FileVault = () => {
               </div>
             </div>
 
-            {/* Pagination controls */}
+            {/* Pagination */}
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground order-2 sm:order-1">
                 Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
