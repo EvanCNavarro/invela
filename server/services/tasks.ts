@@ -6,49 +6,39 @@ export async function updateOnboardingTaskStatus(userId: number) {
   try {
     console.log(`[Task Service] Attempting to update onboarding task for user ID: ${userId}`);
 
-    // First try to find task by user ID
-    let pendingTasks = await db
+    // Get user email first to ensure we have it for searching
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+
+    if (!user) {
+      console.error(`[Task Service] User ${userId} not found`);
+      return null;
+    }
+
+    console.log(`[Task Service] Found user ${userId} with email ${user.email}`);
+
+    // Search for task using either assigned user ID or email (case insensitive)
+    const pendingTasks = await db
       .select()
       .from(tasks)
       .where(
         and(
           eq(tasks.taskType, 'user_onboarding'),
-          eq(tasks.assignedTo, userId),
+          or(
+            eq(tasks.assignedTo, userId),
+            sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`
+          ),
           or(
             eq(tasks.status, 'pending'),
             eq(tasks.status, 'in_progress'),
+            eq(tasks.status, 'email_sent'),
             sql`${tasks.status} IS NULL`
           )
         )
-      );
-
-    // If no task found by user ID, we need to get the user's email and try by that
-    if (pendingTasks.length === 0) {
-      console.log(`[Task Service] No task found by user ID ${userId}, trying by email`);
-
-      // Get user's email
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, userId));
-
-      if (user) {
-        pendingTasks = await db
-          .select()
-          .from(tasks)
-          .where(
-            and(
-              eq(tasks.taskType, 'user_onboarding'),
-              eq(tasks.userEmail, user.email.toLowerCase()),
-              or(
-                eq(tasks.status, 'pending'),
-                eq(tasks.status, 'in_progress'),
-                sql`${tasks.status} IS NULL`
-              )
-            )
-          );
-      }
-    }
+      )
+      .orderBy(sql`created_at DESC`);
 
     console.log(`[Task Service] Found ${pendingTasks.length} pending onboarding tasks for user ${userId}`);
 
@@ -69,12 +59,12 @@ export async function updateOnboardingTaskStatus(userId: number) {
         progress: 100,
         completionDate: new Date(),
         updatedAt: new Date(),
-        assignedTo: userId, // Ensure the task is linked to the user
+        assignedTo: userId // Ensure the task is linked to the user
       })
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log('[Task Service] Update result:', updatedTask);
+    console.log('[Task Service] Updated task:', updatedTask);
 
     return updatedTask;
   } catch (error) {

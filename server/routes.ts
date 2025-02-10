@@ -14,7 +14,7 @@ import {
   users,
   invitations
 } from "@db/schema";
-import { eq, and, inArray, or, gt, sql } from "drizzle-orm";
+import { eq, and, inArray, or, gt, sql, ilike } from "drizzle-orm"; // Added ilike import
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -218,12 +218,12 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`[Register] Created new user with ID: ${user.id}`);
 
-      // Find and update the corresponding onboarding task
+      // Find and update the corresponding onboarding task using case-insensitive email match
       const [pendingTask] = await db.select()
         .from(tasks)
         .where(and(
           eq(tasks.taskType, 'user_onboarding'),
-          eq(tasks.userEmail, email.toLowerCase()),
+          sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
           or(
             eq(tasks.status, 'pending'),
             eq(tasks.status, 'email_sent'),
@@ -706,7 +706,6 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
-
 
   // Add task deletion endpoint after the existing task routes
   app.delete("/api/tasks/:id", requireAuth, async (req, res) => {
