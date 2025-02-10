@@ -262,10 +262,12 @@ export default function NetworkPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-6">
-        <PageHeader
-          title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
-          description="View and manage companies in your network."
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
+            description="View and manage companies in your network."
+          />
+        </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex flex-col sm:flex-row gap-3 w-full">

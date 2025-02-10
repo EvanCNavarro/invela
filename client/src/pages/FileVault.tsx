@@ -921,8 +921,7 @@ export default function FileVault() {
       queryKey: ['/api/files', file.id],
       queryFn: async () => {        const response = await fetch(`/api/files/${file.id}`);
         if (!response.ok) {
-          throw new Error('Failed to fetch file details');
-        }
+          throw new Error('Failed to fetch file details');        }
         return response.json();
       },
     });
@@ -975,24 +974,24 @@ export default function FileVault() {
               <MetricItem label="Downloads" value={currentFile.downloadCount || 0} />
               <MetricItem label="Last Accessed" value={formatDate(currentFile.lastAccessed)} />
               <MetricItem label="Unique Viewers" value={currentFile.uniqueViewers || 0} />
-              <MetricItem 
-                label="Avg. View Duration" 
+              <MetricItem
+                label="Avg. View Duration"
                 value={
-                  currentFile.averageViewDuration 
-                    ? `${currentFile.averageViewDuration.toFixed(1)}s` 
+                  currentFile.averageViewDuration
+                    ? `${currentFile.averageViewDuration.toFixed(1)}s`
                     : 'N/A'
                 }
               />
-              <MetricItem 
-                label="Collaborators" 
-                value={currentFile.collaboratorCount || 0} 
+              <MetricItem
+                label="Collaborators"
+                value={currentFile.collaboratorCount || 0}
               />
             </MetricBox>
 
             {/* Security & Compliance */}
             <MetricBox title="Security & Compliance">
-              <MetricItem 
-                label="Access Level" 
+              <MetricItem
+                label="Access Level"
                 value={
                   <span className={cn(
                     "px-2 py-1 rounded-md text-xs font-medium",
@@ -1002,58 +1001,58 @@ export default function FileVault() {
                       'bg-green-100 text-green-800': !currentFile.accessLevel || currentFile.accessLevel === 'public'
                     }
                   )}>
-                    {(currentFile.accessLevel || 'public').charAt(0).toUpperCase() + 
+                    {(currentFile.accessLevel || 'public').charAt(0).toUpperCase() +
                      (currentFile.accessLevel || 'public').slice(1)}
                   </span>
                 }
               />
-              <MetricItem 
-                label="Encryption" 
-                value={currentFile.encryptionStatus ? 'Enabled' : 'Disabled'} 
+              <MetricItem
+                label="Encryption"
+                value={currentFile.encryptionStatus ? 'Enabled' : 'Disabled'}
               />
-              <MetricItem 
-                label="Classification" 
-                value={currentFile.classificationType || 'Unclassified'} 
+              <MetricItem
+                label="Classification"
+                value={currentFile.classificationType || 'Unclassified'}
               />
-              <MetricItem 
-                label="Compliance Tags" 
-                value={currentFile.complianceTags?.join(', ') || 'None'} 
+              <MetricItem
+                label="Compliance Tags"
+                value={currentFile.complianceTags?.join(', ') || 'None'}
               />
-              <MetricItem 
-                label="Retention Period" 
-                value={currentFile.retentionPeriod ? `${currentFile.retentionPeriod} days` : 'N/A'} 
+              <MetricItem
+                label="Retention Period"
+                value={currentFile.retentionPeriod ? `${currentFile.retentionPeriod} days` : 'N/A'}
               />
             </MetricBox>
 
             {/* Storage & Performance */}
             <MetricBox title="Storage & Performance">
-              <MetricItem 
-                label="Upload Time" 
-                value={formatDate(currentFile.uploadTime)} 
+              <MetricItem
+                label="Upload Time"
+                value={formatDate(currentFile.uploadTime)}
               />
-              <MetricItem 
-                label="Storage Location" 
-                value={currentFile.storageLocation || 'Standard Storage'} 
+              <MetricItem
+                label="Storage Location"
+                value={currentFile.storageLocation || 'Standard Storage'}
               />
-              <MetricItem 
-                label="Compression Ratio" 
+              <MetricItem
+                label="Compression Ratio"
                 value={
-                  currentFile.compressionRatio 
-                    ? `${(currentFile.compressionRatio * 100).toFixed(1)}%` 
+                  currentFile.compressionRatio
+                    ? `${(currentFile.compressionRatio * 100).toFixed(1)}%`
                     : 'N/A'
-                } 
+                }
               />
-              <MetricItem 
-                label="Duplicate Count" 
-                value={currentFile.duplicateCount || 0} 
+              <MetricItem
+                label="Duplicate Count"
+                value={currentFile.duplicateCount || 0}
               />
-              <MetricItem 
-                label="Checksum" 
+              <MetricItem
+                label="Checksum"
                 value={
                   <span className="font-mono text-xs">
                     {currentFile.checksum?.slice(0, 8) || 'N/A'}
                   </span>
-                } 
+                }
               />
             </MetricBox>
           </div>
@@ -1062,7 +1061,7 @@ export default function FileVault() {
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => {
                 downloadMutation.mutate(currentFile.id);
@@ -1082,10 +1081,20 @@ export default function FileVault() {
     <DashboardLayout>
       <TooltipProvider>
         <div className="space-y-6">
-          <PageHeader
-            title="File Vault"
-            description="Manage and organize your company's documents securely."
-          />
+          <div className="flex items-center justify-between">
+            <PageHeader
+              title="File Vault"
+              description="Securely manage and share your company's files."
+            />
+            <Button
+              variant="outline"
+              className="w-56 justify-start"
+              onClick={handleUploadClick}
+            >
+              <UploadIcon className="h-4 w-4 mr-2" />
+              <span>Upload Files</span>
+            </Button>
+          </div>
 
           <FileUpload onDrop={onDrop} className="bg-muted/50" />
 

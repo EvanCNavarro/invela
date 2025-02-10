@@ -84,7 +84,8 @@ export function Example() {
       <LoadingSpinner size="lg" />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "risk-meter",
@@ -97,7 +98,8 @@ export function Example() {
       <RiskMeter score={750} />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "page-header",
@@ -111,7 +113,8 @@ export function Example() {
       description="This is an example description that provides additional context."
     />
   );
-}`,
+}
+`,
   },
   {
     id: "data-table",
@@ -134,7 +137,8 @@ export function Example() {
       ]}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "sidebar-menu",
@@ -152,7 +156,8 @@ export function Example() {
       notificationCount={5}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "sidebar-tab",
@@ -170,7 +175,8 @@ export function Example() {
       isExpanded={true}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "search-bar",
@@ -192,7 +198,8 @@ export function Example() {
       />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "unified-dropdown",
@@ -216,7 +223,8 @@ export function Example() {
       ]}
     />
   );
-}`,
+}
+`,
   },
   {
     id: "download-button",
@@ -238,7 +246,8 @@ export function Example() {
       />
     </div>
   );
-}`,
+}
+`,
   },
   {
     id: "file-upload",
@@ -264,7 +273,8 @@ export function Example() {
       />
     </div>
   );
-}`,
+}
+`,
   },
 ];
 
