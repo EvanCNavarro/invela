@@ -4,36 +4,19 @@ import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   FileIcon,
   UploadIcon,
   RefreshCcwIcon,
   FileTextIcon,
-  MoreVerticalIcon,
-  SearchIcon,
-  ArrowUpDownIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
   Trash2Icon,
-  MinusIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  ShieldIcon,
-  BarChart2Icon,
-  ClockIcon,
   Download,
   Loader2
 } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -41,18 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -65,8 +36,15 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 import React from 'react';
 import { SearchBar } from "@/components/playground/SearchBar";
+import { Table, type Column } from "@/components/playground/Table";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Checkbox } from "@/components/ui/checkbox"; // Added import
+import { MoreVerticalIcon } from "lucide-react"; // Added import
 
 type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
 
@@ -144,7 +122,6 @@ interface UploadingFile extends Omit<FileItem, 'id'> {
   progress: number;
 }
 
-// Simplified status styles function
 const getStatusStyles = (status: FileStatus) => {
   const baseStyles = "rounded-full px-2.5 py-1 text-xs font-medium";
   const statusMap = {
@@ -158,7 +135,6 @@ const getStatusStyles = (status: FileStatus) => {
   return `${baseStyles} ${statusMap[status] || "text-muted-foreground"}`;
 };
 
-// File name cell with improved accessibility
 const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFile }) => {
   const nameRef = useRef<HTMLSpanElement>(null);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
@@ -202,7 +178,6 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 
 FileNameCell.displayName = 'FileNameCell';
 
-// Update the column priorities to include version
 const columnPriorities = {
   fileName: 0,      // Always visible
   size: 1,         // First to show
@@ -214,7 +189,6 @@ const columnPriorities = {
   textPreview: 6,   // Sixth to show
 } as const;
 
-// Add useBreakpoint hook for responsive design
 const useBreakpoint = () => {
   const [breakpoint, setBreakpoint] = useState(() => {
     if (typeof window === 'undefined') return 0;
@@ -233,7 +207,6 @@ const useBreakpoint = () => {
   return breakpoint;
 };
 
-// Update the timezone formatting helper
 const formatTimeWithZone = (date: Date) => {
   // Format time with timezone abbreviation
   return new Intl.DateTimeFormat('en-US', {
@@ -279,7 +252,6 @@ const TableSkeleton = () => (
 );
 
 
-// Add the timestamp formatting function
 const formatTimestampForFilename = () => {
   const now = new Date();
   const year = now.getUTCFullYear();
@@ -292,7 +264,6 @@ const formatTimestampForFilename = () => {
   return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
 };
 
-// Update the getVisibleColumns function to include version and handle sidebar states better
 const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
   const sidebarWidth = isSidebarCollapsed ? 64 : 256; // Account for both states
   const availableSpace = Math.max(0, breakpoint - sidebarWidth - 48); // 48px for padding
@@ -310,7 +281,6 @@ const getVisibleColumns = (breakpoint: number, isSidebarCollapsed: boolean) => {
   return visibleColumns;
 };
 
-// Update the FileConflictModal to properly handle overrides
 const FileConflictModal = ({
   conflicts,
   onResolve,
@@ -358,7 +328,7 @@ const FileConflictModal = ({
   );
 };
 
-export default function FileVault() {
+const FileVault = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -788,11 +758,8 @@ export default function FileVault() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const handleSort = (field: SortField) => {
-    setSortConfig(prev => ({
-      field,
-      order: prev.field === field && prev.order === 'asc' ? 'desc' : 'asc'
-    }));
+  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+    setSortConfig({ field: field as SortField, order: direction });
   };
 
   const getSortIcon = (field: SortField) => {
@@ -914,7 +881,7 @@ export default function FileVault() {
 
   const canRestore = useMemo(() => {    return Array.from(selectedFiles).some(fileId => {
       const file = allFiles.find(f => f.id === fileId);
-      return file?.status === 'deleted';
+      return file?.status=== 'deleted';
     });
   }, [selectedFiles, allFiles]);
 
@@ -927,15 +894,15 @@ export default function FileVault() {
     return new Date(dateString).toLocaleDateString();
   };
 const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className="bg-muted/30 rounded-mdp4 space-y-3">
-      <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
+  <div className="bg-muted/30 rounded-mdp4 space-y-3">
+    <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
+    <div className="space-y-2">{children}</div>
+  </div>
+);
 
-  const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  const MetricItem = ({ label, value}: { label: string; value: React.ReactNode }) => (
     <div className="flex justify-between items-center text-sm">
-      <span className="text-muted-foreground">{label}</span>
+      <span className="text-muted-foreground{label}</span>
       <span className="font-medium">{value}</span>
     </div>
   );
@@ -1104,6 +1071,57 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
     return highlightedText;
   };
 
+  const columns: Column<FileItem | UploadingFile>[] = [
+    {
+      id: 'name',
+      header: 'Name',
+      cell: (file) => <FileNameCell file={file} />,
+      sortable: true,
+      className: 'w-[300px]'
+    },
+    {
+      id: 'size',
+      header: 'Size',
+      cell: (file) => formatFileSize(file.size),
+      sortable: true,
+      className: 'text-right'
+    },
+    {
+      id: 'uploadDate',
+      header: 'Upload Date',
+      cell: (file) => new Date(file.createdAt).toLocaleDateString(),
+      sortable: true
+    },
+    {
+      id: 'uploadTime',
+      header: 'Upload Time',
+      cell: (file) => formatTimeWithZone(new Date(file.uploadTime)),
+      sortable: true
+    },
+    {
+      id: 'version',
+      header: 'Version',
+      cell: (file) => `v${(file.version || 1.0).toFixed(1)}`,
+      className: 'text-center'
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (file) => (
+        <div className="flex justify-center">
+          <span className={getStatusStyles(file.status)}>
+            {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
+          </span>
+        </div>
+      ),
+      sortable: true
+    }
+  ];
+
+  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+    setSortConfig({ field: field as SortField, order: direction });
+  };
+
   return (
     <DashboardLayout>
       <TooltipProvider>
@@ -1113,29 +1131,30 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
         />
 
         <div className="space-y-4">
-          <DragDropProvider onFilesAccepted={onDrop}
+          <DragDropProvider 
+            onFilesAccepted={onDrop}
             className="min-h-[200px] rounded-lg transition-colors duration-200"
-            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30">
+            activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
+          >
             {({ isDragActive }) => (
               <div className="relative">
                 {isDragActive && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                    <p className="text-lg font-medium">Drop files here</p>
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
+                    <div className="flex items-center gap-2 text-lg font-medium">
+                      <UploadIcon className="h-5 w-5" />
+                      Drop files to upload
+                    </div>
                   </div>
                 )}
                 <FileUploadZone
-                  onFilesAccepted={onDrop}
-                  variant="box"
-                  className="w-full"
-                  maxFiles={10}
-                  maxSize={5 * 1024 * 1024} // 5MB
-                  disabled={false}
+                  onFilesSelected={async (files: File[]) => await onDrop(files)}
+                  ref={fileInputRef}
                 />
               </div>
             )}
           </DragDropProvider>
 
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center justify-between gap-4">
             <SearchBar
               contextualType="files"
               onSearch={handleSearch}
@@ -1149,13 +1168,12 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
               value={statusFilter}
               onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
             >
-              <SelectTrigger className="w-[150px]">
+              <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="all">All Files</SelectItem>
                 <SelectItem value="uploaded">Uploaded</SelectItem>
-                <SelectItem value="restored">Restored</SelectItem>
                 <SelectItem value="uploading">Uploading</SelectItem>
                 <SelectItem value="paused">Paused</SelectItem>
                 <SelectItem value="canceled">Canceled</SelectItem>
@@ -1165,243 +1183,132 @@ const MetricBox = ({ title, children }: { title: string; children: React.ReactNo
           </div>
 
           <div>
-            <div className="w-full border rounded-lg overflow-hidden bg-white">
-              <div className="relative">
-                <div className="w-full overflow-x-auto">
-                  <Table className="w-full table-fixed">
-                    <TableHeader className="sticky top-0 z-30 bg-muted">
-                      <TableRow className="hover:bg-transparent">
-                        <TableHead className="w-[40px] sticky left-0 z-40 bg-muted">
-                          <Checkbox
-                            checked={selectedFiles.size === paginatedFiles.length && paginatedFiles.length > 0}
-                            onCheckedChange={() => toggleAllFiles(paginatedFiles)}
-                            aria-label="Select all files"
-                          />
-                        </TableHead>
-                        <TableHead className="w-[30%] sticky left-[5%] z-20 bg-muted">
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleSort('name')}
-                            className="flex items-center gap-1"
-                          >
-                            Name {getSortIcon('name')}
-                          </Button>
-                        </TableHead>
-                        {visibleColumns.has('size') && (
-                          <TableHead className="w-[10%] text-right">
-                            <Button
-                              variant="ghost"
-                              onClick={() => handleSort('size')}
-                              className="flex items-center gap-1 ml-auto"
-                            >
-                              Size {getSortIcon('size')}
-                            </Button>
-                          </TableHead>
-                        )}
-                        {visibleColumns.has('uploadDate') && (
-                          <TableHead className="w-[15%] text-right">
-                            <Button
-                              variant="ghost"
-                              onClick={() => handleSort('createdAt')}
-                              className="flex items-center gap-1 ml-auto"
-                            >
-                              Upload Date {getSortIcon('createdAt')}
-                            </Button>
-                          </TableHead>
-                        )}
-                        {visibleColumns.has('uploadTime') && (
-                          <TableHead className="w-[10%] text-right">Time</TableHead>
-                        )}
-                        {visibleColumns.has('version') && (
-                          <TableHead className="w-[10%] text-center">Version</TableHead>
-                        )}
-                        {visibleColumns.has('status') && (
-                          <TableHead className="w-[12%] text-center">
-                            <Button
-                              variant="ghost"
-                              onClick={() => handleSort('status')}
-                              className="flex items-center gap-1 mx-auto"
-                            >
-                              Status {getSortIcon('status')}
-                            </Button>
-                          </TableHead>
-                        )}
-                        <TableHead className="w-[8%] text-center sticky right-0 z-20 bg-muted">
-                          Actions
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableSkeleton />
-                      ) : paginatedFiles.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={7}
-                            className="h-24 text-center"
-                          >
-                            No files found.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedFiles.map((file) => {
-                          const searchResult = searchResults.find(
-                            result => result.item.id === file.id
-                          );
-
-                          return (
-                            <TableRow key={file.id}>
-                              <TableCell className="w-[40px]">
-                                <Checkbox
-                                  checked={selectedFiles.has(file.id)}
-                                  onCheckedChange={() => toggleFileSelection(file.id)}
-                                  aria-label={`Select ${file.name}`}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                {searchResult ? (
-                                  <div
-                                    className="flex items-center gap-2 min-w-0 max-w-[14rem]"
-                                    dangerouslySetInnerHTML={{
-                                      __html: highlightMatch(
-                                        file.name,
-                                        searchResult.matches.filter(m => m.key === 'name')
-                                      )
-                                    }}
-                                  />
-                                ) : (
-                                  <FileNameCell file={file} />
-                                )}
-                              </TableCell>
-                              {visibleColumns.has('size') && (
-                                <TableCell className="text-right">
-                                  {formatFileSize(file.size)}
-                                </TableCell>
-                              )}
-                              {visibleColumns.has('uploadDate') && (
-                                <TableCell className="text-right">
-                                  {new Date(file.createdAt).toLocaleDateString()}
-                                </TableCell>
-                              )}
-                              {visibleColumns.has('uploadTime') && (
-                                <TableCell className="text-right">
-                                  {formatTimeWithZone(new Date(file.uploadTime))}
-                                </TableCell>
-                              )}
-                              {visibleColumns.has('version') && (
-                                <TableCell className="text-center">
-                                  v{(file.version || 1.0).toFixed(1)}
-                                </TableCell>
-                              )}
-                              {visibleColumns.has('status') && (
-                                <TableCell>
-                                  <div className="flex justify-center">
-                                    <span className={getStatusStyles(file.status)}>
-                                      {file.status.charAt(0).toUpperCase() + file.status.slice(1)}
-                                    </span>
-                                  </div>
-                                </TableCell>
-                              )}
-                              <TableCell>
-                                <FileActions file={file} onDelete={handleDelete} />
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Pagination footer - make it sticky */}
-                {filteredAndSortedFiles.length > 0 && (
-                  <div className="sticky bottom-0 left-0 right-0 bg-muted border-t px-4 py-3 flex items-center justify-between">
-                    <div className="flex-1 text-sm text-muted-foreground">
-                      {filteredAndSortedFiles.length <= itemsPerPage
-                        ? `Showing ${filteredAndSortedFiles.length} ${filteredAndSortedFiles.length === 1 ? 'file' : 'files'}`
-                        : `Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAndSortedFiles.length)}-${Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of ${filteredAndSortedFiles.length} files`
-                      }
-                    </div>
-
-                    {filteredAndSortedFiles.length > itemsPerPage && (
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handlePageChange(1)}
-                          disabled={currentPage === 1}
-                          className="hidden sm:inline-flex"
-                        >
-                          <ChevronsLeftIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handlePageChange(currentPage - 1)}
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeftIcon className="h-4 w-4" />
-                        </Button>
-                        <span className="text-sm font-medium">{currentPage}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handlePageChange(currentPage + 1)}
-                          disabled={currentPage === totalPages}
-                        >
-                          <ChevronRightIcon className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handlePageChange(totalPages)}
-                          disabled={currentPage === totalPages}
-                          className="hidden sm:inline-flex"
-                        >
-                          <ChevronsRightIcon className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
+            <Table
+              data={paginatedFiles}
+              columns={columns}
+              searchResults={searchResults}
+              selectable
+              selectedItems={selectedFiles}
+              onSelectionChange={setSelectedFiles}
+              onSort={handleSort}
+              sortField={sortConfig.field}
+              sortDirection={sortConfig.order}
+              actions={[
+                {
+                  label: "View Details",
+                  icon: <FileTextIcon className="mr-2 h-4 w-4" />,
+                  onClick: (file) => setSelectedFileDetails(file as FileItem),
+                },
+                {
+                  label: "Download",
+                  icon: <Download className="mr-2 h-4 w-4" />,
+                  onClick: (file) => downloadMutation.mutate((file as FileItem).id),
+                },
+                {
+                  label: "Delete",
+                  icon: <Trash2Icon className="mr-2 h-4 w-4" />,
+                  onClick: (file) => {
+                    if ((file as FileItem).status === 'deleted') {
+                      restoreMutation.mutate((file as FileItem).id);
+                    } else {
+                      handleDelete((file as FileItem).id);
+                    }
+                  },
+                },
+              ]}
+              emptyState={
+                isLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <LoadingSpinner className="mr-2" />
+                    <span>Loading files...</span>
                   </div>
-                )}
-              </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
+                    <FileIcon className="h-8 w-8 mb-2" />
+                    <p>No files found</p>
+                  </div>
+                )
+              }
+              className="w-full"
+            />
+          </div>
+
+          {/* Pagination */}
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              Showing {paginatedFiles.length} of {filteredAndSortedFiles.length} files
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeftIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
+              <span className="text-sm text-muted-foreground px-4">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRightIcon className="h-4 w-4" />
+              </Button>
             </div>
           </div>
-
-          <div>
-            <Dialog open={!!selectedFileDetails} onOpenChange={() => setSelectedFileDetails(null)}>
-              <DialogContent
-                className="max-w-2xl w-full p-6 gap-6"
-              >
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-semibold">File Details</DialogTitle>
-                </DialogHeader>
-                {selectedFileDetails && (
-                  <FileDetails file={selectedFileDetails} onClose={() => setSelectedFileDetails(null)} />
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
         </div>
-        <FileConflictModal
-          conflicts={conflictFiles}
-          onResolve={(override) => {
-            const filesToUpload = conflictFiles.map(({ file }) => file);
-            setShowConflictModal(false);
-            setConflictFiles([]);
-            uploadFiles(filesToUpload, override);
-          }}
-          onCancel={() => {
-            setShowConflictModal(false);
-            setConflictFiles([]);
-          }}
-        />
+
+        {/* Modals */}
+        {selectedFileDetails && (
+          <FileDetails
+            file={selectedFileDetails}
+            onClose={() => setSelectedFileDetails(null)}
+          />
+        )}
+
+        {showConflictModal && (
+          <FileConflictModal
+            conflicts={conflictFiles}
+            onResolve={(overrideAll) => {
+              setShowConflictModal(false);
+              if (overrideAll) {
+                uploadFiles(conflictFiles.map(c => c.file), true);
+              }
+              setConflictFiles([]);
+            }}
+            onCancel={() => {
+              setShowConflictModal(false);
+              setConflictFiles([]);
+            }}
+          />
+        )}
       </TooltipProvider>
     </DashboardLayout>
   );
-}
+};
 
-// New component for file preview
+export default FileVault;
+
 const FilePreview = ({ fileId }: { fileId: string }) => {
   const { data: previewData } = useQuery({
     queryKey: [`/api/files/${fileId}/preview`],
