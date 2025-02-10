@@ -7,6 +7,7 @@ import { Lock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
+import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
@@ -89,6 +90,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+
+      <WelcomeModal />
     </div>
   );
 }

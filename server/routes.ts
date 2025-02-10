@@ -203,7 +203,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "User already exists" });
       }
 
-      // Create the user
+      // Create the user with onboardingCompleted set to false
       const [user] = await db.insert(users)
         .values({
           email,
@@ -212,6 +212,7 @@ export function registerRoutes(app: Express): Server {
           firstName,
           lastName,
           companyId: invitation.companyId,
+          onboardingCompleted: false, // Set to false by default
         })
         .returning();
 
@@ -222,25 +223,6 @@ export function registerRoutes(app: Express): Server {
           usedAt: new Date(),
         })
         .where(eq(invitations.id, invitation.id));
-
-      // If there's an associated task, update its status to completed
-      if (invitation.taskId) {
-        await db.update(tasks)
-          .set({
-            status: 'completed',
-            completionDate: new Date(),
-            progress: 100,
-            metadata: {
-              completedByUserId: user.id,
-              completedAt: new Date().toISOString(),
-              registrationDetails: {
-                fullName: user.fullName,
-                companyId: user.companyId
-              }
-            }
-          })
-          .where(eq(tasks.id, invitation.taskId));
-      }
 
       // Log the user in
       req.login(user, (err) => {
@@ -932,8 +914,7 @@ export function registerRoutes(app: Express): Server {
           .where(eq(companyLogos.id, company.logoId));
 
         if (oldLogo) {
-          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);
-          console.log('Debug - Attempting to delete old logo:', oldFilePath);
+          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);          console.log('Debug - Attempting to delete old logo:', oldFilePath);
           if (fs.existsSync(oldFilePath)) {
             fs.unlinkSync(oldFilePath);
             console.log('Debug - Successfully deleted old logo');
@@ -1501,6 +1482,51 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error creating invitation:", error);
       res.status(500).json({ message: "Error creating invitation" });
+    }
+  });
+
+  // Mark user onboarding as completed
+  app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
+    try {
+      // Update user's onboarding status
+      const [updatedUser] = await db.update(users)
+        .set({ onboardingCompleted: true })
+        .where(eq(users.id, req.user!.id))
+        .returning();
+
+      // Find and update associated onboarding task
+      const [onboardingTask] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.taskType, 'user_onboarding'),
+          eq(tasks.status, 'email_sent'),
+          eq(tasks.userEmail, req.user!.email)
+        ));
+
+      if (onboardingTask) {
+        await db.update(tasks)
+          .set({
+            status: 'completed',
+            completionDate: new Date(),
+            progress: 100,
+            metadata: {
+              ...onboardingTask.metadata,
+              completedByUserId: req.user!.id,
+              completedAt: new Date().toISOString(),
+              onboardingCompletionDetails: {
+                completedAt: new Date().toISOString(),
+                userId: req.user!.id,
+                userEmail: req.user!.email
+              }
+            }
+          })
+          .where(eq(tasks.id, onboardingTask.id));
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      res.status(500).json({ message: "Error completing onboarding" });
     }
   });
 
