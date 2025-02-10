@@ -28,9 +28,8 @@ export async function updateOnboardingTaskStatus(userId: number) {
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`,
           or(
-            eq(tasks.status, 'pending'),
-            eq(tasks.status, 'in_progress'),
-            eq(tasks.status, 'email_sent')
+            eq(tasks.status, 'email_sent'),
+            eq(tasks.status, 'in_progress')
           )
         )
       )
@@ -38,7 +37,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
       .limit(1);
 
     if (!taskToUpdate) {
-      console.log(`[Task Service] No pending onboarding task found for user ID: ${userId} with email ${user.email}`);
+      console.log(`[Task Service] No active onboarding task found for user ID: ${userId} with email ${user.email}`);
       return null;
     }
 
@@ -59,7 +58,8 @@ export async function updateOnboardingTaskStatus(userId: number) {
           completionTime: new Date().toISOString(),
           previousStatus: taskToUpdate.status,
           userId: userId,
-          userEmail: user.email.toLowerCase()
+          userEmail: user.email.toLowerCase(),
+          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), 'completed']
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
@@ -77,7 +77,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
   try {
     console.log(`[Task Service] Finding and updating onboarding task for email: ${email}, userId: ${userId}`);
 
-    // Find the most recent pending onboarding task for this email
+    // Find the most recent active onboarding task for this email
     const [taskToUpdate] = await db
       .select()
       .from(tasks)
@@ -85,17 +85,14 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
         and(
           eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
-          or(
-            eq(tasks.status, 'pending'),
-            eq(tasks.status, 'email_sent')
-          )
+          eq(tasks.status, 'email_sent')
         )
       )
       .orderBy(sql`created_at DESC`)
       .limit(1);
 
     if (!taskToUpdate) {
-      console.warn(`[Task Service] No pending onboarding task found for email: ${email}`);
+      console.warn(`[Task Service] No email_sent onboarding task found for email: ${email}`);
       return null;
     }
 
@@ -115,7 +112,8 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
           registrationTime: new Date().toISOString(),
           previousStatus: taskToUpdate.status,
           userId: userId,
-          userEmail: email.toLowerCase()
+          userEmail: email.toLowerCase(),
+          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), 'in_progress']
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))

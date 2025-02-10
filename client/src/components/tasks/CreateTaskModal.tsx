@@ -107,8 +107,8 @@ export function CreateTaskModal() {
           title: `New User Invitation: ${data.userEmail}`,
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`,
           taskScope: TaskScope.USER,
-          status: 'pending',
-          progress: 0,
+          status: 'email_sent',
+          progress: 25,
           userEmail: data.userEmail?.toLowerCase(),
         };
       } else {
