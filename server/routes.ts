@@ -1046,6 +1046,101 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get users by company ID
+  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.companyId);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
+      }
+
+      const companyUsers = await db.select()
+        .from(users)
+        .where(eq(users.companyId, companyId));
+
+      res.json(companyUsers);
+    } catch (error) {
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ message: "Error fetching company users" });
+    }
+  });
+
+  // User invitation endpoint
+  app.post("/api/users/invite", requireAuth, async (req, res) => {
+    try {
+      const { email, fullName, companyId, companyName } = req.body;
+
+      if (!email || !fullName || !companyId || !companyName) {
+        return res.status(400).json({
+          message: "Missing required fields",
+          detail: "Please provide email, full name, and company information"
+        });
+      }
+
+      // Create an onboarding task for the user
+      const taskData = {
+        title: `New User Invitation: ${email}`,
+        description: `Invitation sent to ${fullName} (${email}) to join ${companyName}.`,
+        taskType: 'user_onboarding',
+        taskScope: 'user',
+        status: 'pending',
+        priority: 'medium',
+        progress: 0,
+        createdBy: req.user!.id,
+        userEmail: email,
+        companyId,
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+        assignedTo: null,
+        metadata: {
+          invitedUserName: fullName
+        }
+      };
+
+      // Create the task
+      const [task] = await db.insert(tasks)
+        .values(taskData)
+        .returning();
+
+      // Send invitation email
+      const inviteUrl = `${req.protocol}://${req.get('host')}`;
+
+      const emailParams: SendEmailParams = {
+        to: email,
+        from: process.env.GMAIL_USER!,
+        template: 'fintech_invite',
+        templateData: {
+          recipientEmail: email,
+          senderName: req.user!.fullName,
+          companyName,
+          inviteUrl
+        }
+      };
+
+      const emailResult = await emailService.sendTemplateEmail(emailParams);
+
+      if (!emailResult.success) {
+        await db.update(tasks)
+          .set({ status: 'failed' })
+          .where(eq(tasks.id, task.id));
+
+        return res.status(500).json({
+          message: "Failed to send invite email",
+          error: emailResult.error
+        });
+      }
+
+      // Update task status
+      await db.update(tasks)
+        .set({ status: 'email_sent' })
+        .where(eq(tasks.id, task.id));
+
+      res.status(200).json({ message: "Invitation sent successfully" });
+    } catch (error) {
+      console.error("Error sending user invitation:", error);
+      res.status(500).json({ message: "Error sending invitation" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

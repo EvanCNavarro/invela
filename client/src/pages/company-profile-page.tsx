@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, Search, UserPlus, FileUp } from "lucide-react";
+import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, UserPlus, FileUp } from "lucide-react";
 import type { Company } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
+import { SearchBar } from "@/components/playground/SearchBar";
+import { InviteUserModal } from "@/components/modals/InviteUserModal";
+import { useState } from "react";
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -22,6 +24,10 @@ interface CompanyProfilePageProps {
 }
 
 export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [fileSearchQuery, setFileSearchQuery] = useState("");
+
   const handleBackClick = () => {
     window.history.back();
   };
@@ -34,6 +40,29 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     if (!companySlug || !item.name) return false;
     return generateSlug(item.name) === companySlug;
   });
+
+  // Fetch users for the company
+  const { data: companyUsers = [] } = useQuery({
+    queryKey: ["/api/users/by-company", company?.id],
+    enabled: !!company?.id,
+  });
+
+  // Filter users based on search
+  const filteredUsers = companyUsers.filter((user: any) => {
+    if (!userSearchQuery) return true;
+    const searchLower = userSearchQuery.toLowerCase();
+    return (
+      user.fullName?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.role?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filter files based on search
+  const filteredFiles = company?.documents?.filter((doc: any) => {
+    if (!fileSearchQuery) return true;
+    return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
+  }) || [];
 
   if (isLoading) {
     return (
@@ -156,7 +185,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         </div>
 
         {/* Company Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Company Overview Section */}
           <Card>
             <CardHeader>
@@ -251,7 +280,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         </div>
 
         {/* Key Relationships and Leadership Section - Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Key Relationships Section */}
           <Card>
             <CardHeader>
@@ -297,15 +326,14 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   const renderUsersTab = () => {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex-1 max-w-md">
+            <SearchBar 
               placeholder="Search users..."
-              className="pl-9 pr-4"
+              onChange={setUserSearchQuery}
             />
           </div>
-          <Button className="ml-4">
+          <Button onClick={() => setShowInviteModal(true)}>
             <UserPlus className="h-4 w-4 mr-2" />
             Invite User
           </Button>
@@ -316,18 +344,20 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <CardTitle>Company Users</CardTitle>
           </CardHeader>
           <CardContent>
-            {company.contacts?.map((contact, index) => (
-              <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
-                <div>
-                  <p className="font-medium">{contact.name}</p>
-                  <p className="text-sm text-muted-foreground">{contact.role}</p>
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user: any) => (
+                <div key={user.id} className="flex items-center justify-between py-4 border-b last:border-0">
+                  <div>
+                    <p className="font-medium">{user.fullName || `${user.firstName} ${user.lastName}`}</p>
+                    <p className="text-sm text-muted-foreground">{user.role || 'Member'}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm">{user.email}</p>
+                    <p className="text-sm text-muted-foreground">{user.phone || 'No phone'}</p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm">{contact.email}</p>
-                  <p className="text-sm text-muted-foreground">{contact.phone}</p>
-                </div>
-              </div>
-            )) || (
+              ))
+            ) : (
               <p className="text-muted-foreground">No users found</p>
             )}
           </CardContent>
@@ -339,15 +369,14 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   const renderFilesTab = () => {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex-1 max-w-md">
+            <SearchBar
               placeholder="Search files..."
-              className="pl-9 pr-4"
+              onChange={setFileSearchQuery}
             />
           </div>
-          <Button className="ml-4">
+          <Button className="whitespace-nowrap">
             <FileUp className="h-4 w-4 mr-2" />
             File Request
           </Button>
@@ -358,14 +387,16 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <CardTitle>Company Files</CardTitle>
           </CardHeader>
           <CardContent>
-            {company.documents?.map((doc, index) => (
-              <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
-                <span className="font-medium">{doc.name}</span>
-                <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'}>
-                  {doc.status}
-                </Badge>
-              </div>
-            )) || (
+            {filteredFiles.length > 0 ? (
+              filteredFiles.map((doc: any, index: number) => (
+                <div key={index} className="flex items-center justify-between py-4 border-b last:border-0">
+                  <span className="font-medium">{doc.name}</span>
+                  <Badge variant={doc.status === 'verified' ? 'outline' : 'secondary'}>
+                    {doc.status}
+                  </Badge>
+                </div>
+              ))
+            ) : (
               <p className="text-muted-foreground">No files found</p>
             )}
           </CardContent>
@@ -443,7 +474,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </div>
 
           {/* Company header section */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
                 <div className="absolute inset-0 flex items-center justify-center p-3">
@@ -485,6 +516,15 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </div>
           </Tabs>
         </div>
+
+        {showInviteModal && (
+          <InviteUserModal
+            open={showInviteModal}
+            onOpenChange={setShowInviteModal}
+            companyId={company.id}
+            companyName={company.name}
+          />
+        )}
       </PageContainer>
     </DashboardLayout>
   );
