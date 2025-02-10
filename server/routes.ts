@@ -1212,6 +1212,9 @@ export function registerRoutes(app: Express): Server {
       const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
       console.log('Debug - Processing invitation request:', { email, fullName, companyName });
 
+      // Title case the full name for the greeting
+      const formattedName = toTitleCase(fullName);
+
       // Generate unique invitation code
       const code = uuidv4();
       const expiresAt = new Date();
@@ -1222,7 +1225,7 @@ export function registerRoutes(app: Express): Server {
       const [task] = await db.insert(tasks)
         .values({
           title: `New User Invitation: ${email}`,
-          description: `Invitation sent to ${email} to join ${companyName}`,
+          description: `Invitation sent to ${email} to join ${companyName} on the platform.`,
           taskType: 'user_onboarding',
           taskScope: 'user',
           status: 'pending',
@@ -1231,6 +1234,9 @@ export function registerRoutes(app: Express): Server {
           userEmail: email,
           companyId,
           dueDate: expiresAt,
+          filesRequested: [],
+          filesUploaded: [],
+          metadata: {}
         })
         .returning();
 
@@ -1240,9 +1246,11 @@ export function registerRoutes(app: Express): Server {
         .values({
           email,
           code,
-          companyId,
+          status: 'pending',
           taskId: task.id,
+          companyId,
           expiresAt,
+          metadata: { sender: senderName, company: senderCompany }
         })
         .returning();
 
@@ -1250,17 +1258,18 @@ export function registerRoutes(app: Express): Server {
       const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}`;
 
       console.log('Debug - Preparing to send invitation email');
-      // Send invitation email
+      // Send invitation email with formatted name
       const emailParams = {
         to: email,
         from: process.env.GMAIL_USER!,
         template: 'user_invite',
         templateData: {
           recipientEmail: email,
+          recipientName: formattedName,
           senderName,
           companyName,
           inviteUrl,
-          greeting: `Hello ${fullName}, you've been invited`
+          greeting: `Hello ${formattedName}, you've been invited`
         }
       };
 
@@ -1272,7 +1281,7 @@ export function registerRoutes(app: Express): Server {
         throw new Error(emailResult.error || 'Failed to send invitation email');
       }
 
-      // Update task status
+      // Update task status after successful email send
       await db.update(tasks)
         .set({ status: 'email_sent' })
         .where(eq(tasks.id, task.id));
@@ -1327,4 +1336,10 @@ function formatTimestampForFilename() {
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
   return `${year}${month}${day}${hours}${minutes}${seconds}`;
+}
+
+function toTitleCase(str: string) {
+  return str.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 }
