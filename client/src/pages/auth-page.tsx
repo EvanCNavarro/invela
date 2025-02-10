@@ -40,6 +40,7 @@ export default function AuthPage() {
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [searchParams] = useState(new URLSearchParams(window.location.search));
   const invitationCode = searchParams.get('code');
+  const workEmail = searchParams.get('work_email');
 
   // Validate invitation code if present
   const { data: invitationData, isLoading: isValidatingCode } = useQuery({
@@ -64,7 +65,7 @@ export default function AuthPage() {
   const registrationForm = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
-      email: invitationData?.email || "",
+      email: workEmail || invitationData?.email || "",
       password: "",
       fullName: "",
       firstName: "",
@@ -84,7 +85,8 @@ export default function AuthPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  if (user) {
+  // Only redirect to home if user is logged in and we're not in registration with a valid code
+  if (user && (!invitationCode || !invitationData?.valid)) {
     return <Redirect to="/" />;
   }
 
@@ -119,7 +121,7 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
-  // Show registration form if we have a valid invitation
+  // Show registration form if we have a valid invitation code
   if (invitationCode && invitationData?.valid) {
     return (
       <div className="min-h-screen flex">

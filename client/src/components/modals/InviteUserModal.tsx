@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, Check } from "lucide-react";
+import { Send, Check, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
@@ -253,8 +253,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
             {companyMismatchWarning && (
               <Alert variant="warning" className="bg-yellow-50/50">
+                <AlertCircle className="h-4 w-4 text-yellow-800" />
                 <AlertDescription className="text-yellow-800">
-                  {companyMismatchWarning}
+                  <span className="font-semibold">Warning: </span>
+                  {companyMismatchWarning.replace('Warning: ', '')}
                 </AlertDescription>
               </Alert>
             )}
