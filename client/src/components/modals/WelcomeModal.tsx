@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 const carouselImages = [
   {
@@ -37,6 +38,7 @@ export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [open, setOpen] = useState(true);
   const { user } = useAuth();
+  const { toast } = useToast();
 
   // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
@@ -46,22 +48,41 @@ export function WelcomeModal() {
 
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      // First complete user onboarding
-      const userRes = await apiRequest("POST", "/api/users/complete-onboarding");
-      if (!userRes.ok) {
-        const error = await userRes.json();
+      console.log('[WelcomeModal] Starting onboarding completion for user:', user?.email);
+      const res = await apiRequest("POST", "/api/users/complete-onboarding");
+
+      if (!res.ok) {
+        const error = await res.json();
+        console.error('[WelcomeModal] Failed to complete onboarding:', error);
         throw new Error(error.message || "Failed to complete onboarding");
       }
 
-      return userRes.json();
+      const data = await res.json();
+      console.log('[WelcomeModal] Onboarding completion response:', data);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[WelcomeModal] Successfully completed onboarding:', data);
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      if (data.task) {
+        toast({
+          title: "Welcome aboard!",
+          description: "Your onboarding has been completed successfully.",
+        });
+      } else {
+        console.warn('[WelcomeModal] No task was updated during onboarding completion');
+      }
     },
     onError: (error) => {
-      console.error("Error completing onboarding:", error);
+      console.error('[WelcomeModal] Error completing onboarding:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to complete onboarding",
+        variant: "destructive",
+      });
     },
   });
 
