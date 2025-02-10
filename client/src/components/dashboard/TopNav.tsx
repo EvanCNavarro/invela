@@ -1,7 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
 import {
-  SearchIcon,
   HelpCircleIcon,
   BellIcon,
   LogOutIcon,
@@ -11,8 +10,8 @@ import {
   EyeOffIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SearchBar } from "@/components/playground/SearchBar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +34,11 @@ export function TopNav() {
     });
   };
 
+  const handleSearch = (value: string) => {
+    console.log('Search query:', value);
+    // Implement global search functionality here
+  };
+
   const handlePlaygroundToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -48,10 +52,10 @@ export function TopNav() {
     <div className="w-full">
       <div className="h-14 px-6 flex items-center">
         <div className="relative w-full max-w-md">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <Input
-            placeholder="Search..."
-            className="pl-9 h-8 w-full"
+          <SearchBar
+            isGlobalSearch
+            onSearch={handleSearch}
+            containerClassName="w-full"
           />
         </div>
 
