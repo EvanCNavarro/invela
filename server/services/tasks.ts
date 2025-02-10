@@ -59,7 +59,12 @@ export async function updateOnboardingTaskStatus(userId: number) {
         progress: 100,
         completionDate: new Date(),
         updatedAt: new Date(),
-        assignedTo: userId // Ensure the task is linked to the user
+        assignedTo: userId, // Ensure the task is linked to the user
+        metadata: {
+          ...taskToUpdate.metadata,
+          onboardingCompleted: true,
+          completionTime: new Date().toISOString()
+        }
       })
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
@@ -69,6 +74,59 @@ export async function updateOnboardingTaskStatus(userId: number) {
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task status:', error);
+    throw error;
+  }
+}
+
+export async function findAndUpdateOnboardingTask(email: string, userId: number) {
+  try {
+    console.log(`[Task Service] Finding and updating onboarding task for email: ${email}, userId: ${userId}`);
+
+    // Find the most recent pending onboarding task for this email
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.taskType, 'user_onboarding'),
+          sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
+          or(
+            eq(tasks.status, 'pending'),
+            eq(tasks.status, 'email_sent')
+          )
+        )
+      )
+      .orderBy(sql`created_at DESC`)
+      .limit(1);
+
+    if (!task) {
+      console.log(`[Task Service] No pending onboarding task found for email: ${email}`);
+      return null;
+    }
+
+    console.log(`[Task Service] Found task ${task.id}, updating with user ID ${userId}`);
+
+    // Update the task with registration progress
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        assignedTo: userId,
+        status: 'in_progress',
+        progress: 50,
+        updatedAt: new Date(),
+        metadata: {
+          ...task.metadata,
+          registrationCompleted: true,
+          registrationTime: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, task.id))
+      .returning();
+
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} with registration progress`);
+    return updatedTask;
+  } catch (error) {
+    console.error('[Task Service] Error updating onboarding task:', error);
     throw error;
   }
 }
