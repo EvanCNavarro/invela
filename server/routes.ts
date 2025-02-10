@@ -1367,11 +1367,22 @@ export function registerRoutes(app: Express): Server {
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
-      const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
+      const { email, fullName, companyId } = req.body;
 
-      if (!email || !fullName || !companyId || !companyName) {
+      if (!email || !fullName || !companyId) {
         return res.status(400).json({
           message: "Missing required fields"
+        });
+      }
+
+      // Get the sender's (logged in user's) company information
+      const [senderCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
+
+      if (!senderCompany) {
+        return res.status(400).json({
+          message: "Sender's company information not found"
         });
       }
 
@@ -1390,8 +1401,8 @@ export function registerRoutes(app: Express): Server {
           expiresAt,
           metadata: {
             fullName,
-            senderName,
-            senderCompany
+            senderName: req.user?.fullName,
+            senderCompany: senderCompany.name
           }
         })
         .returning();
@@ -1402,9 +1413,10 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Generate the correct registration URL (without duplicate /register)
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const inviteUrl = baseUrl;
+      // Generate the correct registration URL with HTTPS
+      const protocol = req.get('x-forwarded-proto') || req.protocol;
+      const baseUrl = `${protocol}://${req.get('host')}`;
+      const inviteUrl = `${baseUrl}/register`;
 
       const emailParams = {
         to: email,
@@ -1413,8 +1425,8 @@ export function registerRoutes(app: Express): Server {
         templateData: {
           recipientName: fullName,
           recipientEmail: email,
-          senderName,
-          senderCompany,
+          senderName: req.user?.fullName,
+          senderCompany: senderCompany.name,
           inviteUrl,
           code
         }
