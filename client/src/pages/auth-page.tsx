@@ -18,6 +18,7 @@ import { Eye, EyeOff, Check, AlertTriangle } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 // Form validation schemas
 const loginSchema = z.object({
@@ -34,7 +35,14 @@ const registrationSchema = z.object({
   invitationCode: z.string().min(1, "Invitation code is required."),
 });
 
+const inviteFormSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  fullName: z.string().min(1, "Please enter the invitee's full name"),
+  company: z.string().min(1, "Please enter the invitee's company name"),
+});
+
 export default function AuthPage() {
+  const { toast } = useToast();
   const { user, loginMutation, registerMutation } = useAuth();
   const [location] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
@@ -79,6 +87,15 @@ export default function AuthPage() {
     },
   });
 
+  const inviteForm = useForm<z.infer<typeof inviteFormSchema>>({
+    resolver: zodResolver(inviteFormSchema),
+    defaultValues: {
+      email: "",
+      fullName: "",
+      company: "",
+    },
+  });
+
   // Update email field when invitation data is loaded
   useEffect(() => {
     if (invitationData?.email) {
@@ -95,6 +112,8 @@ export default function AuthPage() {
   // Determine current page and form to show
   const isLoginPath = location === '/login';
   const isRegistrationPath = location === '/register';
+  const isInvitePath = location === '/invite';
+
 
   // Show registration form if:
   // 1. On /register path AND
@@ -105,7 +124,7 @@ export default function AuthPage() {
   );
 
   // Redirect logged-in users to home unless they have a valid invitation
-  if (user && !showRegistrationForm) {
+  if (user && !showRegistrationForm && !isInvitePath) {
     return <Redirect to="/" />;
   }
 
@@ -140,6 +159,39 @@ export default function AuthPage() {
 
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     registerMutation.mutate(values);
+  };
+
+  const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
+    try {
+      const response = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          inviteeName: values.fullName,
+          inviteeCompany: values.company,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to send invitation' }));
+        throw new Error(errorData.message || 'Failed to send invitation');
+      }
+
+      inviteForm.reset();
+      toast({
+        title: "Invitation sent",
+        description: "The user has been invited to join.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send invitation. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Show registration form when applicable
@@ -320,6 +372,85 @@ export default function AuthPage() {
       </div>
     );
   }
+
+  //Show invite form
+  if (isInvitePath) {
+    return (
+      <div className="min-h-screen flex">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-sm p-6">
+            <div className="text-center mb-8">
+              <img
+                src="/invela-logo.svg"
+                alt="Invela"
+                className="h-12 w-12 mx-auto mb-4"
+              />
+              <h1 className="text-2xl font-bold">Send Invitation</h1>
+            </div>
+
+            <Form {...inviteForm}>
+              <form onSubmit={inviteForm.handleSubmit(onInviteSubmit)} className="space-y-4">
+                <FormField
+                  control={inviteForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="user@company.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={inviteForm.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" placeholder="John Doe" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={inviteForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" placeholder="Company Name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90"
+                  disabled={inviteForm.formState.isSubmitting}
+                >
+                  Send Invite
+                </Button>
+              </form>
+            </Form>
+          </div>
+        </div>
+
+        <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(209,99%,50%)]">
+          <AuthHeroSection isLogin={true} />
+        </div>
+      </div>
+    );
+  }
+
 
   // Show login form by default or when on /login path
   return (
