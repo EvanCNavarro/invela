@@ -23,10 +23,25 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Update the corresponding onboarding task
-    const updatedTask = await updateOnboardingTaskStatus(req.user.id);
+    // Find and update the corresponding onboarding task using user's email
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.taskType, 'user_onboarding'),
+          sql`LOWER(${tasks.userEmail}) = LOWER(${req.user.email})`,
+          or(
+            eq(tasks.status, 'pending'),
+            eq(tasks.status, 'in_progress'),
+            eq(tasks.status, 'email_sent')
+          )
+        )
+      )
+      .orderBy(sql`created_at DESC`)
+      .limit(1);
 
-    if (!updatedTask) {
+    if (!task) {
       console.warn(`[User Routes] No pending onboarding task found for user ID ${req.user.id}`);
       return res.json({ 
         user: updatedUser,
@@ -34,6 +49,24 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
         message: "User onboarding completed, but no pending task was found to update"
       });
     }
+
+    // Update the task status
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        status: 'completed',
+        progress: 100,
+        completionDate: new Date(),
+        updatedAt: new Date(),
+        assignedTo: req.user.id,
+        metadata: {
+          ...(task.metadata || {}),
+          onboardingCompleted: true,
+          completionTime: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, task.id))
+      .returning();
 
     console.log(`[User Routes] Successfully updated task ${updatedTask.id} for user ${req.user.id}`);
     res.json({ 
