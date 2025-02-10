@@ -60,6 +60,26 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           sender_company: companyName
         };
 
+        // Validate all required fields before sending
+        const requiredFields = [
+          'email',
+          'invitee_name',
+          'invitee_company',
+          'company_id',
+          'sender_name',
+          'sender_company'
+        ];
+
+        const missingFields = requiredFields.filter(field => {
+          const value = payload[field as keyof typeof payload];
+          return !value || (typeof value === 'string' && !value.trim());
+        });
+
+        if (missingFields.length > 0) {
+          console.error('Missing required fields:', missingFields);
+          throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+        }
+
         console.log('Sending invitation with payload:', payload);
 
         const response = await fetch('/api/users/invite', {
