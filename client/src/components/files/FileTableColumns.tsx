@@ -32,7 +32,7 @@ export const getFileColumns = (): Column<FileItem>[] => [
     id: 'name',
     header: 'Name',
     cell: (item) => (
-      <div className="flex items-center gap-2 min-w-0 max-w-[14rem]">
+      <div className="flex items-center gap-2 min-w-0">
         <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
           <FileIcon className="w-3 h-3 text-primary" />
         </div>
@@ -40,14 +40,14 @@ export const getFileColumns = (): Column<FileItem>[] => [
       </div>
     ),
     sortable: true,
-    className: 'w-[300px]',
+    className: 'min-w-[200px] max-w-[300px]',
   },
   {
     id: 'size',
     header: 'Size',
     cell: (item) => formatFileSize(item.size),
     sortable: true,
-    className: 'text-right',
+    className: 'text-right whitespace-nowrap w-[100px]',
   },
   {
     id: 'status',
@@ -58,17 +58,20 @@ export const getFileColumns = (): Column<FileItem>[] => [
       </span>
     ),
     sortable: true,
+    className: 'hidden sm:table-cell',
   },
   {
     id: 'createdAt',
     header: 'Upload Date',
     cell: (item) => new Date(item.createdAt).toLocaleDateString(),
     sortable: true,
+    className: 'hidden md:table-cell whitespace-nowrap',
   },
   {
     id: 'version',
     header: 'Version',
     cell: (item) => `v${item.version?.toFixed(1) || '1.0'}`,
     sortable: true,
+    className: 'hidden lg:table-cell text-center w-[100px]',
   },
 ];
