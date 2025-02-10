@@ -71,7 +71,7 @@ export function WelcomeModal() {
     setOpen(false);
   };
 
-  if (user?.onboardingCompleted) {
+  if (user?.onboardingUserCompleted) {
     return null;
   }
 
