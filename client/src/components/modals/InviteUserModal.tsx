@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "lucide-react";
+import { Send, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
 import { useAuth } from "@/hooks/use-auth";
+import Fuse from 'fuse.js';
 
 import {
   Dialog,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -37,6 +39,7 @@ interface InviteUserModalProps {
 export function InviteUserModal({ open, onOpenChange, companyId, companyName }: InviteUserModalProps) {
   const { toast } = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [companyMismatchWarning, setCompanyMismatchWarning] = useState<string | null>(null);
   const { user } = useAuth();
 
   const form = useForm<InviteUserData>({
@@ -47,26 +50,78 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     }
   });
 
-  // Helper function to extract and format name from email
-  const extractNameFromEmail = (email: string): string => {
-    const [localPart] = email.split('@');
-    return localPart
-      .split(/[._-]/)
-      .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+  // Helper function to title case a string
+  const toTitleCase = (str: string) => {
+    return str.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  };
+
+  // Helper function to extract and format name from email
+  const extractNameFromEmail = (email: string): { firstName: string; lastName: string; fullName: string } => {
+    const [localPart] = email.split('@');
+
+    // Split by common separators and remove empty parts
+    const parts = localPart.split(/[._-]/).filter(Boolean);
+
+    // If we have at least two parts, use them as first and last name
+    if (parts.length >= 2) {
+      const firstName = toTitleCase(parts[0]);
+      const lastName = toTitleCase(parts[parts.length - 1]);
+      return {
+        firstName,
+        lastName,
+        fullName: `${firstName} ${lastName}`
+      };
+    }
+
+    // If only one part, use it as the first name
+    return {
+      firstName: toTitleCase(parts[0]),
+      lastName: "",
+      fullName: toTitleCase(parts[0])
+    };
+  };
+
+  // Function to check company name similarity
+  const checkCompanyDomainMatch = (email: string, companyName: string) => {
+    const domain = email.split('@')[1]?.split('.')[0];
+    if (!domain) return false;
+
+    const fuse = new Fuse([companyName], {
+      threshold: 0.4,
+      location: 0,
+      distance: 100,
+      minMatchCharLength: 1,
+    });
+
+    const result = fuse.search(domain);
+    return result.length === 0; // No matches found indicates mismatch
   };
 
   // Handle email field change
   const handleEmailChange = (email: string) => {
-    if (email && !form.getValues('fullName')) {
-      const extractedName = extractNameFromEmail(email);
-      form.setValue('fullName', extractedName);
+    if (email) {
+      // Extract name from email
+      const { fullName } = extractNameFromEmail(email);
+      form.setValue('fullName', fullName);
+
+      // Check for company domain mismatch
+      const hasMismatch = checkCompanyDomainMatch(email, companyName);
+      if (hasMismatch) {
+        setCompanyMismatchWarning(
+          `Note: The email domain doesn't match the company name "${companyName}". You can still proceed if this is intended.`
+        );
+      } else {
+        setCompanyMismatchWarning(null);
+      }
     }
     form.setValue('email', email);
   };
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
+      const { firstName } = extractNameFromEmail(data.email);
       const response = await fetch('/api/users/invite', {
         method: 'POST',
         headers: {
@@ -77,7 +132,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           companyId,
           companyName,
           senderName: user?.fullName,
-          senderCompany: companyName
+          senderCompany: companyName,
+          greeting: `Hello ${toTitleCase(firstName)}, you've been invited`
         })
       });
 
@@ -109,7 +165,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       }
 
       toast({
-        title: "Invitation Sent",
+        title: <div className="flex items-center gap-2">
+          <Check className="h-4 w-4 text-green-500" />
+          Invitation Sent
+        </div>,
         description: "The user has been invited to join the company.",
         duration: 2000,
         className: "border-l-4 border-green-500",
@@ -117,6 +176,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       form.reset();
       setServerError(null);
+      setCompanyMismatchWarning(null);
       onOpenChange(false);
     },
     onError: (error: Error) => {
@@ -161,7 +221,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                       type="email"
                       className={cn(
                         "w-full",
-                        serverError && "border-destructive"
+                        serverError && "border-destructive",
+                        field.value && !form.formState.errors.email && "border-green-500"
                       )}
                       disabled={isPending}
                       aria-label="User's email address"
@@ -180,9 +241,23 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                         : serverError}
                     </p>
                   )}
+                  {field.value && !form.formState.errors.email && (
+                    <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                      <Check className="h-4 w-4" />
+                      Valid email address
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
+
+            {companyMismatchWarning && (
+              <Alert variant="warning" className="bg-yellow-50/50">
+                <AlertDescription className="text-yellow-800">
+                  {companyMismatchWarning}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <FormField
               control={form.control}
@@ -196,13 +271,20 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                       type="text"
                       className={cn(
                         "w-full",
-                        serverError && "border-destructive"
+                        serverError && "border-destructive",
+                        field.value && !form.formState.errors.fullName && "border-green-500"
                       )}
                       disabled={isPending}
                       aria-label="User's full name"
                     />
                   </FormControl>
                   <FormMessage />
+                  {field.value && !form.formState.errors.fullName && (
+                    <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                      <Check className="h-4 w-4" />
+                      Name looks good
+                    </p>
+                  )}
                 </FormItem>
               )}
             />
