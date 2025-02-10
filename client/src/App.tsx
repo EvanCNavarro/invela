@@ -35,7 +35,9 @@ function Router() {
         <Redirect to="/login" />
       </Route>
       <Route path="/login" component={AuthPage} />
-      <Route path="/register" component={AuthPage} />
+      <Route path="/register">
+        <Redirect to="/login" />
+      </Route>
       <ProtectedRoute 
         path="/" 
         component={() => (
