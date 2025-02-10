@@ -877,7 +877,7 @@ const FileVault = () => {
     if (sortConfig.field !== field) return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
     return sortConfig.order === 'asc' ?
       <ArrowUpIcon className="h-4 w-4 text-primary" /> :
-      <ArrowDownIcon className="h-4 w-4text-primary" />;
+      <ArrowDownIcon className="h-4 w-4text-primary" />
   };
 
   const allFiles = useMemo(() => {
@@ -1067,25 +1067,16 @@ const FileVault = () => {
           <div className="w-full">
             <DragDropProvider
               onFilesAccepted={onDrop}
-              className="min-h-[120px] sm:min-h-[200px] rounded-lg transition-colors duration-200"
+              className="min-h-[200px] rounded-lg transition-colors duration-200"
               activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
             >
-              {({ isDragActive }) => (
-                <div className="relative">
-                  {isDragActive && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm rounded-lg">
-                      <div className="flex items-center gap-2 text-lg font-medium">
-                        <UploadIcon className="h-5 w-5" />
-                        Drop files to upload
-                      </div>
-                    </div>
-                  )}
-                  <FileUploadZone
-                    onFilesSelected={async (files: File[]) => await onDrop(files)}
-                    ref={fileInputRef}
-                  />
-                </div>
-              )}
+              <FileUploadZone
+                onFilesAccepted={onDrop}
+                variant="box"
+                maxFiles={10}
+                maxSize={5 * 1024 * 1024}
+                className="min-h-[200px]"
+              />
             </DragDropProvider>
           </div>
 
