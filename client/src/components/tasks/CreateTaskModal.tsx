@@ -97,7 +97,15 @@ export function CreateTaskModal() {
         taskData = {
           ...data,
           title: `New User Invitation: ${data.userEmail}`,
-          description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`
+          description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`,
+          // Set task scope for onboarding tasks
+          taskScope: TaskScope.USER,
+          // Initialize status and progress
+          status: 'pending',
+          progress: 0,
+          // Make sure we store the email for matching later
+          userEmail: data.userEmail?.toLowerCase(),
+          // Don't set assignedTo here - it will be set when the user registers
         };
       } else {
         const assignee = data.taskScope === TaskScope.COMPANY
@@ -106,9 +114,14 @@ export function CreateTaskModal() {
         taskData = {
           ...data,
           title: `File Request for ${assignee}`,
-          description: `Document request task for ${assignee}`
+          description: `Document request task for ${assignee}`,
+          status: 'pending',
+          progress: 0,
+          userEmail: data.userEmail?.toLowerCase()
         };
       }
+
+      console.log('[CreateTaskModal] Creating task with data:', taskData);
 
       const response = await fetch("/api/tasks", {
         method: "POST",

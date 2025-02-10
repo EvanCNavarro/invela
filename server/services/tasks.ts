@@ -2,29 +2,18 @@ import { db } from "@db";
 import { tasks } from "@db/schema";
 import { eq, and, sql, or } from "drizzle-orm";
 
-function normalizeEmail(email: string): string {
-  // Remove all dots before @ and convert to lowercase
-  const [localPart, domain] = email.split('@');
-  const normalizedLocal = localPart.replace(/\./g, '').toLowerCase();
-  return `${normalizedLocal}@${domain.toLowerCase()}`;
-}
-
-export async function updateOnboardingTaskStatus(userEmail: string) {
+export async function updateOnboardingTaskStatus(userId: number) {
   try {
-    // Log the task update attempt
-    console.log(`[Task Service] Attempting to update onboarding task for email: ${userEmail}`);
+    console.log(`[Task Service] Attempting to update onboarding task for user ID: ${userId}`);
 
-    // Normalize the input email
-    const normalizedInputEmail = normalizeEmail(userEmail);
-    console.log(`[Task Service] Normalized input email: ${normalizedInputEmail}`);
-
-    // Find all pending tasks
+    // Find pending onboarding task for this user
     const pendingTasks = await db
       .select()
       .from(tasks)
       .where(
         and(
           eq(tasks.taskType, 'user_onboarding'),
+          eq(tasks.assignedTo, userId),
           or(
             eq(tasks.status, 'pending'),
             sql`${tasks.status} IS NULL`
@@ -32,25 +21,18 @@ export async function updateOnboardingTaskStatus(userEmail: string) {
         )
       );
 
-    console.log(`[Task Service] Found ${pendingTasks.length} pending onboarding tasks`);
+    console.log(`[Task Service] Found ${pendingTasks.length} pending onboarding tasks for user ${userId}`);
 
-    // Find matching task by normalizing and comparing emails
-    const matchingTask = pendingTasks.find(task => {
-      if (!task.userEmail) return false;
-      const normalizedTaskEmail = normalizeEmail(task.userEmail);
-      const matches = normalizedTaskEmail === normalizedInputEmail;
-      console.log(`[Task Service] Comparing normalized emails: ${normalizedTaskEmail} with ${normalizedInputEmail}: ${matches}`);
-      return matches;
-    });
-
-    if (!matchingTask) {
-      console.log(`[Task Service] No matching task found for email: ${userEmail}`);
+    if (pendingTasks.length === 0) {
+      console.log(`[Task Service] No pending onboarding task found for user ID: ${userId}`);
       return null;
     }
 
-    console.log(`[Task Service] Found matching task ID: ${matchingTask.id}`);
+    // Get the most recent pending task
+    const taskToUpdate = pendingTasks[0];
+    console.log(`[Task Service] Updating task ID: ${taskToUpdate.id}`);
 
-    // Update the matching task
+    // Update the task
     const result = await db
       .update(tasks)
       .set({
@@ -59,7 +41,7 @@ export async function updateOnboardingTaskStatus(userEmail: string) {
         completionDate: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(tasks.id, matchingTask.id))
+      .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
     console.log('[Task Service] Update result:', result);

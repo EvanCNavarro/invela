@@ -14,7 +14,7 @@ import {
   users,
   invitations
 } from "@db/schema";
-import { eq, and, inArray, or, gt } from "drizzle-orm";
+import { eq, and, inArray, or, gt, sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -203,7 +203,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "User already exists" });
       }
 
-      // Create the user with onboardingCompleted set to false
+      // Create the user
       const [user] = await db.insert(users)
         .values({
           email,
@@ -212,9 +212,37 @@ export function registerRoutes(app: Express): Server {
           firstName,
           lastName,
           companyId: invitation.companyId,
-          onboardingCompleted: false, // Set to false by default
+          onboardingUserCompleted: false,
         })
         .returning();
+
+      console.log(`[Register] Created new user with ID: ${user.id}`);
+
+      // Find and update the corresponding onboarding task
+      const [pendingTask] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.taskType, 'user_onboarding'),
+          eq(tasks.userEmail, email.toLowerCase()),
+          or(
+            eq(tasks.status, 'pending'),
+            sql`${tasks.status} IS NULL`
+          )
+        ));
+
+      if (pendingTask) {
+        console.log(`[Register] Found pending onboarding task ${pendingTask.id} for user ${user.id}`);
+
+        // Update the task with the user ID
+        await db.update(tasks)
+          .set({
+            assignedTo: user.id,
+            status: 'in_progress',
+            progress: 50,
+            updatedAt: new Date()
+          })
+          .where(eq(tasks.id, pendingTask.id));
+      }
 
       // Update invitation status
       await db.update(invitations)

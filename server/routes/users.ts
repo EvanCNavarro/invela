@@ -12,7 +12,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    console.log(`[User Routes] Starting onboarding completion for user: ${req.user.email}`);
+    console.log(`[User Routes] Starting onboarding completion for user ID: ${req.user.id}`);
 
     // Update user onboarding status
     const [updatedUser] = await db
@@ -23,12 +23,11 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Update the corresponding onboarding task
-    const updatedTask = await updateOnboardingTaskStatus(req.user.email);
+    // Update the corresponding onboarding task using user ID
+    const updatedTask = await updateOnboardingTaskStatus(req.user.id);
 
     if (!updatedTask) {
-      console.warn(`[User Routes] No pending onboarding task found for user ${req.user.email}`);
-      // Still return success since the user status was updated
+      console.warn(`[User Routes] No pending onboarding task found for user ID ${req.user.id}`);
       return res.json({ 
         user: updatedUser,
         task: null,
@@ -36,7 +35,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       });
     }
 
-    console.log(`[User Routes] Successfully updated task ${updatedTask.id} for user ${req.user.email}`);
+    console.log(`[User Routes] Successfully updated task ${updatedTask.id} for user ${req.user.id}`);
     res.json({ 
       user: updatedUser, 
       task: updatedTask,
