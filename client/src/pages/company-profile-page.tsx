@@ -388,8 +388,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     const tableData = filteredUsers.map(user => {
       console.log("Debug - Transforming user data:", user);
       return {
-        ...user,
-        onboardingUserCompleted: user.onboardingUserCompleted ? 'Active' : 'Onboarding'
+        ...user
       };
     });
 
