@@ -912,10 +912,9 @@ export function registerRoutes(app: Express): Server {
             fs.unlinkSync(oldFilePath);
             console.log('Debug - Successfully deleted old logo');
           } else {
-            console.log('Debug - Old logo file not found on disk');
-          }
+            console.log('Debug - Old logo file not found on disk');          }
         }
-      }      }
+      }
 
       // Create logo record
       const [logo] = await db.insert(companyLogos)
