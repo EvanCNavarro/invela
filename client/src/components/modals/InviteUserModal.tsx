@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -121,29 +120,33 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
-      const { firstName } = extractNameFromEmail(data.email);
-      const response = await fetch('/api/users/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          ...data,
-          companyId,
-          companyName,
-          senderName: user?.fullName,
-          senderCompany: companyName,
-          greeting: `Hello ${toTitleCase(firstName)}, you've been invited`
-        })
-      });
+      try {
+        const response = await fetch('/api/users/invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...data,
+            companyId,
+            companyName,
+            senderName: user?.fullName,
+            senderCompany: companyName
+          })
+        });
 
-      const result = await response.json();
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to send invitation');
+        }
 
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send invitation');
+        return await response.json();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error;
+        }
+        throw new Error('Failed to send invitation');
       }
-
-      return result;
     },
     onSuccess: () => {
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
@@ -165,13 +168,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       }
 
       toast({
-        title: <div className="flex items-center gap-2">
-          <Check className="h-4 w-4 text-green-500" />
-          Invitation Sent
-        </div>,
         description: "The user has been invited to join the company.",
         duration: 2000,
-        className: "border-l-4 border-green-500",
       });
 
       form.reset();
@@ -236,9 +234,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                   <FormMessage />
                   {serverError && (
                     <p className="text-sm font-medium text-destructive mt-2">
-                      {serverError.includes("mailbox")
-                        ? "This email address does not exist. Please try again."
-                        : serverError}
+                      {serverError}
                     </p>
                   )}
                   {field.value && !form.formState.errors.email && (
@@ -252,13 +248,19 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
             />
 
             {companyMismatchWarning && (
-              <Alert variant="warning" className="bg-yellow-50/50">
-                <AlertCircle className="h-4 w-4 text-yellow-800" />
-                <AlertDescription className="text-yellow-800">
-                  <span className="font-semibold">Warning: </span>
-                  {companyMismatchWarning.replace('Warning: ', '')}
-                </AlertDescription>
-              </Alert>
+              <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-700">
+                      Email domain doesn't match company
+                    </p>
+                    <p className="text-sm text-amber-600 mt-1">
+                      {companyMismatchWarning}
+                    </p>
+                  </div>
+                </div>
+              </div>
             )}
 
             <FormField
