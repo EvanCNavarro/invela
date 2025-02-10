@@ -9,12 +9,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, PlusIcon, Check, FileText, Send, User, Building2 } from "lucide-react";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
+
+// Define company interface
+interface Company {
+  id: number;
+  name: string;
+  category?: string;
+  logoId?: number | null;
+}
 
 // First define the literal types to avoid inference issues
 const TaskType = {
@@ -75,7 +83,7 @@ export function CreateTaskModal() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies", searchQuery],
     enabled: searchQuery.length > 0,
   });
@@ -92,24 +100,20 @@ export function CreateTaskModal() {
     mutationFn: async (data: TaskFormData) => {
       let taskData;
       if (data.taskType === TaskType.USER_ONBOARDING) {
-        const company = companies.find((c: any) => c.id === data.companyId);
+        const company = companies.find((c) => c.id === data.companyId);
         const companyName = company ? company.name : 'the company';
         taskData = {
           ...data,
           title: `New User Invitation: ${data.userEmail}`,
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`,
-          // Set task scope for onboarding tasks
           taskScope: TaskScope.USER,
-          // Initialize status and progress
           status: 'pending',
           progress: 0,
-          // Make sure we store the email for matching later
           userEmail: data.userEmail?.toLowerCase(),
-          // Don't set assignedTo here - it will be set when the user registers
         };
       } else {
         const assignee = data.taskScope === TaskScope.COMPANY
-          ? companies.find((c: any) => c.id === data.companyId)?.name
+          ? companies.find((c) => c.id === data.companyId)?.name
           : data.userEmail;
         taskData = {
           ...data,
@@ -136,7 +140,6 @@ export function CreateTaskModal() {
       return response.json();
     },
     onSuccess: () => {
-      // Invalidate and refetch tasks query
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
       toast({
@@ -183,7 +186,6 @@ export function CreateTaskModal() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Task Type Selection */}
             <FormField
               control={form.control}
               name="taskType"
@@ -231,7 +233,6 @@ export function CreateTaskModal() {
               )}
             />
 
-            {/* Task Scope - Only show for file requests */}
             {taskType === TaskType.FILE_REQUEST && (
               <FormField
                 control={form.control}
@@ -281,7 +282,6 @@ export function CreateTaskModal() {
               />
             )}
 
-            {/* User Email Field */}
             {((taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.USER) || taskType === TaskType.USER_ONBOARDING) && (
               <FormField
                 control={form.control}
@@ -298,7 +298,6 @@ export function CreateTaskModal() {
               />
             )}
 
-            {/* Company Selection */}
             {((taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.COMPANY) || taskType === TaskType.USER_ONBOARDING) && (
               <FormField
                 control={form.control}
@@ -316,7 +315,7 @@ export function CreateTaskModal() {
                             className="w-full justify-between"
                           >
                             {field.value
-                              ? companies.find((company: any) => company.id === field.value)?.name
+                              ? companies.find((company) => company.id === field.value)?.name
                               : "Search companies..."}
                             <Building2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
@@ -331,7 +330,7 @@ export function CreateTaskModal() {
                           />
                           <CommandEmpty>No companies found.</CommandEmpty>
                           <CommandGroup>
-                            {companies.map((company: any) => (
+                            {companies.map((company) => (
                               <CommandItem
                                 key={company.id}
                                 value={company.name}
@@ -359,7 +358,6 @@ export function CreateTaskModal() {
               />
             )}
 
-            {/* Due Date Selection - only show for file requests */}
             {taskType === TaskType.FILE_REQUEST && (
               <FormField
                 control={form.control}
