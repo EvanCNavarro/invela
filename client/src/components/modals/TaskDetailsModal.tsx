@@ -11,10 +11,10 @@ interface TaskDetailsModalProps {
 }
 
 const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Invitation Sent',
+  [TaskStatus.EMAIL_SENT]: 'Email Sent',
   [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
-  pending: 'Invitation Sent', // Backward compatibility for existing tasks
+  pending: 'Email Sent', // Backward compatibility for existing tasks
 };
 
 export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
@@ -56,17 +56,6 @@ export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalP
                 {index < taskFields.length - 1 && <Separator className="my-2" />}
               </div>
             ))}
-            {task.metadata && (
-              <>
-                <Separator className="my-2" />
-                <div>
-                  <div className="font-medium text-muted-foreground mb-2">Additional Metadata</div>
-                  <pre className="bg-muted p-2 rounded-md text-sm">
-                    {JSON.stringify(task.metadata, null, 2)}
-                  </pre>
-                </div>
-              </>
-            )}
           </div>
         </ScrollArea>
       </DialogContent>
