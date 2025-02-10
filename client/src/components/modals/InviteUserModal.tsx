@@ -22,7 +22,8 @@ import { cn } from "@/lib/utils";
 
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  fullName: z.string().min(1, "Full name is required"),
+  inviteeName: z.string().min(1, "Full name is required"),
+  inviteeCompany: z.string().min(1, "Company name is required"),
 });
 
 type InviteUserData = z.infer<typeof inviteUserSchema>;
@@ -43,7 +44,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
-      fullName: "",
+      inviteeName: "",
+      inviteeCompany: "",
     }
   });
 
@@ -160,7 +162,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
             <FormField
               control={form.control}
-              name="fullName"
+              name="inviteeName"
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Full Name</div>
@@ -171,6 +173,26 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
                       className="w-full"
                       disabled={isPending}
                       aria-label="User's full name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="inviteeCompany"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="text-sm font-semibold mb-2">Company Name</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      className="w-full"
+                      disabled={isPending}
+                      aria-label="User's company name"
                     />
                   </FormControl>
                   <FormMessage />
