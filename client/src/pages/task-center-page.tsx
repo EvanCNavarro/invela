@@ -58,7 +58,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { format, differenceInDays } from "date-fns";
 import { PageHeader } from "@/components/ui/page-header";
-import { SearchBar } from "@/components/playground/SearchBar"
+import { SearchBar } from "@/components/playground/SearchBar";
+import Fuse from 'fuse.js'
 
 interface Task {
   id: number;
@@ -144,7 +145,7 @@ export default function TaskCenterPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
   const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
-  const [searchResults, setSearchResults] = useState<Task[]>([]); // Added state for search results
+  const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
 
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
@@ -183,7 +184,15 @@ export default function TaskCenterPage() {
 
   const itemsPerPage = 10;
   const filteredTasks = tasks.map(processTaskStatus).filter((task) => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || task.description.toLowerCase().includes(searchQuery.toLowerCase()); //Improved search
+    // If we have search results, use those instead of doing a basic filter
+    if (searchQuery && searchResults.length > 0) {
+      return searchResults.some(result => result.id === task.id);
+    }
+
+    // Otherwise, fall back to basic filtering
+    const matchesSearch = searchQuery === "" ||
+      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "All Statuses" || task.status === statusFilter.toLowerCase().replace(/ /g, '_');
     const matchesType = typeFilter === "All Task Types" ||
       task.taskType === typeFilter.toLowerCase().replace(/ /g, '_');
@@ -213,7 +222,7 @@ export default function TaskCenterPage() {
     setStatusFilter("All Statuses");
     setTypeFilter("All Task Types");
     setScopeFilter("All Assignee Types");
-    setSearchResults([]); // Clear search results on filter clear
+    setSearchResults([]);
   };
 
   // Component render
@@ -300,7 +309,7 @@ export default function TaskCenterPage() {
                   keys={['title', 'description']}
                   onResults={(results) => {
                     // Map the fuzzy search results back to tasks
-                    const filteredTasks = results.map(result => result.item);
+                    const filteredTasks = results.map(result => result.item as Task);
                     setSearchResults(filteredTasks);
                   }}
                   onSearch={(value) => setSearchQuery(value)}
@@ -369,6 +378,8 @@ export default function TaskCenterPage() {
                       error={error}
                       sortConfig={sortConfig}
                       onSort={handleSort}
+                      searchQuery={searchQuery}
+                      searchResults={searchResults}
                     />
                   </TabsContent>
 
@@ -379,6 +390,8 @@ export default function TaskCenterPage() {
                       error={error}
                       sortConfig={sortConfig}
                       onSort={handleSort}
+                      searchQuery={searchQuery}
+                      searchResults={searchResults}
                     />
                   </TabsContent>
                 </div>
@@ -426,9 +439,11 @@ interface TaskListProps {
   error: any;
   sortConfig: { key: string; direction: 'asc' | 'desc' };
   onSort: (key: string) => void;
+  searchQuery: string;
+  searchResults: Task[];
 }
 
-function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps) {
+function TaskList({ tasks, isLoading, error, sortConfig, onSort, searchQuery, searchResults }: TaskListProps) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -488,7 +503,17 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
       .join(' ');
   };
 
-  const formatTaskTitle = (task: Task) => {
+  const highlightMatch = (text: string, matches: Fuse.FuseResultMatch[]) => {
+    let highlightedText = text;
+    matches.forEach(match => {
+      const start = match.indices[0][0];
+      const end = match.indices[0][1] + 1;
+      highlightedText = highlightedText.substring(0, start) + `<strong>${highlightedText.substring(start, end)}</strong>` + highlightedText.substring(end);
+    })
+    return highlightedText;
+  }
+
+  const formatTaskTitle = (task: Task, searchResult?: Fuse.FuseResult<Task>) => {
     if (task.taskType === 'user_onboarding') {
       const companyMatch = task.description?.match(/to join (.*?) on the platform/);
       const companyName = companyMatch ? companyMatch[1] : 'Unknown';
@@ -502,6 +527,28 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
         </>
       );
     }
+
+    // If we have search results and matches, use highlighting
+    const searchResultForTask = searchResults.find(result => result.id === task.id);
+    if (searchQuery && searchResultForTask?.matches?.length) {
+      return (
+        <>
+          <div
+            className="font-medium"
+            dangerouslySetInnerHTML={{
+              __html: highlightMatch(task.title, searchResultForTask.matches)
+            }}
+          />
+          <div
+            className="text-xs text-muted-foreground line-clamp-2"
+            dangerouslySetInnerHTML={{
+              __html: highlightMatch(task.description, searchResultForTask.matches)
+            }}
+          />
+        </>
+      );
+    }
+
     return (
       <>
         <div className="font-medium truncate">{task.title}</div>
@@ -603,70 +650,73 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
               </TableCell>
             </TableRow>
           ) : (
-            tasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell>
-                  <div className="max-w-[280px] group relative">
-                    {formatTaskTitle(task)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={getStatusBadgeVariant(task.status)}
-                    className="no-hover text-center whitespace-normal"
-                  >
-                    {capitalizeStatus(task.status)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-center">
-                    <div className="w-full max-w-[100px]">
-                      <div className="bg-secondary rounded-full h-2 w-full">
-                        <div
-                          className="bg-primary rounded-full h-2 transition-all"
-                          style={{ width: `${task.progress}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-muted-foreground text-center block mt-1">
-                        {task.progress}%
-                      </span>
+            tasks.map((task, index) => {
+              const searchResult = searchResults.find(result => result.id === task.id);
+              return (
+                <TableRow key={task.id}>
+                  <TableCell>
+                    <div className="max-w-[280px] group relative">
+                      {formatTaskTitle(task, searchResult)}
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell className="hidden md:table-cell">
-                  {getDueInDays(task.dueDate)}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu
-                    open={openDropdownId === task.id}
-                    onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}
-                  >
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => {
-                        setOpenDropdownId(null);
-                        setSelectedTask(task);
-                      }}>
-                        View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          setTaskToDelete(task);
-                          setDeleteModalOpen(true);
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={getStatusBadgeVariant(task.status)}
+                      className="no-hover text-center whitespace-normal"
+                    >
+                      {capitalizeStatus(task.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      <div className="w-full max-w-[100px]">
+                        <div className="bg-secondary rounded-full h-2 w-full">
+                          <div
+                            className="bg-primary rounded-full h-2 transition-all"
+                            style={{ width: `${task.progress}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-muted-foreground text-center block mt-1">
+                          {task.progress}%
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {getDueInDays(task.dueDate)}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu
+                      open={openDropdownId === task.id}
+                      onOpenChange={(open) => setOpenDropdownId(open ? task.id : null)}
+                    >
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => {
                           setOpenDropdownId(null);
-                        }}
-                      >
-                        Delete Task
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
+                          setSelectedTask(task);
+                        }}>
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => {
+                            setTaskToDelete(task);
+                            setDeleteModalOpen(true);
+                            setOpenDropdownId(null);
+                          }}
+                        >
+                          Delete Task
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              )
+            })
           )}
         </TableBody>
       </Table>
@@ -760,7 +810,7 @@ function TaskList({ tasks, isLoading, error, sortConfig, onSort }: TaskListProps
                     {selectedTask.completionDate && (
                       <div>
                         <div className="text-sm font-medium">Completed On</div>
-                        <div className="text-sm text-muted-foreground mt-1">
+                        <div className="text-sm text-muted-foregroundmt-1">
                           {format(new Date(selectedTask.completionDate), 'PPP')}
                         </div>
                       </div>
