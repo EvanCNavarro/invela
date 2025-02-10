@@ -1258,7 +1258,7 @@ export function registerRoutes(app: Express): Server {
       const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}`;
 
       console.log('Debug - Preparing to send invitation email');
-      // Send invitation email with formatted name
+      // Send invitation email with formatted name and company details
       const emailParams = {
         to: email,
         from: process.env.GMAIL_USER!,
@@ -1267,11 +1267,19 @@ export function registerRoutes(app: Express): Server {
           recipientEmail: email,
           recipientName: formattedName,
           senderName,
-          companyName,
+          senderCompany,
+          code,
           inviteUrl,
-          greeting: `Hello ${formattedName}, you've been invited`
         }
       };
+
+      console.log('Debug - Sending invitation email with params:', {
+        to: email,
+        template: 'user_invite',
+        senderName,
+        senderCompany,
+        code
+      });
 
       const emailResult = await emailService.sendTemplateEmail(emailParams);
       console.log('Debug - Email service response:', emailResult);
@@ -1286,7 +1294,7 @@ export function registerRoutes(app: Express): Server {
         .set({ status: 'email_sent' })
         .where(eq(tasks.id, task.id));
 
-      res.json({ message: "Invitation sent successfully" });
+      res.json({ success: true, message: 'Invitation sent successfully' });
     } catch (error) {
       console.error("Error sending invitation:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
