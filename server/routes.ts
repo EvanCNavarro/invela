@@ -219,17 +219,21 @@ export function registerRoutes(app: Express): Server {
 
       console.log(`[Register] Created new user with ID: ${user.id}`);
 
-      // Update the onboarding task - now with explicit error handling
+      // Update the onboarding task with proper error handling
       try {
         const updatedTask = await findAndUpdateOnboardingTask(email, user.id);
-        if (updatedTask) {
-          console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
-        } else {
+        if (!updatedTask) {
           console.warn(`[Register] No task found to update for user ${user.id}`);
+        } else {
+          console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
         }
       } catch (taskError) {
         console.error('[Register] Error updating task:', taskError);
-        // Continue with registration even if task update fails
+        // Since user is created, we continue but return a warning
+        return res.status(201).json({
+          user,
+          warning: "User created but task update failed. Please contact support if issues persist."
+        });
       }
 
       // Update invitation status
@@ -902,7 +906,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/companies/:id/logo", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
-        console.log('Debug - No logo file in request');
+        console.log('Debug - No logo filein request');
         return res.status(400).json({ message: "No logo uploaded" });
       }
 
