@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -38,13 +38,33 @@ export function WelcomeModal() {
   const [open, setOpen] = useState(true);
   const { user } = useAuth();
 
+  // Fetch onboarding task
+  const { data: onboardingTask } = useQuery({
+    queryKey: ["/api/tasks", { type: "user_onboarding", email: user?.email }],
+    enabled: !!user?.email,
+  });
+
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/users/complete-onboarding");
-      if (!res.ok) {
+      // First complete user onboarding
+      const userRes = await apiRequest("POST", "/api/users/complete-onboarding");
+      if (!userRes.ok) {
         throw new Error("Failed to complete onboarding");
       }
-      return res.json();
+
+      // Then update task status if it exists
+      if (onboardingTask?.id) {
+        const taskRes = await apiRequest("PATCH", `/api/tasks/${onboardingTask.id}`, {
+          status: "completed",
+          progress: 100,
+          completionDate: new Date().toISOString(),
+        });
+        if (!taskRes.ok) {
+          throw new Error("Failed to update onboarding task");
+        }
+      }
+
+      return userRes.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
