@@ -1490,37 +1490,30 @@ export function registerRoutes(app: Express): Server {
     try {
       // Update user's onboarding status
       const [updatedUser] = await db.update(users)
-        .set({ onboardingCompleted: true })
+        .set({ onboardingUserCompleted: true })
         .where(eq(users.id, req.user!.id))
         .returning();
 
       // Find and update associated onboarding task
-      const [onboardingTask] = await db.select()
+      const [task] = await db.select()
         .from(tasks)
         .where(and(
+          eq(tasks.userEmail, updatedUser.email),
           eq(tasks.taskType, 'user_onboarding'),
-          eq(tasks.status, 'email_sent'),
-          eq(tasks.userEmail, req.user!.email)
+          eq(tasks.status, 'email_sent')
         ));
 
-      if (onboardingTask) {
+      if (task) {
         await db.update(tasks)
-          .set({
+          .set({ 
             status: 'completed',
-            completionDate: new Date(),
             progress: 100,
             metadata: {
-              ...onboardingTask.metadata,
-              completedByUserId: req.user!.id,
-              completedAt: new Date().toISOString(),
-              onboardingCompletionDetails: {
-                completedAt: new Date().toISOString(),
-                userId: req.user!.id,
-                userEmail: req.user!.email
-              }
+              ...task.metadata,
+              completedAt: new Date().toISOString()
             }
           })
-          .where(eq(tasks.id, onboardingTask.id));
+          .where(eq(tasks.id, task.id));
       }
 
       res.json(updatedUser);
