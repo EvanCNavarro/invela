@@ -19,6 +19,7 @@ import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
+// Form validation schemas
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters."),
@@ -29,7 +30,7 @@ const registrationSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters."),
   fullName: z.string().min(1, "Full name is required."),
   firstName: z.string().min(1, "First name is required."),
-  lastName: z.string().nullable(),
+  lastName: z.string().min(1, "Last name is required."),
   invitationCode: z.string().min(1, "Invitation code is required."),
 });
 
@@ -38,11 +39,14 @@ export default function AuthPage() {
   const [, setLocation] = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
-  const invitationCode = searchParams.get('code')?.split('/')[0];
+  // Extract and clean up URL parameters
+  const searchParams = new URLSearchParams(window.location.search);
+  const rawCode = searchParams.get('code');
+  const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
+  // Validate invitation code
   const { data: invitationData, isLoading: isValidatingCode } = useQuery({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
@@ -54,6 +58,7 @@ export default function AuthPage() {
     enabled: !!invitationCode,
   });
 
+  // Form setup
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -74,24 +79,30 @@ export default function AuthPage() {
     },
   });
 
+  // Update email field when invitation data is loaded
   useEffect(() => {
     if (invitationData?.email) {
       registrationForm.setValue('email', invitationData.email);
     }
   }, [invitationData]);
 
+  // Add loading delay for smooth transitions
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  if (user && (!invitationCode || (invitationData && !invitationData.valid))) {
+  // Updated routing logic to handle invitation codes
+  const showRegistrationForm = !!invitationCode && (
+    isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail)
+  );
+
+  // Only redirect if user is logged in AND there's no valid invitation flow
+  if (user && !showRegistrationForm) {
     return <Redirect to="/" />;
   }
 
-  const showRegistrationForm = invitationCode && 
-    (isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail));
-
+  // Loading state
   if (isPageLoading || isValidatingCode) {
     return (
       <div className="min-h-screen flex">
@@ -114,6 +125,7 @@ export default function AuthPage() {
     );
   }
 
+  // Form submission handlers
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     const { email, password } = values;
     loginMutation.mutate({ email, password });
@@ -123,6 +135,7 @@ export default function AuthPage() {
     registerMutation.mutate(values);
   };
 
+  // Registration form view
   if (showRegistrationForm) {
     return (
       <div className="min-h-screen flex">
@@ -136,6 +149,23 @@ export default function AuthPage() {
               />
               <h1 className="text-2xl font-bold">Create your account</h1>
             </div>
+
+            {/* Email domain warning */}
+            {invitationData?.companyDomainMismatch && (
+              <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-amber-700">
+                      Email domain doesn't match company
+                    </p>
+                    <p className="text-sm text-amber-600 mt-1">
+                      The email domain doesn't match the expected company domain. Please verify this is correct.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Form {...registrationForm}>
               <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
@@ -216,6 +246,7 @@ export default function AuthPage() {
                           <Input
                             {...field}
                             type="text"
+                            value={field.value || ''}
                             className={field.value && !registrationForm.formState.errors.lastName ? "border-green-500" : ""}
                           />
                         </FormControl>
@@ -283,6 +314,7 @@ export default function AuthPage() {
     );
   }
 
+  // Login form view
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
@@ -295,6 +327,7 @@ export default function AuthPage() {
             />
             <h1 className="text-2xl font-bold">Log in to Invela</h1>
           </div>
+
           {!showRegistrationForm && invitationCode && (
             <div className="mb-4 flex items-center gap-2 text-amber-500 bg-amber-50 p-4 rounded-lg">
               <AlertTriangle className="h-5 w-5 text-amber-500" />
