@@ -233,6 +233,16 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
+  const getTaskCountForTab = (tabId: string) => {
+    return tasks.filter(task => {
+      if (tabId === "my-tasks") {
+        return task.assignedTo === user?.id || (task.taskType === 'file_request' && task.createdBy === user?.id);
+      } else {
+        return task.taskType === 'user_onboarding' && task.createdBy === user?.id;
+      }
+    }).length;
+  };
+
   // Component render
   return (
     <DashboardLayout>
@@ -268,18 +278,12 @@ export default function TaskCenterPage() {
                   <User className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     My Tasks
-                    {tasks.filter(task =>
-                      (task.assignedTo === user?.id) ||
-                      (task.taskType === 'file_request' && task.createdBy === user?.id)
-                    ).length > 0 && (
+                    {getTaskCountForTab("my-tasks") > 0 && (
                       <Badge
                         variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {tasks.filter(task =>
-                          (task.assignedTo === user?.id) ||
-                          (task.taskType === 'file_request' && task.createdBy === user?.id)
-                        ).length}
+                        {getTaskCountForTab("my-tasks")}
                       </Badge>
                     )}
                   </span>
@@ -294,22 +298,17 @@ export default function TaskCenterPage() {
                   <Users2 className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     For Others
-                    {tasks.filter(task =>
-                      task.taskType === 'user_onboarding' && task.createdBy === user?.id
-                    ).length > 0 && (
+                    {getTaskCountForTab("for-others") > 0 && (
                       <Badge
                         variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {tasks.filter(task =>
-                          task.taskType === 'user_onboarding' && task.createdBy === user?.id
-                        ).length}
+                        {getTaskCountForTab("for-others")}
                       </Badge>
                     )}
                   </span>
                 </TabsTrigger>
               </TabsList>
-
               <div className="relative w-full sm:w-auto">
                 <SearchBar
                   contextualType="tasks"
