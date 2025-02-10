@@ -601,84 +601,27 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Company not found" });
       }
 
-      // For user onboarding, send email first before creating task
-      if (taskType === 'user_onboarding') {
-        const inviteUrl = `${req.protocol}://${req.get('host')}`;
-
-        const emailParams: SendEmailParams = {
-          to: userEmail,
-          from: process.env.GMAIL_USER!,
-          template: 'fintech_invite',
-          templateData: {
-            recipientEmail: userEmail,
-            senderName: req.user!.fullName,
-            companyName: company.name,
-            inviteUrl: inviteUrl
-          }
-        };
-
-        const emailResult = await emailService.sendTemplateEmail(emailParams);
-
-        if (!emailResult.success) {
-          return res.status(500).json({
-            message: "Failed to send invite email",
-            error: emailResult.error
-          });
-        }
-
-        // Create task only after successful email sending
-        const taskData = {
-          title: `New User Invitation: ${userEmail}`,
-          description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
-          taskType,
-          taskScope: 'user',
-          status: 'email_sent',
-          priority: 'medium',
-          progress: 25,
-          createdBy: req.user!.id,
-          userEmail: userEmail.toLowerCase(), // Store email in lowercase
-          companyId,
-          dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-          assignedTo: null,
-          filesRequested: [],
-          filesUploaded: [],
-          metadata: {
-            emailSentAt: new Date().toISOString(),
-            senderName: req.user!.fullName,
-            senderCompany: company.name,
-            statusFlow: ['email_sent']
-          }
-        };
-
-        const [task] = await db.insert(tasks)
-          .values(taskData)
-          .returning();
-
-        return res.status(201).json(task);
-      }
-
-
-      // Handle other task types
       const taskData = {
-        title: taskType === 'user_onboarding'
-          ? `New User Invitation: ${userEmail}`
-          : `File Request for ${userEmail}`,
-        description: taskType === 'user_onboarding'
-          ? `Invitation sent to ${userEmail} to join ${company.name} on the platform.`
-          : `Document request task for ${userEmail}`,
+        title: `New User Invitation: ${userEmail}`,
+        description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
         taskType,
         taskScope: 'user',
-        status: 'pending',
+        status: 'email_sent',
         priority: 'medium',
-        progress: 0,
+        progress: 25,
         createdBy: req.user!.id,
-        userEmail,
+        userEmail: userEmail.toLowerCase(),
         companyId,
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
-        assignedTo: taskType === 'user_onboarding' ? null : req.user!.id,
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        assignedTo: null,
         filesRequested: [],
         filesUploaded: [],
-        metadata: {}
+        metadata: {
+          emailSentAt: new Date().toISOString(),
+          senderName: req.user!.fullName,
+          senderCompany: company.name,
+          statusFlow: ['email_sent']
+        }
       };
 
       const [task] = await db.insert(tasks)
@@ -914,12 +857,12 @@ export function registerRoutes(app: Express): Server {
       console.log('Debug - Received logo upload:', {
         originalname: req.file.originalname,
         filename: req.file.filename,
-        mimetype:        req.file.mimetype,
+        mimetype: req.file.mimetype,
         size: req.file.size
       });
 
       const companyId = parseInt(req.params.id);
-      const [company] =await db.select()
+      const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, companyId));
 
@@ -935,12 +878,14 @@ export function registerRoutes(app: Express): Server {
           .where(eq(companyLogos.id, company.logoId));
 
         if (oldLogo) {
-          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);          console.log('Debug - Attempting to delete old logo:', oldFilePath);
+          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);
+          console.log('Debug - Attempting to delete old logo:', oldFilePath);
           if (fs.existsSync(oldFilePath)) {
             fs.unlinkSync(oldFilePath);
             console.log('Debug - Successfully deleted old logo');
           } else {
-            console.log('Debug - Old logo file not found on disk');          }
+            console.log('Debug - Old logo file not found on disk');
+          }
         }
       }
 

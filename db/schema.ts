@@ -72,9 +72,9 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
   taskScope: text("task_scope").notNull(), // 'user' or 'company'
-  status: text("status").notNull().default('pending'),
+  status: text("status").notNull().default('email_sent'),
   priority: text("priority").notNull().default('medium'),
-  progress: real("progress").notNull().default(0),
+  progress: real("progress").notNull().default(25),
   assignedTo: integer("assigned_to").references(() => users.id),
   createdBy: integer("created_by").references(() => users.id),
   companyId: integer("company_id").references(() => companies.id),

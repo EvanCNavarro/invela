@@ -37,7 +37,9 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
-                  <div className="capitalize">{task.status}</div>
+                  <div className="capitalize">
+                    {task.status.replace(/_/g, ' ')}
+                  </div>
                 </TableCell>
                 <TableCell>{task.progress}%</TableCell>
                 <TableCell>
