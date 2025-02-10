@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
+// Define the exact shape of data expected by the server
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   inviteeName: z.string().min(1, "Full name is required"),
@@ -50,6 +51,15 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
       try {
+        console.log('Sending invitation with data:', {
+          ...data,
+          companyId,
+          companyName,
+          inviteeCompany: companyName,
+          senderName: user?.fullName,
+          senderCompany: companyName
+        });
+
         const response = await fetch('/api/users/invite', {
           method: 'POST',
           headers: {
@@ -67,11 +77,14 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ message: 'Failed to send invitation' }));
+          console.error('Invitation failed:', errorData);
           throw new Error(errorData.message || 'Failed to send invitation');
         }
 
+        console.log('Invitation sent successfully');
         return await response.json();
       } catch (error) {
+        console.error('Error sending invitation:', error);
         if (error instanceof Error) {
           throw error;
         }
@@ -107,6 +120,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       onOpenChange(false);
     },
     onError: (error: Error) => {
+      console.error('Mutation error:', error);
       setServerError(error.message);
     },
   });
