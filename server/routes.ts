@@ -1210,12 +1210,14 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     try {
       const { email, fullName, companyId, companyName, senderName, senderCompany } = req.body;
+      console.log('Debug - Processing invitation request:', { email, fullName, companyName });
 
       // Generate unique invitation code
       const code = uuidv4();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
 
+      console.log('Debug - Creating invitation task');
       // Create invitation task
       const [task] = await db.insert(tasks)
         .values({
@@ -1232,6 +1234,7 @@ export function registerRoutes(app: Express): Server {
         })
         .returning();
 
+      console.log('Debug - Creating invitation record');
       // Create invitation record
       const [invitation] = await db.insert(invitations)
         .values({
@@ -1246,6 +1249,7 @@ export function registerRoutes(app: Express): Server {
       // Generate invitation URL with code
       const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}`;
 
+      console.log('Debug - Preparing to send invitation email');
       // Send invitation email
       const emailParams = {
         to: email,
@@ -1261,8 +1265,10 @@ export function registerRoutes(app: Express): Server {
       };
 
       const emailResult = await emailService.sendTemplateEmail(emailParams);
+      console.log('Debug - Email service response:', emailResult);
 
       if (!emailResult.success) {
+        console.error('Debug - Email sending failed:', emailResult.error);
         throw new Error(emailResult.error || 'Failed to send invitation email');
       }
 
@@ -1274,7 +1280,11 @@ export function registerRoutes(app: Express): Server {
       res.json({ message: "Invitation sent successfully" });
     } catch (error) {
       console.error("Error sending invitation:", error);
-      res.status(500).json({ message: "Error sending invitation" });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ 
+        message: "Error sending invitation",
+        error: errorMessage
+      });
     }
   });
 
