@@ -11,7 +11,7 @@ import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center');
   const isTaskCenter = taskCenterParams !== null;
@@ -26,7 +26,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { data: currentCompany } = useQuery({
     queryKey: ["/api/companies/current"],
     staleTime: 0, // Don't cache this data
-    cacheTime: 0, // Remove from cache immediately
+    gcTime: 0, // Remove from cache immediately
   });
 
   // Company hasn't completed onboarding
@@ -48,7 +48,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         navigate('/task-center');
       }
     }
-  }, [isCompanyLocked, location]);
+  }, [isCompanyLocked, location, navigate]);
 
   // Only allow task center for locked companies
   if (isCompanyLocked && !isTaskCenter) {
@@ -74,7 +74,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <Sidebar 
           isExpanded={isExpanded}
           onToggleExpanded={toggleExpanded}
-          isCompanyLocked={isCompanyLocked}
           notificationCount={tasks.length}
           showInvelaTabs={false}
           isPlayground={false}
