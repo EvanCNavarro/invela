@@ -3,12 +3,11 @@ import { cn } from "@/lib/utils";
 import {
   HomeIcon,
   CheckCircleIcon,
-  BookIcon,
+  FileIcon,
+  Network,
   BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  FileIcon,
-  Network,
   MousePointer2Icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,14 +26,6 @@ interface SidebarProps {
   isPlayground?: boolean;
 }
 
-interface Task {
-  id: number;
-  title: string;
-  taskType: 'user_onboarding' | 'file_request';
-  createdBy: number;
-  assignedTo: number | null;
-}
-
 export function Sidebar({
   isExpanded,
   onToggleExpanded,
@@ -47,7 +38,7 @@ export function Sidebar({
   const [location] = useLocation();
 
   // Only fetch real data if not in playground mode
-  const { data: tasks = [] } = useQuery<Task[]>({
+  const { data: tasks = [] } = useQuery({
     queryKey: ["/api/tasks"],
     enabled: !isPlayground,
   });
@@ -96,7 +87,6 @@ export function Sidebar({
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
 
-  // In playground mode, use the showInvelaTabs prop, otherwise use real company data
   const isInvelaUser = isPlayground ? showInvelaTabs : (company?.category === 'Invela');
 
   if (isInvelaUser && (isPlayground || showPlayground)) {

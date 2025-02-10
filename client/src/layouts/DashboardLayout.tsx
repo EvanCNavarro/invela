@@ -5,6 +5,7 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -12,6 +13,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [, params] = useRoute('/task-center');
   const isTaskCenter = params !== null;
+
+  // Fetch tasks for notification count
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["/api/tasks"],
+  });
 
   // New user who hasn't completed onboarding
   const isNewUser = user?.onboardingCompleted === false;
@@ -41,6 +47,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           isExpanded={isSidebarExpanded}
           onToggleExpanded={() => setIsSidebarExpanded(!isSidebarExpanded)}
           isNewUser={isNewUser}
+          notificationCount={tasks.length}
+          showInvelaTabs={false}
+          isPlayground={false}
         />
       </aside>
 
