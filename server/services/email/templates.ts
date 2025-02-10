@@ -16,7 +16,6 @@ export const emailTemplateSchema = z.object({
   html: z.string(),
 });
 
-// Email template definitions
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
     subject: "You've been invited to join Invela",

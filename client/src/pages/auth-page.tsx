@@ -39,7 +39,7 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  const invitationCode = searchParams.get('code');
+  const invitationCode = searchParams.get('code')?.split('/')[0]; 
   const workEmail = searchParams.get('work_email');
 
   // Validate invitation code if present
@@ -87,14 +87,16 @@ export default function AuthPage() {
 
   // Only redirect to home if:
   // 1. User is logged in AND
-  // 2. Either there's no invitation code OR the invitation is invalid/expired
+  // 2. No invitation code is present OR invitation is invalid
   if (user && (!invitationCode || (invitationData && !invitationData.valid))) {
     return <Redirect to="/" />;
   }
 
-  // Show registration form if we have an invitation code and are waiting for validation
-  // or if the invitation is valid
-  const showRegistrationForm = invitationCode && (isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail));
+  // Show registration form if:
+  // 1. We have an invitation code AND
+  // 2. Either we're still validating OR the invitation is valid and emails match
+  const showRegistrationForm = invitationCode && 
+    (isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail));
 
   if (isPageLoading || isValidatingCode) {
     return (
