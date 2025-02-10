@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
+import { cn, formatFileSize } from "@/lib/utils";
 import {
   FileIcon,
   UploadIcon,
@@ -38,7 +39,6 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 import React from 'react';
 import { SearchBar } from "@/components/playground/SearchBar";
 import { Table } from "@/components/playground/Table";
@@ -346,10 +346,7 @@ const formatDate = (dateString?: string) => {
 };
 
 const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
-  // Import formatFileSize from FileTableColumns
-  const { formatFileSize } = require('./FileTableColumns');
 
-  // Fetch fresh file data
   const { data: freshFileData } = useQuery({
     queryKey: ['/api/files', file.id],
     queryFn: async () => {
