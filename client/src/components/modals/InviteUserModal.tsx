@@ -21,8 +21,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 
 // Complete schema matching backend requirements
 const inviteUserSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  fullName: z.string().min(1, "Full name is required"),
+  email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
+  full_name: z.string().min(1, "Full name is required"), // Changed to match backend
   company_id: z.number(),
   company_name: z.string(),
   sender_name: z.string(),
@@ -43,18 +43,12 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  console.log("[InviteUserModal] Initialization", {
-    companyId,
-    companyName,
-    currentUser: user,
-  });
-
   // Initialize form with all required fields
   const form = useForm<InviteUserData>({
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
-      fullName: "",
+      full_name: "", // Changed to match backend
       company_id: companyId,
       company_name: companyName,
       sender_name: user?.fullName || "",
@@ -62,26 +56,21 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     }
   });
 
-  console.log("[InviteUserModal] Form default values:", form.getValues());
-
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
       console.log("[InviteUserModal] Starting invitation process", { formData });
 
-      // Pre-submission validation
       if (!user?.fullName) {
-        console.error("[InviteUserModal] Missing sender information");
         throw new Error("Missing sender information. Please try logging in again.");
       }
 
       if (!companyId || !companyName) {
-        console.error("[InviteUserModal] Missing company information", { companyId, companyName });
         throw new Error("Missing company information. Please refresh the page.");
       }
 
       const payload = {
-        email: formData.email.trim().toLowerCase(),
-        fullName: formData.fullName.trim(),
+        email: formData.email,
+        full_name: formData.full_name, // Changed to match backend
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
@@ -174,20 +163,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => {
-            console.log("[InviteUserModal] Form submission data:", data);
-
-            const completeData = {
-              ...data,
-              company_id: companyId,
-              company_name: companyName,
-              sender_name: user?.fullName,
-              sender_company: companyName
-            };
-
-            console.log("[InviteUserModal] Complete form data:", completeData);
-            sendInvite(completeData);
-          })} className="space-y-6">
+          <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
             <div>
               <div className="text-sm font-semibold mb-2">Company</div>
               <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
@@ -219,7 +195,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
             <FormField
               control={form.control}
-              name="fullName"
+              name="full_name"
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Full Name</div>
