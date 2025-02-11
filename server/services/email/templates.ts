@@ -25,7 +25,8 @@ Getting Started:
 1. Click the button below to Create Your Account.
    — or manually enter your unique Invitation Code: ${data.code}
 2. Finish updating your Profile.
-3. Access your company's dashboard and resources.
+3. Upload the requested files to our secure system.
+4. Acquire an Invela Accreditation & Risk Score for your company.
 
 Click here to get started: ${data.inviteUrl}
 
@@ -151,7 +152,8 @@ Your Invitation Code: ${data.code}
         <ol>
           <li>Click the button below to Create Your Account.</li>
           <li>Finish updating your Profile.</li>
-          <li>Access your company's dashboard and resources.</li>
+          <li>Upload the requested files to our secure system.</li>
+          <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
         </ol>
       </div>
 
@@ -296,7 +298,6 @@ Your Invitation Code: ${data.code}
           <div class="container">
             <h1 class="company-name">${data.senderCompany}</h1>
             <h2 class="title">Hello ${data.recipientName}, you've been invited to join ${data.senderCompany} by ${data.senderName}.</h2>
-
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
               <ol>
@@ -306,14 +307,11 @@ Your Invitation Code: ${data.code}
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
             </div>
-
             <div class="invitation-code">
               <span class="code-label">Your Invitation Code</span>
               ${data.code}
             </div>
-
             <a href="${data.inviteUrl}" class="button">Create Your Account</a>
-
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
             </div>
