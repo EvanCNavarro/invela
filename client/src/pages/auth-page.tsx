@@ -158,7 +158,14 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
-    registerMutation.mutate(values);
+    registerMutation.mutate({
+      email: values.email,
+      password: values.password,
+      fullName: values.fullName,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      invitationCode: values.invitationCode,
+    });
   };
 
   const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
