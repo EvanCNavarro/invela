@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 const carouselImages = [
   {
@@ -39,10 +40,11 @@ export function WelcomeModal() {
   const [open, setOpen] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { socket, connected } = useWebSocket();
 
   // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
-    queryKey: ["/api/tasks", { type: "user_onboarding", email: user?.email }],
+    queryKey: ["/api/tasks", { type: "user_invitation", email: user?.email }],
     enabled: !!user?.email,
   });
 
@@ -65,6 +67,22 @@ export function WelcomeModal() {
 
       const data = await response.json();
       console.log('[WelcomeModal] Onboarding completion response:', data);
+
+      // Send WebSocket update
+      if (connected && socket && data.task) {
+        socket.send(JSON.stringify({
+          type: 'task_update',
+          data: {
+            taskId: data.task.id,
+            status: 'completed',
+            metadata: {
+              onboardingCompleted: true,
+              completionTime: new Date().toISOString()
+            }
+          }
+        }));
+      }
+
       return data;
     },
     onSuccess: (data) => {
