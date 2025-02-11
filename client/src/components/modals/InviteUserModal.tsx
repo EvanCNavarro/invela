@@ -43,6 +43,12 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  console.log("[InviteUserModal] Initialization", {
+    companyId,
+    companyName,
+    currentUser: user,
+  });
+
   // Initialize form with all required fields
   const form = useForm<InviteUserData>({
     resolver: zodResolver(inviteUserSchema),
@@ -56,31 +62,79 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     }
   });
 
+  console.log("[InviteUserModal] Form default values:", form.getValues());
+
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
+      console.log("[InviteUserModal] Starting invitation process", { formData });
+
+      // Pre-submission validation
+      if (!user?.fullName) {
+        console.error("[InviteUserModal] Missing sender information");
+        throw new Error("Missing sender information. Please try logging in again.");
+      }
+
+      if (!companyId || !companyName) {
+        console.error("[InviteUserModal] Missing company information", { companyId, companyName });
+        throw new Error("Missing company information. Please refresh the page.");
+      }
+
+      const payload = {
+        email: formData.email.trim().toLowerCase(),
+        fullName: formData.fullName.trim(),
+        company_id: companyId,
+        company_name: companyName,
+        sender_name: user.fullName,
+        sender_company: companyName
+      };
+
+      console.log("[InviteUserModal] Sending invitation payload:", JSON.stringify(payload, null, 2));
+
       const response = await fetch('/api/users/invite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          email: formData.email.trim().toLowerCase(),
-          fullName: formData.fullName.trim(),
-          company_id: companyId,
-          company_name: companyName,
-          sender_name: user?.fullName,
-          sender_company: companyName
-        })
+        body: JSON.stringify(payload)
       });
 
+      console.log("[InviteUserModal] Server response status:", response.status);
+
+      const responseData = await response.json();
+      console.log("[InviteUserModal] Server response data:", JSON.stringify(responseData, null, 2));
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to send invitation');
+        console.error("[InviteUserModal] Server error response:", responseData);
+
+        let errorMessage = responseData.message || 'Failed to send invitation';
+
+        if (responseData.details) {
+          const errors = Object.entries(responseData.details)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join('\n');
+
+          if (errors) {
+            errorMessage = `Validation errors:\n${errors}`;
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
-      return await response.json();
+      return responseData;
+    },
+    onError: (error: Error) => {
+      console.error("[InviteUserModal] Mutation error:", error);
+      setServerError(error.message);
+      toast({
+        title: "Error sending invitation",
+        description: error.message,
+        variant: "destructive",
+      });
     },
     onSuccess: (data) => {
+      console.log("[InviteUserModal] Invitation sent successfully:", data);
+
       toast({
         title: "Invitation sent successfully",
         description: `${data.user.fullName} has been invited to join ${companyName}.`,
@@ -108,15 +162,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         });
       }
     },
-    onError: (error: Error) => {
-      console.error('Mutation error:', error);
-      setServerError(error.message);
-      toast({
-        title: "Error sending invitation",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 
   return (
@@ -130,7 +175,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => {
-            // Ensure all required data is included
+            console.log("[InviteUserModal] Form submission data:", data);
+
             const completeData = {
               ...data,
               company_id: companyId,
@@ -138,6 +184,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
               sender_name: user?.fullName,
               sender_company: companyName
             };
+
+            console.log("[InviteUserModal] Complete form data:", completeData);
             sendInvite(completeData);
           })} className="space-y-6">
             <div>
