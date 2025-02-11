@@ -82,8 +82,30 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
 
       return response.json();
     },
+    onMutate: async ({ taskId, newStatus }) => {
+      // Optimistic update
+      setTasks(currentTasks =>
+        currentTasks.map(task =>
+          task.id === taskId
+            ? { ...task, status: newStatus, progress: STATUS_PROGRESS[newStatus] }
+            : task
+        )
+      );
+
+      // Update counts optimistically
+      setTaskCounts(current => {
+        const oldTask = tasks.find(t => t.id === taskId);
+        if (!oldTask) return current;
+
+        return {
+          ...current,
+          [oldTask.status.toLowerCase()]: current[oldTask.status.toLowerCase() as keyof TaskCount] - 1,
+          [newStatus.toLowerCase()]: current[newStatus.toLowerCase() as keyof TaskCount] + 1
+        };
+      });
+    },
     onSuccess: () => {
-      // Immediately invalidate queries to trigger refetch
+      // Invalidate queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Task Updated",
@@ -91,6 +113,8 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       });
     },
     onError: (error) => {
+      // Revert the optimistic update by refetching
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Error",
         description: "Failed to update task status. Please try again.",
@@ -150,6 +174,33 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
           }
         });
         subscriptions.push(unsubTaskDelete);
+
+        // Subscribe to task status updates
+        const unsubTaskStatusUpdate = await wsService.subscribe('task_status_updated', (data) => {
+          setTasks(currentTasks =>
+            currentTasks.map(task =>
+              task.id === data.taskId
+                ? { ...task, status: data.status, progress: STATUS_PROGRESS[data.status] }
+                : task
+            )
+          );
+
+          // Update the counts based on the new status
+          setTaskCounts(current => {
+            const oldTask = tasks.find(t => t.id === data.taskId);
+            if (!oldTask) return current;
+
+            return {
+              ...current,
+              [oldTask.status.toLowerCase()]: current[oldTask.status.toLowerCase() as keyof TaskCount] - 1,
+              [data.status.toLowerCase()]: current[data.status.toLowerCase() as keyof TaskCount] + 1
+            };
+          });
+
+          // Force refresh the tasks query to update sidebar count
+          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        });
+        subscriptions.push(unsubTaskStatusUpdate);
       } catch (error) {
         console.error('Error setting up WebSocket subscriptions:', error);
         toast({
@@ -171,18 +222,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
         }
       });
     };
-  }, [queryClient, toast]);
-
-  // Update tasks when initialTasks changes
-  useEffect(() => {
-    setTasks(initialTasks);
-    setTaskCounts({
-      total: initialTasks.length,
-      emailSent: initialTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-      inProgress: initialTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
-      completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
-    });
-  }, [initialTasks]);
+  }, [queryClient, toast, tasks]);
 
   // Handle status transition
   const handleStatusUpdate = async (task: Task) => {

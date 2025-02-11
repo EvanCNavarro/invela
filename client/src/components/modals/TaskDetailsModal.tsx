@@ -5,6 +5,8 @@ import { Separator } from "@/components/ui/separator";
 import { TaskStatus } from "@db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { useEffect, useState } from "react";
+import { wsService } from "@/lib/websocket";
 
 interface TaskDetailsModalProps {
   task: any;
@@ -26,7 +28,49 @@ const statusProgressMap = {
 
 const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
-export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
+export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: TaskDetailsModalProps) {
+  const [task, setTask] = useState(initialTask);
+
+  useEffect(() => {
+    setTask(initialTask);
+  }, [initialTask]);
+
+  useEffect(() => {
+    if (!task) return;
+
+    const setupWebSocket = async () => {
+      try {
+        const unsubscribe = await wsService.subscribe('task_status_updated', (data) => {
+          if (data.taskId === task.id) {
+            setTask(current => ({
+              ...current,
+              status: data.status,
+              progress: statusProgressMap[data.status as TaskStatus]
+            }));
+          }
+        });
+
+        return unsubscribe;
+      } catch (error) {
+        console.error('Error setting up WebSocket subscription:', error);
+      }
+    };
+
+    const unsubscribePromise = setupWebSocket();
+
+    return () => {
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe) {
+          try {
+            unsubscribe();
+          } catch (error) {
+            console.error('Error unsubscribing from WebSocket:', error);
+          }
+        }
+      });
+    };
+  }, [task]);
+
   if (!task) return null;
 
   // Ensure progress is always synced with status
