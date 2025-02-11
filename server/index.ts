@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { WebSocketServer, WebSocket } from 'ws';
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -13,6 +14,19 @@ export class APIError extends Error {
     super(message);
     this.name = 'APIError';
   }
+}
+
+// WebSocket clients store
+const clients = new Set<WebSocket>();
+
+// Broadcast to all connected clients
+export function broadcastMessage(type: string, data: any) {
+  const message = JSON.stringify({ type, data });
+  clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(message);
+    }
+  });
 }
 
 const app = express();
@@ -71,6 +85,41 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = registerRoutes(app);
+
+  // Setup WebSocket server
+  const wss = new WebSocketServer({ 
+    server,
+    path: '/ws',
+    // Ignore Vite HMR WebSocket connections
+    verifyClient: ({ req }) => {
+      return req.headers['sec-websocket-protocol'] !== 'vite-hmr';
+    }
+  });
+
+  // WebSocket connection handling
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('New WebSocket client connected');
+    clients.add(ws);
+
+    ws.on('message', (message: string) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received WebSocket message:', data);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      clients.delete(ws);
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      clients.delete(ws);
+    });
+  });
 
   // Enhanced error handling middleware
   app.use((err: any, req: Request, res: Response, _next: NextFunction) => {

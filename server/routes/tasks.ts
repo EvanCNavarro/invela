@@ -4,6 +4,7 @@ import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
 import { z } from "zod";
+import { broadcastMessage } from "../index";
 
 const router = Router();
 
@@ -63,6 +64,14 @@ router.patch("/api/tasks/:id/status",
         .where(eq(tasks.id, taskId))
         .returning();
 
+      // Broadcast the task update via WebSocket
+      broadcastMessage('task_updated', {
+        taskId: updatedTask.id,
+        status: updatedTask.status,
+        progress: updatedTask.progress,
+        metadata: updatedTask.metadata
+      });
+
       res.json(updatedTask);
     } catch (error) {
       console.error("[Task Routes] Error updating task status:", error);
@@ -84,9 +93,20 @@ router.post("/api/tasks/fix-progress", async (req, res) => {
       .where(eq(tasks.status, TaskStatus.EMAIL_SENT))
       .returning();
 
+    if (updatedTasks && Array.isArray(updatedTasks)) {
+      // Broadcast updates for each modified task
+      updatedTasks.forEach(task => {
+        broadcastMessage('task_updated', {
+          taskId: task.id,
+          status: task.status,
+          progress: task.progress
+        });
+      });
+    }
+
     res.json({
       message: "Successfully updated task progress values",
-      updatedCount: updatedTasks?.length || 0
+      updatedCount: Array.isArray(updatedTasks) ? updatedTasks.length : 0
     });
   } catch (error) {
     console.error("[Task Routes] Error fixing task progress:", error);

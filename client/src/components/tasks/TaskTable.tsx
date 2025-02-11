@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { wsService } from "@/lib/websocket";
 
 // Define the task status flow
 const taskStatusFlow = {
@@ -47,7 +48,8 @@ interface Task {
   dueDate?: string | Date;
 }
 
-export function TaskTable({ tasks }: { tasks: Task[] }) {
+export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -65,6 +67,30 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
     },
   });
+
+  // Set up WebSocket subscription for real-time updates
+  useEffect(() => {
+    // Subscribe to task updates
+    const unsubscribe = wsService.subscribe('task_updated', (data) => {
+      setTasks(currentTasks => 
+        currentTasks.map(task => 
+          task.id === data.taskId 
+            ? { ...task, status: data.status, progress: data.progress }
+            : task
+        )
+      );
+    });
+
+    // Clean up subscription on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Update tasks when initialTasks changes
+  useEffect(() => {
+    setTasks(initialTasks);
+  }, [initialTasks]);
 
   // Get progress based on status, fallback to actual progress value if exists
   const getProgress = (task: Task) => {
@@ -115,7 +141,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                 <TableCell>
                   <div className="w-full bg-secondary h-2 rounded-full">
                     <div
-                      className="bg-primary h-2 rounded-full"
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
                       style={{ width: `${getProgress(task)}%` }}
                     />
                   </div>
