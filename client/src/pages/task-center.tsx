@@ -22,8 +22,8 @@ export default function TaskCenter() {
     refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
-  const filteredTasks = selectedStatus === 'all' 
-    ? tasks 
+  const filteredTasks = selectedStatus === 'all'
+    ? tasks
     : tasks.filter(task => task.status === selectedStatus);
 
   if (isLoading) {
