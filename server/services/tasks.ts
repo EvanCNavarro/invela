@@ -65,7 +65,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log(`[Task Service] Successfully updated task ${updatedTask.id} from ${taskToUpdate.status} to completed`);
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} to completed status`);
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task status:', error);
@@ -102,9 +102,9 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        assignedTo: userId,
         status: TaskStatus.IN_PROGRESS,
         progress: 50,
+        assignedTo: userId,
         updatedAt: new Date(),
         metadata: {
           ...(taskToUpdate.metadata || {}),
@@ -119,7 +119,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log(`[Task Service] Successfully updated task ${updatedTask.id} from ${taskToUpdate.status} to in_progress`);
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} to in_progress status`);
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task:', error);

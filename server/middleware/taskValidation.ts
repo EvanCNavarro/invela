@@ -1,21 +1,29 @@
 import { Request, Response, NextFunction } from "express";
 import { TaskStatus } from "@db/schema";
 
+// Define valid status transitions
 const VALID_TRANSITIONS = {
   [TaskStatus.EMAIL_SENT]: [TaskStatus.IN_PROGRESS],
   [TaskStatus.IN_PROGRESS]: [TaskStatus.COMPLETED],
   [TaskStatus.COMPLETED]: [], // Terminal state
 } as const;
 
+// Define progress percentage for each status
 const STATUS_PROGRESS = {
   [TaskStatus.EMAIL_SENT]: 25,
   [TaskStatus.IN_PROGRESS]: 50,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
-export function validateTaskStatusTransition(req: Request, res: Response, next: NextFunction) {
+export interface TaskRequest extends Request {
+  taskId?: number;
+  task?: any;
+}
+
+// Middleware to validate task status transitions
+export function validateTaskStatusTransition(req: TaskRequest, res: Response, next: NextFunction) {
   const { status: newStatus } = req.body;
-  const currentStatus = req.task?.status; // Will be set by previous middleware
+  const currentStatus = req.task?.status;
 
   // Validate the status exists
   if (!Object.values(TaskStatus).includes(newStatus)) {
@@ -27,6 +35,8 @@ export function validateTaskStatusTransition(req: Request, res: Response, next: 
 
   // If no current status (new task) or same status, allow
   if (!currentStatus || currentStatus === newStatus) {
+    // Set initial progress
+    req.body.progress = STATUS_PROGRESS[newStatus];
     return next();
   }
 
@@ -43,11 +53,12 @@ export function validateTaskStatusTransition(req: Request, res: Response, next: 
 
   // Set the progress based on new status
   req.body.progress = STATUS_PROGRESS[newStatus];
-  
+
   next();
 }
 
-export function loadTaskMiddleware(req: Request, res: Response, next: NextFunction) {
+// Middleware to load task before validation
+export async function loadTaskMiddleware(req: TaskRequest, res: Response, next: NextFunction) {
   if (!req.params.id) {
     return next();
   }
@@ -57,7 +68,6 @@ export function loadTaskMiddleware(req: Request, res: Response, next: NextFuncti
     return res.status(400).json({ message: "Invalid task ID" });
   }
 
-  // Task will be loaded by the database query in the route handler
   req.taskId = taskId;
   next();
 }
