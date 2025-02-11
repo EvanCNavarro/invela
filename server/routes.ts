@@ -641,14 +641,18 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Company not found" });
       }
 
+      // Set initial progress based on status
+      const initialStatus = TaskStatus.EMAIL_SENT;
+      const initialProgress = 25; // Progress for EMAIL_SENT status
+
       const taskData = {
         title: `New User Invitation: ${userEmail}`,
         description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
         taskType,
         taskScope: 'user',
-        status: TaskStatus.EMAIL_SENT, // Use the enum value directly
+        status: initialStatus,
         priority: 'medium',
-        progress: 25,
+        progress: initialProgress,
         createdBy: req.user!.id,
         userEmail: userEmail.toLowerCase(),
         companyId,
@@ -660,7 +664,7 @@ export function registerRoutes(app: Express): Server {
           emailSentAt: new Date().toISOString(),
           senderName: req.user!.fullName,
           senderCompany: company.name,
-          statusFlow: [TaskStatus.EMAIL_SENT]
+          statusFlow: [initialStatus]
         }
       };
 
