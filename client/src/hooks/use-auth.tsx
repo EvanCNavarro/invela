@@ -50,12 +50,12 @@ const useRegisterMutation = () => {
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      const res = await apiRequest("POST", "/api/register", data);
+      const res = await apiRequest("POST", "/api/account/setup", data);
       if (!res.ok) {
         const errorData = await res.json().catch(async () => ({ 
           message: await res.text() 
         }));
-        throw new Error(errorData.message || "Registration failed");
+        throw new Error(errorData.message || "Account setup failed");
       }
       return await res.json();
     },
