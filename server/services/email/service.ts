@@ -79,15 +79,45 @@ class EmailService {
         return { isValid: false, reason: "Invalid email format" };
       }
 
-      // Parse email parts
+      // Step 2: Parse email parts
       const [localPart, domain] = email.split('@');
+      if (!domain || !localPart) {
+        console.log('[EmailService] Email parsing failed - invalid format');
+        return { isValid: false, reason: "Invalid email format" };
+      }
 
-      // Extensive validation checks...
+      // Step 3: Check for disposable email domains
+      if (disposableDomains.has(domain.toLowerCase())) {
+        console.log('[EmailService] Disposable email domain detected:', domain);
+        return { isValid: false, reason: "Disposable email addresses are not allowed" };
+      }
+
+      // Step 4: Check for role-based emails
+      if (roleBasedPrefixes.has(localPart.toLowerCase())) {
+        console.log('[EmailService] Role-based email detected:', localPart);
+        return { isValid: false, reason: "Role-based email addresses are not allowed" };
+      }
+
+      // Step 5: Check MX records
+      try {
+        console.log('[EmailService] Checking MX records for domain:', domain);
+        const mxRecords = await resolveMx(domain);
+        if (!mxRecords || mxRecords.length === 0) {
+          console.log('[EmailService] No MX records found for domain:', domain);
+          return { isValid: false, reason: "This email doesn't exist. Enter a valid email." };
+        }
+        console.log('[EmailService] MX records found for domain:', domain);
+      } catch (error) {
+        console.error('[EmailService] MX record check failed:', error);
+        // Don't fail on MX check errors
+        console.log('[EmailService] Continuing despite MX check failure');
+      }
+
       console.log('[EmailService] Email validation successful for:', email);
       return { isValid: true };
     } catch (error) {
       console.error('[EmailService] Email validation error:', error);
-      return { isValid: true };
+      return { isValid: false, reason: "Email validation failed" };
     }
   }
 
