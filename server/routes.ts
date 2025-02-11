@@ -923,7 +923,7 @@ export function registerRoutes(app: Express): Express {
         return res.status(400).json({ message: "Sender company information not found" });
       }
 
-      const senderName = sender.users.fullName;
+const senderName = sender.users.fullName;
       const senderCompany = sender.companies.name;
 
       // Generate invitation code
@@ -1000,23 +1000,25 @@ export function registerRoutes(app: Express): Express {
       const code = req.params.code;
       console.log('[Invite] Validating invitation code:', code);
 
-      // Find the invitation with company and task details
-      const [invitation] = await db
+      // Find the invitation with company, task, and user details
+      const [result] = await db
         .select({
           invitation: invitations,
           task: tasks,
-          company: companies
+          company: companies,
+          user: users
         })
         .from(invitations)
         .leftJoin(tasks, eq(invitations.taskId, tasks.id))
         .leftJoin(companies, eq(tasks.companyId, companies.id))
+        .leftJoin(users, eq(tasks.userEmail, users.email))
         .where(and(
           eq(invitations.code, code),
           eq(invitations.status, 'pending'),
           gt(invitations.expiresAt, new Date())
         ));
 
-      if (!invitation?.invitation) {
+      if (!result?.invitation) {
         console.log('[Invite] Invalid or expired invitation code:', code);
         return res.status(404).json({
           valid: false,
@@ -1025,21 +1027,26 @@ export function registerRoutes(app: Express): Express {
       }
 
       console.log('[Invite] Invitation found:', {
-        id: invitation.invitation.id,
-        email: invitation.invitation.email,
-        company: invitation.company?.name,
-        status: invitation.invitation.status
+        id: result.invitation.id,
+        email: result.invitation.email,
+        company: result.company?.name,
+        status: result.invitation.status,
+        user: result.user
       });
 
+      // Return complete user information for pre-filling the form
       res.json({
         valid: true,
         invitation: {
-          email: invitation.invitation.email,
-          company: invitation.company?.name || null,
-          inviteeName: invitation.invitation.inviteeName || null,
-          companyId: invitation.company?.id || null
+          email: result.invitation.email,
+          company: result.company?.name || result.task?.metadata?.company || null,
+          companyId: result.company?.id || null,
+          firstName: result.user?.firstName || result.invitation.inviteeName?.split(' ')[0] || '',
+          lastName: result.user?.lastName || result.invitation.inviteeName?.split(' ').slice(1).join(' ') || '',
+          fullName: result.user?.fullName || result.invitation.inviteeName || ''
         }
       });
+
     } catch (error) {
       console.error('[Invite] Error validating invitation:', error);
       res.status(500).json({
@@ -1054,7 +1061,8 @@ export function registerRoutes(app: Express): Express {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
   }
 
-  function formatTimestampForFilename(): string {    const now = new Date();
+  function formatTimestampForFilename(): string {
+    const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
