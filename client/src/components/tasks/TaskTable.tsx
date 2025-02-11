@@ -33,7 +33,7 @@ const taskStatusMap = {
 } as const;
 
 // Define progress values for each status
-const statusProgressMap = {
+const STATUS_PROGRESS = {
   [TaskStatus.EMAIL_SENT]: 25,
   [TaskStatus.IN_PROGRESS]: 50,
   [TaskStatus.COMPLETED]: 100,
@@ -57,18 +57,18 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
     mutationFn: async ({ taskId, newStatus }: { taskId: number; newStatus: TaskStatus }) => {
       return apiRequest(`/api/tasks/${taskId}/status`, {
         method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
     },
     onSuccess: () => {
-      // Invalidate and refetch tasks
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
     },
   });
 
   // Get progress based on status, fallback to actual progress value if exists
   const getProgress = (task: Task) => {
-    return statusProgressMap[task.status] ?? task.progress ?? 0;
+    return STATUS_PROGRESS[task.status as TaskStatus] ?? task.progress ?? 0;
   };
 
   // Handle status transition
@@ -112,7 +112,17 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                     {taskStatusMap[task.status] || task.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{getProgress(task)}%</TableCell>
+                <TableCell>
+                  <div className="w-full bg-secondary h-2 rounded-full">
+                    <div
+                      className="bg-primary h-2 rounded-full"
+                      style={{ width: `${getProgress(task)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground mt-1">
+                    {getProgress(task)}%
+                  </span>
+                </TableCell>
                 <TableCell>
                   {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '-'}
                 </TableCell>
