@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Define schema with exact field names matching the backend
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   full_name: z.string().min(1, "Full name is required"),
@@ -51,18 +50,15 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
       try {
-        // Create a payload with normalized field names
         const payload = {
           email: data.email.trim(),
           full_name: data.full_name.trim(),
           company_id: companyId,
           company_name: companyName,
           sender_name: user?.fullName || '',
-          sender_company: "Invela", // Hardcoded for now since this is the parent company
-          initial_status: TaskStatus.EMAIL_SENT, // Explicitly set the initial status
+          sender_company: "Invela", // Parent company
         };
 
-        // Debug log the exact payload being sent
         console.debug('Sending invitation payload:', JSON.stringify(payload, null, 2));
 
         const response = await fetch('/api/users/invite', {
@@ -78,7 +74,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
         if (!response.ok) {
           if (responseData.details) {
-            // Handle detailed validation errors
             const errorMessages = Object.entries(responseData.details)
               .filter(([_, message]) => message)
               .map(([field, message]) => `${field}: ${message}`)
@@ -94,7 +89,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -115,7 +110,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       toast({
         title: "Invitation sent",
-        description: "The user has been invited to join.",
+        description: `${data.user.fullName} has been invited to join ${companyName}.`,
       });
 
       form.reset();
@@ -144,7 +139,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => sendInvite(data))} className="space-y-6">
-            {/* Company Information (Read-only) */}
             <div>
               <div className="text-sm font-semibold mb-2">Company</div>
               <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
