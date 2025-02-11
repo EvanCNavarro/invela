@@ -998,7 +998,7 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
       const code = req.params.code;
-      console.log('[Invite] Validating invitation code:', code);
+      console.log('[Invite Debug] Starting validation for code:', code);
 
       // Find the invitation first
       const [invitation] = await db.select()
@@ -1009,45 +1009,57 @@ export function registerRoutes(app: Express): Express {
           gt(invitations.expiresAt, new Date())
         ));
 
+      console.log('[Invite Debug] Initial invitation query result:', invitation);
+
       if (!invitation) {
-        console.log('[Invite] Invalid or expired invitation code:', code);
+        console.log('[Invite Debug] No valid invitation found for code:', code);
         return res.status(404).json({
           valid: false,
           message: "Invalid or expired invitation code"
         });
       }
 
-      // Find associated task and user information
+      // Find the user associated with this email
+      const [user] = await db.select()
+        .from(users)
+        .where(sql`LOWER(${users.email}) = LOWER(${invitation.email})`);
+
+      console.log('[Invite Debug] Found user for email:', {
+        email: invitation.email,
+        userFound: !!user,
+        userData: user ? {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: user.fullName
+        } : null
+      });
+
+      // Find associated task and company information
       const [taskInfo] = await db
         .select({
           task: tasks,
-          user: users,
           company: companies
         })
         .from(tasks)
-        .leftJoin(users, sql`LOWER(${users.email}) = LOWER(${tasks.userEmail})`)
         .leftJoin(companies, eq(tasks.companyId, companies.id))
-        .where(eq(tasks.id, invitation.taskId));
+        .where(and(
+          eq(tasks.id, invitation.taskId),
+          eq(tasks.status, TaskStatus.EMAIL_SENT)
+        ));
 
-      console.log('[Invite] Found associated data:', {
-        invitation: {
-          id: invitation.id,
-          email: invitation.email,
-          status: invitation.status
-        },
-        user: taskInfo?.user ? {
-          id: taskInfo.user.id,
-          email: taskInfo.user.email,
-          firstName: taskInfo.user.firstName,
-          lastName: taskInfo.user.lastName
+      console.log('[Invite Debug] Task and company info:', {
+        taskFound: !!taskInfo?.task,
+        companyFound: !!taskInfo?.company,
+        taskData: taskInfo?.task ? {
+          id: taskInfo.task.id,
+          status: taskInfo.task.status,
+          metadata: taskInfo.task.metadata
         } : null,
-        company: taskInfo?.company ? {
+        companyData: taskInfo?.company ? {
           id: taskInfo.company.id,
           name: taskInfo.company.name
-        } : null,
-        task: taskInfo?.task ? {
-          id: taskInfo.task.id,
-          status: taskInfo.task.status
         } : null
       });
 
@@ -1059,17 +1071,17 @@ export function registerRoutes(app: Express): Express {
           email: invitation.email.toLowerCase(),
           company: taskInfo?.company?.name || null,
           companyId: taskInfo?.company?.id || null,
-          firstName: taskInfo?.user?.firstName || (invitation.inviteeName ? invitation.inviteeName.split(' ')[0] : ''),
-          lastName: taskInfo?.user?.lastName || (invitation.inviteeName ? invitation.inviteeName.split(' ').slice(1).join(' ') : ''),
-          fullName: taskInfo?.user?.fullName || invitation.inviteeName || ''
+          firstName: user?.firstName || (invitation.inviteeName ? invitation.inviteeName.split(' ')[0] : ''),
+          lastName: user?.lastName || (invitation.inviteeName ? invitation.inviteeName.split(' ').slice(1).join(' ') : ''),
+          fullName: user?.fullName || invitation.inviteeName || ''
         }
       };
 
-      console.log('[Invite] Returning response:', response);
+      console.log('[Invite Debug] Final response:', response);
       res.json(response);
 
     } catch (error) {
-      console.error('[Invite] Error validating invitation:', error);
+      console.error('[Invite Debug] Error during validation:', error);
       res.status(500).json({
         valid: false,
         message: "Error validating invitation code"
