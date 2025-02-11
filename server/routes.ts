@@ -25,6 +25,7 @@ import { emailService } from "./services/email/service.ts";
 import type { SendEmailParams } from "./services/email/service.ts";
 import bcrypt from 'bcrypt';
 import { findAndUpdateOnboardingTask } from "./services/tasks";
+import { WebSocketServer, WebSocket } from 'ws';
 
 // Configure multer for file upload
 const storage = multer.diskStorage({
@@ -128,6 +129,52 @@ function requireAuth(req: Express.Request, res: Express.Response, next: Express.
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Create HTTP server
+  const httpServer = createServer(app);
+
+  // Create WebSocket server with a different path to avoid conflicts with Vite
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws'
+  });
+
+  // Store active connections
+  const clients = new Set<WebSocket>();
+
+  // WebSocket connection handler
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
+    clients.add(ws);
+
+    // Handle client disconnection
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+      clients.delete(ws);
+    });
+
+    // Handle incoming messages
+    ws.on('message', (message) => {
+      console.log('Received WebSocket message:', message.toString());
+    });
+
+    // Send initial ping to verify connection
+    ws.send(JSON.stringify({ type: 'connected' }));
+  });
+
+  // Broadcast task updates to all connected clients
+  function broadcastTaskUpdate(task: any) {
+    const message = JSON.stringify({
+      type: 'task_update',
+      task
+    });
+
+    clients.forEach(client => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    });
+  }
+
   // Check invitation validity
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
@@ -230,19 +277,22 @@ export function registerRoutes(app: Express): Server {
         // Update task with new user information and progress
         const [updatedTask] = await db.update(tasks)
           .set({
-            status: 'REGISTERED',
-            progress: 50,
+            status: TaskStatus.COMPLETED,
+            progress: 100,
             assignedTo: user.id,
             metadata: {
               ...task.metadata,
               registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata.statusFlow || []), 'REGISTERED']
+              statusFlow: [...(task.metadata.statusFlow || []), TaskStatus.COMPLETED]
             }
           })
           .where(eq(tasks.id, task.id))
           .returning();
 
         console.log(`[Register] Updated task ${updatedTask.id} with registration progress`);
+
+        // Broadcast the task update to all connected clients
+        broadcastTaskUpdate(updatedTask);
       } else {
         console.warn(`[Register] No task found to update for user ${user.id}`);
       }
@@ -1609,7 +1659,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  const httpServer = createServer(app);
   return httpServer;
 }
 
