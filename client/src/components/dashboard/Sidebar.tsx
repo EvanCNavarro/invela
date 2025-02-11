@@ -26,6 +26,7 @@ interface SidebarProps {
   showPulsingDot?: boolean;
   showInvelaTabs?: boolean;
   isPlayground?: boolean;
+  variant?: 'default' | 'company-locked';
 }
 
 export function Sidebar({
@@ -35,7 +36,8 @@ export function Sidebar({
   notificationCount = 0,
   showPulsingDot = false,
   showInvelaTabs = false,
-  isPlayground = false
+  isPlayground = false,
+  variant = 'default'
 }: SidebarProps) {
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
@@ -53,7 +55,7 @@ export function Sidebar({
 
   // Update taskCount when tasks data changes
   useEffect(() => {
-    if (!isPlayground) {
+    if (!isPlayground && Array.isArray(tasks)) {
       setTaskCount(tasks.length);
     }
   }, [tasks, isPlayground]);
@@ -112,7 +114,7 @@ export function Sidebar({
       icon: HomeIcon,
       label: "Dashboard",
       href: "/",
-      locked: isNewUser
+      locked: variant === 'company-locked' || isNewUser
     },
     {
       icon: CheckCircleIcon,
@@ -125,20 +127,20 @@ export function Sidebar({
       icon: Network,
       label: "Network",
       href: "/network",
-      locked: isNewUser,
+      locked: variant === 'company-locked' || isNewUser,
       pulsingDot: showPulsingDot
     },
     {
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: isNewUser
+      locked: variant === 'company-locked' || isNewUser
     },
     {
       icon: BarChartIcon,
       label: "Insights",
       href: "/insights",
-      locked: isNewUser
+      locked: variant === 'company-locked' || isNewUser
     }
   ];
 
@@ -146,14 +148,14 @@ export function Sidebar({
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
 
-  const isInvelaUser = isPlayground ? showInvelaTabs : (company?.category === 'Invela');
+  const isInvelaUser = isPlayground ? showInvelaTabs : (company && typeof company === 'object' && 'category' in company && company.category === 'Invela');
 
   if (isInvelaUser && (isPlayground || showPlayground)) {
     adminMenuItems.push({
       icon: MousePointer2Icon,
       label: "Playground",
       href: "/playground",
-      locked: false
+      locked: variant === 'company-locked'
     });
   }
 
