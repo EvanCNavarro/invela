@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
@@ -53,13 +53,16 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   ArrowUpRight,
+  Check
 } from "lucide-react";
 import { SearchBar } from "@/components/playground/SearchBar";
-import SearchBarPlayground from "@/components/playground/SearchBarPlayground"; // Import the new component
+import SearchBarPlayground from "@/components/playground/SearchBarPlayground";
 import { DropdownPlayground } from "@/components/playground/DropdownPlayground";
 import { DownloadButtonPlayground } from "@/components/playground/DownloadButtonPlayground";
 import { FileUploadPlayground } from '@/components/playground/FileUploadPlayground';
 import TabsDemo from "@/components/playground/TabsDemo";
+import { useQueryClient } from "@tanstack/react-query";
+import { wsService } from "@/lib/websocket";
 
 
 // Define the Component interface
@@ -344,7 +347,8 @@ export function Example() {
       </TabsContent>
     </Tabs>
   );
-}`,
+}
+`,
   },
 
 ];
@@ -396,6 +400,7 @@ export default function PlaygroundPage() {
   const [selectedComponent, setSelectedComponent] = useState("loading-spinner");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   const [riskScore, setRiskScore] = useState(250);
+  const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Sidebar playground state
@@ -559,6 +564,53 @@ export default function PlaygroundPage() {
       });
     }
   };
+
+  // Add WebSocket effect for task notifications
+  useEffect(() => {
+    const unsubscribeRefs = {
+      created: null,
+      deleted: null,
+      updated: null
+    };
+
+    const setupSubscriptions = async () => {
+      try {
+        unsubscribeRefs.created = await wsService.subscribe('task_created', (data) => {
+          if (data.count?.total !== undefined) {
+            setNotificationCount(data.count.total);
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          }
+        });
+
+        unsubscribeRefs.deleted = await wsService.subscribe('task_deleted', (data) => {
+          if (data.count?.total !== undefined) {
+            setNotificationCount(data.count.total);
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          }
+        });
+
+        unsubscribeRefs.updated = await wsService.subscribe('task_updated', (data) => {
+          if (data.count?.total !== undefined) {
+            setNotificationCount(data.count.total);
+            queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+          }
+        });
+      } catch (error) {
+        console.error("Failed to setup WebSocket subscriptions:", error);
+      }
+    };
+
+    setupSubscriptions();
+
+    return () => {
+      Object.values(unsubscribeRefs).forEach(unsubscribe => {
+        if (typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      });
+    };
+  }, [queryClient]);
+
 
   return (
     <DashboardLayout>
@@ -899,33 +951,18 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex gap-8">
-                      {/* Preview container */}
-                      <div className="w-[300px] h-[600px] bg-muted/50 rounded-lg p-4 overflow-hidden">
-                        <div className="relative h-full">
-                          <div
-                            className={cn(
-                              "absolute top-0 left-0 h-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
-                              isExpanded ? "w-64" : "w-20"
-                            )}
-                          >
-                            <Sidebar
-                              isExpanded={isExpanded}
-                              onToggleExpanded={() =>
-                                setIsExpanded(!isExpanded)
-                              }
-                              isNewUser={false}
-                              notificationCount={
-                                showNotifications ? notificationCount : 0
-                              }
-                              showPulsingDot={pulsingDot}
-                              showInvelaTabs={showInvelaTabs}
-                              isPlayground={true}
-                            />
-                          </div>
-                        </div>
+                      <div className="w-64 border rounded-lg">
+                        <Sidebar
+                          isExpanded={isExpanded}
+                          onToggleExpanded={() => setIsExpanded(!isExpanded)}
+                          isNewUser={false}
+                          notificationCount={showNotifications ? notificationCount : 0}
+                          showPulsingDot={pulsingDot}
+                          showInvelaTabs={showInvelaTabs}
+                          isPlayground={true}
+                        />
                       </div>
 
-                      {/* Controls */}
                       <div className="flex-1 space-y-6">
                         <div className="space-y-4">
                           <Button
@@ -961,22 +998,15 @@ export default function PlaygroundPage() {
                                 ? "bg-primary/10 text-primary hover:bg-primary/20"
                                 : ""
                             )}
-                            onClick={() => {
-                              setShowNotifications(!showNotifications);
-                              if (!showNotifications) {
-                                setNotificationCount(5);
-                              } else {
-                                setNotificationCount(0);
-                              }
-                            }}
+                            onClick={() => setShowNotifications(!showNotifications)}
                           >
                             <Badge
-                                                            variant="secondary"
+                              variant="secondary"
                               className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs mr-2"
                             >
-                              {showNotifications ? 5 : 0}
+                              {showNotifications ? notificationCount : 0}
                             </Badge>
-                            <span>Task Notifications</span>
+                            Task Notifications
                           </Button>
 
                           <Button
@@ -990,13 +1020,13 @@ export default function PlaygroundPage() {
                             )}
                             onClick={() => setPulsingDot(!pulsingDot)}
                           >
-                            <span
+                            <div
                               className={cn(
                                 "h-2 w-2 rounded-full mr-2",
                                 pulsingDot ? "bg-primary animate-pulse" : "bg-muted-foreground"
                               )}
                             />
-                            <span>Pulsing Dot</span>
+                            Pulsing Dot
                           </Button>
 
                           <Button
@@ -1011,18 +1041,24 @@ export default function PlaygroundPage() {
                             onClick={() => setShowInvelaTabs(!showInvelaTabs)}
                           >
                             {showInvelaTabs ? (
-                              <span>Hide Invela-Only Tabs</span>
+                              <>
+                                <Check className="h-4 w-4 mr-2" />
+                                <span>Hide Invela-Only Tabs</span>
+                              </>
                             ) : (
-                              <span>Show Invela-Only Tabs</span>
+                              <>
+                                <XCircle className="h-4 w-4 mr-2" />
+                                <span>Show Invela-Only Tabs</span>
+                              </>
                             )}
                           </Button>
                         </div>
                       </div>
+
                     </div>
                   </CardContent>
                 </Card>
               )}
-
               {currentComponent.id === "sidebar-tab" && (
                 <Card>
                   <CardHeader>
@@ -1040,9 +1076,7 @@ export default function PlaygroundPage() {
                       </Button>                    </div>
                   </CardHeader>
                   <CardContent className="space-y-8">
-                    {/* Controls Panel */}
                     <div className="flex flex-wrap gap-4 pb-6 border-b">
-                      {/* Access Control */}
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p className="text-sm font-medium text-foreground">
                           Access
@@ -1062,7 +1096,6 @@ export default function PlaygroundPage() {
                         </Button>
                       </div>
 
-                      {/* Icon Selection */}
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p
                           className={cn(
@@ -1135,7 +1168,6 @@ export default function PlaygroundPage() {
                         </Select>
                       </div>
 
-                      {/* Label Input */}
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p className="text-sm font-medium text-foreground">
                           Label
@@ -1149,7 +1181,6 @@ export default function PlaygroundPage() {
                         />
                       </div>
 
-                      {/* Tab Variant */}
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p
                           className={cn(
@@ -1176,14 +1207,11 @@ export default function PlaygroundPage() {
                         </Select>
                       </div>
 
-                      {/* Tab State */}
                       <div className="space-y-2 min-w-[200px] flex-1">
                         <p
                           className={cn(
                             "text-sm font-medium",
-                            isTabDisabled
-                              ? "text-muted-foreground"
-                              : "text-foreground"
+                            isTabDisabled ? "text-muted-foreground" : "text-foreground"
                           )}
                         >
                           State</p>
@@ -1203,7 +1231,6 @@ export default function PlaygroundPage() {
                         </Button>
                       </div>
 
-                      {/* Indicators */}
                       <div className="space-y-2 min-w-[300px] flex-2">
                         <p
                           className={cn(
@@ -1282,7 +1309,6 @@ export default function PlaygroundPage() {
                       </div>
                     </div>
 
-                    {/* Preview Area */}
                     <div className="w-[300px] mx-auto bg-background rounded-lg border">
                       <div className="p-4">
                         <SidebarTab
@@ -1314,7 +1340,6 @@ export default function PlaygroundPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-8">
-                      {/* Global Search Examples */}
                       <div className="space-y-4">
                         <p className="text-sm font-medium">Global Application Search</p>
                         <p className="text-sm text-muted-foreground">
@@ -1339,7 +1364,6 @@ export default function PlaygroundPage() {
                         </div>
                       </div>
 
-                      {/* Contextual Search Example */}
                       <div className="border-t pt-8">
                         <div className="space-y-4">
                           <p className="text-sm font-medium">Contextual Search</p>
@@ -1400,7 +1424,6 @@ export default function PlaygroundPage() {
                 </Card>
               )}
 
-              {/* Usage Examples section second */}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
@@ -1430,7 +1453,6 @@ export default function PlaygroundPage() {
                 </CardContent>
               </Card>
 
-              {/* Code Example section last */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
