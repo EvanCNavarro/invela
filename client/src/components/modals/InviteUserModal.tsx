@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Schema matches exactly what the server expects
+// Form schema matches user input fields only
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   fullName: z.string().min(1, "Full name is required"),
@@ -58,17 +58,19 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw new Error("Missing company information. Please refresh the page.");
       }
 
-      // Construct the invitation payload exactly as specified
+      // Construct the invitation payload using all available data sources
       const payload = {
-        // Form fields from user input
-        email: formData.email.trim().toLowerCase(), // User provided in form
-        fullName: formData.fullName.trim(), // User provided in form
-        // Company information from the company profile being viewed
-        company_id: companyId, // Company ID of the profile page being viewed
-        company_name: companyName, // Name of company being viewed
-        // Sender information from logged-in user
-        sender_name: user.fullName, // From logged-in user
-        sender_company: companyName // Name of company being viewed
+        // From form input
+        email: formData.email.trim().toLowerCase(),
+        fullName: formData.fullName.trim(),
+
+        // From company profile being viewed
+        company_id: companyId,  
+        company_name: companyName,
+
+        // From logged-in user context
+        sender_name: user.fullName,
+        sender_company: companyName // Company name of the profile being viewed
       };
 
       const response = await fetch('/api/users/invite', {
@@ -79,29 +81,17 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         body: JSON.stringify(payload)
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
-        let errorMessage = responseData.message || 'Failed to send invitation';
-
-        if (responseData.details) {
-          const errors = Object.entries(responseData.details)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join('\n');
-          if (errors) {
-            errorMessage = errors;
-          }
-        }
-
-        throw new Error(errorMessage);
+        const responseData = await response.json();
+        throw new Error(responseData.message || 'Failed to send invitation');
       }
 
-      return responseData;
+      return await response.json();
     },
-    onSuccess: (responseData) => {
+    onSuccess: (data) => {
       toast({
         title: "Invitation sent successfully",
-        description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
+        description: `${data.user.fullName} has been invited to join ${companyName}.`,
       });
 
       // Reset form and close modal
