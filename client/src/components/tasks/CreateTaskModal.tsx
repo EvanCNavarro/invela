@@ -107,7 +107,7 @@ export function CreateTaskModal() {
           title: `New User Invitation: ${data.userEmail}`,
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`,
           taskScope: TaskScope.USER,
-          status: 'email_sent',
+          status: 'EMAIL_SENT',
           progress: 25,
           userEmail: data.userEmail?.toLowerCase(),
         };
@@ -119,8 +119,8 @@ export function CreateTaskModal() {
           ...data,
           title: `File Request for ${assignee}`,
           description: `Document request task for ${assignee}`,
-          status: 'pending',
-          progress: 0,
+          status: 'PENDING', //Changed to PENDING as per the intention to have a clear task status flow.
+          progress: 0, //Changed to 0 as per the intention to have a clear task status flow.
           userEmail: data.userEmail?.toLowerCase()
         };
       }
