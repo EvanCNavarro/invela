@@ -19,6 +19,17 @@ const STATUS_PROGRESS = {
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
+// Helper function to get task counts
+async function getTaskCount() {
+  const allTasks = await db.select().from(tasks);
+  return {
+    total: allTasks.length,
+    emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
+    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length
+  };
+}
+
 // Create new task
 router.post("/api/tasks", async (req, res) => {
   try {
@@ -138,50 +149,5 @@ router.patch("/api/tasks/:id/status",
     }
   }
 );
-
-// Helper function to get task counts
-async function getTaskCount() {
-  const allTasks = await db.select().from(tasks);
-  return {
-    total: allTasks.length,
-    emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
-    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length
-  };
-}
-
-// Update existing tasks to have correct progress values
-router.post("/api/tasks/fix-progress", async (req, res) => {
-  try {
-    // Update all EMAIL_SENT tasks to have 25% progress
-    const [updatedTasks] = await db
-      .update(tasks)
-      .set({
-        progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
-        updatedAt: new Date()
-      })
-      .where(eq(tasks.status, TaskStatus.EMAIL_SENT))
-      .returning();
-
-    if (updatedTasks && Array.isArray(updatedTasks)) {
-      // Broadcast updates for each modified task
-      updatedTasks.forEach(task => {
-        broadcastMessage('task_updated', {
-          taskId: task.id,
-          status: task.status,
-          progress: task.progress
-        });
-      });
-    }
-
-    res.json({
-      message: "Successfully updated task progress values",
-      updatedCount: Array.isArray(updatedTasks) ? updatedTasks.length : 0
-    });
-  } catch (error) {
-    console.error("[Task Routes] Error fixing task progress:", error);
-    res.status(500).json({ message: "Failed to update task progress" });
-  }
-});
 
 export default router;

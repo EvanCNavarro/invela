@@ -8,6 +8,8 @@ class WebSocketService {
   private reconnectTimeout = 1000;
   private connectionPromise: Promise<void> | null = null;
   private connectionResolve: (() => void) | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private pingTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     this.connect();
@@ -28,6 +30,27 @@ class WebSocketService {
     return `${protocol}//${url.hostname}:${port}${wsPath}`;
   }
 
+  private startHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
+    if (this.pingTimeout) {
+      clearTimeout(this.pingTimeout);
+    }
+
+    this.heartbeatInterval = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({ type: 'ping' }));
+
+        // Set a timeout to reconnect if we don't receive a pong
+        this.pingTimeout = setTimeout(() => {
+          console.log('[WebSocket] No pong received, reconnecting...');
+          this.reconnect();
+        }, 5000); // Wait 5s for pong before reconnecting
+      }
+    }, 30000); // Send heartbeat every 30s
+  }
+
   private async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
 
@@ -44,6 +67,7 @@ class WebSocketService {
           console.log('[WebSocket] Connected successfully');
           this.reconnectAttempts = 0;
           this.reconnectTimeout = 1000;
+          this.startHeartbeat();
           if (this.connectionResolve) {
             this.connectionResolve();
             this.connectionResolve = null;
@@ -52,7 +76,17 @@ class WebSocketService {
 
         this.socket.onmessage = (event) => {
           try {
-            const { type, data } = JSON.parse(event.data);
+            const message = JSON.parse(event.data);
+
+            // Handle pong responses
+            if (message.type === 'pong') {
+              if (this.pingTimeout) {
+                clearTimeout(this.pingTimeout);
+              }
+              return;
+            }
+
+            const { type, data } = message;
             console.log('[WebSocket] Received message:', { type, data });
             this.handleMessage(type, data);
           } catch (error) {
@@ -62,6 +96,7 @@ class WebSocketService {
 
         this.socket.onclose = (event) => {
           console.log('[WebSocket] Connection closed:', event.code, event.reason);
+          this.cleanup();
           this.handleReconnect();
         };
 
@@ -71,6 +106,7 @@ class WebSocketService {
         };
       } catch (error) {
         console.error('[WebSocket] Error establishing connection:', error);
+        this.cleanup();
         this.handleReconnect();
       }
     });
@@ -78,10 +114,20 @@ class WebSocketService {
     return this.connectionPromise;
   }
 
-  private handleReconnect() {
+  private cleanup() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.pingTimeout) {
+      clearTimeout(this.pingTimeout);
+      this.pingTimeout = null;
+    }
     this.socket = null;
     this.connectionPromise = null;
+  }
 
+  private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
@@ -90,10 +136,17 @@ class WebSocketService {
         this.connect().catch(error => {
           console.error('[WebSocket] Reconnection attempt failed:', error);
         });
+        // Exponential backoff with max of 30 seconds
         this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
       }, this.reconnectTimeout);
     } else {
       console.error('[WebSocket] Max reconnection attempts reached');
+    }
+  }
+
+  private reconnect() {
+    if (this.socket) {
+      this.socket.close();
     }
   }
 
