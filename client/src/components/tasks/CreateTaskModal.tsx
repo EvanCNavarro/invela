@@ -35,6 +35,18 @@ const TaskScope = {
   COMPANY: "company",
 } as const;
 
+const TaskStatus = {
+  EMAIL_SENT: "EMAIL_SENT",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+} as const;
+
+const STATUS_PROGRESS = {
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.COMPLETED]: 100,
+} as const;
+
 type TaskType = typeof TaskType[keyof typeof TaskType];
 type TaskScope = typeof TaskScope[keyof typeof TaskScope];
 
@@ -107,9 +119,13 @@ export function CreateTaskModal() {
           title: `New User Invitation: ${data.userEmail}`,
           description: `Invitation sent to ${data.userEmail} to join ${companyName} on the platform.`,
           taskScope: TaskScope.USER,
-          status: 'EMAIL_SENT',
-          progress: 25,
+          status: TaskStatus.EMAIL_SENT,
+          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
           userEmail: data.userEmail?.toLowerCase(),
+          metadata: {
+            emailSentAt: new Date().toISOString(),
+            statusFlow: [TaskStatus.EMAIL_SENT]
+          }
         };
       } else {
         const assignee = data.taskScope === TaskScope.COMPANY
@@ -119,9 +135,13 @@ export function CreateTaskModal() {
           ...data,
           title: `File Request for ${assignee}`,
           description: `Document request task for ${assignee}`,
-          status: 'PENDING', //Changed to PENDING as per the intention to have a clear task status flow.
-          progress: 0, //Changed to 0 as per the intention to have a clear task status flow.
-          userEmail: data.userEmail?.toLowerCase()
+          status: TaskStatus.PENDING,
+          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT], //Starts at 25% progress.  Consider changing default status to IN_PROGRESS.
+          userEmail: data.userEmail?.toLowerCase(),
+          metadata: {
+            emailSentAt: new Date().toISOString(),
+            statusFlow: [TaskStatus.EMAIL_SENT]
+          }
         };
       }
 
