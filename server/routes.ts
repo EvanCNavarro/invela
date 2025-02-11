@@ -1670,23 +1670,25 @@ export function registerRoutes(app: Express): Server {
         console.log('[Invite] Created task:', task);
         console.log('[Invite] Sending invitation email');
 
-        // Send invitation email with correctly named template fields and static Invela branding
-        const emailResult = await emailService.sendTemplateEmail({
-          to: inviteData.email,
-          from: process.env.GMAIL_USER!,
-          template: 'user_invite',
-          templateData: {
-            recipientName: inviteData.fullName,
-            company: "Invela", // Always use Invela as the company name in emails
-            code: invitation.code,
-            inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
-            senderName: inviteData.senderName
-          }
-        });
+        try {
+          // Send invitation email with correctly named template fields and static Invela branding
+          await emailService.sendTemplateEmail({
+            to: inviteData.email,
+            from: process.env.GMAIL_USER!,
+            template: 'user_invite',
+            templateData: {
+              recipientName: inviteData.fullName,
+              company: "Invela", // Always use Invela as the company name in emails
+              code: invitation.code,
+              inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
+              senderName: inviteData.senderName
+            }
+          });
 
-        if (!emailResult.success) {
-          console.error('[Invite] Failed to send email:', emailResult.error);
-          throw new Error(`Failed to send invitation email: ${emailResult.error}`);
+          console.log('[Invite] Successfully sent invitation email');
+        } catch (emailError) {
+          console.error('[Invite] Failed to send email:', emailError);
+          throw new Error('Failed to send invitation email');
         }
 
         console.log('[Invite] Successfully completed invitation process');
