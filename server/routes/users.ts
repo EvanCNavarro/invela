@@ -41,7 +41,7 @@ router.post("/api/users/invite", async (req, res) => {
     const validationResult = inviteUserSchema.safeParse(req.body);
 
     if (!validationResult.success) {
-      console.error('[Step 1] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
+      console.error('[Step 1] Validation failed:', validationResult.error.format());
       return res.status(400).json({
         message: "Missing required fields",
         details: validationResult.error.errors.reduce((acc, err) => {
@@ -52,7 +52,7 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     const data = validationResult.data;
-    console.log('[Step 1] Validation successful. Validated data:', JSON.stringify(data, null, 2));
+    console.log('[Step 1] Validation successful. Validated data:', data);
 
     // Get company info
     const [company] = await db.select()
@@ -154,45 +154,6 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
-        // Step 3.5: Validate and log all email template data
-        console.log('\n[Email Data Validation] Starting email data validation...');
-
-        // Validate recipient name
-        console.log('[Email Data Validation] Recipient Name:', {
-          value: data.full_name,
-          isValid: !!data.full_name,
-          length: data.full_name.length
-        });
-
-        // Validate sender name
-        console.log('[Email Data Validation] Sender Name:', {
-          value: data.sender_name,
-          isValid: !!data.sender_name,
-          length: data.sender_name.length
-        });
-
-        // Validate company name
-        console.log('[Email Data Validation] Company Name:', {
-          value: company.name,
-          isValid: !!company.name,
-          length: company.name.length
-        });
-
-        // Validate invitation code
-        console.log('[Email Data Validation] Invitation Code:', {
-          value: invitationCode,
-          isValid: !!invitationCode,
-          length: invitationCode.length
-        });
-
-        // Validate invite URL
-        console.log('[Email Data Validation] Invite URL:', {
-          value: inviteUrl,
-          isValid: !!inviteUrl,
-          isValidUrl: inviteUrl.startsWith('http'),
-          length: inviteUrl.length
-        });
-
         // Prepare email template data according to the strict schema
         const emailTemplateData = {
           recipientName: data.full_name,
@@ -202,18 +163,13 @@ router.post("/api/users/invite", async (req, res) => {
           inviteUrl: inviteUrl
         };
 
-        // Log complete email preview
-        console.log('\n[Email Preview] Complete email template data:');
-        console.log(JSON.stringify(emailTemplateData, null, 2));
-        console.log('\n[Email Preview] Email will be sent to:', data.email);
-        console.log('[Email Preview] Email will be sent from:', process.env.GMAIL_USER);
-        console.log('[Email Preview] Using template:', 'user_invite');
+        console.log('\n[Email Preview] Complete email template data:', emailTemplateData);
 
         // Send invitation email
         const emailResult = await emailService.sendTemplateEmail({
           to: data.email,
           from: process.env.GMAIL_USER!,
-          template: 'user_invite', 
+          template: 'user_invite',
           templateData: emailTemplateData
         });
 
