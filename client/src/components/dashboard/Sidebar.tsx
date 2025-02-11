@@ -11,10 +11,12 @@ import {
   MousePointer2Icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
+import { useEffect, useState } from "react";
+import { wsService } from "@/lib/websocket";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -36,6 +38,8 @@ export function Sidebar({
   isPlayground = false
 }: SidebarProps) {
   const [location] = useLocation();
+  const queryClient = useQueryClient();
+  const [taskCount, setTaskCount] = useState(0);
 
   // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery({
@@ -47,6 +51,47 @@ export function Sidebar({
     queryKey: ["/api/companies/current"],
     enabled: !isPlayground,
   });
+
+  // Update taskCount when tasks data changes
+  useEffect(() => {
+    if (!isPlayground) {
+      setTaskCount(tasks.length);
+    }
+  }, [tasks, isPlayground]);
+
+  // Set up WebSocket subscription for real-time updates
+  useEffect(() => {
+    if (isPlayground) return;
+
+    // Subscribe to task updates that include count information
+    const unsubscribeCreated = wsService.subscribe('task_created', (data) => {
+      if (data.count?.total !== undefined) {
+        setTaskCount(data.count.total);
+        // Invalidate the tasks query to ensure consistency
+        queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      }
+    });
+
+    const unsubscribeDeleted = wsService.subscribe('task_deleted', (data) => {
+      if (data.count?.total !== undefined) {
+        setTaskCount(data.count.total);
+        queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      }
+    });
+
+    const unsubscribeUpdated = wsService.subscribe('task_updated', (data) => {
+      if (data.count?.total !== undefined) {
+        setTaskCount(data.count.total);
+        queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      }
+    });
+
+    return () => {
+      unsubscribeCreated();
+      unsubscribeDeleted();
+      unsubscribeUpdated();
+    };
+  }, [isPlayground, queryClient]);
 
   const menuItems = [
     {
@@ -60,7 +105,7 @@ export function Sidebar({
       label: "Task Center",
       href: "/task-center",
       locked: false, // Task Center is never locked
-      count: isPlayground ? notificationCount : tasks.length
+      count: isPlayground ? notificationCount : taskCount
     },
     {
       icon: Network,
