@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
-  fullName: z.string().min(1, "Full name is required"),  // Changed to match frontend
+  fullName: z.string().min(1, "Full name is required"),
   company_id: z.number({
     required_error: "Company ID is required",
     invalid_type_error: "Company ID must be a number"
@@ -35,6 +35,7 @@ async function hashPassword(password: string) {
 router.post("/api/users/invite", async (req, res) => {
   try {
     console.log('\n[User Invitation] Starting user invitation process');
+    console.log('[User Invitation] Request headers:', req.headers);
     console.log('[User Invitation] Request body:', JSON.stringify(req.body, null, 2));
 
     // Step 1: Validate request data
@@ -50,7 +51,7 @@ router.post("/api/users/invite", async (req, res) => {
       });
 
       return res.status(400).json({
-        message: "Invalid or missing fields in invitation data",
+        message: "Missing required fields",
         details: errorDetails
       });
     }
@@ -88,7 +89,7 @@ router.post("/api/users/invite", async (req, res) => {
           .insert(users)
           .values({
             email: data.email.toLowerCase(),
-            fullName: data.fullName,  // Match the frontend field name
+            fullName: data.fullName,
             password: hashedPassword,
             companyId: data.company_id,
             onboardingUserCompleted: false,
@@ -115,7 +116,7 @@ router.post("/api/users/invite", async (req, res) => {
         const taskInsertResult = await tx
           .insert(tasks)
           .values({
-            title: `Complete onboarding for ${data.fullName}`,  // Match the frontend field name
+            title: `Complete onboarding for ${data.fullName}`,
             description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
             taskType: 'user_onboarding',
             taskScope: 'user',

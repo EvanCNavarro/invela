@@ -17,27 +17,13 @@ export class APIError extends Error {
   }
 }
 
-// WebSocket clients store
-const clients = new Set<WebSocket>();
-
-// Broadcast to all connected clients
-export function broadcastMessage(type: string, data: any) {
-  const message = JSON.stringify({ type, data });
-  clients.forEach(client => {
-    if (client.readyState === WebSocket.OPEN) {
-      try {
-        client.send(message);
-      } catch (error) {
-        console.error('Error broadcasting message:', error);
-        clients.delete(client);
-      }
-    }
-  });
-}
-
 const app = express();
 const server = createServer(app);
 
+// WebSocket clients store
+const wsClients = new Set<WebSocket>();
+
+// Configure body parsing middleware first
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -47,6 +33,12 @@ app.use((req, res, next) => {
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
   let errorCaptured: Error | undefined = undefined;
+
+  // Debug request body for specific endpoints
+  if (path === '/api/users/invite' && req.method === 'POST') {
+    log(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
+    log(`Request body (raw): ${JSON.stringify(req.body)}`, 'debug');
+  }
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -90,7 +82,6 @@ app.use((req, res, next) => {
 registerRoutes(app);
 
 if (app.get("env") === "development") {
-  // Setup Vite first in development
   await setupVite(app, server);
 }
 
@@ -114,7 +105,7 @@ server.on('upgrade', (request, socket, head) => {
 // WebSocket connection handling
 wss.on('connection', (ws: WebSocket, req) => {
   console.log('New WebSocket client connected from:', req.headers.origin);
-  clients.add(ws);
+  wsClients.add(ws);
 
   // Send initial connection confirmation
   ws.send(JSON.stringify({ 
@@ -133,12 +124,12 @@ wss.on('connection', (ws: WebSocket, req) => {
 
   ws.on('close', () => {
     console.log('WebSocket client disconnected');
-    clients.delete(ws);
+    wsClients.delete(ws);
   });
 
   ws.on('error', (error) => {
     console.error('WebSocket error:', error);
-    clients.delete(ws);
+    wsClients.delete(ws);
   });
 });
 
@@ -162,6 +153,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
     ...((!isProduction && err.stack) ? { stack: err.stack } : {})
   };
 
+  // Log error details
   const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
   if (status >= 500) {
     console.error(logMessage, {
@@ -183,6 +175,6 @@ if (app.get("env") !== "development") {
 }
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, "0.0.0.0", () => {
-  log(`Server and WebSocket running on port ${PORT}`);
+server.listen(PORT, () => {
+  log(`Server running on port ${PORT}`);
 });
