@@ -921,8 +921,7 @@ export function registerRoutes(app: Express): Server {
           return res.status(200).json(updatedFile);
         } catch (error) {
           console.error('Error updating existing file:', error);
-          // Clean up uploaded file on error
-          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
+          // Clean up uploaded file on error          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
           if (fs.existsSync(newFilePath)) {
             fs.unlinkSync(newFilePath);
           }
@@ -1779,6 +1778,8 @@ const STATUS_PROGRESS = {
 };
 
 function generateInviteCode(): string {
-  // Generate a 6 character hex code
-  return crypto.randomBytes(3).toString('hex').toUpperCase();
+  // Generate a 6 character hex code to match frontend input field
+  const code = crypto.randomBytes(3).toString('hex').toUpperCase();
+  console.log('[Invite] Generated 6-digit invite code:', code);
+  return code;
 }
