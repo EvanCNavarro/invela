@@ -60,7 +60,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       // Construct the invitation payload with all required fields
       const payload = {
         // Form fields
-        email: data.email.trim(),
+        email: data.email.trim().toLowerCase(),
         fullName: data.fullName.trim(),
         // Company being viewed
         company_id: companyId,
