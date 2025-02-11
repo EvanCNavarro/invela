@@ -89,10 +89,10 @@ app.use((req, res, next) => {
 
 registerRoutes(app);
 
-// Setup WebSocket server
+// Setup WebSocket server on a specific path
 const wss = new WebSocketServer({ 
   server,
-  path: '/ws',
+  path: '/api/ws', // Changed path to avoid conflicts with Vite HMR
   verifyClient: ({ req }) => {
     // Skip Vite HMR connections
     if (req.headers['sec-websocket-protocol'] === 'vite-hmr') {

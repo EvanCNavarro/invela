@@ -14,12 +14,12 @@ class WebSocketService {
   }
 
   private getWebSocketUrl(): string {
-    // Get the full hostname from the current window location
+    // Get the full URL including protocol, hostname, and port
     const fullUrl = new URL(window.location.href);
     const protocol = fullUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    // Construct WebSocket URL using the full hostname and path
-    const wsUrl = `${protocol}//${fullUrl.host}/ws`;
+    // Use /api/ws path to avoid conflicts with Vite HMR
+    const wsUrl = `${protocol}//${fullUrl.host}/api/ws`;
     console.log('Constructing WebSocket URL:', wsUrl);
     return wsUrl;
   }
