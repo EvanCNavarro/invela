@@ -86,7 +86,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   fullName: text("full_name").notNull(),
-  firstName: text("first_name").notNull(),
+  firstName: text("first_name"),  // Changed to be nullable
   lastName: text("last_name"),
   password: text("password").notNull(),
   companyId: integer("company_id").references(() => companies.id).notNull(),
@@ -184,7 +184,7 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
 export const registrationSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(1),
-  firstName: z.string().min(1),
+  firstName: z.string().nullable().optional(),  // Changed to be nullable and optional
   lastName: z.string().nullable(),
   password: z.string().min(6),
   company: z.string().min(1),
