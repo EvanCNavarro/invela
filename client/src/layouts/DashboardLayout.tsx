@@ -9,6 +9,15 @@ import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
+interface Company {
+  onboardingCompanyCompleted: boolean;
+}
+
+interface Task {
+  id: string;
+  // Add other task properties as needed
+}
+
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
   const [location, navigate] = useLocation();
@@ -18,12 +27,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
 
   // Fetch tasks for notification count
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
   // Fetch current company data
-  const { data: currentCompany } = useQuery({
+  const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     staleTime: 0, // Don't cache this data
     gcTime: 0, // Remove from cache immediately
@@ -77,6 +86,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           notificationCount={tasks.length}
           showInvelaTabs={false}
           isPlayground={false}
+          variant={isCompanyLocked ? 'company-locked' : 'default'}
         />
       </aside>
 
