@@ -302,7 +302,7 @@ export function registerRoutes(app: Express): Server {
             metadata: {
               ...task.metadata,
               registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata.statusFlow || []), TaskStatus.COMPLETED]
+              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
             }
           })
           .where(eq(tasks.id, task.id))
@@ -919,7 +919,7 @@ export function registerRoutes(app: Express): Server {
               type: req.file.mimetype,
               path: storedPath,
               status: 'uploaded',
-              updatedAt: newDate(),
+              updatedAt: new Date(),
               version: newVersion,
             })
             .where(eq(files.id, existingFile[0].id))
