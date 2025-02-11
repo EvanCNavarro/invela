@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { SearchBar } from "@/components/playground/SearchBar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { User, Users2 } from "lucide-react";
@@ -23,6 +23,7 @@ import { Card } from "@/components/ui/card";
 import { CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TaskStatus } from "@db/schema";
+import { wsService } from "@/lib/websocket";
 
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
@@ -56,10 +57,71 @@ export default function TaskCenterPage() {
   const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
+  const { data: tasks = [], isLoading, error } = useQuery({
     queryKey: ["/api/tasks"],
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache the results
   });
+
+  // Set up WebSocket subscription for real-time updates
+  useEffect(() => {
+    const subscriptions: Array<() => void> = [];
+
+    const setupSubscriptions = async () => {
+      try {
+        // Subscribe to task creation
+        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
+          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+            const newTasks = [...oldTasks];
+            if (!newTasks.find(t => t.id === data.task.id)) {
+              newTasks.push(data.task);
+            }
+            return newTasks;
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+        });
+        subscriptions.push(unsubTaskCreate);
+
+        // Subscribe to task updates
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+            return oldTasks.map(task =>
+              task.id === data.taskId
+                ? { ...task, status: data.status, progress: data.progress }
+                : task
+            );
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+        });
+        subscriptions.push(unsubTaskUpdate);
+
+        // Subscribe to task deletion
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
+          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
+            return oldTasks.filter(task => task.id !== data.taskId);
+          });
+          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+        });
+        subscriptions.push(unsubTaskDelete);
+      } catch (error) {
+        console.error('Error setting up WebSocket subscriptions:', error);
+      }
+    };
+
+    setupSubscriptions();
+
+    return () => {
+      subscriptions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('Error unsubscribing from WebSocket:', error);
+        }
+      });
+    };
+  }, [queryClient]);
 
   const handleSort = (key: string) => {
     setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
