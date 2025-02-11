@@ -19,14 +19,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Complete schema matching backend requirements
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
   company_id: z.number(),
   company_name: z.string(),
   sender_name: z.string(),
-  sender_company: z.string()
 });
 
 type InviteUserData = z.infer<typeof inviteUserSchema>;
@@ -51,7 +49,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       company_id: companyId,
       company_name: companyName,
       sender_name: user?.fullName || "",
-      sender_company: companyName // Set the sender's company name to the current company
     }
   });
 
@@ -62,14 +59,12 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         const validatedData = inviteUserSchema.parse(formData);
         console.log("[Step 2] Frontend Validation successful", validatedData);
 
-        // Prepare and send the request with correct company information
         const payload = {
           email: validatedData.email,
           full_name: validatedData.full_name,
           company_id: companyId,
           company_name: companyName,
           sender_name: user?.fullName,
-          sender_company: companyName // Ensure sender company is set correctly
         };
 
         console.log("[Step 2] Sending request payload:", payload);
@@ -86,7 +81,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         console.log("[Step 2] Server response:", responseData);
 
         if (!response.ok) {
-          throw new Error(responseData.message || 'Failed to send invitation');
+          throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
         }
 
         return responseData;
@@ -107,20 +102,15 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     onSuccess: (data) => {
       console.log("[Step 4] Starting UI Updates");
       try {
-        // Show success toast
         toast({
           title: "Invitation sent successfully",
-          description: `${data.invitation.inviteeName} has been invited to join ${companyName}.`,
+          description: `${form.getValues().full_name} has been invited to join ${companyName}.`,
         });
 
-        // Reset form
         form.reset();
         setServerError(null);
-
-        // Close modal
         onOpenChange(false);
 
-        // Trigger confetti
         const inviteButton = document.querySelector('[data-element="invite-user-button"]');
         if (inviteButton) {
           const rect = inviteButton.getBoundingClientRect();

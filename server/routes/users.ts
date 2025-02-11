@@ -214,13 +214,7 @@ router.post("/api/users/invite", async (req, res) => {
           to: data.email,
           from: process.env.GMAIL_USER!,
           template: 'user_invite',
-          templateData: {
-            recipientName: data.full_name,
-            senderName: data.sender_name,
-            company: company.name,
-            code: invitationCode,
-            inviteUrl: inviteUrl
-          }
+          templateData: emailTemplateData
         });
 
         if (!emailResult.success) {
