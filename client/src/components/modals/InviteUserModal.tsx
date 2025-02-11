@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
 import { useAuth } from "@/hooks/use-auth";
+import { TaskStatus } from "@db/schema";
 
 import {
   Dialog,
@@ -58,6 +59,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           company_name: companyName,
           sender_name: user?.fullName || '',
           sender_company: "Invela", // Hardcoded for now since this is the parent company
+          initial_status: TaskStatus.EMAIL_SENT, // Explicitly set the initial status
         };
 
         // Debug log the exact payload being sent
