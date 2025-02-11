@@ -34,20 +34,30 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    console.log('[User Routes] Invitation request body:', req.body);
+    console.log('[User Routes] Received invitation request body:', JSON.stringify(req.body, null, 2));
 
     // Validate request data
     const validationResult = inviteUserSchema.safeParse(req.body);
     if (!validationResult.success) {
-      console.error('[User Routes] Validation failed:', validationResult.error.format());
+      const formattedErrors = validationResult.error.format();
+      console.error('[User Routes] Validation failed. Errors:', JSON.stringify(formattedErrors, null, 2));
+
+      // Create a more user-friendly error message
+      const errorDetails = {};
+      Object.entries(formattedErrors).forEach(([key, value]) => {
+        if (key !== '_errors' && value?._errors?.length > 0) {
+          errorDetails[key] = value._errors[0];
+        }
+      });
+
       return res.status(400).json({
-        message: "Invalid invitation data",
-        details: validationResult.error.format()
+        message: "Invalid or missing fields in invitation data",
+        details: errorDetails
       });
     }
 
     const data = validationResult.data;
-    console.log('[User Routes] Processing invitation for:', data.email);
+    console.log('[User Routes] Processing validated invitation data:', JSON.stringify(data, null, 2));
 
     // Start transaction to ensure data consistency
     let newUser;
@@ -116,27 +126,34 @@ router.post("/api/users/invite", async (req, res) => {
       }
     });
 
+    console.log('[User Routes] Successfully created user and task');
+
     // Send success response
     res.status(201).json({
       message: "Invitation sent successfully",
       user: {
-        id: newUser.id,
-        email: newUser.email,
-        fullName: newUser.fullName
+        id: newUser!.id,
+        email: newUser!.email,
+        fullName: newUser!.fullName
       },
       task: {
-        id: task.id,
-        status: task.status
+        id: task!.id,
+        status: task!.status
       }
     });
 
   } catch (error) {
-    console.error('[User Routes] Error sending invitation:', error);
+    console.error('[User Routes] Error processing invitation:', error);
 
     if (error instanceof z.ZodError) {
+      const formattedErrors = {};
+      error.errors.forEach(err => {
+        formattedErrors[err.path.join('.')] = err.message;
+      });
+
       return res.status(400).json({
         message: "Invalid invitation data",
-        details: error.errors
+        details: formattedErrors
       });
     }
 
