@@ -1,11 +1,169 @@
-.where(eq(files.id, existingFile[0].id))
+import { Express } from 'express';
+import { eq, and, gt, sql } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
+import * as bcrypt from 'bcrypt';
+import path from 'path';
+import fs from 'fs';
+import { db } from '@db';
+import { users, companies, files, companyLogos, relationships, tasks, invitations } from '@db/schema';
+import { emailService } from './services/email';
+import { requireAuth } from './middleware/auth';
+import { logoUpload } from './middleware/upload';
+import { broadcastTaskUpdate } from './services/websocket';
+import crypto from 'crypto';
+
+// Task status enum
+export enum TaskStatus {
+  PENDING = 'pending',
+  EMAIL_SENT = 'email_sent',
+  COMPLETED = 'completed',
+  FAILED = 'failed'
+}
+
+// Progress mapping for task statuses
+const taskStatusToProgress: Record<TaskStatus, number> = {
+  [TaskStatus.PENDING]: 0,
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.COMPLETED]: 100,
+  [TaskStatus.FAILED]: 100,
+};
+
+declare global {
+  namespace Express {
+    interface Request {
+      file?: Express.Multer.File
+    }
+  }
+}
+
+export default function setupRoutes(app: Express) {
+  // Account setup endpoint
+  app.post("/api/account/setup", async (req, res) => {
+    try {
+      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+
+      // Validate invitation code
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, invitationCode),
+          eq(invitations.status, 'pending'),
+          sql`LOWER(${invitations.email}) = LOWER(${email})`,
+          gt(invitations.expiresAt, new Date())
+        ));
+
+      if (!invitation) {
+        return res.status(400).json({
+          message: "Invalid invitation code or email mismatch"
+        });
+      }
+
+      // Find existing user with case-insensitive email match
+      const [existingUser] = await db.select()
+        .from(users)
+        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+
+      if (!existingUser) {
+        return res.status(400).json({ message: "User account not found" });
+      }
+
+      // Update the existing user with new information
+      const [updatedUser] = await db.update(users)
+        .set({
+          firstName,
+          lastName,
+          fullName,
+          password: await bcrypt.hash(password, 10),
+          onboardingUserCompleted: true,
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+
+      // Update the related task
+      const [task] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.userEmail, email.toLowerCase()),
+          eq(tasks.status, TaskStatus.EMAIL_SENT)
+        ));
+
+      if (task) {
+        const [updatedTask] = await db.update(tasks)
+          .set({
+            status: TaskStatus.COMPLETED,
+            progress: 100,
+            assignedTo: updatedUser.id,
+            metadata: {
+              ...task.metadata,
+              registeredAt: new Date().toISOString(),
+              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+            }
+          })
+          .where(eq(tasks.id, task.id))
+          .returning();
+
+        broadcastTaskUpdate(updatedTask);
+      }
+
+      // Update invitation status
+      await db.update(invitations)
+        .set({
+          status: 'used',
+          usedAt: new Date(),
+        })
+        .where(eq(invitations.id, invitation.id));
+
+      // Log the user in
+      req.login(updatedUser, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.status(500).json({ message: "Error logging in" });
+        }
+        res.json(updatedUser);
+      });
+
+    } catch (error) {
+      console.error("Account setup error:", error);
+      res.status(500).json({ message: "Error updating user information" });
+    }
+  });
+
+  // File upload endpoint
+  app.post("/api/files/upload", requireAuth, async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const storedPath = req.file.filename;
+
+      // Check if file already exists
+      const existingFile = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.name, req.file.originalname),
+          eq(files.userId, req.user!.id)
+        ));
+
+      if (existingFile.length > 0) {
+        try {
+          // Update existing file record
+          const [updatedFile] = await db.update(files)
+            .set({
+              size: req.file.size,
+              type: req.file.mimetype,
+              path: storedPath,
+              version: existingFile[0].version + 1
+            })
+            .where(eq(files.id, existingFile[0].id))
             .returning();
 
           console.log('Debug - Updated existing file record:', updatedFile);
           return res.status(200).json(updatedFile);
         } catch (error) {
           console.error('Error updating existing file:', error);
-          // Clean up uploaded file on error          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
+          // Clean up uploaded file on error
+          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
           if (fs.existsSync(newFilePath)) {
             fs.unlinkSync(newFilePath);
           }
@@ -16,7 +174,8 @@
       // Create new file record
       const fileData = {
         name: req.file.originalname,
-        size: req.file.size,        type:req.file.mimetype,
+        size: req.file.size,
+        type: req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
         userId: req.user!.id,
@@ -456,205 +615,9 @@
     }
   });
 
-  // Get users by company ID
-  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.companyId);
-      if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
-      }
+  // Add users by company endpoint - This endpoint is already defined above, so it's removed here to avoid duplication.
 
-      // Get the user's company to check permissions
-      const [userCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
 
-      if (!userCompany) {
-        return res.status(404).json({ message: "User's company not found" });
-      }
-
-      // If user is from Invela, they can see all users
-      // Otherwise, they can only see users from their own company or companies in their network
-      let companyUsers;
-      if (userCompany.category === 'Invela') {
-        companyUsers = await db.select()
-          .from(users)
-          .where(eq(users.companyId, companyId));
-      } else {
-        // First check if the requested company is in the user's network
-        const [relationship] = await db.select()
-          .from(relationships)
-          .where(and(
-            eq(relationships.companyId, req.user!.companyId),
-            eq(relationships.relatedCompanyId, companyId),
-            eq(relationships.status, 'active')
-          ));
-
-        // Only allow access if it's the user's own company or a company in their network
-        if (companyId === req.user!.companyId || relationship) {
-          companyUsers = await db.select()
-            .from(users)
-            .where(eq(users.companyId, companyId));
-        } else {
-          return res.status(403).json({ message: "Not authorized to view users for this company" });
-        }
-      }
-
-      res.json(companyUsers || []);
-    } catch (error) {
-      console.error("Error fetching company users:", error);
-      res.status(500).json({ message: "Error fetching company users" });
-    }
-  });
-
-  // Update the user invitation endpoint to include sender details
-  app.post("/api/invitations", requireAuth, async (req, res) => {
-    try {
-      const { email, name: recipientName } = req.body;
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-
-      // Format the recipient's name
-      const formattedName = recipientName
-        ?.split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ') || email.split('@')[0];
-
-      // Get sender's full name and company
-      const [sender] = await db.select()
-        .from(users)
-        .leftJoin(companies, eq(users.companyId, companies.id))
-        .where(eq(users.id, req.user!.id));
-
-      if (!sender || !sender.companies) {
-        return res.status(400).json({ message: "Sender company information not found" });
-      }
-
-      const senderName = sender.users.fullName;
-      const senderCompany = sender.companies.name;
-
-      // Generate invitation code
-      const code = uuidv4();
-
-      console.log('Debug - Creating invitation with details:', {
-        senderName,
-        senderCompany,
-        recipientName: formattedName,
-        email
-      });
-
-      // Create invitation record
-      const [invitation] = await db.insert(invitations)
-        .values({
-          email,
-          code,
-          status: 'pending',
-          companyId: req.user!.companyId,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-          createdBy: req.user!.id
-        })
-        .returning();
-
-      const inviteUrl = `${req.protocol}://${req.get('host')}`;
-
-      console.log('Debug - Preparing to send invitation email');
-      // Send invitation email with formatted name and company details
-      const emailParams = {
-        to: email,
-        from: process.env.GMAIL_USER!,
-        template: 'user_invite',
-        templateData: {
-          recipientEmail: email,
-          recipientName: formattedName,
-          senderName,
-          senderCompany,
-          code,
-          inviteUrl,
-        }
-      };
-
-      console.log('Debug - Sending invitation email with params:', {
-        to: email,
-        template: 'user_invite',
-        senderName,
-        senderCompany,
-        code
-      });
-
-      const emailResult = await emailService.sendTemplateEmail(emailParams);
-      console.log('Debug - Email service response:', emailResult);
-
-      if (!emailResult.success) {
-        throw new Error(`Failed to send email: ${emailResult.error}`);
-      }
-
-      // Update task status
-      await db.update(tasks)
-        .set({ status: 'email_sent' })
-        .where(eq(tasks.id, invitation.taskId));
-
-      res.json({ success: true, message: 'Invitation sent successfully' });
-    } catch (error) {
-      console.error("Error sending invitation:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ message: `Error sending invitation: ${errorMessage}` });
-    }
-  });
-
-  // Add users by company endpoint
-  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.companyId);
-      console.log('Debug - Fetching users for company:', companyId);
-      console.log('Debug - Company ID type:', typeof companyId);
-
-      if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
-      }
-
-      // Debug: Log the query we're about to execute
-      console.log('Debug - Executing query with companyId:', companyId);
-
-      const companyUsers = await db.select()
-        .from(users)
-        .where(eq(users.companyId, companyId));
-
-      console.log('Debug - SQL Query result:', companyUsers);
-      console.log('Debug - Number of users found:', companyUsers.length);
-
-      res.json(companyUsers);
-    } catch (error) {
-      console.error("Error fetching company users:", error);
-      res.status(500).json({ message: "Error fetching company users" });
-    }
-  });
-
-  // Update the users by company endpoint
-  app.get("/api/users/by-company/:id", requireAuth, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.id);
-      if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
-      }
-
-      // Get all users for the company, including pending invitations
-      const companyUsers = await db.select()
-        .from(users)
-        .where(eq(users.companyId, companyId));
-
-      console.log('Debug - Fetched users for company:', {
-        companyId,
-        userCount: companyUsers.length,
-        users: companyUsers.map(u => ({ id: u.id, email: u.email }))
-      });
-
-      res.json(companyUsers);
-    } catch (error) {
-      console.error("Error fetching company users:", error);
-      res.status(500).json({ message: "Error fetching company users" });
-    }
-  });
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     console.log('[Invite] Starting invitation process');
@@ -828,147 +791,175 @@
     }
   });
 
-  // Add the new account setup endpoint
-  app.post("/api/account/setup", async (req, res) => {
+
+  // Get users by company ID
+  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
     try {
-      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
-
-      // Validate invitation code
-      const [invitation] = await db.select()
-        .from(invitations)
-        .where(and(
-          eq(invitations.code, invitationCode),
-          eq(invitations.status, 'pending'),
-          sql`LOWER(${invitations.email}) = LOWER(${email})`,
-          gt(invitations.expiresAt, new Date())
-        ));
-
-      if (!invitation) {
-        return res.status(400).json({
-          message: "Invalid invitation code or email mismatch"
-        });
+      const companyId = parseInt(req.params.companyId);
+      if (isNaN(companyId)) {
+        return res.status(400).json({ message: "Invalid company ID" });
       }
 
-      // Find existing user with case-insensitive email match
-      const [existingUser] = await db.select()
-        .from(users)
-        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+      // Get the user's company to check permissions
+      const [userCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
 
-      if (!existingUser) {
-        return res.status(400).json({ message: "User account not found" });
+      if (!userCompany) {
+        return res.status(404).json({ message: "User's company not found" });
       }
 
-      // Update the existing user with new information
-      const [updatedUser] = await db.update(users)
-        .set({
-          firstName,
-          lastName,
-          fullName,
-          password: await bcrypt.hash(password, 10),
-          onboardingUserCompleted: true,
-        })
-        .where(eq(users.id, existingUser.id))
-        .returning();
+      // If user is from Invela, they can see all users
+      // Otherwise, they can only see users from their own company or companies in their network
+      let companyUsers;
+      if (userCompany.category === 'Invela') {
+        companyUsers = await db.select()
+          .from(users)
+          .where(eq(users.companyId, companyId));
+      } else {
+        // First check if the requested company is in the user's network
+        const [relationship] = await db.select()
+          .from(relationships)
+          .where(and(
+            eq(relationships.companyId, req.user!.companyId),
+            eq(relationships.relatedCompanyId, companyId),
+            eq(relationships.status, 'active')
+          ));
 
-      console.log(`[Account Setup] Updated user account with ID: ${updatedUser.id}`);
-
-      // Update the related task
-      const [task] = await db.select()
-        .from(tasks)
-        .where(and(
-          eq(tasks.userEmail, email.toLowerCase()),
-          eq(tasks.status, 'EMAIL_SENT')
-        ));
-
-      if (task) {
-        const [updatedTask] = await db.update(tasks)
-          .set({
-            status: 'COMPLETED',
-            progress: 100,
-            assignedTo: updatedUser.id,
-            metadata: {
-              ...task.metadata,
-              registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata?.statusFlow || []), 'COMPLETED']
-            }
-          })
-          .where(eq(tasks.id, task.id))
-          .returning();
-
-        console.log(`[Account Setup] Updated task ${updatedTask.id} with completion progress`);
-        broadcastTaskUpdate(updatedTask);
-      }
-
-      // Update invitation status
-      await db.update(invitations)
-        .set({
-          status: 'used',
-          usedAt: new Date(),
-        })
-        .where(eq(invitations.id, invitation.id));
-
-      console.log(`[Account Setup] Updated invitation ${invitation.id} to used status`);
-
-      // Log the user in
-      req.login(updatedUser, (err) => {
-        if (err) {
-          console.error("Login error:", err);
-          return res.status(500).json({ message: "Error logging in" });
+        // Only allow access if it's the user's own company or a company in their network
+        if (companyId === req.user!.companyId || relationship) {
+          companyUsers = await db.select()
+            .from(users)
+            .where(eq(users.companyId, companyId));
+        } else {
+          return res.status(403).json({ message: "Not authorized to view users for this company" });
         }
-        res.json(updatedUser);
-      });
+      }
+
+      res.json(companyUsers || []);
     } catch (error) {
-      console.error("Account setup error:", error);
-      res.status(500).json({ message: "Error updating user information" });
+      console.error("Error fetching company users:", error);
+      res.status(500).json({ message: "Error fetching company users" });
     }
   });
 
-  return httpServer;
-}
+  // Update the user invitation endpoint to include sender details
+  app.post("/api/invitations", requireAuth, async (req, res) => {
+    try {
+      const { email, name: recipientName } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
 
-function formatTimestampForFilename() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-const minutes = String(now.getMinutes()).padStart(2, '0');
-  const seconds = String(now.getSeconds()).padStart(2, '0');
-  return `${year}${month}${day}${hours}${minutes}${seconds}`;
-}
+      // Format the recipient's name
+      const formattedName = recipientName
+        ?.split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ') || email.split('@')[0];
 
-function toTitleCase(str: string) {
-  return str.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-enum TaskStatus {
-  PENDING = 'pending',
-  EMAIL_SENT = 'email_sent',
-  IN_PROGRESS = 'in_progress',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
+      // Get sender's full name and company
+      const [sender] = await db.select()
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(eq(users.id, req.user!.id));
 
-const STATUS_PROGRESS = {
-  [TaskStatus.PENDING]: 0,
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
-  [TaskStatus.COMPLETED]: 100,
-  [TaskStatus.FAILED]: 100,
-};
+      if (!sender || !sender.companies) {
+        return res.status(400).json({ message: "Sender company information not found" });
+      }
 
-function generateInviteCode(): string {
-  // Generate a 6 character hex code to match frontend input field
-  const bytes = crypto.randomBytes(3); // 3 bytes = 6 hex characters
-  const code = bytes.toString('hex').toUpperCase();
+      const senderName = sender.users.fullName;
+      const senderCompany = sender.companies.name;
 
-  // Validate generated code format
-  if (code.length !== 6 || !/^[A-F0-9]{6}$/.test(code)) {
-    console.error('[Invite] Generated invalid code format:', code);
-    return generateInviteCode(); // Recursively try again if invalid
+      // Generate invitation code
+      const code = uuidv4();
+
+      console.log('Debug - Creating invitation with details:', {
+        senderName,
+        senderCompany,
+        recipientName: formattedName,
+        email
+      });
+
+      // Create invitation record
+      const [invitation] = await db.insert(invitations)
+        .values({
+          email,
+          code,
+          status: 'pending',
+          companyId: req.user!.companyId,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+          createdBy: req.user!.id
+        })
+        .returning();
+
+      const inviteUrl = `${req.protocol}://${req.get('host')}`;
+
+      console.log('Debug - Preparing to send invitation email');
+      // Send invitation email with formatted name and company details
+      const emailParams = {
+        to: email,
+        from: process.env.GMAIL_USER!,
+        template: 'user_invite',
+        templateData: {
+          recipientEmail: email,
+          recipientName: formattedName,
+          senderName,
+          senderCompany,
+          code,
+          inviteUrl,
+        }
+      };
+
+      console.log('Debug - Sending invitation email with params:', {
+        to: email,
+        template: 'user_invite',
+        senderName,
+        senderCompany,
+        code
+      });
+
+      const emailResult = await emailService.sendTemplateEmail(emailParams);
+      console.log('Debug - Email service response:', emailResult);
+
+      if (!emailResult.success) {
+        throw new Error(`Failed to send email: ${emailResult.error}`);
+      }
+
+      // Update task status
+      await db.update(tasks)
+        .set({ status: 'email_sent' })
+        .where(eq(tasks.id, invitation.taskId));
+
+      res.json({ success: true, message: 'Invitation sent successfully' });
+    } catch (error) {
+      console.error("Error sending invitation:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: `Error sending invitation: ${errorMessage}` });
+    }
+  });
+
+  // Utility functions
+  function generateInviteCode(): string {
+    return crypto.randomBytes(3).toString('hex').toUpperCase();
   }
 
-  console.log('[Invite] Generated 6-digit invite code:', code);
-  return code;
+  function formatTimestampForFilename(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}${month}${day}${hours}${minutes}${seconds}`;
+  }
+
+  function toTitleCase(str: string): string {
+    return str.split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  }
+
+  console.log('[Routes] Routes setup completed');
+  return app;
 }
