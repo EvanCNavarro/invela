@@ -11,6 +11,13 @@ const updateTaskStatusSchema = z.object({
   status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED]),
 });
 
+// Initial progress values for each status
+const STATUS_PROGRESS = {
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.COMPLETED]: 100,
+} as const;
+
 // Update task status with validation middleware
 router.patch("/api/tasks/:id/status",
   loadTaskMiddleware,
@@ -18,7 +25,7 @@ router.patch("/api/tasks/:id/status",
   async (req, res) => {
     try {
       const taskId = req.taskId;
-      const { status, progress } = req.body;
+      const { status } = req.body;
 
       // First get the current task to include in metadata
       const [currentTask] = await db.select()
@@ -28,6 +35,9 @@ router.patch("/api/tasks/:id/status",
       if (!currentTask) {
         return res.status(404).json({ message: "Task not found" });
       }
+
+      // Get the progress value for the new status
+      const progress = STATUS_PROGRESS[status];
 
       // Update task with new status, progress, and metadata
       const [updatedTask] = await db
@@ -60,5 +70,28 @@ router.patch("/api/tasks/:id/status",
     }
   }
 );
+
+// Update existing tasks to have correct progress values
+router.post("/api/tasks/fix-progress", async (req, res) => {
+  try {
+    // Update all EMAIL_SENT tasks to have 25% progress
+    const [updatedTasks] = await db
+      .update(tasks)
+      .set({
+        progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
+        updatedAt: new Date()
+      })
+      .where(eq(tasks.status, TaskStatus.EMAIL_SENT))
+      .returning();
+
+    res.json({
+      message: "Successfully updated task progress values",
+      updatedCount: updatedTasks?.length || 0
+    });
+  } catch (error) {
+    console.error("[Task Routes] Error fixing task progress:", error);
+    res.status(500).json({ message: "Failed to update task progress" });
+  }
+});
 
 export default router;
