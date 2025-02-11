@@ -34,17 +34,18 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    console.log('[User Routes] Received invitation request body:', JSON.stringify(req.body, null, 2));
+    console.log('\n[User Invitation] Starting user invitation process');
+    console.log('[User Invitation] Request body:', JSON.stringify(req.body, null, 2));
 
-    // Validate request data
+    // Step 1: Validate request data
+    console.log('[User Invitation] Validating request data...');
     const validationResult = inviteUserSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      const formattedErrors = validationResult.error.format();
-      console.error('[User Routes] Validation failed. Errors:', JSON.stringify(formattedErrors, null, 2));
 
-      // Create a more user-friendly error message
+    if (!validationResult.success) {
+      console.error('[User Invitation] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
+
       const errorDetails = {};
-      Object.entries(formattedErrors).forEach(([key, value]) => {
+      Object.entries(validationResult.error.format()).forEach(([key, value]) => {
         if (key !== '_errors' && value?._errors?.length > 0) {
           errorDetails[key] = value._errors[0];
         }
@@ -57,93 +58,124 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     const data = validationResult.data;
-    console.log('[User Routes] Processing validated invitation data:', JSON.stringify(data, null, 2));
+    console.log('[User Invitation] Validated data:', JSON.stringify(data, null, 2));
 
     // Start transaction to ensure data consistency
     let newUser;
     let task;
 
-    await db.transaction(async (tx) => {
-      // Check if user already exists
-      const existingUser = await tx.query.users.findFirst({
-        where: eq(users.email, data.email.toLowerCase()),
+    try {
+      await db.transaction(async (tx) => {
+        console.log('[User Invitation] Starting database transaction');
+
+        // Step 2: Check if user already exists
+        console.log('[User Invitation] Checking for existing user...');
+        const existingUser = await tx.query.users.findFirst({
+          where: eq(users.email, data.email.toLowerCase()),
+        });
+
+        if (existingUser) {
+          console.log('[User Invitation] User already exists:', existingUser.email);
+          throw new Error("User with this email already exists");
+        }
+
+        // Step 3: Generate temporary password and hash it
+        console.log('[User Invitation] Generating temporary password...');
+        const tempPassword = generateTempPassword();
+        const hashedPassword = await hashPassword(tempPassword);
+
+        // Step 4: Create new user account
+        console.log('[User Invitation] Creating new user account...');
+        const userInsertResult = await tx
+          .insert(users)
+          .values({
+            email: data.email.toLowerCase(),
+            fullName: data.fullName,
+            password: hashedPassword,
+            companyId: data.company_id,
+            onboardingUserCompleted: false,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+
+        newUser = userInsertResult[0];
+
+        if (!newUser?.id) {
+          console.error('[User Invitation] Failed to create user account');
+          throw new Error("Failed to create user account");
+        }
+
+        console.log('[User Invitation] User created successfully:', {
+          id: newUser.id,
+          email: newUser.email,
+          companyId: newUser.companyId
+        });
+
+        // Step 5: Create onboarding task
+        console.log('[User Invitation] Creating onboarding task...');
+        const taskInsertResult = await tx
+          .insert(tasks)
+          .values({
+            title: `Complete onboarding for ${data.fullName}`,
+            description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
+            taskType: 'user_onboarding',
+            taskScope: 'user',
+            status: TaskStatus.EMAIL_SENT,
+            priority: 'medium',
+            progress: 25,
+            assignedTo: newUser.id,
+            createdBy: req.user?.id || newUser.id,
+            companyId: data.company_id,
+            userEmail: data.email.toLowerCase(),
+            metadata: {
+              invitedBy: req.user?.id || null,
+              invitedByName: data.sender_name,
+              companyName: data.company_name,
+              statusFlow: [TaskStatus.EMAIL_SENT]
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+
+        task = taskInsertResult[0];
+
+        if (!task?.id) {
+          console.error('[User Invitation] Failed to create onboarding task');
+          throw new Error("Failed to create onboarding task");
+        }
+
+        console.log('[User Invitation] Task created successfully:', {
+          id: task.id,
+          title: task.title,
+          status: task.status
+        });
       });
 
-      if (existingUser) {
-        throw new Error("User with this email already exists");
-      }
+      console.log('[User Invitation] Transaction completed successfully');
 
-      // Generate temporary password and hash it
-      const tempPassword = generateTempPassword();
-      const hashedPassword = await hashPassword(tempPassword);
+      // Send success response
+      res.status(201).json({
+        message: "Invitation sent successfully",
+        user: {
+          id: newUser!.id,
+          email: newUser!.email,
+          fullName: newUser!.fullName
+        },
+        task: {
+          id: task!.id,
+          status: task!.status
+        }
+      });
 
-      // Create new user account
-      [newUser] = await tx
-        .insert(users)
-        .values({
-          email: data.email.toLowerCase(),
-          fullName: data.fullName,
-          password: hashedPassword,
-          companyId: data.company_id,
-          onboardingUserCompleted: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-
-      if (!newUser?.id) {
-        throw new Error("Failed to create user account");
-      }
-
-      // Create onboarding task for the new user
-      [task] = await tx
-        .insert(tasks)
-        .values({
-          title: `Complete onboarding for ${data.fullName}`,
-          description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
-          taskType: 'user_onboarding',
-          taskScope: 'user',
-          status: TaskStatus.EMAIL_SENT,
-          priority: 'medium',
-          progress: 25,
-          assignedTo: newUser.id,
-          createdBy: req.user?.id || newUser.id,
-          companyId: data.company_id,
-          userEmail: data.email.toLowerCase(),
-          metadata: {
-            invitedBy: req.user?.id || null,
-            invitedByName: data.sender_name,
-            companyName: data.company_name,
-            statusFlow: [TaskStatus.EMAIL_SENT]
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
-        .returning();
-
-      if (!task?.id) {
-        throw new Error("Failed to create onboarding task");
-      }
-    });
-
-    console.log('[User Routes] Successfully created user and task');
-
-    // Send success response
-    res.status(201).json({
-      message: "Invitation sent successfully",
-      user: {
-        id: newUser!.id,
-        email: newUser!.email,
-        fullName: newUser!.fullName
-      },
-      task: {
-        id: task!.id,
-        status: task!.status
-      }
-    });
+    } catch (txError) {
+      console.error('[User Invitation] Transaction error:', txError);
+      throw txError; // Re-throw to be caught by outer catch block
+    }
 
   } catch (error) {
-    console.error('[User Routes] Error processing invitation:', error);
+    console.error('[User Invitation] Error processing invitation:', error);
 
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
