@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
+import { setupAuth } from "./auth";
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -26,6 +27,9 @@ const wsClients = new Set<WebSocket>();
 // Configure body parsing middleware first
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Set up authentication before routes
+setupAuth(app);
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -79,10 +83,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// Register API routes
 registerRoutes(app);
 
+// Set up development environment
 if (app.get("env") === "development") {
   await setupVite(app, server);
+} else {
+  // Serve static files only in production, after API routes
+  serveStatic(app);
 }
 
 // Setup WebSocket server after Vite in development
@@ -169,10 +178,6 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 
   res.status(status).json(errorResponse);
 });
-
-if (app.get("env") !== "development") {
-  serveStatic(app);
-}
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
