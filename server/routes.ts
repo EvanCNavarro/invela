@@ -36,7 +36,7 @@ declare global {
   }
 }
 
-export default function setupRoutes(app: Express) {
+export function registerRoutes(app: Express): Express {
   // Account setup endpoint
   app.post("/api/account/setup", async (req, res) => {
     try {
@@ -615,8 +615,6 @@ export default function setupRoutes(app: Express) {
     }
   });
 
-  // Add users by company endpoint - This endpoint is already defined above, so it's removed here to avoid duplication.
-
 
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
@@ -943,8 +941,7 @@ export default function setupRoutes(app: Express) {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
   }
 
-  function formatTimestampForFilename(): string {
-    const now = new Date();
+  function formatTimestampForFilename(): string {    const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
@@ -963,3 +960,6 @@ export default function setupRoutes(app: Express) {
   console.log('[Routes] Routes setup completed');
   return app;
 }
+
+// Export both the named and default function for backward compatibility
+export default registerRoutes;
