@@ -48,8 +48,21 @@ interface Task {
   dueDate?: string | Date;
 }
 
+interface TaskCount {
+  total: number;
+  emailSent: number;
+  inProgress: number;
+  completed: number;
+}
+
 export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [taskCounts, setTaskCounts] = useState<TaskCount>({
+    total: initialTasks.length,
+    emailSent: initialTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
+    inProgress: initialTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
+  });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -71,25 +84,46 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   // Set up WebSocket subscription for real-time updates
   useEffect(() => {
     // Subscribe to task updates
-    const unsubscribe = wsService.subscribe('task_updated', (data) => {
-      setTasks(currentTasks => 
-        currentTasks.map(task => 
-          task.id === data.taskId 
+    const unsubscribeTaskUpdate = wsService.subscribe('task_updated', (data) => {
+      setTasks(currentTasks =>
+        currentTasks.map(task =>
+          task.id === data.taskId
             ? { ...task, status: data.status, progress: data.progress }
             : task
         )
       );
+      if (data.count) setTaskCounts(data.count);
     });
 
-    // Clean up subscription on unmount
+    // Subscribe to task creation
+    const unsubscribeTaskCreate = wsService.subscribe('task_created', (data) => {
+      setTasks(currentTasks => [...currentTasks, data.task]);
+      if (data.count) setTaskCounts(data.count);
+    });
+
+    // Subscribe to task deletion
+    const unsubscribeTaskDelete = wsService.subscribe('task_deleted', (data) => {
+      setTasks(currentTasks => currentTasks.filter(task => task.id !== data.taskId));
+      if (data.count) setTaskCounts(data.count);
+    });
+
+    // Clean up subscriptions on unmount
     return () => {
-      unsubscribe();
+      unsubscribeTaskUpdate();
+      unsubscribeTaskCreate();
+      unsubscribeTaskDelete();
     };
   }, []);
 
   // Update tasks when initialTasks changes
   useEffect(() => {
     setTasks(initialTasks);
+    setTaskCounts({
+      total: initialTasks.length,
+      emailSent: initialTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
+      inProgress: initialTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+      completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
+    });
   }, [initialTasks]);
 
   // Get progress based on status, fallback to actual progress value if exists
@@ -130,7 +164,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
-                  <Badge 
+                  <Badge
                     variant="secondary"
                     className="cursor-pointer hover:bg-secondary/80"
                     onClick={() => handleStatusUpdate(task)}
@@ -155,8 +189,8 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                 <TableCell className="text-right pr-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
+                      <Button
+                        variant="ghost"
                         size="icon"
                         className="h-8 w-8 p-0 hover:bg-accent"
                       >
@@ -165,7 +199,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         onClick={() => {
                           setSelectedTask(task);
                           setDetailsModalOpen(true);
