@@ -632,21 +632,49 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Tasks
+  // Update the task listing endpoint
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] Fetching tasks for user:', req.user!.id);
+      console.log('[Tasks] Query params:', req.query);
+
+      // Get query parameters for filtering
+      const status = req.query.status as string;
+      const taskType = req.query.taskType as string;
+
+      // Build where clause
+      let whereClause = or(
+        eq(tasks.createdBy, req.user!.id),
+        eq(tasks.assignedTo, req.user!.id)
+      );
+
+      // Add status filter if provided
+      if (status && status !== 'all') {
+        whereClause = and(whereClause, eq(tasks.status, status));
+      }
+
+      // Add taskType filter if provided
+      if (taskType && taskType !== 'all') {
+        whereClause = and(whereClause, eq(tasks.taskType, taskType));
+      }
 
       const results = await db.select()
         .from(tasks)
-        .where(
-          or(
-            eq(tasks.createdBy, req.user!.id),
-            eq(tasks.assignedTo, req.user!.id)
-          )
-        )
+        .where(whereClause)
         .orderBy(desc(tasks.createdAt));
 
+      console.log('[Tasks] Query where clause:', whereClause);
       console.log('[Tasks] Found tasks:', results.length);
+      if (results.length > 0) {
+        console.log('[Tasks] First task:', {
+          id: results[0].id,
+          title: results[0].title,
+          createdBy: results[0].createdBy,
+          assignedTo: results[0].assignedTo,
+          status: results[0].status,
+          taskType: results[0].taskType
+        });
+      }
 
       res.json(results);
     } catch (error) {
@@ -1626,23 +1654,25 @@ export function registerRoutes(app: Express): Server {
             .insert(tasks)
             .values({
               title: `New User Invitation: ${inviteData.email}`,
-              description: `Invitation sent to ${inviteData.email} to join ${inviteData.companyName}`,
-              taskType: 'user_invitation',
+              description: `Invitation sent to ${inviteData.fullName} to join ${inviteData.companyName}`,
+              taskType: 'user_onboarding', // Changed to match expected type
               taskScope: 'user',
-              status: 'EMAIL_SENT',
+              status: TaskStatus.EMAIL_SENT, // Using proper enum
               priority: 'medium',
-              progress: 25,
+              progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT], // Using proper progress mapping
               createdBy: req.user!.id,
-              assignedTo: newUser.id, // Assign to created user
+              assignedTo: null, // Changed: don't assign to new user yet since they haven't registered
               userEmail: inviteData.email.toLowerCase(),
               companyId: inviteData.companyId,
+              dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Set due date to 7 days
               metadata: {
                 invitationId: invitation.id,
-                invitationCode: inviteCode,
+                invitationCode: invitation.code,
                 userId: newUser.id,
                 senderName: inviteData.senderName,
                 senderCompany: inviteData.senderCompany,
-                statusFlow: ['EMAIL_SENT']
+                emailSentAt: new Date().toISOString(),
+                statusFlow: [TaskStatus.EMAIL_SENT]
               }
             })
             .returning();
