@@ -27,16 +27,28 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
+    console.log('Debug - Comparing passwords:');
+    console.log('Stored password:', stored);
     const [hashedStored, salt] = stored.split(".");
+
     if (!hashedStored || !salt) {
-      console.error("Invalid stored password format");
+      console.error("Invalid stored password format - hashedStored:", !!hashedStored, "salt:", !!salt);
       return false;
     }
+
+    console.log('Extracted salt:', salt);
+    console.log('Stored hash length:', hashedStored.length);
+
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuf = Buffer.from(hashedStored, "hex");
+
+    console.log('Supplied hash length:', suppliedBuf.length);
+    console.log('Stored buffer length:', storedBuf.length);
+
     return timingSafeEqual(suppliedBuf, storedBuf);
   } catch (error) {
     console.error("Password comparison error:", error);
+    console.error("Error stack:", error.stack);
     return false;
   }
 }
@@ -71,18 +83,31 @@ export function setupAuth(app: Express) {
       { usernameField: 'email' },
       async (email, password, done) => {
         try {
+          console.log('Debug - Login attempt for email:', email);
           const [user] = await getUserByEmail(email);
+
           if (!user) {
+            console.log('Debug - No user found with email:', email);
             return done(null, false);
           }
 
+          console.log('Debug - User found:', {
+            id: user.id,
+            email: user.email,
+            passwordLength: user.password?.length
+          });
+
           const isValid = await comparePasswords(password, user.password);
+          console.log('Debug - Password validation result:', isValid);
+
           if (!isValid) {
             return done(null, false);
           }
 
           return done(null, user);
         } catch (error) {
+          console.error('Debug - Login error:', error);
+          console.error('Debug - Error stack:', error.stack);
           return done(error);
         }
       }
