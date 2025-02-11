@@ -923,7 +923,7 @@ export function registerRoutes(app: Express): Server {
       // Create new file record
       const fileData = {
         name: req.file.originalname,
-        size: req.file.size,        type: req.file.mimetype,
+        size: req.file.size,        type:req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
         userId: req.user!.id,
@@ -1584,19 +1584,25 @@ export function registerRoutes(app: Express): Server {
       const result = await db.transaction(async (tx) => {
         console.log('[Invite] Creating user account');
 
-        // Create user account
+        // Generate a temporary password
+        const tempPassword = crypto.randomBytes(32).toString('hex');
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // Create user account with temporary password
         const [newUser] = await tx.insert(users)
           .values({
             email: inviteData.email,
+            password: hashedPassword, // Add temporary hashed password
             companyId: inviteData.companyId,
+            fullName: inviteData.fullName, // Add fullName
             onboardingUserCompleted: false
           })
           .returning();
 
-        console.log('[Invite] Created user account:', newUser);
+        console.log('[Invite] Created user account:', { id: newUser.id, email: newUser.email });
 
         // Generate invitation code
-        const code = generateInviteCode();
+        const code = crypto.randomBytes(4).toString('hex').toUpperCase();
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 7);
 
