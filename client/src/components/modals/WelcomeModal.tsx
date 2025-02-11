@@ -49,8 +49,9 @@ export function WelcomeModal() {
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
       console.log('[WelcomeModal] Starting onboarding completion for user:', user?.email);
-      const response = await apiRequest("/api/users/complete-onboarding", {
-        method: "POST",
+
+      const response = await fetch('/api/users/complete-onboarding', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }
