@@ -213,7 +213,7 @@ router.post("/api/users/invite", async (req, res) => {
         const emailResult = await emailService.sendTemplateEmail({
           to: data.email,
           from: process.env.GMAIL_USER!,
-          template: 'user_invite',
+          template: 'user_invite', 
           templateData: emailTemplateData
         });
 
