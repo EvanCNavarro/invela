@@ -10,12 +10,15 @@ const router = Router();
 
 // Schema for user invitation
 const inviteUserSchema = z.object({
-  email: z.string().email(),
-  fullName: z.string().min(1),
-  company_id: z.number(),
-  company_name: z.string(),
-  sender_name: z.string(),
-  sender_company: z.string(),
+  email: z.string().email("Valid email is required"),
+  fullName: z.string().min(1, "Full name is required"),
+  company_id: z.number({
+    required_error: "Company ID is required",
+    invalid_type_error: "Company ID must be a number"
+  }),
+  company_name: z.string().min(1, "Company name is required"),
+  sender_name: z.string().min(1, "Sender name is required"),
+  sender_company: z.string().min(1, "Sender company name is required"),
 });
 
 // Generate a temporary password
@@ -31,7 +34,18 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    const data = inviteUserSchema.parse(req.body);
+    console.log('[User Routes] Invitation request body:', req.body);
+
+    const validationResult = inviteUserSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      console.error('[User Routes] Validation failed:', validationResult.error.format());
+      return res.status(400).json({
+        message: "Invalid invitation data",
+        details: validationResult.error.format()
+      });
+    }
+
+    const data = validationResult.data;
     console.log('[User Routes] Processing invitation for:', data.email);
 
     // Check if user already exists
