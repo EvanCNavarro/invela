@@ -13,7 +13,6 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
-// First define the TaskStatus enum for consistent usage
 export const TaskStatus = {
   EMAIL_SENT: 'email_sent',
   IN_PROGRESS: 'in_progress',
@@ -22,14 +21,13 @@ export const TaskStatus = {
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
-// Update the tasks table definition
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
   taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
   taskScope: text("task_scope").notNull(), // 'user' or 'company'
-  status: text("status").notNull().default('email_sent'),
+  status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.EMAIL_SENT),
   priority: text("priority").notNull().default('medium'),
   progress: real("progress").notNull().default(25),
   assignedTo: integer("assigned_to").references(() => users.id),
@@ -209,6 +207,9 @@ export const insertTaskSchema = z.object({
   assignedTo: z.number().nullable().optional(),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   filesRequested: z.array(z.string()).optional(),
+  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED])
+    .optional()
+    .default(TaskStatus.EMAIL_SENT),
 }).superRefine((data, ctx) => {
   if (data.taskType === "user_onboarding") {
     if (!data.userEmail) {

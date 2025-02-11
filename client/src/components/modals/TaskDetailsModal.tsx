@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { formatDate } from "@/lib/utils";
+import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { TaskStatus } from "@db/schema";
 
@@ -14,8 +14,9 @@ const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
   [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
-  pending: 'Email Sent', // Backward compatibility for existing tasks
-};
+} as const;
+
+const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
   if (!task) return null;
@@ -26,7 +27,7 @@ export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalP
     { label: "Description", value: task.description },
     { label: "Type", value: task.taskType },
     { label: "Scope", value: task.taskScope },
-    { label: "Status", value: taskStatusMap[task.status] || task.status },
+    { label: "Status", value: taskStatusMap[task.status as TaskStatus] || task.status },
     { label: "Priority", value: task.priority },
     { label: "Progress", value: `${task.progress}%` },
     { label: "Created By", value: task.createdBy },
