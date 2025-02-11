@@ -19,10 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Form schema matches user input fields only
+// Complete schema matching backend requirements
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   fullName: z.string().min(1, "Full name is required"),
+  company_id: z.number(),
+  company_name: z.string(),
+  sender_name: z.string(),
+  sender_company: z.string()
 });
 
 type InviteUserData = z.infer<typeof inviteUserSchema>;
@@ -39,51 +43,39 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
 
+  // Initialize form with all required fields
   const form = useForm<InviteUserData>({
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
       fullName: "",
+      company_id: companyId,
+      company_name: companyName,
+      sender_name: user?.fullName || "",
+      sender_company: companyName
     }
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
-      // Ensure we have all required data
-      if (!user?.fullName) {
-        throw new Error("Missing sender information. Please try logging in again.");
-      }
-
-      if (!companyId || !companyName) {
-        throw new Error("Missing company information. Please refresh the page.");
-      }
-
-      // Construct the invitation payload using all available data sources
-      const payload = {
-        // From form input
-        email: formData.email.trim().toLowerCase(),
-        fullName: formData.fullName.trim(),
-
-        // From company profile being viewed
-        company_id: companyId,  
-        company_name: companyName,
-
-        // From logged-in user context
-        sender_name: user.fullName,
-        sender_company: companyName // Company name of the profile being viewed
-      };
-
       const response = await fetch('/api/users/invite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          email: formData.email.trim().toLowerCase(),
+          fullName: formData.fullName.trim(),
+          company_id: companyId,
+          company_name: companyName,
+          sender_name: user?.fullName,
+          sender_company: companyName
+        })
       });
 
       if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData.message || 'Failed to send invitation');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to send invitation');
       }
 
       return await response.json();
@@ -94,12 +86,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         description: `${data.user.fullName} has been invited to join ${companyName}.`,
       });
 
-      // Reset form and close modal
       form.reset();
       setServerError(null);
       onOpenChange(false);
 
-      // Show success animation
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -139,7 +129,17 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => sendInvite(data))} className="space-y-6">
+          <form onSubmit={form.handleSubmit((data) => {
+            // Ensure all required data is included
+            const completeData = {
+              ...data,
+              company_id: companyId,
+              company_name: companyName,
+              sender_name: user?.fullName,
+              sender_company: companyName
+            };
+            sendInvite(completeData);
+          })} className="space-y-6">
             <div>
               <div className="text-sm font-semibold mb-2">Company</div>
               <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
