@@ -109,6 +109,8 @@ export function registerRoutes(app: Express): Express {
     try {
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
 
+      console.log('[Account Setup] Processing setup request for:', email);
+
       // Validate invitation code
       const [invitation] = await db.select()
         .from(invitations)
@@ -120,6 +122,7 @@ export function registerRoutes(app: Express): Express {
         ));
 
       if (!invitation) {
+        console.log('[Account Setup] Invalid invitation:', invitationCode);
         return res.status(400).json({
           message: "Invalid invitation code or email mismatch"
         });
@@ -131,6 +134,7 @@ export function registerRoutes(app: Express): Express {
         .where(sql`LOWER(${users.email}) = LOWER(${email})`);
 
       if (!existingUser) {
+        console.log('[Account Setup] User not found for email:', email);
         return res.status(400).json({ message: "User account not found" });
       }
 
@@ -146,6 +150,8 @@ export function registerRoutes(app: Express): Express {
         .where(eq(users.id, existingUser.id))
         .returning();
 
+      console.log('[Account Setup] Updated user:', updatedUser.id);
+
       // Update the related task
       const [task] = await db.select()
         .from(tasks)
@@ -158,7 +164,7 @@ export function registerRoutes(app: Express): Express {
         const [updatedTask] = await db.update(tasks)
           .set({
             status: TaskStatus.COMPLETED,
-            progress: 100,
+            progress: taskStatusToProgress[TaskStatus.COMPLETED],
             assignedTo: updatedUser.id,
             metadata: {
               ...task.metadata,
@@ -183,14 +189,14 @@ export function registerRoutes(app: Express): Express {
       // Log the user in
       req.login(updatedUser, (err) => {
         if (err) {
-          console.error("Login error:", err);
+          console.error("[Account Setup] Login error:", err);
           return res.status(500).json({ message: "Error logging in" });
         }
         res.json(updatedUser);
       });
 
     } catch (error) {
-      console.error("Account setup error:", error);
+      console.error("[Account Setup] Account setup error:", error);
       res.status(500).json({ message: "Error updating user information" });
     }
   });
@@ -682,7 +688,7 @@ export function registerRoutes(app: Express): Express {
         companyId: req.body.company_id,
         companyName: req.body.company_name,
         senderName: req.body.sender_name,
-        senderCompany: req.user?.companyId === 0 ? 'Invela' : undefined
+        senderCompany: req.body.senderCompany || (req.user?.companyId === 0 ? 'Invela' : undefined)
       };
 
       console.log('[Invite] Validated invite data:', inviteData);
@@ -994,16 +1000,23 @@ export function registerRoutes(app: Express): Express {
       const code = req.params.code;
       console.log('[Invite] Validating invitation code:', code);
 
-      // Find the invitation
-      const [invitation] = await db.select()
+      // Find the invitation with company and task details
+      const [invitation] = await db
+        .select({
+          invitation: invitations,
+          task: tasks,
+          company: companies
+        })
         .from(invitations)
+        .leftJoin(tasks, eq(invitations.taskId, tasks.id))
+        .leftJoin(companies, eq(tasks.companyId, companies.id))
         .where(and(
           eq(invitations.code, code),
           eq(invitations.status, 'pending'),
           gt(invitations.expiresAt, new Date())
         ));
 
-      if (!invitation) {
+      if (!invitation?.invitation) {
         console.log('[Invite] Invalid or expired invitation code:', code);
         return res.status(404).json({
           valid: false,
@@ -1011,24 +1024,20 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Find associated task
-      const [task] = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, invitation.taskId));
-
       console.log('[Invite] Invitation found:', {
-        id: invitation.id,
-        email: invitation.email,
-        status: invitation.status,
-        taskId: invitation.taskId
+        id: invitation.invitation.id,
+        email: invitation.invitation.email,
+        company: invitation.company?.name,
+        status: invitation.invitation.status
       });
 
       res.json({
         valid: true,
         invitation: {
-          email: invitation.email,
-          company: task?.metadata?.company || null,
-          inviteeName: invitation.inviteeName || null
+          email: invitation.invitation.email,
+          company: invitation.company?.name || null,
+          inviteeName: invitation.invitation.inviteeName || null,
+          companyId: invitation.company?.id || null
         }
       });
     } catch (error) {
