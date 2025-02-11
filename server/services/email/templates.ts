@@ -18,10 +18,8 @@ export const emailTemplateSchema = z.object({
 
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
-    subject: `You've been invited to join ${data.senderCompany}`,
-    text: `Hello ${data.recipientName},
-
-You've been invited to join ${data.senderCompany} by ${data.senderName}.
+    subject: `Invitation to join Invela`,
+    text: `Hello ${data.recipientName}. You've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -145,9 +143,8 @@ Your Invitation Code: ${data.code}
   </head>
   <body>
     <div class="container">
-      <h1 class="company-name">${data.senderCompany}</h1>
-      <p class="greeting">Hello ${data.recipientName},</p>
-      <p class="invitation">You've been invited to join ${data.senderCompany} by ${data.senderName}.</p>
+      <h1 class="company-name">Invela</h1>
+      <p class="invitation">Hello ${data.recipientName}. You've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.</p>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
