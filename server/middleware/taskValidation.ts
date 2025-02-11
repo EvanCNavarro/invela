@@ -1,15 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { TaskStatus } from "@db/schema";
 
-// Define valid status transitions.  The edited code simplifies this to only EMAIL_SENT to COMPLETED.
+// Define valid status transitions
 const VALID_TRANSITIONS = {
   [TaskStatus.EMAIL_SENT]: [TaskStatus.COMPLETED],
   [TaskStatus.COMPLETED]: [], // Terminal state
 } as const;
 
-// Define progress percentage for each status.  The edited code updates the percentages.
+// Define progress percentage for each status
 const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 50,
+  [TaskStatus.EMAIL_SENT]: 25,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
@@ -21,7 +21,7 @@ export interface TaskRequest extends Request {
   };
 }
 
-// Middleware to validate task status transitions. The logic remains largely the same, but operates with the simplified VALID_TRANSITIONS.
+// Middleware to validate task status transitions
 export function validateTaskStatusTransition(req: TaskRequest, res: Response, next: NextFunction) {
   const { status: newStatus } = req.body;
   const currentStatus = req.task?.status;
@@ -57,7 +57,7 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   next();
 }
 
-// Middleware to load task before validation. This middleware remains unchanged as it's independent of the status transition logic.
+// Middleware to load task before validation
 export async function loadTaskMiddleware(req: TaskRequest, res: Response, next: NextFunction) {
   if (!req.params.id) {
     return next();

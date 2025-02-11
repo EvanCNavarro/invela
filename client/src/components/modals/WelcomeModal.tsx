@@ -91,19 +91,10 @@ export function WelcomeModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      if (data.task) {
-        toast({
-          title: "Welcome aboard!",
-          description: "Your onboarding has been completed successfully.",
-        });
-      } else {
-        console.warn('[WelcomeModal] No task was updated during onboarding completion');
-        toast({
-          title: "Welcome aboard!",
-          description: "Your onboarding has been completed.",
-          variant: "default"
-        });
-      }
+      toast({
+        title: "Welcome aboard!",
+        description: "Your onboarding has been completed successfully.",
+      });
     },
     onError: (error) => {
       console.error('[WelcomeModal] Error completing onboarding:', error);
@@ -132,15 +123,14 @@ export function WelcomeModal() {
   const handleComplete = async () => {
     try {
       await completeOnboardingMutation.mutateAsync();
+      setOpen(false);
     } catch (error) {
       console.error('[WelcomeModal] Error in handleComplete:', error);
-    } finally {
-      setOpen(false);
     }
   };
 
-  // Don't show modal if user has completed onboarding
-  if (user?.onboardingUserCompleted) {
+  // Don't show modal if user has completed onboarding or no user is logged in
+  if (!user || user.onboardingUserCompleted) {
     return null;
   }
 

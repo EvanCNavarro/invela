@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { db } from "@db";
-import { users, tasks, TaskStatus, invitations, companies } from "@db/schema"; 
-import { eq } from "drizzle-orm";
+import { users, tasks, invitations, companies } from "@db/schema"; 
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { emailService } from "../services/email/service";
+import { TaskStatus } from "@db/schema";
 
 const router = Router();
 
@@ -30,6 +31,60 @@ function generateTempPassword() {
 async function hashPassword(password: string) {
   const salt = await bcrypt.genSalt(10);
   return bcrypt.hash(password, salt);
+}
+
+// Function to update invitation task status
+async function updateInvitationTaskStatus(email: string, userId: number) {
+  try {
+    console.log('[Task Update] Finding task for email:', email);
+
+    // Find the most recent task for this email
+    const [task] = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.taskType, 'user_onboarding'),
+          eq(tasks.userEmail, email.toLowerCase()),
+          eq(tasks.status, TaskStatus.EMAIL_SENT)
+        )
+      )
+      .orderBy(sql`created_at DESC`)
+      .limit(1);
+
+    if (!task) {
+      console.log('[Task Update] No task found for email:', email);
+      return null;
+    }
+
+    console.log('[Task Update] Found task:', task.id);
+
+    // Update the task status to completed
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        status: TaskStatus.COMPLETED,
+        progress: 100,
+        completionDate: new Date(),
+        assignedTo: userId,
+        metadata: {
+          ...task.metadata,
+          completedAt: new Date().toISOString(),
+          statusUpdateTime: new Date().toISOString(),
+          previousStatus: task.status,
+          userId: userId,
+          userEmail: email.toLowerCase(),
+          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+        }
+      })
+      .where(eq(tasks.id, task.id))
+      .returning();
+
+    console.log('[Task Update] Updated task status to completed:', updatedTask.id);
+    return updatedTask;
+  } catch (error) {
+    console.error('[Task Update] Error updating task status:', error);
+    throw error;
+  }
 }
 
 router.post("/api/users/invite", async (req, res) => {
@@ -77,7 +132,7 @@ router.post("/api/users/invite", async (req, res) => {
           throw new Error("User with this email already exists");
         }
 
-        // Create new user
+        // Create new user with initial onboarding state
         const [userResult] = await tx.insert(users)
           .values({
             email: data.email.toLowerCase(),
@@ -96,14 +151,6 @@ router.post("/api/users/invite", async (req, res) => {
         const host = req.headers.host;
         const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}`;
 
-        // Prepare invitation metadata
-        const invitationMetadata = {
-          inviteUrl,
-          userId: newUser.id,
-          senderName: data.sender_name,
-          senderCompany: company.name
-        };
-
         // Create invitation record
         const [invitationResult] = await tx.insert(invitations)
           .values({
@@ -113,10 +160,13 @@ router.post("/api/users/invite", async (req, res) => {
             companyId: data.company_id,
             inviteeName: data.full_name,
             inviteeCompany: company.name,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            metadata: invitationMetadata,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            metadata: {
+              inviteUrl,
+              userId: newUser.id,
+              senderName: data.sender_name,
+              senderCompany: company.name
+            }
           })
           .returning();
 
@@ -135,6 +185,7 @@ router.post("/api/users/invite", async (req, res) => {
             createdBy: req.user?.id,
             assignedTo: newUser.id,
             companyId: data.company_id,
+            userEmail: data.email.toLowerCase(),
             metadata: {
               invitedBy: req.user?.id,
               invitationId: invitation.id,
@@ -151,7 +202,7 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
-        // Prepare email template data according to the strict schema
+        // Send invitation email
         const emailTemplateData = {
           recipientName: data.full_name,
           senderName: data.sender_name,
@@ -162,7 +213,6 @@ router.post("/api/users/invite", async (req, res) => {
 
         console.log('[Invite] Sending invitation email');
 
-        // Send invitation email
         const emailResult = await emailService.sendTemplateEmail({
           to: data.email,
           from: process.env.GMAIL_USER!,
@@ -215,6 +265,39 @@ router.post("/api/users/invite", async (req, res) => {
     res.status(500).json({ 
       message: error instanceof Error ? error.message : "Failed to send invitation",
       details: error instanceof Error ? error.message : undefined
+    });
+  }
+});
+
+// Registration endpoint
+router.post("/api/register", async (req, res) => {
+  try {
+    const { email, password, fullName, invitationCode, companyId } = req.body;
+
+    // Create or update user account
+    const [userResult] = await db.insert(users)
+      .values({
+        email: email.toLowerCase(),
+        password: await hashPassword(password),
+        fullName,
+        companyId,
+        onboardingUserCompleted: true // Set to true as registration is complete
+      })
+      .returning();
+
+    // Update the associated invitation task
+    const updatedTask = await updateInvitationTaskStatus(email, userResult.id);
+
+    // Return success response with task info
+    res.status(200).json({
+      message: "Account created successfully",
+      user: userResult,
+      task: updatedTask
+    });
+  } catch (error) {
+    console.error('[Register] Error:', error);
+    res.status(500).json({ 
+      message: error instanceof Error ? error.message : "Failed to create account"
     });
   }
 });
