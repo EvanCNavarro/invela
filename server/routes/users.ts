@@ -13,10 +13,13 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Starting onboarding completion for user ID: ${req.user.id}, email: ${req.user.email}`);
 
-    // Update user onboarding status
+    // Update user onboarding status first
     const [updatedUser] = await db
       .update(users)
-      .set({ onboardingUserCompleted: true })
+      .set({ 
+        onboardingUserCompleted: true,
+        updatedAt: new Date()
+      })
       .where(eq(users.id, req.user.id))
       .returning();
 

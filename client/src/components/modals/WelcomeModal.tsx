@@ -49,21 +49,26 @@ export function WelcomeModal() {
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
       console.log('[WelcomeModal] Starting onboarding completion for user:', user?.email);
-      const res = await apiRequest("POST", "/api/users/complete-onboarding");
+      const response = await apiRequest("/api/users/complete-onboarding", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      if (!res.ok) {
-        const error = await res.json();
+      if (!response.ok) {
+        const error = await response.json();
         console.error('[WelcomeModal] Failed to complete onboarding:', error);
         throw new Error(error.message || "Failed to complete onboarding");
       }
 
-      const data = await res.json();
+      const data = await response.json();
       console.log('[WelcomeModal] Onboarding completion response:', data);
       return data;
     },
     onSuccess: (data) => {
       console.log('[WelcomeModal] Successfully completed onboarding:', data);
-      // Invalidate relevant queries
+      // Invalidate relevant queries to trigger UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
@@ -74,6 +79,11 @@ export function WelcomeModal() {
         });
       } else {
         console.warn('[WelcomeModal] No task was updated during onboarding completion');
+        toast({
+          title: "Welcome aboard!",
+          description: "Your onboarding has been completed.",
+          variant: "default"
+        });
       }
     },
     onError: (error) => {
@@ -100,11 +110,17 @@ export function WelcomeModal() {
     }
   };
 
-  const handleComplete = () => {
-    completeOnboardingMutation.mutate();
-    setOpen(false);
+  const handleComplete = async () => {
+    try {
+      await completeOnboardingMutation.mutateAsync();
+    } catch (error) {
+      console.error('[WelcomeModal] Error in handleComplete:', error);
+    } finally {
+      setOpen(false);
+    }
   };
 
+  // Don't show modal if user has completed onboarding
   if (user?.onboardingUserCompleted) {
     return null;
   }
@@ -123,7 +139,7 @@ export function WelcomeModal() {
         </DialogDescription>
         <div className="relative px-4 pb-8 pt-6">
           <button
-            onClick={() => setOpen(false)}
+            onClick={handleComplete}
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           >
             <X className="h-4 w-4" />
