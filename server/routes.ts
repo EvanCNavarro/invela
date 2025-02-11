@@ -923,7 +923,7 @@ export function registerRoutes(app: Express): Express {
         return res.status(400).json({ message: "Sender company information not found" });
       }
 
-const senderName = sender.users.fullName;
+      const senderName = sender.users.fullName;
       const senderCompany = sender.companies.name;
 
       // Generate invitation code
@@ -1000,7 +1000,7 @@ const senderName = sender.users.fullName;
       const code = req.params.code;
       console.log('[Invite] Validating invitation code:', code);
 
-      // Find the invitation with company, task, and user details
+      // Find the invitation with all related information
       const [result] = await db
         .select({
           invitation: invitations,
@@ -1011,7 +1011,7 @@ const senderName = sender.users.fullName;
         .from(invitations)
         .leftJoin(tasks, eq(invitations.taskId, tasks.id))
         .leftJoin(companies, eq(tasks.companyId, companies.id))
-        .leftJoin(users, eq(tasks.userEmail, users.email))
+        .leftJoin(users, sql`LOWER(${users.email}) = LOWER(${invitations.email})`)
         .where(and(
           eq(invitations.code, code),
           eq(invitations.status, 'pending'),
@@ -1035,17 +1035,20 @@ const senderName = sender.users.fullName;
       });
 
       // Return complete user information for pre-filling the form
-      res.json({
+      const response = {
         valid: true,
         invitation: {
-          email: result.invitation.email,
-          company: result.company?.name || result.task?.metadata?.company || null,
+          email: result.invitation.email.toLowerCase(),
+          company: result.company?.name || null,
           companyId: result.company?.id || null,
-          firstName: result.user?.firstName || result.invitation.inviteeName?.split(' ')[0] || '',
-          lastName: result.user?.lastName || result.invitation.inviteeName?.split(' ').slice(1).join(' ') || '',
-          fullName: result.user?.fullName || result.invitation.inviteeName || ''
+          firstName: result.user?.firstName || result.task?.metadata?.firstName || '',
+          lastName: result.user?.lastName || result.task?.metadata?.lastName || '',
+          fullName: result.user?.fullName || result.task?.metadata?.fullName || result.invitation.inviteeName || ''
         }
-      });
+      };
+
+      console.log('[Invite] Returning response:', response);
+      res.json(response);
 
     } catch (error) {
       console.error('[Invite] Error validating invitation:', error);
