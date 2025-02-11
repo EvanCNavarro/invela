@@ -83,15 +83,12 @@ router.post("/api/users/invite", async (req, res) => {
         }
         console.log('[Step 2] User check completed - no existing user found');
 
-        // Create new user with temporary password
-        const tempPassword = generateTempPassword();
-        const hashedPassword = await hashPassword(tempPassword);
-
-        // Create the user first to get the ID
+        // Step 3: Create the user first
+        console.log('[Step 3] Creating new user...');
         const [userResult] = await tx.insert(users)
           .values({
             email: data.email.toLowerCase(),
-            password: hashedPassword,
+            password: await hashPassword(generateTempPassword()),
             fullName: data.full_name,
             companyId: data.company_id,
             onboardingUserCompleted: false,
@@ -101,12 +98,12 @@ router.post("/api/users/invite", async (req, res) => {
         newUser = userResult;
         console.log('[Step 3] Created new user:', { id: newUser.id, email: newUser.email });
 
-        // Generate invitation code and URL first
+        // Step 4: Generate invitation code and URL
         const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Construct the invitation URL using the request's host and include all necessary parameters
+        // Construct the invitation URL with proper parameters
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers.host;
         const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}&name=${encodeURIComponent(data.full_name)}`;
@@ -116,8 +113,8 @@ router.post("/api/users/invite", async (req, res) => {
           url: inviteUrl
         });
 
-        // Create invitation record
-        console.log('\n[Step 5] Creating invitation record...');
+        // Step 5: Create invitation record
+        console.log('[Step 5] Creating invitation record...');
         const [invitationResult] = await tx.insert(invitations)
           .values({
             email: data.email.toLowerCase(),
@@ -140,8 +137,8 @@ router.post("/api/users/invite", async (req, res) => {
 
         invitation = invitationResult;
 
-        // Create task
-        console.log('\n[Step 6] Creating onboarding task...');
+        // Step 6: Create task with proper assignedTo field
+        console.log('[Step 6] Creating onboarding task...');
         const [taskResult] = await tx.insert(tasks)
           .values({
             title: `Complete onboarding for ${data.full_name}`,
@@ -152,7 +149,7 @@ router.post("/api/users/invite", async (req, res) => {
             priority: 'medium',
             progress: 25,
             createdBy: req.user?.id,
-            assignedTo: newUser.id, // Assign to the newly created user
+            assignedTo: newUser.id, // Properly assigned to the new user
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
             metadata: {
@@ -171,13 +168,11 @@ router.post("/api/users/invite", async (req, res) => {
         task = taskResult;
 
         // Update invitation with task ID
-        if (task?.id) {
-          await tx.update(invitations)
-            .set({ taskId: task.id })
-            .where(eq(invitations.id, invitation.id));
-        }
+        await tx.update(invitations)
+          .set({ taskId: task.id })
+          .where(eq(invitations.id, invitation.id));
 
-        // Send invitation email
+        // Send invitation email with correct data
         await emailService.sendInvitationEmail({
           to: data.email,
           recipientName: data.full_name,
@@ -189,7 +184,7 @@ router.post("/api/users/invite", async (req, res) => {
 
         console.log('\n[Success] Transaction completed successfully');
         console.log('[Success] Task and Invitation created:', {
-          taskId: task?.id,
+          taskId: task.id,
           invitationId: invitation.id,
           inviteUrl,
           code: invitationCode
