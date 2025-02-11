@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
 import { users, tasks, TaskStatus } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -36,6 +36,7 @@ router.post("/api/users/invite", async (req, res) => {
   try {
     console.log('[User Routes] Invitation request body:', req.body);
 
+    // Validate request data
     const validationResult = inviteUserSchema.safeParse(req.body);
     if (!validationResult.success) {
       console.error('[User Routes] Validation failed:', validationResult.error.format());
@@ -48,80 +49,74 @@ router.post("/api/users/invite", async (req, res) => {
     const data = validationResult.data;
     console.log('[User Routes] Processing invitation for:', data.email);
 
-    // Check if user already exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, data.email.toLowerCase()),
+    // Start transaction to ensure data consistency
+    let newUser;
+    let task;
+
+    await db.transaction(async (tx) => {
+      // Check if user already exists
+      const existingUser = await tx.query.users.findFirst({
+        where: eq(users.email, data.email.toLowerCase()),
+      });
+
+      if (existingUser) {
+        throw new Error("User with this email already exists");
+      }
+
+      // Generate temporary password and hash it
+      const tempPassword = generateTempPassword();
+      const hashedPassword = await hashPassword(tempPassword);
+
+      // Create new user account
+      [newUser] = await tx
+        .insert(users)
+        .values({
+          email: data.email.toLowerCase(),
+          fullName: data.fullName,
+          password: hashedPassword,
+          companyId: data.company_id,
+          onboardingUserCompleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      if (!newUser?.id) {
+        throw new Error("Failed to create user account");
+      }
+
+      // Create onboarding task for the new user
+      [task] = await tx
+        .insert(tasks)
+        .values({
+          title: `Complete onboarding for ${data.fullName}`,
+          description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
+          taskType: 'user_onboarding',
+          taskScope: 'user',
+          status: TaskStatus.EMAIL_SENT,
+          priority: 'medium',
+          progress: 25,
+          assignedTo: newUser.id,
+          createdBy: req.user?.id || newUser.id,
+          companyId: data.company_id,
+          userEmail: data.email.toLowerCase(),
+          metadata: {
+            invitedBy: req.user?.id || null,
+            invitedByName: data.sender_name,
+            companyName: data.company_name,
+            statusFlow: [TaskStatus.EMAIL_SENT]
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      if (!task?.id) {
+        throw new Error("Failed to create onboarding task");
+      }
     });
 
-    if (existingUser) {
-      console.log('[User Routes] User already exists:', existingUser.id);
-      return res.status(400).json({
-        message: "User with this email already exists",
-        userId: existingUser.id
-      });
-    }
-
-    // Generate temporary password and hash it
-    const tempPassword = generateTempPassword();
-    const hashedPassword = await hashPassword(tempPassword);
-
-    console.log('[User Routes] Creating new user account');
-
-    // Create new user account
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        email: data.email.toLowerCase(),
-        fullName: data.fullName,
-        password: hashedPassword,
-        companyId: data.company_id,
-        onboardingUserCompleted: false,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      .returning();
-
-    if (!newUser?.id) {
-      throw new Error("Failed to create user account");
-    }
-
-    console.log('[User Routes] Created new user:', newUser.id);
-
-    // Create onboarding task for the new user
-    const [task] = await db
-      .insert(tasks)
-      .values({
-        title: `Complete onboarding for ${data.fullName}`,
-        description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
-        taskType: 'user_onboarding',
-        taskScope: 'user',
-        status: TaskStatus.EMAIL_SENT,
-        priority: 'medium',
-        progress: 25,
-        assignedTo: newUser.id,
-        createdBy: req.user?.id || newUser.id, // If no creator, use the new user's ID
-        companyId: data.company_id,
-        userEmail: data.email.toLowerCase(),
-        metadata: {
-          invitedBy: req.user?.id || null,
-          invitedByName: data.sender_name,
-          companyName: data.company_name,
-          statusFlow: [TaskStatus.EMAIL_SENT]
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      .returning();
-
-    if (!task?.id) {
-      throw new Error("Failed to create onboarding task");
-    }
-
-    console.log('[User Routes] Created onboarding task:', task.id);
-
-    // TODO: Send invitation email with registration link and temporary password
-    // This would typically be handled by your email service
-
+    // Send success response
     res.status(201).json({
       message: "Invitation sent successfully",
       user: {
@@ -134,14 +129,22 @@ router.post("/api/users/invite", async (req, res) => {
         status: task.status
       }
     });
+
   } catch (error) {
     console.error('[User Routes] Error sending invitation:', error);
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         message: "Invalid invitation data",
         details: error.errors
       });
     }
+
+    // Handle specific error cases
+    if (error instanceof Error && error.message === "User with this email already exists") {
+      return res.status(400).json({ message: error.message });
+    }
+
     res.status(500).json({ 
       message: error instanceof Error ? error.message : "Failed to send invitation" 
     });
