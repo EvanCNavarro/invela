@@ -51,27 +51,25 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       company_id: companyId,
       company_name: companyName,
       sender_name: user?.fullName || "",
-      sender_company: companyName
+      sender_company: companyName // Set the sender's company name to the current company
     }
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
-      // Step 2: Frontend Validation
       console.log("[Step 2] Starting Frontend Validation");
       try {
-        // Validate the schema
         const validatedData = inviteUserSchema.parse(formData);
         console.log("[Step 2] Frontend Validation successful", validatedData);
 
-        // Prepare and send the request
+        // Prepare and send the request with correct company information
         const payload = {
           email: validatedData.email,
           full_name: validatedData.full_name,
           company_id: companyId,
           company_name: companyName,
           sender_name: user?.fullName,
-          sender_company: companyName
+          sender_company: companyName // Ensure sender company is set correctly
         };
 
         console.log("[Step 2] Sending request payload:", payload);
