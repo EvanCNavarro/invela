@@ -19,7 +19,7 @@ export const emailTemplateSchema = z.object({
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
     subject: `Invitation to join Invela`,
-    text: `Hello ${data.recipientName}. You've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.
+    text: `Hello ${data.recipientName}, you've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -138,7 +138,7 @@ Your Invitation Code: ${data.code}
   <body>
     <div class="container">
       <h1 class="company-name">Invela</h1>
-      <p class="invitation">Hello ${data.recipientName}. You've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.</p>
+      <p class="invitation">Hello ${data.recipientName}, you've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.</p>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
@@ -323,10 +323,14 @@ export function getEmailTemplate(templateName: TemplateNames, data: TemplateData
     throw new Error(`Email template '${templateName}' not found`);
   }
 
+  // Add debug logging
+  console.log('[EmailTemplate] Generating template with data:', JSON.stringify(data, null, 2));
+
   const emailTemplate = template(data);
   const result = emailTemplateSchema.safeParse(emailTemplate);
 
   if (!result.success) {
+    console.error('[EmailTemplate] Validation error:', result.error);
     throw new Error(`Invalid email template: ${result.error.message}`);
   }
 
