@@ -176,19 +176,22 @@ export function registerRoutes(app: Express): Server {
     });
   }
 
-  // Check invitation validity
+  // Update the validation endpoint to handle case-insensitive code matching
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
-      const code = req.params.code;
+      const code = req.params.code.toUpperCase();
+      console.log('[Validate] Checking invitation code:', code);
+
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
-          eq(invitations.code, code),
+          sql`UPPER(${invitations.code}) = UPPER(${code})`,
           eq(invitations.status, 'pending'),
           gt(invitations.expiresAt, new Date())
         ));
 
       if (!invitation) {
+        console.log('[Validate] No valid invitation found for code:', code);
         return res.status(404).json({
           message: "Invalid or expired invitation code",
           valid: false
@@ -201,11 +204,18 @@ export function registerRoutes(app: Express): Server {
         .where(eq(companies.id, invitation.companyId));
 
       if (!company) {
+        console.log('[Validate] Company not found for ID:', invitation.companyId);
         return res.status(404).json({
           message: "Company not found",
           valid: false
         });
       }
+
+      console.log('[Validate] Found valid invitation:', {
+        code,
+        email: invitation.email,
+        company: company.name
+      });
 
       res.json({
         valid: true,
@@ -216,7 +226,7 @@ export function registerRoutes(app: Express): Server {
         inviteeCompany: invitation.inviteeCompany
       });
     } catch (error) {
-      console.error("Error validating invitation:", error);
+      console.error("[Validate] Error validating invitation:", error);
       res.status(500).json({ message: "Error validating invitation" });
     }
   });
@@ -1575,7 +1585,7 @@ export function registerRoutes(app: Express): Server {
         companyId: req.body.company_id,
         companyName: req.body.company_name,
         senderName: req.body.sender_name,
-        senderCompany: req.body.sender_company
+        senderCompany: req.user?.companyId === 0 ? 'Invela' : undefined
       };
 
       console.log('[Invite] Validated invite data:', inviteData);
@@ -1592,9 +1602,9 @@ export function registerRoutes(app: Express): Server {
         const [newUser] = await tx.insert(users)
           .values({
             email: inviteData.email,
-            password: hashedPassword, // Add temporary hashed password
+            password: hashedPassword,
             companyId: inviteData.companyId,
-            fullName: inviteData.fullName, // Add fullName
+            fullName: inviteData.fullName,
             onboardingUserCompleted: false
           })
           .returning();
@@ -1602,11 +1612,11 @@ export function registerRoutes(app: Express): Server {
         console.log('[Invite] Created user account:', { id: newUser.id, email: newUser.email });
 
         // Generate invitation code
-        const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+        const code = generateInviteCode();
         const expiryDate = new Date();
         expiryDate.setDate(expiryDate.getDate() + 7);
 
-        console.log('[Invite] Creating invitation record');
+        console.log('[Invite] Creating invitation record with code:', code);
 
         // Create invitation
         const [invitation] = await tx.insert(invitations)
@@ -1768,6 +1778,7 @@ const STATUS_PROGRESS = {
   [TaskStatus.FAILED]: 100,
 };
 
-function generateInviteCode() {
-  return uuidv4().substring(0, 8).toUpperCase();
+function generateInviteCode(): string {
+  // Generate a 6 character hex code
+  return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
