@@ -18,7 +18,7 @@ export enum TaskStatus {
   EMAIL_SENT = 'email_sent',
   COMPLETED = 'completed',
   FAILED = 'failed'
-}
+};
 
 // Progress mapping for task statuses
 const taskStatusToProgress: Record<TaskStatus, number> = {
@@ -920,7 +920,7 @@ export function registerRoutes(app: Express): Express {
         .where(eq(users.id, req.user!.id));
 
       if (!sender || !sender.companies) {
-        return res.status(400).json({ message: "Sender company information not found" });
+        returnres.status(400).json({ message: "Sender company information not found" });
       }
 
       const senderName = sender.users.fullName;
@@ -1000,25 +1000,16 @@ export function registerRoutes(app: Express): Express {
       const code = req.params.code;
       console.log('[Invite] Validating invitation code:', code);
 
-      // Find the invitation with all related information
-      const [result] = await db
-        .select({
-          invitation: invitations,
-          task: tasks,
-          company: companies,
-          user: users
-        })
+      // Find the invitation first
+      const [invitation] = await db.select()
         .from(invitations)
-        .leftJoin(tasks, eq(invitations.taskId, tasks.id))
-        .leftJoin(companies, eq(tasks.companyId, companies.id))
-        .leftJoin(users, sql`LOWER(${users.email}) = LOWER(${invitations.email})`)
         .where(and(
           eq(invitations.code, code),
           eq(invitations.status, 'pending'),
           gt(invitations.expiresAt, new Date())
         ));
 
-      if (!result?.invitation) {
+      if (!invitation) {
         console.log('[Invite] Invalid or expired invitation code:', code);
         return res.status(404).json({
           valid: false,
@@ -1026,24 +1017,51 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      console.log('[Invite] Invitation found:', {
-        id: result.invitation.id,
-        email: result.invitation.email,
-        company: result.company?.name,
-        status: result.invitation.status,
-        user: result.user
+      // Find associated task and user information
+      const [taskInfo] = await db
+        .select({
+          task: tasks,
+          user: users,
+          company: companies
+        })
+        .from(tasks)
+        .leftJoin(users, sql`LOWER(${users.email}) = LOWER(${tasks.userEmail})`)
+        .leftJoin(companies, eq(tasks.companyId, companies.id))
+        .where(eq(tasks.id, invitation.taskId));
+
+      console.log('[Invite] Found associated data:', {
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          status: invitation.status
+        },
+        user: taskInfo?.user ? {
+          id: taskInfo.user.id,
+          email: taskInfo.user.email,
+          firstName: taskInfo.user.firstName,
+          lastName: taskInfo.user.lastName
+        } : null,
+        company: taskInfo?.company ? {
+          id: taskInfo.company.id,
+          name: taskInfo.company.name
+        } : null,
+        task: taskInfo?.task ? {
+          id: taskInfo.task.id,
+          status: taskInfo.task.status
+        } : null
       });
 
-      // Return complete user information for pre-filling the form
+      // Structure response with all required fields
       const response = {
         valid: true,
         invitation: {
-          email: result.invitation.email.toLowerCase(),
-          company: result.company?.name || null,
-          companyId: result.company?.id || null,
-          firstName: result.user?.firstName || result.task?.metadata?.firstName || '',
-          lastName: result.user?.lastName || result.task?.metadata?.lastName || '',
-          fullName: result.user?.fullName || result.task?.metadata?.fullName || result.invitation.inviteeName || ''
+          code: invitation.code,
+          email: invitation.email.toLowerCase(),
+          company: taskInfo?.company?.name || null,
+          companyId: taskInfo?.company?.id || null,
+          firstName: taskInfo?.user?.firstName || (invitation.inviteeName ? invitation.inviteeName.split(' ')[0] : ''),
+          lastName: taskInfo?.user?.lastName || (invitation.inviteeName ? invitation.inviteeName.split(' ').slice(1).join(' ') : ''),
+          fullName: taskInfo?.user?.fullName || invitation.inviteeName || ''
         }
       };
 
