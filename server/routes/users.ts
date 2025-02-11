@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
 import { users, tasks, TaskStatus } from "@db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
-  fullName: z.string().min(1, "Full name is required"),
+  fullName: z.string().min(1, "Full name is required"),  // Changed from full_name to fullName
   company_id: z.number({
     required_error: "Company ID is required",
     invalid_type_error: "Company ID must be a number"
@@ -45,10 +45,8 @@ router.post("/api/users/invite", async (req, res) => {
       console.error('[User Invitation] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
 
       const errorDetails = {};
-      Object.entries(validationResult.error.format()).forEach(([key, value]) => {
-        if (key !== '_errors' && value?._errors?.length > 0) {
-          errorDetails[key] = value._errors[0];
-        }
+      validationResult.error.errors.forEach(err => {
+        errorDetails[err.path.join('.')] = err.message;
       });
 
       return res.status(400).json({
@@ -90,7 +88,7 @@ router.post("/api/users/invite", async (req, res) => {
           .insert(users)
           .values({
             email: data.email.toLowerCase(),
-            fullName: data.fullName,
+            fullName: data.fullName,  // Match the frontend field name
             password: hashedPassword,
             companyId: data.company_id,
             onboardingUserCompleted: false,
@@ -117,7 +115,7 @@ router.post("/api/users/invite", async (req, res) => {
         const taskInsertResult = await tx
           .insert(tasks)
           .values({
-            title: `Complete onboarding for ${data.fullName}`,
+            title: `Complete onboarding for ${data.fullName}`,  // Match the frontend field name
             description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
             taskType: 'user_onboarding',
             taskScope: 'user',
