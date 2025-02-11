@@ -8,16 +8,12 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { wsService } from "@/lib/websocket";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
 
 // Define task status mappings and constants
 const taskStatusFlow = {
   [TaskStatus.EMAIL_SENT]: {
-    next: TaskStatus.IN_PROGRESS,
-    progress: 25,
-  },
-  [TaskStatus.IN_PROGRESS]: {
     next: TaskStatus.COMPLETED,
     progress: 50,
   },
@@ -29,13 +25,11 @@ const taskStatusFlow = {
 
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
 } as const;
 
 const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.EMAIL_SENT]: 50,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
@@ -50,7 +44,6 @@ interface Task {
 interface TaskCount {
   total: number;
   emailSent: number;
-  inProgress: number;
   completed: number;
 }
 
@@ -59,13 +52,15 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [taskCounts, setTaskCounts] = useState<TaskCount>({
     total: initialTasks.length,
     emailSent: initialTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    inProgress: initialTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
     completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
   });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Initialize WebSocket connection
+  useWebSocket();
 
   // Add mutation for updating task status
   const updateTaskStatus = useMutation({
@@ -82,30 +77,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
 
       return response.json();
     },
-    onMutate: async ({ taskId, newStatus }) => {
-      // Optimistic update
-      setTasks(currentTasks =>
-        currentTasks.map(task =>
-          task.id === taskId
-            ? { ...task, status: newStatus, progress: STATUS_PROGRESS[newStatus] }
-            : task
-        )
-      );
-
-      // Update counts optimistically
-      setTaskCounts(current => {
-        const oldTask = tasks.find(t => t.id === taskId);
-        if (!oldTask) return current;
-
-        return {
-          ...current,
-          [oldTask.status.toLowerCase()]: current[oldTask.status.toLowerCase() as keyof TaskCount] - 1,
-          [newStatus.toLowerCase()]: current[newStatus.toLowerCase() as keyof TaskCount] + 1
-        };
-      });
-    },
     onSuccess: () => {
-      // Invalidate queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Task Updated",
@@ -113,7 +85,6 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       });
     },
     onError: (error) => {
-      // Revert the optimistic update by refetching
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Error",
@@ -123,106 +94,6 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       console.error('Failed to update task status:', error);
     },
   });
-
-  // Set up WebSocket subscription for real-time updates
-  useEffect(() => {
-    const subscriptions: Array<() => void> = [];
-
-    const setupWebSocketSubscriptions = async () => {
-      try {
-        // Subscribe to task updates
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
-          setTasks(currentTasks =>
-            currentTasks.map(task =>
-              task.id === data.taskId
-                ? { ...task, status: data.status, progress: data.progress }
-                : task
-            )
-          );
-          if (data.count) {
-            setTaskCounts(data.count);
-            // Force refresh the tasks query to update sidebar count
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          }
-        });
-        subscriptions.push(unsubTaskUpdate);
-
-        // Subscribe to task creation
-        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
-          setTasks(currentTasks => {
-            const newTasks = [...currentTasks];
-            if (!newTasks.find(t => t.id === data.task.id)) {
-              newTasks.push(data.task);
-            }
-            return newTasks;
-          });
-          if (data.count) {
-            setTaskCounts(data.count);
-            // Force refresh the tasks query to update sidebar count
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          }
-        });
-        subscriptions.push(unsubTaskCreate);
-
-        // Subscribe to task deletion
-        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
-          setTasks(currentTasks => currentTasks.filter(task => task.id !== data.taskId));
-          if (data.count) {
-            setTaskCounts(data.count);
-            // Force refresh the tasks query to update sidebar count
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          }
-        });
-        subscriptions.push(unsubTaskDelete);
-
-        // Subscribe to task status updates
-        const unsubTaskStatusUpdate = await wsService.subscribe('task_status_updated', (data) => {
-          setTasks(currentTasks =>
-            currentTasks.map(task =>
-              task.id === data.taskId
-                ? { ...task, status: data.status, progress: STATUS_PROGRESS[data.status] }
-                : task
-            )
-          );
-
-          // Update the counts based on the new status
-          setTaskCounts(current => {
-            const oldTask = tasks.find(t => t.id === data.taskId);
-            if (!oldTask) return current;
-
-            return {
-              ...current,
-              [oldTask.status.toLowerCase()]: current[oldTask.status.toLowerCase() as keyof TaskCount] - 1,
-              [data.status.toLowerCase()]: current[data.status.toLowerCase() as keyof TaskCount] + 1
-            };
-          });
-
-          // Force refresh the tasks query to update sidebar count
-          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-        });
-        subscriptions.push(unsubTaskStatusUpdate);
-      } catch (error) {
-        console.error('Error setting up WebSocket subscriptions:', error);
-        toast({
-          title: "Connection Error",
-          description: "Failed to establish real-time connection. Updates may be delayed.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    setupWebSocketSubscriptions();
-
-    return () => {
-      subscriptions.forEach(unsubscribe => {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error('Error unsubscribing from WebSocket:', error);
-        }
-      });
-    };
-  }, [queryClient, toast, tasks]);
 
   // Handle status transition
   const handleStatusUpdate = async (task: Task) => {
@@ -263,7 +134,9 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                 <TableCell>
                   <Badge
                     variant="secondary"
-                    className="cursor-pointer hover:bg-secondary/80"
+                    className={`cursor-pointer hover:bg-secondary/80 ${
+                      task.status === TaskStatus.COMPLETED ? 'bg-green-100' : ''
+                    }`}
                     onClick={() => handleStatusUpdate(task)}
                   >
                     {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status}
