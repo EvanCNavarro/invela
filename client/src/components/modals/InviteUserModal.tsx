@@ -22,7 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 // Complete schema matching backend requirements
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
-  full_name: z.string().min(1, "Full name is required"), // Changed to match backend
+  full_name: z.string().min(1, "Full name is required"),
   company_id: z.number(),
   company_name: z.string(),
   sender_name: z.string(),
@@ -43,12 +43,11 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
 
-  // Initialize form with all required fields
   const form = useForm<InviteUserData>({
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
-      full_name: "", // Changed to match backend
+      full_name: "",
       company_id: companyId,
       company_name: companyName,
       sender_name: user?.fullName || "",
@@ -58,49 +57,48 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
-      console.log("[InviteUserModal] Starting invitation process", { formData });
+      // Step 2: Frontend Validation
+      console.log("[Step 2] Starting Frontend Validation");
+      try {
+        // Validate the schema
+        const validatedData = inviteUserSchema.parse(formData);
+        console.log("[Step 2] Frontend Validation successful", validatedData);
 
-      if (!user?.fullName) {
-        throw new Error("Missing sender information. Please try logging in again.");
+        // Prepare and send the request
+        const payload = {
+          email: validatedData.email,
+          full_name: validatedData.full_name,
+          company_id: companyId,
+          company_name: companyName,
+          sender_name: user?.fullName,
+          sender_company: companyName
+        };
+
+        console.log("[Step 2] Sending request payload:", payload);
+
+        const response = await fetch('/api/users/invite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const responseData = await response.json();
+        console.log("[Step 2] Server response:", responseData);
+
+        if (!response.ok) {
+          throw new Error(responseData.message || 'Failed to send invitation');
+        }
+
+        return responseData;
+      } catch (error) {
+        console.error("[Step 2] Frontend Validation failed:", error);
+        throw error;
       }
-
-      if (!companyId || !companyName) {
-        throw new Error("Missing company information. Please refresh the page.");
-      }
-
-      const payload = {
-        email: formData.email,
-        full_name: formData.full_name,
-        company_id: companyId,
-        company_name: companyName,
-        sender_name: user.fullName,
-        sender_company: companyName
-      };
-
-      console.log("[InviteUserModal] Sending invitation payload:", JSON.stringify(payload, null, 2));
-
-      const response = await fetch('/api/users/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      console.log("[InviteUserModal] Server response status:", response.status);
-
-      const responseData = await response.json();
-      console.log("[InviteUserModal] Server response data:", JSON.stringify(responseData, null, 2));
-
-      if (!response.ok) {
-        console.error("[InviteUserModal] Server error response:", responseData);
-        throw new Error(responseData.message || 'Failed to send invitation');
-      }
-
-      return responseData;
     },
     onError: (error: Error) => {
-      console.error("[InviteUserModal] Mutation error:", error);
+      console.error("[Step 4] UI Update - Error:", error);
       setServerError(error.message);
       toast({
         title: "Error sending invitation",
@@ -109,33 +107,42 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       });
     },
     onSuccess: (data) => {
-      console.log("[InviteUserModal] Invitation sent successfully:", data);
-
-      toast({
-        title: "Invitation sent successfully",
-        description: `${data.invitation.inviteeName} has been invited to join ${companyName}.`,
-      });
-
-      form.reset();
-      setServerError(null);
-      onOpenChange(false);
-
-      const inviteButton = document.querySelector('[data-element="invite-user-button"]');
-      if (inviteButton) {
-        const rect = inviteButton.getBoundingClientRect();
-        confetti({
-          particleCount: 75,
-          spread: 52,
-          origin: {
-            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-            y: rect.top / window.innerHeight
-          },
-          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-          ticks: 200,
-          gravity: 0.8,
-          scalar: 0.8,
-          shapes: ["circle"]
+      console.log("[Step 4] Starting UI Updates");
+      try {
+        // Show success toast
+        toast({
+          title: "Invitation sent successfully",
+          description: `${data.invitation.inviteeName} has been invited to join ${companyName}.`,
         });
+
+        // Reset form
+        form.reset();
+        setServerError(null);
+
+        // Close modal
+        onOpenChange(false);
+
+        // Trigger confetti
+        const inviteButton = document.querySelector('[data-element="invite-user-button"]');
+        if (inviteButton) {
+          const rect = inviteButton.getBoundingClientRect();
+          confetti({
+            particleCount: 75,
+            spread: 52,
+            origin: {
+              x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+              y: rect.top / window.innerHeight
+            },
+            colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+            ticks: 200,
+            gravity: 0.8,
+            scalar: 0.8,
+            shapes: ["circle"]
+          });
+        }
+        console.log("[Step 4] UI Updates completed successfully");
+      } catch (error) {
+        console.error("[Step 4] UI Updates failed:", error);
       }
     },
   });
