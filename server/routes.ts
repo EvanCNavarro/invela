@@ -1688,7 +1688,7 @@ export function registerRoutes(app: Express): Server {
         const emailResult = await emailService.sendTemplateEmail({
           to: inviteData.email,
           from: process.env.GMAIL_USER!,
-          template: 'fintech_invite',
+          template: 'user_invite',
           templateData: {
             recipientName: inviteData.fullName,
             invitationCode: invitation.code,
