@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation
 const inviteUserSchema = z.object({
   email: z.string().email(),
-  full_name: z.string().min(1),
+  fullName: z.string().min(1),
   company_id: z.number(),
   company_name: z.string(),
   sender_name: z.string(),
@@ -46,16 +46,18 @@ router.post("/api/users/invite", async (req, res) => {
       });
     }
 
-    // Generate temporary password
+    // Generate temporary password and hash it
     const tempPassword = generateTempPassword();
     const hashedPassword = await hashPassword(tempPassword);
+
+    console.log('[User Routes] Creating new user account');
 
     // Create new user account
     const [newUser] = await db
       .insert(users)
       .values({
         email: data.email.toLowerCase(),
-        fullName: data.full_name,
+        fullName: data.fullName,
         password: hashedPassword,
         companyId: data.company_id,
         onboardingUserCompleted: false,
@@ -70,7 +72,7 @@ router.post("/api/users/invite", async (req, res) => {
     const [task] = await db
       .insert(tasks)
       .values({
-        title: `Complete onboarding for ${data.full_name}`,
+        title: `Complete onboarding for ${data.fullName}`,
         description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
         taskType: 'user_onboarding',
         taskScope: 'user',
@@ -78,6 +80,7 @@ router.post("/api/users/invite", async (req, res) => {
         priority: 'medium',
         progress: 25,
         assignedTo: newUser.id,
+        createdBy: req.user?.id || null,
         companyId: data.company_id,
         userEmail: data.email.toLowerCase(),
         metadata: {

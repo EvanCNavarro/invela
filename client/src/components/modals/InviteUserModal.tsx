@@ -22,7 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  full_name: z.string().min(1, "Full name is required"),
+  fullName: z.string().min(1, "Full name is required"),
 });
 
 type InviteUserData = z.infer<typeof inviteUserSchema>;
@@ -43,7 +43,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       email: "",
-      full_name: "",
+      fullName: "",
     }
   });
 
@@ -51,11 +51,11 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
     mutationFn: async (data: InviteUserData) => {
       const payload = {
         email: data.email.trim(),
-        full_name: data.full_name.trim(),
+        fullName: data.fullName.trim(),
         company_id: companyId,
         company_name: companyName,
         sender_name: user?.fullName || '',
-        sender_company: "Invela", // Parent company
+        sender_company: companyName,
       };
 
       console.debug('Sending invitation payload:', JSON.stringify(payload, null, 2));
@@ -72,18 +72,16 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       console.debug('Server response:', JSON.stringify(responseData, null, 2));
 
       if (!response.ok) {
-        if (responseData.details) {
-          const errorMessages = Object.entries(responseData.details)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join('\n');
-          throw new Error(errorMessages);
-        }
         throw new Error(responseData.message || 'Failed to send invitation');
       }
 
       return responseData;
     },
-    onSuccess: (data) => {
+    onSuccess: (responseData) => {
+      if (!responseData.user) {
+        throw new Error('Invalid server response');
+      }
+
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -104,7 +102,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       toast({
         title: "Invitation sent",
-        description: `${data.user.fullName} has been invited to join ${companyName}.`,
+        description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
       });
 
       form.reset();
@@ -164,7 +162,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
             <FormField
               control={form.control}
-              name="full_name"
+              name="fullName"
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Full Name</div>
