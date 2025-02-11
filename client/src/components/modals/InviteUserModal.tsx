@@ -49,45 +49,39 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
-      try {
-        const payload = {
-          email: data.email.trim(),
-          full_name: data.full_name.trim(),
-          company_id: companyId,
-          company_name: companyName,
-          sender_name: user?.fullName || '',
-          sender_company: "Invela", // Parent company
-        };
+      const payload = {
+        email: data.email.trim(),
+        full_name: data.full_name.trim(),
+        company_id: companyId,
+        company_name: companyName,
+        sender_name: user?.fullName || '',
+        sender_company: "Invela", // Parent company
+      };
 
-        console.debug('Sending invitation payload:', JSON.stringify(payload, null, 2));
+      console.debug('Sending invitation payload:', JSON.stringify(payload, null, 2));
 
-        const response = await fetch('/api/users/invite', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        });
+      const response = await fetch('/api/users/invite', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
 
-        const responseData = await response.json();
-        console.debug('Server response:', JSON.stringify(responseData, null, 2));
+      const responseData = await response.json();
+      console.debug('Server response:', JSON.stringify(responseData, null, 2));
 
-        if (!response.ok) {
-          if (responseData.details) {
-            const errorMessages = Object.entries(responseData.details)
-              .filter(([_, message]) => message)
-              .map(([field, message]) => `${field}: ${message}`)
-              .join('\n');
-            throw new Error(errorMessages);
-          }
-          throw new Error(responseData.message || 'Failed to send invitation');
+      if (!response.ok) {
+        if (responseData.details) {
+          const errorMessages = Object.entries(responseData.details)
+            .map(([field, message]) => `${field}: ${message}`)
+            .join('\n');
+          throw new Error(errorMessages);
         }
-
-        return responseData;
-      } catch (error) {
-        console.error('Invitation error:', error);
-        throw error;
+        throw new Error(responseData.message || 'Failed to send invitation');
       }
+
+      return responseData;
     },
     onSuccess: (data) => {
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
