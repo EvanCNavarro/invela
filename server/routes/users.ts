@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { emailService } from "../services/email/service";
 
 const router = Router();
 
@@ -82,25 +83,42 @@ router.post("/api/users/invite", async (req, res) => {
         }
         console.log('[Step 2] User check completed - no existing user found');
 
+        // Create new user with temporary password
+        const tempPassword = generateTempPassword();
+        const hashedPassword = await hashPassword(tempPassword);
+
+        // Create the user first to get the ID
+        const [userResult] = await tx.insert(users)
+          .values({
+            email: data.email.toLowerCase(),
+            password: hashedPassword,
+            fullName: data.full_name,
+            companyId: data.company_id,
+            onboardingUserCompleted: false,
+          })
+          .returning();
+
+        newUser = userResult;
+        console.log('[Step 3] Created new user:', { id: newUser.id, email: newUser.email });
+
         // Generate invitation code and URL first
         const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
-        // Construct the invitation URL using the request's host
+        // Construct the invitation URL using the request's host and include all necessary parameters
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers.host;
-        const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}`;
+        const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}&name=${encodeURIComponent(data.full_name)}`;
 
-        console.log('[Step 3] Generated invitation details:', {
+        console.log('[Step 4] Generated invitation details:', {
           code: invitationCode,
           url: inviteUrl
         });
 
-        // Step 4: Create invitation record first
-        console.log('\n[Step 4] Creating invitation record...');
-        const invitationInsertResult = await tx
-          .insert(invitations)
+        // Create invitation record
+        console.log('\n[Step 5] Creating invitation record...');
+        const [invitationResult] = await tx.insert(invitations)
           .values({
             email: data.email.toLowerCase(),
             code: invitationCode,
@@ -112,23 +130,19 @@ router.post("/api/users/invite", async (req, res) => {
             metadata: {
               inviteUrl,
               senderName: data.sender_name,
-              senderCompany: senderCompany.name
+              senderCompany: senderCompany.name,
+              userId: newUser.id
             },
             createdAt: new Date(),
             updatedAt: new Date()
           })
           .returning();
 
-        invitation = invitationInsertResult[0];
+        invitation = invitationResult;
 
-        if (!invitation?.id) {
-          throw new Error("Failed to create invitation");
-        }
-
-        // Step 5: Create task
-        console.log('\n[Step 5] Creating onboarding task...');
-        const taskInsertResult = await tx
-          .insert(tasks)
+        // Create task
+        console.log('\n[Step 6] Creating onboarding task...');
+        const [taskResult] = await tx.insert(tasks)
           .values({
             title: `Complete onboarding for ${data.full_name}`,
             description: `New user invitation from ${data.sender_name} at ${senderCompany.name}`,
@@ -138,35 +152,47 @@ router.post("/api/users/invite", async (req, res) => {
             priority: 'medium',
             progress: 25,
             createdBy: req.user?.id,
+            assignedTo: newUser.id, // Assign to the newly created user
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
             metadata: {
               invitedBy: req.user?.id,
               invitedByName: data.sender_name,
               senderCompany: senderCompany.name,
-              companyName: data.company_name,
               invitationId: invitation.id,
-              statusFlow: [TaskStatus.EMAIL_SENT]
+              statusFlow: [TaskStatus.EMAIL_SENT],
+              emailSentAt: new Date().toISOString(),
             },
             createdAt: new Date(),
             updatedAt: new Date()
           })
           .returning();
 
-        task = taskInsertResult[0];
+        task = taskResult;
 
         // Update invitation with task ID
         if (task?.id) {
-          await tx
-            .update(invitations)
+          await tx.update(invitations)
             .set({ taskId: task.id })
             .where(eq(invitations.id, invitation.id));
         }
 
+        // Send invitation email
+        await emailService.sendInvitationEmail({
+          to: data.email,
+          recipientName: data.full_name,
+          senderName: data.sender_name,
+          senderCompany: senderCompany.name,
+          inviteUrl,
+          code: invitationCode
+        });
+
         console.log('\n[Success] Transaction completed successfully');
         console.log('[Success] Task and Invitation created:', {
           taskId: task?.id,
-          invitationId: invitation.id
+          invitationId: invitation.id,
+          inviteUrl,
+          code: invitationCode
         });
       });
 
@@ -193,6 +219,7 @@ router.post("/api/users/invite", async (req, res) => {
     } catch (txError) {
       console.error('[Error] Transaction error:', txError);
       console.error('[Error] Failed at stage:', {
+        userCreated: !!newUser,
         taskCreated: !!task,
         invitationCreated: !!invitation
       });

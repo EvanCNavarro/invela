@@ -18,10 +18,10 @@ export const emailTemplateSchema = z.object({
 
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
-    subject: "You've been invited to join Invela",
-    text: `Hello there, ${data.recipientName}.
+    subject: `You've been invited to join ${data.senderCompany}`,
+    text: `Hello ${data.recipientName},
 
-You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.
+You've been invited to join ${data.senderCompany} by ${data.senderName}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -30,6 +30,8 @@ Getting Started:
 3. Access your company's dashboard and resources.
 
 Click here to get started: ${data.inviteUrl}
+
+Your Invitation Code: ${data.code}
 
 © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
 `.trim(),
@@ -98,13 +100,22 @@ Click here to get started: ${data.inviteUrl}
         margin-bottom: 12px;
         color: #374151;
       }
-      .manual-code {
+      .invitation-code {
         font-family: monospace;
-        padding-left: 24px;
-        margin-top: 4px;
-        margin-bottom: 12px;
-        color: #4B5563;
-        font-size: 0.9em;
+        background-color: #f3f4f6;
+        padding: 12px;
+        border-radius: 4px;
+        margin: 16px 0;
+        text-align: center;
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      .code-label {
+        display: block;
+        font-size: 14px;
+        color: #6b7280;
+        margin-bottom: 4px;
       }
       .button {
         background-color: #4965EC;
@@ -116,6 +127,7 @@ Click here to get started: ${data.inviteUrl}
         font-weight: 500;
         font-size: 14px;
         text-align: center;
+        margin-top: 16px;
       }
       .footer {
         margin-top: 40px;
@@ -133,20 +145,22 @@ Click here to get started: ${data.inviteUrl}
   </head>
   <body>
     <div class="container">
-      <h1 class="company-name">Invela</h1>
-      <p class="greeting">Hello there, ${data.recipientName}.</p>
-      <p class="invitation">You've been invited to join Invela, by ${data.senderName} of ${data.senderCompany}.</p>
+      <h1 class="company-name">${data.senderCompany}</h1>
+      <p class="greeting">Hello ${data.recipientName},</p>
+      <p class="invitation">You've been invited to join ${data.senderCompany} by ${data.senderName}.</p>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
         <ol>
-          <li>
-            Click the button below to Create Your Account.
-            <div class="manual-code">— or manually enter your unique Invitation Code: ${data.code}</div>
-          </li>
+          <li>Click the button below to Create Your Account.</li>
           <li>Finish updating your Profile.</li>
           <li>Access your company's dashboard and resources.</li>
         </ol>
+      </div>
+
+      <div class="invitation-code">
+        <span class="code-label">Your Invitation Code</span>
+        ${data.code}
       </div>
 
       <a href="${data.inviteUrl}" class="button">Create Your Account</a>
@@ -160,9 +174,9 @@ Click here to get started: ${data.inviteUrl}
 `.trim(),
   }),
   fintech_invite: (data: TemplateData): EmailTemplate => ({
-    subject: "You've been invited to join Invela",
+    subject: `You've been invited to join ${data.senderCompany}`,
     text: `
-      Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.
+      Hello ${data.recipientName}, you've been invited to join ${data.senderCompany} by ${data.senderName}.
 
       Getting Started:
       1. Click the button below to Create Your Account.
@@ -170,9 +184,9 @@ Click here to get started: ${data.inviteUrl}
       3. Upload the requested files to our secure system.
       4. Acquire an Invela Accreditation & Risk Score for your company.
 
-      Click here to get started: ${data.inviteUrl}
+      Your Invitation Code: ${data.code}
 
-      Or use your invitation code: ${data.code}
+      Click here to get started: ${data.inviteUrl}
 
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
@@ -236,7 +250,6 @@ Click here to get started: ${data.inviteUrl}
             }
             li:last-child {
               margin-bottom: 0;
-              border-bottom: 1px solid #e5e7eb;
               padding-bottom: 12px;
             }
             .button {
@@ -249,14 +262,24 @@ Click here to get started: ${data.inviteUrl}
               font-weight: 500;
               font-size: 14px;
               text-align: center;
+              margin-top: 16px;
             }
             .invitation-code {
-              margin-top: 20px;
+              margin: 20px 0;
               font-family: monospace;
               background-color: #f3f4f6;
               padding: 12px;
               border-radius: 4px;
               text-align: center;
+              font-size: 18px;
+              font-weight: 600;
+              letter-spacing: 1px;
+            }
+            .code-label {
+              display: block;
+              font-size: 14px;
+              color: #6b7280;
+              margin-bottom: 4px;
             }
             .footer {
               margin-top: 40px;
@@ -274,8 +297,8 @@ Click here to get started: ${data.inviteUrl}
         </head>
         <body>
           <div class="container">
-            <h1 class="company-name">Invela</h1>
-            <h2 class="title">Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.</h2>
+            <h1 class="company-name">${data.senderCompany}</h1>
+            <h2 class="title">Hello ${data.recipientName}, you've been invited to join ${data.senderCompany} by ${data.senderName}.</h2>
 
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
@@ -287,11 +310,12 @@ Click here to get started: ${data.inviteUrl}
               </ol>
             </div>
 
-            <a href="${data.inviteUrl}" class="button">Create Your Account</a>
-
             <div class="invitation-code">
-              Invitation Code: ${data.code}
+              <span class="code-label">Your Invitation Code</span>
+              ${data.code}
             </div>
+
+            <a href="${data.inviteUrl}" class="button">Create Your Account</a>
 
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
