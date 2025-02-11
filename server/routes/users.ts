@@ -34,22 +34,18 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    console.log('\n[User Invitation] Starting user invitation process');
-    console.log('[User Invitation] Request headers:', req.headers);
-    console.log('[User Invitation] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('\n[Step 3A] Starting Initial Steps');
+    console.log('[Step 3A] Request body:', JSON.stringify(req.body, null, 2));
 
-    // Step 1: Validate request data
-    console.log('[User Invitation] Validating request data...');
+    // Step 3A: Validate request data
     const validationResult = inviteUserSchema.safeParse(req.body);
 
     if (!validationResult.success) {
-      console.error('[User Invitation] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
-
+      console.error('[Step 3A] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
       const errorDetails = {};
       validationResult.error.errors.forEach(err => {
         errorDetails[err.path.join('.')] = err.message;
       });
-
       return res.status(400).json({
         message: "Missing required fields",
         details: errorDetails
@@ -57,35 +53,32 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     const data = validationResult.data;
-    console.log('[User Invitation] Validated data:', JSON.stringify(data, null, 2));
+    console.log('[Step 3A] Validation successful. Validated data:', JSON.stringify(data, null, 2));
 
-    // Start transaction to ensure data consistency
+    // Start transaction
     let newUser;
     let task;
     let invitation;
 
     try {
       await db.transaction(async (tx) => {
-        console.log('[User Invitation] Starting database transaction');
-
-        // Step 2: Check if user already exists
-        console.log('[User Invitation] Checking for existing user...');
+        // Check if user exists
+        console.log('[Step 3A] Checking for existing user...');
         const existingUser = await tx.query.users.findFirst({
           where: eq(users.email, data.email.toLowerCase()),
         });
 
         if (existingUser) {
-          console.log('[User Invitation] User already exists:', existingUser.email);
+          console.error('[Step 3A] User already exists:', existingUser.email);
           throw new Error("User with this email already exists");
         }
+        console.log('[Step 3A] User check completed - no existing user found');
 
-        // Step 3: Generate temporary password and hash it
-        console.log('[User Invitation] Generating temporary password...');
+        // Step 3B: Create new user account
+        console.log('\n[Step 3B] Starting User Account Creation');
         const tempPassword = generateTempPassword();
         const hashedPassword = await hashPassword(tempPassword);
 
-        // Step 4: Create new user account
-        console.log('[User Invitation] Creating new user account...');
         const userInsertResult = await tx
           .insert(users)
           .values({
@@ -100,20 +93,18 @@ router.post("/api/users/invite", async (req, res) => {
           .returning();
 
         newUser = userInsertResult[0];
-
         if (!newUser?.id) {
-          console.error('[User Invitation] Failed to create user account');
+          console.error('[Step 3B] Failed to create user account');
           throw new Error("Failed to create user account");
         }
-
-        console.log('[User Invitation] User created successfully:', {
+        console.log('[Step 3B] User account created successfully:', {
           id: newUser.id,
           email: newUser.email,
           companyId: newUser.companyId
         });
 
-        // Step 5: Create onboarding task
-        console.log('[User Invitation] Creating onboarding task...');
+        // Step 3C: Create onboarding task
+        console.log('\n[Step 3C] Starting Onboarding Task Creation');
         const taskInsertResult = await tx
           .insert(tasks)
           .values({
@@ -124,7 +115,7 @@ router.post("/api/users/invite", async (req, res) => {
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
             progress: 25,
-            assignedTo: newUser.id, 
+            assignedTo: newUser.id,
             createdBy: req.user?.id || newUser.id,
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
@@ -140,16 +131,21 @@ router.post("/api/users/invite", async (req, res) => {
           .returning();
 
         task = taskInsertResult[0];
-
         if (!task?.id) {
-          console.error('[User Invitation] Failed to create onboarding task');
+          console.error('[Step 3C] Failed to create onboarding task');
           throw new Error("Failed to create onboarding task");
         }
+        console.log('[Step 3C] Onboarding task created successfully:', {
+          id: task.id,
+          title: task.title,
+          assignedTo: task.assignedTo
+        });
 
-        // Step 6: Create invitation record
+        // Step 3D: Create invitation record
+        console.log('\n[Step 3D] Starting Invitation Creation');
         const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7); 
+        expiresAt.setDate(expiresAt.getDate() + 7);
 
         const invitationInsertResult = await tx
           .insert(invitations)
@@ -168,18 +164,18 @@ router.post("/api/users/invite", async (req, res) => {
           .returning();
 
         invitation = invitationInsertResult[0];
-
         if (!invitation?.id) {
+          console.error('[Step 3D] Failed to create invitation');
           throw new Error("Failed to create invitation");
         }
-
-        console.log('[User Invitation] Invitation created successfully:', {
+        console.log('[Step 3D] Invitation created successfully:', {
           id: invitation.id,
-          code: invitation.code
+          code: invitation.code,
+          email: invitation.email
         });
       });
 
-      console.log('[User Invitation] Transaction completed successfully');
+      console.log('\n[Step 3] Transaction completed successfully');
 
       // Send success response
       res.status(201).json({
@@ -201,12 +197,12 @@ router.post("/api/users/invite", async (req, res) => {
       });
 
     } catch (txError) {
-      console.error('[User Invitation] Transaction error:', txError);
+      console.error('[Step 3] Transaction error:', txError);
       throw txError;
     }
 
   } catch (error) {
-    console.error('[User Invitation] Error processing invitation:', error);
+    console.error('[Step 3] Error processing invitation:', error);
 
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
@@ -220,7 +216,6 @@ router.post("/api/users/invite", async (req, res) => {
       });
     }
 
-    // Handle specific error cases
     if (error instanceof Error && error.message === "User with this email already exists") {
       return res.status(400).json({ message: error.message });
     }
