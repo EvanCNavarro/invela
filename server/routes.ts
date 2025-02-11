@@ -37,6 +37,73 @@ declare global {
 }
 
 export function registerRoutes(app: Express): Express {
+  // Companies endpoints
+  app.get("/api/companies", requireAuth, async (req, res) => {
+    try {
+      const allCompanies = await db.select().from(companies);
+      res.json(allCompanies);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      res.status(500).json({ message: "Error fetching companies" });
+    }
+  });
+
+  app.get("/api/companies/current", requireAuth, async (req, res) => {
+    try {
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.companyId));
+
+      if (!company) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.json(company);
+    } catch (error) {
+      console.error("Error fetching current company:", error);
+      res.status(500).json({ message: "Error fetching company details" });
+    }
+  });
+
+  // Tasks endpoints
+  app.get("/api/tasks", requireAuth, async (req, res) => {
+    try {
+      const userTasks = await db.select()
+        .from(tasks)
+        .where(eq(tasks.companyId, req.user!.companyId));
+      res.json(userTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      res.status(500).json({ message: "Error fetching tasks" });
+    }
+  });
+
+  // Files endpoints
+  app.get("/api/files", requireAuth, async (req, res) => {
+    try {
+      const userFiles = await db.select()
+        .from(files)
+        .where(eq(files.userId, req.user!.id));
+      res.json(userFiles);
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      res.status(500).json({ message: "Error fetching files" });
+    }
+  });
+
+  // Relationships endpoints
+  app.get("/api/relationships", requireAuth, async (req, res) => {
+    try {
+      const companyRelationships = await db.select()
+        .from(relationships)
+        .where(eq(relationships.companyId, req.user!.companyId));
+      res.json(companyRelationships);
+    } catch (error) {
+      console.error("Error fetching relationships:", error);
+      res.status(500).json({ message: "Error fetching relationships" });
+    }
+  });
+
   // Account setup endpoint
   app.post("/api/account/setup", async (req, res) => {
     try {
@@ -204,19 +271,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update file list endpoint to include all necessary fields
-  app.get("/api/files", requireAuth, async (req, res) => {
-    try {
-      const userFiles = await db.select()
-        .from(files)
-        .where(eq(files.userId, req.user!.id));
-
-      res.json(userFiles);
-    } catch (error) {
-      console.error("Error fetching files:", error);
-      res.status(500).json({ message: "Error fetching files" });
-    }
-  });
 
   app.delete("/api/files/:id", requireAuth, async (req, res) => {
     try {
@@ -880,7 +934,7 @@ export function registerRoutes(app: Express): Express {
 
       // Create invitation record
       const [invitation] = await db.insert(invitations)
-        .values({
+        .values.values({
           email,
           code,
           status: 'pending',
