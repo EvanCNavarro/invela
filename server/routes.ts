@@ -1652,14 +1652,14 @@ export function registerRoutes(app: Express): Server {
         console.log('[Invite] Created task:', task);
         console.log('[Invite] Sending invitation email');
 
-        // Send invitation email with correctly named template fields
+        // Send invitation email with correctly named template fields and static Invela branding
         const emailResult = await emailService.sendTemplateEmail({
           to: inviteData.email,
           from: process.env.GMAIL_USER!,
           template: 'user_invite',
           templateData: {
             recipientName: inviteData.fullName,
-            company: inviteData.companyName,
+            company: "Invela", // Always use Invela as the company name in emails
             code: invitation.code,
             inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
             senderName: inviteData.senderName
