@@ -51,6 +51,7 @@ class EmailService {
   private defaultFromEmail: string;
 
   constructor() {
+    console.log('[EmailService] Initializing email service');
     if (!process.env.GMAIL_APP_PASSWORD || !process.env.GMAIL_USER) {
       throw new Error("Gmail credentials must be set in environment variables");
     }
@@ -64,57 +65,70 @@ class EmailService {
     });
 
     this.defaultFromEmail = process.env.GMAIL_USER;
+    console.log('[EmailService] Email service initialized successfully');
   }
 
   private async validateEmail(email: string): Promise<ValidationResult> {
     try {
+      console.log('[EmailService] Starting email validation for:', email);
+
       // Step 1: Basic format validation
       const result = emailSchema.safeParse(email);
       if (!result.success) {
+        console.log('[EmailService] Basic format validation failed');
         return { isValid: false, reason: "Invalid email format" };
       }
 
       // Step 2: Parse email parts
       const [localPart, domain] = email.split('@');
       if (!domain || !localPart) {
+        console.log('[EmailService] Email parsing failed - invalid format');
         return { isValid: false, reason: "Invalid email format" };
       }
 
       // Step 3: Check for disposable email domains
       if (disposableDomains.has(domain.toLowerCase())) {
+        console.log('[EmailService] Disposable email domain detected:', domain);
         return { isValid: false, reason: "Disposable email addresses are not allowed" };
       }
 
       // Step 4: Check for role-based emails
       if (roleBasedPrefixes.has(localPart.toLowerCase())) {
+        console.log('[EmailService] Role-based email detected:', localPart);
         return { isValid: false, reason: "Role-based email addresses are not allowed" };
       }
 
       // Step 5: Check MX records
       try {
+        console.log('[EmailService] Checking MX records for domain:', domain);
         const mxRecords = await resolveMx(domain);
         if (!mxRecords || mxRecords.length === 0) {
+          console.log('[EmailService] No MX records found for domain:', domain);
           return { isValid: false, reason: "This email doesn't exist. Enter a valid email." };
         }
+        console.log('[EmailService] MX records found for domain:', domain);
       } catch (error) {
-        console.error('MX record check failed:', error);
+        console.error('[EmailService] MX record check failed:', error);
         // If MX check fails, we'll still allow the email
         return { isValid: true };
       }
 
+      console.log('[EmailService] Email validation successful for:', email);
       return { isValid: true };
     } catch (error) {
-      console.error('Email validation error:', error);
+      console.error('[EmailService] Email validation error:', error);
       // On error, we'll still allow the email to be used
       return { isValid: true };
     }
   }
 
   async sendTemplateEmail(params: SendEmailParams): Promise<{ success: boolean; error?: string }> {
+    console.log('[EmailService] Starting to send template email to:', params.to);
     try {
       // Validate email addresses with basic validation
       const toValidation = await this.validateEmail(params.to);
       if (!toValidation.isValid) {
+        console.error('[EmailService] Recipient email validation failed:', toValidation.reason);
         return { 
           success: false, 
           error: toValidation.reason || 'Invalid recipient email address'
@@ -123,6 +137,7 @@ class EmailService {
 
       const fromValidation = await this.validateEmail(params.from || this.defaultFromEmail);
       if (!fromValidation.isValid) {
+        console.error('[EmailService] Sender email validation failed:', fromValidation.reason);
         return { 
           success: false, 
           error: fromValidation.reason || 'Invalid sender email address'
@@ -130,12 +145,14 @@ class EmailService {
       }
 
       // Get email template
+      console.log('[EmailService] Getting email template:', params.template);
       const template = getEmailTemplate(
         params.template as TemplateNames,
         params.templateData
       );
 
       // Send email using nodemailer
+      console.log('[EmailService] Attempting to send email...');
       await this.transporter.sendMail({
         from: params.from || this.defaultFromEmail,
         to: params.to,
@@ -144,9 +161,10 @@ class EmailService {
         html: template.html,
       });
 
+      console.log('[EmailService] Email sent successfully to:', params.to);
       return { success: true };
     } catch (error) {
-      console.error('Failed to send email:', error);
+      console.error('[EmailService] Failed to send email:', error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Failed to send email' 
@@ -156,11 +174,13 @@ class EmailService {
 
   // Method to verify connection
   async verifyConnection(): Promise<boolean> {
+    console.log('[EmailService] Verifying email service connection...');
     try {
       await this.transporter.verify();
+      console.log('[EmailService] Email service connection verified successfully');
       return true;
     } catch (error) {
-      console.error('Failed to verify email connection:', error);
+      console.error('[EmailService] Failed to verify email connection:', error);
       return false;
     }
   }
