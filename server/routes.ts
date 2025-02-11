@@ -654,8 +654,8 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Set initial status and progress for new invitation tasks
-      const initialStatus = 'EMAIL_SENT';
-      const initialProgress = 25; // Progress for EMAIL_SENT status
+      const initialStatus = TaskStatus.EMAIL_SENT;
+      const initialProgress = STATUS_PROGRESS[initialStatus]; // Get progress from constant mapping
 
       const taskData = {
         title: `New User Invitation: ${userEmail}`,
@@ -1636,3 +1636,11 @@ enum TaskStatus {
   COMPLETED = 'completed',
   FAILED = 'failed',
 }
+
+const STATUS_PROGRESS = {
+  [TaskStatus.PENDING]: 0,
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.COMPLETED]: 100,
+  [TaskStatus.FAILED]: 100,
+};

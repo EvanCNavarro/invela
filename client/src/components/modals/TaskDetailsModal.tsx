@@ -29,7 +29,8 @@ const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
   if (!task) return null;
 
-  const progress = statusProgressMap[task.status as TaskStatus] ?? task.progress ?? 0;
+  // Ensure progress is always synced with status
+  const progress = task.status ? statusProgressMap[task.status as TaskStatus] : task.progress ?? 0;
 
   const taskFields = [
     { label: "Task ID", value: task.id },
