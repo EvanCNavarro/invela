@@ -61,12 +61,14 @@ export default function AuthPage() {
       if (!invitationCode) return null;
       const response = await fetch(`/api/invitations/${invitationCode}/validate`);
       if (!response.ok) throw new Error('Invalid invitation code');
-      return response.json();
+      const data = await response.json();
+      console.log('Invitation validation response:', data);
+      return data;
     },
     enabled: !!invitationCode,
   });
 
-  // Form setup
+  // Form setup with default values from invitation
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -96,39 +98,45 @@ export default function AuthPage() {
     },
   });
 
-  // Update email field when invitation data is loaded
+  // Update form fields when invitation data is loaded
+  useEffect(() => {
+    if (invitationData?.valid && invitationData?.invitation) {
+      console.log('Setting form values from invitation:', invitationData.invitation);
+      const { email, firstName, lastName, fullName, company } = invitationData.invitation;
+
+      registrationForm.setValue('email', email || '');
+      registrationForm.setValue('firstName', firstName || '');
+      registrationForm.setValue('lastName', lastName || '');
+      registrationForm.setValue('fullName', fullName || '');
+
+      // Force form validation after setting values
+      registrationForm.trigger();
+    }
+  }, [invitationData, registrationForm]);
+
   useEffect(() => {
     if (invitationData?.email) {
       registrationForm.setValue('email', invitationData.email);
     }
   }, [invitationData]);
 
-  // Add loading delay for smooth transitions
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  // Determine current page and form to show
   const isLoginPath = location === '/login';
   const isRegistrationPath = location === '/register';
   const isInvitePath = location === '/invite';
 
-
-  // Show registration form if:
-  // 1. On /register path AND
-  // 2. Has invitation code AND
-  // 3. Either validating code OR code is valid and email matches
   const showRegistrationForm = isRegistrationPath && invitationCode && (
     isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail)
   );
 
-  // Redirect logged-in users to home unless they have a valid invitation
   if (user && !showRegistrationForm && !isInvitePath) {
     return <Redirect to="/" />;
   }
 
-  // Loading state
   if (isPageLoading || isValidatingCode) {
     return (
       <div className="min-h-screen flex">
@@ -151,7 +159,6 @@ export default function AuthPage() {
     );
   }
 
-  // Form submission handlers
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
     const { email, password } = values;
     loginMutation.mutate({ email, password });
@@ -201,7 +208,6 @@ export default function AuthPage() {
     }
   };
 
-  // Show registration form when applicable
   if (showRegistrationForm) {
     return (
       <div className="min-h-screen flex">
@@ -219,7 +225,6 @@ export default function AuthPage() {
               </p>
             </div>
 
-            {/* Email domain warning */}
             {invitationData?.companyDomainMismatch && (
               <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <div className="flex items-start gap-3">
@@ -383,7 +388,6 @@ export default function AuthPage() {
     );
   }
 
-  //Show invite form
   if (isInvitePath) {
     return (
       <div className="min-h-screen flex">
@@ -462,8 +466,6 @@ export default function AuthPage() {
   }
 
 
-
-  // Show login form by default or when on /login path
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
