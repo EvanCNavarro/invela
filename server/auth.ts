@@ -29,6 +29,8 @@ async function comparePasswords(supplied: string, stored: string) {
   try {
     console.log('Debug - Comparing passwords:');
     console.log('Stored password:', stored);
+
+    // Split stored password into hash and salt
     const [hashedStored, salt] = stored.split(".");
 
     if (!hashedStored || !salt) {
@@ -36,19 +38,31 @@ async function comparePasswords(supplied: string, stored: string) {
       return false;
     }
 
-    console.log('Extracted salt:', salt);
-    console.log('Stored hash length:', hashedStored.length);
-
+    // Generate hash from supplied password using same salt
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuf = Buffer.from(hashedStored, "hex");
+    const suppliedHex = suppliedBuf.toString('hex');
 
-    console.log('Supplied hash length:', suppliedBuf.length);
-    console.log('Stored buffer length:', storedBuf.length);
+    console.log('Debug - Password comparison:');
+    console.log('Salt:', salt);
+    console.log('Stored hash:', hashedStored);
+    console.log('Generated hash:', suppliedHex);
 
-    return timingSafeEqual(suppliedBuf, storedBuf);
+    // Compare the hashes directly as hex strings first (for debugging)
+    const hexMatch = hashedStored === suppliedHex;
+    console.log('Hex string comparison result:', hexMatch);
+
+    // Also do timing-safe comparison of buffers
+    const storedBuf = Buffer.from(hashedStored, 'hex');
+    const timing = timingSafeEqual(suppliedBuf, storedBuf);
+    console.log('Timing-safe buffer comparison result:', timing);
+
+    return timing;
   } catch (error) {
     console.error("Password comparison error:", error);
-    console.error("Error stack:", error.stack);
+    if (error instanceof Error) {
+      console.error("Error details:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     return false;
   }
 }
