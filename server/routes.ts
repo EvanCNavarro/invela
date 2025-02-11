@@ -1568,9 +1568,9 @@ export function registerRoutes(app: Express): Server {
     console.log('[Invite] Request body:', req.body);
 
     try {
-      // Validate request data
+      // Validate and normalize invite data
       const inviteData = {
-        email: req.body.email,
+        email: req.body.email.toLowerCase(),
         fullName: req.body.full_name,
         companyId: req.body.company_id,
         companyName: req.body.company_name,
@@ -1580,119 +1580,81 @@ export function registerRoutes(app: Express): Server {
 
       console.log('[Invite] Validated invite data:', inviteData);
 
-      // Check if user already exists
-      const existingUser = await db.select()
-        .from(users)
-        .where(eq(users.email, inviteData.email.toLowerCase()));
+      // Create the transaction for atomic operations
+      const result = await db.transaction(async (tx) => {
+        console.log('[Invite] Creating user account');
 
-      if (existingUser.length > 0) {
-        console.error('[Invite] User already exists:', inviteData.email);
-        return res.status(400).json({ message: "User with this email already exists" });
-      }
+        // Create user account
+        const [newUser] = await tx.insert(users)
+          .values({
+            email: inviteData.email,
+            companyId: inviteData.companyId,
+            onboardingUserCompleted: false
+          })
+          .returning();
 
-      // Start transaction for creating user, invitation, and task
-      let newUser;
-      let invitation;
-      let task;
+        console.log('[Invite] Created user account:', newUser);
 
-      try {
-        await db.transaction(async (tx) => {
-          // 1. Create user account first
-          console.log('[Invite] Creating user account');
-          const tempPassword = crypto.randomBytes(16).toString('hex');
-          const hashedPassword = await bcrypt.hash(tempPassword, 10);
+        // Generate invitation code
+        const code = generateInviteCode();
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 7);
 
-          const [createdUser] = await tx
-            .insert(users)
-            .values({
-              email: inviteData.email.toLowerCase(),
-              password: hashedPassword,
-              fullName: inviteData.fullName,
-              companyId: inviteData.companyId,
-              onboardingUserCompleted: false,
-            })
-            .returning();
+        console.log('[Invite] Creating invitation record');
 
-          if (!createdUser) {
-            throw new Error("Failed to create user account");
-          }
-          newUser = createdUser;
-          console.log('[Invite] Created user account:', { id: newUser.id, email: newUser.email });
+        // Create invitation
+        const [invitation] = await tx.insert(invitations)
+          .values({
+            email: inviteData.email,
+            code,
+            status: 'pending',
+            companyId: inviteData.companyId,
+            inviteeName: inviteData.fullName,
+            inviteeCompany: inviteData.companyName,
+            expiresAt: expiryDate
+          })
+          .returning();
 
-          // 2. Create invitation record
-          console.log('[Invite] Creating invitation record');
-          const inviteCode = uuidv4().substring(0, 8).toUpperCase();
-          const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + 7);
+        console.log('[Invite] Created invitation:', invitation);
+        console.log('[Invite] Creating associated task');
 
-          const [createdInvitation] = await tx
-            .insert(invitations)
-            .values({
-              email: inviteData.email.toLowerCase(),
-              code: inviteCode,
-              status: 'pending',
-              companyId: inviteData.companyId,
-              inviteeName: inviteData.fullName,
-              inviteeCompany: inviteData.companyName,
+        // Create associated task
+        const [task] = await tx.insert(tasks)
+          .values({
+            title: `New User Invitation: ${inviteData.email}`,
+            description: `Invitation sent to ${inviteData.fullName} to join ${inviteData.companyName}`,
+            taskType: 'user_onboarding',
+            taskScope: 'user',
+            status: TaskStatus.EMAIL_SENT,
+            priority: 'medium',
+            progress: 25,
+            createdBy: req.user!.id,
+            companyId: inviteData.companyId,
+            userEmail: inviteData.email,
+            dueDate: expiryDate,
+            metadata: {
+              userId: newUser.id,
               senderName: inviteData.senderName,
-              senderCompany: inviteData.senderCompany,
-              expiresAt: expiryDate,
-              userId: newUser.id // Link to created user
-            })
-            .returning();
+              statusFlow: [TaskStatus.EMAIL_SENT],
+              emailSentAt: new Date().toISOString(),
+              invitationId: invitation.id,
+              invitationCode: code
+            }
+          })
+          .returning();
 
-          if (!createdInvitation) {
-            throw new Error("Failed to create invitation record");
-          }
-          invitation = createdInvitation;
-          console.log('[Invite] Created invitation:', invitation);
-
-          // 3. Create tracking task
-          console.log('[Invite] Creating associated task');
-          const [createdTask] = await tx
-            .insert(tasks)
-            .values({
-              title: `New User Invitation: ${inviteData.email}`,
-              description: `Invitation sent to ${inviteData.fullName} to join ${inviteData.companyName}`,
-              taskType: 'user_onboarding', // Changed to match expected type
-              taskScope: 'user',
-              status: TaskStatus.EMAIL_SENT, // Using proper enum
-              priority: 'medium',
-              progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT], // Using proper progress mapping
-              createdBy: req.user!.id,
-              assignedTo: null, // Changed: don't assign to new user yet since they haven't registered
-              userEmail: inviteData.email.toLowerCase(),
-              companyId: inviteData.companyId,
-              dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Set due date to 7 days
-              metadata: {
-                invitationId: invitation.id,
-                invitationCode: invitation.code,
-                userId: newUser.id,
-                senderName: inviteData.senderName,
-                senderCompany: inviteData.senderCompany,
-                emailSentAt: new Date().toISOString(),
-                statusFlow: [TaskStatus.EMAIL_SENT]
-              }
-            })
-            .returning();
-
-          if (!createdTask) {
-            throw new Error("Failed to create tracking task");
-          }
-          task = createdTask;
-          console.log('[Invite] Created task:', task);
-        });
-
-        // 4. Send invitation email (outside transaction since it's external)
+        console.log('[Invite] Created task:', task);
         console.log('[Invite] Sending invitation email');
+
+        // Send invitation email with correctly named template fields
         const emailResult = await emailService.sendTemplateEmail({
           to: inviteData.email,
           from: process.env.GMAIL_USER!,
           template: 'user_invite',
           templateData: {
             recipientName: inviteData.fullName,
-            company: inviteData.companyName,  // Changed from companyName to company
-            code: invitation.code,            // Changed from invitationCode to code
+            company: inviteData.companyName,
+            code: invitation.code,
             inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
             senderName: inviteData.senderName
           }
@@ -1700,32 +1662,29 @@ export function registerRoutes(app: Express): Server {
 
         if (!emailResult.success) {
           console.error('[Invite] Failed to send email:', emailResult.error);
-          throw new Error(emailResult.error || 'Failed to send invitation email');
+          throw new Error(`Failed to send invitation email: ${emailResult.error}`);
         }
 
         console.log('[Invite] Successfully completed invitation process');
-        res.status(201).json({
-          message: "Invitation sent successfully",
-          invitation: {
-            id: invitation.id,
-            email: invitation.email,
-            code: invitation.code,
-            expiresAt: invitation.expiresAt,
-            userId: newUser.id
-          }
-        });
 
-      } catch (txError) {
-        console.error('[Invite] Transaction error:', txError);
-        // Transaction will automatically rollback
-        throw txError;
-      }
+        return { invitation, task, newUser };
+      });
 
-    } catch (error) {
+      // Send success response
+      res.status(201).json({
+        message: "Invitation sent successfully",
+        invitation: {
+          id: result.invitation.id,
+          email: result.invitation.email,
+          taskId: result.task.id
+        }
+      });
+
+    } catch (error: any) {
       console.error('[Invite] Error processing invitation:', error);
       res.status(500).json({
         message: "Failed to process invitation",
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error.message
       });
     }
   });
