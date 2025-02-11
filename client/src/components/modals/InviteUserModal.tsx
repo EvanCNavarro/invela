@@ -70,7 +70,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       const payload = {
         email: formData.email,
-        full_name: formData.full_name, // Changed to match backend
+        full_name: formData.full_name,
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
@@ -94,20 +94,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       if (!response.ok) {
         console.error("[InviteUserModal] Server error response:", responseData);
-
-        let errorMessage = responseData.message || 'Failed to send invitation';
-
-        if (responseData.details) {
-          const errors = Object.entries(responseData.details)
-            .map(([field, message]) => `${field}: ${message}`)
-            .join('\n');
-
-          if (errors) {
-            errorMessage = `Validation errors:\n${errors}`;
-          }
-        }
-
-        throw new Error(errorMessage);
+        throw new Error(responseData.message || 'Failed to send invitation');
       }
 
       return responseData;
@@ -126,7 +113,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       toast({
         title: "Invitation sent successfully",
-        description: `${data.user.fullName} has been invited to join ${companyName}.`,
+        description: `${data.invitation.inviteeName} has been invited to join ${companyName}.`,
       });
 
       form.reset();
