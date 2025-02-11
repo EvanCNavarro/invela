@@ -34,14 +34,11 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    console.log('\n[Step 1] Starting User Invitation Process');
-    console.log('[Debug] Request body:', JSON.stringify(req.body, null, 2));
-
-    // Step 1: Validate request data
+    console.log('[Invite] Starting invitation process');
     const validationResult = inviteUserSchema.safeParse(req.body);
 
     if (!validationResult.success) {
-      console.error('[Step 1] Validation failed:', validationResult.error.format());
+      console.error('[Invite] Validation failed:', validationResult.error.format());
       return res.status(400).json({
         message: "Missing required fields",
         details: validationResult.error.errors.reduce((acc, err) => {
@@ -52,7 +49,7 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     const data = validationResult.data;
-    console.log('[Step 1] Validation successful. Validated data:', data);
+    console.log('[Invite] Validation successful. Data:', data);
 
     // Get company info
     const [company] = await db.select()
@@ -60,7 +57,7 @@ router.post("/api/users/invite", async (req, res) => {
       .where(eq(companies.id, data.company_id));
 
     if (!company) {
-      console.error('[Error] Company not found for ID:', data.company_id);
+      console.error('[Invite] Company not found for ID:', data.company_id);
       throw new Error("Company not found");
     }
 
@@ -163,7 +160,7 @@ router.post("/api/users/invite", async (req, res) => {
           inviteUrl: inviteUrl
         };
 
-        console.log('\n[Email Preview] Complete email template data:', emailTemplateData);
+        console.log('[Invite] Sending invitation email');
 
         // Send invitation email
         const emailResult = await emailService.sendTemplateEmail({
@@ -174,11 +171,11 @@ router.post("/api/users/invite", async (req, res) => {
         });
 
         if (!emailResult.success) {
-          console.error('[Error] Failed to send email:', emailResult.error);
+          console.error('[Invite] Failed to send email:', emailResult.error);
           throw new Error(emailResult.error || 'Failed to send invitation email');
         }
 
-        console.log('[Success] Email sent successfully');
+        console.log('[Invite] Email sent successfully');
       });
 
       // Send success response
@@ -194,12 +191,12 @@ router.post("/api/users/invite", async (req, res) => {
       });
 
     } catch (txError) {
-      console.error('[Error] Transaction error:', txError);
+      console.error('[Invite] Transaction error:', txError);
       throw txError;
     }
 
   } catch (error) {
-    console.error('[Error] Error processing invitation:', error);
+    console.error('[Invite] Error processing invitation:', error);
 
     if (error instanceof z.ZodError) {
       return res.status(400).json({
