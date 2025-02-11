@@ -14,14 +14,18 @@ class WebSocketService {
   }
 
   private getWebSocketUrl(): string {
-    // Get the full URL including protocol, hostname, and port
-    const fullUrl = new URL(window.location.href);
-    const protocol = fullUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+    const url = window.location;
+    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsPath = '/api/ws';
 
-    // Use /api/ws path to avoid conflicts with Vite HMR
-    const wsUrl = `${protocol}//${fullUrl.host}/api/ws`;
-    console.log('Constructing WebSocket URL:', wsUrl);
-    return wsUrl;
+    // For Replit environment
+    if (url.hostname.includes('.repl.co')) {
+      return `${protocol}//${url.host}${wsPath}`;
+    }
+
+    // For local development
+    const port = url.port || (url.protocol === 'https:' ? '443' : '80');
+    return `${protocol}//${url.hostname}:${port}${wsPath}`;
   }
 
   private async connect(): Promise<void> {
@@ -32,12 +36,12 @@ class WebSocketService {
 
       try {
         const wsUrl = this.getWebSocketUrl();
-        console.log('WebSocket connecting to:', wsUrl);
+        console.log('[WebSocket] Connecting to:', wsUrl);
 
         this.socket = new WebSocket(wsUrl);
 
         this.socket.onopen = () => {
-          console.log('WebSocket connected successfully');
+          console.log('[WebSocket] Connected successfully');
           this.reconnectAttempts = 0;
           this.reconnectTimeout = 1000;
           if (this.connectionResolve) {
@@ -49,26 +53,24 @@ class WebSocketService {
         this.socket.onmessage = (event) => {
           try {
             const { type, data } = JSON.parse(event.data);
-            console.log('Received WebSocket message:', { type, data });
+            console.log('[WebSocket] Received message:', { type, data });
             this.handleMessage(type, data);
           } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
+            console.error('[WebSocket] Error parsing message:', error);
           }
         };
 
         this.socket.onclose = (event) => {
-          console.log('WebSocket connection closed', event.code, event.reason);
+          console.log('[WebSocket] Connection closed:', event.code, event.reason);
           this.handleReconnect();
         };
 
         this.socket.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          if (this.socket) {
-            this.socket.close();
-          }
+          console.error('[WebSocket] Error:', error);
+          // Don't close the socket here, let the onclose handler deal with reconnection
         };
       } catch (error) {
-        console.error('Error establishing WebSocket connection:', error);
+        console.error('[WebSocket] Error establishing connection:', error);
         this.handleReconnect();
       }
     });
@@ -82,16 +84,16 @@ class WebSocketService {
 
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+      console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
       setTimeout(() => {
         this.connect().catch(error => {
-          console.error('Reconnection attempt failed:', error);
+          console.error('[WebSocket] Reconnection attempt failed:', error);
         });
         this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
       }, this.reconnectTimeout);
     } else {
-      console.error('Max reconnection attempts reached');
+      console.error('[WebSocket] Max reconnection attempts reached');
     }
   }
 
@@ -102,7 +104,7 @@ class WebSocketService {
         try {
           handler(data);
         } catch (error) {
-          console.error(`Error in message handler for type "${type}":`, error);
+          console.error(`[WebSocket] Error in message handler for type "${type}":`, error);
         }
       });
     }
@@ -133,7 +135,7 @@ class WebSocketService {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type, data }));
     } else {
-      throw new Error('WebSocket is not connected');
+      throw new Error('[WebSocket] Connection not ready');
     }
   }
 }

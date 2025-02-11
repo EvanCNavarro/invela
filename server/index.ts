@@ -89,16 +89,25 @@ app.use((req, res, next) => {
 
 registerRoutes(app);
 
-// Setup WebSocket server on a specific path
+if (app.get("env") === "development") {
+  // Setup Vite first in development
+  await setupVite(app, server);
+}
+
+// Setup WebSocket server after Vite in development
 const wss = new WebSocketServer({ 
-  server,
-  path: '/api/ws', // Changed path to avoid conflicts with Vite HMR
-  verifyClient: ({ req }) => {
-    // Skip Vite HMR connections
-    if (req.headers['sec-websocket-protocol'] === 'vite-hmr') {
-      return false;
-    }
-    return true;
+  noServer: true, // Important: Use noServer mode
+  perMessageDeflate: false // Disable compression for better compatibility
+});
+
+// Handle upgrade requests manually
+server.on('upgrade', (request, socket, head) => {
+  const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+
+  if (pathname === '/api/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
   }
 });
 
@@ -108,7 +117,10 @@ wss.on('connection', (ws: WebSocket, req) => {
   clients.add(ws);
 
   // Send initial connection confirmation
-  ws.send(JSON.stringify({ type: 'connection_established', data: { timestamp: new Date().toISOString() } }));
+  ws.send(JSON.stringify({ 
+    type: 'connection_established', 
+    data: { timestamp: new Date().toISOString() } 
+  }));
 
   ws.on('message', (message: string) => {
     try {
@@ -166,9 +178,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-if (app.get("env") === "development") {
-  await setupVite(app, server);
-} else {
+if (app.get("env") !== "development") {
   serveStatic(app);
 }
 
