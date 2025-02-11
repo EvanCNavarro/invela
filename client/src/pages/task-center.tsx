@@ -7,9 +7,9 @@ import { TaskStatus } from "@db/schema";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// Update status mapping to only include EMAIL_SENT and COMPLETED
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
 } as const;
 
@@ -19,8 +19,7 @@ export default function TaskCenter() {
   const { data: tasks = [], isLoading } = useQuery<SelectTask[]>({
     queryKey: ["/api/tasks"],
     staleTime: 1000, // Consider data stale after 1 second
-    cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchOnWindowFocus: true, // Refetch when window regains focus
+    refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
   const filteredTasks = selectedStatus === 'all' 
