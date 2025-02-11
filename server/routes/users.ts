@@ -35,7 +35,7 @@ async function hashPassword(password: string) {
 router.post("/api/users/invite", async (req, res) => {
   try {
     console.log('\n[Step 1] Starting User Invitation Process');
-    console.log('[Step 1] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('[Debug] Initial request data:', JSON.stringify(req.body, null, 2));
 
     // Step 1: Validate request data
     const validationResult = inviteUserSchema.safeParse(req.body);
@@ -61,8 +61,11 @@ router.post("/api/users/invite", async (req, res) => {
       .where(eq(companies.id, req.user?.companyId));
 
     if (!senderCompany) {
+      console.error('[Error] Sender company not found for ID:', req.user?.companyId);
       throw new Error("Sender's company not found");
     }
+
+    console.log('[Debug] Sender company data:', JSON.stringify(senderCompany, null, 2));
 
     // Start transaction
     let newUser;
@@ -83,7 +86,7 @@ router.post("/api/users/invite", async (req, res) => {
         }
         console.log('[Step 2] User check completed - no existing user found');
 
-        // Step 3: Create the user first
+        // Step 3: Create the user
         console.log('[Step 3] Creating new user...');
         const [userResult] = await tx.insert(users)
           .values({
@@ -110,32 +113,37 @@ router.post("/api/users/invite", async (req, res) => {
 
         console.log('[Step 4] Generated invitation details:', {
           code: invitationCode,
-          url: inviteUrl
+          url: inviteUrl,
+          expiresAt
         });
 
         // Step 5: Create invitation record
         console.log('[Step 5] Creating invitation record...');
+        const invitationData = {
+          email: data.email.toLowerCase(),
+          code: invitationCode,
+          status: 'pending',
+          companyId: data.company_id,
+          inviteeName: data.full_name,
+          inviteeCompany: data.company_name,
+          expiresAt,
+          metadata: {
+            inviteUrl,
+            senderName: data.sender_name,
+            senderCompany: senderCompany.name,
+            userId: newUser.id
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        console.log('[Debug] Invitation data to be inserted:', JSON.stringify(invitationData, null, 2));
+
         const [invitationResult] = await tx.insert(invitations)
-          .values({
-            email: data.email.toLowerCase(),
-            code: invitationCode,
-            status: 'pending',
-            companyId: data.company_id,
-            inviteeName: data.full_name,
-            inviteeCompany: data.company_name,
-            expiresAt,
-            metadata: {
-              inviteUrl,
-              senderName: data.sender_name,
-              senderCompany: senderCompany.name,
-              userId: newUser.id
-            },
-            createdAt: new Date(),
-            updatedAt: new Date()
-          })
+          .values(invitationData)
           .returning();
 
         invitation = invitationResult;
+        console.log('[Debug] Created invitation:', JSON.stringify(invitation, null, 2));
 
         // Step 6: Create task with proper assignedTo field
         console.log('[Step 6] Creating onboarding task...');
@@ -172,8 +180,8 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
-        // Send invitation email with correct template and data structure
-        await emailService.sendTemplateEmail({
+        // Prepare email template data
+        const emailData = {
           to: data.email,
           from: process.env.GMAIL_USER!,
           template: 'user_invite',
@@ -184,10 +192,15 @@ router.post("/api/users/invite", async (req, res) => {
             inviteUrl,
             code: invitationCode
           }
-        });
+        };
+        console.log('[Debug] Email template data:', JSON.stringify(emailData, null, 2));
+
+        // Send invitation email
+        await emailService.sendTemplateEmail(emailData);
 
         console.log('\n[Success] Transaction completed successfully');
-        console.log('[Success] Task and Invitation created:', {
+        console.log('[Success] Created entities:', {
+          userId: newUser.id,
           taskId: task.id,
           invitationId: invitation.id,
           inviteUrl,
@@ -217,11 +230,17 @@ router.post("/api/users/invite", async (req, res) => {
 
     } catch (txError) {
       console.error('[Error] Transaction error:', txError);
+      console.error('[Error] Failed at stage:', {
+        userCreated: !!newUser,
+        taskCreated: !!task,
+        invitationCreated: !!invitation
+      });
       throw txError;
     }
 
   } catch (error) {
     console.error('[Error] Error processing invitation:', error);
+    console.error('[Error] Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
 
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
