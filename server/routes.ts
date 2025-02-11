@@ -1752,6 +1752,101 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Add the new account setup endpoint
+  app.post("/api/account/setup", async (req, res) => {
+    try {
+      const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
+
+      // Validate invitation code
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, invitationCode),
+          eq(invitations.status, 'pending'),
+          sql`LOWER(${invitations.email}) = LOWER(${email})`,
+          gt(invitations.expiresAt, new Date())
+        ));
+
+      if (!invitation) {
+        return res.status(400).json({
+          message: "Invalid invitation code or email mismatch"
+        });
+      }
+
+      // Find existing user with case-insensitive email match
+      const [existingUser] = await db.select()
+        .from(users)
+        .where(sql`LOWER(${users.email}) = LOWER(${email})`);
+
+      if (!existingUser) {
+        return res.status(400).json({ message: "User account not found" });
+      }
+
+      // Update the existing user with new information
+      const [updatedUser] = await db.update(users)
+        .set({
+          firstName,
+          lastName,
+          fullName,
+          password: await bcrypt.hash(password, 10),
+          onboardingUserCompleted: true,
+        })
+        .where(eq(users.id, existingUser.id))
+        .returning();
+
+      console.log(`[Account Setup] Updated user account with ID: ${updatedUser.id}`);
+
+      // Update the related task
+      const [task] = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.userEmail, email.toLowerCase()),
+          eq(tasks.status, 'EMAIL_SENT')
+        ));
+
+      if (task) {
+        const [updatedTask] = await db.update(tasks)
+          .set({
+            status: 'COMPLETED',
+            progress: 100,
+            assignedTo: updatedUser.id,
+            metadata: {
+              ...task.metadata,
+              registeredAt: new Date().toISOString(),
+              statusFlow: [...(task.metadata?.statusFlow || []), 'COMPLETED']
+            }
+          })
+          .where(eq(tasks.id, task.id))
+          .returning();
+
+        console.log(`[Account Setup] Updated task ${updatedTask.id} with completion progress`);
+        broadcastTaskUpdate(updatedTask);
+      }
+
+      // Update invitation status
+      await db.update(invitations)
+        .set({
+          status: 'used',
+          usedAt: new Date(),
+        })
+        .where(eq(invitations.id, invitation.id));
+
+      console.log(`[Account Setup] Updated invitation ${invitation.id} to used status`);
+
+      // Log the user in
+      req.login(updatedUser, (err) => {
+        if (err) {
+          console.error("Login error:", err);
+          return res.status(500).json({ message: "Error logging in" });
+        }
+        res.json(updatedUser);
+      });
+    } catch (error) {
+      console.error("Account setup error:", error);
+      res.status(500).json({ message: "Error updating user information" });
+    }
+  });
+
   return httpServer;
 }
 
