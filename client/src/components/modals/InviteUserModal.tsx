@@ -63,10 +63,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
-        sender_company: companyName // Using company name from props for sender's company
+        sender_company: user.companyName || companyName, // Use sender's company name if available, otherwise use viewed company
       };
 
-      console.log('Debug - Invitation payload:', payload);
+      console.log('Debug - Complete invitation payload:', payload);
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -80,16 +80,22 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       console.log('Debug - Server response:', responseData);
 
       if (!response.ok) {
-        let errorMessage = responseData.message || 'Failed to send invitation';
+        let errorMessage = 'Failed to send invitation';
+
+        // Handle validation errors
         if (responseData.details) {
-          const errors = Object.entries(responseData.details)
+          const missingFields = Object.entries(responseData.details)
             .filter(([_, value]: [string, any]) => value?.message)
-            .map(([field, value]: [string, any]) => value.message)
-            .join(', ');
-          if (errors) {
-            errorMessage += `: ${errors}`;
+            .map(([field, value]: [string, any]) => `${field}: ${value.message}`)
+            .join('\n');
+
+          if (missingFields) {
+            errorMessage = `Missing or invalid fields:\n${missingFields}`;
           }
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
         }
+
         throw new Error(errorMessage);
       }
 
@@ -101,7 +107,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       }
 
       toast({
-        title: "Invitation sent",
+        title: "Invitation sent successfully",
         description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
       });
 
@@ -202,7 +208,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
             />
 
             {serverError && (
-              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+              <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
                 {serverError}
               </div>
             )}
