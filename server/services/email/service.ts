@@ -35,7 +35,7 @@ export const emailSchema = z.string().email("Invalid email address");
 export const sendEmailSchema = z.object({
   to: emailSchema,
   from: emailSchema,
-  template: z.string(),
+  template: z.enum(['user_invite']), // Explicitly define allowed template names
   templateData: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])),
 });
 
@@ -128,8 +128,8 @@ class EmailService {
       const toValidation = await this.validateEmail(params.to);
       if (!toValidation.isValid) {
         console.error('[EmailService] Recipient email validation failed:', toValidation.reason);
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: toValidation.reason || 'Invalid recipient email address'
         };
       }
@@ -137,8 +137,8 @@ class EmailService {
       const fromValidation = await this.validateEmail(params.from || this.defaultFromEmail);
       if (!fromValidation.isValid) {
         console.error('[EmailService] Sender email validation failed:', fromValidation.reason);
-        return { 
-          success: false, 
+        return {
+          success: false,
           error: fromValidation.reason || 'Invalid sender email address'
         };
       }
@@ -164,9 +164,9 @@ class EmailService {
       return { success: true };
     } catch (error) {
       console.error('[EmailService] Failed to send email:', error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Failed to send email' 
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to send email'
       };
     }
   }
