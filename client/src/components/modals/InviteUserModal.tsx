@@ -57,13 +57,17 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw new Error("Missing company information. Please refresh the page.");
       }
 
+      // Construct the invitation payload with all required fields
       const payload = {
+        // Form fields
         email: data.email.trim(),
         fullName: data.fullName.trim(),
+        // Company being viewed
         company_id: companyId,
         company_name: companyName,
+        // Sender information from logged-in user
         sender_name: user.fullName,
-        sender_company: user.companyName || companyName // Use sender's company name if available, otherwise use viewed company
+        sender_company: user.companyName || companyName // Use sender's company name, fallback to viewed company
       };
 
       console.log('Debug - Complete invitation payload:', JSON.stringify(payload, null, 2));
