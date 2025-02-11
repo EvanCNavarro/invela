@@ -3,6 +3,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
 import { TaskStatus } from "@db/schema";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 interface TaskDetailsModalProps {
   task: any;
@@ -16,28 +18,46 @@ const taskStatusMap = {
   [TaskStatus.COMPLETED]: 'Completed',
 } as const;
 
+const statusProgressMap = {
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.COMPLETED]: 100,
+} as const;
+
 const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task, open, onOpenChange }: TaskDetailsModalProps) {
   if (!task) return null;
 
+  const progress = statusProgressMap[task.status as TaskStatus] ?? task.progress ?? 0;
+
   const taskFields = [
     { label: "Task ID", value: task.id },
     { label: "Title", value: task.title },
     { label: "Description", value: task.description },
-    { label: "Type", value: task.taskType },
-    { label: "Scope", value: task.taskScope },
-    { label: "Status", value: taskStatusMap[task.status as TaskStatus] || task.status },
-    { label: "Priority", value: task.priority },
-    { label: "Progress", value: `${task.progress}%` },
+    { 
+      label: "Status", 
+      value: (
+        <Badge variant="secondary">
+          {taskStatusMap[task.status as TaskStatus] || task.status}
+        </Badge>
+      )
+    },
+    { 
+      label: "Progress", 
+      value: (
+        <div className="flex items-center gap-2">
+          <Progress value={progress} className="w-[60%]" />
+          <span>{progress}%</span>
+        </div>
+      )
+    },
     { label: "Created By", value: task.createdBy },
     { label: "User Email", value: task.userEmail },
     { label: "Company ID", value: task.companyId },
     { label: "Due Date", value: task.dueDate ? formatDate(new Date(task.dueDate)) : "Not set" },
     { label: "Created At", value: formatDate(new Date(task.createdAt)) },
     { label: "Updated At", value: formatDate(new Date(task.updatedAt)) },
-    { label: "Files Requested", value: task.filesRequested?.length || 0 },
-    { label: "Files Uploaded", value: task.filesUploaded?.length || 0 }
   ];
 
   return (
