@@ -49,16 +49,21 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
+      // Ensure all required fields are present
+      if (!companyId || !companyName || !user?.fullName) {
+        throw new Error("Missing required company or user information");
+      }
+
       const payload = {
         email: data.email.trim(),
         fullName: data.fullName.trim(),
         company_id: companyId,
         company_name: companyName,
-        sender_name: user?.fullName || '',
+        sender_name: user.fullName,
         sender_company: companyName,
       };
 
-      console.debug('Sending invitation payload:', JSON.stringify(payload, null, 2));
+      console.log('Debug - Sending invitation payload:', payload);
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -69,10 +74,20 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       });
 
       const responseData = await response.json();
-      console.debug('Server response:', JSON.stringify(responseData, null, 2));
+      console.log('Debug - Server response:', responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.message || 'Failed to send invitation');
+        let errorMessage = responseData.message || 'Failed to send invitation';
+        if (responseData.details) {
+          const errors = Object.entries(responseData.details)
+            .filter(([_, value]: [string, any]) => value?.message)
+            .map(([field, value]: [string, any]) => value.message)
+            .join(', ');
+          if (errors) {
+            errorMessage += `: ${errors}`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       return responseData;
