@@ -12,13 +12,12 @@ const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
   [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
-  pending: 'Email Sent', // Backward compatibility for existing tasks
-};
+} as const;
 
 interface Task {
   id: number;
   title: string;
-  status: string;
+  status: TaskStatus;
   progress: number;
   dueDate?: string;
 }
@@ -46,7 +45,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
                   <Badge variant="secondary">
-                    {taskStatusMap[task.status] || task.status.replace(/_/g, ' ')}
+                    {taskStatusMap[task.status] || task.status}
                   </Badge>
                 </TableCell>
                 <TableCell>{task.progress}%</TableCell>

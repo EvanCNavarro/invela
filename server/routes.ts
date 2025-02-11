@@ -26,7 +26,6 @@ import type { SendEmailParams } from "./services/email/service.ts";
 import bcrypt from 'bcrypt';
 import { findAndUpdateOnboardingTask } from "./services/tasks";
 
-
 // Configure multer for file upload
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -580,7 +579,48 @@ export function registerRoutes(app: Express): Server {
     res.json(results);
   });
 
-  // Task creation logic update
+  // Update task status with validation
+  app.patch("/api/tasks/:id/status", requireAuth, async (req, res) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      const { status } = req.body;
+
+      // Validate status value
+      if (!Object.values(TaskStatus).includes(status)) {
+        return res.status(400).json({
+          message: "Invalid status value",
+          allowedValues: Object.values(TaskStatus)
+        });
+      }
+
+      const [updatedTask] = await db
+        .update(tasks)
+        .set({
+          status,
+          updatedAt: new Date(),
+          metadata: sql`
+            jsonb_set(
+              COALESCE(metadata, '{}'),
+              '{statusFlow}',
+              COALESCE(metadata->'statusFlow', '[]'::jsonb) || $1::jsonb
+            )
+          `,
+        })
+        .where(eq(tasks.id, taskId))
+        .returning();
+
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("[Task Routes] Error updating task status:", error);
+      res.status(500).json({ message: "Failed to update task status" });
+    }
+  });
+
+  // Task creation with proper status handling
   app.post("/api/tasks", requireAuth, async (req, res) => {
     try {
       const { taskType, userEmail, companyId } = req.body;
@@ -606,7 +646,7 @@ export function registerRoutes(app: Express): Server {
         description: `Invitation sent to ${userEmail} to join ${company.name} on the platform.`,
         taskType,
         taskScope: 'user',
-        status: 'email_sent',
+        status: TaskStatus.EMAIL_SENT, // Use the enum value directly
         priority: 'medium',
         progress: 25,
         createdBy: req.user!.id,
@@ -620,7 +660,7 @@ export function registerRoutes(app: Express): Server {
           emailSentAt: new Date().toISOString(),
           senderName: req.user!.fullName,
           senderCompany: company.name,
-          statusFlow: ['email_sent']
+          statusFlow: [TaskStatus.EMAIL_SENT]
         }
       };
 
@@ -636,6 +676,42 @@ export function registerRoutes(app: Express): Server {
         error: error.message,
         detail: error.detail || 'No additional details available'
       });
+    }
+  });
+
+  // Migration helper endpoint (Invela admin only)
+  app.post("/api/tasks/migrate-pending", requireAuth, async (req, res) => {
+    try {
+      // Only allow Invela admin (companyId 0)
+      if (req.user?.companyId !== 0) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      const [updatedTasks] = await db
+        .update(tasks)
+        .set({
+          status: TaskStatus.EMAIL_SENT,
+          updatedAt: new Date(),
+          metadata: sql`
+            jsonb_set(
+              COALESCE(metadata, '{}'),
+              '{statusFlow}',
+              COALESCE(metadata->'statusFlow', '[]'::jsonb) || jsonb_build_array($1::text)
+            )
+          `
+        })
+        .where(eq(tasks.status, 'pending'))
+        .returning();
+
+      const updatedCount = Array.isArray(updatedTasks) ? updatedTasks.length : 0;
+
+      res.json({
+        message: "Successfully migrated pending tasks",
+        updatedCount
+      });
+    } catch (error) {
+      console.error("[Task Routes] Error migrating pending tasks:", error);
+      res.status(500).json({ message: "Failed to migrate pending tasks" });
     }
   });
 
@@ -1536,4 +1612,11 @@ function toTitleCase(str: string) {
   return str.split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
+}
+enum TaskStatus {
+  PENDING = 'pending',
+  EMAIL_SENT = 'email_sent',
+  IN_PROGRESS = 'in_progress',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
 }

@@ -1,9 +1,10 @@
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { TaskTable } from "@/components/tasks/TaskTable";
 import { useQuery } from "@tanstack/react-query";
+import type { SelectTask } from "@db/schema";
 
 export default function TaskCenter() {
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<SelectTask[]>({
     queryKey: ["/api/tasks"],
   });
 
