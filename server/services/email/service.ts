@@ -109,7 +109,7 @@ class EmailService {
         console.log('[EmailService] MX records found for domain:', domain);
       } catch (error) {
         console.error('[EmailService] MX record check failed:', error);
-        // Don't fail on MX check errors
+        // Don't fail on MX check errors, as some valid domains might have temporary DNS issues
         console.log('[EmailService] Continuing despite MX check failure');
       }
 
