@@ -99,6 +99,14 @@ router.post("/api/users/invite", async (req, res) => {
         const host = req.headers.host;
         const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}`;
 
+        // Prepare invitation metadata
+        const invitationMetadata = {
+          inviteUrl,
+          userId: newUser.id,
+          senderName: data.sender_name,
+          senderCompany: company.name
+        };
+
         // Create invitation record
         const [invitationResult] = await tx.insert(invitations)
           .values({
@@ -109,12 +117,7 @@ router.post("/api/users/invite", async (req, res) => {
             inviteeName: data.full_name,
             inviteeCompany: company.name,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            metadata: {
-              inviteUrl,
-              userId: newUser.id,
-              senderName: data.sender_name,
-              senderCompany: company.name
-            },
+            metadata: invitationMetadata,
             createdAt: new Date(),
             updatedAt: new Date()
           })
@@ -151,23 +154,31 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
+        // Prepare email template data according to the strict schema
+        const emailTemplateData = {
+          recipientName: data.full_name,
+          senderName: data.sender_name,
+          company: company.name,
+          code: invitationCode,
+          inviteUrl: inviteUrl
+        };
+
+        console.log('[Debug] Email template data:', JSON.stringify(emailTemplateData, null, 2));
+
         // Send invitation email
         const emailResult = await emailService.sendTemplateEmail({
           to: data.email,
           from: process.env.GMAIL_USER!,
           template: 'user_invite',
-          templateData: {
-            recipientName: data.full_name,
-            senderName: data.sender_name,
-            company: company.name,
-            code: invitationCode,
-            inviteUrl
-          }
+          templateData: emailTemplateData
         });
 
         if (!emailResult.success) {
+          console.error('[Error] Failed to send email:', emailResult.error);
           throw new Error(emailResult.error || 'Failed to send invitation email');
         }
+
+        console.log('[Success] Email sent successfully');
       });
 
       // Send success response
