@@ -240,7 +240,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Update the registration endpoint to handle task update correctly
+  // Update the registration endpoint to handle account setup
   app.post("/api/register", async (req, res) => {
     try {
       const { email, password, fullName, firstName, lastName, invitationCode } = req.body;
@@ -261,7 +261,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Find existing user
+      // Find existing user with case-insensitive email match
       const [existingUser] = await db.select()
         .from(users)
         .where(sql`LOWER(${users.email}) = LOWER(${email})`);
@@ -296,13 +296,13 @@ export function registerRoutes(app: Express): Server {
         // Update task with new user information and progress
         const [updatedTask] = await db.update(tasks)
           .set({
-            status: TaskStatus.COMPLETED,
+            status: 'COMPLETED',
             progress: 100,
             assignedTo: updatedUser.id,
             metadata: {
               ...task.metadata,
               registeredAt: new Date().toISOString(),
-              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.COMPLETED]
+              statusFlow: [...(task.metadata?.statusFlow || []), 'COMPLETED']
             }
           })
           .where(eq(tasks.id, task.id))
