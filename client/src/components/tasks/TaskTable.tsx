@@ -10,6 +10,7 @@ import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { wsService } from "@/lib/websocket";
+import { useToast } from "@/hooks/use-toast";
 
 // Define the task status flow
 const taskStatusFlow = {
@@ -66,54 +67,95 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Add mutation for updating task status
   const updateTaskStatus = useMutation({
     mutationFn: async ({ taskId, newStatus }: { taskId: number; newStatus: TaskStatus }) => {
-      return apiRequest(`/api/tasks/${taskId}/status`, {
+      const response = await fetch(`/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task status');
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      toast({
+        title: "Task Updated",
+        description: "The task status has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update task status. Please try again.",
+        variant: "destructive",
+      });
+      console.error('Failed to update task status:', error);
     },
   });
 
   // Set up WebSocket subscription for real-time updates
   useEffect(() => {
-    // Subscribe to task updates
-    const unsubscribeTaskUpdate = wsService.subscribe('task_updated', (data) => {
-      setTasks(currentTasks =>
-        currentTasks.map(task =>
-          task.id === data.taskId
-            ? { ...task, status: data.status, progress: data.progress }
-            : task
-        )
-      );
-      if (data.count) setTaskCounts(data.count);
-    });
+    const subscriptions: Array<() => void> = [];
 
-    // Subscribe to task creation
-    const unsubscribeTaskCreate = wsService.subscribe('task_created', (data) => {
-      setTasks(currentTasks => [...currentTasks, data.task]);
-      if (data.count) setTaskCounts(data.count);
-    });
+    const setupWebSocketSubscriptions = async () => {
+      try {
+        // Subscribe to task updates
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+          setTasks(currentTasks =>
+            currentTasks.map(task =>
+              task.id === data.taskId
+                ? { ...task, status: data.status, progress: data.progress }
+                : task
+            )
+          );
+          if (data.count) setTaskCounts(data.count);
+        });
+        subscriptions.push(unsubTaskUpdate);
 
-    // Subscribe to task deletion
-    const unsubscribeTaskDelete = wsService.subscribe('task_deleted', (data) => {
-      setTasks(currentTasks => currentTasks.filter(task => task.id !== data.taskId));
-      if (data.count) setTaskCounts(data.count);
-    });
+        // Subscribe to task creation
+        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
+          setTasks(currentTasks => [...currentTasks, data.task]);
+          if (data.count) setTaskCounts(data.count);
+        });
+        subscriptions.push(unsubTaskCreate);
 
-    // Clean up subscriptions on unmount
-    return () => {
-      unsubscribeTaskUpdate();
-      unsubscribeTaskCreate();
-      unsubscribeTaskDelete();
+        // Subscribe to task deletion
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
+          setTasks(currentTasks => currentTasks.filter(task => task.id !== data.taskId));
+          if (data.count) setTaskCounts(data.count);
+        });
+        subscriptions.push(unsubTaskDelete);
+      } catch (error) {
+        console.error('Error setting up WebSocket subscriptions:', error);
+        toast({
+          title: "Connection Error",
+          description: "Failed to establish real-time connection. Updates may be delayed.",
+          variant: "destructive",
+        });
+      }
     };
-  }, []);
+
+    setupWebSocketSubscriptions();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      subscriptions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('Error unsubscribing from WebSocket:', error);
+        }
+      });
+    };
+  }, [toast]);
 
   // Update tasks when initialTasks changes
   useEffect(() => {
@@ -128,7 +170,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
 
   // Get progress based on status, fallback to actual progress value if exists
   const getProgress = (task: Task) => {
-    return STATUS_PROGRESS[task.status as TaskStatus] ?? task.progress ?? 0;
+    return task.progress ?? STATUS_PROGRESS[task.status] ?? 0;
   };
 
   // Handle status transition
@@ -169,7 +211,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                     className="cursor-pointer hover:bg-secondary/80"
                     onClick={() => handleStatusUpdate(task)}
                   >
-                    {taskStatusMap[task.status] || task.status}
+                    {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status}
                   </Badge>
                 </TableCell>
                 <TableCell>

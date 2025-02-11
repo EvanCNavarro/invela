@@ -31,13 +31,15 @@ router.post("/api/tasks", async (req, res) => {
       })
       .returning();
 
-    // Broadcast task creation
+    // Get updated counts and broadcast task creation
+    const taskCount = await getTaskCount();
     broadcastMessage('task_created', {
       task: newTask,
-      count: await getTaskCount()
+      count: taskCount,
+      timestamp: new Date().toISOString()
     });
 
-    res.status(201).json(newTask);
+    res.status(201).json({ task: newTask, count: taskCount });
   } catch (error) {
     console.error("[Task Routes] Error creating task:", error);
     res.status(500).json({ message: "Failed to create task" });
@@ -58,13 +60,15 @@ router.delete("/api/tasks/:id", async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Broadcast task deletion
+    // Get updated counts and broadcast task deletion
+    const taskCount = await getTaskCount();
     broadcastMessage('task_deleted', {
       taskId: deletedTask.id,
-      count: await getTaskCount()
+      count: taskCount,
+      timestamp: new Date().toISOString()
     });
 
-    res.json({ message: "Task deleted successfully" });
+    res.json({ message: "Task deleted successfully", count: taskCount });
   } catch (error) {
     console.error("[Task Routes] Error deleting task:", error);
     res.status(500).json({ message: "Failed to delete task" });
@@ -77,8 +81,8 @@ router.patch("/api/tasks/:id/status",
   validateTaskStatusTransition,
   async (req, res) => {
     try {
-      const taskId = req.taskId;
-      const { status } = req.body;
+      const taskId = parseInt(req.params.id);
+      const { status } = updateTaskStatusSchema.parse(req.body);
 
       const [currentTask] = await db.select()
         .from(tasks)
@@ -113,18 +117,23 @@ router.patch("/api/tasks/:id/status",
         .where(eq(tasks.id, taskId))
         .returning();
 
-      // Broadcast task update with updated count
+      // Get updated counts and broadcast task update
+      const taskCount = await getTaskCount();
       broadcastMessage('task_updated', {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
         metadata: updatedTask.metadata,
-        count: await getTaskCount()
+        count: taskCount,
+        timestamp: new Date().toISOString()
       });
 
-      res.json(updatedTask);
+      res.json({ task: updatedTask, count: taskCount });
     } catch (error) {
       console.error("[Task Routes] Error updating task status:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid status value", errors: error.errors });
+      }
       res.status(500).json({ message: "Failed to update task status" });
     }
   }
