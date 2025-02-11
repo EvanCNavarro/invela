@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
-  fullName: z.string().min(1, "Full name is required"),  // Changed from full_name to fullName
+  fullName: z.string().min(1, "Full name is required"),  // Changed to match frontend
   company_id: z.number({
     required_error: "Company ID is required",
     invalid_type_error: "Company ID must be a number"
