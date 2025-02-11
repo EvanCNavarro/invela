@@ -28,9 +28,13 @@ async function hashPassword(password: string) {
 async function comparePasswords(supplied: string, stored: string) {
   try {
     const [hashedStored, salt] = stored.split(".");
+    if (!hashedStored || !salt) {
+      console.error("Invalid stored password format");
+      return false;
+    }
     const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
     const storedBuf = Buffer.from(hashedStored, "hex");
-    return timingSafeEqual(storedBuf, suppliedBuf);
+    return timingSafeEqual(suppliedBuf, storedBuf);
   } catch (error) {
     console.error("Password comparison error:", error);
     return false;
@@ -95,7 +99,6 @@ export function setupAuth(app: Express) {
         .limit(1);
 
       if (!user) {
-        // If user not found, return false instead of error
         return done(null, false);
       }
 
@@ -103,22 +106,6 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error("Error deserializing user:", error);
       done(error);
-    }
-  });
-
-  // Add email check endpoint
-  app.post("/api/check-email", async (req, res) => {
-    try {
-      const { email } = req.body;
-      if (!email) {
-        return res.status(400).json({ exists: false });
-      }
-
-      const [existingUser] = await getUserByEmail(email);
-      return res.json(!!existingUser);
-    } catch (error) {
-      console.error("Email check error:", error);
-      return res.status(500).json({ error: "Failed to check email" });
     }
   });
 
@@ -148,7 +135,6 @@ export function setupAuth(app: Express) {
       if (existingCompany) {
         company = existingCompany;
       } else {
-        // For Invela users, automatically set company to Invela
         if (isInvelaEmail) {
           [company] = await db.select()
             .from(companies)
@@ -158,19 +144,16 @@ export function setupAuth(app: Express) {
             return res.status(400).json({ error: "Invela company not found in the system" });
           }
         } else {
-          // For other users, create their company as specified
           [company] = await db.insert(companies)
             .values({
               name: result.data.company,
               category: result.data.company.toLowerCase().includes('bank') ? 'Bank' : 'FinTech',
-              description: '',  // Optional fields can be updated later
+              description: '',
             })
             .returning();
         }
       }
 
-      // Create the user with the company ID and normalized email
-      // For Invela users, automatically set onboardingCompleted to true
       const [user] = await db
         .insert(users)
         .values({
@@ -180,7 +163,7 @@ export function setupAuth(app: Express) {
           lastName: result.data.lastName,
           password: await hashPassword(result.data.password),
           companyId: company.id,
-          onboardingCompleted: isInvelaEmail, // Set to true for Invela users, false otherwise
+          onboardingUserCompleted: isInvelaEmail,
         })
         .returning();
 
