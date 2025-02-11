@@ -36,7 +36,7 @@ interface Task {
   id: number;
   title: string;
   description: string;
-  taskType: 'user_onboarding' | 'file_request';
+  taskType: 'user_onboarding' | 'file_request' | 'user_invitation';
   taskScope?: 'user' | 'company';
   status: string;
   progress: number;
@@ -132,7 +132,7 @@ export default function TaskCenterPage() {
   const filteredTasks = tasks.filter((task) => {
     const matchesTab = activeTab === "my-tasks"
       ? (task.assignedTo === user?.id || task.taskType === 'file_request' && task.createdBy === user?.id)
-      : (task.taskType === 'user_onboarding' && task.createdBy === user?.id);
+      : ((task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') && task.createdBy === user?.id);
 
     if (!matchesTab) return false;
 
@@ -191,7 +191,7 @@ export default function TaskCenterPage() {
       if (tabId === "my-tasks") {
         return task.assignedTo === user?.id || (task.taskType === 'file_request' && task.createdBy === user?.id);
       } else {
-        return task.taskType === 'user_onboarding' && task.createdBy === user?.id;
+        return (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') && task.createdBy === user?.id;
       }
     }).length;
   };
