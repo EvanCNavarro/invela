@@ -5,6 +5,7 @@ import type { SelectTask } from "@db/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TaskStatus } from "@db/schema";
 import { useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
@@ -14,13 +15,29 @@ const taskStatusMap = {
 
 export default function TaskCenter() {
   const [selectedStatus, setSelectedStatus] = useState<TaskStatus | 'all'>('all');
-  const { data: tasks = [] } = useQuery<SelectTask[]>({
+
+  const { data: tasks = [], isLoading } = useQuery<SelectTask[]>({
     queryKey: ["/api/tasks"],
+    staleTime: 1000, // Consider data stale after 1 second
+    cacheTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnWindowFocus: true, // Refetch when window regains focus
   });
 
   const filteredTasks = selectedStatus === 'all' 
     ? tasks 
     : tasks.filter(task => task.status === selectedStatus);
+
+  if (isLoading) {
+    return (
+      <div className="container py-6 max-w-7xl mx-auto space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6 max-w-7xl mx-auto">
