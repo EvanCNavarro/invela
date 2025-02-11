@@ -19,6 +19,58 @@ const STATUS_PROGRESS = {
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
+// Create new task
+router.post("/api/tasks", async (req, res) => {
+  try {
+    const [newTask] = await db
+      .insert(tasks)
+      .values({
+        ...req.body,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    // Broadcast task creation
+    broadcastMessage('task_created', {
+      task: newTask,
+      count: await getTaskCount()
+    });
+
+    res.status(201).json(newTask);
+  } catch (error) {
+    console.error("[Task Routes] Error creating task:", error);
+    res.status(500).json({ message: "Failed to create task" });
+  }
+});
+
+// Delete task
+router.delete("/api/tasks/:id", async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+
+    const [deletedTask] = await db
+      .delete(tasks)
+      .where(eq(tasks.id, taskId))
+      .returning();
+
+    if (!deletedTask) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Broadcast task deletion
+    broadcastMessage('task_deleted', {
+      taskId: deletedTask.id,
+      count: await getTaskCount()
+    });
+
+    res.json({ message: "Task deleted successfully" });
+  } catch (error) {
+    console.error("[Task Routes] Error deleting task:", error);
+    res.status(500).json({ message: "Failed to delete task" });
+  }
+});
+
 // Update task status with validation middleware
 router.patch("/api/tasks/:id/status",
   loadTaskMiddleware,
@@ -28,7 +80,6 @@ router.patch("/api/tasks/:id/status",
       const taskId = req.taskId;
       const { status } = req.body;
 
-      // First get the current task to include in metadata
       const [currentTask] = await db.select()
         .from(tasks)
         .where(eq(tasks.id, taskId));
@@ -37,10 +88,8 @@ router.patch("/api/tasks/:id/status",
         return res.status(404).json({ message: "Task not found" });
       }
 
-      // Get the progress value for the new status
       const progress = STATUS_PROGRESS[status];
 
-      // Update task with new status, progress, and metadata
       const [updatedTask] = await db
         .update(tasks)
         .set({
@@ -64,12 +113,13 @@ router.patch("/api/tasks/:id/status",
         .where(eq(tasks.id, taskId))
         .returning();
 
-      // Broadcast the task update via WebSocket
+      // Broadcast task update with updated count
       broadcastMessage('task_updated', {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
-        metadata: updatedTask.metadata
+        metadata: updatedTask.metadata,
+        count: await getTaskCount()
       });
 
       res.json(updatedTask);
@@ -79,6 +129,17 @@ router.patch("/api/tasks/:id/status",
     }
   }
 );
+
+// Helper function to get task counts
+async function getTaskCount() {
+  const allTasks = await db.select().from(tasks);
+  return {
+    total: allTasks.length,
+    emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
+    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length
+  };
+}
 
 // Update existing tasks to have correct progress values
 router.post("/api/tasks/fix-progress", async (req, res) => {
