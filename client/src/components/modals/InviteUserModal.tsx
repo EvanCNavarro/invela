@@ -63,10 +63,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
-        sender_company: user.companyName || companyName, // Use sender's company name if available, otherwise use viewed company
+        sender_company: user.companyName || companyName // Use sender's company name if available, otherwise use viewed company
       };
 
-      console.log('Debug - Complete invitation payload:', payload);
+      console.log('Debug - Complete invitation payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -77,7 +77,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       });
 
       const responseData = await response.json();
-      console.log('Debug - Server response:', responseData);
+      console.log('Debug - Server response:', JSON.stringify(responseData, null, 2));
 
       if (!response.ok) {
         let errorMessage = 'Failed to send invitation';
@@ -85,12 +85,11 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         // Handle validation errors
         if (responseData.details) {
           const missingFields = Object.entries(responseData.details)
-            .filter(([_, value]: [string, any]) => value?.message)
-            .map(([field, value]: [string, any]) => `${field}: ${value.message}`)
+            .map(([field, message]) => `${field}: ${message}`)
             .join('\n');
 
           if (missingFields) {
-            errorMessage = `Missing or invalid fields:\n${missingFields}`;
+            errorMessage = `Invalid or missing fields:\n${missingFields}`;
           }
         } else if (responseData.message) {
           errorMessage = responseData.message;
@@ -99,13 +98,13 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw new Error(errorMessage);
       }
 
-      return responseData;
-    },
-    onSuccess: (responseData) => {
       if (!responseData.user) {
         throw new Error('Invalid server response');
       }
 
+      return responseData;
+    },
+    onSuccess: (responseData) => {
       toast({
         title: "Invitation sent successfully",
         description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
