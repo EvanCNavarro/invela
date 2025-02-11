@@ -65,13 +65,6 @@ Your Invitation Code: ${data.code}
         color: #111827;
         margin: 0 0 24px 0;
       }
-      .greeting {
-        font-size: 16px;
-        font-weight: 500;
-        color: #374151;
-        margin: 0 0 16px 0;
-        line-height: 1.4;
-      }
       .invitation {
         font-size: 16px;
         font-weight: 500;
