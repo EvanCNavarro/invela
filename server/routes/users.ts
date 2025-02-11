@@ -184,7 +184,7 @@ router.post("/api/users/invite", async (req, res) => {
         const emailData = {
           to: data.email,
           from: process.env.GMAIL_USER!,
-          template: 'user_invite',
+          template: 'user_invite', 
           templateData: {
             recipientName: data.full_name,
             senderName: data.sender_name,
@@ -196,7 +196,10 @@ router.post("/api/users/invite", async (req, res) => {
         console.log('[Debug] Email template data:', JSON.stringify(emailData, null, 2));
 
         // Send invitation email
-        await emailService.sendTemplateEmail(emailData);
+        const emailResult = await emailService.sendTemplateEmail(emailData);
+        if (!emailResult.success) {
+          throw new Error(emailResult.error || 'Failed to send invitation email');
+        }
 
         console.log('\n[Success] Transaction completed successfully');
         console.log('[Success] Created entities:', {
