@@ -7,6 +7,24 @@ import { TaskDetailsModal } from "@/components/modals/TaskDetailsModal";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+
+// Define the task status flow
+const taskStatusFlow = {
+  [TaskStatus.EMAIL_SENT]: {
+    next: TaskStatus.IN_PROGRESS,
+    progress: 25,
+  },
+  [TaskStatus.IN_PROGRESS]: {
+    next: TaskStatus.COMPLETED,
+    progress: 50,
+  },
+  [TaskStatus.COMPLETED]: {
+    next: null,
+    progress: 100,
+  },
+} as const;
 
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
@@ -26,16 +44,46 @@ interface Task {
   title: string;
   status: TaskStatus;
   progress?: number;
-  dueDate?: string;
+  dueDate?: string | Date;
 }
 
 export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Add mutation for updating task status
+  const updateTaskStatus = useMutation({
+    mutationFn: async ({ taskId, newStatus }: { taskId: number; newStatus: TaskStatus }) => {
+      return apiRequest(`/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: newStatus }),
+      });
+    },
+    onSuccess: () => {
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+    },
+  });
 
   // Get progress based on status, fallback to actual progress value if exists
   const getProgress = (task: Task) => {
     return statusProgressMap[task.status] ?? task.progress ?? 0;
+  };
+
+  // Handle status transition
+  const handleStatusUpdate = async (task: Task) => {
+    const nextStatus = taskStatusFlow[task.status]?.next;
+    if (!nextStatus) return;
+
+    try {
+      await updateTaskStatus.mutateAsync({
+        taskId: task.id,
+        newStatus: nextStatus,
+      });
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+    }
   };
 
   return (
@@ -56,7 +104,11 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
-                  <Badge variant="secondary">
+                  <Badge 
+                    variant="secondary"
+                    className="cursor-pointer hover:bg-secondary/80"
+                    onClick={() => handleStatusUpdate(task)}
+                  >
                     {taskStatusMap[task.status] || task.status}
                   </Badge>
                 </TableCell>
@@ -86,6 +138,14 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                       >
                         View Details
                       </DropdownMenuItem>
+                      {taskStatusFlow[task.status]?.next && (
+                        <DropdownMenuItem
+                          onClick={() => handleStatusUpdate(task)}
+                          className="cursor-pointer"
+                        >
+                          Update Status
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
