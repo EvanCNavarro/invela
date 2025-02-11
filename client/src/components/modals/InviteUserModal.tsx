@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
+// Schema matches exactly what the server expects
 const inviteUserSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   fullName: z.string().min(1, "Full name is required"),
@@ -48,7 +49,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
-      // Validate required data before making the request
+      // Ensure we have all required data
       if (!user?.fullName) {
         throw new Error("Missing sender information. Please try logging in again.");
       }
@@ -57,20 +58,18 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw new Error("Missing company information. Please refresh the page.");
       }
 
-      // Construct the invitation payload with all required fields
+      // Construct the invitation payload exactly as specified
       const payload = {
         // Form fields from user input
-        email: formData.email.trim().toLowerCase(),
-        fullName: formData.fullName.trim(),
-        // Company information from props (company being viewed)
-        company_id: companyId,
-        company_name: companyName,
+        email: formData.email.trim().toLowerCase(), // User provided in form
+        fullName: formData.fullName.trim(), // User provided in form
+        // Company information from the company profile being viewed
+        company_id: companyId, // Company ID of the profile page being viewed
+        company_name: companyName, // Name of company being viewed
         // Sender information from logged-in user
-        sender_name: user.fullName,
-        sender_company: companyName // Using viewed company name for consistency
+        sender_name: user.fullName, // From logged-in user
+        sender_company: companyName // Name of company being viewed
       };
-
-      console.log('Debug - Complete invitation payload:', JSON.stringify(payload, null, 2));
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -81,29 +80,20 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
       });
 
       const responseData = await response.json();
-      console.log('Debug - Server response:', JSON.stringify(responseData, null, 2));
 
       if (!response.ok) {
-        let errorMessage = 'Failed to send invitation';
+        let errorMessage = responseData.message || 'Failed to send invitation';
 
-        // Handle validation errors
         if (responseData.details) {
-          const missingFields = Object.entries(responseData.details)
+          const errors = Object.entries(responseData.details)
             .map(([field, message]) => `${field}: ${message}`)
             .join('\n');
-
-          if (missingFields) {
-            errorMessage = `Invalid or missing fields:\n${missingFields}`;
+          if (errors) {
+            errorMessage = errors;
           }
-        } else if (responseData.message) {
-          errorMessage = responseData.message;
         }
 
         throw new Error(errorMessage);
-      }
-
-      if (!responseData.user) {
-        throw new Error('Invalid server response');
       }
 
       return responseData;
