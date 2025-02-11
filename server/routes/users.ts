@@ -172,14 +172,18 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
-        // Send invitation email with correct data
-        await emailService.sendInvitationEmail({
+        // Send invitation email with correct template and data structure
+        await emailService.sendTemplateEmail({
           to: data.email,
-          recipientName: data.full_name,
-          senderName: data.sender_name,
-          senderCompany: senderCompany.name,
-          inviteUrl,
-          code: invitationCode
+          from: process.env.GMAIL_USER!,
+          template: 'user_invite',
+          templateData: {
+            recipientName: data.full_name,
+            senderName: data.sender_name,
+            senderCompany: senderCompany.name,
+            inviteUrl: invitation.metadata?.inviteUrl,
+            code: invitation.code
+          }
         });
 
         console.log('\n[Success] Transaction completed successfully');
