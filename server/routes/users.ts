@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
 import { users, tasks, TaskStatus } from "@db/schema";
-import { eq, and, or, sql } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -25,19 +25,15 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Find and update the corresponding onboarding task using case-insensitive email comparison.  The change is to look for a 'user_invitation' task type instead of 'user_onboarding', as the onboarding task is created with EMAIL_SENT status when inviting the user.  Also added PENDING status check.
+    // Find the corresponding onboarding task using case-insensitive email comparison
     const [task] = await db
       .select()
       .from(tasks)
       .where(
         and(
-          eq(tasks.taskType, 'user_invitation'),  
+          eq(tasks.taskType, 'user_onboarding'),
           sql`LOWER(${tasks.userEmail}) = LOWER(${req.user.email})`,
-          or(
-            eq(tasks.status, TaskStatus.EMAIL_SENT),
-            eq(tasks.status, TaskStatus.IN_PROGRESS),
-            eq(tasks.status, TaskStatus.PENDING)  
-          )
+          eq(tasks.status, TaskStatus.EMAIL_SENT)  // Only look for EMAIL_SENT tasks
         )
       )
       .orderBy(sql`created_at DESC`)
@@ -66,7 +62,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
         updatedAt: new Date(),
         assignedTo: req.user.id,
         metadata: {
-          ...(task.metadata || {}),
+          ...task.metadata,
           onboardingCompleted: true,
           completionTime: new Date().toISOString(),
           previousStatus: task.status,
@@ -78,7 +74,7 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
       .where(eq(tasks.id, task.id))
       .returning();
 
-    console.log(`[User Routes] Successfully updated task ${updatedTask.id} from ${task.status} to completed`);
+    console.log(`[User Routes] Successfully updated task ${updatedTask.id} to completed`);
     res.json({ 
       user: updatedUser, 
       task: updatedTask,

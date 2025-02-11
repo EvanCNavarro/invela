@@ -133,7 +133,7 @@ export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
   // Create WebSocket server with a different path to avoid conflicts with Vite
-  const wss = new WebSocketServer({ 
+  const wss = new WebSocketServer({
     server: httpServer,
     path: '/ws'
   });
@@ -972,7 +972,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       if (file.status !== 'deleted') {
-                return res.status(400).json({ message: "File is not in deleted state" });
+        return res.status(400).json({ message: "File is not in deleted state" });
       }
 
       // Update file status to restored
@@ -1571,13 +1571,17 @@ export function registerRoutes(app: Express): Server {
           description: `Invitation sent to ${full_name} to join ${company_name}`,
           taskType: 'user_onboarding',
           taskScope: 'user',
-          status: 'pending',
+          status: TaskStatus.EMAIL_SENT,  // Changed from 'pending' to TaskStatus.EMAIL_SENT
           priority: 'medium',
-          progress: 0,
+          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],  // Set progress based on EMAIL_SENT status
           createdBy: req.user!.id,
           companyId: company_id,
           userEmail: email,
           dueDate: expiresAt,
+          metadata: {
+            invitedAt: new Date().toISOString(),
+            statusFlow: [TaskStatus.EMAIL_SENT]
+          }
         })
         .returning();
 
