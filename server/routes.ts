@@ -1691,22 +1691,16 @@ export function registerRoutes(app: Express): Server {
           template: 'user_invite',
           templateData: {
             recipientName: inviteData.fullName,
-            invitationCode: invitation.code,
-            companyName: inviteData.companyName,
+            company: inviteData.companyName,  // Changed from companyName to company
+            code: invitation.code,            // Changed from invitationCode to code
+            inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
             senderName: inviteData.senderName
           }
         });
 
         if (!emailResult.success) {
           console.error('[Invite] Failed to send email:', emailResult.error);
-          // Clean up created records if email fails
-          await db.delete(tasks).where(eq(tasks.id, task.id));
-          await db.delete(invitations).where(eq(invitations.id, invitation.id));
-          await db.delete(users).where(eq(users.id, newUser.id));
-          return res.status(500).json({
-            message: "Failed to send invitation email",
-            error: emailResult.error
-          });
+          throw new Error(emailResult.error || 'Failed to send invitation email');
         }
 
         console.log('[Invite] Successfully completed invitation process');
