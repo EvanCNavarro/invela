@@ -14,17 +14,17 @@ class WebSocketService {
   }
 
   private getWebSocketUrl(): string {
-    // Get the full hostname from the current URL
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Get the full hostname from the current window location
+    const fullUrl = new URL(window.location.href);
+    const protocol = fullUrl.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    // Construct URL using the full hostname, which includes the Replit domain
-    const wsUrl = `${protocol}//${hostname}/ws`;
+    // Construct WebSocket URL using the full hostname and path
+    const wsUrl = `${protocol}//${fullUrl.host}/ws`;
     console.log('Constructing WebSocket URL:', wsUrl);
     return wsUrl;
   }
 
-  private connect(): Promise<void> {
+  private async connect(): Promise<void> {
     if (this.connectionPromise) return this.connectionPromise;
 
     this.connectionPromise = new Promise((resolve) => {
@@ -49,6 +49,7 @@ class WebSocketService {
         this.socket.onmessage = (event) => {
           try {
             const { type, data } = JSON.parse(event.data);
+            console.log('Received WebSocket message:', { type, data });
             this.handleMessage(type, data);
           } catch (error) {
             console.error('Error parsing WebSocket message:', error);
