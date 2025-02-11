@@ -172,6 +172,8 @@ Click here to get started: ${data.inviteUrl}
 
       Click here to get started: ${data.inviteUrl}
 
+      Or use your invitation code: ${data.code}
+
       © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
     `.trim(),
     html: `
@@ -248,6 +250,14 @@ Click here to get started: ${data.inviteUrl}
               font-size: 14px;
               text-align: center;
             }
+            .invitation-code {
+              margin-top: 20px;
+              font-family: monospace;
+              background-color: #f3f4f6;
+              padding: 12px;
+              border-radius: 4px;
+              text-align: center;
+            }
             .footer {
               margin-top: 40px;
               padding-top: 20px;
@@ -266,7 +276,7 @@ Click here to get started: ${data.inviteUrl}
           <div class="container">
             <h1 class="company-name">Invela</h1>
             <h2 class="title">Hello ${data.recipientName}, you've been invited to join Invela by ${data.senderName} of ${data.senderCompany}.</h2>
-          
+
             <div class="getting-started">
               <h3 class="section-title">Getting Started:</h3>
               <ol>
@@ -276,9 +286,13 @@ Click here to get started: ${data.inviteUrl}
                 <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
               </ol>
             </div>
-          
+
             <a href="${data.inviteUrl}" class="button">Create Your Account</a>
-          
+
+            <div class="invitation-code">
+              Invitation Code: ${data.code}
+            </div>
+
             <div class="footer">
               <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
             </div>
