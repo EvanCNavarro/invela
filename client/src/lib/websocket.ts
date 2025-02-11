@@ -5,7 +5,7 @@ class WebSocketService {
   private messageHandlers = new Map<string, Set<MessageHandler>>();
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
-  private reconnectTimeout = 1000; // Start with 1 second
+  private reconnectTimeout = 1000;
   private connectionPromise: Promise<void> | null = null;
   private connectionResolve: (() => void) | null = null;
 
@@ -14,9 +14,14 @@ class WebSocketService {
   }
 
   private getWebSocketUrl(): string {
+    // Get the full hostname from the current URL
+    const hostname = window.location.hostname;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.host;
-    return `${protocol}//${host}/ws`;
+
+    // Construct URL using the full hostname, which includes the Replit domain
+    const wsUrl = `${protocol}//${hostname}/ws`;
+    console.log('Constructing WebSocket URL:', wsUrl);
+    return wsUrl;
   }
 
   private connect(): Promise<void> {
@@ -27,7 +32,7 @@ class WebSocketService {
 
       try {
         const wsUrl = this.getWebSocketUrl();
-        console.log('Attempting WebSocket connection to:', wsUrl);
+        console.log('WebSocket connecting to:', wsUrl);
 
         this.socket = new WebSocket(wsUrl);
 
@@ -50,8 +55,8 @@ class WebSocketService {
           }
         };
 
-        this.socket.onclose = () => {
-          console.log('WebSocket connection closed');
+        this.socket.onclose = (event) => {
+          console.log('WebSocket connection closed', event.code, event.reason);
           this.handleReconnect();
         };
 
@@ -82,7 +87,6 @@ class WebSocketService {
         this.connect().catch(error => {
           console.error('Reconnection attempt failed:', error);
         });
-        // Exponential backoff with a maximum of 30 seconds
         this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
       }, this.reconnectTimeout);
     } else {
@@ -104,7 +108,6 @@ class WebSocketService {
   }
 
   public async subscribe(type: string, handler: MessageHandler): Promise<() => void> {
-    // Ensure connection is established before subscribing
     await this.connect();
 
     if (!this.messageHandlers.has(type)) {
@@ -134,5 +137,4 @@ class WebSocketService {
   }
 }
 
-// Create a singleton instance
 export const wsService = new WebSocketService();
