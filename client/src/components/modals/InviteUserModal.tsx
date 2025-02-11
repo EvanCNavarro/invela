@@ -47,7 +47,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (data: InviteUserData) => {
+    mutationFn: async (formData: InviteUserData) => {
       // Validate required data before making the request
       if (!user?.fullName) {
         throw new Error("Missing sender information. Please try logging in again.");
@@ -59,15 +59,15 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
       // Construct the invitation payload with all required fields
       const payload = {
-        // Form fields
-        email: data.email.trim().toLowerCase(),
-        fullName: data.fullName.trim(),
-        // Company being viewed
+        // Form fields from user input
+        email: formData.email.trim().toLowerCase(),
+        fullName: formData.fullName.trim(),
+        // Company information from props (company being viewed)
         company_id: companyId,
         company_name: companyName,
         // Sender information from logged-in user
         sender_name: user.fullName,
-        sender_company: user.companyName || companyName // Use sender's company name, fallback to viewed company
+        sender_company: companyName // Using viewed company name for consistency
       };
 
       console.log('Debug - Complete invitation payload:', JSON.stringify(payload, null, 2));
