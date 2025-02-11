@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { users, tasks, TaskStatus } from "@db/schema";
+import { users, tasks, TaskStatus, invitations } from "@db/schema"; // Added invitations import
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
-  fullName: z.string().min(1, "Full name is required"),
+  full_name: z.string().min(1, "Full name is required"), //Corrected field name
   company_id: z.number({
     required_error: "Company ID is required",
     invalid_type_error: "Company ID must be a number"
@@ -62,6 +62,7 @@ router.post("/api/users/invite", async (req, res) => {
     // Start transaction to ensure data consistency
     let newUser;
     let task;
+    let invitation;
 
     try {
       await db.transaction(async (tx) => {
@@ -89,7 +90,7 @@ router.post("/api/users/invite", async (req, res) => {
           .insert(users)
           .values({
             email: data.email.toLowerCase(),
-            fullName: data.fullName,
+            fullName: data.full_name,
             password: hashedPassword,
             companyId: data.company_id,
             onboardingUserCompleted: false,
@@ -116,14 +117,14 @@ router.post("/api/users/invite", async (req, res) => {
         const taskInsertResult = await tx
           .insert(tasks)
           .values({
-            title: `Complete onboarding for ${data.fullName}`,
+            title: `Complete onboarding for ${data.full_name}`,
             description: `New user invitation from ${data.sender_name} at ${data.sender_company}`,
             taskType: 'user_onboarding',
             taskScope: 'user',
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
             progress: 25,
-            assignedTo: newUser.id,
+            assignedTo: newUser.id, 
             createdBy: req.user?.id || newUser.id,
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
@@ -145,10 +146,36 @@ router.post("/api/users/invite", async (req, res) => {
           throw new Error("Failed to create onboarding task");
         }
 
-        console.log('[User Invitation] Task created successfully:', {
-          id: task.id,
-          title: task.title,
-          status: task.status
+        // Step 6: Create invitation record
+        const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7); 
+
+        const invitationInsertResult = await tx
+          .insert(invitations)
+          .values({
+            email: data.email.toLowerCase(),
+            code: invitationCode,
+            status: 'pending',
+            companyId: data.company_id,
+            taskId: task.id,
+            inviteeName: data.full_name,
+            inviteeCompany: data.company_name,
+            expiresAt,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          })
+          .returning();
+
+        invitation = invitationInsertResult[0];
+
+        if (!invitation?.id) {
+          throw new Error("Failed to create invitation");
+        }
+
+        console.log('[User Invitation] Invitation created successfully:', {
+          id: invitation.id,
+          code: invitation.code
         });
       });
 
@@ -157,20 +184,25 @@ router.post("/api/users/invite", async (req, res) => {
       // Send success response
       res.status(201).json({
         message: "Invitation sent successfully",
-        user: {
-          id: newUser!.id,
-          email: newUser!.email,
-          fullName: newUser!.fullName
-        },
-        task: {
-          id: task!.id,
-          status: task!.status
+        invitation: {
+          id: invitation!.id,
+          email: invitation!.email,
+          code: invitation!.code,
+          status: invitation!.status,
+          companyId: invitation!.companyId,
+          taskId: invitation!.taskId,
+          inviteeName: invitation!.inviteeName,
+          inviteeCompany: invitation!.inviteeCompany,
+          expiresAt: invitation!.expiresAt,
+          usedAt: invitation!.usedAt,
+          createdAt: invitation!.createdAt,
+          updatedAt: invitation!.updatedAt
         }
       });
 
     } catch (txError) {
       console.error('[User Invitation] Transaction error:', txError);
-      throw txError; // Re-throw to be caught by outer catch block
+      throw txError;
     }
 
   } catch (error) {
