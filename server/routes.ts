@@ -176,11 +176,20 @@ export function registerRoutes(app: Express): Server {
     });
   }
 
-  // Update the validation endpoint to handle case-insensitive code matching
+  // Update the validation endpoint to handle case-insensitive code matching and enforce 6 characters
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
       const code = req.params.code.toUpperCase();
       console.log('[Validate] Checking invitation code:', code);
+
+      // Validate code format
+      if (code.length !== 6 || !/^[A-F0-9]{6}$/.test(code)) {
+        console.log('[Validate] Invalid code format:', code);
+        return res.status(404).json({
+          message: "Invalid invitation code format",
+          valid: false
+        });
+      }
 
       const [invitation] = await db.select()
         .from(invitations)
@@ -198,7 +207,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Get company information
+      // Get company details
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, invitation.companyId));
@@ -1779,7 +1788,15 @@ const STATUS_PROGRESS = {
 
 function generateInviteCode(): string {
   // Generate a 6 character hex code to match frontend input field
-  const code = crypto.randomBytes(3).toString('hex').toUpperCase();
+  const bytes = crypto.randomBytes(3); // 3 bytes = 6 hex characters
+  const code = bytes.toString('hex').toUpperCase();
+
+  // Validate generated code format
+  if (code.length !== 6 || !/^[A-F0-9]{6}$/.test(code)) {
+    console.error('[Invite] Generated invalid code format:', code);
+    return generateInviteCode(); // Recursively try again if invalid
+  }
+
   console.log('[Invite] Generated 6-digit invite code:', code);
   return code;
 }
