@@ -3,9 +3,8 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
-import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
+import bcrypt from "bcrypt";
+import { users, companies } from "@db/schema";
 import { db, pool } from "@db";
 import { sql, eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
@@ -16,14 +15,7 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
 const PostgresSessionStore = connectPg(session);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
@@ -32,16 +24,7 @@ async function comparePasswords(supplied: string, stored: string) {
       return false;
     }
 
-    const [hashedStored, salt] = stored.split(".");
-    if (!hashedStored || !salt) {
-      console.error("Invalid stored password format");
-      return false;
-    }
-
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuf = Buffer.from(hashedStored, 'hex');
-
-    return timingSafeEqual(suppliedBuf, storedBuf);
+    return await bcrypt.compare(supplied, stored);
   } catch (error) {
     console.error("Password comparison error:", error);
     return false;
