@@ -1,26 +1,27 @@
 import { Request, Response, NextFunction } from "express";
 import { TaskStatus } from "@db/schema";
 
-// Define valid status transitions
+// Define valid status transitions.  The edited code simplifies this to only EMAIL_SENT to COMPLETED.
 const VALID_TRANSITIONS = {
-  [TaskStatus.EMAIL_SENT]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.IN_PROGRESS]: [TaskStatus.COMPLETED],
+  [TaskStatus.EMAIL_SENT]: [TaskStatus.COMPLETED],
   [TaskStatus.COMPLETED]: [], // Terminal state
 } as const;
 
-// Define progress percentage for each status
+// Define progress percentage for each status.  The edited code updates the percentages.
 const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.EMAIL_SENT]: 50,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
 export interface TaskRequest extends Request {
   taskId?: number;
-  task?: any;
+  task?: {
+    status: TaskStatus;
+    metadata: Record<string, any> | null;
+  };
 }
 
-// Middleware to validate task status transitions
+// Middleware to validate task status transitions. The logic remains largely the same, but operates with the simplified VALID_TRANSITIONS.
 export function validateTaskStatusTransition(req: TaskRequest, res: Response, next: NextFunction) {
   const { status: newStatus } = req.body;
   const currentStatus = req.task?.status;
@@ -35,8 +36,7 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
 
   // If no current status (new task) or same status, allow
   if (!currentStatus || currentStatus === newStatus) {
-    // Set initial progress
-    req.body.progress = STATUS_PROGRESS[newStatus];
+    req.body.progress = STATUS_PROGRESS[newStatus as TaskStatus];
     return next();
   }
 
@@ -52,12 +52,12 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   }
 
   // Set the progress based on new status
-  req.body.progress = STATUS_PROGRESS[newStatus];
+  req.body.progress = STATUS_PROGRESS[newStatus as TaskStatus];
 
   next();
 }
 
-// Middleware to load task before validation
+// Middleware to load task before validation. This middleware remains unchanged as it's independent of the status transition logic.
 export async function loadTaskMiddleware(req: TaskRequest, res: Response, next: NextFunction) {
   if (!req.params.id) {
     return next();

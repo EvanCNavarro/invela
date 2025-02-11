@@ -15,7 +15,6 @@ import { z } from "zod";
 
 export const TaskStatus = {
   EMAIL_SENT: 'email_sent',
-  IN_PROGRESS: 'in_progress',
   COMPLETED: 'completed',
 } as const;
 
@@ -207,7 +206,7 @@ export const insertTaskSchema = z.object({
   assignedTo: z.number().nullable().optional(),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   filesRequested: z.array(z.string()).optional(),
-  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED])
+  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.COMPLETED])
     .optional()
     .default(TaskStatus.EMAIL_SENT),
 }).superRefine((data, ctx) => {
