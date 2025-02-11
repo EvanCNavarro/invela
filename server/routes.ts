@@ -669,7 +669,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
     console.log('[Invite] Starting invitation process');
@@ -843,7 +842,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-
   // Get users by company ID
   app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
     try {
@@ -934,7 +932,7 @@ export function registerRoutes(app: Express): Express {
 
       // Create invitation record
       const [invitation] = await db.insert(invitations)
-        .values.values({
+        .values({
           email,
           code,
           status: 'pending',
@@ -987,6 +985,58 @@ export function registerRoutes(app: Express): Express {
       console.error("Error sending invitation:", error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: `Error sending invitation: ${errorMessage}` });
+    }
+  });
+
+  // Add invitation validation endpoint
+  app.get("/api/invitations/:code/validate", async (req, res) => {
+    try {
+      const code = req.params.code;
+      console.log('[Invite] Validating invitation code:', code);
+
+      // Find the invitation
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, code),
+          eq(invitations.status, 'pending'),
+          gt(invitations.expiresAt, new Date())
+        ));
+
+      if (!invitation) {
+        console.log('[Invite] Invalid or expired invitation code:', code);
+        return res.status(404).json({
+          valid: false,
+          message: "Invalid or expired invitation code"
+        });
+      }
+
+      // Find associated task
+      const [task] = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, invitation.taskId));
+
+      console.log('[Invite] Invitation found:', {
+        id: invitation.id,
+        email: invitation.email,
+        status: invitation.status,
+        taskId: invitation.taskId
+      });
+
+      res.json({
+        valid: true,
+        invitation: {
+          email: invitation.email,
+          company: task?.metadata?.company || null,
+          inviteeName: invitation.inviteeName || null
+        }
+      });
+    } catch (error) {
+      console.error('[Invite] Error validating invitation:', error);
+      res.status(500).json({
+        valid: false,
+        message: "Error validating invitation code"
+      });
     }
   });
 
