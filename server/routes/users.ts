@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@db";
 import { users, tasks, TaskStatus } from "@db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -54,6 +54,7 @@ router.post("/api/users/invite", async (req, res) => {
     });
 
     if (existingUser) {
+      console.log('[User Routes] User already exists:', existingUser.id);
       return res.status(400).json({
         message: "User with this email already exists",
         userId: existingUser.id
@@ -80,6 +81,10 @@ router.post("/api/users/invite", async (req, res) => {
       })
       .returning();
 
+    if (!newUser?.id) {
+      throw new Error("Failed to create user account");
+    }
+
     console.log('[User Routes] Created new user:', newUser.id);
 
     // Create onboarding task for the new user
@@ -94,11 +99,11 @@ router.post("/api/users/invite", async (req, res) => {
         priority: 'medium',
         progress: 25,
         assignedTo: newUser.id,
-        createdBy: req.user?.id || null,
+        createdBy: req.user?.id || newUser.id, // If no creator, use the new user's ID
         companyId: data.company_id,
         userEmail: data.email.toLowerCase(),
         metadata: {
-          invitedBy: req.user?.id,
+          invitedBy: req.user?.id || null,
           invitedByName: data.sender_name,
           companyName: data.company_name,
           statusFlow: [TaskStatus.EMAIL_SENT]
@@ -107,6 +112,10 @@ router.post("/api/users/invite", async (req, res) => {
         updatedAt: new Date()
       })
       .returning();
+
+    if (!task?.id) {
+      throw new Error("Failed to create onboarding task");
+    }
 
     console.log('[User Routes] Created onboarding task:', task.id);
 
@@ -133,7 +142,9 @@ router.post("/api/users/invite", async (req, res) => {
         details: error.errors
       });
     }
-    res.status(500).json({ message: "Failed to send invitation" });
+    res.status(500).json({ 
+      message: error instanceof Error ? error.message : "Failed to send invitation" 
+    });
   }
 });
 

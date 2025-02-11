@@ -7,7 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
 import { useAuth } from "@/hooks/use-auth";
-import { TaskStatus } from "@db/schema";
 
 import {
   Dialog,
@@ -49,9 +48,13 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteUserData) => {
-      // Ensure all required fields are present
-      if (!companyId || !companyName || !user?.fullName) {
-        throw new Error("Missing required company or user information");
+      // Validate required data before making the request
+      if (!user?.fullName) {
+        throw new Error("Missing sender information. Please try logging in again.");
+      }
+
+      if (!companyId || !companyName) {
+        throw new Error("Missing company information. Please refresh the page.");
       }
 
       const payload = {
@@ -60,10 +63,10 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
-        sender_company: companyName,
+        sender_company: companyName
       };
 
-      console.log('Debug - Sending invitation payload:', payload);
+      console.log('Debug - Invitation payload:', payload);
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -97,6 +100,17 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         throw new Error('Invalid server response');
       }
 
+      toast({
+        title: "Invitation sent",
+        description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
+      });
+
+      // Reset form and close modal
+      form.reset();
+      setServerError(null);
+      onOpenChange(false);
+
+      // Show success animation
       const inviteButton = document.querySelector('[data-element="invite-user-button"]');
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -114,15 +128,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           shapes: ["circle"]
         });
       }
-
-      toast({
-        title: "Invitation sent",
-        description: `${responseData.user.fullName} has been invited to join ${companyName}.`,
-      });
-
-      form.reset();
-      setServerError(null);
-      onOpenChange(false);
     },
     onError: (error: Error) => {
       console.error('Mutation error:', error);
