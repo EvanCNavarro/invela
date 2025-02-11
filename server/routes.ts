@@ -261,31 +261,30 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Check if user already exists with case-insensitive check
-      const existingUser = await db.select()
+      // Find existing user
+      const [existingUser] = await db.select()
         .from(users)
         .where(sql`LOWER(${users.email}) = LOWER(${email})`);
 
-      if (existingUser.length > 0) {
-        return res.status(400).json({ message: "User already exists" });
+      if (!existingUser) {
+        return res.status(400).json({ message: "User account not found" });
       }
 
-      // Create the user
-      const [user] = await db.insert(users)
-        .values({
-          email: email.toLowerCase(), // Store email in lowercase
-          password: await bcrypt.hash(password, 10),
-          fullName,
+      // Update the existing user with new information
+      const [updatedUser] = await db.update(users)
+        .set({
           firstName,
           lastName,
-          companyId: invitation.companyId,
+          fullName,
+          password: await bcrypt.hash(password, 10),
           onboardingUserCompleted: false,
         })
+        .where(eq(users.id, existingUser.id))
         .returning();
 
-      console.log(`[Register] Created new user with ID: ${user.id}`);
+      console.log(`[Register] Updated user account with ID: ${updatedUser.id}`);
 
-      // Find and update the related task (now looking for EMAIL_SENT status)
+      // Find and update the related task
       const [task] = await db.select()
         .from(tasks)
         .where(and(
@@ -299,7 +298,7 @@ export function registerRoutes(app: Express): Server {
           .set({
             status: TaskStatus.COMPLETED,
             progress: 100,
-            assignedTo: user.id,
+            assignedTo: updatedUser.id,
             metadata: {
               ...task.metadata,
               registeredAt: new Date().toISOString(),
@@ -314,7 +313,7 @@ export function registerRoutes(app: Express): Server {
         // Broadcast the task update to all connected clients
         broadcastTaskUpdate(updatedTask);
       } else {
-        console.warn(`[Register] No task found to update for user ${user.id}`);
+        console.warn(`[Register] No task found to update for user ${updatedUser.id}`);
       }
 
       // Update invitation status
@@ -328,16 +327,16 @@ export function registerRoutes(app: Express): Server {
       console.log(`[Register] Updated invitation ${invitation.id} to used status`);
 
       // Log the user in
-      req.login(user, (err) => {
+      req.login(updatedUser, (err) => {
         if (err) {
           console.error("Login error:", err);
           return res.status(500).json({ message: "Error logging in" });
         }
-        res.json(user);
+        res.json(updatedUser);
       });
     } catch (error) {
       console.error("Registration error:", error);
-      res.status(500).json({ message: "Error registering user" });
+      res.status(500).json({ message: "Error updating user information" });
     }
   });
 
@@ -920,7 +919,7 @@ export function registerRoutes(app: Express): Server {
               type: req.file.mimetype,
               path: storedPath,
               status: 'uploaded',
-              updatedAt: new Date(),
+              updatedAt: newDate(),
               version: newVersion,
             })
             .where(eq(files.id, existingFile[0].id))
