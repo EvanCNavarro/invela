@@ -36,14 +36,12 @@ const TaskScope = {
 } as const;
 
 const TaskStatus = {
-  EMAIL_SENT: "EMAIL_SENT",
-  IN_PROGRESS: "IN_PROGRESS",
-  COMPLETED: "COMPLETED",
+  EMAIL_SENT: "email_sent",
+  COMPLETED: "completed",
 } as const;
 
 const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.EMAIL_SENT]: 50,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
@@ -135,8 +133,8 @@ export function CreateTaskModal() {
           ...data,
           title: `File Request for ${assignee}`,
           description: `Document request task for ${assignee}`,
-          status: TaskStatus.PENDING,
-          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT], //Starts at 25% progress.  Consider changing default status to IN_PROGRESS.
+          status: TaskStatus.EMAIL_SENT,
+          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
           userEmail: data.userEmail?.toLowerCase(),
           metadata: {
             emailSentAt: new Date().toISOString(),
