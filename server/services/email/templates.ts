@@ -6,9 +6,17 @@ export interface EmailTemplate {
   html: string;
 }
 
-export interface TemplateData {
-  [key: string]: string | number | boolean | null;
-}
+// Define a strict schema for invitation template data
+const invitationTemplateSchema = z.object({
+  recipientName: z.string().min(1, "Recipient name is required"),
+  senderName: z.string().min(1, "Sender name is required"),
+  company: z.string().min(1, "Company name is required"),
+  code: z.string().min(1, "Invitation code is required"),
+  inviteUrl: z.string().url("Valid invite URL is required")
+});
+
+export type InvitationTemplateData = z.infer<typeof invitationTemplateSchema>;
+export type TemplateData = InvitationTemplateData;
 
 export const emailTemplateSchema = z.object({
   subject: z.string(),
@@ -17,20 +25,23 @@ export const emailTemplateSchema = z.object({
 });
 
 const templates = {
-  user_invite: (data: TemplateData): EmailTemplate => {
-    console.log('[Template:user_invite] Received data:', JSON.stringify(data, null, 2));
+  user_invite: (data: InvitationTemplateData): EmailTemplate => {
+    // Validate the template data
+    const result = invitationTemplateSchema.safeParse(data);
+    if (!result.success) {
+      console.error('[Template:user_invite] Invalid template data:', result.error);
+      throw new Error(`Invalid template data: ${result.error.message}`);
+    }
 
-    // Ensure all required fields exist
-    const companyName = data.company || 'Invela';
-    const recipientName = data.recipientName || 'User';
-    const senderName = data.senderName || 'Admin';
-    const code = data.code || '';
-    const inviteUrl = data.inviteUrl || '';
+    const { recipientName, senderName, company, code, inviteUrl } = result.data;
+    console.log('[Template:user_invite] Generating template with data:', { 
+      recipientName, senderName, company, code, inviteUrl 
+    });
 
     return {
-      subject: `Invitation to join ${companyName}`,
+      subject: `Invitation to join ${company}`,
       text: `
-Hello ${recipientName}, you've been invited to join ${companyName} by ${senderName}.
+Hello ${recipientName}, you've been invited to join ${company} by ${senderName}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -147,8 +158,8 @@ Click here to get started: ${inviteUrl}
   </head>
   <body>
     <div class="container">
-      <h1 class="company-name">${companyName}</h1>
-      <h2 class="title">Hello ${recipientName}, you've been invited to join ${companyName} by ${senderName}.</h2>
+      <h1 class="company-name">${company}</h1>
+      <h2 class="title">Hello ${recipientName}, you've been invited to join ${company} by ${senderName}.</h2>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
@@ -337,13 +348,18 @@ export function getEmailTemplate(templateName: TemplateNames, data: TemplateData
     throw new Error(`Email template '${templateName}' not found`);
   }
 
-  const emailTemplate = template(data);
-  const result = emailTemplateSchema.safeParse(emailTemplate);
+  try {
+    const emailTemplate = template(data);
+    const validationResult = emailTemplateSchema.safeParse(emailTemplate);
 
-  if (!result.success) {
-    console.error('[EmailTemplate] Validation error:', result.error);
-    throw new Error(`Invalid email template: ${result.error.message}`);
+    if (!validationResult.success) {
+      console.error('[EmailTemplate] Validation error:', validationResult.error);
+      throw new Error(`Invalid email template: ${validationResult.error.message}`);
+    }
+
+    return emailTemplate;
+  } catch (error) {
+    console.error('[EmailTemplate] Error generating template:', error);
+    throw error;
   }
-
-  return emailTemplate;
 }
