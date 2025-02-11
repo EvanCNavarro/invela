@@ -149,7 +149,7 @@ router.post("/api/users/invite", async (req, res) => {
             priority: 'medium',
             progress: 25,
             createdBy: req.user?.id,
-            assignedTo: newUser.id, // Properly assigned to the new user
+            assignedTo: newUser.id,
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
             metadata: {
@@ -181,8 +181,8 @@ router.post("/api/users/invite", async (req, res) => {
             recipientName: data.full_name,
             senderName: data.sender_name,
             senderCompany: senderCompany.name,
-            inviteUrl: invitation.metadata?.inviteUrl,
-            code: invitation.code
+            inviteUrl,
+            code: invitationCode
           }
         });
 
@@ -217,17 +217,11 @@ router.post("/api/users/invite", async (req, res) => {
 
     } catch (txError) {
       console.error('[Error] Transaction error:', txError);
-      console.error('[Error] Failed at stage:', {
-        userCreated: !!newUser,
-        taskCreated: !!task,
-        invitationCreated: !!invitation
-      });
       throw txError;
     }
 
   } catch (error) {
     console.error('[Error] Error processing invitation:', error);
-    console.error('[Error] Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
 
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
