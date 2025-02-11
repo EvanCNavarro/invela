@@ -1523,105 +1523,125 @@ export function registerRoutes(app: Express): Server {
   });
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
+    console.log('[Invite] Starting invitation process');
+    console.log('[Invite] Request body:', req.body);
+
     try {
-      const { email, full_name, company_id, company_name, sender_name, sender_company } = req.body;
+      // Validate request data
+      const inviteData = {
+        email: req.body.email,
+        fullName: req.body.full_name,
+        companyId: req.body.company_id,
+        companyName: req.body.company_name,
+        senderName: req.body.sender_name,
+        senderCompany: req.body.sender_company
+      };
 
-      // Validate required fields
-      if (!email || !full_name || !company_id || !company_name) {
-        console.log('Missing required fields:', { email, full_name, company_id, company_name });
-        return res.status(400).json({
-          message: "Missing required fields",
-          details: {
-            email: !email ? "Email is required" : null,
-            full_name: !full_name ? "Full name is required" : null,
-            company_id: !company_id ? "Company ID is required" : null,
-            company_name: !company_name ? "Company name is required" : null
-          }
-        });
-      }
+      console.log('[Invite] Validated invite data:', inviteData);
 
-      // Generate a unique 6-digit hex code
-      const code = Math.floor(Math.random() * 0xFFFFFF).toString(16).padStart(6, '0').toUpperCase();
-
-      // Set expiration to 7 days from now
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7);
+      // Generate invitation code
+      const inviteCode = uuidv4().substring(0, 8).toUpperCase();
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 7); // 7 days expiry
 
       // Create invitation record
+      console.log('[Invite] Creating invitation record');
       const [invitation] = await db.insert(invitations)
         .values({
-          email: email.toLowerCase(),
-          code,
+          email: inviteData.email.toLowerCase(),
+          code: inviteCode,
           status: 'pending',
-          companyId: company_id,
-          inviteeName: full_name,
-          inviteeCompany: company_name,
-          expiresAt,
+          companyId: inviteData.companyId,
+          inviteeName: inviteData.fullName,
+          inviteeCompany: inviteData.companyName,
+          senderName: inviteData.senderName,
+          senderCompany: inviteData.senderCompany,
+          expiresAt: expiryDate
         })
         .returning();
 
       if (!invitation) {
-        throw new Error("Failed to create invitation");
+        console.error('[Invite] Failed to create invitation record');
+        return res.status(500).json({ message: "Failed to create invitation" });
       }
 
-      // Create an onboarding task
+      console.log('[Invite] Created invitation:', invitation);
+
+      // Create task for tracking the invitation
+      console.log('[Invite] Creating associated task');
       const [task] = await db.insert(tasks)
         .values({
-          title: `New User Invitation: ${email}`,
-          description: `Invitation sent to ${full_name} to join ${company_name}`,
-          taskType: 'user_onboarding',
+          title: `New User Invitation: ${inviteData.email}`,
+          description: `Invitation sent to ${inviteData.email} to join ${inviteData.companyName}`,
+          taskType: 'user_invitation',
           taskScope: 'user',
-          status: TaskStatus.EMAIL_SENT,  // Changed from 'pending' to TaskStatus.EMAIL_SENT
+          status: 'EMAIL_SENT',
           priority: 'medium',
-          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],  // Set progress based on EMAIL_SENT status
+          progress: 25,
           createdBy: req.user!.id,
-          companyId: company_id,
-          userEmail: email,
-          dueDate: expiresAt,
+          userEmail: inviteData.email.toLowerCase(),
+          companyId: inviteData.companyId,
           metadata: {
-            invitedAt: new Date().toISOString(),
-            statusFlow: [TaskStatus.EMAIL_SENT]
+            invitationId: invitation.id,
+            invitationCode: inviteCode,
+            senderName: inviteData.senderName,
+            senderCompany: inviteData.senderCompany,
+            statusFlow: ['EMAIL_SENT']
           }
         })
         .returning();
 
-      // Update invitation with task reference
-      await db.update(invitations)
-        .set({ taskId: task.id })
-        .where(eq(invitations.id, invitation.id));
+      if (!task) {
+        console.error('[Invite] Failed to create task record');
+        // Rollback invitation
+        await db.delete(invitations).where(eq(invitations.id, invitation.id));
+        return res.status(500).json({ message: "Failed to create tracking task" });
+      }
+
+      console.log('[Invite] Created task:', task);
 
       // Send invitation email
-      const inviteUrl = `${req.protocol}://${req.get('host')}/auth?code=${code}`;
-
-      const emailParams = {
-        to: email,
+      console.log('[Invite] Sending invitation email');
+      const emailResult = await emailService.sendTemplateEmail({
+        to: inviteData.email,
         from: process.env.GMAIL_USER!,
         template: 'fintech_invite',
         templateData: {
-          recipientName: full_name,
-          recipientEmail: email,
-          senderName: sender_name,
-          senderCompany: sender_company,
-          inviteUrl,
-          code
+          recipientName: inviteData.fullName,
+          invitationCode: inviteCode,
+          companyName: inviteData.companyName,
+          senderName: inviteData.senderName
         }
-      };
-
-      const emailResult = await emailService.sendTemplateEmail(emailParams);
+      });
 
       if (!emailResult.success) {
-        console.error('Failed to send invitation email:', emailResult.error);
-        // Don't return error, still consider invitation created
+        console.error('[Invite] Failed to send email:', emailResult.error);
+        // Rollback both records
+        await db.delete(tasks).where(eq(tasks.id, task.id));
+        await db.delete(invitations).where(eq(invitations.id, invitation.id));
+        return res.status(500).json({
+          message: "Failed to send invitation email",
+          error: emailResult.error
+        });
       }
 
+      console.log('[Invite] Successfully completed invitation process');
       res.status(201).json({
         message: "Invitation sent successfully",
-        invitation
+        invitation: {
+          id: invitation.id,
+          email: invitation.email,
+          code: invitation.code,
+          expiresAt: invitation.expiresAt
+        }
       });
 
     } catch (error) {
-      console.error("Error creating invitation:", error);
-      res.status(500).json({ message: "Error creating invitation" });
+      console.error('[Invite] Error processing invitation:', error);
+      res.status(500).json({
+        message: "Failed to process invitation",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
