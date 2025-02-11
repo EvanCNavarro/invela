@@ -18,19 +18,18 @@ export const emailTemplateSchema = z.object({
 
 const templates = {
   user_invite: (data: TemplateData): EmailTemplate => ({
-    subject: `Invitation to join Invela`,
-    text: `Hello ${data.recipientName}, you've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.
+    subject: `Invitation to join ${data.company}`,
+    text: `Hello ${data.recipientName}, you've been invited to join ${data.company} by ${data.senderName}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
-   — or manually enter your unique Invitation Code: ${data.code}
-2. Finish updating your Profile.
+2. Finish updating your Company's Profile.
 3. Upload the requested files to our secure system.
 4. Acquire an Invela Accreditation & Risk Score for your company.
 
-Click here to get started: ${data.inviteUrl}
-
 Your Invitation Code: ${data.code}
+
+Click here to get started: ${data.inviteUrl}
 
 © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
 `.trim(),
@@ -137,14 +136,14 @@ Your Invitation Code: ${data.code}
   </head>
   <body>
     <div class="container">
-      <h1 class="company-name">Invela</h1>
-      <p class="invitation">Hello ${data.recipientName}, you've been sent an invitation to join Invela, from ${data.senderName} of ${data.senderCompany}.</p>
+      <h1 class="company-name">${data.company}</h1>
+      <h2 class="title">Hello ${data.recipientName}, you've been invited to join ${data.company} by ${data.senderName}.</h2>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
         <ol>
           <li>Click the button below to Create Your Account.</li>
-          <li>Finish updating your Profile.</li>
+          <li>Finish updating your Company's Profile.</li>
           <li>Upload the requested files to our secure system.</li>
           <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
         </ol>
@@ -318,13 +317,13 @@ Your Invitation Code: ${data.code}
 export type TemplateNames = keyof typeof templates;
 
 export function getEmailTemplate(templateName: TemplateNames, data: TemplateData): EmailTemplate {
+  console.log('[EmailTemplate] Template requested:', templateName);
+  console.log('[EmailTemplate] Template data:', JSON.stringify(data, null, 2));
+
   const template = templates[templateName];
   if (!template) {
     throw new Error(`Email template '${templateName}' not found`);
   }
-
-  // Add debug logging
-  console.log('[EmailTemplate] Generating template with data:', JSON.stringify(data, null, 2));
 
   const emailTemplate = template(data);
   const result = emailTemplateSchema.safeParse(emailTemplate);

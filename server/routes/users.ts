@@ -58,14 +58,14 @@ router.post("/api/users/invite", async (req, res) => {
     // Get sender's company info first
     const [senderCompany] = await db.select()
       .from(companies)
-      .where(eq(companies.id, req.user?.companyId));
+      .where(eq(companies.id, data.company_id));
 
     if (!senderCompany) {
-      console.error('[Error] Sender company not found for ID:', req.user?.companyId);
-      throw new Error("Sender's company not found");
+      console.error('[Error] Company not found for ID:', data.company_id);
+      throw new Error("Company not found");
     }
 
-    console.log('[Debug] Sender company data:', JSON.stringify(senderCompany, null, 2));
+    console.log('[Debug] Company data:', JSON.stringify(senderCompany, null, 2));
 
     // Start transaction
     let newUser;
@@ -131,11 +131,14 @@ router.post("/api/users/invite", async (req, res) => {
             inviteUrl,
             senderName: data.sender_name,
             senderCompany: senderCompany.name,
-            userId: newUser.id
+            userId: newUser.id,
+            recipientName: data.full_name,
+            company: senderCompany.name
           },
           createdAt: new Date(),
           updatedAt: new Date()
         };
+
         console.log('[Debug] Invitation data to be inserted:', JSON.stringify(invitationData, null, 2));
 
         const [invitationResult] = await tx.insert(invitations)
@@ -180,17 +183,18 @@ router.post("/api/users/invite", async (req, res) => {
           .set({ taskId: task.id })
           .where(eq(invitations.id, invitation.id));
 
-        // Prepare email template data
+        // Prepare email template data with all required fields
         const emailData = {
           to: data.email,
           from: process.env.GMAIL_USER!,
-          template: 'user_invite', 
+          template: 'user_invite',
           templateData: {
             recipientName: data.full_name,
             senderName: data.sender_name,
             senderCompany: senderCompany.name,
+            code: invitationCode,
             inviteUrl,
-            code: invitationCode
+            company: senderCompany.name
           }
         };
         console.log('[Debug] Email template data:', JSON.stringify(emailData, null, 2));
@@ -198,17 +202,11 @@ router.post("/api/users/invite", async (req, res) => {
         // Send invitation email
         const emailResult = await emailService.sendTemplateEmail(emailData);
         if (!emailResult.success) {
+          console.error('[Error] Failed to send email:', emailResult.error);
           throw new Error(emailResult.error || 'Failed to send invitation email');
         }
 
-        console.log('\n[Success] Transaction completed successfully');
-        console.log('[Success] Created entities:', {
-          userId: newUser.id,
-          taskId: task.id,
-          invitationId: invitation.id,
-          inviteUrl,
-          code: invitationCode
-        });
+        console.log('[Success] Email sent successfully');
       });
 
       // Send success response
@@ -218,16 +216,8 @@ router.post("/api/users/invite", async (req, res) => {
           id: invitation!.id,
           email: invitation!.email,
           code: invitation!.code,
-          status: invitation!.status,
-          companyId: invitation!.companyId,
-          taskId: task!.id,
-          inviteeName: invitation!.inviteeName,
-          inviteeCompany: invitation!.inviteeCompany,
-          inviteUrl: invitation!.metadata?.inviteUrl,
-          senderCompany: senderCompany.name,
           expiresAt: invitation!.expiresAt,
-          createdAt: invitation!.createdAt,
-          updatedAt: invitation!.updatedAt
+          userId: newUser!.id
         }
       });
 
