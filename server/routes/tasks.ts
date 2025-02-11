@@ -2,20 +2,18 @@ import { Router } from "express";
 import { db } from "@db";
 import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
 import { z } from "zod";
 import { broadcastMessage } from "../index";
 
 const router = Router();
 
 const updateTaskStatusSchema = z.object({
-  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED]),
+  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.COMPLETED]),
 });
 
 // Initial progress values for each status
 const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.EMAIL_SENT]: 50,
   [TaskStatus.COMPLETED]: 100,
 } as const;
 
@@ -25,7 +23,6 @@ async function getTaskCount() {
   return {
     total: allTasks.length,
     emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
     completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length
   };
 }
@@ -37,8 +34,14 @@ router.post("/api/tasks", async (req, res) => {
       .insert(tasks)
       .values({
         ...req.body,
+        status: TaskStatus.EMAIL_SENT,
+        progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
         createdAt: new Date(),
         updatedAt: new Date(),
+        metadata: {
+          ...req.body.metadata,
+          statusFlow: [TaskStatus.EMAIL_SENT]
+        }
       })
       .returning();
 
@@ -86,68 +89,74 @@ router.delete("/api/tasks/:id", async (req, res) => {
   }
 });
 
-// Update task status with validation middleware
-router.patch("/api/tasks/:id/status",
-  loadTaskMiddleware,
-  validateTaskStatusTransition,
-  async (req, res) => {
-    try {
-      const taskId = parseInt(req.params.id);
-      const { status } = updateTaskStatusSchema.parse(req.body);
+// Update task status
+router.patch("/api/tasks/:id/status", async (req, res) => {
+  try {
+    const taskId = parseInt(req.params.id);
+    const { status } = updateTaskStatusSchema.parse(req.body);
 
-      const [currentTask] = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, taskId));
+    const [currentTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
 
-      if (!currentTask) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-
-      const progress = STATUS_PROGRESS[status];
-
-      const [updatedTask] = await db
-        .update(tasks)
-        .set({
-          status,
-          progress,
-          updatedAt: new Date(),
-          metadata: {
-            ...currentTask.metadata,
-            statusFlow: [...(currentTask.metadata?.statusFlow || []), status],
-            statusUpdates: [
-              ...(currentTask.metadata?.statusUpdates || []),
-              {
-                from: currentTask.status,
-                to: status,
-                timestamp: new Date().toISOString(),
-                progress
-              }
-            ]
-          }
-        })
-        .where(eq(tasks.id, taskId))
-        .returning();
-
-      // Get updated counts and broadcast task update
-      const taskCount = await getTaskCount();
-      broadcastMessage('task_updated', {
-        taskId: updatedTask.id,
-        status: updatedTask.status,
-        progress: updatedTask.progress,
-        metadata: updatedTask.metadata,
-        count: taskCount,
-        timestamp: new Date().toISOString()
-      });
-
-      res.json({ task: updatedTask, count: taskCount });
-    } catch (error) {
-      console.error("[Task Routes] Error updating task status:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid status value", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update task status" });
+    if (!currentTask) {
+      return res.status(404).json({ message: "Task not found" });
     }
+
+    // Only allow transition from EMAIL_SENT to COMPLETED
+    if (currentTask.status === TaskStatus.EMAIL_SENT && status !== TaskStatus.COMPLETED) {
+      return res.status(400).json({ 
+        message: "Invalid status transition. Tasks can only move from EMAIL_SENT to COMPLETED" 
+      });
+    }
+
+    const progress = STATUS_PROGRESS[status];
+
+    const [updatedTask] = await db
+      .update(tasks)
+      .set({
+        status,
+        progress,
+        updatedAt: new Date(),
+        metadata: {
+          ...currentTask.metadata,
+          statusFlow: [...(currentTask.metadata?.statusFlow || []), status],
+          statusUpdates: [
+            ...(currentTask.metadata?.statusUpdates || []),
+            {
+              from: currentTask.status,
+              to: status,
+              timestamp: new Date().toISOString(),
+              progress
+            }
+          ]
+        }
+      })
+      .where(eq(tasks.id, taskId))
+      .returning();
+
+    // Get updated counts and broadcast task update
+    const taskCount = await getTaskCount();
+    broadcastMessage('task_updated', {
+      taskId: updatedTask.id,
+      status: updatedTask.status,
+      progress: updatedTask.progress,
+      metadata: updatedTask.metadata,
+      count: taskCount,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({ task: updatedTask, count: taskCount });
+  } catch (error) {
+    console.error("[Task Routes] Error updating task status:", error);
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        message: "Invalid status value. Only EMAIL_SENT and COMPLETED are allowed.", 
+        errors: error.errors 
+      });
+    }
+    res.status(500).json({ message: "Failed to update task status" });
   }
-);
+});
 
 export default router;
