@@ -25,22 +25,25 @@ router.post("/api/users/complete-onboarding", async (req, res) => {
 
     console.log(`[User Routes] Updated user onboarding status for ID ${req.user.id}`);
 
-    // Find and update the corresponding onboarding task using case-insensitive email comparison
+    // Find and update the corresponding onboarding task using case-insensitive email comparison.  The change is to look for a 'user_invitation' task type instead of 'user_onboarding', as the onboarding task is created with EMAIL_SENT status when inviting the user.  Also added PENDING status check.
     const [task] = await db
       .select()
       .from(tasks)
       .where(
         and(
-          eq(tasks.taskType, 'user_onboarding'),
+          eq(tasks.taskType, 'user_invitation'),  
           sql`LOWER(${tasks.userEmail}) = LOWER(${req.user.email})`,
           or(
             eq(tasks.status, TaskStatus.EMAIL_SENT),
-            eq(tasks.status, TaskStatus.IN_PROGRESS)
+            eq(tasks.status, TaskStatus.IN_PROGRESS),
+            eq(tasks.status, TaskStatus.PENDING)  
           )
         )
       )
       .orderBy(sql`created_at DESC`)
       .limit(1);
+
+    console.log(`[User Routes] Found task:`, task);
 
     if (!task) {
       console.warn(`[User Routes] No active onboarding task found for user ID ${req.user.id}`);
