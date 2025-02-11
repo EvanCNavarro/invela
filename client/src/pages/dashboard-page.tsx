@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteFormData) => {
-      const response = await fetch('/api/fintech/invite', {
+      const response = await fetch('/api/users/invite', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -430,7 +430,7 @@ export default function DashboardPage() {
                               {serverError && (
                                 <div className="p-3 mt-2 bg-destructive/10 rounded-lg border border-destructive/20">
                                   <p className="text-sm font-medium text-destructive">
-                                    {serverError.includes("mailbox") 
+                                    {serverError.includes("mailbox")
                                       ? "This email address does not exist. Please try again."
                                       : "Failed to send invitation. Please try again."}
                                   </p>

@@ -923,8 +923,7 @@ export function registerRoutes(app: Express): Server {
       // Create new file record
       const fileData = {
         name: req.file.originalname,
-        size: req.file.size,
-        type: req.file.mimetype,
+        size: req.file.size,        type: req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
         userId: req.user!.id,
@@ -1809,3 +1808,7 @@ const STATUS_PROGRESS = {
   [TaskStatus.COMPLETED]: 100,
   [TaskStatus.FAILED]: 100,
 };
+
+function generateInviteCode() {
+  return uuidv4().substring(0, 8).toUpperCase();
+}
