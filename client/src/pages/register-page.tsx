@@ -346,7 +346,7 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(209,99%,50%)]">
+      <div className="hidden lg:flex flex-1 items-center justify-center bg-background">
         <AuthHeroSection isLogin={false} />
       </div>
     </div>
