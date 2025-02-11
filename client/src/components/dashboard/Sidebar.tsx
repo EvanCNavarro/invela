@@ -11,11 +11,11 @@ import {
   MousePointer2Icon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Separator } from "@/components/ui/separator";
 import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { wsService } from "@/lib/websocket";
 
 interface SidebarProps {
@@ -38,9 +38,7 @@ export function Sidebar({
   isPlayground = false
 }: SidebarProps) {
   const [location] = useLocation();
-  const queryClient = useQueryClient();
   const [taskCount, setTaskCount] = useState(0);
-  const unsubscribeRefs = useRef<(() => void)[]>([]);
 
   // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery({
@@ -64,45 +62,50 @@ export function Sidebar({
   useEffect(() => {
     if (isPlayground) return;
 
-    const setupSubscriptions = async () => {
-      // Clear previous unsubscribe functions
-      unsubscribeRefs.current.forEach(unsubscribe => unsubscribe());
-      unsubscribeRefs.current = [];
+    const subscriptions: Array<() => void> = [];
 
-      // Subscribe to task updates that include count information
-      const createdUnsubscribe = await wsService.subscribe('task_created', (data) => {
-        if (data.count?.total !== undefined) {
-          setTaskCount(data.count.total);
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-        }
-      });
-      unsubscribeRefs.current.push(createdUnsubscribe);
+    const setupWebSocketSubscriptions = async () => {
+      try {
+        // Subscribe to task creation
+        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
+          if (data.count?.total !== undefined) {
+            setTaskCount(data.count.total);
+          }
+        });
+        subscriptions.push(unsubTaskCreate);
 
-      const deletedUnsubscribe = await wsService.subscribe('task_deleted', (data) => {
-        if (data.count?.total !== undefined) {
-          setTaskCount(data.count.total);
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-        }
-      });
-      unsubscribeRefs.current.push(deletedUnsubscribe);
+        // Subscribe to task deletion
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
+          if (data.count?.total !== undefined) {
+            setTaskCount(data.count.total);
+          }
+        });
+        subscriptions.push(unsubTaskDelete);
 
-      const updatedUnsubscribe = await wsService.subscribe('task_updated', (data) => {
-        if (data.count?.total !== undefined) {
-          setTaskCount(data.count.total);
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-        }
-      });
-      unsubscribeRefs.current.push(updatedUnsubscribe);
+        // Subscribe to task updates
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+          if (data.count?.total !== undefined) {
+            setTaskCount(data.count.total);
+          }
+        });
+        subscriptions.push(unsubTaskUpdate);
+      } catch (error) {
+        console.error('Error setting up WebSocket subscriptions:', error);
+      }
     };
 
-    setupSubscriptions();
+    setupWebSocketSubscriptions();
 
-    // Cleanup function
     return () => {
-      unsubscribeRefs.current.forEach(unsubscribe => unsubscribe());
-      unsubscribeRefs.current = [];
+      subscriptions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('Error unsubscribing from WebSocket:', error);
+        }
+      });
     };
-  }, [isPlayground, queryClient]);
+  }, [isPlayground]);
 
   const menuItems = [
     {

@@ -8,11 +8,10 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
 
-// Define the task status flow
+// Define task status mappings and constants
 const taskStatusFlow = {
   [TaskStatus.EMAIL_SENT]: {
     next: TaskStatus.IN_PROGRESS,
@@ -34,7 +33,6 @@ const taskStatusMap = {
   [TaskStatus.COMPLETED]: 'Completed',
 } as const;
 
-// Define progress values for each status
 const STATUS_PROGRESS = {
   [TaskStatus.EMAIL_SENT]: 25,
   [TaskStatus.IN_PROGRESS]: 50,
@@ -85,6 +83,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       return response.json();
     },
     onSuccess: () => {
+      // Immediately invalidate queries to trigger refetch
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       toast({
         title: "Task Updated",
@@ -116,21 +115,39 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                 : task
             )
           );
-          if (data.count) setTaskCounts(data.count);
+          if (data.count) {
+            setTaskCounts(data.count);
+            // Force refresh the tasks query to update sidebar count
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          }
         });
         subscriptions.push(unsubTaskUpdate);
 
         // Subscribe to task creation
         const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
-          setTasks(currentTasks => [...currentTasks, data.task]);
-          if (data.count) setTaskCounts(data.count);
+          setTasks(currentTasks => {
+            const newTasks = [...currentTasks];
+            if (!newTasks.find(t => t.id === data.task.id)) {
+              newTasks.push(data.task);
+            }
+            return newTasks;
+          });
+          if (data.count) {
+            setTaskCounts(data.count);
+            // Force refresh the tasks query to update sidebar count
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          }
         });
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
         const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
           setTasks(currentTasks => currentTasks.filter(task => task.id !== data.taskId));
-          if (data.count) setTaskCounts(data.count);
+          if (data.count) {
+            setTaskCounts(data.count);
+            // Force refresh the tasks query to update sidebar count
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          }
         });
         subscriptions.push(unsubTaskDelete);
       } catch (error) {
@@ -145,7 +162,6 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
 
     setupWebSocketSubscriptions();
 
-    // Cleanup subscriptions on unmount
     return () => {
       subscriptions.forEach(unsubscribe => {
         try {
@@ -155,7 +171,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
         }
       });
     };
-  }, [toast]);
+  }, [queryClient, toast]);
 
   // Update tasks when initialTasks changes
   useEffect(() => {
@@ -167,11 +183,6 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
     });
   }, [initialTasks]);
-
-  // Get progress based on status, fallback to actual progress value if exists
-  const getProgress = (task: Task) => {
-    return task.progress ?? STATUS_PROGRESS[task.status] ?? 0;
-  };
 
   // Handle status transition
   const handleStatusUpdate = async (task: Task) => {
@@ -186,6 +197,10 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
     } catch (error) {
       console.error('Failed to update task status:', error);
     }
+  };
+
+  const getProgress = (task: Task) => {
+    return task.progress ?? STATUS_PROGRESS[task.status] ?? 0;
   };
 
   return (
