@@ -14,7 +14,7 @@ import {
   users,
   invitations
 } from "@db/schema";
-import { eq, and, inArray, or, gt, sql, ilike } from "drizzle-orm";
+import { eq, and, inArray, or, gt, sql, ilike, desc } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -633,13 +633,26 @@ export function registerRoutes(app: Express): Server {
 
   // Tasks
   app.get("/api/tasks", requireAuth, async (req, res) => {
-    const results = await db.select().from(tasks).where(
-      or(
-        eq(tasks.createdBy, req.user!.id),
-        eq(tasks.assignedTo, req.user!.id)
-      )
-    );
-    res.json(results);
+    try {
+      console.log('[Tasks] Fetching tasks for user:', req.user!.id);
+
+      const results = await db.select()
+        .from(tasks)
+        .where(
+          or(
+            eq(tasks.createdBy, req.user!.id),
+            eq(tasks.assignedTo, req.user!.id)
+          )
+        )
+        .orderBy(desc(tasks.createdAt));
+
+      console.log('[Tasks] Found tasks:', results.length);
+
+      res.json(results);
+    } catch (error) {
+      console.error('[Tasks] Error fetching tasks:', error);
+      res.status(500).json({ message: "Error fetching tasks" });
+    }
   });
 
   // Update task status with validation
@@ -1459,7 +1472,7 @@ export function registerRoutes(app: Express): Server {
       // Update task status
       await db.update(tasks)
         .set({ status: 'email_sent' })
-        .where(eq(tasks.id, task.id));
+        .where(eq(tasks.id, invitation.taskId));
 
       res.json({ success: true, message: 'Invitation sent successfully' });
     } catch (error) {
