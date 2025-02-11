@@ -206,7 +206,10 @@ export default function AuthPage() {
                 alt="Invela"
                 className="h-12 w-12 mx-auto mb-4"
               />
-              <h1 className="text-2xl font-bold">Create your account</h1>
+              <h1 className="text-2xl font-bold">Complete Your Account</h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                Provide additional details to complete your account setup
+              </p>
             </div>
 
             {/* Email domain warning */}
@@ -245,7 +248,7 @@ export default function AuthPage() {
                       {field.value && !registrationForm.formState.errors.email && (
                         <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
                           <Check className="h-4 w-4" />
-                          Valid email address
+                          Verified email address
                         </p>
                       )}
                     </FormItem>
@@ -320,7 +323,7 @@ export default function AuthPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>Set Password</FormLabel>
                       <div className="relative">
                         <FormControl>
                           <Input
@@ -359,7 +362,7 @@ export default function AuthPage() {
                   className="w-full font-bold hover:opacity-90"
                   disabled={registerMutation.isPending}
                 >
-                  Create Account
+                  Complete Account Setup
                 </Button>
               </form>
             </Form>
@@ -450,6 +453,7 @@ export default function AuthPage() {
       </div>
     );
   }
+
 
 
   // Show login form by default or when on /login path
