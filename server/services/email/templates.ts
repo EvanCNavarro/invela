@@ -17,9 +17,20 @@ export const emailTemplateSchema = z.object({
 });
 
 const templates = {
-  user_invite: (data: TemplateData): EmailTemplate => ({
-    subject: `Invitation to join ${data.company}`,
-    text: `Hello ${data.recipientName}, you've been invited to join ${data.company} by ${data.senderName}.
+  user_invite: (data: TemplateData): EmailTemplate => {
+    console.log('[Template:user_invite] Received data:', JSON.stringify(data, null, 2));
+
+    // Ensure all required fields exist
+    const companyName = data.company || 'Invela';
+    const recipientName = data.recipientName || 'User';
+    const senderName = data.senderName || 'Admin';
+    const code = data.code || '';
+    const inviteUrl = data.inviteUrl || '';
+
+    return {
+      subject: `Invitation to join ${companyName}`,
+      text: `
+Hello ${recipientName}, you've been invited to join ${companyName} by ${senderName}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -27,13 +38,13 @@ Getting Started:
 3. Upload the requested files to our secure system.
 4. Acquire an Invela Accreditation & Risk Score for your company.
 
-Your Invitation Code: ${data.code}
+Your Invitation Code: ${code}
 
-Click here to get started: ${data.inviteUrl}
+Click here to get started: ${inviteUrl}
 
 © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
 `.trim(),
-    html: `
+      html: `
 <!DOCTYPE html>
 <html>
   <head>
@@ -64,7 +75,7 @@ Click here to get started: ${data.inviteUrl}
         color: #111827;
         margin: 0 0 24px 0;
       }
-      .invitation {
+      .title {
         font-size: 16px;
         font-weight: 500;
         color: #374151;
@@ -136,8 +147,8 @@ Click here to get started: ${data.inviteUrl}
   </head>
   <body>
     <div class="container">
-      <h1 class="company-name">${data.company}</h1>
-      <h2 class="title">Hello ${data.recipientName}, you've been invited to join ${data.company} by ${data.senderName}.</h2>
+      <h1 class="company-name">${companyName}</h1>
+      <h2 class="title">Hello ${recipientName}, you've been invited to join ${companyName} by ${senderName}.</h2>
 
       <div class="getting-started">
         <h3 class="section-title">Getting Started:</h3>
@@ -151,10 +162,10 @@ Click here to get started: ${data.inviteUrl}
 
       <div class="invitation-code">
         <span class="code-label">Your Invitation Code</span>
-        ${data.code}
+        ${code}
       </div>
 
-      <a href="${data.inviteUrl}" class="button">Create Your Account</a>
+      <a href="${inviteUrl}" class="button">Create Your Account</a>
 
       <div class="footer">
         <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
@@ -163,7 +174,8 @@ Click here to get started: ${data.inviteUrl}
   </body>
 </html>
 `.trim(),
-  }),
+    };
+  },
   fintech_invite: (data: TemplateData): EmailTemplate => ({
     subject: `You've been invited to join ${data.senderCompany}`,
     text: `
@@ -317,7 +329,7 @@ Click here to get started: ${data.inviteUrl}
 export type TemplateNames = keyof typeof templates;
 
 export function getEmailTemplate(templateName: TemplateNames, data: TemplateData): EmailTemplate {
-  console.log('[EmailTemplate] Template requested:', templateName);
+  console.log('[EmailTemplate] Getting template:', templateName);
   console.log('[EmailTemplate] Template data:', JSON.stringify(data, null, 2));
 
   const template = templates[templateName];
