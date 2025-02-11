@@ -8,7 +8,7 @@ import crypto from "crypto";
 
 const router = Router();
 
-// Schema for user invitation
+// Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
   fullName: z.string().min(1, "Full name is required"),

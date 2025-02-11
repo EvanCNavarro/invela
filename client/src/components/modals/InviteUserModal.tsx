@@ -63,7 +63,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         company_id: companyId,
         company_name: companyName,
         sender_name: user.fullName,
-        sender_company: companyName
+        sender_company: companyName // Using company name from props for sender's company
       };
 
       console.log('Debug - Invitation payload:', payload);
