@@ -7,6 +7,7 @@ import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -21,6 +22,13 @@ import PlaygroundPage from "@/pages/playground-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+
+  // Redirect to login if no user
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
   return (
     <div className="min-h-screen">
       {children}
@@ -30,6 +38,13 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const [location] = useLocation();
+  const { user } = useAuth();
+
+  // Redirect authenticated users away from auth pages
+  if (user && (location === "/login" || location === "/register")) {
+    return <Redirect to="/" />;
+  }
+
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
