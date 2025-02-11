@@ -14,17 +14,29 @@ const taskStatusMap = {
   [TaskStatus.COMPLETED]: 'Completed',
 } as const;
 
+// Define progress values for each status
+const statusProgressMap = {
+  [TaskStatus.EMAIL_SENT]: 25,
+  [TaskStatus.IN_PROGRESS]: 50,
+  [TaskStatus.COMPLETED]: 100,
+} as const;
+
 interface Task {
   id: number;
   title: string;
   status: TaskStatus;
-  progress: number;
+  progress?: number;
   dueDate?: string;
 }
 
 export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+
+  // Get progress based on status, fallback to actual progress value if exists
+  const getProgress = (task: Task) => {
+    return statusProgressMap[task.status] ?? task.progress ?? 0;
+  };
 
   return (
     <>
@@ -48,7 +60,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                     {taskStatusMap[task.status] || task.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{task.progress}%</TableCell>
+                <TableCell>{getProgress(task)}%</TableCell>
                 <TableCell>
                   {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '-'}
                 </TableCell>
