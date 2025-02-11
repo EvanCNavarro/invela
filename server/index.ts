@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { WebSocketServer, WebSocket } from 'ws';
+import { createServer } from 'http';
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -24,30 +25,35 @@ export function broadcastMessage(type: string, data: any) {
   const message = JSON.stringify({ type, data });
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
+      try {
+        client.send(message);
+      } catch (error) {
+        console.error('Error broadcasting message:', error);
+        clients.delete(client);
+      }
     }
   });
 }
 
 const app = express();
+const server = createServer(app);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Request logging middleware with improved error tracking
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
   let errorCaptured: Error | undefined = undefined;
 
-  // Capture response data for logging
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
     capturedJsonResponse = bodyJson;
     return originalResJson.apply(res, [bodyJson, ...args]);
   };
 
-  // Error event listener
   res.on('error', (error) => {
     errorCaptured = error;
     log(`Response error: ${error.message}`, 'error');
@@ -61,12 +67,10 @@ app.use((req, res, next) => {
 
       let logLine = `${req.method} ${path} ${status} in ${duration}ms`;
 
-      // Add error information if present
       if (errorCaptured) {
         logLine += ` :: Error: ${errorCaptured.message}`;
       }
 
-      // Add response data for non-error responses
       if (capturedJsonResponse && !errorCaptured) {
         const responseStr = JSON.stringify(capturedJsonResponse);
         if (responseStr.length > 80) {
@@ -83,96 +87,92 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = registerRoutes(app);
+registerRoutes(app);
 
-  // Setup WebSocket server
-  const wss = new WebSocketServer({ 
-    server,
-    path: '/ws',
-    // Ignore Vite HMR WebSocket connections
-    verifyClient: ({ req }) => {
-      return req.headers['sec-websocket-protocol'] !== 'vite-hmr';
+// Setup WebSocket server
+const wss = new WebSocketServer({ 
+  server,
+  path: '/ws',
+  verifyClient: ({ req }) => {
+    // Skip Vite HMR connections
+    if (req.headers['sec-websocket-protocol'] === 'vite-hmr') {
+      return false;
+    }
+    return true;
+  }
+});
+
+// WebSocket connection handling
+wss.on('connection', (ws: WebSocket, req) => {
+  console.log('New WebSocket client connected from:', req.headers.origin);
+  clients.add(ws);
+
+  // Send initial connection confirmation
+  ws.send(JSON.stringify({ type: 'connection_established', data: { timestamp: new Date().toISOString() } }));
+
+  ws.on('message', (message: string) => {
+    try {
+      const data = JSON.parse(message.toString());
+      console.log('Received WebSocket message:', data);
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
     }
   });
 
-  // WebSocket connection handling
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('New WebSocket client connected');
-    clients.add(ws);
-
-    ws.on('message', (message: string) => {
-      try {
-        const data = JSON.parse(message.toString());
-        console.log('Received WebSocket message:', data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
-      }
-    });
-
-    ws.on('close', () => {
-      console.log('WebSocket client disconnected');
-      clients.delete(ws);
-    });
-
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-      clients.delete(ws);
-    });
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+    clients.delete(ws);
   });
 
-  // Enhanced error handling middleware
-  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-    const isAPIError = err instanceof APIError;
-    const status = isAPIError ? err.status : err.status || err.statusCode || 500;
-    const timestamp = new Date().toISOString();
-
-    // Determine if we should expose error details
-    const isProduction = process.env.NODE_ENV === 'production';
-    const shouldExposeError = !isProduction || status < 500;
-
-    // Construct error response
-    const errorResponse = {
-      status,
-      message: shouldExposeError ? err.message : 'Internal Server Error',
-      code: isAPIError ? err.code : undefined,
-      timestamp,
-      path: req.path,
-      method: req.method,
-      ...(shouldExposeError && err.details ? { details: err.details } : {}),
-      ...((!isProduction && err.stack) ? { stack: err.stack } : {})
-    };
-
-    // Log error with full details
-    const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
-    if (status >= 500) {
-      console.error(logMessage, {
-        error: err,
-        stack: err.stack,
-        body: req.body,
-        query: req.query,
-        user: req.user
-      });
-    } else {
-      console.warn(logMessage, { error: err });
-    }
-
-    res.status(status).json(errorResponse);
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    clients.delete(ws);
   });
+});
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  const isAPIError = err instanceof APIError;
+  const status = isAPIError ? err.status : err.status || err.statusCode || 500;
+  const timestamp = new Date().toISOString();
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const shouldExposeError = !isProduction || status < 500;
+
+  const errorResponse = {
+    status,
+    message: shouldExposeError ? err.message : 'Internal Server Error',
+    code: isAPIError ? err.code : undefined,
+    timestamp,
+    path: req.path,
+    method: req.method,
+    ...(shouldExposeError && err.details ? { details: err.details } : {}),
+    ...((!isProduction && err.stack) ? { stack: err.stack } : {})
+  };
+
+  const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
+  if (status >= 500) {
+    console.error(logMessage, {
+      error: err,
+      stack: err.stack,
+      body: req.body,
+      query: req.query,
+      user: req.user
+    });
   } else {
-    serveStatic(app);
+    console.warn(logMessage, { error: err });
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client
-  const PORT = 5000;
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
-})();
+  res.status(status).json(errorResponse);
+});
+
+if (app.get("env") === "development") {
+  await setupVite(app, server);
+} else {
+  serveStatic(app);
+}
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, "0.0.0.0", () => {
+  log(`Server and WebSocket running on port ${PORT}`);
+});
