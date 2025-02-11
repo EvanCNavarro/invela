@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@db";
-import { users, tasks, TaskStatus, invitations } from "@db/schema"; // Added invitations import
+import { users, tasks, TaskStatus, invitations } from "@db/schema"; 
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcrypt";
@@ -11,7 +11,7 @@ const router = Router();
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
-  full_name: z.string().min(1, "Full name is required"), //Corrected field name
+  full_name: z.string().min(1, "Full name is required"), 
   company_id: z.number({
     required_error: "Company ID is required",
     invalid_type_error: "Company ID must be a number"
@@ -34,14 +34,14 @@ async function hashPassword(password: string) {
 
 router.post("/api/users/invite", async (req, res) => {
   try {
-    console.log('\n[Step 3A] Starting Initial Steps');
-    console.log('[Step 3A] Request body:', JSON.stringify(req.body, null, 2));
+    console.log('\n[Step 1] Starting User Invitation Process');
+    console.log('[Step 1] Request body:', JSON.stringify(req.body, null, 2));
 
-    // Step 3A: Validate request data
+    // Step 1: Validate request data
     const validationResult = inviteUserSchema.safeParse(req.body);
 
     if (!validationResult.success) {
-      console.error('[Step 3A] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
+      console.error('[Step 1] Validation failed:', JSON.stringify(validationResult.error.format(), null, 2));
       const errorDetails = {};
       validationResult.error.errors.forEach(err => {
         errorDetails[err.path.join('.')] = err.message;
@@ -53,7 +53,7 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     const data = validationResult.data;
-    console.log('[Step 3A] Validation successful. Validated data:', JSON.stringify(data, null, 2));
+    console.log('[Step 1] Validation successful. Validated data:', JSON.stringify(data, null, 2));
 
     // Start transaction
     let newUser;
@@ -63,22 +63,26 @@ router.post("/api/users/invite", async (req, res) => {
     try {
       await db.transaction(async (tx) => {
         // Check if user exists
-        console.log('[Step 3A] Checking for existing user...');
+        console.log('[Step 2] Checking for existing user...');
         const existingUser = await tx.query.users.findFirst({
           where: eq(users.email, data.email.toLowerCase()),
         });
 
         if (existingUser) {
-          console.error('[Step 3A] User already exists:', existingUser.email);
+          console.error('[Step 2] User already exists:', existingUser.email);
           throw new Error("User with this email already exists");
         }
-        console.log('[Step 3A] User check completed - no existing user found');
+        console.log('[Step 2] User check completed - no existing user found');
 
-        // Step 3B: Create new user account
-        console.log('\n[Step 3B] Starting User Account Creation');
+        // Step 3: Create new user account
+        console.log('\n[Step 3] Starting User Account Creation');
         const tempPassword = generateTempPassword();
-        const hashedPassword = await hashPassword(tempPassword);
+        console.log('[Step 3] Generated temporary password');
 
+        const hashedPassword = await hashPassword(tempPassword);
+        console.log('[Step 3] Password hashed successfully');
+
+        console.log('[Step 3] Attempting to create user account...');
         const userInsertResult = await tx
           .insert(users)
           .values({
@@ -94,17 +98,17 @@ router.post("/api/users/invite", async (req, res) => {
 
         newUser = userInsertResult[0];
         if (!newUser?.id) {
-          console.error('[Step 3B] Failed to create user account');
+          console.error('[Step 3] Failed to create user account');
           throw new Error("Failed to create user account");
         }
-        console.log('[Step 3B] User account created successfully:', {
+        console.log('[Step 3] User account created successfully:', {
           id: newUser.id,
           email: newUser.email,
           companyId: newUser.companyId
         });
 
-        // Step 3C: Create onboarding task
-        console.log('\n[Step 3C] Starting Onboarding Task Creation');
+        // Step 4: Create onboarding task
+        console.log('\n[Step 4] Starting Onboarding Task Creation');
         const taskInsertResult = await tx
           .insert(tasks)
           .values({
@@ -132,21 +136,22 @@ router.post("/api/users/invite", async (req, res) => {
 
         task = taskInsertResult[0];
         if (!task?.id) {
-          console.error('[Step 3C] Failed to create onboarding task');
+          console.error('[Step 4] Failed to create onboarding task');
           throw new Error("Failed to create onboarding task");
         }
-        console.log('[Step 3C] Onboarding task created successfully:', {
+        console.log('[Step 4] Onboarding task created successfully:', {
           id: task.id,
           title: task.title,
           assignedTo: task.assignedTo
         });
 
-        // Step 3D: Create invitation record
-        console.log('\n[Step 3D] Starting Invitation Creation');
+        // Step 5: Create invitation record
+        console.log('\n[Step 5] Starting Invitation Creation');
         const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
+        console.log('[Step 5] Attempting to create invitation record...');
         const invitationInsertResult = await tx
           .insert(invitations)
           .values({
@@ -165,17 +170,22 @@ router.post("/api/users/invite", async (req, res) => {
 
         invitation = invitationInsertResult[0];
         if (!invitation?.id) {
-          console.error('[Step 3D] Failed to create invitation');
+          console.error('[Step 5] Failed to create invitation');
           throw new Error("Failed to create invitation");
         }
-        console.log('[Step 3D] Invitation created successfully:', {
+        console.log('[Step 5] Invitation created successfully:', {
           id: invitation.id,
           code: invitation.code,
           email: invitation.email
         });
-      });
 
-      console.log('\n[Step 3] Transaction completed successfully');
+        console.log('\n[Success] Transaction completed successfully');
+        console.log('[Success] User, Task, and Invitation created:', {
+          userId: newUser.id,
+          taskId: task.id,
+          invitationId: invitation.id
+        });
+      });
 
       // Send success response
       res.status(201).json({
@@ -197,12 +207,18 @@ router.post("/api/users/invite", async (req, res) => {
       });
 
     } catch (txError) {
-      console.error('[Step 3] Transaction error:', txError);
+      console.error('[Error] Transaction error:', txError);
+      console.error('[Error] Failed at stage:', {
+        userCreated: !!newUser,
+        taskCreated: !!task,
+        invitationCreated: !!invitation
+      });
       throw txError;
     }
 
   } catch (error) {
-    console.error('[Step 3] Error processing invitation:', error);
+    console.error('[Error] Error processing invitation:', error);
+    console.error('[Error] Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
 
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
@@ -221,7 +237,8 @@ router.post("/api/users/invite", async (req, res) => {
     }
 
     res.status(500).json({ 
-      message: error instanceof Error ? error.message : "Failed to send invitation" 
+      message: error instanceof Error ? error.message : "Failed to send invitation",
+      details: error instanceof Error ? error.message : undefined
     });
   }
 });
