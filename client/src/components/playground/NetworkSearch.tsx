@@ -1,9 +1,11 @@
 import * as React from "react"
-import { Search as SearchIcon, Plus, X, Check } from "lucide-react"
+import { Search as SearchIcon, Plus, X, Check, AlertTriangle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
+import { Link } from "wouter"
 import Fuse from 'fuse.js'
 import type { Company } from "@/types/company"
 
@@ -20,6 +22,7 @@ export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLI
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
   isValid?: boolean
   isError?: boolean
+  existingCompany?: Company | null
 }
 
 export function NetworkSearch({
@@ -36,6 +39,7 @@ export function NetworkSearch({
   onAddNewCompany,
   isValid = false,
   isError = false,
+  existingCompany = null,
   ...props
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
@@ -114,97 +118,123 @@ export function NetworkSearch({
   }, [controlledOnChange, onSearch])
 
   return (
-    <div 
-      ref={containerRef}
-      className={cn("relative flex w-full items-center", containerClassName)}
-    >
-      {isValid ? (
-        <Check 
-          className="absolute left-3 h-4 w-4 text-green-500 pointer-events-none"
-        />
-      ) : (
-        <SearchIcon 
-          className={cn(
-            "absolute left-3 h-4 w-4 pointer-events-none",
-            isError ? "text-destructive" : "text-muted-foreground"
-          )}
-        />
-      )}
-      <Input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        onFocus={() => setIsOpen(true)}
-        placeholder="Search Network"
-        className={cn(
-          "pl-9 pr-[70px]",
-          "focus:ring-2 focus:ring-offset-2",
-          isValid 
-            ? "border-green-500 focus:ring-green-500 focus:ring-offset-background" 
-            : isError
-              ? "border-destructive focus:ring-destructive focus:ring-offset-background"
-              : "focus:ring-ring focus:ring-offset-background",
-          className
-        )}
-        {...props}
-      />
-      <div className="absolute right-3 flex items-center gap-2">
-        {isLoading ? (
-          <LoadingSpinner size="sm" />
-        ) : hasValue && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleClear}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-
-      {/* Dropdown menu */}
-      <div
-        className={cn(
-          "absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md",
-          !isOpen && "hidden"
-        )}
+    <div className="space-y-2">
+      <div 
+        ref={containerRef}
+        className={cn("relative flex w-full items-center", containerClassName)}
       >
-        {hasValue && searchResults.length > 0 && (
-          <>
-            <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
-            {searchResults.map((result, index) => (
-              <button
-                key={index}
-                className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                onClick={() => handleSelect(result.item.name)}
-              >
-                <span className="flex-1 text-left">{result.item.name}</span>
-                {result.item.category && (
-                  <span className="text-xs text-muted-foreground">{result.item.category}</span>
-                )}
-              </button>
-            ))}
-          </>
+        {existingCompany ? (
+          <AlertTriangle 
+            className="absolute left-3 h-4 w-4 text-yellow-500 pointer-events-none"
+          />
+        ) : isValid ? (
+          <Check 
+            className="absolute left-3 h-4 w-4 text-green-500 pointer-events-none"
+          />
+        ) : (
+          <SearchIcon 
+            className={cn(
+              "absolute left-3 h-4 w-4 pointer-events-none",
+              isError ? "text-destructive" : "text-muted-foreground"
+            )}
+          />
         )}
-
-        {hasValue && searchResults.length === 0 && (
-          <>
-            <div className="px-2 py-1.5 text-sm font-medium">No results found</div>
-            <button
-              className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              onClick={() => {
-                console.log('[NetworkSearch] Adding new company:', inputValue)
-                onAddNewCompany?.(inputValue)
-              }}
+        <Input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          onChange={handleChange}
+          onFocus={() => setIsOpen(true)}
+          placeholder="Search Network"
+          className={cn(
+            "pl-9 pr-[70px]",
+            "focus:ring-2 focus:ring-offset-2",
+            existingCompany 
+              ? "border-yellow-500 focus:ring-yellow-500 focus:ring-offset-background"
+              : isValid 
+                ? "border-green-500 focus:ring-green-500 focus:ring-offset-background" 
+                : isError
+                  ? "border-destructive focus:ring-destructive focus:ring-offset-background"
+                  : "focus:ring-ring focus:ring-offset-background",
+            className
+          )}
+          {...props}
+        />
+        <div className="absolute right-3 flex items-center gap-2">
+          {isLoading ? (
+            <LoadingSpinner size="sm" />
+          ) : hasValue && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleClear}
             >
-              <Plus className="h-4 w-4" />
-              Add "{inputValue}" to {currentCompanyName}'s Network
-            </button>
-          </>
-        )}
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Dropdown menu */}
+        <div
+          className={cn(
+            "absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md",
+            !isOpen && "hidden"
+          )}
+        >
+          {hasValue && searchResults.length > 0 && (
+            <>
+              <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
+              {searchResults.map((result, index) => (
+                <button
+                  key={index}
+                  className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                  onClick={() => handleSelect(result.item.name)}
+                >
+                  <span className="flex-1 text-left">{result.item.name}</span>
+                  {result.item.category && (
+                    <span className="text-xs text-muted-foreground">{result.item.category}</span>
+                  )}
+                </button>
+              ))}
+            </>
+          )}
+
+          {hasValue && searchResults.length === 0 && (
+            <>
+              <div className="px-2 py-1.5 text-sm font-medium">No results found</div>
+              <button
+                className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  console.log('[NetworkSearch] Adding new company:', inputValue)
+                  onAddNewCompany?.(inputValue)
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add "{inputValue}" to {currentCompanyName}'s Network
+              </button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Warning message for existing company */}
+      {existingCompany && (
+        <Alert variant="warning" className="mt-2">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>
+              {existingCompany.name} already exists. To invite users to an existing company, 
+              visit the company's profile page.
+            </span>
+            <Link href={`/companies/${existingCompany.id}`}>
+              <Button variant="outline" size="sm" className="ml-2">
+                Go to {existingCompany.name}'s Profile
+              </Button>
+            </Link>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   )
 }
