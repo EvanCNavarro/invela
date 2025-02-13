@@ -231,7 +231,7 @@ export function NetworkSearch({
               {existingCompany.name} already exists. To invite users to an existing company, 
               visit the company's profile page.
             </AlertDescription>
-            <Link href={`/network/companies/${getCompanySlug(existingCompany.name)}`}>
+            <Link href={`/network/companies/${getCompanySlug(existingCompany.name)}?tab=users`}>
               <Button variant="outline" size="sm" className="w-full justify-between">
                 Go to {existingCompany.name}'s Profile
                 <ExternalLink className="h-4 w-4 ml-2" />
