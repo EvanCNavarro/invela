@@ -54,10 +54,8 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteUserData) => {
-      console.log("[Step 2] Starting Frontend Validation");
       try {
         const validatedData = inviteUserSchema.parse(formData);
-        console.log("[Step 2] Frontend Validation successful", validatedData);
 
         const payload = {
           email: validatedData.email,
@@ -65,9 +63,13 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           company_id: companyId,
           company_name: companyName,
           sender_name: user?.fullName,
+          // Add the missing fields required by the email template
+          sender_company: companyName,
+          target_company: companyName,
+          recipient_email: validatedData.email
         };
 
-        console.log("[Step 2] Sending request payload:", payload);
+        console.log("[InviteUserModal] Sending invitation with payload:", payload);
 
         const response = await fetch('/api/users/invite', {
           method: 'POST',
@@ -78,7 +80,6 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         });
 
         const responseData = await response.json();
-        console.log("[Step 2] Server response:", responseData);
 
         if (!response.ok) {
           throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
@@ -86,12 +87,11 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
 
         return responseData;
       } catch (error) {
-        console.error("[Step 2] Frontend Validation failed:", error);
+        console.error("[InviteUserModal] Error:", error);
         throw error;
       }
     },
     onError: (error: Error) => {
-      console.error("[Step 4] UI Update - Error:", error);
       setServerError(error.message);
       toast({
         title: "Error sending invitation",
@@ -99,44 +99,38 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
         variant: "destructive",
       });
     },
-    onSuccess: (data) => {
-      console.log("[Step 4] Starting UI Updates");
-      try {
-        toast({
-          title: "Invitation sent successfully",
-          description: `${form.getValues().full_name} has been invited to join ${companyName}.`,
-        });
+    onSuccess: () => {
+      toast({
+        title: "Invitation sent successfully",
+        description: `${form.getValues().full_name} has been invited to join ${companyName}.`,
+      });
 
-        form.reset({
-          email: "",
-          full_name: "",
-          company_id: companyId,
-          company_name: companyName,
-          sender_name: user?.fullName || "",
-        });
-        setServerError(null);
-        onOpenChange(false);
+      form.reset({
+        email: "",
+        full_name: "",
+        company_id: companyId,
+        company_name: companyName,
+        sender_name: user?.fullName || "",
+      });
+      setServerError(null);
+      onOpenChange(false);
 
-        const inviteButton = document.querySelector('[data-element="invite-user-button"]');
-        if (inviteButton) {
-          const rect = inviteButton.getBoundingClientRect();
-          confetti({
-            particleCount: 75,
-            spread: 52,
-            origin: {
-              x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-              y: rect.top / window.innerHeight
-            },
-            colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-            ticks: 200,
-            gravity: 0.8,
-            scalar: 0.8,
-            shapes: ["circle"]
-          });
-        }
-        console.log("[Step 4] UI Updates completed successfully");
-      } catch (error) {
-        console.error("[Step 4] UI Updates failed:", error);
+      const inviteButton = document.querySelector('[data-element="invite-user-button"]');
+      if (inviteButton) {
+        const rect = inviteButton.getBoundingClientRect();
+        confetti({
+          particleCount: 75,
+          spread: 52,
+          origin: {
+            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+            y: rect.top / window.innerHeight
+          },
+          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+          ticks: 200,
+          gravity: 0.8,
+          scalar: 0.8,
+          shapes: ["circle"]
+        });
       }
     },
   });
