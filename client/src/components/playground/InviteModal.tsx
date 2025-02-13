@@ -59,13 +59,43 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   });
 
+  // Debug logging for form values
+  form.watch((data) => {
+    console.log('[InviteModal] Form values updated:', {
+      data,
+      errors: form.formState.errors,
+      isDirty: form.formState.isDirty,
+      isValid: form.formState.isValid
+    });
+  });
+
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
-      console.log('[InviteModal] Submitting invitation:', {
+      console.log('[InviteModal] Starting mutation with data:', {
         endpoint,
-        data
+        data,
+        formState: {
+          isValid: form.formState.isValid,
+          errors: form.formState.errors,
+          dirtyFields: form.formState.dirtyFields
+        }
+      });
+
+      // Validate required fields before sending
+      if (!data.email || !data.company_name) {
+        console.error('[InviteModal] Validation failed:', {
+          email: data.email,
+          company_name: data.company_name
+        });
+        throw new Error('Email and company name are required');
+      }
+
+      console.log('[InviteModal] Sending request to server:', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
       });
 
       const response = await fetch(endpoint, {
@@ -83,10 +113,15 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
       }
 
+      console.log('[InviteModal] Server response success:', responseData);
       return responseData;
     },
     onError: (error: Error) => {
-      console.error('[InviteModal] Error:', error);
+      console.error('[InviteModal] Mutation error:', {
+        error,
+        formData: form.getValues(),
+        formState: form.formState
+      });
       setServerError(error.message);
       toast({
         title: "Error sending invitation",
@@ -100,6 +135,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
       });
 
+      console.log('[InviteModal] Success - Resetting form');
       form.reset();
       setServerError(null);
       setIsValidCompanySelection(false);
@@ -140,7 +176,20 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   };
 
   const onSubmit = (formData: InviteData) => {
+    console.log('[InviteModal] Form submission started:', {
+      formData,
+      variant,
+      isValidCompanySelection,
+      formState: {
+        isValid: form.formState.isValid,
+        errors: form.formState.errors,
+        dirtyFields: form.formState.dirtyFields,
+        values: form.getValues()
+      }
+    });
+
     if (variant === 'fintech' && !isValidCompanySelection) {
+      console.log('[InviteModal] Invalid company selection');
       form.setError('company_name', {
         type: 'manual',
         message: 'Please select a valid company'
@@ -148,11 +197,10 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
-    console.log('[InviteModal] Form submission:', {
-      formData,
-      variant,
-      isValidCompanySelection
-    });
+    if (!formData.company_name) {
+      console.error('[InviteModal] Company name missing in form data');
+      return;
+    }
 
     sendInvite(formData);
   };
@@ -189,10 +237,18 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                       <NetworkSearch
                         value={field.value}
                         onChange={(e) => {
+                          console.log('[InviteModal] Company search onChange:', {
+                            value: e.target.value,
+                            previousValue: field.value
+                          });
                           field.onChange(e.target.value);
                           setIsValidCompanySelection(false);
                         }}
                         onCompanySelect={(company) => {
+                          console.log('[InviteModal] Company selected:', {
+                            company,
+                            previousValue: field.value
+                          });
                           field.onChange(company);
                           setIsValidCompanySelection(true);
                         }}
