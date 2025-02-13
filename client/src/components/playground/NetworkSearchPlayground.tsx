@@ -1,12 +1,32 @@
 import * as React from "react"
 import { NetworkSearch } from "./NetworkSearch"
+import type { Company } from "@/types/company"
 
-const sampleCompanies = [
-  { name: "Acme Corporation", industry: "Technology" },
-  { name: "Global Industries", industry: "Manufacturing" },
-  { name: "Tech Solutions", industry: "Technology" },
-  { name: "Future Enterprises", industry: "Finance" },
-  { name: "Innovation Labs", industry: "Research" },
+const sampleCompanies: Company[] = [
+  { 
+    id: 1,
+    name: "Acme Corporation",
+    category: "Technology",
+    description: "Leading technology solutions provider",
+    accreditationStatus: "APPROVED",
+    riskScore: 85
+  },
+  { 
+    id: 2,
+    name: "Global Industries",
+    category: "Manufacturing",
+    description: "Global manufacturing solutions",
+    accreditationStatus: "PENDING",
+    riskScore: 75
+  },
+  { 
+    id: 3,
+    name: "Tech Solutions",
+    category: "Technology",
+    description: "Innovative tech solutions",
+    accreditationStatus: "APPROVED",
+    riskScore: 90
+  }
 ]
 
 export default function NetworkSearchPlayground() {
@@ -25,7 +45,6 @@ export default function NetworkSearchPlayground() {
   }
 
   const handleAddNewCompany = (companyName: string) => {
-    // In a real application, this would trigger an API call to add the company
     console.log("Adding new company:", companyName)
     handleCompanySelect(companyName)
   }

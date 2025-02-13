@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
 import { useAuth } from "@/hooks/use-auth";
 import { NetworkSearch } from "./NetworkSearch";
@@ -46,6 +46,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const [selectedCompany, setSelectedCompany] = useState("");
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
 
+  // Fetch companies for network search
+  const { data: companies = [] } = useQuery({
+    queryKey: ["/api/companies"],
+    enabled: variant === 'fintech'
+  });
+
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
     defaultValues: {
@@ -60,17 +66,19 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
-      console.log('[InviteModal] Submit payload:', {
-        formData,
-        variant,
-        selectedCompany,
-        companyName
-      });
 
+      // Construct the payload ensuring company_name is set correctly
       const payload = {
         ...formData,
-        company_name: variant === 'user' ? companyName : selectedCompany,
+        company_name: variant === 'user' ? companyName : selectedCompany
       };
+
+      console.log('[InviteModal] Submitting invitation:', {
+        endpoint,
+        payload,
+        variant,
+        selectedCompany
+      });
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -146,6 +154,13 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   };
 
   const onSubmit = (data: InviteData) => {
+    console.log('[InviteModal] Form submission:', {
+      data,
+      selectedCompany,
+      isValidCompanySelection,
+      variant
+    });
+
     if (variant === 'fintech' && !isValidCompanySelection) {
       form.setError('company_name', {
         type: 'manual',
@@ -154,10 +169,13 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
-    sendInvite({
+    // Ensure company_name is set correctly for both variants
+    const payload = {
       ...data,
       company_name: variant === 'user' ? companyName! : selectedCompany
-    });
+    };
+
+    sendInvite(payload);
   };
 
   return (
@@ -205,6 +223,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         className="w-full"
                         isValid={isValidCompanySelection}
                         onKeyDown={handleKeyDown}
+                        data={companies}
                       />
                     </FormControl>
                     <FormMessage />
