@@ -696,8 +696,7 @@ export function registerRoutes(app: Express): Express {
             recipientName: full_name,
             senderName: sender_name,
             senderCompany: userCompany.name,
-            company: company_name,
-            code,
+            targetCompany: company_name, // Changed from company to targetCompany
             inviteUrl
           }
         };
