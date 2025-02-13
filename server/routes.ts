@@ -922,15 +922,21 @@ export function registerRoutes(app: Express): Express {
         email: req.body.email.toLowerCase(),
         fullName: req.body.full_name,
         companyId: req.body.company_id,
-companyName: req.body.company_name,
+        companyName: req.body.company_name,
         senderName: req.body.sender_name,
-        senderCompany: req.body.senderCompany || (req.user?.companyId === 0 ? 'Invela' : undefined)
+        senderCompany: req.body.sender_company || (req.user?.companyId === 0 ? 'Invela' : undefined)
       };
 
       console.log('[Invite] Validated invite data:', inviteData);
 
+      if (!inviteData.senderCompany) {
+        console.error('[Invite] Missing sender company:', inviteData);
+        throw new Error("Sender company is required");
+      }
+
       // Create the transaction for atomic operations
       const result = await db.transaction(async (tx) => {
+        console.log('[Invite] Starting database transaction');
         console.log('[Invite] Creating user account');
 
         // Generate a temporary password
@@ -957,7 +963,7 @@ companyName: req.body.company_name,
 
         console.log('[Invite] Creating invitation record with code:', code);
 
-        // Create invitation
+        // Create invitation record
         const [invitation] = await tx.insert(invitations)
           .values({
             email: inviteData.email,
@@ -966,14 +972,20 @@ companyName: req.body.company_name,
             companyId: inviteData.companyId,
             inviteeName: inviteData.fullName,
             inviteeCompany: inviteData.companyName,
-            expiresAt: expiryDate
+            expiresAt: expiryDate,
+            metadata: {
+              userId: newUser.id,
+              senderName: inviteData.senderName,
+              senderCompany: inviteData.senderCompany,
+              createdAt: new Date().toISOString()
+            }
           })
           .returning();
 
         console.log('[Invite] Created invitation:', invitation);
-        console.log('[Invite] Creating associated task');
 
         // Create associated task
+        console.log('[Invite] Creating associated task');
         const [task] = await tx.insert(tasks)
           .values({
             title: `New User Invitation: ${inviteData.email}`,
@@ -982,10 +994,10 @@ companyName: req.body.company_name,
             taskScope: 'user',
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
-            progress: 25,
+            progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
             createdBy: req.user!.id,
-            companyId: inviteData.companyId,
             userEmail: inviteData.email,
+            companyId: inviteData.companyId,
             dueDate: expiryDate,
             metadata: {
               userId: newUser.id,
@@ -999,138 +1011,102 @@ companyName: req.body.company_name,
           .returning();
 
         console.log('[Invite] Created task:', task);
+
+        // Send invitation email
         console.log('[Invite] Sending invitation email');
+        console.log('[Invite] Email template data:', {
+          recipientName: inviteData.fullName,
+          recipientEmail: inviteData.email,
+          senderName: inviteData.senderName,
+          senderCompany: inviteData.senderCompany,
+          targetCompany: inviteData.companyName,
+          inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
+          code: invitation.code
+        });
 
-        try {
-          // Send invitation email with correctly named template fields and static Invela branding
-          await emailService.sendTemplateEmail({
-            to: inviteData.email,
-            from: process.env.GMAIL_USER!,
-            template: 'user_invite',
-            templateData: {
-              recipientName: inviteData.fullName,
-              company: "Invela", // Always use Invela as the company name in emails
-              code: invitation.code,
-              inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
-              senderName: inviteData.senderName
-            }
-          });
+        const emailResult = await emailService.sendTemplateEmail({
+          to: inviteData.email,
+          from: process.env.GMAIL_USER!,
+          template: 'user_invite',
+          templateData: {
+            recipientName: inviteData.fullName,
+            recipientEmail: inviteData.email,
+            senderName: inviteData.senderName,
+            senderCompany: inviteData.senderCompany,
+            targetCompany: inviteData.companyName,
+            inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
+            code: invitation.code
+          }
+        });
 
-          console.log('[Invite] Successfully sent invitation email');
-        } catch (emailError) {
-          console.error('[Invite] Failed to send email:', emailError);
-          throw new Error('Failed to send invitation email');
+        if (!emailResult.success) {
+          console.error('[Invite] Failed to send email:', emailResult.error);
+          throw new Error(emailResult.error || 'Failed to send invitation email');
         }
 
+        console.log('[Invite] Successfully sent invitation email');
         console.log('[Invite] Successfully completed invitation process');
 
-        return { invitation, task, newUser };
+        return { invitation, task, user: newUser };
       });
 
-      // Send success response
-      res.status(201).json({
+      res.json({
         message: "Invitation sent successfully",
-        invitation: {
-          id: result.invitation.id,
-          email: result.invitation.email,
-          taskId: result.task.id
-        }
+        invitation: result.invitation,
+        user: result.user
       });
 
     } catch (error: any) {
-      console.error('[Invite] Error processing invitation:', error);
+      console.error("[Invite] Error processing invitation:", error);
       res.status(500).json({
-        message: "Failed to process invitation",
-        error: error.message
+        message: error.message || "Failed to send invitation. Please try again."
       });
     }
   });
+  // Add endpoint for companies to add other companies to their network
+  app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
+    try {
+      const targetCompanyId = parseInt(req.params.id);
 
-  // Mark user onboarding as completed
-  app.post("/api/users/complete-onboarding", requireAuth, async(req, res) => {
-    try{
-      // Update user's onboarding status
-      const [updatedUser] = await db.update(users)
-        .set({ onboardingUserCompleted: true }).where(eq(users.id, req.user!.id))
-        .returning();
+      // Verify the target company exists
+      const [targetCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, targetCompanyId));
 
-      // Find and update associated onboarding task
-      const [task] = await db.select()
-        .from(tasks)
+      if (!targetCompany) {
+        return res.status(404).json({ message: "Target company not found" });
+      }
+
+      // Check if relationship already exists
+      const [existingRelationship] = await db.select()
+        .from(relationships)
         .where(and(
-          eq(tasks.userEmail, updatedUser.email),
-          eq(tasks.taskType, 'user_onboarding'),
-          eq(tasks.status, 'email_sent')
+          eq(relationships.companyId, req.user!.companyId),
+          eq(relationships.relatedCompanyId, targetCompanyId)
         ));
 
-      if (task) {
-        await db.update(tasks)
-          .set({
-            status: 'completed',
-            progress: 100,
-            metadata: {
-              ...task.metadata,
-              completedAt: new Date().toISOString()
-            }
-          })
-          .where(eq(tasks.id, task.id));
+      if (existingRelationship) {
+        return res.status(400).json({ message: "Company is already in your network" });
       }
 
-      res.json(updatedUser);
+      // Create the relationship
+      const [relationship] = await db.insert(relationships)
+        .values({
+          companyId: req.user!.companyId,
+          relatedCompanyId: targetCompanyId,
+          relationshipType: 'network_member',
+          status: 'active',
+          metadata: {
+            addedAt: new Date().toISOString(),
+            addedBy: req.user!.id
+          }
+        })
+        .returning();
+
+      res.status(201).json(relationship);
     } catch (error) {
-      console.error("Error completing onboarding:", error);
-      res.status(500).json({ message: "Error completing onboarding" });
-    }
-  });
-
-  // Get users by company ID
-  app.get("/api/users/by-company/:companyId", requireAuth, async (req, res) => {
-    try {
-      const companyId = parseInt(req.params.companyId);
-      if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
-      }
-
-      // Get the user's company to check permissions
-      const [userCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
-
-      if (!userCompany) {
-        return res.status(404).json({ message: "User's company not found" });
-      }
-
-      // If user is from Invela, they can see all users
-      // Otherwise, they can only see users from their own company or companies in their network
-      let companyUsers;
-      if (userCompany.category === 'Invela') {
-        companyUsers = await db.select()
-          .from(users)
-          .where(eq(users.companyId, companyId));
-      } else {
-        // First check if the requested company is in the user's network
-        const [relationship] = await db.select()
-          .from(relationships)
-          .where(and(
-            eq(relationships.companyId, req.user!.companyId),
-            eq(relationships.relatedCompanyId, companyId),
-            eq(relationships.status, 'active')
-          ));
-
-        // Only allow access if it's the user's own company or a company in their network
-        if (companyId === req.user!.companyId || relationship) {
-          companyUsers = await db.select()
-            .from(users)
-            .where(eq(users.companyId, companyId));
-        } else {
-          return res.status(403).json({ message: "Not authorized to view users for this company" });
-        }
-      }
-
-      res.json(companyUsers || []);
-    } catch (error) {
-      console.error("Error fetching company users:", error);
-      res.status(500).json({ message: "Error fetching company users" });
+      console.error("Error adding company to network:", error);
+      res.status(500).json({ message: "Error adding company to network" });
     }
   });
 
