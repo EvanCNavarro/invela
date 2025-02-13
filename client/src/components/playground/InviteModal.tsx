@@ -188,23 +188,25 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
                   <FormControl>
                     <Input
                       {...field}
-                      className={`w-full ${existingCompany ? 'border-amber-500 focus:ring-amber-500' : ''}`}
+                      className={`w-full ${existingCompany ? 'border-amber-500 focus-visible:ring-amber-500' : ''}`}
                       placeholder="Enter company name"
                       autoFocus
                       onChange={(e) => {
                         field.onChange(e);
-                        setExistingCompany(null); // Clear warning when company name changes
+                        if (!e.target.value) {
+                          setExistingCompany(null);
+                        }
                       }}
-                      onBlur={(e) => {
+                      onBlur={async (e) => {
                         field.onBlur();
                         if (e.target.value) {
-                          checkExistingCompany(e.target.value);
+                          await checkExistingCompany(e.target.value);
                         }
                       }}
                     />
                   </FormControl>
                   {existingCompany && (
-                    <Alert className="mt-2 bg-amber-50/50">
+                    <Alert className="mt-2 bg-amber-50/50 border-amber-500">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                       <AlertDescription className="mt-0">
                         <div className="flex flex-col gap-2">
