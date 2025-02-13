@@ -6,6 +6,7 @@ export interface EmailTemplate {
   html: string;
 }
 
+// Unified schema for both user and fintech invitations
 const invitationTemplateSchema = z.object({
   recipientName: z.string().min(1, "Recipient name is required"),
   recipientEmail: z.string().email("Valid recipient email is required"),
@@ -13,7 +14,8 @@ const invitationTemplateSchema = z.object({
   senderCompany: z.string().min(1, "Sender company is required"),
   targetCompany: z.string().min(1, "Target company is required"),
   inviteUrl: z.string().url("Valid invite URL is required"),
-  code: z.string().optional()
+  code: z.string().optional(),
+  inviteType: z.enum(['user', 'fintech']).default('user')
 });
 
 export type InvitationTemplateData = z.infer<typeof invitationTemplateSchema>;
@@ -30,14 +32,14 @@ const getFooter = (year: number) => `
   <p>© ${year} Invela | Privacy Policy | Terms of Service | Support Center</p>
 </div>`;
 
-const getSteps = () => `
+const getSteps = (inviteType: 'user' | 'fintech') => `
 <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
   <h2 style="color: #333; margin-top: 0;">Getting Started:</h2>
   <ol style="margin: 0; padding-left: 20px;">
     <li>Click the button below to Create Your Account</li>
-    <li>Finish updating your Company's Profile</li>
+    ${inviteType === 'fintech' ? '<li>Complete your Company Profile setup</li>' : '<li>Finish updating your Profile</li>'}
     <li>Upload the requested files to our secure system</li>
-    <li>Acquire an Invela Accreditation & Risk Score for your company</li>
+    <li>Acquire an Invela Accreditation & Risk Score${inviteType === 'fintech' ? ' for your company' : ''}</li>
   </ol>
 </div>`;
 
@@ -47,124 +49,79 @@ const getButton = (inviteUrl: string) => `
   Create Your Account
 </a>`;
 
-const templates = {
-  user_invite: (data: InvitationTemplateData): EmailTemplate => {
-    console.log('[Template:user_invite] Received template data:', JSON.stringify(data, null, 2));
+// Unified invitation template
+function invitationTemplate(data: InvitationTemplateData): EmailTemplate {
+  console.log('[Template:invitation] Received template data:', JSON.stringify(data, null, 2));
 
-    const result = invitationTemplateSchema.safeParse(data);
-    if (!result.success) {
-      console.error('[Template:user_invite] Invalid template data:', result.error);
-      throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
-    }
-
-    const { recipientName, senderName, senderCompany, targetCompany, inviteUrl, code } = result.data;
-    const year = new Date().getFullYear();
-
-    return {
-      subject: `Invitation to join ${targetCompany}`,
-      text: `
-Hello ${recipientName},
-
-You've been invited to join ${targetCompany} by ${senderName} from ${senderCompany}.
-
-Getting Started:
-1. Click the button below to Create Your Account
-2. Finish updating your Company's Profile
-3. Upload the requested files to our secure system
-4. Acquire an Invela Accreditation & Risk Score for your company
-
-${code ? `Your Invitation Code: ${code}` : ''}
-
-Click here to get started: ${inviteUrl}
-
-© ${year} Invela | Privacy Policy | Terms of Service | Support Center
-`.trim(),
-      html: `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Join ${targetCompany} on Invela</title>
-  </head>
-  <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${targetCompany}</h1>
-
-    <p>Hello ${recipientName},</p>
-    <p>You've been invited to join ${targetCompany} by ${senderName} from ${senderCompany}.</p>
-
-    ${getSteps()}
-
-    ${code ? `
-    <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
-      <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
-    </div>
-    ` : ''}
-
-    ${getButton(inviteUrl)}
-    ${getFooter(year)}
-  </body>
-</html>
-`.trim()
-    };
-  },
-
-  fintech_invite: (data: InvitationTemplateData): EmailTemplate => {
-    const result = invitationTemplateSchema.safeParse(data);
-    if (!result.success) {
-      console.error('[Template:fintech_invite] Invalid template data:', result.error);
-      throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
-    }
-
-    const { recipientName, senderName, senderCompany, targetCompany, inviteUrl, code } = result.data;
-    const year = new Date().getFullYear();
-
-    return {
-      subject: `Welcome to ${targetCompany}`,
-      text: `
-Hello ${recipientName},
-
-You have been invited by ${senderName} from ${senderCompany} to join ${targetCompany} on the Invela platform.
-
-Getting Started:
-1. Click the button below to Create Your Account
-2. Finish updating your Company's Profile
-3. Upload the requested files to our secure system
-4. Acquire an Invela Accreditation & Risk Score for your company
-
-${code ? `Your Invitation Code: ${code}` : ''}
-
-Click here to get started: ${inviteUrl}
-
-© ${year} Invela | Privacy Policy | Terms of Service | Support Center
-`.trim(),
-      html: `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Welcome to ${targetCompany}</title>
-  </head>
-  <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${targetCompany}</h1>
-
-    <p>Hello ${recipientName},</p>
-    <p>You have been invited by ${senderName} from ${senderCompany} to join ${targetCompany} on the Invela platform.</p>
-
-    ${getSteps()}
-
-    ${code ? `
-    <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
-      <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
-    </div>
-    ` : ''}
-
-    ${getButton(inviteUrl)}
-    ${getFooter(year)}
-  </body>
-</html>
-`.trim()
-    };
+  const result = invitationTemplateSchema.safeParse(data);
+  if (!result.success) {
+    console.error('[Template:invitation] Invalid template data:', result.error);
+    throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
   }
+
+  const { recipientName, senderName, senderCompany, targetCompany, inviteUrl, code, inviteType } = result.data;
+  const year = new Date().getFullYear();
+
+  const isFintech = inviteType === 'fintech';
+  const subject = isFintech 
+    ? `Welcome to ${targetCompany}`
+    : `Invitation to join ${targetCompany}`;
+
+  const intro = isFintech
+    ? `You have been invited by ${senderName} from ${senderCompany} to join ${targetCompany} on the Invela platform.`
+    : `You've been invited to join ${targetCompany} by ${senderName} from ${senderCompany}.`;
+
+  return {
+    subject,
+    text: `
+Hello ${recipientName},
+
+${intro}
+
+Getting Started:
+1. Click the button below to Create Your Account
+2. ${isFintech ? 'Complete your Company Profile setup' : 'Finish updating your Profile'}
+3. Upload the requested files to our secure system
+4. Acquire an Invela Accreditation & Risk Score${isFintech ? ' for your company' : ''}
+
+${code ? `Your Invitation Code: ${code}` : ''}
+
+Click here to get started: ${inviteUrl}
+
+© ${year} Invela | Privacy Policy | Terms of Service | Support Center
+`.trim(),
+    html: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>${subject}</title>
+  </head>
+  <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${targetCompany}</h1>
+
+    <p>Hello ${recipientName},</p>
+    <p>${intro}</p>
+
+    ${getSteps(inviteType)}
+
+    ${code ? `
+    <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+      <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
+    </div>
+    ` : ''}
+
+    ${getButton(inviteUrl)}
+    ${getFooter(year)}
+  </body>
+</html>
+`.trim()
+  };
+}
+
+const templates = {
+  user_invite: invitationTemplate,
+  fintech_invite: invitationTemplate
 };
 
 export type TemplateNames = keyof typeof templates;
@@ -179,7 +136,13 @@ export function getEmailTemplate(templateName: TemplateNames, data: InvitationTe
   }
 
   try {
-    const emailTemplate = template(data);
+    // Set the invite type based on the template name
+    const templateData = {
+      ...data,
+      inviteType: templateName === 'fintech_invite' ? 'fintech' : 'user'
+    };
+
+    const emailTemplate = template(templateData);
     const validationResult = emailTemplateSchema.safeParse(emailTemplate);
 
     if (!validationResult.success) {
