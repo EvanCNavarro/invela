@@ -205,8 +205,10 @@ router.post("/api/users/invite", async (req, res) => {
         // Send invitation email
         const emailTemplateData = {
           recipientName: data.full_name,
+          recipientEmail: data.email.toLowerCase(),
           senderName: data.sender_name,
-          company: company.name,
+          senderCompany: company.name,
+          targetCompany: company.name,
           code: invitationCode,
           inviteUrl: inviteUrl
         };
