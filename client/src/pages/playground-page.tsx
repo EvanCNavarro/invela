@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import { Sidebar } from "@/components/dashboard/Sidebar";
+import { InvitePlayground } from "@/components/playground/InvitePlayground";
 import {
   Select,
   SelectContent,
