@@ -1,10 +1,13 @@
 import * as React from "react"
 import { InviteModal } from "./InviteModal"
 import { InviteButton } from "@/components/ui/invite-button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 
 export function InvitePlayground() {
   const [openUserModal, setOpenUserModal] = React.useState(false)
   const [openFinTechModal, setOpenFinTechModal] = React.useState(false)
+  const [pulseEnabled, setPulseEnabled] = React.useState(true)
 
   return (
     <div className="space-y-8">
@@ -15,16 +18,25 @@ export function InvitePlayground() {
         </p>
       </div>
 
+      <div className="flex items-center space-x-2">
+        <Checkbox 
+          id="pulse-toggle"
+          checked={pulseEnabled}
+          onCheckedChange={(checked) => setPulseEnabled(checked as boolean)}
+        />
+        <Label htmlFor="pulse-toggle">Enable pulse animation</Label>
+      </div>
+
       <div className="flex gap-4">
         <InviteButton
           variant="user"
-          pulse={true}
+          pulse={pulseEnabled}
           onClick={() => setOpenUserModal(true)}
         />
 
         <InviteButton
           variant="fintech"
-          pulse={true}
+          pulse={pulseEnabled}
           onClick={() => setOpenFinTechModal(true)}
         />
       </div>
