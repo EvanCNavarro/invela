@@ -78,6 +78,8 @@ export class EmailService {
   }
 
   private transformTemplateData(data: TemplateData) {
+    console.log('[EmailService] Input template data:', JSON.stringify(data, null, 2));
+
     // Generate a unique invitation code if not provided
     const inviteCode = data.code || uuidv4().slice(0, 8);
 
@@ -86,7 +88,7 @@ export class EmailService {
     const inviteUrl = `${data.inviteUrl}${separator}code=${inviteCode}`;
 
     // Return data with exact parameter names required by template
-    return {
+    const transformedData = {
       recipientName: data.recipientName,
       recipientEmail: data.recipientEmail,
       senderName: data.senderName,
@@ -95,6 +97,9 @@ export class EmailService {
       inviteUrl,
       code: inviteCode
     };
+
+    console.log('[EmailService] Transformed template data:', JSON.stringify(transformedData, null, 2));
+    return transformedData;
   }
 
   private async validateEmail(email: string): Promise<ValidationResult> {

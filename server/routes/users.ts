@@ -209,11 +209,11 @@ router.post("/api/users/invite", async (req, res) => {
           senderName: data.sender_name,
           senderCompany: company.name,
           targetCompany: company.name,
-          code: invitationCode,
-          inviteUrl: inviteUrl
+          inviteUrl,
+          code: invitationCode
         };
 
-        console.log('[Invite] Sending invitation email');
+        console.log('[User Invite] Email template data being sent:', JSON.stringify(emailTemplateData, null, 2));
 
         const emailResult = await emailService.sendTemplateEmail({
           to: data.email,
