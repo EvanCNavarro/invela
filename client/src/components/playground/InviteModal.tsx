@@ -83,7 +83,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         }
       });
 
-      // Validate required fields before sending
       if (!data.email || !data.company_name) {
         console.error('[InviteModal] Validation failed:', {
           email: data.email,
@@ -202,7 +201,11 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
-    sendInvite(formData);
+    // Deep clone the form data to prevent any reference issues
+    const payload = JSON.parse(JSON.stringify(formData));
+    console.log('[InviteModal] Final payload before mutation:', payload);
+
+    sendInvite(payload);
   };
 
   return (
