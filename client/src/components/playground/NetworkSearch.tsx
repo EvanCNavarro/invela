@@ -27,6 +27,7 @@ export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLI
   isValid?: boolean
   isError?: boolean
   existingCompany?: Company | null
+  onExistingCompanyChange?: (company: Company | null) => void
 }
 
 export function NetworkSearch({
@@ -44,6 +45,7 @@ export function NetworkSearch({
   isValid = false,
   isError = false,
   existingCompany = null,
+  onExistingCompanyChange,
   ...props
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
@@ -83,12 +85,23 @@ export function NetworkSearch({
       setSearchResults(results)
     } else {
       setSearchResults([])
+      // Clear existing company when input is empty
+      if (onExistingCompanyChange) {
+        onExistingCompanyChange(null)
+      }
     }
     onSearch?.(newValue)
-  }, [controlledOnChange, onSearch, fuse])
+  }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange])
 
   const handleSelect = (companyName: string) => {
     console.log('[NetworkSearch] handleSelect:', { companyName, controlled: !!controlledOnChange })
+
+    // Find the selected company in the data
+    const selectedCompany = data.find(company => company.name === companyName)
+
+    if (selectedCompany && onExistingCompanyChange) {
+      onExistingCompanyChange(selectedCompany)
+    }
 
     if (controlledOnChange) {
       const event = {
@@ -117,9 +130,13 @@ export function NetworkSearch({
       setValue('')
     }
     setSearchResults([])
+    // Clear existing company when input is cleared
+    if (onExistingCompanyChange) {
+      onExistingCompanyChange(null)
+    }
     onSearch?.('')
     inputRef.current?.focus()
-  }, [controlledOnChange, onSearch])
+  }, [controlledOnChange, onSearch, onExistingCompanyChange])
 
   return (
     <div className="space-y-2">
