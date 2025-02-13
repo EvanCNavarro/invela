@@ -43,7 +43,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { user } = useAuth();
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
 
-  // Debug log when component mounts/updates
   useEffect(() => {
     console.log('[InviteModal] Component state:', {
       variant,
@@ -63,7 +62,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   });
 
-  // Watch form values
   useEffect(() => {
     const subscription = form.watch((value, { name, type }) => {
       console.log('[InviteModal] Form value changed:', {
@@ -96,11 +94,18 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         }
       });
 
-      // Manual validation
-      const validationResult = inviteSchema.safeParse(data);
-      if (!validationResult.success) {
-        console.error('[InviteModal] Schema validation failed:', validationResult.error);
-        throw new Error('Invalid form data');
+      // Create the payload
+      const payload = {
+        email: data.email.toLowerCase(),
+        full_name: data.full_name,
+        company_name: data.company_name,
+        sender_name: data.sender_name
+      };
+
+      // Validate payload
+      if (!payload.email || !payload.company_name) {
+        console.error('[InviteModal] Payload validation failed:', payload);
+        throw new Error('Email and company name are required');
       }
 
       // Final request logging
@@ -108,13 +113,13 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         url: endpoint,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data, null, 2)
+        body: JSON.stringify(payload, null, 2)
       });
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(payload)
       });
 
       const responseData = await response.json();
@@ -207,7 +212,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     queryKey: ["/api/companies"],
     enabled: variant === 'fintech'
   });
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
