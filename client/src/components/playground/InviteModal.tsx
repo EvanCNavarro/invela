@@ -116,28 +116,30 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       existingCompany: existingCompany?.name
     });
 
-    // For fintech variant, if company exists, prevent submission
-    if (variant === 'fintech' && existingCompany) {
-      toast({
-        title: "Cannot invite to existing company",
-        description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
-        variant: "destructive",
-      });
-      return;
+    // For fintech variant, check for company name
+    if (variant === 'fintech') {
+      if (!formData.company_name) {
+        form.setError('company_name', {
+          type: 'manual',
+          message: 'Please enter a company name'
+        });
+        return;
+      }
+
+      // If we found an existing company, prevent submission
+      if (existingCompany) {
+        toast({
+          title: "Cannot invite to existing company",
+          description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
-    // Company name is required for fintech variant
-    if (variant === 'fintech' && !formData.company_name) {
-      form.setError('company_name', {
-        type: 'manual',
-        message: 'Please enter a company name'
-      });
-      return;
-    }
-
-    // At this point, either:
-    // 1. It's a user invite (variant === 'user')
-    // 2. It's a fintech invite with a new company name
+    // At this point, we have either:
+    // 1. A user invite (variant === 'user')
+    // 2. A fintech invite with a new company name
     sendInvite(formData);
   };
 
@@ -148,14 +150,11 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       shouldDirty: true,
       shouldTouch: true
     });
-    setIsValidCompanySelection(true);
   };
 
   const handleExistingCompanyChange = (company: Company | null) => {
     setExistingCompany(company);
-    if (!company) {
-      setIsValidCompanySelection(false);
-    }
+    setIsValidCompanySelection(company !== null);
   };
 
   return (
@@ -196,7 +195,8 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         existingCompany={existingCompany}
                         onExistingCompanyChange={handleExistingCompanyChange}
                         data={companies}
-                        isValid={isValidCompanySelection}
+                        isValid={!existingCompany && field.value !== ""}
+                        isError={!!form.formState.errors.company_name}
                       />
                     </FormControl>
                     <FormMessage />

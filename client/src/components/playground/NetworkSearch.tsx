@@ -94,7 +94,6 @@ export function NetworkSearch({
       setIsOpen(true)
     } else {
       setSearchResults([])
-      // Clear existing company when input is empty
       if (onExistingCompanyChange) {
         onExistingCompanyChange(null)
       }
@@ -132,6 +131,23 @@ export function NetworkSearch({
     setIsOpen(false)
   }
 
+  const handleAddNewCompany = () => {
+    console.log('[NetworkSearch] Adding new company:', inputValue)
+    if (onExistingCompanyChange) {
+      onExistingCompanyChange(null)
+    }
+    setSelectedCompanyName(null)
+
+    if (controlledOnChange) {
+      const event = {
+        target: { value: inputValue }
+      } as React.ChangeEvent<HTMLInputElement>
+      controlledOnChange(event)
+    }
+    onAddNewCompany?.(inputValue)
+    setIsOpen(false)
+  }
+
   const handleClear = React.useCallback(() => {
     console.log('[NetworkSearch] handleClear')
     if (controlledOnChange) {
@@ -144,7 +160,6 @@ export function NetworkSearch({
     }
     setSearchResults([])
     setSelectedCompanyName(null)
-    // Clear existing company when input is cleared
     if (onExistingCompanyChange) {
       onExistingCompanyChange(null)
     }
@@ -154,20 +169,8 @@ export function NetworkSearch({
 
   // Determine if warning should be shown
   const showWarning = React.useMemo(() => {
-    return existingCompany !== null && selectedCompanyName !== null && inputValue === selectedCompanyName;
+    return existingCompany !== null && existingCompany !== undefined && selectedCompanyName !== null && inputValue === selectedCompanyName;
   }, [existingCompany, selectedCompanyName, inputValue]);
-
-  const handleAddNewCompany = () => {
-    console.log('[NetworkSearch] Adding new company:', inputValue)
-    if (controlledOnChange) {
-      const event = {
-        target: { value: inputValue }
-      } as React.ChangeEvent<HTMLInputElement>
-      controlledOnChange(event)
-    }
-    onAddNewCompany?.(inputValue)
-    setIsOpen(false)
-  }
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -189,7 +192,7 @@ export function NetworkSearch({
         ref={containerRef}
         className={cn("relative flex w-full items-center", containerClassName)}
       >
-        {existingCompany && selectedCompanyName === inputValue ? (
+        {showWarning ? (
           <AlertTriangle
             className="absolute left-3 h-4 w-4 text-yellow-500 pointer-events-none"
           />
@@ -215,7 +218,7 @@ export function NetworkSearch({
           className={cn(
             "pl-9 pr-[70px]",
             "focus:ring-2 focus:ring-offset-2",
-            existingCompany && selectedCompanyName === inputValue
+            showWarning
               ? "border-yellow-500 focus:ring-yellow-500 focus:ring-offset-background"
               : isValid
                 ? "border-green-500 focus:ring-green-500 focus:ring-offset-background"
