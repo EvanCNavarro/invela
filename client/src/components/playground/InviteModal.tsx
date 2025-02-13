@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import confetti from 'canvas-confetti';
 import { useAuth } from "@/hooks/use-auth";
 import { NetworkSearch } from "./NetworkSearch";
 
@@ -42,6 +41,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
+  const [existingCompany, setExistingCompany] = useState<any>(null);
 
   useEffect(() => {
     console.log('[InviteModal] Component state:', {
@@ -81,11 +81,9 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
-      const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
-
       // Pre-validation logging
       console.log('[InviteModal] Starting mutation with data:', {
-        endpoint,
+        endpoint: variant === 'user' ? '/api/users/invite' : '/api/fintech/invite',
         data: JSON.stringify(data, null, 2),
         formState: {
           isValid: form.formState.isValid,
@@ -106,6 +104,8 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       const validationErrors = [];
       if (!payload.email) validationErrors.push('Email is required');
       if (!payload.company_name) validationErrors.push('Company name is required');
+      if (!payload.full_name) validationErrors.push('Full name is required');
+      if (!payload.sender_name) validationErrors.push('Sender name is required');
 
       console.log('[InviteModal] Payload validation:', {
         payload,
@@ -124,13 +124,13 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
       // Final request logging
       console.log('[InviteModal] Sending request:', {
-        url: endpoint,
+        url: variant === 'user' ? '/api/users/invite' : '/api/fintech/invite',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload, null, 2)
       });
 
-      const response = await fetch(endpoint, {
+      const response = await fetch(variant === 'user' ? '/api/users/invite' : '/api/fintech/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -172,11 +172,22 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       form.reset();
       setServerError(null);
       setIsValidCompanySelection(false);
+      setExistingCompany(null);
       onOpenChange(false);
     },
   });
 
   const onSubmit = (formData: InviteData) => {
+    // Don't allow submission if company already exists
+    if (existingCompany) {
+      toast({
+        title: "Cannot invite to existing company",
+        description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
+        variant: "warning",
+      });
+      return;
+    }
+
     // Pre-submission validation and logging
     console.log('[InviteModal] Form submission started:', {
       rawFormData: formData,
@@ -199,17 +210,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
-    // Clone and prepare the payload
-    const payload = JSON.parse(JSON.stringify(formData));
-
-    // Final payload logging
-    console.log('[InviteModal] Submitting payload:', {
-      payload: JSON.stringify(payload, null, 2),
-      variant,
-      isValidCompanySelection
-    });
-
-    sendInvite(payload);
+    sendInvite(formData);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -222,10 +223,23 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   };
 
+  // Query to get companies and check for existing companies
   const { data: companies = [] } = useQuery({
     queryKey: ["/api/companies"],
     enabled: variant === 'fintech'
   });
+
+  // Function to check if company exists when selected
+  const handleCompanySelect = async (selectedCompany: string) => {
+    const existingComp = companies.find(c => c.name.toLowerCase() === selectedCompany.toLowerCase());
+    if (existingComp) {
+      setExistingCompany(existingComp);
+      setIsValidCompanySelection(false);
+    } else {
+      setExistingCompany(null);
+      setIsValidCompanySelection(true);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -272,11 +286,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                             previousValue: field.value
                           });
                           field.onChange(company);
-                          setIsValidCompanySelection(true);
+                          handleCompanySelect(company);
                         }}
                         placeholder={`Add company to ${user?.company?.name || ''}'s Network`}
                         className="w-full"
                         isValid={isValidCompanySelection}
+                        existingCompany={existingCompany}
                         onKeyDown={handleKeyDown}
                         data={companies}
                       />
@@ -341,7 +356,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
               <Button
                 type="submit"
                 className="gap-2"
-                disabled={isPending}
+                disabled={isPending || existingCompany !== null}
                 data-element={`invite-${variant}-button`}
               >
                 {isPending ? (
