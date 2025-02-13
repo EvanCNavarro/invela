@@ -15,10 +15,15 @@ export function setupWebSocket(server: Server) {
   wss = new WebSocket.Server({ 
     server,
     path: '/ws',
-    // Increase timeout values
+    // Increase timeout values for Replit environment
     clientTracking: true,
-    perMessageDeflate: false
+    perMessageDeflate: false,
+    maxPayload: 1024 * 1024, // 1MB
+    // Skip certificate verification in Replit environment
+    verifyClient: () => true
   });
+
+  console.log('[WebSocket] Server initialized on path: /ws');
 
   wss.on('connection', (ws) => {
     console.log('New WebSocket client connected');
@@ -32,7 +37,12 @@ export function setupWebSocket(server: Server) {
     // Set up ping/pong with longer intervals
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'ping' }));
+        try {
+          ws.ping();
+          ws.send(JSON.stringify({ type: 'ping' }));
+        } catch (error) {
+          console.error('[WebSocket] Error sending ping:', error);
+        }
       }
     }, 45000); // Match client's interval
 
@@ -52,14 +62,26 @@ export function setupWebSocket(server: Server) {
       }
     });
 
+    ws.on('ping', () => {
+      try {
+        ws.pong();
+      } catch (error) {
+        console.error('[WebSocket] Error sending pong:', error);
+      }
+    });
+
     ws.on('error', (error) => {
       console.error('WebSocket error:', error);
     });
 
-    ws.on('close', () => {
+    ws.on('close', (code, reason) => {
       clearInterval(pingInterval);
-      console.log('WebSocket client disconnected');
+      console.log(`WebSocket client disconnected with code ${code}${reason ? ` and reason: ${reason}` : ''}`);
     });
+  });
+
+  wss.on('error', (error) => {
+    console.error('[WebSocket] Server error:', error);
   });
 }
 
