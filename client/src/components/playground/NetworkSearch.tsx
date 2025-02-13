@@ -45,6 +45,7 @@ export function NetworkSearch({
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchResults, setSearchResults] = React.useState<any[]>([])
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
 
   const fuse = React.useMemo(() => {
     return new Fuse(data, {
@@ -101,6 +102,7 @@ export function NetworkSearch({
     }
     setSearchResults([])
     onSearch?.('')
+    inputRef.current?.focus() // Keep focus after clearing
   }, [controlledOnChange, onSearch])
 
   const handleAddNew = React.useCallback(() => {
@@ -110,109 +112,119 @@ export function NetworkSearch({
     }
   }, [inputValue, onAddNewCompany])
 
+  // Focus and blur handlers
   const handleFocus = React.useCallback(() => {
     setIsOpen(true)
   }, [])
 
-  const handleBlur = React.useCallback((event: React.FocusEvent) => {
-    // Check if the related target is within our component
-    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-      setIsOpen(false)
+  // Handle clicks outside the component
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
 
   return (
     <div 
+      ref={containerRef}
       className={cn("relative flex w-full items-center", containerClassName)}
-      onBlur={handleBlur}
     >
       <SearchIcon 
         className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
       />
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
-          <Input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={handleChange}
-            onFocus={handleFocus}
-            placeholder="Search Network"
-            className={cn(
-              "pl-9 pr-[70px]",
-              "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
-              className
-            )}
-            {...props}
-          />
-        </DropdownMenuTrigger>
-        <div className="absolute right-3 flex items-center gap-2">
-          {isLoading ? (
-            <LoadingSpinner size="sm" />
-          ) : hasValue && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={handleClear}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-        <DropdownMenuContent
-          align="start"
-          className="w-[var(--radix-dropdown-menu-trigger-width)]"
-        >
-          {!hasValue && recentSearches.length > 0 && (
-            <>
-              <DropdownMenuLabel>Recent Searches</DropdownMenuLabel>
-              {recentSearches.slice(0, 5).map((company, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  onClick={() => handleSelect(company)}
-                >
-                  {company}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-            </>
-          )}
+      <Input
+        ref={inputRef}
+        type="text"
+        value={inputValue}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        placeholder="Search Network"
+        className={cn(
+          "pl-9 pr-[70px]",
+          "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
+          className
+        )}
+        {...props}
+      />
+      <div className="absolute right-3 flex items-center gap-2">
+        {isLoading ? (
+          <LoadingSpinner size="sm" />
+        ) : hasValue && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleClear}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
 
-          {!hasValue && recentSearches.length === 0 && (
-            <DropdownMenuLabel className="text-muted-foreground">
-              No recent searches
-            </DropdownMenuLabel>
-          )}
-
-          {hasValue && searchResults.length > 0 && (
-            <>
-              <DropdownMenuLabel>Search Results</DropdownMenuLabel>
-              {searchResults.map((result, index) => (
-                <DropdownMenuItem
-                  key={index}
-                  onClick={() => handleSelect(result.item.name)}
-                >
-                  {result.item.name}
-                </DropdownMenuItem>
-              ))}
-            </>
-          )}
-
-          {hasValue && searchResults.length === 0 && (
-            <>
-              <DropdownMenuLabel>No results found</DropdownMenuLabel>
-              <DropdownMenuItem
-                className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-                onClick={handleAddNew}
+      {/* Dropdown menu */}
+      <div
+        className={cn(
+          "absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md",
+          !isOpen && "hidden"
+        )}
+      >
+        {!hasValue && recentSearches.length > 0 && (
+          <>
+            <div className="px-2 py-1.5 text-sm font-medium">Recent Searches</div>
+            {recentSearches.slice(0, 5).map((company, index) => (
+              <button
+                key={index}
+                className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                onClick={() => handleSelect(company)}
               >
-                <Plus className="h-4 w-4" />
-                Add "{inputValue}" to {currentCompanyName}'s Network
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+                {company}
+              </button>
+            ))}
+            <div className="mx-2 my-1 border-t" />
+          </>
+        )}
+
+        {!hasValue && recentSearches.length === 0 && (
+          <div className="px-2 py-1.5 text-sm text-muted-foreground">
+            No recent searches
+          </div>
+        )}
+
+        {hasValue && searchResults.length > 0 && (
+          <>
+            <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
+            {searchResults.map((result, index) => (
+              <button
+                key={index}
+                className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
+                onClick={() => handleSelect(result.item.name)}
+              >
+                {result.item.name}
+              </button>
+            ))}
+          </>
+        )}
+
+        {hasValue && searchResults.length === 0 && (
+          <>
+            <div className="px-2 py-1.5 text-sm font-medium">No results found</div>
+            <button
+              className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+              onClick={handleAddNew}
+            >
+              <Plus className="h-4 w-4" />
+              Add "{inputValue}" to {currentCompanyName}'s Network
+            </button>
+          </>
+        )}
+      </div>
     </div>
   )
 }
