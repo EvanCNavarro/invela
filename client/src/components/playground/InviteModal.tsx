@@ -97,6 +97,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.fullName,
+        sender_company: user?.companyName || 'Invela',
         company_id: companyId || 0
       };
 
