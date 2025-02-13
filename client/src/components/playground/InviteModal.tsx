@@ -34,12 +34,8 @@ interface InviteModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-}
-
-interface ExistingCompany {
-  id: number;
-  name: string;
-  category: string;
+  companyId?: number;
+  companyName?: string;
 }
 
 function slugify(text: string): string {
@@ -52,11 +48,11 @@ function slugify(text: string): string {
     .replace(/--+/g, '-');    // Replace multiple - with single -
 }
 
-export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteModalProps) {
+export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId, companyName }: InviteModalProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [existingCompany, setExistingCompany] = useState<ExistingCompany | null>(null);
+  const [existingCompany, setExistingCompany] = useState<{ id: number; name: string; category: string; } | null>(null);
   const [isCheckingCompany, setIsCheckingCompany] = useState(false);
 
   const form = useForm<InviteData>({
@@ -64,12 +60,12 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
     defaultValues: {
       email: "",
       full_name: "",
-      company_name: ""
+      company_name: variant === 'user' ? companyName || "" : ""
     }
   });
 
   const checkExistingCompany = async (companyName: string) => {
-    if (!companyName) return;
+    if (!companyName || variant === 'user') return;
 
     setIsCheckingCompany(true);
     try {
@@ -100,7 +96,8 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
         email: formData.email.toLowerCase().trim(),
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
-        sender_name: user?.fullName
+        sender_name: user?.fullName,
+        ...(variant === 'user' && companyId && { company_id: companyId })
       };
 
       console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
@@ -148,7 +145,11 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
         description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
       });
 
-      form.reset();
+      form.reset({
+        email: "",
+        full_name: "",
+        company_name: variant === 'user' ? companyName || "" : ""
+      });
       setServerError(null);
       setExistingCompany(null);
       onOpenChange(false);
@@ -185,24 +186,30 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Company</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      className={`w-full ${existingCompany ? 'border-amber-500 focus:ring-amber-500' : ''}`}
-                      placeholder="Enter company name"
-                      autoFocus
-                      onChange={(e) => {
-                        field.onChange(e);
-                        setExistingCompany(null); // Clear warning when company name changes
-                      }}
-                      onBlur={(e) => {
-                        field.onBlur();
-                        if (e.target.value) {
-                          checkExistingCompany(e.target.value);
-                        }
-                      }}
-                    />
-                  </FormControl>
+                  {variant === 'user' ? (
+                    <div className="w-full px-3 py-2 border rounded-md bg-muted/50 text-foreground">
+                      {companyName}
+                    </div>
+                  ) : (
+                    <FormControl>
+                      <Input
+                        {...field}
+                        className={`w-full ${existingCompany ? 'border-amber-500 focus:ring-amber-500' : ''}`}
+                        placeholder="Enter company name"
+                        autoFocus
+                        onChange={(e) => {
+                          field.onChange(e);
+                          setExistingCompany(null);
+                        }}
+                        onBlur={(e) => {
+                          field.onBlur();
+                          if (e.target.value) {
+                            checkExistingCompany(e.target.value);
+                          }
+                        }}
+                      />
+                    </FormControl>
+                  )}
                   {existingCompany && (
                     <Alert className="mt-2 bg-amber-50/50">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
