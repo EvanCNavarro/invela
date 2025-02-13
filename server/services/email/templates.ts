@@ -96,21 +96,21 @@ Click here to get started: ${inviteUrl}
     const { recipientName, senderName, company, code, inviteUrl } = result.data;
 
     return {
-      subject: `Join ${company} as a FinTech Partner`,
+      subject: `Invitation to join ${company}`,
       text: `
 Hello ${recipientName},
 
-You've been invited to join ${company} as a FinTech partner by ${senderName}.
+You have an invitation, sent from ${senderName}, to join the Invela platform as a part of ${company}.
 
-Next Steps:
-1. Create your account using the invitation code below
-2. Complete your FinTech company profile
-3. Set up secure data sharing preferences
-4. Begin collaboration with your network
+Getting Started:
+1. Click the button below to Create Your Account.
+2. Finish updating your Company's Profile.
+3. Upload the requested files to our secure system.
+4. Acquire an Invela Accreditation & Risk Score for your company.
 
 Your Invitation Code: ${code}
 
-Get Started: ${inviteUrl}
+Click here to get started: ${inviteUrl}
 
 © ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
 `.trim(),
@@ -119,20 +119,20 @@ Get Started: ${inviteUrl}
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Join ${company} as a FinTech Partner</title>
+    <title>Join ${company} on Invela</title>
   </head>
   <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${company}</h1>
     <p>Hello ${recipientName},</p>
-    <p>You've been invited to join ${company} as a FinTech partner by ${senderName}.</p>
+    <p>You have an invitation, sent from ${senderName}, to join the Invela platform as a part of ${company}.</p>
 
     <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h2 style="color: #333; margin-top: 0;">Next Steps:</h2>
+      <h2 style="color: #333; margin-top: 0;">Getting Started:</h2>
       <ol style="margin: 0; padding-left: 20px;">
-        <li>Create your account using the invitation code below</li>
-        <li>Complete your FinTech company profile</li>
-        <li>Set up secure data sharing preferences</li>
-        <li>Begin collaboration with your network</li>
+        <li>Click the button below to Create Your Account</li>
+        <li>Finish updating your Company's Profile</li>
+        <li>Upload the requested files to our secure system</li>
+        <li>Acquire an Invela Accreditation & Risk Score for your company</li>
       </ol>
     </div>
 

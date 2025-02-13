@@ -647,7 +647,7 @@ export function registerRoutes(app: Express): Express {
       console.log('[FinTech Invite] Created new company:', newCompany);
 
       // Generate invitation code
-      const code = uuidv4();
+      const code = crypto.randomBytes(4).toString('hex').toUpperCase();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
