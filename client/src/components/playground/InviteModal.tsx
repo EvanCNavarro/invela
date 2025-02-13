@@ -60,12 +60,12 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
     defaultValues: {
       email: "",
       full_name: "",
-      company_name: variant === 'user' ? companyName || "" : ""
+      company_name: companyName || ""
     }
   });
 
   const checkExistingCompany = async (companyName: string) => {
-    if (!companyName || variant === 'user') return;
+    if (!companyName || (variant === 'user' && companyId)) return;
 
     setIsCheckingCompany(true);
     try {
@@ -97,7 +97,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.fullName,
-        ...(variant === 'user' && companyId && { company_id: companyId })
+        ...(companyId && { company_id: companyId })
       };
 
       console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
@@ -148,7 +148,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
       form.reset({
         email: "",
         full_name: "",
-        company_name: variant === 'user' ? companyName || "" : ""
+        company_name: companyName || ""
       });
       setServerError(null);
       setExistingCompany(null);
@@ -186,7 +186,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
               render={({ field }) => (
                 <FormItem>
                   <div className="text-sm font-semibold mb-2">Company</div>
-                  {variant === 'user' ? (
+                  {companyName ? (
                     <div className="w-full px-3 py-2 border rounded-md bg-muted/50 text-foreground">
                       {companyName}
                     </div>
@@ -210,7 +210,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                       />
                     </FormControl>
                   )}
-                  {existingCompany && (
+                  {existingCompany && !companyName && (
                     <Alert className="mt-2 bg-amber-50/50">
                       <AlertTriangle className="h-4 w-4 text-amber-600" />
                       <AlertDescription className="mt-0">
@@ -236,7 +236,6 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="full_name"
@@ -254,7 +253,6 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="email"
@@ -273,13 +271,11 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
                 </FormItem>
               )}
             />
-
             {serverError && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
                 {serverError}
               </div>
             )}
-
             <div className="flex justify-end">
               <Button
                 type="submit"
