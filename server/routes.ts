@@ -1,6 +1,5 @@
 import { Express } from 'express';
 import { eq, and, gt, sql, or } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
@@ -11,6 +10,11 @@ import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
 import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
+
+// Generate invitation code helper function (keep it DRY)
+function generateInviteCode(): string {
+  return crypto.randomBytes(3).toString('hex').toUpperCase();
+}
 
 // Task status enum
 export enum TaskStatus {
@@ -647,7 +651,7 @@ export function registerRoutes(app: Express): Express {
       console.log('[FinTech Invite] Created new company:', newCompany);
 
       // Generate invitation code (6 characters, uppercase)
-      const code = crypto.randomBytes(3).toString('hex').toUpperCase();
+      const code = generateInviteCode();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
@@ -931,7 +935,7 @@ export function registerRoutes(app: Express): Express {
 
   // Mark user onboarding as completed
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
-    try {
+    try{
       // Update user's onboarding status
       const [updatedUser] = await db.update(users)
         .set({ onboardingUserCompleted: true }).where(eq(users.id, req.user!.id))
@@ -1045,7 +1049,7 @@ export function registerRoutes(app: Express): Express {
       const senderCompany = sender.companies.name;
 
       // Generate invitation code
-      const code = uuidv4();
+      const code = generateInviteCode();
 
       console.log('Debug - Creating invitation with details:', {
         senderName,
