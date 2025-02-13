@@ -130,9 +130,16 @@ export default function TaskCenterPage() {
   const itemsPerPage = 10;
 
   const filteredTasks = tasks.filter((task) => {
+    // For "My Tasks" tab:
+    // Show tasks where the user is assigned
     const matchesTab = activeTab === "my-tasks"
-      ? (task.assignedTo === user?.id || task.taskType === 'file_request' && task.createdBy === user?.id)
-      : ((task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') && task.createdBy === user?.id);
+      ? task.assignedTo === user?.id
+      // For "For Others" tab:
+      // Show tasks created by the user AND are onboarding/invitation type
+      // BUT exclude tasks that are assigned to the user (those go in My Tasks)
+      : (task.createdBy === user?.id && 
+         (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') &&
+         task.assignedTo !== user?.id);
 
     if (!matchesTab) return false;
 
@@ -189,9 +196,11 @@ export default function TaskCenterPage() {
   const getTaskCountForTab = (tabId: string) => {
     return tasks.filter(task => {
       if (tabId === "my-tasks") {
-        return task.assignedTo === user?.id || (task.taskType === 'file_request' && task.createdBy === user?.id);
+        return task.assignedTo === user?.id;
       } else {
-        return (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') && task.createdBy === user?.id;
+        return (task.createdBy === user?.id && 
+                (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') &&
+                task.assignedTo !== user?.id);
       }
     }).length;
   };
