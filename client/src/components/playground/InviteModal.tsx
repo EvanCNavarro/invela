@@ -97,10 +97,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.fullName,
-        ...(companyId && { company_id: companyId })
+        ...(typeof companyId === 'number' && { company_id: companyId }) 
       };
 
-      console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
+      console.log(`[InviteModal] Sending ${variant} invitation with payload:`, payload);
 
       const response = await fetch(endpoint, {
         method: 'POST',
