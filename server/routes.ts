@@ -604,145 +604,139 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Check for existing company with same name
-      const [existingCompany] = await db.select()
-        .from(companies)
-        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
+      // Database transaction for atomicity
+      await db.transaction(async (tx) => {
+        // Check for existing company with same name
+        const [existingCompany] = await tx.select()
+          .from(companies)
+          .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
 
-      if (existingCompany) {
-        return res.status(409).json({
-          message: "A company with this name already exists",
-          existingCompany: {
-            id: existingCompany.id,
-            name: existingCompany.name,
-            category: existingCompany.category
-          }
-        });
-      }
+        if (existingCompany) {
+          throw new Error("A company with this name already exists");
+        }
 
-      // Get user's company details
-      const [userCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
+        // Get user's company details
+        const [userCompany] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, req.user!.companyId));
 
-      if (!userCompany) {
-        return res.status(404).json({
-          message: "Your company information not found"
-        });
-      }
+        if (!userCompany) {
+          throw new Error("Your company information not found");
+        }
 
-      // Create new company record
-      const [newCompany] = await db.insert(companies)
-        .values({
-          name: company_name.trim(),
-          category: 'FinTech',
-          description: `FinTech partner company ${company_name}`,
-          status: 'pending',
-          accreditationStatus: 'PENDING',
-          onboardingCompanyCompleted: false,
-          metadata: {
-            invitedBy: req.user!.id,
-            invitedAt: new Date().toISOString(),
-            invitedFrom: userCompany.name
-          }
-        })
-        .returning();
+        // Create new company record
+        const [newCompany] = await tx.insert(companies)
+          .values({
+            name: company_name.trim(),
+            category: 'FinTech',
+            description: `FinTech partner company ${company_name}`,
+            status: 'pending',
+            accreditationStatus: 'PENDING',
+            onboardingCompanyCompleted: false,
+            metadata: {
+              invitedBy: req.user!.id,
+              invitedAt: new Date().toISOString(),
+              invitedFrom: userCompany.name
+            }
+          })
+          .returning();
 
-      console.log('[FinTech Invite] Created new company:', newCompany);
+        console.log('[FinTech Invite] Created new company:', newCompany);
 
-      // Generate invitation code using the shared function
-      const code = generateInviteCode();
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
+        // Generate invitation code using the shared function
+        const code = generateInviteCode();
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
-      // Create task for invitation
-      const [task] = await db.insert(tasks)
-        .values({
-          title: `New User Invitation: ${email}`,
-          description: `Invitation sent to ${email} to join ${company_name} on the platform.`,
-          taskType: 'user_onboarding',
-          taskScope: 'user',
-          status: TaskStatus.PENDING,
-          priority: 'medium',
-          progress: 0,
-          createdBy: req.user!.id,
-          userEmail: email.toLowerCase(),
-          companyId: newCompany.id,
-          dueDate: expirationDate,
-          metadata: {
+        // Create task for invitation
+        const [task] = await tx.insert(tasks)
+          .values({
+            title: `New User Invitation: ${email}`,
+            description: `Invitation sent to ${email} to join ${company_name} on the platform.`,
+            taskType: 'user_onboarding',
+            taskScope: 'user',
+            status: TaskStatus.PENDING,
+            priority: 'medium',
+            progress: 0,
+            createdBy: req.user!.id,
+            userEmail: email.toLowerCase(),
+            companyId: newCompany.id,
+            dueDate: expirationDate,
+            metadata: {
+              inviteeName: full_name,
+              inviteeCompany: company_name,
+              senderName: sender_name,
+              companyCreatedAt: newCompany.createdAt
+            }
+          })
+          .returning();
+
+        // Create invitation record
+        const [invitation] = await tx.insert(invitations)
+          .values({
+            email: email.toLowerCase(),
+            code,
+            status: 'pending',
+            companyId: newCompany.id,
             inviteeName: full_name,
             inviteeCompany: company_name,
-            senderName: sender_name,
-            companyCreatedAt: newCompany.createdAt
-          }
-        })
-        .returning();
-
-      // Create invitation record
-      const [invitation] = await db.insert(invitations)
-        .values({
-          email: email.toLowerCase(),
-          code,
-          status: 'pending',
-          companyId: newCompany.id,
-          inviteeName: full_name,
-          inviteeCompany: company_name,
-          expiresAt: expirationDate,
-          taskId: task.id
-        })
-        .returning();
-
-      // Send invitation email using the same URL structure as user invites
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
-
-      const emailParams = {
-        to: email,
-        from: process.env.GMAIL_USER!,
-        template: 'fintech_invite',
-        templateData: {
-          recipientName: full_name,
-          senderName: sender_name,
-          senderCompany: userCompany.name,
-          company: company_name,
-          code,
-          inviteUrl
-        }
-      };
-
-      const emailResult = await emailService.sendTemplateEmail(emailParams);
-
-      if (!emailResult.success) {
-        // Rollback the invitation and task if email fails
-        await db.update(invitations)
-          .set({ status: 'failed' })
-          .where(eq(invitations.id, invitation.id));
-
-        await db.update(tasks)
-          .set({
-            status: TaskStatus.FAILED,
-            progress: taskStatusToProgress[TaskStatus.FAILED]
+            expiresAt: expirationDate,
+            taskId: task.id
           })
-          .where(eq(tasks.id, task.id));
+          .returning();
 
-        return res.status(500).json({
-          message: "Failed to send invitation email. Please try again."
+        // Send invitation email using the same URL structure as user invites
+        const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
+
+        const emailParams = {
+          to: email,
+          from: process.env.GMAIL_USER!,
+          template: 'fintech_invite',
+          templateData: {
+            recipientName: full_name,
+            senderName: sender_name,
+            senderCompany: userCompany.name,
+            company: company_name,
+            code,
+            inviteUrl
+          }
+        };
+
+        try {
+          const emailResult = await emailService.sendTemplateEmail(emailParams);
+          if (!emailResult.success) {
+            throw new Error(`Failed to send invitation email: ${emailResult.error}`);
+          }
+
+          // Update task status after successful email
+          await tx.update(tasks)
+            .set({
+              status: TaskStatus.EMAIL_SENT,
+              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
+            })
+            .where(eq(tasks.id, task.id));
+        } catch (emailError) {
+          console.error("[FinTech Invite] Email sending failed:", emailError);
+          //Rollback
+          await tx.update(invitations)
+            .set({ status: 'failed' })
+            .where(eq(invitations.id, invitation.id));
+          await tx.update(tasks)
+            .set({
+              status: TaskStatus.FAILED,
+              progress: taskStatusToProgress[TaskStatus.FAILED]
+            })
+            .where(eq(tasks.id, task.id));
+          throw new Error("Failed to send invitation email. Please try again.");
+        }
+
+        console.log('[FinTech Invite] Invitation sent successfully');
+        res.json({
+          message: "Invitation sent successfully",
+          invitation,
+          company: newCompany
         });
-      }
-
-      // Update task status after successful email
-      await db.update(tasks)
-        .set({
-          status: TaskStatus.EMAIL_SENT,
-          progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
-        })
-        .where(eq(tasks.id, task.id));
-
-      res.json({
-        message: "Invitation sent successfully",
-        invitation,
-        company: newCompany
       });
-
     } catch (error: any) {
       console.error("Error sending invitation:", error);
       res.status(500).json({
