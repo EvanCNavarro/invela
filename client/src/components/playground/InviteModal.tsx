@@ -96,16 +96,30 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
       // Create the payload
       const payload = {
-        email: data.email.toLowerCase(),
-        full_name: data.full_name,
-        company_name: data.company_name,
-        sender_name: data.sender_name
+        email: data?.email?.toLowerCase()?.trim() || '',
+        full_name: data?.full_name?.trim() || '',
+        company_name: data?.company_name?.trim() || '',
+        sender_name: data?.sender_name?.trim() || ''
       };
 
-      // Validate payload
-      if (!payload.email || !payload.company_name) {
-        console.error('[InviteModal] Payload validation failed:', payload);
-        throw new Error('Email and company name are required');
+      // Detailed validation with specific error messages
+      const validationErrors = [];
+      if (!payload.email) validationErrors.push('Email is required');
+      if (!payload.company_name) validationErrors.push('Company name is required');
+
+      console.log('[InviteModal] Payload validation:', {
+        payload,
+        hasEmail: Boolean(payload.email),
+        hasCompanyName: Boolean(payload.company_name),
+        validationErrors
+      });
+
+      if (validationErrors.length > 0) {
+        console.error('[InviteModal] Payload validation failed:', {
+          payload,
+          validationErrors
+        });
+        throw new Error(validationErrors.join(', '));
       }
 
       // Final request logging
