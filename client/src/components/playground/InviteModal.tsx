@@ -57,6 +57,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
   const { user } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [existingCompany, setExistingCompany] = useState<ExistingCompany | null>(null);
+  const [isCheckingCompany, setIsCheckingCompany] = useState(false);
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -66,6 +67,30 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
       company_name: ""
     }
   });
+
+  const checkExistingCompany = async (companyName: string) => {
+    if (!companyName) return;
+
+    setIsCheckingCompany(true);
+    try {
+      const response = await fetch('/api/fintech/check-company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_name: companyName })
+      });
+
+      if (response.status === 409) {
+        const data = await response.json();
+        setExistingCompany(data.existingCompany);
+      } else {
+        setExistingCompany(null);
+      }
+    } catch (error) {
+      console.error('Error checking company:', error);
+    } finally {
+      setIsCheckingCompany(false);
+    }
+  };
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteData) => {
@@ -152,28 +177,6 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
             Please provide details to send a {variant === 'user' ? 'user' : 'FinTech'} invitation.
           </DialogDescription>
         </DialogHeader>
-        {existingCompany && (
-          <Alert className="mb-6 bg-amber-50/50">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="mt-0">
-              <div className="flex flex-col gap-2">
-                <p className="text-sm font-medium text-amber-900">
-                  "{existingCompany.name}" already exists in the network. If you'd like to invite a user under this company, click the button below to navigate to the Company's Profile page.
-                </p>
-                <Button
-                  variant="outline"
-                  className="w-full justify-between bg-white hover:bg-gray-50"
-                  asChild
-                >
-                  <Link to={`/network/company/${slugify(existingCompany.name)}?tab=users`}>
-                    <span>View Company Profile</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
             <FormField
@@ -185,15 +188,43 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
                   <FormControl>
                     <Input
                       {...field}
-                      className="w-full"
+                      className={`w-full ${existingCompany ? 'border-amber-500 focus:ring-amber-500' : ''}`}
                       placeholder="Enter company name"
                       autoFocus
                       onChange={(e) => {
                         field.onChange(e);
                         setExistingCompany(null); // Clear warning when company name changes
                       }}
+                      onBlur={(e) => {
+                        field.onBlur();
+                        if (e.target.value) {
+                          checkExistingCompany(e.target.value);
+                        }
+                      }}
                     />
                   </FormControl>
+                  {existingCompany && (
+                    <Alert className="mt-2 bg-amber-50/50">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="mt-0">
+                        <div className="flex flex-col gap-2">
+                          <p className="text-sm font-medium text-amber-900">
+                            "{existingCompany.name}" already exists in the network. If you'd like to invite a user under this company, click the button below to navigate to the Company's Profile page.
+                          </p>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between bg-white hover:bg-gray-50"
+                            asChild
+                          >
+                            <Link to={`/network/company/${slugify(existingCompany.name)}?tab=users`}>
+                              <span>View Company Profile</span>
+                              <ExternalLink className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}
