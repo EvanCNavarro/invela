@@ -2,7 +2,6 @@ import * as React from "react"
 import { Search as SearchIcon, Plus, X, Check, AlertTriangle, ExternalLink } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 import { Link } from "wouter"
@@ -92,6 +91,7 @@ export function NetworkSearch({
       const results = fuse.search(newValue)
       console.log('[NetworkSearch] Search results:', results)
       setSearchResults(results)
+      setIsOpen(true)
     } else {
       setSearchResults([])
       // Clear existing company when input is empty
@@ -169,6 +169,20 @@ export function NetworkSearch({
     setIsOpen(false)
   }
 
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
   return (
     <div className="space-y-2">
       <div
@@ -214,7 +228,7 @@ export function NetworkSearch({
         />
         <div className="absolute right-3 flex items-center gap-2">
           {isLoading ? (
-            <LoadingSpinner size="sm" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
           ) : hasValue && (
             <Button
               variant="ghost"
@@ -230,7 +244,7 @@ export function NetworkSearch({
         {/* Dropdown menu */}
         <div
           className={cn(
-            "absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md",
+            "absolute left-0 right-0 top-full mt-1 rounded-md border bg-popover text-popover-foreground shadow-md z-50",
             !isOpen && "hidden"
           )}
         >

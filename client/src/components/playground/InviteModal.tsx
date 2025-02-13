@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { NetworkSearch } from "./NetworkSearch";
+import type { Company } from "@/types/company";
 
 import {
   Dialog,
@@ -41,7 +42,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
-  const [existingCompany, setExistingCompany] = useState<any>(null);
+  const [existingCompany, setExistingCompany] = useState<Company | null>(null);
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -53,40 +54,34 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   });
 
-
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<Company[]>({
     queryKey: ["/api/companies"],
     enabled: variant === 'fintech'
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
-      console.log('[InviteModal] Starting mutation with data:', {
-        endpoint: variant === 'user' ? '/api/users/invite' : '/api/fintech/invite',
-        data: JSON.stringify(data, null, 2),
-        formState: {
-          isValid: form.formState.isValid,
-          errors: form.formState.errors,
-          dirtyFields: form.formState.dirtyFields
-        }
+      console.log('[InviteModal] Sending invitation:', {
+        data,
+        isValidCompanySelection,
+        existingCompany: existingCompany?.name
       });
 
-      const payload = {
-        email: data?.email?.toLowerCase()?.trim() || '',
-        full_name: data?.full_name?.trim() || '',
-        company_name: data?.company_name?.trim() || '',
-        sender_name: data?.sender_name?.trim() || ''
-      };
-
-      const validationErrors = [];
-      if (!payload.email) validationErrors.push('Email is required');
-      if (!payload.company_name) validationErrors.push('Company name is required');
-      if (!payload.full_name) validationErrors.push('Full name is required');
-      if (!payload.sender_name) validationErrors.push('Sender name is required');
-
-      if (validationErrors.length > 0) {
-        throw new Error(validationErrors.join(', '));
+      // Additional validation
+      if (variant === 'fintech' && !data.company_name) {
+        throw new Error('Company name is required');
       }
+
+      if (existingCompany) {
+        throw new Error(`${existingCompany.name} already exists. Please visit their company profile to invite new users.`);
+      }
+
+      const payload = {
+        email: data.email.toLowerCase().trim(),
+        full_name: data.full_name.trim(),
+        company_name: data.company_name.trim(),
+        sender_name: data.sender_name.trim()
+      };
 
       const response = await fetch(variant === 'user' ? '/api/users/invite' : '/api/fintech/invite', {
         method: 'POST',
@@ -124,19 +119,17 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   });
 
   const onSubmit = (formData: InviteData) => {
-    if (existingCompany) {
-      toast({
-        title: "Cannot invite to existing company",
-        description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('[InviteModal] Form submitted:', {
+      formData,
+      isValidCompanySelection,
+      existingCompany: existingCompany?.name
+    });
 
-    if (variant === 'fintech' && !isValidCompanySelection && !formData.company_name) {
+    // For fintech variant, validate company name
+    if (variant === 'fintech' && !formData.company_name) {
       form.setError('company_name', {
         type: 'manual',
-        message: 'Please select a valid company'
+        message: 'Please enter a company name'
       });
       return;
     }
@@ -146,11 +139,15 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
   const handleCompanySelect = (company: string) => {
     console.log('[InviteModal] Company selected:', company);
-    form.setValue('company_name', company, { shouldValidate: true });
+    form.setValue('company_name', company, { 
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
     setIsValidCompanySelection(true);
   };
 
-  const handleExistingCompanyChange = (company: any) => {
+  const handleExistingCompanyChange = (company: Company | null) => {
     setExistingCompany(company);
     if (!company) {
       setIsValidCompanySelection(false);
