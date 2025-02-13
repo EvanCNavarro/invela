@@ -641,33 +641,48 @@ export function registerRoutes(app: Express): Express {
 
           // Step 3: Create new company record with proper status
           console.log('[FinTech Invite] Creating new company:', company_name);
+
+          const companyData = {
+            name: company_name.trim(),
+            description: `FinTech partner company ${company_name}`,
+            category: 'FinTech',
+            status: 'active', // Set proper status
+            accreditationStatus: 'PENDING',
+            onboardingCompanyCompleted: false,
+            registryDate: new Date(),
+            metadata: {
+              invitedBy: req.user!.id,
+              invitedAt: new Date().toISOString(),
+              invitedFrom: userCompany.name,
+              createdVia: 'fintech_invite'
+            }
+          };
+
+          console.log('[FinTech Invite] Attempting to insert company with data:', JSON.stringify(companyData, null, 2));
+
           const [newCompany] = await tx.insert(companies)
-            .values({
-              name: company_name.trim(),
-              description: `FinTech partner company ${company_name}`,
-              category: 'FinTech',
-              status: 'active', // Set proper status
-              accreditationStatus: 'PENDING',
-              onboardingCompanyCompleted: false,
-              registryDate: new Date(),
-              metadata: {
-                invitedBy: req.user!.id,
-                invitedAt: new Date().toISOString(),
-                invitedFrom: userCompany.name,
-                createdVia: 'fintech_invite'
-              }
-            })
+            .values(companyData)
             .returning();
 
+          console.log('[FinTech Invite] Raw database response:', JSON.stringify(newCompany, null, 2));
+
           if (!newCompany) {
-            console.error('[FinTech Invite] Failed to create company');
+            console.error('[FinTech Invite] Failed to create company - null response');
             throw new Error("Failed to create company record");
+          }
+
+          if (!newCompany.id) {
+            console.error('[FinTech Invite] Company created but missing ID:', newCompany);
+            throw new Error("Invalid company record created");
           }
 
           console.log('[FinTech Invite] Successfully created company:', {
             id: newCompany.id,
             name: newCompany.name,
-            status: newCompany.status
+            status: newCompany.status,
+            category: newCompany.category,
+            createdAt: newCompany.createdAt,
+            metadata: newCompany.metadata
           });
 
           // Step 4: Create user record with temporary password
@@ -907,7 +922,7 @@ export function registerRoutes(app: Express): Express {
         email: req.body.email.toLowerCase(),
         fullName: req.body.full_name,
         companyId: req.body.company_id,
-        companyName: req.body.company_name,
+companyName: req.body.company_name,
         senderName: req.body.sender_name,
         senderCompany: req.body.senderCompany || (req.user?.companyId === 0 ? 'Invela' : undefined)
       };
