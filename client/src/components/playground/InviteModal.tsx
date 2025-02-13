@@ -67,7 +67,10 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          company_name: variant === 'user' ? companyName : formData.company_name
+        })
       });
 
       const responseData = await response.json();
@@ -128,7 +131,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
-      if (form.getValues('company_name') && isValidCompanySelection) {
+      if (variant === 'fintech' && form.getValues('company_name') && isValidCompanySelection) {
         const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
         emailInput?.focus();
       }
@@ -141,6 +144,14 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   };
 
+  const onSubmit = (data: InviteData) => {
+    if (variant === 'fintech' && !isValidCompanySelection) {
+      setShowCompanyError(true);
+      return;
+    }
+    sendInvite(data);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -149,11 +160,11 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
             Invite a New {variant === 'user' ? 'User' : 'FinTech'}
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
-            Please provide details to send {variant === 'user' ? 'a user' : 'a FinTech'} invitation.
+            Please provide details to send a {variant === 'user' ? 'user' : 'FinTech'} invitation.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Company Field - Always First */}
             {variant === 'user' ? (
               <div>
@@ -192,9 +203,9 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         onBlur={handleCompanyBlur}
                       />
                     </FormControl>
-                    {showCompanyError && (
+                    {!form.formState.errors.company_name && showCompanyError && (
                       <p className="text-sm font-medium text-destructive mt-2">
-                        Please select a company
+                        Company name is required
                       </p>
                     )}
                     <FormMessage />
@@ -247,7 +258,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
               )}
             />
 
-            {serverError && (
+            {serverError && !form.formState.errors.company_name && !form.formState.errors.email && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
                 {serverError}
               </div>
