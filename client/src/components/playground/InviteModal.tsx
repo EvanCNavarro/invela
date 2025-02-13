@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,11 +43,15 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { user } = useAuth();
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
 
-  // Fetch companies for network search
-  const { data: companies = [] } = useQuery({
-    queryKey: ["/api/companies"],
-    enabled: variant === 'fintech'
-  });
+  // Debug log when component mounts/updates
+  useEffect(() => {
+    console.log('[InviteModal] Component state:', {
+      variant,
+      companyId,
+      companyName,
+      isValidCompanySelection
+    });
+  }, [variant, companyId, companyName, isValidCompanySelection]);
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -59,23 +63,32 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   });
 
-  // Debug logging for form values
-  form.watch((data) => {
-    console.log('[InviteModal] Form values updated:', {
-      data,
-      errors: form.formState.errors,
-      isDirty: form.formState.isDirty,
-      isValid: form.formState.isValid
+  // Watch form values
+  useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      console.log('[InviteModal] Form value changed:', {
+        field: name,
+        type,
+        value,
+        allValues: form.getValues(),
+        formState: {
+          isDirty: form.formState.isDirty,
+          isValid: form.formState.isValid,
+          errors: form.formState.errors
+        }
+      });
     });
-  });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
+      // Pre-validation logging
       console.log('[InviteModal] Starting mutation with data:', {
         endpoint,
-        data,
+        data: JSON.stringify(data, null, 2),
         formState: {
           isValid: form.formState.isValid,
           errors: form.formState.errors,
@@ -83,43 +96,45 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         }
       });
 
-      if (!data.email || !data.company_name) {
-        console.error('[InviteModal] Validation failed:', {
-          email: data.email,
-          company_name: data.company_name
-        });
-        throw new Error('Email and company name are required');
+      // Manual validation
+      const validationResult = inviteSchema.safeParse(data);
+      if (!validationResult.success) {
+        console.error('[InviteModal] Schema validation failed:', validationResult.error);
+        throw new Error('Invalid form data');
       }
 
-      console.log('[InviteModal] Sending request to server:', {
+      // Final request logging
+      console.log('[InviteModal] Sending request:', {
+        url: endpoint,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data, null, 2)
+      });
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
       const responseData = await response.json();
+      console.log('[InviteModal] Server response:', responseData);
 
       if (!response.ok) {
-        console.error('[InviteModal] Server error:', responseData);
         throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
       }
 
-      console.log('[InviteModal] Server response success:', responseData);
       return responseData;
     },
     onError: (error: Error) => {
       console.error('[InviteModal] Mutation error:', {
         error,
         formData: form.getValues(),
-        formState: form.formState
+        formState: {
+          isValid: form.formState.isValid,
+          errors: form.formState.errors,
+          dirtyFields: form.formState.dirtyFields
+        }
       });
       setServerError(error.message);
       toast({
@@ -129,40 +144,54 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       });
     },
     onSuccess: () => {
+      console.log('[InviteModal] Mutation succeeded');
       toast({
         title: "Invitation sent successfully",
         description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
       });
 
-      console.log('[InviteModal] Success - Resetting form');
       form.reset();
       setServerError(null);
       setIsValidCompanySelection(false);
       onOpenChange(false);
-
-      const buttonSelector = variant === 'user' 
-        ? '[data-element="invite-user-button"]'
-        : '[data-element="invite-fintech-button"]';
-
-      const inviteButton = document.querySelector(buttonSelector);
-      if (inviteButton) {
-        const rect = inviteButton.getBoundingClientRect();
-        confetti({
-          particleCount: 75,
-          spread: 52,
-          origin: {
-            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-            y: rect.top / window.innerHeight
-          },
-          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-          ticks: 200,
-          gravity: 0.8,
-          scalar: 0.8,
-          shapes: ["circle"]
-        });
-      }
     },
   });
+
+  const onSubmit = (formData: InviteData) => {
+    // Pre-submission validation and logging
+    console.log('[InviteModal] Form submission started:', {
+      rawFormData: formData,
+      formState: {
+        isValid: form.formState.isValid,
+        errors: form.formState.errors,
+        isDirty: form.formState.isDirty,
+        dirtyFields: Object.keys(form.formState.dirtyFields),
+        touchedFields: Object.keys(form.formState.touchedFields)
+      }
+    });
+
+    // Additional validation for fintech variant
+    if (variant === 'fintech' && !isValidCompanySelection) {
+      console.log('[InviteModal] Invalid company selection');
+      form.setError('company_name', {
+        type: 'manual',
+        message: 'Please select a valid company'
+      });
+      return;
+    }
+
+    // Clone and prepare the payload
+    const payload = JSON.parse(JSON.stringify(formData));
+
+    // Final payload logging
+    console.log('[InviteModal] Submitting payload:', {
+      payload: JSON.stringify(payload, null, 2),
+      variant,
+      isValidCompanySelection
+    });
+
+    sendInvite(payload);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -174,39 +203,11 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   };
 
-  const onSubmit = (formData: InviteData) => {
-    console.log('[InviteModal] Form submission started:', {
-      formData,
-      variant,
-      isValidCompanySelection,
-      formState: {
-        isValid: form.formState.isValid,
-        errors: form.formState.errors,
-        dirtyFields: form.formState.dirtyFields,
-        values: form.getValues()
-      }
-    });
+  const { data: companies = [] } = useQuery({
+    queryKey: ["/api/companies"],
+    enabled: variant === 'fintech'
+  });
 
-    if (variant === 'fintech' && !isValidCompanySelection) {
-      console.log('[InviteModal] Invalid company selection');
-      form.setError('company_name', {
-        type: 'manual',
-        message: 'Please select a valid company'
-      });
-      return;
-    }
-
-    if (!formData.company_name) {
-      console.error('[InviteModal] Company name missing in form data');
-      return;
-    }
-
-    // Deep clone the form data to prevent any reference issues
-    const payload = JSON.parse(JSON.stringify(formData));
-    console.log('[InviteModal] Final payload before mutation:', payload);
-
-    sendInvite(payload);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

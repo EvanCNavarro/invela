@@ -44,7 +44,7 @@ export function NetworkSearch({
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
-  // Initialize Fuse instance for fuzzy search with proper keys
+  // Initialize Fuse instance for fuzzy search
   const fuse = React.useMemo(() => new Fuse(data, {
     keys: ['name', 'description'],
     threshold: 0.3,
@@ -57,11 +57,14 @@ export function NetworkSearch({
 
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
+    console.log('[NetworkSearch] handleChange:', { newValue, controlled: !!controlledOnChange })
 
     // Handle controlled input
     if (controlledOnChange) {
+      console.log('[NetworkSearch] Calling controlled onChange')
       controlledOnChange(event)
     } else {
+      console.log('[NetworkSearch] Setting internal value')
       setValue(newValue)
     }
 
@@ -77,19 +80,26 @@ export function NetworkSearch({
   }, [controlledOnChange, onSearch, fuse])
 
   const handleSelect = (companyName: string) => {
+    console.log('[NetworkSearch] handleSelect:', { companyName, controlled: !!controlledOnChange })
+
     if (controlledOnChange) {
       const event = {
         target: { value: companyName }
       } as React.ChangeEvent<HTMLInputElement>
+      console.log('[NetworkSearch] Calling controlled onChange with selected company')
       controlledOnChange(event)
     } else {
+      console.log('[NetworkSearch] Setting internal value with selected company')
       setValue(companyName)
     }
+
+    console.log('[NetworkSearch] Calling onCompanySelect')
     onCompanySelect?.(companyName)
     setIsOpen(false)
   }
 
   const handleClear = React.useCallback(() => {
+    console.log('[NetworkSearch] handleClear')
     if (controlledOnChange) {
       const event = {
         target: { value: '' }
@@ -102,26 +112,6 @@ export function NetworkSearch({
     onSearch?.('')
     inputRef.current?.focus()
   }, [controlledOnChange, onSearch])
-
-  const handleAddNew = React.useCallback(() => {
-    if (inputValue) {
-      onAddNewCompany?.(inputValue)
-      handleSelect(inputValue)
-    }
-  }, [inputValue, onAddNewCompany])
-
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [])
 
   return (
     <div 
@@ -181,22 +171,6 @@ export function NetworkSearch({
           !isOpen && "hidden"
         )}
       >
-        {!hasValue && recentSearches.length > 0 && (
-          <>
-            <div className="px-2 py-1.5 text-sm font-medium">Recent Searches</div>
-            {recentSearches.slice(0, 5).map((company, index) => (
-              <button
-                key={index}
-                className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                onClick={() => handleSelect(company)}
-              >
-                {company}
-              </button>
-            ))}
-            <div className="mx-2 my-1 border-t" />
-          </>
-        )}
-
         {hasValue && searchResults.length > 0 && (
           <>
             <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
@@ -220,7 +194,10 @@ export function NetworkSearch({
             <div className="px-2 py-1.5 text-sm font-medium">No results found</div>
             <button
               className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              onClick={handleAddNew}
+              onClick={() => {
+                console.log('[NetworkSearch] Adding new company:', inputValue)
+                onAddNewCompany?.(inputValue)
+              }}
             >
               <Plus className="h-4 w-4" />
               Add "{inputValue}" to {currentCompanyName}'s Network
