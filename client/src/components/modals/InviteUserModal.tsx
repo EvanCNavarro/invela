@@ -107,7 +107,13 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           description: `${form.getValues().full_name} has been invited to join ${companyName}.`,
         });
 
-        form.reset();
+        form.reset({
+          email: "",
+          full_name: "",
+          company_id: companyId,
+          company_name: companyName,
+          sender_name: user?.fullName || "",
+        });
         setServerError(null);
         onOpenChange(false);
 
@@ -148,7 +154,7 @@ export function InviteUserModal({ open, onOpenChange, companyId, companyName }: 
           <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
             <div>
               <div className="text-sm font-semibold mb-2">Company</div>
-              <div className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground">
+              <div className="w-full px-3 py-2 border rounded-md bg-muted/50 text-foreground">
                 {companyName}
               </div>
             </div>
