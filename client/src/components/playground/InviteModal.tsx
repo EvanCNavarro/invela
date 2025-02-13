@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,6 +67,15 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
       company_name: ""
     }
   });
+
+  // Reset form and warnings when modal closes
+  useEffect(() => {
+    if (!open) {
+      setExistingCompany(null);
+      setServerError(null);
+      form.reset();
+    }
+  }, [open, form]);
 
   const checkExistingCompany = async (companyName: string) => {
     if (!companyName) return;
@@ -188,15 +197,19 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
                   <FormControl>
                     <Input
                       {...field}
-                      className={`w-full ${existingCompany ? 'border-amber-500 focus:ring-amber-500' : ''}`}
+                      className={`w-full ${existingCompany ? 'border-amber-500 focus-visible:ring-amber-500' : ''}`}
                       placeholder="Enter company name"
                       autoFocus
                       onChange={(e) => {
                         field.onChange(e);
-                        setExistingCompany(null); // Clear warning when company name changes
+                        // Only clear warning if field is empty
+                        if (e.target.value === '') {
+                          setExistingCompany(null);
+                        }
                       }}
                       onBlur={(e) => {
                         field.onBlur();
+                        // Check for existing company when field loses focus
                         if (e.target.value) {
                           checkExistingCompany(e.target.value);
                         }
@@ -277,7 +290,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
               <Button
                 type="submit"
                 className="gap-2"
-                disabled={isPending || existingCompany !== null}
+                disabled={isPending || existingCompany !== null || isCheckingCompany}
                 data-element={`invite-${variant}-button`}
               >
                 {isPending ? (
