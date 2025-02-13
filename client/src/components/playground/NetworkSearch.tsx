@@ -119,35 +119,37 @@ export function NetworkSearch({
       <SearchIcon 
         className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
       />
-      <Input
-        ref={inputRef}
-        type="text"
-        value={inputValue}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        placeholder="Search Network"
-        className={cn(
-          "pl-9 pr-[70px]",
-          "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
-          className
-        )}
-        {...props}
-      />
-      <div className="absolute right-3 flex items-center gap-2">
-        {isLoading ? (
-          <LoadingSpinner size="sm" />
-        ) : hasValue && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleClear}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Input
+            ref={inputRef}
+            type="text"
+            value={inputValue}
+            onChange={handleChange}
+            onFocus={handleFocus}
+            placeholder="Search Network"
+            className={cn(
+              "pl-9 pr-[70px]",
+              "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
+              className
+            )}
+            {...props}
+          />
+        </DropdownMenuTrigger>
+        <div className="absolute right-3 flex items-center gap-2">
+          {isLoading ? (
+            <LoadingSpinner size="sm" />
+          ) : hasValue && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={handleClear}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
         <DropdownMenuContent
           align="start"
           className="w-[var(--radix-dropdown-menu-trigger-width)]"
