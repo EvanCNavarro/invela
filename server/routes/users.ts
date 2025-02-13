@@ -149,7 +149,7 @@ router.post("/api/users/invite", async (req, res) => {
         const invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers.host;
-        const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}`;
+        const inviteUrl = `${protocol}://${host}/register?email=${encodeURIComponent(data.email)}`;
 
         // Create invitation record
         const [invitationResult] = await tx.insert(invitations)
@@ -209,7 +209,7 @@ router.post("/api/users/invite", async (req, res) => {
           senderName: data.sender_name,
           senderCompany: company.name,
           targetCompany: company.name,
-          inviteUrl,
+          inviteUrl: `${protocol}://${host}/register?email=${encodeURIComponent(data.email)}`,
           code: invitationCode
         };
 

@@ -83,9 +83,10 @@ export class EmailService {
     // Generate a unique invitation code if not provided
     const inviteCode = data.code || uuidv4().slice(0, 8);
 
-    // Build invitation URL with code if needed
-    const separator = data.inviteUrl.includes('?') ? '&' : '?';
-    const inviteUrl = `${data.inviteUrl}${separator}code=${inviteCode}`;
+    // Build invitation URL without duplicating code parameter
+    const url = new URL(data.inviteUrl);
+    url.searchParams.set('code', inviteCode);
+    const inviteUrl = url.toString();
 
     // Return data with exact parameter names required by template
     const transformedData = {
