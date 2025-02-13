@@ -80,12 +80,9 @@ export class EmailService {
   private transformTemplateData(data: TemplateData) {
     console.log('[EmailService] Input template data:', JSON.stringify(data, null, 2));
 
-    // Generate a unique invitation code if not provided
-    const inviteCode = data.code || uuidv4().slice(0, 8);
-
     // Build invitation URL without duplicating code parameter
     const url = new URL(data.inviteUrl);
-    url.searchParams.set('code', inviteCode);
+    url.searchParams.set('code', data.code || '');
     const inviteUrl = url.toString();
 
     // Return data with exact parameter names required by template
@@ -96,7 +93,7 @@ export class EmailService {
       senderCompany: data.senderCompany,
       targetCompany: data.targetCompany,
       inviteUrl,
-      code: inviteCode
+      code: data.code
     };
 
     console.log('[EmailService] Transformed template data:', JSON.stringify(transformedData, null, 2));
@@ -163,9 +160,9 @@ export class EmailService {
         };
       }
 
-      // Transform template data to match expected schema
+      // Transform and validate template data
+      console.log('[EmailService] Original template data:', JSON.stringify(params.templateData, null, 2));
       const transformedData = this.transformTemplateData(params.templateData);
-      console.log('[EmailService] Transformed template data:', transformedData);
 
       // Get email template
       console.log('[EmailService] Getting email template:', params.template);
@@ -205,5 +202,4 @@ export class EmailService {
   }
 }
 
-// Export singleton instance
 export const emailService = new EmailService();

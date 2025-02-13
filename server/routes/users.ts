@@ -40,6 +40,8 @@ router.post("/api/users/invite", async (req, res) => {
   while (retryCount < maxRetries) {
     try {
       console.log('[Invite] Starting invitation process');
+      console.log('[Invite] Request body:', req.body);
+
       const validationResult = inviteUserSchema.safeParse(req.body);
 
       if (!validationResult.success) {
@@ -134,7 +136,7 @@ router.post("/api/users/invite", async (req, res) => {
         return { newUser: userResult, invitation: invitationResult, task: taskResult };
       });
 
-      // Send invitation email
+      // Prepare email template data with all required fields
       const emailTemplateData = {
         recipientName: data.full_name,
         recipientEmail: data.email,
@@ -159,7 +161,6 @@ router.post("/api/users/invite", async (req, res) => {
         throw new Error(emailResult.error || 'Failed to send invitation email');
       }
 
-      // Send success response
       return res.status(201).json({
         message: "Invitation sent successfully",
         invitation: {
@@ -174,14 +175,6 @@ router.post("/api/users/invite", async (req, res) => {
     } catch (error) {
       console.error('[Invite] Error processing invitation (attempt ${retryCount + 1}):', error);
 
-      // If it's a connection error, retry
-      if (error.message?.includes('Console request failed') && retryCount < maxRetries - 1) {
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
-        continue;
-      }
-
-      // If we've exhausted retries or it's another type of error, return error response
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Invalid invitation data",
@@ -191,6 +184,15 @@ router.post("/api/users/invite", async (req, res) => {
 
       if (error instanceof Error && error.message === "User with this email already exists") {
         return res.status(400).json({ message: error.message });
+      }
+
+      // If it's a connection error, retry
+      if (error instanceof Error && 
+          error.message?.includes('Console request failed') && 
+          retryCount < maxRetries - 1) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+        continue;
       }
 
       return res.status(500).json({ 
