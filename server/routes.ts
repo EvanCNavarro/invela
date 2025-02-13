@@ -545,6 +545,17 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
+      // Check for existing company with same name
+      const [existingCompany] = await db.select()
+        .from(companies)
+        .where(sql`LOWER(${companies.name}) = LOWER(${companyName})`);
+
+      if (existingCompany) {
+        return res.status(400).json({
+          message: "A company with this name already exists"
+        });
+      }
+
       // Get user's company details
       const [userCompany] = await db.select()
         .from(companies)
