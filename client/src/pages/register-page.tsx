@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 // Initial schema just for invitation code
 const invitationCodeSchema = z.object({
@@ -40,6 +41,7 @@ const registrationSchema = z.object({
 });
 
 export default function RegisterPage() {
+  const { toast } = useToast();
   const { user, registerMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [validatedInvitation, setValidatedInvitation] = useState<{
@@ -70,44 +72,60 @@ export default function RegisterPage() {
     },
   });
 
-  // Update the validateInvitation query
+  // Update the validateInvitation query with better error handling and debugging
   const { data: invitationData, refetch: validateInvitation } = useQuery({
     queryKey: ["validateInvitation", invitationForm.watch("invitationCode")],
     queryFn: async () => {
       const code = invitationForm.watch("invitationCode")?.toUpperCase();
-      if (!code || code.length !== 6) return null;
+      console.log("[Registration] Validating invitation code:", code);
 
-      const response = await fetch(`/api/invitations/${code}/validate`);
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error || "Invalid invitation code");
+      if (!code || code.length !== 6) {
+        console.log("[Registration] Invalid code format:", code);
+        return null;
       }
-      return response.json();
+
+      try {
+        const response = await fetch(`/api/invitations/${code}/validate`);
+        const responseData = await response.json();
+        console.log("[Registration] Validation response:", responseData);
+
+        if (!response.ok) {
+          throw new Error(responseData.message || "Invalid invitation code");
+        }
+
+        return responseData;
+      } catch (error) {
+        console.error("[Registration] Validation error:", error);
+        throw error;
+      }
     },
-    enabled: false, // Don't run automatically
-    retry: false, // Don't retry on failure
+    enabled: false,
+    retry: false,
   });
 
   // Add URL parameter handling with improved error handling
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
+    console.log("[Registration] URL code parameter:", code);
+
     if (code) {
       const formattedCode = code.toUpperCase();
+      console.log("[Registration] Setting invitation code:", formattedCode);
       invitationForm.setValue('invitationCode', formattedCode);
-      // Trigger validation after setting the code
       validateInvitation();
     }
   }, []);
 
   // Handle invitation code validation
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
+    console.log("[Registration] Starting code validation for:", values.invitationCode);
     try {
       const result = await validateInvitation();
-      console.log("Invitation validation result:", result); // Debug log
+      console.log("[Registration] Validation result:", result);
 
-      // The response comes directly from result.data
       if (result?.data?.valid) {
+        console.log("[Registration] Setting validated invitation data:", result.data);
         setValidatedInvitation({
           email: result.data.email,
           company: result.data.company,
@@ -116,6 +134,7 @@ export default function RegisterPage() {
         });
 
         // Pre-fill registration form
+        console.log("[Registration] Pre-filling registration form");
         registrationForm.setValue("invitationCode", values.invitationCode);
         registrationForm.setValue("email", result.data.email);
         registrationForm.setValue("company", result.data.company);
@@ -123,17 +142,22 @@ export default function RegisterPage() {
         // Split full name if provided
         if (result.data.fullName) {
           const nameParts = result.data.fullName.split(" ");
+          console.log("[Registration] Setting name parts:", nameParts);
           registrationForm.setValue("firstName", nameParts[0] || "");
           registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
         }
+
+        // Debug form values after setting
+        console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
       } else {
+        console.log("[Registration] Invalid invitation code response");
         invitationForm.setError("invitationCode", {
           type: "manual",
           message: "Invalid invitation code",
         });
       }
     } catch (error) {
-      console.error("Invitation validation error:", error);
+      console.error("[Registration] Validation error:", error);
       invitationForm.setError("invitationCode", {
         type: "manual",
         message: "Invalid invitation code",
@@ -143,19 +167,41 @@ export default function RegisterPage() {
 
   // Handle full registration
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
-    if (!validatedInvitation?.companyId) return;
+    console.log("[Registration] Starting registration with values:", values);
+    if (!validatedInvitation?.companyId) {
+      console.error("[Registration] Missing companyId in validated invitation");
+      return;
+    }
 
     const fullName = `${values.firstName} ${values.lastName}`.trim();
+    console.log("[Registration] Submitting registration with fullName:", fullName);
 
     registerMutation.mutate({
       ...values,
       fullName,
       companyId: validatedInvitation.companyId,
+    }, {
+      onSuccess: () => {
+        console.log("[Registration] Registration successful");
+        toast({
+          title: "Registration successful",
+          description: "Welcome to Invela! You can now log in.",
+        });
+      },
+      onError: (error) => {
+        console.error("[Registration] Registration error:", error);
+        toast({
+          title: "Registration failed",
+          description: "There was an error creating your account. Please try again.",
+          variant: "destructive",
+        });
+      },
     });
   };
 
   // Redirect if already logged in
   if (user) {
+    console.log("[Registration] User already logged in, redirecting");
     return <Redirect to="/" />;
   }
 
