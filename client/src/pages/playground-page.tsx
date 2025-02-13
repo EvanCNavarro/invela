@@ -63,7 +63,7 @@ import { FileUploadPlayground } from '@/components/playground/FileUploadPlaygrou
 import TabsDemo from "@/components/playground/TabsDemo";
 import { useQueryClient } from "@tanstack/react-query";
 import { wsService } from "@/lib/websocket";
-
+import NetworkSearchPlayground from "@/components/playground/NetworkSearchPlayground";
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -202,6 +202,30 @@ export function Example() {
         iconPosition="left"
       />
     </div>
+  );
+}
+`,
+  },
+  {
+    id: "network-search",
+    name: "Network Search",
+    code: `import { NetworkSearch } from "@/components/playground/NetworkSearch";
+
+export function Example() {
+  const handleCompanySelect = (company: string) => {
+    console.log('Selected company:', company);
+  };
+
+  return (
+    <NetworkSearch
+      data={[
+        { name: "Acme Corp" },
+        { name: "Tech Solutions" }
+      ]}
+      currentCompanyName="Your Company"
+      recentSearches={["Recent Co 1", "Recent Co 2"]}
+      onCompanySelect={handleCompanySelect}
+    />
   );
 }
 `,
@@ -950,7 +974,7 @@ export default function PlaygroundPage() {
                     <CardTitle className="text-sm font-bold">Preview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex gap-8">
+                    <div className="flex gap8">
                       <div className="w-64 border rounded-lg">
                         <Sidebar
                           isExpanded={isExpanded}
@@ -1420,6 +1444,16 @@ export default function PlaygroundPage() {
                     <div className="space-y-8">
                       <TabsDemo />
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+              {currentComponent.id === "network-search" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <NetworkSearchPlayground />
                   </CardContent>
                 </Card>
               )}
