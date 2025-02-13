@@ -8,6 +8,7 @@ export interface EmailTemplate {
 
 const invitationTemplateSchema = z.object({
   recipientName: z.string().min(1, "Recipient name is required"),
+  recipientEmail: z.string().email("Valid recipient email is required"),
   senderName: z.string().min(1, "Sender name is required"),
   senderCompany: z.string().min(1, "Sender company is required"),
   targetCompany: z.string().min(1, "Target company is required"),
