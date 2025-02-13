@@ -584,6 +584,23 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
+      // Create new company record
+      const [newCompany] = await db.insert(companies)
+        .values({
+          name: company_name.trim(),
+          category: 'FinTech',
+          description: `FinTech partner company ${company_name}`,
+          status: 'pending',
+          metadata: {
+            invitedBy: req.user!.id,
+            invitedAt: new Date().toISOString(),
+            invitedFrom: userCompany.name
+          }
+        })
+        .returning();
+
+      console.log('[FinTech Invite] Created new company:', newCompany);
+
       // Generate invitation code
       const code = uuidv4();
       const expirationDate = new Date();
@@ -601,12 +618,13 @@ export function registerRoutes(app: Express): Express {
           progress: 0,
           createdBy: req.user!.id,
           userEmail: email.toLowerCase(),
-          companyId: req.user!.companyId,
+          companyId: newCompany.id, // Use new company ID
           dueDate: expirationDate,
           metadata: {
             inviteeName: full_name,
             inviteeCompany: company_name,
-            senderName: sender_name
+            senderName: sender_name,
+            companyCreatedAt: newCompany.createdAt
           }
         })
         .returning();
@@ -617,7 +635,7 @@ export function registerRoutes(app: Express): Express {
           email: email.toLowerCase(),
           code,
           status: 'pending',
-          companyId: req.user!.companyId,
+          companyId: newCompany.id, // Use new company ID
           inviteeName: full_name,
           inviteeCompany: company_name,
           expiresAt: expirationDate,
@@ -672,7 +690,8 @@ export function registerRoutes(app: Express): Express {
 
       res.json({
         message: "Invitation sent successfully",
-        invitation
+        invitation,
+        company: newCompany
       });
 
     } catch (error: any) {
