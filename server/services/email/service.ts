@@ -85,20 +85,10 @@ export class EmailService {
     const separator = data.inviteUrl.includes('?') ? '&' : '?';
     const inviteUrl = `${data.inviteUrl}${separator}code=${inviteCode}`;
 
-    console.log('[EmailService] Transforming template data:', {
-      recipientName: data.recipientName,
-      recipientEmail: data.recipientEmail, // Include recipientEmail in logging
-      senderName: data.senderName,
-      senderCompany: data.senderCompany,
-      targetCompany: data.targetCompany,
-      code: inviteCode,
-      inviteUrl
-    });
-
     // Return data with exact parameter names required by template
     return {
       recipientName: data.recipientName,
-      recipientEmail: data.recipientEmail, // Include recipientEmail in returned data
+      recipientEmail: data.recipientEmail,
       senderName: data.senderName,
       senderCompany: data.senderCompany,
       targetCompany: data.targetCompany,
