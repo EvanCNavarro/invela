@@ -2,21 +2,19 @@ import * as nodemailer from 'nodemailer';
 import { z } from 'zod';
 import dns from 'dns';
 import { promisify } from 'util';
+import { v4 as uuidv4 } from 'uuid';
 import type { EmailTemplate, TemplateNames } from './templates';
 import { getEmailTemplate } from './templates';
 
 const resolveMx = promisify(dns.resolveMx);
 
-// Common disposable email domains
 const disposableDomains = new Set([
   'tempmail.com',
   'throwawaymail.com',
   '10minutemail.com',
   'guerrillamail.com',
-  // Add more as needed
 ]);
 
-// Common role-based email prefixes
 const roleBasedPrefixes = new Set([
   'admin',
   'info',
@@ -26,17 +24,27 @@ const roleBasedPrefixes = new Set([
   'help',
   'no-reply',
   'noreply',
-  // Add more as needed
 ]);
 
-// Validation schemas
+// Template data schema
+const templateDataSchema = z.object({
+  recipientEmail: z.string().email(),
+  recipientName: z.string(),
+  senderName: z.string(),
+  senderCompany: z.string(),
+  targetCompany: z.string(),
+  inviteUrl: z.string().url()
+});
+
+type TemplateData = z.infer<typeof templateDataSchema>;
+
 export const emailSchema = z.string().email("Invalid email address");
 
 export const sendEmailSchema = z.object({
   to: emailSchema,
   from: emailSchema,
-  template: z.enum(['user_invite']), // Explicitly define allowed template names
-  templateData: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])),
+  template: z.enum(['user_invite', 'fintech_invite']),
+  templateData: templateDataSchema,
 });
 
 export type SendEmailParams = z.infer<typeof sendEmailSchema>;
@@ -68,37 +76,55 @@ class EmailService {
     console.log('[EmailService] Email service initialized successfully');
   }
 
+  private transformTemplateData(data: TemplateData) {
+    // Generate a unique invitation code
+    const inviteCode = uuidv4().slice(0, 8);
+
+    // Build invitation URL with code
+    const separator = data.inviteUrl.includes('?') ? '&' : '?';
+    const inviteUrl = `${data.inviteUrl}${separator}code=${inviteCode}`;
+
+    console.log('[EmailService] Transforming template data:', { 
+      company: data.targetCompany,
+      inviteCode,
+      inviteUrl
+    });
+
+    return {
+      recipientName: data.recipientName,
+      senderName: data.senderName,
+      company: data.targetCompany,  // Map targetCompany to company for the template
+      code: inviteCode,
+      inviteUrl: inviteUrl
+    };
+  }
+
   private async validateEmail(email: string): Promise<ValidationResult> {
     try {
       console.log('[EmailService] Starting email validation for:', email);
 
-      // Step 1: Basic format validation
       const result = emailSchema.safeParse(email);
       if (!result.success) {
         console.log('[EmailService] Basic format validation failed');
         return { isValid: false, reason: "Invalid email format" };
       }
 
-      // Step 2: Parse email parts
       const [localPart, domain] = email.split('@');
       if (!domain || !localPart) {
         console.log('[EmailService] Email parsing failed - invalid format');
         return { isValid: false, reason: "Invalid email format" };
       }
 
-      // Step 3: Check for disposable email domains
       if (disposableDomains.has(domain.toLowerCase())) {
         console.log('[EmailService] Disposable email domain detected:', domain);
         return { isValid: false, reason: "Disposable email addresses are not allowed" };
       }
 
-      // Step 4: Check for role-based emails
       if (roleBasedPrefixes.has(localPart.toLowerCase())) {
         console.log('[EmailService] Role-based email detected:', localPart);
         return { isValid: false, reason: "Role-based email addresses are not allowed" };
       }
 
-      // Step 5: Check MX records
       try {
         console.log('[EmailService] Checking MX records for domain:', domain);
         const mxRecords = await resolveMx(domain);
@@ -109,7 +135,6 @@ class EmailService {
         console.log('[EmailService] MX records found for domain:', domain);
       } catch (error) {
         console.error('[EmailService] MX record check failed:', error);
-        // Don't fail on MX check errors, as some valid domains might have temporary DNS issues
         console.log('[EmailService] Continuing despite MX check failure');
       }
 
@@ -134,21 +159,13 @@ class EmailService {
         };
       }
 
-      const fromValidation = await this.validateEmail(params.from || this.defaultFromEmail);
-      if (!fromValidation.isValid) {
-        console.error('[EmailService] Sender email validation failed:', fromValidation.reason);
-        return {
-          success: false,
-          error: fromValidation.reason || 'Invalid sender email address'
-        };
-      }
+      // Transform template data to match expected schema
+      const transformedData = this.transformTemplateData(params.templateData);
+      console.log('[EmailService] Transformed template data:', transformedData);
 
       // Get email template
       console.log('[EmailService] Getting email template:', params.template);
-      const template = getEmailTemplate(
-        params.template as TemplateNames,
-        params.templateData
-      );
+      const template = getEmailTemplate(params.template as TemplateNames, transformedData);
 
       // Send email using nodemailer
       console.log('[EmailService] Attempting to send email...');
@@ -171,7 +188,6 @@ class EmailService {
     }
   }
 
-  // Method to verify connection
   async verifyConnection(): Promise<boolean> {
     console.log('[EmailService] Verifying email service connection...');
     try {
