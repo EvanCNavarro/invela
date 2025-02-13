@@ -215,7 +215,7 @@ export function registerRoutes(app: Express): Express {
   });
 
   // File upload endpoint
-  app.post("/api/files/upload", requireAuth, logoUpload.single('logo'), async (req, res) => {
+  app.post("/api/files/upload", requireAuth, async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -571,7 +571,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update the fintech invite endpoint
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -646,8 +645,8 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[FinTech Invite] Created new company:', newCompany);
 
-      // Generate invitation code (4 characters hex, matching user invites)
-      const invitationCode = crypto.randomBytes(2).toString('hex').toUpperCase();
+      // Generate invitation code (same format as user invites)
+      const invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
@@ -676,7 +675,7 @@ export function registerRoutes(app: Express): Express {
         })
         .returning();
 
-      // Create invitation record with the same 4-character code format
+      // Create invitation record
       const [invitation] = await db.insert(invitations)
         .values({
           email: email.toLowerCase(),
@@ -707,7 +706,11 @@ export function registerRoutes(app: Express): Express {
       });
 
       if (!emailResult.success) {
-        // Update task status if email fails
+        // Rollback the invitation and task if email fails
+        await db.update(invitations)
+          .set({ status: 'failed' })
+          .where(eq(invitations.id, invitation.id));
+
         await db.update(tasks)
           .set({
             status: TaskStatus.FAILED,
@@ -719,10 +722,6 @@ export function registerRoutes(app: Express): Express {
             }
           })
           .where(eq(tasks.id, task.id));
-
-        await db.update(invitations)
-          .set({ status: 'failed' })
-          .where(eq(invitations.id, invitation.id));
 
         return res.status(500).json({
           message: "Failed to send invitation email. Please try again."
