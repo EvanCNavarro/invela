@@ -605,6 +605,15 @@ export function registerRoutes(app: Express): Express {
 
       // Database transaction for atomicity
       const result = await db.transaction(async (tx) => {
+        // Get user's company details first
+        const [userCompany] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, req.user!.companyId));
+
+        if (!userCompany) {
+          throw new Error("Your company information not found");
+        }
+
         // Check for existing company with same name
         const [existingCompany] = await tx.select()
           .from(companies)
@@ -612,15 +621,6 @@ export function registerRoutes(app: Express): Express {
 
         if (existingCompany) {
           throw new Error("A company with this name already exists");
-        }
-
-        // Get user's company details
-        const [userCompany] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, req.user!.companyId));
-
-        if (!userCompany) {
-          throw new Error("Your company information not found");
         }
 
         // Create new company record
@@ -642,7 +642,7 @@ export function registerRoutes(app: Express): Express {
 
         console.log('[FinTech Invite] Created new company:', newCompany);
 
-        // Generate invitation code using the shared function
+        // Generate invitation code
         const code = generateInviteCode();
         const expirationDate = new Date();
         expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
@@ -666,7 +666,8 @@ export function registerRoutes(app: Express): Express {
               inviteeCompany: company_name,
               senderName: sender_name,
               companyCreatedAt: newCompany.createdAt,
-              invitationCode: code
+              invitationCode: code,
+              statusFlow: [TaskStatus.PENDING]
             }
           })
           .returning();
@@ -685,25 +686,24 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
-        // Send invitation email using the same URL structure as user invites
+        // Send invitation email
         const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
 
-        const emailParams = {
-          to: email,
-          from: process.env.GMAIL_USER!,
-          template: 'fintech_invite',
-          templateData: {
-            recipientName: full_name,
-            senderName: sender_name,
-            senderCompany: userCompany.name,
-            targetCompany: company_name,
-            inviteUrl,
-            code
-          }
-        };
-
         try {
-          const emailResult = await emailService.sendTemplateEmail(emailParams);
+          const emailResult = await emailService.sendTemplateEmail({
+            to: email,
+            from: process.env.GMAIL_USER!,
+            template: 'fintech_invite',
+            templateData: {
+              recipientName: full_name,
+              senderName: sender_name,
+              senderCompany: userCompany.name,
+              targetCompany: company_name,
+              inviteUrl,
+              code
+            }
+          });
+
           if (!emailResult.success) {
             throw new Error(`Failed to send invitation email: ${emailResult.error}`);
           }
@@ -712,17 +712,42 @@ export function registerRoutes(app: Express): Express {
           await tx.update(tasks)
             .set({
               status: TaskStatus.EMAIL_SENT,
-              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
+              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
+              metadata: {
+                ...task.metadata,
+                emailSentAt: new Date().toISOString(),
+                statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.EMAIL_SENT]
+              }
             })
             .where(eq(tasks.id, task.id));
 
           return { invitation, task, company: newCompany };
         } catch (emailError) {
           console.error("[FinTech Invite] Email sending failed:", emailError);
+
+          // Update task and invitation status on failure
+          await tx.update(tasks)
+            .set({
+              status: TaskStatus.FAILED,
+              progress: taskStatusToProgress[TaskStatus.FAILED],
+              metadata: {
+                ...task.metadata,
+                failedAt: new Date().toISOString(),
+                failureReason: emailError.message,
+                statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.FAILED]
+              }
+            })
+            .where(eq(tasks.id, task.id));
+
+          await tx.update(invitations)
+            .set({ status: 'failed' })
+            .where(eq(invitations.id, invitation.id));
+
           throw new Error("Failed to send invitation email. Please try again.");
         }
       });
 
+      console.log('[FinTech Invite] Invitation sent successfully');
       res.json({
         message: "Invitation sent successfully",
         invitation: result.invitation,
