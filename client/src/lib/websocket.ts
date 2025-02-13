@@ -88,8 +88,12 @@ class WebSocketService {
               return;
             }
 
-            const { type, data } = message;
-            this.handleMessage(type, data);
+            if (message.type === 'connection_established') {
+              console.log('[WebSocket] Connection established:', message.data);
+              return;
+            }
+
+            this.handleMessage(message.type, message.data);
           } catch (error) {
             console.error('[WebSocket] Error parsing message:', error);
           }
@@ -106,6 +110,7 @@ class WebSocketService {
           console.error('[WebSocket] Error:', error);
           // Don't close the socket here, let the onclose handler deal with reconnection
         };
+
       } catch (error) {
         console.error('[WebSocket] Error establishing connection:', error);
         this.cleanup();
