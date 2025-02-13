@@ -24,7 +24,6 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "@/component
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
-  company_id: z.number().optional(),
   company_name: z.string().min(1, "Company name is required"),
   sender_name: z.string(),
 });
@@ -57,27 +56,23 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     defaultValues: {
       email: "",
       full_name: "",
-      company_id: companyId,
       company_name: variant === 'user' ? companyName : "",
       sender_name: user?.fullName || "",
     }
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (formData: InviteData) => {
+    mutationFn: async (data: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
-      // Construct the payload ensuring company_name is set correctly
-      const payload = {
-        ...formData,
-        company_name: variant === 'user' ? companyName : selectedCompany
-      };
+      // For fintech invites, ensure company_name is set from selectedCompany
+      if (variant === 'fintech') {
+        data.company_name = selectedCompany;
+      }
 
       console.log('[InviteModal] Submitting invitation:', {
         endpoint,
-        payload,
-        variant,
-        selectedCompany
+        data
       });
 
       const response = await fetch(endpoint, {
@@ -85,7 +80,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(data)
       });
 
       const responseData = await response.json();
@@ -153,14 +148,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   };
 
-  const onSubmit = (data: InviteData) => {
-    console.log('[InviteModal] Form submission:', {
-      data,
-      selectedCompany,
-      isValidCompanySelection,
-      variant
-    });
-
+  const onSubmit = (formData: InviteData) => {
     if (variant === 'fintech' && !isValidCompanySelection) {
       form.setError('company_name', {
         type: 'manual',
@@ -170,12 +158,16 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
 
     // Ensure company_name is set correctly for both variants
-    const payload = {
-      ...data,
-      company_name: variant === 'user' ? companyName! : selectedCompany
-    };
+    formData.company_name = variant === 'user' ? companyName! : selectedCompany;
 
-    sendInvite(payload);
+    console.log('[InviteModal] Form submission:', {
+      formData,
+      variant,
+      selectedCompany,
+      isValidCompanySelection
+    });
+
+    sendInvite(formData);
   };
 
   return (
