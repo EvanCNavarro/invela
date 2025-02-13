@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { cn } from "@/lib/utils"
 import Fuse from 'fuse.js'
+import type { Company } from "@/types/company"
 
 export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   onSearch?: (value: string) => void
   isLoading?: boolean
   containerClassName?: string
-  data?: any[]
+  data: Company[]
   currentCompanyName?: string
   recentSearches?: string[]
   onCompanySelect?: (company: string) => void
@@ -18,6 +19,7 @@ export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLI
   value?: string
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
   isValid?: boolean
+  isError?: boolean
 }
 
 export function NetworkSearch({
@@ -33,20 +35,21 @@ export function NetworkSearch({
   onCompanySelect,
   onAddNewCompany,
   isValid = false,
+  isError = false,
   ...props
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
   const [isOpen, setIsOpen] = React.useState(false)
-  const [searchResults, setSearchResults] = React.useState<any[]>([])
+  const [searchResults, setSearchResults] = React.useState<Fuse.FuseResult<Company>[]>([])
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
-  const fuse = React.useMemo(() => {
-    return new Fuse(data, {
-      keys: ['name'],
-      threshold: 0.3,
-    })
-  }, [data])
+  // Initialize Fuse instance for fuzzy search with proper keys
+  const fuse = React.useMemo(() => new Fuse(data, {
+    keys: ['name', 'description'],
+    threshold: 0.3,
+    includeScore: true,
+  }), [data])
 
   // Handle controlled vs uncontrolled input
   const inputValue = controlledValue !== undefined ? controlledValue : value
@@ -63,8 +66,9 @@ export function NetworkSearch({
     }
 
     // Handle search
-    if (newValue && fuse) {
+    if (newValue) {
       const results = fuse.search(newValue)
+      console.log('[NetworkSearch] Search results:', results)
       setSearchResults(results)
     } else {
       setSearchResults([])
@@ -96,7 +100,7 @@ export function NetworkSearch({
     }
     setSearchResults([])
     onSearch?.('')
-    inputRef.current?.focus() // Keep focus after clearing
+    inputRef.current?.focus()
   }, [controlledOnChange, onSearch])
 
   const handleAddNew = React.useCallback(() => {
@@ -106,12 +110,6 @@ export function NetworkSearch({
     }
   }, [inputValue, onAddNewCompany])
 
-  // Focus and blur handlers
-  const handleFocus = React.useCallback(() => {
-    setIsOpen(true)
-  }, [])
-
-  // Handle clicks outside the component
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -136,7 +134,10 @@ export function NetworkSearch({
         />
       ) : (
         <SearchIcon 
-          className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
+          className={cn(
+            "absolute left-3 h-4 w-4 pointer-events-none",
+            isError ? "text-destructive" : "text-muted-foreground"
+          )}
         />
       )}
       <Input
@@ -144,14 +145,16 @@ export function NetworkSearch({
         type="text"
         value={inputValue}
         onChange={handleChange}
-        onFocus={handleFocus}
+        onFocus={() => setIsOpen(true)}
         placeholder="Search Network"
         className={cn(
           "pl-9 pr-[70px]",
           "focus:ring-2 focus:ring-offset-2",
           isValid 
             ? "border-green-500 focus:ring-green-500 focus:ring-offset-background" 
-            : "focus:ring-ring focus:ring-offset-background",
+            : isError
+              ? "border-destructive focus:ring-destructive focus:ring-offset-background"
+              : "focus:ring-ring focus:ring-offset-background",
           className
         )}
         {...props}
@@ -194,12 +197,6 @@ export function NetworkSearch({
           </>
         )}
 
-        {!hasValue && recentSearches.length === 0 && (
-          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-            No recent searches
-          </div>
-        )}
-
         {hasValue && searchResults.length > 0 && (
           <>
             <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
@@ -209,7 +206,10 @@ export function NetworkSearch({
                 className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
                 onClick={() => handleSelect(result.item.name)}
               >
-                {result.item.name}
+                <span className="flex-1 text-left">{result.item.name}</span>
+                {result.item.category && (
+                  <span className="text-xs text-muted-foreground">{result.item.category}</span>
+                )}
               </button>
             ))}
           </>
