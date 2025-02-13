@@ -42,8 +42,8 @@ router.post("/api/users/invite", async (req, res) => {
       console.log('[Invite] Starting invitation process');
       console.log('[Invite] Request body:', req.body);
 
+      // Validate input data
       const validationResult = inviteUserSchema.safeParse(req.body);
-
       if (!validationResult.success) {
         console.error('[Invite] Validation failed:', validationResult.error.format());
         return res.status(400).json({
@@ -56,24 +56,21 @@ router.post("/api/users/invite", async (req, res) => {
       console.log('[Invite] Validated invite data:', data);
 
       // Get company info
-      const company = await db.transaction(async (tx) => {
-        const [comp] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, data.company_id));
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, data.company_id));
 
-        if (!comp) {
-          throw new Error("Company not found");
-        }
-        return comp;
-      });
+      if (!company) {
+        throw new Error("Company not found");
+      }
 
-      // Generate invitation details
+      // Generate invitation code
       const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
       const protocol = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers.host;
-      const inviteUrl = `${protocol}://${host}/register?email=${encodeURIComponent(data.email)}`;
+      const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(data.email)}`;
 
-      // Create new user and invitation in transaction
+      // Database transaction to create user, invitation and task
       const { newUser, invitation, task } = await db.transaction(async (tx) => {
         // Check if user exists
         const existingUser = await tx.query.users.findFirst({
@@ -136,10 +133,10 @@ router.post("/api/users/invite", async (req, res) => {
         return { newUser: userResult, invitation: invitationResult, task: taskResult };
       });
 
-      // Prepare email template data with all required fields
+      // Send invitation email - match exactly the schema required by email template
       const emailTemplateData = {
         recipientName: data.full_name,
-        recipientEmail: data.email,
+        recipientEmail: data.email.toLowerCase(),
         senderName: data.sender_name,
         senderCompany: company.name,
         targetCompany: company.name,
@@ -150,7 +147,7 @@ router.post("/api/users/invite", async (req, res) => {
       console.log('[User Invite] Email template data:', JSON.stringify(emailTemplateData, null, 2));
 
       const emailResult = await emailService.sendTemplateEmail({
-        to: data.email,
+        to: data.email.toLowerCase(),
         from: process.env.GMAIL_USER!,
         template: 'user_invite',
         templateData: emailTemplateData
@@ -191,7 +188,7 @@ router.post("/api/users/invite", async (req, res) => {
           error.message?.includes('Console request failed') && 
           retryCount < maxRetries - 1) {
         retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount)); // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
         continue;
       }
 
@@ -219,15 +216,10 @@ router.post("/api/register", async (req, res) => {
       })
       .returning();
 
-    // Update the associated invitation task
-    //This function is removed because task creation is handled in the invite route now.
-    //const updatedTask = await updateInvitationTaskStatus(email, userResult.id);
 
-    // Return success response with task info
     res.status(200).json({
       message: "Account created successfully",
       user: userResult,
-      //task: updatedTask //task is removed from the response
     });
   } catch (error) {
     console.error('[Register] Error:', error);
