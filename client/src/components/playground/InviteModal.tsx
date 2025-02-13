@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Schema for both user and fintech invites
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
@@ -42,7 +41,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { toast } = useToast();
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
-  const [selectedCompany, setSelectedCompany] = useState("");
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
 
   // Fetch companies for network search
@@ -56,7 +54,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     defaultValues: {
       email: "",
       full_name: "",
-      company_name: variant === 'user' ? companyName : "",
+      company_name: variant === 'user' ? companyName || "" : "",
       sender_name: user?.fullName || "",
     }
   });
@@ -64,11 +62,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
-
-      // For fintech invites, ensure company_name is set from selectedCompany
-      if (variant === 'fintech') {
-        data.company_name = selectedCompany;
-      }
 
       console.log('[InviteModal] Submitting invitation:', {
         endpoint,
@@ -102,15 +95,13 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       });
     },
     onSuccess: () => {
-      const displayCompany = variant === 'user' ? companyName : selectedCompany;
       toast({
         title: "Invitation sent successfully",
-        description: `${form.getValues('full_name')} has been invited to join ${displayCompany}.`,
+        description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
       });
 
       form.reset();
       setServerError(null);
-      setSelectedCompany("");
       setIsValidCompanySelection(false);
       onOpenChange(false);
 
@@ -141,7 +132,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (variant === 'fintech' && selectedCompany && isValidCompanySelection) {
+      if (variant === 'fintech' && form.getValues('company_name') && isValidCompanySelection) {
         const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
         emailInput?.focus();
       }
@@ -157,13 +148,9 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
-    // Ensure company_name is set correctly for both variants
-    formData.company_name = variant === 'user' ? companyName! : selectedCompany;
-
     console.log('[InviteModal] Form submission:', {
       formData,
       variant,
-      selectedCompany,
       isValidCompanySelection
     });
 
@@ -200,16 +187,14 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                     <div className="text-sm font-semibold mb-2">Company</div>
                     <FormControl>
                       <NetworkSearch
-                        value={selectedCompany}
+                        value={field.value}
                         onChange={(e) => {
-                          setSelectedCompany(e.target.value);
-                          setIsValidCompanySelection(false);
                           field.onChange(e.target.value);
+                          setIsValidCompanySelection(false);
                         }}
                         onCompanySelect={(company) => {
-                          setSelectedCompany(company);
-                          setIsValidCompanySelection(true);
                           field.onChange(company);
+                          setIsValidCompanySelection(true);
                         }}
                         placeholder={`Add company to ${user?.company?.name || ''}'s Network`}
                         className="w-full"
