@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageContainer } from "@/components/ui/page-container";
@@ -14,7 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SearchBar } from "@/components/playground/SearchBar";
 import { InviteUserModal } from "@/components/modals/InviteUserModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table'; // Changed to named import
 
 
@@ -29,6 +29,24 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Get the initial tab value from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam && ['overview', 'users', 'files', 'risk'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, []);
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', value);
+    window.history.replaceState({}, '', newUrl.toString());
+  };
 
   const handleBackClick = () => {
     window.history.back();
@@ -43,7 +61,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     return generateSlug(item.name) === companySlug.toLowerCase();
   });
 
-  // Update the useQuery for users to use the correct endpoint and add debug logs
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: () => {
@@ -67,7 +84,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     }
   });
 
-  // Filter users based on search
   const filteredUsers = companyUsers.filter((user) => {
     console.log("Debug - Filtering user:", user);
     if (!userSearchQuery) return true;
@@ -78,13 +94,11 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     );
   });
 
-  // Filter files based on search
   const filteredFiles = (company?.documents || []).filter((doc) => {
     if (!fileSearchQuery) return true;
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   });
 
-  // Loading states
   if (companiesLoading) {
     return (
       <DashboardLayout>
@@ -151,7 +165,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   const renderOverviewTab = () => {
     return (
       <div className="space-y-6">
-        {/* Key Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -205,9 +218,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </Card>
         </div>
 
-        {/* Company Details Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Company Overview Section */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -251,7 +262,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </CardContent>
           </Card>
 
-          {/* Business Details Section */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -300,9 +310,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </Card>
         </div>
 
-        {/* Key Relationships and Leadership Section - Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* Key Relationships Section */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -321,7 +329,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </CardContent>
           </Card>
 
-          {/* Leadership Section */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -365,7 +372,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
       },
     ];
 
-    // Transform users data to match what DataTable expects
     const tableData = filteredUsers.map(user => {
       console.log("Debug - Transforming user data:", user);
       return {
@@ -518,7 +524,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     <DashboardLayout>
       <PageContainer>
         <div className="space-y-6">
-          {/* Back to Network button */}
           <div className="flex items-center justify-start">
             <Button
               variant="outline"
@@ -531,7 +536,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </Button>
           </div>
 
-          {/* Company header section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
@@ -546,8 +550,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <Tabs defaultValue="overview" className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="w-full">
               <TabsTrigger value="overview" className="px-4">Overview</TabsTrigger>
               <TabsTrigger value="users" className="px-4">Users</TabsTrigger>
@@ -586,7 +589,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
           </Tabs>
         </div>
 
-        {/* Update the InviteUserModal to include company information */}
         {showInviteModal && (
           <InviteUserModal
             open={showInviteModal}
