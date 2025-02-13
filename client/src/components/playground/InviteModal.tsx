@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, AlertTriangle } from "lucide-react";
+import { Send, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,6 +40,16 @@ interface ExistingCompany {
   id: number;
   name: string;
   category: string;
+}
+
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-');    // Replace multiple - with single -
 }
 
 export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteModalProps) {
@@ -143,18 +153,21 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
           </DialogDescription>
         </DialogHeader>
         {existingCompany && (
-          <Alert variant="warning" className="mb-6">
-            <AlertTriangle className="h-4 w-4" />
+          <Alert className="mb-6 bg-amber-50/50">
+            <AlertTriangle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="mt-0">
               <div className="flex flex-col gap-2">
-                <p>A company named "{existingCompany.name}" already exists in our system.</p>
+                <p className="text-sm font-medium text-amber-900">
+                  "{existingCompany.name}" already exists in the network. If you'd like to invite a user under this company, click the button below to navigate to the Company's Profile page.
+                </p>
                 <Button
-                  variant="link"
-                  className="h-auto p-0 text-left font-normal"
+                  variant="outline"
+                  className="w-full justify-between bg-white hover:bg-gray-50"
                   asChild
                 >
-                  <Link to={`/companies/${existingCompany.id}/users`}>
-                    View existing company users
+                  <Link to={`/network/company/${slugify(existingCompany.name)}?tab=users`}>
+                    <span>View Company Profile</span>
+                    <ExternalLink className="h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -175,6 +188,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
                       className="w-full"
                       placeholder="Enter company name"
                       autoFocus
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setExistingCompany(null); // Clear warning when company name changes
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
