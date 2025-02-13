@@ -157,6 +157,18 @@ export function NetworkSearch({
     return existingCompany && selectedCompanyName && inputValue === selectedCompanyName;
   }, [existingCompany, selectedCompanyName, inputValue]);
 
+  const handleAddNewCompany = () => {
+    console.log('[NetworkSearch] Adding new company:', inputValue)
+    if (controlledOnChange) {
+      const event = {
+        target: { value: inputValue }
+      } as React.ChangeEvent<HTMLInputElement>
+      controlledOnChange(event)
+    }
+    onAddNewCompany?.(inputValue)
+    setIsOpen(false)
+  }
+
   return (
     <div className="space-y-2">
       <div
@@ -185,7 +197,7 @@ export function NetworkSearch({
           value={inputValue}
           onChange={handleChange}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search Network"
+          placeholder="Add a new FinTech to network"
           className={cn(
             "pl-9 pr-[70px]",
             "focus:ring-2 focus:ring-offset-2",
@@ -245,13 +257,10 @@ export function NetworkSearch({
               <div className="px-2 py-1.5 text-sm font-medium">No results found</div>
               <button
                 className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                onClick={() => {
-                  console.log('[NetworkSearch] Adding new company:', inputValue)
-                  onAddNewCompany?.(inputValue)
-                }}
+                onClick={handleAddNewCompany}
               >
                 <Plus className="h-4 w-4" />
-                Add "{inputValue}" to {currentCompanyName}'s Network
+                Add "{inputValue}" to Network
               </button>
             </>
           )}
