@@ -754,7 +754,7 @@ export function registerRoutes(app: Express): Express {
               template: 'fintech_invite',
               templateData: {
                 recipientName: full_name,
-                recipientEmail: email,
+                recipientEmail: email.toLowerCase(),
                 senderName: sender_name,
                 senderCompany: userCompany.name,
                 targetCompany: company_name,
@@ -930,7 +930,7 @@ export function registerRoutes(app: Express): Express {
             title: `New User Invitation: ${inviteData.email}`,
             description: `Invitation sent to ${inviteData.fullName} to join ${inviteData.companyName}`,
             taskType: 'user_onboarding',
-            taskScope: 'user',
+taskScope: 'user',
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
             progress: 25,
