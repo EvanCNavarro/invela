@@ -67,15 +67,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         existingCompany: existingCompany?.name
       });
 
-      // Additional validation
-      if (variant === 'fintech' && !data.company_name) {
-        throw new Error('Company name is required');
-      }
-
-      if (existingCompany) {
-        throw new Error(`${existingCompany.name} already exists. Please visit their company profile to invite new users.`);
-      }
-
       const payload = {
         email: data.email.toLowerCase().trim(),
         full_name: data.full_name.trim(),
@@ -125,7 +116,17 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       existingCompany: existingCompany?.name
     });
 
-    // For fintech variant, validate company name
+    // For fintech variant, if company exists, prevent submission
+    if (variant === 'fintech' && existingCompany) {
+      toast({
+        title: "Cannot invite to existing company",
+        description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Company name is required for fintech variant
     if (variant === 'fintech' && !formData.company_name) {
       form.setError('company_name', {
         type: 'manual',
@@ -134,6 +135,9 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       return;
     }
 
+    // At this point, either:
+    // 1. It's a user invite (variant === 'user')
+    // 2. It's a fintech invite with a new company name
     sendInvite(formData);
   };
 
