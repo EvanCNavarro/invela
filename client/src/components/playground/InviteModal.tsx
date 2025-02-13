@@ -126,10 +126,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   });
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && form.getValues('company_name') && isValidCompanySelection) {
-      e.preventDefault();
-      const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
-      emailInput?.focus();
+    if (e.key === 'Enter') {
+      e.preventDefault(); // Prevent form submission
+      if (form.getValues('company_name') && isValidCompanySelection) {
+        const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
+        emailInput?.focus();
+      }
     }
   };
 
@@ -192,7 +194,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                     </FormControl>
                     {showCompanyError && (
                       <p className="text-sm font-medium text-destructive mt-2">
-                        Please select a valid company from the search results
+                        Please select a company
                       </p>
                     )}
                     <FormMessage />
