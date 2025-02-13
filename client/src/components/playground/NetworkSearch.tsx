@@ -123,20 +123,20 @@ export function NetworkSearch({
 
   return (
     <div className="space-y-2">
-      <div 
+      <div
         ref={containerRef}
         className={cn("relative flex w-full items-center", containerClassName)}
       >
         {existingCompany ? (
-          <AlertTriangle 
+          <AlertTriangle
             className="absolute left-3 h-4 w-4 text-yellow-500 pointer-events-none"
           />
         ) : isValid ? (
-          <Check 
+          <Check
             className="absolute left-3 h-4 w-4 text-green-500 pointer-events-none"
           />
         ) : (
-          <SearchIcon 
+          <SearchIcon
             className={cn(
               "absolute left-3 h-4 w-4 pointer-events-none",
               isError ? "text-destructive" : "text-muted-foreground"
@@ -153,10 +153,10 @@ export function NetworkSearch({
           className={cn(
             "pl-9 pr-[70px]",
             "focus:ring-2 focus:ring-offset-2",
-            existingCompany 
+            existingCompany
               ? "border-yellow-500 focus:ring-yellow-500 focus:ring-offset-background"
-              : isValid 
-                ? "border-green-500 focus:ring-green-500 focus:ring-offset-background" 
+              : isValid
+                ? "border-green-500 focus:ring-green-500 focus:ring-offset-background"
                 : isError
                   ? "border-destructive focus:ring-destructive focus:ring-offset-background"
                   : "focus:ring-ring focus:ring-offset-background",
@@ -223,12 +223,12 @@ export function NetworkSearch({
       </div>
 
       {/* Warning message for existing company */}
-      {existingCompany && (
+      {existingCompany && inputValue && (
         <Alert variant="warning" className="mt-2 bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <div className="flex flex-col space-y-3">
             <AlertDescription>
-              {existingCompany.name} already exists. To invite users to an existing company, 
+              {existingCompany.name} already exists. To invite users to an existing company,
               visit the company's profile page.
             </AlertDescription>
             <Link href={`/network/company/${getCompanySlug(existingCompany.name)}?tab=users`}>
