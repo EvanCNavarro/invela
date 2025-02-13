@@ -591,6 +591,8 @@ export function registerRoutes(app: Express): Express {
           category: 'FinTech',
           description: `FinTech partner company ${company_name}`,
           status: 'pending',
+          accreditationStatus: 'PENDING',
+          onboardingCompanyCompleted: false,
           metadata: {
             invitedBy: req.user!.id,
             invitedAt: new Date().toISOString(),
@@ -669,7 +671,7 @@ export function registerRoutes(app: Express): Express {
           .where(eq(invitations.id, invitation.id));
 
         await db.update(tasks)
-          .set({ 
+          .set({
             status: TaskStatus.FAILED,
             progress: taskStatusToProgress[TaskStatus.FAILED]
           })
@@ -682,7 +684,7 @@ export function registerRoutes(app: Express): Express {
 
       // Update task status after successful email
       await db.update(tasks)
-        .set({ 
+        .set({
           status: TaskStatus.EMAIL_SENT,
           progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
         })
@@ -927,7 +929,7 @@ export function registerRoutes(app: Express): Express {
     try {
       const companyId = parseInt(req.params.companyId);
       if (isNaN(companyId)) {
-        return res.status(400).json({ message: "Invalid company ID" });
+                return res.status(400).json({ message: "Invalid company ID" });
       }
 
       // Get the user's company to check permissions
