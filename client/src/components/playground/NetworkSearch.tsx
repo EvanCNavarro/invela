@@ -1,18 +1,10 @@
 import * as React from "react"
-import { Search as SearchIcon, Plus, X } from "lucide-react"
+import { Search as SearchIcon, Plus, X, Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { cn } from "@/lib/utils"
 import Fuse from 'fuse.js'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   onSearch?: (value: string) => void
@@ -25,6 +17,7 @@ export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLI
   onAddNewCompany?: (companyName: string) => void
   value?: string
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
+  isValid?: boolean
 }
 
 export function NetworkSearch({
@@ -39,6 +32,7 @@ export function NetworkSearch({
   recentSearches = [],
   onCompanySelect,
   onAddNewCompany,
+  isValid = false,
   ...props
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
@@ -136,9 +130,15 @@ export function NetworkSearch({
       ref={containerRef}
       className={cn("relative flex w-full items-center", containerClassName)}
     >
-      <SearchIcon 
-        className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
-      />
+      {isValid ? (
+        <Check 
+          className="absolute left-3 h-4 w-4 text-green-500 pointer-events-none"
+        />
+      ) : (
+        <SearchIcon 
+          className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
+        />
+      )}
       <Input
         ref={inputRef}
         type="text"
@@ -148,7 +148,10 @@ export function NetworkSearch({
         placeholder="Search Network"
         className={cn(
           "pl-9 pr-[70px]",
-          "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
+          "focus:ring-2 focus:ring-offset-2",
+          isValid 
+            ? "border-green-500 focus:ring-green-500 focus:ring-offset-background" 
+            : "focus:ring-ring focus:ring-offset-background",
           className
         )}
         {...props}

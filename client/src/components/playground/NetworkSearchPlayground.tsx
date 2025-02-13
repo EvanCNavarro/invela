@@ -42,6 +42,7 @@ export default function NetworkSearchPlayground() {
           onAddNewCompany={handleAddNewCompany}
           value={selectedCompany}
           onChange={(e) => setSelectedCompany(e.target.value)}
+          isValid={Boolean(selectedCompany)}
         />
 
         {selectedCompany && (
