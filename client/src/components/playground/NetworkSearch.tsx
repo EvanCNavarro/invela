@@ -50,7 +50,7 @@ export function NetworkSearch({
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
   const [isOpen, setIsOpen] = React.useState(false)
-  const [searchResults, setSearchResults] = React.useState<Fuse.FuseResult<Company>[]>([])
+  const [searchResults, setSearchResults] = React.useState<Array<Fuse.FuseResult<Company>>>([])
   const [selectedCompanyName, setSelectedCompanyName] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
@@ -154,7 +154,7 @@ export function NetworkSearch({
 
   // Determine if warning should be shown
   const showWarning = React.useMemo(() => {
-    return existingCompany && selectedCompanyName && inputValue === selectedCompanyName;
+    return existingCompany !== null && selectedCompanyName !== null && inputValue === selectedCompanyName;
   }, [existingCompany, selectedCompanyName, inputValue]);
 
   const handleAddNewCompany = () => {
@@ -268,8 +268,8 @@ export function NetworkSearch({
       </div>
 
       {/* Warning message for existing company */}
-      {showWarning && (
-        <Alert variant="warning" className="mt-2 bg-yellow-50 border-yellow-200">
+      {showWarning && existingCompany && (
+        <Alert className="mt-2 bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <div className="flex flex-col space-y-3">
             <AlertDescription>
