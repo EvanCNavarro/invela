@@ -6,7 +6,6 @@ export interface EmailTemplate {
   html: string;
 }
 
-// Use a single template schema for both user and fintech invites
 const invitationTemplateSchema = z.object({
   recipientName: z.string().min(1, "Recipient name is required"),
   senderName: z.string().min(1, "Sender name is required"),
@@ -28,7 +27,7 @@ const templates = {
     const result = invitationTemplateSchema.safeParse(data);
     if (!result.success) {
       console.error('[Template:user_invite] Invalid template data:', result.error);
-      throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
+      throw new Error(`Invalid template data: ${result.error.message}`);
     }
 
     const { recipientName, senderName, company, code, inviteUrl } = result.data;
@@ -36,9 +35,7 @@ const templates = {
     return {
       subject: `Invitation to join ${company}`,
       text: `
-Hello ${recipientName},
-
-You've been invited to join ${company} by ${senderName}.
+Hello ${recipientName}, you've been invited to join ${company} by ${senderName}.
 
 Getting Started:
 1. Click the button below to Create Your Account.
@@ -93,7 +90,7 @@ Click here to get started: ${inviteUrl}
     const result = invitationTemplateSchema.safeParse(data);
     if (!result.success) {
       console.error('[Template:fintech_invite] Invalid template data:', result.error);
-      throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
+      throw new Error(`Invalid template data: ${result.error.message}`);
     }
 
     const { recipientName, senderName, company, code, inviteUrl } = result.data;
