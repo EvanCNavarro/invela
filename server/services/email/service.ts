@@ -78,12 +78,24 @@ export class EmailService {
   }
 
   private transformTemplateData(data: TemplateData) {
+    console.log('[EmailService] Starting template data transformation');
     console.log('[EmailService] Input template data:', JSON.stringify(data, null, 2));
+
+    // Validate required fields before transformation
+    const requiredFields = ['recipientEmail', 'recipientName', 'senderName', 'senderCompany', 'targetCompany'];
+    const missingFields = requiredFields.filter(field => !data[field as keyof TemplateData]);
+
+    if (missingFields.length > 0) {
+      console.error('[EmailService] Missing required fields:', missingFields);
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    }
 
     // Build invitation URL without duplicating code parameter
     const url = new URL(data.inviteUrl);
     url.searchParams.set('code', data.code || '');
     const inviteUrl = url.toString();
+
+    console.log('[EmailService] Built invite URL:', inviteUrl);
 
     // Return data with exact parameter names required by template
     const transformedData = {
@@ -106,7 +118,7 @@ export class EmailService {
 
       const result = emailSchema.safeParse(email);
       if (!result.success) {
-        console.log('[EmailService] Basic format validation failed');
+        console.log('[EmailService] Basic format validation failed:', result.error);
         return { isValid: false, reason: "Invalid email format" };
       }
 
@@ -148,7 +160,11 @@ export class EmailService {
   }
 
   async sendTemplateEmail(params: SendEmailParams): Promise<{ success: boolean; error?: string }> {
-    console.log('[EmailService] Starting to send template email to:', params.to);
+    console.log('[EmailService] Starting to send template email');
+    console.log('[EmailService] Template type:', params.template);
+    console.log('[EmailService] Recipient:', params.to);
+    console.log('[EmailService] Template data (raw):', JSON.stringify(params.templateData, null, 2));
+
     try {
       // Validate email addresses
       const toValidation = await this.validateEmail(params.to);
@@ -161,15 +177,23 @@ export class EmailService {
       }
 
       // Transform and validate template data
-      console.log('[EmailService] Original template data:', JSON.stringify(params.templateData, null, 2));
+      console.log('[EmailService] Transforming template data');
       const transformedData = this.transformTemplateData(params.templateData);
 
       // Get email template
       console.log('[EmailService] Getting email template:', params.template);
       const template = getEmailTemplate(params.template as TemplateNames, transformedData);
+      console.log('[EmailService] Template generated successfully');
 
       // Send email using nodemailer
-      console.log('[EmailService] Attempting to send email...');
+      console.log('[EmailService] Preparing to send email with configuration:', {
+        from: params.from || this.defaultFromEmail,
+        to: params.to,
+        subject: template.subject,
+        textLength: template.text.length,
+        htmlLength: template.html.length
+      });
+
       await this.transporter.sendMail({
         from: params.from || this.defaultFromEmail,
         to: params.to,
@@ -182,6 +206,11 @@ export class EmailService {
       return { success: true };
     } catch (error) {
       console.error('[EmailService] Failed to send email:', error);
+      console.error('[EmailService] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to send email'
