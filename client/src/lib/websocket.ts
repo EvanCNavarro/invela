@@ -17,7 +17,8 @@ class WebSocketService {
 
   private getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws`;
+    const host = window.location.host;
+    return `${protocol}//${host}/ws`;
   }
 
   private startHeartbeat() {
@@ -36,7 +37,7 @@ class WebSocketService {
         this.pongTimeout = setTimeout(() => {
           console.log('[WebSocket] No pong received, reconnecting...');
           this.reconnect();
-        }, 10000); // Wait 10s for pong before reconnecting
+        }, 15000); // Wait 15s for pong before reconnecting
       }
     }, 45000); // Send heartbeat every 45s
   }
@@ -53,8 +54,19 @@ class WebSocketService {
 
         this.socket = new WebSocket(wsUrl);
 
+        // Set a generous timeout for the initial connection
+        const connectionTimeout = setTimeout(() => {
+          if (this.socket?.readyState !== WebSocket.OPEN) {
+            console.log('[WebSocket] Connection timeout, attempting reconnect...');
+            this.socket?.close();
+            this.cleanup();
+            this.handleReconnect();
+          }
+        }, 20000); // 20 second timeout for initial connection
+
         this.socket.onopen = () => {
           console.log('[WebSocket] Connected successfully');
+          clearTimeout(connectionTimeout);
           this.reconnectAttempts = 0;
           this.reconnectTimeout = 1000;
           this.startHeartbeat();
@@ -85,6 +97,7 @@ class WebSocketService {
 
         this.socket.onclose = (event) => {
           console.log('[WebSocket] Connection closed:', event.code, event.reason);
+          clearTimeout(connectionTimeout);
           this.cleanup();
           this.handleReconnect();
         };
