@@ -92,21 +92,13 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
-      const basePayload = {
+      const payload = {
         email: formData.email.toLowerCase().trim(),
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.fullName,
-        company_id: companyId // Always include company_id if it exists, even if it's 0
+        company_id: companyId || 0
       };
-
-      // Add email template fields only for user invitations with correct camelCase naming
-      const payload = variant === 'user' ? {
-        ...basePayload,
-        recipientEmail: formData.email.toLowerCase().trim(),
-        senderCompany: formData.company_name.trim(),
-        targetCompany: formData.company_name.trim()
-      } : basePayload;
 
       console.log(`[InviteModal] Sending ${variant} invitation with payload:`, payload);
 
