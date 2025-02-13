@@ -291,6 +291,7 @@ export function registerRoutes(app: Express): Express {
   });
 
 
+
   app.delete("/api/files/:id", requireAuth, async (req, res) => {
     try {
       const [file] = await db.select()
@@ -530,6 +531,43 @@ export function registerRoutes(app: Express): Express {
           code: "LOGO_SERVER_ERROR"
         });
       }
+    }
+  });
+
+  // Add this endpoint before the fintech invite endpoint
+  app.post("/api/fintech/check-company", requireAuth, async (req, res) => {
+    try {
+      const { company_name } = req.body;
+
+      if (!company_name) {
+        return res.status(400).json({
+          message: "Company name is required"
+        });
+      }
+
+      // Check for existing company with same name
+      const [existingCompany] = await db.select()
+        .from(companies)
+        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
+
+      if (existingCompany) {
+        return res.status(409).json({
+          message: "A company with this name already exists",
+          existingCompany: {
+            id: existingCompany.id,
+            name: existingCompany.name,
+            category: existingCompany.category
+          }
+        });
+      }
+
+      res.status(200).json({ exists: false });
+
+    } catch (error) {
+      console.error("Error checking company existence:", error);
+      res.status(500).json({
+        message: "Error checking company existence"
+      });
     }
   });
 
@@ -900,7 +938,7 @@ export function registerRoutes(app: Express): Express {
         .where(eq(users.id, req.user!.id))
         .returning();
 
-      // Find and update associated onboarding task
+              // Find and update associated onboarding task
       const [task] = await db.select()
         .from(tasks)
         .where(and(
