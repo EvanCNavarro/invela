@@ -61,13 +61,20 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
-      console.log('[InviteModal] Sending form data:', formData);
+      console.log('[InviteModal] Form values before mutation:', form.getValues());
+      console.log('[InviteModal] Selected company state:', {
+        selectedCompany,
+        isValidCompanySelection,
+        companyName: variant === 'user' ? companyName : selectedCompany
+      });
 
+      // Construct payload
       const payload = {
         ...formData,
-        company_name: variant === 'user' ? companyName : formData.company_name
+        company_name: variant === 'user' ? companyName : selectedCompany // Use selectedCompany for fintech
       };
-      console.log('[InviteModal] Processed payload:', payload);
+
+      console.log('[InviteModal] Final payload:', payload);
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -80,7 +87,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.error('[InviteModal] Submission error:', responseData);
+        console.error('[InviteModal] Server response error:', responseData);
         throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
       }
 
@@ -100,7 +107,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         title: "Invitation sent successfully",
         description: variant === 'user' 
           ? `${form.getValues('full_name')} has been invited to join ${companyName}.`
-          : `${form.getValues('full_name')} from ${form.getValues('company_name')} has been invited to join the network.`,
+          : `${form.getValues('full_name')} from ${selectedCompany} has been invited to join the network.`,
       });
 
       form.reset();
@@ -137,7 +144,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault(); // Prevent form submission
-      if (variant === 'fintech' && form.getValues('company_name') && isValidCompanySelection) {
+      if (variant === 'fintech' && selectedCompany && isValidCompanySelection) {
         const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
         emailInput?.focus();
       }
@@ -151,18 +158,23 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   };
 
   const onSubmit = (data: InviteData) => {
-    console.log('[InviteModal] Form submission data:', data);
-    console.log('[InviteModal] Form state:', {
-      isValidCompanySelection,
+    console.log('[InviteModal] Form submission:', {
+      formData: data,
       selectedCompany,
-      variant,
-      companyName
+      isValidCompanySelection,
+      variant
     });
 
     if (variant === 'fintech' && !isValidCompanySelection) {
       setShowCompanyError(true);
       return;
     }
+
+    // Update company_name in form data for fintech variant
+    if (variant === 'fintech') {
+      data.company_name = selectedCompany;
+    }
+
     sendInvite(data);
   };
 
