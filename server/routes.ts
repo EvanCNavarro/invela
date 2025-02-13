@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { eq, and, gt, sql } from 'drizzle-orm';
+import { eq, and, gt, sql, or } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
@@ -68,9 +68,22 @@ export function registerRoutes(app: Express): Express {
   // Tasks endpoints
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
+      console.log('[Tasks] Fetching tasks for user:', req.user!.id);
+
+      // Only fetch tasks where user is explicitly assigned or created them
       const userTasks = await db.select()
         .from(tasks)
-        .where(eq(tasks.companyId, req.user!.companyId));
+        .where(
+          and(
+            eq(tasks.companyId, req.user!.companyId),
+            or(
+              eq(tasks.assignedTo, req.user!.id),
+              eq(tasks.createdBy, req.user!.id)
+            )
+          )
+        );
+
+      console.log('[Tasks] Found tasks:', userTasks.length);
       res.json(userTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
