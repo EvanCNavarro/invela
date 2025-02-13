@@ -19,7 +19,7 @@ export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLI
   data: Company[]
   currentCompanyName?: string
   recentSearches?: string[]
-  onCompanySelect?: (company: string) => void
+  onCompanySelect?: (company: Company) => void
   onAddNewCompany?: (companyName: string) => void
   value?: string
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
@@ -95,28 +95,25 @@ export function NetworkSearch({
     onSearch?.(newValue)
   }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange])
 
-  const handleSelect = (companyName: string) => {
-    console.log('[NetworkSearch] handleSelect:', { companyName, controlled: !!controlledOnChange })
+  const handleSelect = (company: Company) => {
+    console.log('[NetworkSearch] handleSelect:', { company, controlled: !!controlledOnChange })
 
-    // Find the selected company in the data
-    const selectedCompany = data.find(company => company.name === companyName)
-
-    if (selectedCompany && onExistingCompanyChange) {
-      onExistingCompanyChange(selectedCompany)
+    if (onExistingCompanyChange) {
+      onExistingCompanyChange(company)
     }
 
     if (controlledOnChange) {
       const event = {
-        target: { value: companyName }
+        target: { value: company.name }
       } as React.ChangeEvent<HTMLInputElement>
       console.log('[NetworkSearch] Calling controlled onChange with selected company')
       controlledOnChange(event)
     } else {
       console.log('[NetworkSearch] Setting internal value with selected company')
-      setValue(companyName)
+      setValue(company.name)
     }
 
-    onCompanySelect?.(companyName)
+    onCompanySelect?.(company)
     setIsOpen(false)
   }
 
@@ -139,7 +136,6 @@ export function NetworkSearch({
     }
 
     onAddNewCompany?.(newCompanyName)
-    onCompanySelect?.(newCompanyName)
     setIsOpen(false)
   }
 
@@ -251,7 +247,7 @@ export function NetworkSearch({
                 <button
                   key={index}
                   className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => handleSelect(company.name)}
+                  onClick={() => handleSelect(company)}
                 >
                   <span className="flex-1 text-left">{company.name}</span>
                   {company.category && (

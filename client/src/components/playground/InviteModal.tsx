@@ -72,8 +72,8 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         email: formData.email.toLowerCase().trim(),
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
-        ...(formData.company_id && { company_id: formData.company_id }),
-        sender_name: user?.fullName
+        sender_name: user?.fullName,
+        ...(existingCompany?.id && { company_id: existingCompany.id })
       };
 
       console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
@@ -131,6 +131,16 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     },
   });
 
+  const handleCompanySelect = (company: Company) => {
+    console.log('[InviteModal] Company selected:', company);
+    form.setValue('company_name', company.name, { 
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
+    setExistingCompany(company);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -162,10 +172,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                       <NetworkSearch
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
-                        onCompanySelect={(value) => {
-                          field.onChange(value);
-                          setExistingCompany(null);
-                        }}
+                        onCompanySelect={handleCompanySelect}
                         onExistingCompanyChange={setExistingCompany}
                         data={companies}
                         isValid={!existingCompany && field.value !== ""}
