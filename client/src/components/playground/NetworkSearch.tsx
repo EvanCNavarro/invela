@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search as SearchIcon, Plus, X, Check, AlertTriangle } from "lucide-react"
+import { Search as SearchIcon, Plus, X, Check, AlertTriangle, ExternalLink } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
@@ -8,6 +8,10 @@ import { cn } from "@/lib/utils"
 import { Link } from "wouter"
 import Fuse from 'fuse.js'
 import type { Company } from "@/types/company"
+
+const getCompanySlug = (name: string) => {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
 
 export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   onSearch?: (value: string) => void
@@ -220,19 +224,20 @@ export function NetworkSearch({
 
       {/* Warning message for existing company */}
       {existingCompany && (
-        <Alert variant="warning" className="mt-2">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>
+        <Alert variant="warning" className="mt-2 bg-yellow-50 border-yellow-200">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <div className="flex flex-col space-y-3">
+            <AlertDescription>
               {existingCompany.name} already exists. To invite users to an existing company, 
               visit the company's profile page.
-            </span>
-            <Link href={`/companies/${existingCompany.id}`}>
-              <Button variant="outline" size="sm" className="ml-2">
+            </AlertDescription>
+            <Link href={`/network/companies/${getCompanySlug(existingCompany.name)}`}>
+              <Button variant="outline" size="sm" className="w-full justify-between">
                 Go to {existingCompany.name}'s Profile
+                <ExternalLink className="h-4 w-4 ml-2" />
               </Button>
             </Link>
-          </AlertDescription>
+          </div>
         </Alert>
       )}
     </div>
