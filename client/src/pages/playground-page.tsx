@@ -374,7 +374,20 @@ export function Example() {
 }
 `,
   },
+  {
+    id: "invite",
+    name: "Invite Button/Modal",
+    code: `import { InvitePlayground } from "@/components/playground/InvitePlayground";
 
+export function Example() {
+  return (
+    <div className="space-y-4">
+      <InvitePlayground />
+    </div>
+  );
+}
+`,
+  },
 ];
 
 // Update availableIcons mapping to include all options in sidebar order with proper labels
@@ -1458,6 +1471,16 @@ export default function PlaygroundPage() {
                 </Card>
               )}
 
+              {currentComponent.id === "invite" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <InvitePlayground />
+                  </CardContent>
+                </Card>
+              )}
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
