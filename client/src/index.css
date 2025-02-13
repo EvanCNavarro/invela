@@ -55,19 +55,20 @@
   }
 
   /* Pulsing border animation */
-  @keyframes pulse-border {
+  @keyframes pulse-ring {
     0% {
       box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0.4);
     }
     70% {
-      box-shadow: 0 0 0 6px hsla(227, 81%, 61%, 0);
+      box-shadow: 0 0 0 10px hsla(227, 81%, 61%, 0);
     }
     100% {
       box-shadow: 0 0 0 0 hsla(227, 81%, 61%, 0);
     }
   }
 
-  .pulse-border {
-    animation: pulse-border 1.5s infinite;
+  /* Pulse animation class */
+  .animate-pulse-ring {
+    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
