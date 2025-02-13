@@ -96,7 +96,7 @@ Click here to get started: ${inviteUrl}
     const { recipientName, senderName, company, code, inviteUrl } = result.data;
 
     return {
-      subject: `Invitation to join ${company}`,
+      subject: `Welcome to ${company}`,
       text: `
 Hello ${recipientName},
 
@@ -119,7 +119,7 @@ Click here to get started: ${inviteUrl}
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Join ${company} on Invela</title>
+    <title>Welcome to ${company}</title>
   </head>
   <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
     <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${company}</h1>
