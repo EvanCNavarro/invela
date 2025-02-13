@@ -37,14 +37,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import Fuse from 'fuse.js'
+import { InviteModal } from "@/components/playground/InviteModal";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -54,45 +51,11 @@ const DEFAULT_WIDGETS = {
   networkVisualization: true
 };
 
-const inviteFormSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
-  email: z.string().email("Please enter a valid email address")
-});
 
-type InviteFormData = z.infer<typeof inviteFormSchema>;
-
-// Helper function to title case a string
 const toTitleCase = (str: string) => {
   return str.split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
-};
-
-// Helper function to extract and format name from email
-const extractNameFromEmail = (email: string): { companyName: string; email: string } => {
-  const [localPart, domain] = email.split('@');
-  const domainParts = domain?.split('.') || [];
-  const companyPart = domainParts[0] || '';
-
-  return {
-    companyName: toTitleCase(companyPart),
-    email: email
-  };
-};
-
-// Function to check company name similarity
-const checkCompanyDomainMatch = (email: string, companyName: string) => {
-  const domain = email.split('@')[1]?.split('.')[0];
-  if (!domain) return false;
-
-  const fuse = new Fuse([companyName], {
-    threshold: 0.4,
-    location: 0,
-    distance: 100,
-    minMatchCharLength: 1,
-  });
-
-  return fuse.search(domain).length === 0;
 };
 
 
@@ -101,16 +64,6 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [companyMismatchWarning, setCompanyMismatchWarning] = useState<string | null>(null);
-
-  const form = useForm<InviteFormData>({
-    resolver: zodResolver(inviteFormSchema),
-    defaultValues: {
-      companyName: "",
-      email: ""
-    }
-  });
 
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -125,91 +78,6 @@ export default function DashboardPage() {
   };
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
-
-  const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (data: InviteFormData) => {
-      const response = await fetch('/api/users/invite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'Failed to send invitation');
-      }
-
-      return result;
-    },
-    onSuccess: () => {
-      const addFinTechButton = document.querySelector('[data-element="add-fintech-button"]');
-      if (addFinTechButton) {
-        const rect = addFinTechButton.getBoundingClientRect();
-        confetti({
-          particleCount: 75,
-          spread: 52,
-          origin: {
-            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
-            y: rect.top / window.innerHeight
-          },
-          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
-          ticks: 200,
-          gravity: 0.8,
-          scalar: 0.8,
-          shapes: ["circle"]
-        });
-      }
-
-      toast({
-        title: <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          Invitation Sent
-        </div>,
-        description: "The FinTech has been invited to join.",
-        duration: 2000,
-        className: "border-l-4 border-green-500",
-      });
-
-      form.reset();
-      setServerError(null);
-      setIsModalOpen(false);
-    },
-    onError: (error: Error) => {
-      setServerError(error.message);
-    },
-  });
-
-  const handleSendInvite = (data: InviteFormData) => {
-    setServerError(null);
-    sendInvite(data);
-  };
-
-  const handleInputChange = () => {
-    if (serverError) {
-      setServerError(null);
-    }
-  };
-
-  // Helper function for email change
-  const handleEmailChange = (email: string) => {
-    if (email) {
-      const { companyName: derivedCompanyName } = extractNameFromEmail(email);
-      form.setValue('companyName', derivedCompanyName);
-
-      const hasMismatch = checkCompanyDomainMatch(email, derivedCompanyName);
-      if (hasMismatch) {
-        setCompanyMismatchWarning(
-          `Email domain doesn't match company name "${derivedCompanyName}"`
-        );
-      } else {
-        setCompanyMismatchWarning(null);
-      }
-    }
-    form.setValue('email', email);
-  };
 
   return (
     <DashboardLayout>
@@ -345,129 +213,14 @@ export default function DashboardPage() {
                   </Button>
                 </div>
 
-                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-semibold">Invite a New FinTech</DialogTitle>
-                      <DialogDescription className="text-sm text-muted-foreground mt-1.5 mb-6">
-                        Please provide details to send a FinTech invitation.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <Form {...form}>
-                      <form onSubmit={form.handleSubmit(handleSendInvite)} className="space-y-6">
-                        <FormField
-                          control={form.control}
-                          name="companyName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="text-sm font-semibold mb-2">Company Name</div>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="text"
-                                  className={cn(
-                                    "w-full",
-                                    serverError && "border-destructive",
-                                    field.value && !form.formState.errors.companyName && "border-green-500"
-                                  )}
-                                  disabled={isPending}
-                                  aria-label="FinTech company name"
-                                  autoFocus
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              {field.value && !form.formState.errors.companyName && (
-                                <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
-                                  <Check className="h-4 w-4" />
-                                  Company name looks good
-                                </p>
-                              )}
-                            </FormItem>
-                          )}
-                        />
-
-                        {companyMismatchWarning && (
-                          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                            <div className="flex items-start gap-3">
-                              <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                              <div>
-                                <p className="text-sm font-medium text-amber-700">
-                                  Email domain doesn't match company
-                                </p>
-                                <p className="text-sm text-amber-600 mt-1">
-                                  {companyMismatchWarning}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        <FormField
-                          control={form.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <div className="text-sm font-semibold mb-2">Invitee Email</div>
-                              <FormControl>
-                                <Input
-                                  {...field}
-                                  type="email"
-                                  className={cn(
-                                    "w-full",
-                                    serverError && "border-destructive",
-                                    field.value && !form.formState.errors.email && "border-green-500"
-                                  )}
-                                  disabled={isPending}
-                                  aria-label="FinTech representative email"
-                                  onChange={(e) => {
-                                    field.onChange(e);
-                                    handleEmailChange(e.target.value);
-                                    handleInputChange();
-                                  }}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                              {serverError && (
-                                <div className="p-3 mt-2 bg-destructive/10 rounded-lg border border-destructive/20">
-                                  <p className="text-sm font-medium text-destructive">
-                                    {serverError.includes("mailbox")
-                                      ? "This email address does not exist. Please try again."
-                                      : "Failed to send invitation. Please try again."}
-                                  </p>
-                                </div>
-                              )}
-                              {field.value && !form.formState.errors.email && (
-                                <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
-                                  <Check className="h-4 w-4" />
-                                  Valid email address
-                                </p>
-                              )}
-                            </FormItem>
-                          )}
-                        />
-                        <div className="flex justify-end">
-                          <Button
-                            type="submit"
-                            className="gap-2"
-                            disabled={isPending}
-                          >
-                            {isPending ? (
-                              <>
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-foreground" />
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <Send className="h-4 w-4" />
-                                Send Invite
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  </DialogContent>
-                </Dialog>
+                <InviteModal
+                  variant="fintech"
+                  open={isModalOpen}
+                  onOpenChange={setIsModalOpen}
+                  onSuccess={() => {
+                    // Add any additional success handling if needed
+                  }}
+                />
               </Widget>
             )}
 
