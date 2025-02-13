@@ -50,7 +50,6 @@ export function NetworkSearch({
   const [value, setValue] = React.useState('')
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchResults, setSearchResults] = React.useState<Array<Fuse.FuseResult<Company>>>([])
-  const [selectedCompanyName, setSelectedCompanyName] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -69,14 +68,6 @@ export function NetworkSearch({
     const newValue = event.target.value
     console.log('[NetworkSearch] handleChange:', { newValue, controlled: !!controlledOnChange })
 
-    // Reset selected company if input value changes
-    if (selectedCompanyName && newValue !== selectedCompanyName) {
-      setSelectedCompanyName(null)
-      if (onExistingCompanyChange) {
-        onExistingCompanyChange(null)
-      }
-    }
-
     // Handle controlled input
     if (controlledOnChange) {
       console.log('[NetworkSearch] Calling controlled onChange')
@@ -84,6 +75,11 @@ export function NetworkSearch({
     } else {
       console.log('[NetworkSearch] Setting internal value')
       setValue(newValue)
+    }
+
+    // Reset existing company when input changes
+    if (onExistingCompanyChange) {
+      onExistingCompanyChange(null)
     }
 
     // Handle search
@@ -94,19 +90,13 @@ export function NetworkSearch({
       setIsOpen(true)
     } else {
       setSearchResults([])
-      if (onExistingCompanyChange) {
-        onExistingCompanyChange(null)
-      }
-      setSelectedCompanyName(null)
+      setIsOpen(false)
     }
     onSearch?.(newValue)
-  }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange, selectedCompanyName])
+  }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange])
 
   const handleSelect = (companyName: string) => {
     console.log('[NetworkSearch] handleSelect:', { companyName, controlled: !!controlledOnChange })
-
-    // Set selected company name
-    setSelectedCompanyName(companyName)
 
     // Find the selected company in the data
     const selectedCompany = data.find(company => company.name === companyName)
@@ -126,17 +116,17 @@ export function NetworkSearch({
       setValue(companyName)
     }
 
-    console.log('[NetworkSearch] Calling onCompanySelect')
     onCompanySelect?.(companyName)
     setIsOpen(false)
   }
 
   const handleAddNewCompany = () => {
     console.log('[NetworkSearch] Adding new company:', inputValue)
+
+    // Clear existing company selection when adding new
     if (onExistingCompanyChange) {
       onExistingCompanyChange(null)
     }
-    setSelectedCompanyName(null)
 
     if (controlledOnChange) {
       const event = {
@@ -144,6 +134,7 @@ export function NetworkSearch({
       } as React.ChangeEvent<HTMLInputElement>
       controlledOnChange(event)
     }
+
     onAddNewCompany?.(inputValue)
     setIsOpen(false)
   }
@@ -159,18 +150,13 @@ export function NetworkSearch({
       setValue('')
     }
     setSearchResults([])
-    setSelectedCompanyName(null)
     if (onExistingCompanyChange) {
       onExistingCompanyChange(null)
     }
     onSearch?.('')
+    setIsOpen(false)
     inputRef.current?.focus()
   }, [controlledOnChange, onSearch, onExistingCompanyChange])
-
-  // Determine if warning should be shown
-  const showWarning = React.useMemo(() => {
-    return existingCompany !== null && existingCompany !== undefined && selectedCompanyName !== null && inputValue === selectedCompanyName;
-  }, [existingCompany, selectedCompanyName, inputValue]);
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -185,6 +171,9 @@ export function NetworkSearch({
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
+
+  // Show warning if company exists
+  const showWarning = existingCompany !== null && existingCompany !== undefined
 
   return (
     <div className="space-y-2">
@@ -213,7 +202,7 @@ export function NetworkSearch({
           type="text"
           value={inputValue}
           onChange={handleChange}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => hasValue && setIsOpen(true)}
           placeholder="Add a new FinTech to network"
           className={cn(
             "pl-9 pr-[70px]",

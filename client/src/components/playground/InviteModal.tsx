@@ -39,9 +39,8 @@ interface InviteModalProps {
 
 export function InviteModal({ variant, open, onOpenChange, companyId, companyName }: InviteModalProps) {
   const { toast } = useToast();
-  const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
-  const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [existingCompany, setExistingCompany] = useState<Company | null>(null);
 
   const form = useForm<InviteData>({
@@ -61,11 +60,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (data: InviteData) => {
-      console.log('[InviteModal] Sending invitation:', {
-        data,
-        isValidCompanySelection,
-        existingCompany: existingCompany?.name
-      });
+      console.log('[InviteModal] Sending invitation:', { data });
 
       const payload = {
         email: data.email.toLowerCase().trim(),
@@ -103,20 +98,18 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
       form.reset();
       setServerError(null);
-      setIsValidCompanySelection(false);
       setExistingCompany(null);
       onOpenChange(false);
     },
   });
 
   const onSubmit = (formData: InviteData) => {
-    console.log('[InviteModal] Form submitted:', {
+    console.log('[InviteModal] Form submitted:', { 
       formData,
-      isValidCompanySelection,
-      existingCompany: existingCompany?.name
+      existingCompany: existingCompany?.name 
     });
 
-    // For fintech variant, check for company name
+    // For fintech variant, validate company name and existence
     if (variant === 'fintech') {
       if (!formData.company_name) {
         form.setError('company_name', {
@@ -126,7 +119,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         return;
       }
 
-      // If we found an existing company, prevent submission
+      // Block submission if company already exists
       if (existingCompany) {
         toast({
           title: "Cannot invite to existing company",
@@ -137,9 +130,9 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       }
     }
 
-    // At this point, we have either:
-    // 1. A user invite (variant === 'user')
-    // 2. A fintech invite with a new company name
+    // At this point, we're either:
+    // 1. Sending a user invite to an existing company (variant === 'user')
+    // 2. Creating a new company and sending an invite (variant === 'fintech' && !existingCompany)
     sendInvite(formData);
   };
 
@@ -153,8 +146,8 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   };
 
   const handleExistingCompanyChange = (company: Company | null) => {
+    console.log('[InviteModal] Existing company changed:', company?.name);
     setExistingCompany(company);
-    setIsValidCompanySelection(company !== null);
   };
 
   return (
