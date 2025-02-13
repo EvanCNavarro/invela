@@ -6,7 +6,6 @@ export interface EmailTemplate {
   html: string;
 }
 
-// Define a strict schema for invitation template data
 const invitationTemplateSchema = z.object({
   recipientName: z.string().min(1, "Recipient name is required"),
   senderName: z.string().min(1, "Sender name is required"),
@@ -16,7 +15,6 @@ const invitationTemplateSchema = z.object({
 });
 
 export type InvitationTemplateData = z.infer<typeof invitationTemplateSchema>;
-export type TemplateData = InvitationTemplateData;
 
 export const emailTemplateSchema = z.object({
   subject: z.string(),
@@ -26,7 +24,6 @@ export const emailTemplateSchema = z.object({
 
 const templates = {
   user_invite: (data: InvitationTemplateData): EmailTemplate => {
-    // Validate the template data
     const result = invitationTemplateSchema.safeParse(data);
     if (!result.success) {
       console.error('[Template:user_invite] Invalid template data:', result.error);
@@ -34,9 +31,6 @@ const templates = {
     }
 
     const { recipientName, senderName, company, code, inviteUrl } = result.data;
-    console.log('[Template:user_invite] Generating template with data:', { 
-      recipientName, senderName, company, code, inviteUrl 
-    });
 
     return {
       subject: `Invitation to join ${company}`,
@@ -60,138 +54,107 @@ Click here to get started: ${inviteUrl}
 <html>
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-      body { 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-        line-height: 1.5;
-        color: #111827;
-        margin: 0;
-        padding: 32px 16px;
-        background-color: #f3f4f6;
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-      .container {
-        max-width: 580px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 8px;
-        padding: 40px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      .company-name {
-        font-size: 24px;
-        font-weight: 600;
-        color: #111827;
-        margin: 0 0 24px 0;
-      }
-      .title {
-        font-size: 16px;
-        font-weight: 500;
-        color: #374151;
-        margin: 0 0 24px 0;
-        line-height: 1.4;
-      }
-      .getting-started {
-        background-color: #f9fafb;
-        border-radius: 8px;
-        padding: 24px;
-        margin-bottom: 24px;
-      }
-      .section-title {
-        font-weight: 600;
-        font-size: 16px;
-        margin: 0 0 16px 0;
-        color: #111827;
-      }
-      ol {
-        padding-left: 24px;
-        margin: 0;
-      }
-      li {
-        margin-bottom: 12px;
-        color: #374151;
-      }
-      .invitation-code {
-        font-family: monospace;
-        background-color: #f3f4f6;
-        padding: 12px;
-        border-radius: 4px;
-        margin: 16px 0;
-        text-align: center;
-        font-size: 18px;
-        font-weight: 600;
-        letter-spacing: 1px;
-      }
-      .code-label {
-        display: block;
-        font-size: 14px;
-        color: #6b7280;
-        margin-bottom: 4px;
-      }
-      .button {
-        background-color: #4965EC;
-        color: #ffffff !important;
-        padding: 12px 24px;
-        text-decoration: none;
-        border-radius: 6px;
-        display: inline-block;
-        font-weight: 500;
-        font-size: 14px;
-        text-align: center;
-        margin-top: 16px;
-      }
-      .footer {
-        margin-top: 40px;
-        padding-top: 20px;
-        border-top: 1px solid #e5e7eb;
-        color: #6b7280;
-        font-size: 12px;
-        text-align: left;
-      }
-      .footer span {
-        margin: 0 6px;
-        color: #9ca3af;
-      }
-    </style>
+    <title>Join ${company} on Invela</title>
   </head>
-  <body>
-    <div class="container">
-      <h1 class="company-name">${company}</h1>
-      <h2 class="title">Hello ${recipientName}, you've been invited to join ${company} by ${senderName}.</h2>
+  <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${company}</h1>
+    <p>Hello ${recipientName},</p>
+    <p>You've been invited to join ${company} by ${senderName}.</p>
 
-      <div class="getting-started">
-        <h3 class="section-title">Getting Started:</h3>
-        <ol>
-          <li>Click the button below to Create Your Account.</li>
-          <li>Finish updating your Company's Profile.</li>
-          <li>Upload the requested files to our secure system.</li>
-          <li>Acquire an Invela Accreditation & Risk Score for your company.</li>
-        </ol>
-      </div>
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h2 style="color: #333; margin-top: 0;">Getting Started:</h2>
+      <ol style="margin: 0; padding-left: 20px;">
+        <li>Click the button below to Create Your Account</li>
+        <li>Finish updating your Company's Profile</li>
+        <li>Upload the requested files to our secure system</li>
+        <li>Acquire an Invela Accreditation & Risk Score for your company</li>
+      </ol>
+    </div>
 
-      <div class="invitation-code">
-        <span class="code-label">Your Invitation Code</span>
-        ${code}
-      </div>
+    <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+      <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
+    </div>
 
-      <a href="${inviteUrl}" class="button">Create Your Account</a>
+    <a href="${inviteUrl}" style="display: inline-block; background: #4965EC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Create Your Account</a>
 
-      <div class="footer">
-        <p>© ${new Date().getFullYear()} Invela <span>•</span> Privacy Policy <span>•</span> Terms of Service <span>•</span> Support Center</p>
-      </div>
+    <div style="color: #666; font-size: 0.9em; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+      <p>© ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center</p>
     </div>
   </body>
 </html>
-`.trim(),
+`.trim()
     };
   },
+
+  fintech_invite: (data: InvitationTemplateData): EmailTemplate => {
+    const result = invitationTemplateSchema.safeParse(data);
+    if (!result.success) {
+      console.error('[Template:fintech_invite] Invalid template data:', result.error);
+      throw new Error(`Invalid template data: ${result.error.message}`);
+    }
+
+    const { recipientName, senderName, company, code, inviteUrl } = result.data;
+
+    return {
+      subject: `Join ${company} as a FinTech Partner`,
+      text: `
+Hello ${recipientName},
+
+You've been invited to join ${company} as a FinTech partner by ${senderName}.
+
+Next Steps:
+1. Create your account using the invitation code below
+2. Complete your FinTech company profile
+3. Set up secure data sharing preferences
+4. Begin collaboration with your network
+
+Your Invitation Code: ${code}
+
+Get Started: ${inviteUrl}
+
+© ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center
+`.trim(),
+      html: `
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Join ${company} as a FinTech Partner</title>
+  </head>
+  <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${company}</h1>
+    <p>Hello ${recipientName},</p>
+    <p>You've been invited to join ${company} as a FinTech partner by ${senderName}.</p>
+
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h2 style="color: #333; margin-top: 0;">Next Steps:</h2>
+      <ol style="margin: 0; padding-left: 20px;">
+        <li>Create your account using the invitation code below</li>
+        <li>Complete your FinTech company profile</li>
+        <li>Set up secure data sharing preferences</li>
+        <li>Begin collaboration with your network</li>
+      </ol>
+    </div>
+
+    <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
+      <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
+    </div>
+
+    <a href="${inviteUrl}" style="display: inline-block; background: #4965EC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Create Your Account</a>
+
+    <div style="color: #666; font-size: 0.9em; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+      <p>© ${new Date().getFullYear()} Invela | Privacy Policy | Terms of Service | Support Center</p>
+    </div>
+  </body>
+</html>
+`.trim()
+    };
+  }
 };
 
 export type TemplateNames = keyof typeof templates;
 
-export function getEmailTemplate(templateName: TemplateNames, data: TemplateData): EmailTemplate {
+export function getEmailTemplate(templateName: TemplateNames, data: InvitationTemplateData): EmailTemplate {
   console.log('[EmailTemplate] Getting template:', templateName);
   console.log('[EmailTemplate] Template data:', JSON.stringify(data, null, 2));
 
