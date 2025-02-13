@@ -67,7 +67,7 @@ export function NetworkSearch({
       setValue(newValue)
     }
 
-    // Perform search
+    // Handle search
     if (newValue && fuse) {
       const results = fuse.search(newValue)
       setSearchResults(results)
@@ -114,8 +114,18 @@ export function NetworkSearch({
     setIsOpen(true)
   }, [])
 
+  const handleBlur = React.useCallback((event: React.FocusEvent) => {
+    // Check if the related target is within our component
+    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+      setIsOpen(false)
+    }
+  }, [])
+
   return (
-    <div className={cn("relative flex w-full items-center", containerClassName)}>
+    <div 
+      className={cn("relative flex w-full items-center", containerClassName)}
+      onBlur={handleBlur}
+    >
       <SearchIcon 
         className="absolute left-3 h-4 w-4 text-muted-foreground pointer-events-none"
       />
