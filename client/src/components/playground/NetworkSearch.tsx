@@ -228,7 +228,7 @@ export function NetworkSearch({
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <div className="flex flex-col space-y-3">
             <AlertDescription>
-              {existingCompany.name} already exists. To invite users to an existing company,
+              {existingCompany.name} already exists in your company's network. To invite users to an existing company,
               visit the company's profile page.
             </AlertDescription>
             <Link href={`/network/company/${getCompanySlug(existingCompany.name)}?tab=users`}>
