@@ -51,6 +51,7 @@ export function NetworkSearch({
   const [value, setValue] = React.useState('')
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchResults, setSearchResults] = React.useState<Fuse.FuseResult<Company>[]>([])
+  const [selectedCompanyName, setSelectedCompanyName] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -68,6 +69,14 @@ export function NetworkSearch({
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
     console.log('[NetworkSearch] handleChange:', { newValue, controlled: !!controlledOnChange })
+
+    // Reset selected company if input value changes
+    if (selectedCompanyName && newValue !== selectedCompanyName) {
+      setSelectedCompanyName(null)
+      if (onExistingCompanyChange) {
+        onExistingCompanyChange(null)
+      }
+    }
 
     // Handle controlled input
     if (controlledOnChange) {
@@ -89,12 +98,16 @@ export function NetworkSearch({
       if (onExistingCompanyChange) {
         onExistingCompanyChange(null)
       }
+      setSelectedCompanyName(null)
     }
     onSearch?.(newValue)
-  }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange])
+  }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange, selectedCompanyName])
 
   const handleSelect = (companyName: string) => {
     console.log('[NetworkSearch] handleSelect:', { companyName, controlled: !!controlledOnChange })
+
+    // Set selected company name
+    setSelectedCompanyName(companyName)
 
     // Find the selected company in the data
     const selectedCompany = data.find(company => company.name === companyName)
@@ -130,6 +143,7 @@ export function NetworkSearch({
       setValue('')
     }
     setSearchResults([])
+    setSelectedCompanyName(null)
     // Clear existing company when input is cleared
     if (onExistingCompanyChange) {
       onExistingCompanyChange(null)
@@ -138,13 +152,18 @@ export function NetworkSearch({
     inputRef.current?.focus()
   }, [controlledOnChange, onSearch, onExistingCompanyChange])
 
+  // Determine if warning should be shown
+  const showWarning = React.useMemo(() => {
+    return existingCompany && selectedCompanyName && inputValue === selectedCompanyName;
+  }, [existingCompany, selectedCompanyName, inputValue]);
+
   return (
     <div className="space-y-2">
       <div
         ref={containerRef}
         className={cn("relative flex w-full items-center", containerClassName)}
       >
-        {existingCompany ? (
+        {existingCompany && selectedCompanyName === inputValue ? (
           <AlertTriangle
             className="absolute left-3 h-4 w-4 text-yellow-500 pointer-events-none"
           />
@@ -170,7 +189,7 @@ export function NetworkSearch({
           className={cn(
             "pl-9 pr-[70px]",
             "focus:ring-2 focus:ring-offset-2",
-            existingCompany
+            existingCompany && selectedCompanyName === inputValue
               ? "border-yellow-500 focus:ring-yellow-500 focus:ring-offset-background"
               : isValid
                 ? "border-green-500 focus:ring-green-500 focus:ring-offset-background"
@@ -240,7 +259,7 @@ export function NetworkSearch({
       </div>
 
       {/* Warning message for existing company */}
-      {existingCompany && inputValue && (
+      {showWarning && (
         <Alert variant="warning" className="mt-2 bg-yellow-50 border-yellow-200">
           <AlertTriangle className="h-4 w-4 text-yellow-600" />
           <div className="flex flex-col space-y-3">
