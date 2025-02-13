@@ -646,8 +646,8 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[FinTech Invite] Created new company:', newCompany);
 
-      // Generate invitation code
-      const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+      // Generate invitation code (6 characters, uppercase)
+      const code = crypto.randomBytes(3).toString('hex').toUpperCase();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
@@ -934,8 +934,7 @@ export function registerRoutes(app: Express): Express {
     try {
       // Update user's onboarding status
       const [updatedUser] = await db.update(users)
-        .set({ onboardingUserCompleted: true })
-        .where(eq(users.id, req.user!.id))
+        .set({ onboardingUserCompleted: true }).where(eq(users.id, req.user!.id))
         .returning();
 
               // Find and update associated onboarding task
