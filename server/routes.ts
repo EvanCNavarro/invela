@@ -84,6 +84,7 @@ export function registerRoutes(app: Express): Express {
         );
 
       console.log('[Tasks] Found tasks:', userTasks.length);
+      console.log('[Tasks] Tasks data:', JSON.stringify(userTasks, null, 2));
       res.json(userTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
