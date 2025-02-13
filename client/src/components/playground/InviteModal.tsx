@@ -100,12 +100,12 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         company_id: companyId // Always include company_id if it exists, even if it's 0
       };
 
-      // Add email template fields only for user invitations
+      // Add email template fields only for user invitations with correct camelCase naming
       const payload = variant === 'user' ? {
         ...basePayload,
-        recipient_email: formData.email.toLowerCase().trim(),
-        sender_company: formData.company_name.trim(),
-        target_company: formData.company_name.trim()
+        recipientEmail: formData.email.toLowerCase().trim(),
+        senderCompany: formData.company_name.trim(),
+        targetCompany: formData.company_name.trim()
       } : basePayload;
 
       console.log(`[InviteModal] Sending ${variant} invitation with payload:`, payload);
