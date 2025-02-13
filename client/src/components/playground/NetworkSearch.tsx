@@ -96,7 +96,7 @@ export function NetworkSearch({
   }, [controlledOnChange, onSearch, fuse, onExistingCompanyChange])
 
   const handleSelect = (company: Company) => {
-    console.log('[NetworkSearch] handleSelect:', { company, controlled: !!controlledOnChange })
+    console.log('[NetworkSearch] handleSelect:', { company })
 
     if (onExistingCompanyChange) {
       onExistingCompanyChange(company)
@@ -106,10 +106,8 @@ export function NetworkSearch({
       const event = {
         target: { value: company.name }
       } as React.ChangeEvent<HTMLInputElement>
-      console.log('[NetworkSearch] Calling controlled onChange with selected company')
       controlledOnChange(event)
     } else {
-      console.log('[NetworkSearch] Setting internal value with selected company')
       setValue(company.name)
     }
 
