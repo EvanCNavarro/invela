@@ -533,7 +533,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add fintech invite endpoint
+  // Update the fintech invite endpoint to return company details
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -568,8 +568,13 @@ export function registerRoutes(app: Express): Express {
         .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
 
       if (existingCompany) {
-        return res.status(400).json({
-          message: "A company with this name already exists"
+        return res.status(409).json({
+          message: "A company with this name already exists",
+          existingCompany: {
+            id: existingCompany.id,
+            name: existingCompany.name,
+            category: existingCompany.category
+          }
         });
       }
 

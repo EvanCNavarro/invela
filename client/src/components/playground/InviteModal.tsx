@@ -2,11 +2,12 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "lucide-react";
+import { Send, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import confetti from 'canvas-confetti';
+import { Link } from "wouter";
 
 import {
   Dialog,
@@ -18,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -34,10 +36,17 @@ interface InviteModalProps {
   onSuccess?: () => void;
 }
 
+interface ExistingCompany {
+  id: number;
+  name: string;
+  category: string;
+}
+
 export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteModalProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
+  const [existingCompany, setExistingCompany] = useState<ExistingCompany | null>(null);
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -66,6 +75,12 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
+      if (response.status === 409) {
+        const data = await response.json();
+        setExistingCompany(data.existingCompany);
+        throw new Error("COMPANY_EXISTS");
+      }
 
       if (!response.ok) {
         const data = await response.json();
@@ -100,16 +115,19 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
 
       form.reset();
       setServerError(null);
+      setExistingCompany(null);
       onOpenChange(false);
       onSuccess?.();
     },
     onError: (error: Error) => {
-      setServerError(error.message);
-      toast({
-        title: "Error Sending Invitation",
-        description: error.message,
-        variant: "destructive",
-      });
+      if (error.message !== "COMPANY_EXISTS") {
+        setServerError(error.message);
+        toast({
+          title: "Error Sending Invitation",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
@@ -124,6 +142,25 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
             Please provide details to send a {variant === 'user' ? 'user' : 'FinTech'} invitation.
           </DialogDescription>
         </DialogHeader>
+        {existingCompany && (
+          <Alert variant="warning" className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="mt-0">
+              <div className="flex flex-col gap-2">
+                <p>A company named "{existingCompany.name}" already exists in our system.</p>
+                <Button
+                  variant="link"
+                  className="h-auto p-0 text-left font-normal"
+                  asChild
+                >
+                  <Link to={`/companies/${existingCompany.id}/users`}>
+                    View existing company users
+                  </Link>
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
         <Form {...form}>
           <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
             <FormField
