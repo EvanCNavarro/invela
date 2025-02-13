@@ -119,6 +119,7 @@ router.post("/api/users/invite", async (req, res) => {
             assignedTo: userResult.id,
             companyId: data.company_id,
             userEmail: data.email.toLowerCase(),
+            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             metadata: {
               userId: userResult.id,
               senderName: data.sender_name,
