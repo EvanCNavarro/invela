@@ -21,7 +21,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Unified schema for both user and fintech invitations
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
@@ -67,14 +66,18 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
-      // Create a clean payload without undefined values
+      // Create payload based on whether it's a new company or existing one
       const payload = {
         email: formData.email.toLowerCase().trim(),
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.fullName,
-        ...(existingCompany?.id && { company_id: existingCompany.id })
       };
+
+      // Only include company_id if we're working with an existing company
+      if (existingCompany) {
+        Object.assign(payload, { company_id: existingCompany.id });
+      }
 
       console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
 
@@ -133,12 +136,22 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
 
   const handleCompanySelect = (company: Company) => {
     console.log('[InviteModal] Company selected:', company);
+    setExistingCompany(company);
     form.setValue('company_name', company.name, { 
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true
     });
-    setExistingCompany(company);
+  };
+
+  const handleNewCompany = (companyName: string) => {
+    console.log('[InviteModal] Adding new company:', companyName);
+    setExistingCompany(null);
+    form.setValue('company_name', companyName, {
+      shouldValidate: true,
+      shouldDirty: true,
+      shouldTouch: true
+    });
   };
 
   return (
@@ -173,10 +186,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                         onCompanySelect={handleCompanySelect}
+                        onAddNewCompany={handleNewCompany}
                         onExistingCompanyChange={setExistingCompany}
                         data={companies}
                         isValid={!existingCompany && field.value !== ""}
                         isError={!!form.formState.errors.company_name}
+                        existingCompany={existingCompany}
                       />
                     </FormControl>
                     <FormMessage />
