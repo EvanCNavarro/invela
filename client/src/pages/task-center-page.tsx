@@ -130,6 +130,15 @@ export default function TaskCenterPage() {
   const itemsPerPage = 10;
 
   const filteredTasks = tasks.filter((task) => {
+    console.log('[TaskCenter] Filtering task:', {
+      taskId: task.id,
+      taskType: task.taskType,
+      createdBy: task.createdBy,
+      assignedTo: task.assignedTo,
+      currentUserId: user?.id,
+      activeTab
+    });
+
     // For "My Tasks" tab:
     // Show tasks where the user is assigned
     const matchesTab = activeTab === "my-tasks"
@@ -140,6 +149,8 @@ export default function TaskCenterPage() {
       : (task.createdBy === user?.id && 
          (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') &&
          task.assignedTo !== user?.id);
+
+    console.log('[TaskCenter] Task matches tab:', matchesTab);
 
     if (!matchesTab) return false;
 
