@@ -20,7 +20,14 @@ export function setupWebSocket(server: Server) {
     perMessageDeflate: false,
     maxPayload: 1024 * 1024, // 1MB
     // Skip certificate verification in Replit environment
-    verifyClient: () => true
+    verifyClient: (info, cb) => {
+      // Skip verification for vite-hmr
+      if (info.req.headers['sec-websocket-protocol'] === 'vite-hmr') {
+        cb(false);
+        return;
+      }
+      cb(true);
+    }
   });
 
   console.log('[WebSocket] Server initialized on path: /ws');
@@ -46,6 +53,19 @@ export function setupWebSocket(server: Server) {
       }
     }, 45000); // Match client's interval
 
+    ws.on('ping', () => {
+      try {
+        ws.pong();
+      } catch (error) {
+        console.error('[WebSocket] Error sending pong:', error);
+      }
+    });
+
+    ws.on('pong', () => {
+      // Reset any ping timeouts here if needed
+      console.log('[WebSocket] Received pong from client');
+    });
+
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
@@ -59,14 +79,6 @@ export function setupWebSocket(server: Server) {
         console.log('Received WebSocket message:', data);
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
-      }
-    });
-
-    ws.on('ping', () => {
-      try {
-        ws.pong();
-      } catch (error) {
-        console.error('[WebSocket] Error sending pong:', error);
       }
     });
 
