@@ -536,19 +536,36 @@ export function registerRoutes(app: Express): Express {
   // Add fintech invite endpoint
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
-      const { email, companyName } = req.body;
+      const { email, company_name, full_name, sender_name } = req.body;
 
       // Input validation
-      if (!email || !companyName) {
+      const invalidFields = [];
+      if (!email) invalidFields.push('email');
+      if (!company_name) invalidFields.push('company name');
+      if (!full_name) invalidFields.push('full name');
+      if (!sender_name) invalidFields.push('sender name');
+
+      if (invalidFields.length > 0) {
+        const errorMessage = invalidFields.length === 1
+          ? `${invalidFields[0]} is required`
+          : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
+
+        console.log('[FinTech Invite] Validation failed:', {
+          receivedData: req.body,
+          invalidFields,
+          errorMessage
+        });
+
         return res.status(400).json({
-          message: "Email and company name are required"
+          message: errorMessage,
+          invalidFields
         });
       }
 
       // Check for existing company with same name
       const [existingCompany] = await db.select()
         .from(companies)
-        .where(sql`LOWER(${companies.name}) = LOWER(${companyName})`);
+        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
 
       if (existingCompany) {
         return res.status(400).json({
@@ -576,28 +593,35 @@ export function registerRoutes(app: Express): Express {
       const [task] = await db.insert(tasks)
         .values({
           title: `New User Invitation: ${email}`,
-          description: `Invitation sent to ${email} to join ${companyName} on the platform.`,
+          description: `Invitation sent to ${email} to join ${company_name} on the platform.`,
           taskType: 'user_onboarding',
           taskScope: 'user',
-          status: 'pending',
+          status: TaskStatus.PENDING,
           priority: 'medium',
           progress: 0,
           createdBy: req.user!.id,
-          userEmail: email,
+          userEmail: email.toLowerCase(),
           companyId: req.user!.companyId,
           dueDate: expirationDate,
+          metadata: {
+            inviteeName: full_name,
+            inviteeCompany: company_name,
+            senderName: sender_name
+          }
         })
         .returning();
 
       // Create invitation record
       const [invitation] = await db.insert(invitations)
         .values({
-          email,
+          email: email.toLowerCase(),
           code,
           status: 'pending',
           companyId: req.user!.companyId,
-          taskId: task.id,
+          inviteeName: full_name,
+          inviteeCompany: company_name,
           expiresAt: expirationDate,
+          taskId: task.id
         })
         .returning();
 
@@ -610,10 +634,11 @@ export function registerRoutes(app: Express): Express {
         template: 'fintech_invite',
         templateData: {
           recipientEmail: email,
-          senderName: req.user!.fullName,
-          senderCompany: userCompany.name, // Add sender's company name
-          targetCompany: companyName,      // Company being invited
-          inviteUrl: inviteUrl
+          recipientName: full_name,
+          senderName: sender_name,
+          senderCompany: userCompany.name,
+          targetCompany: company_name,
+          inviteUrl
         }
       };
 
@@ -626,7 +651,10 @@ export function registerRoutes(app: Express): Express {
           .where(eq(invitations.id, invitation.id));
 
         await db.update(tasks)
-          .set({ status: 'failed' })
+          .set({ 
+            status: TaskStatus.FAILED,
+            progress: taskStatusToProgress[TaskStatus.FAILED]
+          })
           .where(eq(tasks.id, task.id));
 
         return res.status(500).json({
@@ -636,7 +664,10 @@ export function registerRoutes(app: Express): Express {
 
       // Update task status after successful email
       await db.update(tasks)
-        .set({ status: 'email_sent' })
+        .set({ 
+          status: TaskStatus.EMAIL_SENT,
+          progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
+        })
         .where(eq(tasks.id, task.id));
 
       res.json({
