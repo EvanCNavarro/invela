@@ -629,12 +629,19 @@ export function registerRoutes(app: Express): Express {
 
           if (existingCompany) {
             console.error('[FinTech Invite] Company already exists:', existingCompany.name);
-            throw new Error("A company with this name already exists");
+            return res.status(409).json({
+              message: "A company with this name already exists",
+              existingCompany: {
+                id: existingCompany.id,
+                name: existingCompany.name,
+                category: existingCompany.category
+              }
+            });
           }
 
           // Step 3: Create new company record
           console.log('[FinTech Invite] Creating new company:', company_name);
-          const companyInsertResult = await tx.insert(companies)
+          const [newCompany] = await tx.insert(companies)
             .values({
               name: company_name.trim(),
               description: `FinTech partner company ${company_name}`,
@@ -652,12 +659,11 @@ export function registerRoutes(app: Express): Express {
             })
             .returning();
 
-          if (!companyInsertResult || companyInsertResult.length === 0) {
-            console.error('[FinTech Invite] Failed to create company - no result returned');
+          if (!newCompany) {
+            console.error('[FinTech Invite] Failed to create company');
             throw new Error("Failed to create company record");
           }
 
-          const [newCompany] = companyInsertResult;
           console.log('[FinTech Invite] Successfully created company:', {
             id: newCompany.id,
             name: newCompany.name,
@@ -671,7 +677,7 @@ export function registerRoutes(app: Express): Express {
 
           // Step 5: Create invitation record
           console.log('[FinTech Invite] Creating invitation for:', email);
-          const invitationInsertResult = await tx.insert(invitations)
+          const [invitation] = await tx.insert(invitations)
             .values({
               email: email.toLowerCase(),
               code,
@@ -689,12 +695,11 @@ export function registerRoutes(app: Express): Express {
             })
             .returning();
 
-          if (!invitationInsertResult || invitationInsertResult.length === 0) {
-            console.error('[FinTech Invite] Failed to create invitation - no result returned');
+          if (!invitation) {
+            console.error('[FinTech Invite] Failed to create invitation');
             throw new Error("Failed to create invitation record");
           }
 
-          const [invitation] = invitationInsertResult;
           console.log('[FinTech Invite] Successfully created invitation:', {
             id: invitation.id,
             code: invitation.code,
@@ -703,7 +708,7 @@ export function registerRoutes(app: Express): Express {
 
           // Step 6: Create task for invitation
           console.log('[FinTech Invite] Creating task');
-          const taskInsertResult = await tx.insert(tasks)
+          const [task] = await tx.insert(tasks)
             .values({
               title: `New User Invitation: ${email}`,
               description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
@@ -728,12 +733,11 @@ export function registerRoutes(app: Express): Express {
             })
             .returning();
 
-          if (!taskInsertResult || taskInsertResult.length === 0) {
-            console.error('[FinTech Invite] Failed to create task - no result returned');
+          if (!task) {
+            console.error('[FinTech Invite] Failed to create task');
             throw new Error("Failed to create task record");
           }
 
-          const [task] = taskInsertResult;
           console.log('[FinTech Invite] Successfully created task:', {
             id: task.id,
             status: task.status
@@ -750,10 +754,10 @@ export function registerRoutes(app: Express): Express {
               template: 'fintech_invite',
               templateData: {
                 recipientName: full_name,
+                recipientEmail: email,
                 senderName: sender_name,
                 senderCompany: userCompany.name,
                 targetCompany: company_name,
-                recipientEmail: email,
                 inviteUrl,
                 code
               }
@@ -765,7 +769,7 @@ export function registerRoutes(app: Express): Express {
             }
 
             // Update task status after successful email
-            const taskUpdateResult = await tx.update(tasks)
+            const [updatedTask] = await tx.update(tasks)
               .set({
                 status: TaskStatus.EMAIL_SENT,
                 progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
@@ -778,13 +782,13 @@ export function registerRoutes(app: Express): Express {
               .where(eq(tasks.id, task.id))
               .returning();
 
-            if (!taskUpdateResult || taskUpdateResult.length === 0) {
+            if (!updatedTask) {
               console.error('[FinTech Invite] Failed to update task status');
               throw new Error("Failed to update task status");
             }
 
             console.log('[FinTech Invite] Successfully completed invitation process');
-            return { invitation, task, company: newCompany };
+            return { invitation, task: updatedTask, company: newCompany };
 
           } catch (emailError) {
             console.error("[FinTech Invite] Email sending failed:", emailError);
