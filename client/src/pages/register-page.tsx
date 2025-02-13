@@ -87,7 +87,7 @@ export default function RegisterPage() {
       try {
         const response = await fetch(`/api/invitations/${code}/validate`);
         const responseData = await response.json();
-        console.log("[Registration] Validation response:", responseData);
+        console.log("[Registration] Raw validation response:", responseData);
 
         if (!response.ok) {
           throw new Error(responseData.message || "Invalid invitation code");
@@ -122,33 +122,45 @@ export default function RegisterPage() {
     console.log("[Registration] Starting code validation for:", values.invitationCode);
     try {
       const result = await validateInvitation();
-      console.log("[Registration] Validation result:", result);
+      console.log("[Registration] Full validation result:", result);
 
-      if (result?.data?.valid) {
-        console.log("[Registration] Setting validated invitation data:", result.data);
+      if (result?.data?.valid && result?.data?.invitation) {
+        const { invitation } = result.data;
+        console.log("[Registration] Extracted invitation data:", invitation);
+
         setValidatedInvitation({
-          email: result.data.email,
-          company: result.data.company,
-          companyId: result.data.companyId,
-          fullName: result.data.fullName || '',
+          email: invitation.email,
+          company: invitation.company || "",
+          companyId: invitation.companyId,
+          fullName: invitation.fullName || `${invitation.firstName} ${invitation.lastName}`.trim(),
         });
 
-        // Pre-fill registration form
+        // Pre-fill registration form with corrected data access
         console.log("[Registration] Pre-filling registration form");
         registrationForm.setValue("invitationCode", values.invitationCode);
-        registrationForm.setValue("email", result.data.email);
-        registrationForm.setValue("company", result.data.company);
+        registrationForm.setValue("email", invitation.email);
+        registrationForm.setValue("company", invitation.company || "");
 
-        // Split full name if provided
-        if (result.data.fullName) {
-          const nameParts = result.data.fullName.split(" ");
-          console.log("[Registration] Setting name parts:", nameParts);
+        // Handle name fields
+        if (invitation.firstName && invitation.lastName) {
+          console.log("[Registration] Setting split name parts:", { 
+            firstName: invitation.firstName, 
+            lastName: invitation.lastName 
+          });
+          registrationForm.setValue("firstName", invitation.firstName);
+          registrationForm.setValue("lastName", invitation.lastName);
+        } else if (invitation.fullName) {
+          const nameParts = invitation.fullName.split(" ");
+          console.log("[Registration] Splitting full name:", nameParts);
           registrationForm.setValue("firstName", nameParts[0] || "");
           registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
         }
 
         // Debug form values after setting
         console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
+
+        // Validate form after setting values
+        registrationForm.trigger();
       } else {
         console.log("[Registration] Invalid invitation code response");
         invitationForm.setError("invitationCode", {
