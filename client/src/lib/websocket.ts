@@ -9,46 +9,36 @@ class WebSocketService {
   private connectionPromise: Promise<void> | null = null;
   private connectionResolve: (() => void) | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
-  private pingTimeout: NodeJS.Timeout | null = null;
+  private pongTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     this.connect();
   }
 
   private getWebSocketUrl(): string {
-    const url = window.location;
-    const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsPath = '/api/ws';
-
-    // For Replit environment
-    if (url.hostname.includes('.repl.co')) {
-      return `${protocol}//${url.host}${wsPath}`;
-    }
-
-    // For local development
-    const port = url.port || (url.protocol === 'https:' ? '443' : '80');
-    return `${protocol}//${url.hostname}:${port}${wsPath}`;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws`;
   }
 
   private startHeartbeat() {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
     }
-    if (this.pingTimeout) {
-      clearTimeout(this.pingTimeout);
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
     }
 
     this.heartbeatInterval = setInterval(() => {
       if (this.socket?.readyState === WebSocket.OPEN) {
         this.socket.send(JSON.stringify({ type: 'ping' }));
 
-        // Set a timeout to reconnect if we don't receive a pong
-        this.pingTimeout = setTimeout(() => {
+        // Set a timeout for pong response
+        this.pongTimeout = setTimeout(() => {
           console.log('[WebSocket] No pong received, reconnecting...');
           this.reconnect();
-        }, 5000); // Wait 5s for pong before reconnecting
+        }, 10000); // Wait 10s for pong before reconnecting
       }
-    }, 30000); // Send heartbeat every 30s
+    }, 45000); // Send heartbeat every 45s
   }
 
   private async connect(): Promise<void> {
@@ -80,14 +70,13 @@ class WebSocketService {
 
             // Handle pong responses
             if (message.type === 'pong') {
-              if (this.pingTimeout) {
-                clearTimeout(this.pingTimeout);
+              if (this.pongTimeout) {
+                clearTimeout(this.pongTimeout);
               }
               return;
             }
 
             const { type, data } = message;
-            console.log('[WebSocket] Received message:', { type, data });
             this.handleMessage(type, data);
           } catch (error) {
             console.error('[WebSocket] Error parsing message:', error);
@@ -119,9 +108,9 @@ class WebSocketService {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
     }
-    if (this.pingTimeout) {
-      clearTimeout(this.pingTimeout);
-      this.pingTimeout = null;
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
     }
     this.socket = null;
     this.connectionPromise = null;
@@ -145,7 +134,7 @@ class WebSocketService {
   }
 
   private reconnect() {
-    if (this.socket) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.close();
     }
   }

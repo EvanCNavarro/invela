@@ -14,25 +14,39 @@ interface TaskUpdate {
 export function setupWebSocket(server: Server) {
   wss = new WebSocket.Server({ 
     server,
-    path: '/ws'
+    path: '/ws',
+    // Increase timeout values
+    clientTracking: true,
+    perMessageDeflate: false
   });
 
   wss.on('connection', (ws) => {
-    console.log('New WebSocket connection established');
+    console.log('New WebSocket client connected');
 
-    // Set up ping-pong
+    // Send initial connection acknowledgment
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      data: { timestamp: new Date().toISOString() }
+    }));
+
+    // Set up ping/pong with longer intervals
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'ping' }));
       }
-    }, 30000);
+    }, 45000); // Match client's interval
 
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
+
+        // Handle ping messages immediately
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
+          return;
         }
+
+        console.log('Received WebSocket message:', data);
       } catch (error) {
         console.error('Error processing WebSocket message:', error);
       }
@@ -44,7 +58,7 @@ export function setupWebSocket(server: Server) {
 
     ws.on('close', () => {
       clearInterval(pingInterval);
-      console.log('WebSocket connection closed');
+      console.log('WebSocket client disconnected');
     });
   });
 }
@@ -59,7 +73,7 @@ export function broadcastTaskUpdate(task: TaskUpdate) {
     if (client.readyState === WebSocket.OPEN) {
       try {
         client.send(JSON.stringify({
-          type: 'TASK_UPDATE',
+          type: 'task_update',
           payload: task
         }));
       } catch (error) {
