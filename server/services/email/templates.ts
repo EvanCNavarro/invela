@@ -62,12 +62,9 @@ function invitationTemplate(data: InvitationTemplateData): EmailTemplate {
   const { recipientName, senderName, senderCompany, targetCompany, inviteUrl, code, inviteType } = result.data;
   const year = new Date().getFullYear();
 
-  const isFintech = inviteType === 'fintech';
-  const subject = isFintech 
-    ? `Welcome to ${targetCompany}`
-    : `Invitation to join ${targetCompany}`;
+  const subject = "Invitation to join Invela";
 
-  const intro = isFintech
+  const intro = inviteType === 'fintech'
     ? `You have been invited by ${senderName} from ${senderCompany} to join ${targetCompany} on the Invela platform.`
     : `You've been invited to join ${targetCompany} by ${senderName} from ${senderCompany}.`;
 
@@ -80,9 +77,9 @@ ${intro}
 
 Getting Started:
 1. Click the button below to Create Your Account
-2. ${isFintech ? 'Complete your Company Profile setup' : 'Finish updating your Profile'}
+2. ${inviteType === 'fintech' ? 'Complete your Company Profile setup' : 'Finish updating your Profile'}
 3. Upload the requested files to our secure system
-4. Acquire an Invela Accreditation & Risk Score${isFintech ? ' for your company' : ''}
+4. Acquire an Invela Accreditation & Risk Score${inviteType === 'fintech' ? ' for your company' : ''}
 
 ${code ? `Your Invitation Code: ${code}` : ''}
 

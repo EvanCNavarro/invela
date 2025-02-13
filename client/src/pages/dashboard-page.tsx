@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { InviteButton } from "@/components/ui/invite-button";
 import {
   Settings,
   BarChart3,
@@ -51,19 +52,18 @@ const DEFAULT_WIDGETS = {
   networkVisualization: true
 };
 
-
 const toTitleCase = (str: string) => {
   return str.split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
 
-
 export default function DashboardPage() {
   const { toast } = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
+  const [openUserInviteModal, setOpenUserInviteModal] = useState(false);
 
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -194,14 +194,11 @@ export default function DashboardPage() {
                 ]}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    className="w-full pulse-border font-medium"
-                    onClick={() => setIsModalOpen(true)}
-                    data-element="add-fintech-button"
-                  >
-                    Add New FinTech
-                  </Button>
+                  <InviteButton
+                    variant="user"
+                    pulse={true}
+                    onClick={() => setOpenUserInviteModal(true)}
+                  />
                   <Button variant="outline" className="w-full font-medium">
                     Add User
                   </Button>
@@ -214,12 +211,9 @@ export default function DashboardPage() {
                 </div>
 
                 <InviteModal
-                  variant="fintech"
-                  open={isModalOpen}
-                  onOpenChange={setIsModalOpen}
-                  onSuccess={() => {
-                    // Add any additional success handling if needed
-                  }}
+                  variant="user"
+                  open={openUserInviteModal}
+                  onOpenChange={setOpenUserInviteModal}
                 />
               </Widget>
             )}
