@@ -45,6 +45,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { user } = useAuth();
   const [selectedCompany, setSelectedCompany] = useState("");
   const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
+  const [showCompanyError, setShowCompanyError] = useState(false);
 
   const form = useForm<InviteData>({
     resolver: zodResolver(inviteSchema),
@@ -97,6 +98,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       setServerError(null);
       setSelectedCompany("");
       setIsValidCompanySelection(false);
+      setShowCompanyError(false);
       onOpenChange(false);
 
       const buttonSelector = variant === 'user' 
@@ -131,6 +133,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     }
   };
 
+  const handleCompanyBlur = () => {
+    if (variant === 'fintech' && !isValidCompanySelection) {
+      setShowCompanyError(true);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -144,6 +152,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
+            {/* Company Field - Always First */}
             {variant === 'user' ? (
               <div>
                 <div className="text-sm font-semibold mb-2">Company</div>
@@ -164,46 +173,35 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         onChange={(e) => {
                           setSelectedCompany(e.target.value);
                           setIsValidCompanySelection(false);
+                          setShowCompanyError(false);
                           field.onChange(e.target.value);
                         }}
                         onCompanySelect={(company) => {
                           setSelectedCompany(company);
                           setIsValidCompanySelection(true);
+                          setShowCompanyError(false);
                           field.onChange(company);
                         }}
                         placeholder={`Add company to ${user?.company?.name || ''}'s Network`}
                         className="w-full"
                         isValid={isValidCompanySelection}
+                        isError={showCompanyError}
                         onKeyDown={handleKeyDown}
+                        onBlur={handleCompanyBlur}
                       />
                     </FormControl>
+                    {showCompanyError && (
+                      <p className="text-sm font-medium text-destructive mt-2">
+                        Please select a valid company from the search results
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
 
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="text-sm font-semibold mb-2">Full Name</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      className="w-full"
-                      disabled={isPending}
-                      placeholder="John Doe"
-                      aria-label="Full name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
+            {/* Email Field - Second */}
             <FormField
               control={form.control}
               name="email"
@@ -218,6 +216,28 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                       disabled={isPending}
                       placeholder="user@company.com"
                       aria-label="Email address"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Full Name Field - Third */}
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="text-sm font-semibold mb-2">Full Name</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      className="w-full"
+                      disabled={isPending}
+                      placeholder="John Doe"
+                      aria-label="Full name"
                     />
                   </FormControl>
                   <FormMessage />
