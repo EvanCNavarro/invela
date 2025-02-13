@@ -49,7 +49,7 @@ export function NetworkSearch({
 }: NetworkSearchProps) {
   const [value, setValue] = React.useState('')
   const [isOpen, setIsOpen] = React.useState(false)
-  const [searchResults, setSearchResults] = React.useState<Array<Fuse.FuseResult<Company>>>([])
+  const [searchResults, setSearchResults] = React.useState<Company[]>([])
   const inputRef = React.useRef<HTMLInputElement>(null)
   const containerRef = React.useRef<HTMLDivElement>(null)
 
@@ -65,7 +65,7 @@ export function NetworkSearch({
   const hasValue = Boolean(inputValue && inputValue.length > 0)
 
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value
+    const newValue = event.target.value.trim()
     console.log('[NetworkSearch] handleChange:', { newValue, controlled: !!controlledOnChange })
 
     // Handle controlled input
@@ -84,7 +84,7 @@ export function NetworkSearch({
 
     // Handle search
     if (newValue) {
-      const results = fuse.search(newValue)
+      const results = fuse.search(newValue).map(result => result.item)
       console.log('[NetworkSearch] Search results:', results)
       setSearchResults(results)
       setIsOpen(true)
@@ -121,7 +121,8 @@ export function NetworkSearch({
   }
 
   const handleAddNewCompany = () => {
-    console.log('[NetworkSearch] Adding new company:', inputValue)
+    const newCompanyName = inputValue.trim()
+    console.log('[NetworkSearch] Adding new company:', newCompanyName)
 
     // Clear existing company selection when adding new
     if (onExistingCompanyChange) {
@@ -130,12 +131,15 @@ export function NetworkSearch({
 
     if (controlledOnChange) {
       const event = {
-        target: { value: inputValue }
+        target: { value: newCompanyName }
       } as React.ChangeEvent<HTMLInputElement>
       controlledOnChange(event)
+    } else {
+      setValue(newCompanyName)
     }
 
-    onAddNewCompany?.(inputValue)
+    onAddNewCompany?.(newCompanyName)
+    onCompanySelect?.(newCompanyName)
     setIsOpen(false)
   }
 
@@ -243,15 +247,15 @@ export function NetworkSearch({
           {hasValue && searchResults.length > 0 && (
             <>
               <div className="px-2 py-1.5 text-sm font-medium">Search Results</div>
-              {searchResults.map((result, index) => (
+              {searchResults.map((company, index) => (
                 <button
                   key={index}
                   className="flex w-full items-center px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => handleSelect(result.item.name)}
+                  onClick={() => handleSelect(company.name)}
                 >
-                  <span className="flex-1 text-left">{result.item.name}</span>
-                  {result.item.category && (
-                    <span className="text-xs text-muted-foreground">{result.item.category}</span>
+                  <span className="flex-1 text-left">{company.name}</span>
+                  {company.category && (
+                    <span className="text-xs text-muted-foreground">{company.category}</span>
                   )}
                 </button>
               ))}

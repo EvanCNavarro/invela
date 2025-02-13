@@ -67,11 +67,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
+      // Create a clean payload without undefined values
       const payload = {
         email: formData.email.toLowerCase().trim(),
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
-        company_id: formData.company_id,
+        ...(formData.company_id && { company_id: formData.company_id }),
         sender_name: user?.fullName
       };
 
