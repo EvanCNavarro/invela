@@ -277,7 +277,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess }: InviteMo
               <Button
                 type="submit"
                 className="gap-2"
-                disabled={isPending}
+                disabled={isPending || existingCompany !== null}
                 data-element={`invite-${variant}-button`}
               >
                 {isPending ? (
