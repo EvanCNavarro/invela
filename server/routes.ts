@@ -686,7 +686,7 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
-        // Send invitation email
+        // Send invitation email with correct parameter structure
         const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
 
         try {
@@ -1191,7 +1191,7 @@ export function registerRoutes(app: Express): Express {
         invitation: {
           code: invitation.code,
           email: invitation.email,
-          company: invitation.inviteeCompany || company?.name || null, // Map inviteeCompany to company
+          company: invitation.inviteeCompany || company?.name || null,
           companyId: invitation.companyId,
           firstName: invitation.inviteeName?.split(' ')[0] || null,
           lastName: invitation.inviteeName?.split(' ').slice(1).join(' ') || null,

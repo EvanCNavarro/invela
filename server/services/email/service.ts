@@ -33,7 +33,8 @@ const templateDataSchema = z.object({
   senderName: z.string(),
   senderCompany: z.string(),
   targetCompany: z.string(),
-  inviteUrl: z.string().url()
+  inviteUrl: z.string().url(),
+  code: z.string().optional()
 });
 
 type TemplateData = z.infer<typeof templateDataSchema>;
@@ -54,7 +55,7 @@ interface ValidationResult {
   reason?: string;
 }
 
-class EmailService {
+export class EmailService {
   private transporter: nodemailer.Transporter;
   private defaultFromEmail: string;
 
@@ -77,25 +78,30 @@ class EmailService {
   }
 
   private transformTemplateData(data: TemplateData) {
-    // Generate a unique invitation code
-    const inviteCode = uuidv4().slice(0, 8);
+    // Generate a unique invitation code if not provided
+    const inviteCode = data.code || uuidv4().slice(0, 8);
 
-    // Build invitation URL with code
+    // Build invitation URL with code if needed
     const separator = data.inviteUrl.includes('?') ? '&' : '?';
     const inviteUrl = `${data.inviteUrl}${separator}code=${inviteCode}`;
 
-    console.log('[EmailService] Transforming template data:', { 
-      company: data.targetCompany,
-      inviteCode,
+    console.log('[EmailService] Transforming template data:', {
+      recipientName: data.recipientName,
+      senderName: data.senderName,
+      senderCompany: data.senderCompany,
+      targetCompany: data.targetCompany,
+      code: inviteCode,
       inviteUrl
     });
 
+    // Return data with exact parameter names required by template
     return {
       recipientName: data.recipientName,
       senderName: data.senderName,
-      company: data.targetCompany,  // Map targetCompany to company for the template
-      code: inviteCode,
-      inviteUrl: inviteUrl
+      senderCompany: data.senderCompany,
+      targetCompany: data.targetCompany,
+      inviteUrl,
+      code: inviteCode
     };
   }
 
