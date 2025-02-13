@@ -571,7 +571,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update the fintech invite endpoint to return company details
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -646,8 +645,8 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[FinTech Invite] Created new company:', newCompany);
 
-      // Generate invitation code
-      const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+      // Generate invitation code (same format as user invites)
+      const invitationCode = crypto.randomBytes(4).toString('hex').toUpperCase();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
 
@@ -663,13 +662,15 @@ export function registerRoutes(app: Express): Express {
           progress: 0,
           createdBy: req.user!.id,
           userEmail: email.toLowerCase(),
-          companyId: newCompany.id, // Use new company ID
+          companyId: newCompany.id,
           dueDate: expirationDate,
           metadata: {
             inviteeName: full_name,
             inviteeCompany: company_name,
             senderName: sender_name,
-            companyCreatedAt: newCompany.createdAt
+            companyCreatedAt: newCompany.createdAt,
+            invitationCode,
+            statusFlow: [TaskStatus.PENDING]
           }
         })
         .returning();
@@ -678,9 +679,9 @@ export function registerRoutes(app: Express): Express {
       const [invitation] = await db.insert(invitations)
         .values({
           email: email.toLowerCase(),
-          code,
+          code: invitationCode,
           status: 'pending',
-          companyId: newCompany.id, // Use new company ID
+          companyId: newCompany.id,
           inviteeName: full_name,
           inviteeCompany: company_name,
           expiresAt: expirationDate,
@@ -688,24 +689,21 @@ export function registerRoutes(app: Express): Express {
         })
         .returning();
 
-      // Send invitation email
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&work_email=${encodeURIComponent(email)}`;
+      // Send invitation email with consistent URL parameter naming
+      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${invitationCode}&email=${encodeURIComponent(email)}`;
 
-      const emailParams = {
+      const emailResult = await emailService.sendTemplateEmail({
         to: email,
         from: process.env.GMAIL_USER!,
         template: 'fintech_invite',
         templateData: {
-          recipientEmail: email,
           recipientName: full_name,
           senderName: sender_name,
-          senderCompany: userCompany.name,
-          targetCompany: company_name,
+          company: company_name,
+          code: invitationCode,
           inviteUrl
         }
-      };
-
-      const emailResult = await emailService.sendTemplateEmail(emailParams);
+      });
 
       if (!emailResult.success) {
         // Rollback the invitation and task if email fails
@@ -716,7 +714,12 @@ export function registerRoutes(app: Express): Express {
         await db.update(tasks)
           .set({
             status: TaskStatus.FAILED,
-            progress: taskStatusToProgress[TaskStatus.FAILED]
+            progress: taskStatusToProgress[TaskStatus.FAILED],
+            metadata: {
+              ...task.metadata,
+              statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.FAILED],
+              failureReason: 'Email sending failed'
+            }
           })
           .where(eq(tasks.id, task.id));
 
@@ -729,7 +732,12 @@ export function registerRoutes(app: Express): Express {
       await db.update(tasks)
         .set({
           status: TaskStatus.EMAIL_SENT,
-          progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
+          progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
+          metadata: {
+            ...task.metadata,
+            statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.EMAIL_SENT],
+            emailSentAt: new Date().toISOString()
+          }
         })
         .where(eq(tasks.id, task.id));
 
@@ -923,7 +931,7 @@ export function registerRoutes(app: Express): Express {
     } catch (error: any) {
       console.error('[Invite] Error processing invitation:', error);
       res.status(500).json({
-        message: "Failed to process invitation",
+        message: "Failed toprocess invitation",
         error: error.message
       });
     }
@@ -938,7 +946,7 @@ export function registerRoutes(app: Express): Express {
         .where(eq(users.id, req.user!.id))
         .returning();
 
-              // Find and update associated onboarding task
+      // Find and update associated onboarding task      
       const [task] = await db.select()
         .from(tasks)
         .where(and(
@@ -972,7 +980,7 @@ export function registerRoutes(app: Express): Express {
     try {
       const companyId = parseInt(req.params.companyId);
       if (isNaN(companyId)) {
-                return res.status(400).json({ message: "Invalid company ID" });
+        return res.status(400).json({ message: "Invalid company ID" });
       }
 
       // Get the user's company to check permissions
