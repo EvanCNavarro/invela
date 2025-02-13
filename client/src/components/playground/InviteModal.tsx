@@ -2,12 +2,13 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "lucide-react";
+import { Send, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { NetworkSearch } from "./NetworkSearch";
 import type { Company } from "@/types/company";
+import confetti from 'canvas-confetti';
 
 import {
   Dialog,
@@ -20,11 +21,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
+// Unified schema for both user and fintech invitations
 const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
   company_name: z.string().min(1, "Company name is required"),
-  sender_name: z.string(),
+  company_id: z.number().optional(),
+  sender_name: z.string()
 });
 
 type InviteData = z.infer<typeof inviteSchema>;
@@ -35,9 +38,10 @@ interface InviteModalProps {
   onOpenChange: (open: boolean) => void;
   companyId?: number;
   companyName?: string;
+  onSuccess?: () => void;
 }
 
-export function InviteModal({ variant, open, onOpenChange, companyId, companyName }: InviteModalProps) {
+export function InviteModal({ variant, open, onOpenChange, companyId, companyName, onSuccess }: InviteModalProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -49,6 +53,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       email: "",
       full_name: "",
       company_name: variant === 'user' ? companyName || "" : "",
+      company_id: companyId,
       sender_name: user?.fullName || "",
     }
   });
@@ -59,40 +64,53 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (data: InviteData) => {
-      console.log('[InviteModal] Sending invitation:', { data });
+    mutationFn: async (formData: InviteData) => {
+      const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
 
       const payload = {
-        email: data.email.toLowerCase().trim(),
-        full_name: data.full_name.trim(),
-        company_name: data.company_name.trim(),
-        sender_name: data.sender_name.trim()
+        email: formData.email.toLowerCase().trim(),
+        full_name: formData.full_name.trim(),
+        company_name: formData.company_name.trim(),
+        company_id: formData.company_id,
+        sender_name: user?.fullName
       };
 
-      const response = await fetch(variant === 'user' ? '/api/users/invite' : '/api/fintech/invite', {
+      console.log(`[InviteModal] Sending ${variant} invitation:`, payload);
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
-      const responseData = await response.json();
       if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
+        const data = await response.json();
+        throw new Error(data.message || data.error || `Failed to send ${variant} invitation`);
       }
 
-      return responseData;
-    },
-    onError: (error: Error) => {
-      setServerError(error.message);
-      toast({
-        title: "Error sending invitation",
-        description: error.message,
-        variant: "destructive",
-      });
+      return response.json();
     },
     onSuccess: () => {
+      const inviteButton = document.querySelector(`[data-element="invite-${variant}-button"]`);
+      if (inviteButton) {
+        const rect = inviteButton.getBoundingClientRect();
+        confetti({
+          particleCount: 75,
+          spread: 52,
+          origin: {
+            x: rect.left / window.innerWidth + (rect.width / window.innerWidth) / 2,
+            y: rect.top / window.innerHeight
+          },
+          colors: ['#4965EC', '#F4F6FA', '#FCFDFF'],
+          ticks: 200,
+          gravity: 0.8,
+          scalar: 0.8,
+          shapes: ["circle"]
+        });
+      }
+
       toast({
-        title: "Invitation sent successfully",
+        title: "Invitation Sent Successfully",
         description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
       });
 
@@ -100,55 +118,17 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       setServerError(null);
       setExistingCompany(null);
       onOpenChange(false);
+      onSuccess?.();
+    },
+    onError: (error: Error) => {
+      setServerError(error.message);
+      toast({
+        title: "Error Sending Invitation",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
-
-  const onSubmit = (formData: InviteData) => {
-    console.log('[InviteModal] Form submitted:', { 
-      formData,
-      existingCompany: existingCompany?.name 
-    });
-
-    // For fintech variant, validate company name and existence
-    if (variant === 'fintech') {
-      if (!formData.company_name) {
-        form.setError('company_name', {
-          type: 'manual',
-          message: 'Please enter a company name'
-        });
-        return;
-      }
-
-      // Block submission if company already exists
-      if (existingCompany) {
-        toast({
-          title: "Cannot invite to existing company",
-          description: `${existingCompany.name} already exists. Please visit their company profile to invite new users.`,
-          variant: "destructive",
-        });
-        return;
-      }
-    }
-
-    // At this point, we're either:
-    // 1. Sending a user invite to an existing company (variant === 'user')
-    // 2. Creating a new company and sending an invite (variant === 'fintech' && !existingCompany)
-    sendInvite(formData);
-  };
-
-  const handleCompanySelect = (company: string) => {
-    console.log('[InviteModal] Company selected:', company);
-    form.setValue('company_name', company, { 
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
-    });
-  };
-
-  const handleExistingCompanyChange = (company: Company | null) => {
-    console.log('[InviteModal] Existing company changed:', company?.name);
-    setExistingCompany(company);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -162,7 +142,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(data => sendInvite(data))} className="space-y-6">
             {variant === 'user' ? (
               <div>
                 <div className="text-sm font-semibold mb-2">Company</div>
@@ -180,23 +160,50 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                     <FormControl>
                       <NetworkSearch
                         value={field.value}
-                        onChange={(e) => {
-                          field.onChange(e.target.value);
+                        onChange={(e) => field.onChange(e.target.value)}
+                        onCompanySelect={(value) => {
+                          field.onChange(value);
+                          setExistingCompany(null);
                         }}
-                        onCompanySelect={handleCompanySelect}
-                        onAddNewCompany={handleCompanySelect}
-                        existingCompany={existingCompany}
-                        onExistingCompanyChange={handleExistingCompanyChange}
+                        onExistingCompanyChange={setExistingCompany}
                         data={companies}
                         isValid={!existingCompany && field.value !== ""}
                         isError={!!form.formState.errors.company_name}
                       />
                     </FormControl>
                     <FormMessage />
+                    {field.value && !form.formState.errors.company_name && !existingCompany && (
+                      <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                        <Check className="h-4 w-4" />
+                        Company name is available
+                      </p>
+                    )}
                   </FormItem>
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="text-sm font-semibold mb-2">Full Name</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      className="w-full"
+                      disabled={isPending}
+                      placeholder="John Doe"
+                      aria-label="Full name"
+                      autoFocus
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -219,27 +226,6 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="text-sm font-semibold mb-2">Full Name</div>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="text"
-                      className="w-full"
-                      disabled={isPending}
-                      placeholder="John Doe"
-                      aria-label="Full name"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
             {serverError && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
                 {serverError}
@@ -250,7 +236,8 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
               <Button
                 type="submit"
                 className="gap-2"
-                disabled={isPending || existingCompany !== null}
+                disabled={isPending || (variant === 'fintech' && existingCompany !== null)}
+                data-element={`invite-${variant}-button`}
               >
                 {isPending ? (
                   <>
