@@ -920,7 +920,7 @@ export function registerRoutes(app: Express): Express {
         .where(eq(users.id, req.user!.id));
 
       if (!sender || !sender.companies) {
-        returnres.status(400).json({ message: "Sender company information not found" });
+        return res.status(400).json({ message: "Sender company information not found" });
       }
 
       const senderName = sender.users.fullName;
@@ -997,10 +997,10 @@ export function registerRoutes(app: Express): Express {
   // Add invitation validation endpoint
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
-      const code = req.params.code;
-      console.log('[Invite Debug] Starting validation for code:', code);
+      console.log('[Invite Debug] Starting validation for code:', req.params.code);
+      const code = req.params.code.toUpperCase();
 
-      // Find the invitation first
+      // Find the invitation
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
@@ -1012,17 +1012,16 @@ export function registerRoutes(app: Express): Express {
       console.log('[Invite Debug] Initial invitation query result:', invitation);
 
       if (!invitation) {
-        console.log('[Invite Debug] No valid invitation found for code:', code);
         return res.status(404).json({
           valid: false,
           message: "Invalid or expired invitation code"
         });
       }
 
-      // Find the user associated with this email
+      // Find the associated user
       const [user] = await db.select()
         .from(users)
-        .where(sql`LOWER(${users.email}) = LOWER(${invitation.email})`);
+        .where(eq(users.email, invitation.email.toLowerCase()));
 
       console.log('[Invite Debug] Found user for email:', {
         email: invitation.email,
@@ -1036,52 +1035,42 @@ export function registerRoutes(app: Express): Express {
         } : null
       });
 
-      // Find associated task and company information
-      const [taskInfo] = await db
-        .select({
-          task: tasks,
-          company: companies
-        })
-        .from(tasks)
-        .leftJoin(companies, eq(tasks.companyId, companies.id))
-        .where(and(
-          eq(tasks.id, invitation.taskId),
-          eq(tasks.status, TaskStatus.EMAIL_SENT)
-        ));
+      // Get associated task and company info if needed
+      const [task] = invitation.taskId ? await db.select().from(tasks).where(eq(tasks.id, invitation.taskId)) : [null];
+      const [company] = invitation.companyId ? await db.select().from(companies).where(eq(companies.id, invitation.companyId)) : [null];
 
       console.log('[Invite Debug] Task and company info:', {
-        taskFound: !!taskInfo?.task,
-        companyFound: !!taskInfo?.company,
-        taskData: taskInfo?.task ? {
-          id: taskInfo.task.id,
-          status: taskInfo.task.status,
-          metadata: taskInfo.task.metadata
+        taskFound: !!task,
+        companyFound: !!company,
+        taskData: task ? {
+          id: task.id,
+          status: task.status
         } : null,
-        companyData: taskInfo?.company ? {
-          id: taskInfo.company.id,
-          name: taskInfo.company.name
+        companyData: company ? {
+          id: company.id,
+          name: company.name
         } : null
       });
 
-      // Structure response with all required fields
+      // Construct the response with proper field mapping
       const response = {
         valid: true,
         invitation: {
           code: invitation.code,
-          email: invitation.email.toLowerCase(),
-          company: taskInfo?.company?.name || null,
-          companyId: taskInfo?.company?.id || null,
-          firstName: user?.firstName || (invitation.inviteeName ? invitation.inviteeName.split(' ')[0] : ''),
-          lastName: user?.lastName || (invitation.inviteeName ? invitation.inviteeName.split(' ').slice(1).join(' ') : ''),
-          fullName: user?.fullName || invitation.inviteeName || ''
+          email: invitation.email,
+          company: invitation.inviteeCompany || company?.name || null, // Map inviteeCompany to company
+          companyId: invitation.companyId,
+          firstName: invitation.inviteeName?.split(' ')[0] || null,
+          lastName: invitation.inviteeName?.split(' ').slice(1).join(' ') || null,
+          fullName: invitation.inviteeName || null
         }
       };
 
       console.log('[Invite Debug] Final response:', response);
-      res.json(response);
 
+      res.json(response);
     } catch (error) {
-      console.error('[Invite Debug] Error during validation:', error);
+      console.error('[Invite Debug] Validation error:', error);
       res.status(500).json({
         valid: false,
         message: "Error validating invitation code"
