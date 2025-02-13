@@ -70,16 +70,15 @@ export function registerRoutes(app: Express): Express {
     try {
       console.log('[Tasks] Fetching tasks for user:', req.user!.id);
 
-      // Only fetch tasks where user is explicitly assigned or created them
+      // Get all tasks that are either:
+      // 1. Assigned to the user
+      // 2. Created by the user
       const userTasks = await db.select()
         .from(tasks)
         .where(
-          and(
-            eq(tasks.companyId, req.user!.companyId),
-            or(
-              eq(tasks.assignedTo, req.user!.id),
-              eq(tasks.createdBy, req.user!.id)
-            )
+          or(
+            eq(tasks.assignedTo, req.user!.id),
+            eq(tasks.createdBy, req.user!.id)
           )
         );
 
