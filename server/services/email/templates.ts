@@ -49,6 +49,8 @@ const getButton = (inviteUrl: string) => `
 
 const templates = {
   user_invite: (data: InvitationTemplateData): EmailTemplate => {
+    console.log('[Template:user_invite] Received template data:', JSON.stringify(data, null, 2));
+
     const result = invitationTemplateSchema.safeParse(data);
     if (!result.success) {
       console.error('[Template:user_invite] Invalid template data:', result.error);
