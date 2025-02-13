@@ -61,27 +61,33 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const { mutate: sendInvite, isPending } = useMutation({
     mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
+      console.log('[InviteModal] Sending form data:', formData);
+
+      const payload = {
+        ...formData,
+        company_name: variant === 'user' ? companyName : formData.company_name
+      };
+      console.log('[InviteModal] Processed payload:', payload);
 
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          ...formData,
-          company_name: variant === 'user' ? companyName : formData.company_name
-        })
+        body: JSON.stringify(payload)
       });
 
       const responseData = await response.json();
 
       if (!response.ok) {
+        console.error('[InviteModal] Submission error:', responseData);
         throw new Error(responseData.message || responseData.error || 'Failed to send invitation');
       }
 
       return responseData;
     },
     onError: (error: Error) => {
+      console.error('[InviteModal] Mutation error:', error);
       setServerError(error.message);
       toast({
         title: "Error sending invitation",
@@ -145,6 +151,14 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   };
 
   const onSubmit = (data: InviteData) => {
+    console.log('[InviteModal] Form submission data:', data);
+    console.log('[InviteModal] Form state:', {
+      isValidCompanySelection,
+      selectedCompany,
+      variant,
+      companyName
+    });
+
     if (variant === 'fintech' && !isValidCompanySelection) {
       setShowCompanyError(true);
       return;
