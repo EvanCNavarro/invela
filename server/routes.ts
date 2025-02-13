@@ -575,7 +575,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update the fintech invite endpoint to return company details
+  // Update the fintech invite endpoint to use the same URL structure
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -650,7 +650,7 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[FinTech Invite] Created new company:', newCompany);
 
-      // Generate invitation code (6 characters, uppercase)
+      // Generate invitation code using the shared function
       const code = generateInviteCode();
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 7); // 7 days expiration
@@ -667,7 +667,7 @@ export function registerRoutes(app: Express): Express {
           progress: 0,
           createdBy: req.user!.id,
           userEmail: email.toLowerCase(),
-          companyId: newCompany.id, // Use new company ID
+          companyId: newCompany.id,
           dueDate: expirationDate,
           metadata: {
             inviteeName: full_name,
@@ -684,7 +684,7 @@ export function registerRoutes(app: Express): Express {
           email: email.toLowerCase(),
           code,
           status: 'pending',
-          companyId: newCompany.id, // Use new company ID
+          companyId: newCompany.id,
           inviteeName: full_name,
           inviteeCompany: company_name,
           expiresAt: expirationDate,
@@ -692,19 +692,19 @@ export function registerRoutes(app: Express): Express {
         })
         .returning();
 
-      // Send invitation email
-      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&work_email=${encodeURIComponent(email)}`;
+      // Send invitation email using the same URL structure as user invites
+      const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
 
       const emailParams = {
         to: email,
         from: process.env.GMAIL_USER!,
         template: 'fintech_invite',
         templateData: {
-          recipientEmail: email,
           recipientName: full_name,
           senderName: sender_name,
           senderCompany: userCompany.name,
-          targetCompany: company_name,
+          company: company_name,
+          code,
           inviteUrl
         }
       };
@@ -934,7 +934,7 @@ export function registerRoutes(app: Express): Express {
   });
 
   // Mark user onboarding as completed
-  app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
+  app.post("/api/users/complete-onboarding", requireAuth, async(req, res) => {
     try{
       // Update user's onboarding status
       const [updatedUser] = await db.update(users)
