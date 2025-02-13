@@ -2,7 +2,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, Plus } from "lucide-react";
+import { Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import confetti from 'canvas-confetti';
@@ -20,24 +20,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
-// Schema for user invites
-const userInviteSchema = z.object({
+// Schema for both user and fintech invites
+const inviteSchema = z.object({
   email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
   full_name: z.string().min(1, "Full name is required"),
-  company_id: z.number(),
-  company_name: z.string(),
-  sender_name: z.string(),
-});
-
-// Schema for fintech invites
-const fintechInviteSchema = z.object({
-  email: z.string().email("Please enter a valid email address").transform(val => val.toLowerCase()),
+  company_id: z.number().optional(),
   company_name: z.string().min(1, "Company name is required"),
   sender_name: z.string(),
 });
 
-type UserInviteData = z.infer<typeof userInviteSchema>;
-type FinTechInviteData = z.infer<typeof fintechInviteSchema>;
+type InviteData = z.infer<typeof inviteSchema>;
 
 interface InviteModalProps {
   variant: 'user' | 'fintech';
@@ -52,26 +44,23 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
   const [serverError, setServerError] = useState<string | null>(null);
   const { user } = useAuth();
   const [selectedCompany, setSelectedCompany] = useState("");
+  const [isValidCompanySelection, setIsValidCompanySelection] = useState(false);
 
-  const form = useForm<UserInviteData | FinTechInviteData>({
-    resolver: zodResolver(variant === 'user' ? userInviteSchema : fintechInviteSchema),
-    defaultValues: variant === 'user' ? {
+  const form = useForm<InviteData>({
+    resolver: zodResolver(inviteSchema),
+    defaultValues: {
       email: "",
       full_name: "",
       company_id: companyId,
-      company_name: companyName,
-      sender_name: user?.fullName || "",
-    } : {
-      email: "",
-      company_name: "",
+      company_name: variant === 'user' ? companyName : "",
       sender_name: user?.fullName || "",
     }
   });
 
   const { mutate: sendInvite, isPending } = useMutation({
-    mutationFn: async (formData: UserInviteData | FinTechInviteData) => {
+    mutationFn: async (formData: InviteData) => {
       const endpoint = variant === 'user' ? '/api/users/invite' : '/api/fintech/invite';
-      
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -101,17 +90,19 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
         title: "Invitation sent successfully",
         description: variant === 'user' 
           ? `${form.getValues('full_name')} has been invited to join ${companyName}.`
-          : `Invitation sent to join the network.`,
+          : `${form.getValues('full_name')} from ${form.getValues('company_name')} has been invited to join the network.`,
       });
 
       form.reset();
       setServerError(null);
+      setSelectedCompany("");
+      setIsValidCompanySelection(false);
       onOpenChange(false);
 
       const buttonSelector = variant === 'user' 
         ? '[data-element="invite-user-button"]'
         : '[data-element="invite-fintech-button"]';
-      
+
       const inviteButton = document.querySelector(buttonSelector);
       if (inviteButton) {
         const rect = inviteButton.getBoundingClientRect();
@@ -131,6 +122,14 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
       }
     },
   });
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && form.getValues('company_name') && isValidCompanySelection) {
+      e.preventDefault();
+      const emailInput = document.querySelector('input[name="email"]') as HTMLElement;
+      emailInput?.focus();
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -164,14 +163,18 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                         value={selectedCompany}
                         onChange={(e) => {
                           setSelectedCompany(e.target.value);
+                          setIsValidCompanySelection(false);
                           field.onChange(e.target.value);
                         }}
                         onCompanySelect={(company) => {
                           setSelectedCompany(company);
+                          setIsValidCompanySelection(true);
                           field.onChange(company);
                         }}
+                        placeholder={`Add company to ${user?.company?.name || ''}'s Network`}
                         className="w-full"
-                        isValid={Boolean(selectedCompany)}
+                        isValid={isValidCompanySelection}
+                        onKeyDown={handleKeyDown}
                       />
                     </FormControl>
                     <FormMessage />
@@ -179,6 +182,27 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                 )}
               />
             )}
+
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="text-sm font-semibold mb-2">Full Name</div>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="text"
+                      className="w-full"
+                      disabled={isPending}
+                      placeholder="John Doe"
+                      aria-label="Full name"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -194,36 +218,12 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
                       disabled={isPending}
                       placeholder="user@company.com"
                       aria-label="Email address"
-                      autoFocus
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            {variant === 'user' && (
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <div className="text-sm font-semibold mb-2">Full Name</div>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="text"
-                        className="w-full"
-                        disabled={isPending}
-                        placeholder="John Doe"
-                        aria-label="Full name"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             {serverError && (
               <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md whitespace-pre-line">
@@ -235,7 +235,7 @@ export function InviteModal({ variant, open, onOpenChange, companyId, companyNam
               <Button
                 type="submit"
                 className="gap-2"
-                disabled={isPending}
+                disabled={isPending || (variant === 'fintech' && !isValidCompanySelection)}
                 data-element={`invite-${variant}-button`}
               >
                 {isPending ? (
