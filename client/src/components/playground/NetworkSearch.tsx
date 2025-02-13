@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search as SearchIcon, Plus } from "lucide-react"
+import { Search as SearchIcon, Plus, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
@@ -11,9 +11,10 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export interface NetworkSearchProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface NetworkSearchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   onSearch?: (value: string) => void
   isLoading?: boolean
   containerClassName?: string
@@ -22,6 +23,8 @@ export interface NetworkSearchProps extends React.InputHTMLAttributes<HTMLInputE
   recentSearches?: string[]
   onCompanySelect?: (company: string) => void
   onAddNewCompany?: (companyName: string) => void
+  value?: string
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 export function NetworkSearch({
@@ -52,7 +55,7 @@ export function NetworkSearch({
 
   // Handle controlled vs uncontrolled input
   const inputValue = controlledValue !== undefined ? controlledValue : value
-  const hasValue = inputValue !== '';
+  const hasValue = Boolean(inputValue && inputValue.length > 0)
 
   const handleChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value
@@ -87,17 +90,29 @@ export function NetworkSearch({
     setIsOpen(false)
   }
 
-  const handleAddNew = () => {
-    const newCompany = inputValue.trim()
-    if (newCompany) {
-      onAddNewCompany?.(newCompany)
-      handleSelect(newCompany)
+  const handleClear = React.useCallback(() => {
+    if (controlledOnChange) {
+      const event = {
+        target: { value: '' }
+      } as React.ChangeEvent<HTMLInputElement>
+      controlledOnChange(event)
+    } else {
+      setValue('')
     }
-  }
+    setSearchResults([])
+    onSearch?.('')
+  }, [controlledOnChange, onSearch])
 
-  const handleFocus = () => {
+  const handleAddNew = React.useCallback(() => {
+    if (inputValue) {
+      onAddNewCompany?.(inputValue)
+      handleSelect(inputValue)
+    }
+  }, [inputValue, onAddNewCompany])
+
+  const handleFocus = React.useCallback(() => {
     setIsOpen(true)
-  }
+  }, [])
 
   return (
     <div className={cn("relative flex w-full items-center", containerClassName)}>
@@ -112,11 +127,26 @@ export function NetworkSearch({
         onFocus={handleFocus}
         placeholder="Search Network"
         className={cn(
-          "pl-9 pr-4",
+          "pl-9 pr-[70px]",
+          "focus:ring-2 focus:ring-offset-2 focus:ring-ring focus:ring-offset-background",
           className
         )}
         {...props}
       />
+      <div className="absolute right-3 flex items-center gap-2">
+        {isLoading ? (
+          <LoadingSpinner size="sm" />
+        ) : hasValue && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleClear}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
         <DropdownMenuContent
           align="start"
@@ -136,7 +166,7 @@ export function NetworkSearch({
               <DropdownMenuSeparator />
             </>
           )}
-          
+
           {!hasValue && recentSearches.length === 0 && (
             <DropdownMenuLabel className="text-muted-foreground">
               No recent searches
