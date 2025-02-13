@@ -63,7 +63,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
-  const [openUserInviteModal, setOpenUserInviteModal] = useState(false);
+  const [openFinTechModal, setOpenFinTechModal] = useState(false); // Added Fintech Modal State
 
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -195,9 +195,9 @@ export default function DashboardPage() {
               >
                 <div className="grid grid-cols-2 gap-2">
                   <InviteButton
-                    variant="user"
+                    variant="fintech"
                     pulse={true}
-                    onClick={() => setOpenUserInviteModal(true)}
+                    onClick={() => setOpenFinTechModal(true)}
                   />
                   <Button variant="outline" className="w-full font-medium">
                     Add User
@@ -211,9 +211,9 @@ export default function DashboardPage() {
                 </div>
 
                 <InviteModal
-                  variant="user"
-                  open={openUserInviteModal}
-                  onOpenChange={setOpenUserInviteModal}
+                  variant="fintech"
+                  open={openFinTechModal}
+                  onOpenChange={setOpenFinTechModal}
                 />
               </Widget>
             )}

@@ -13,10 +13,10 @@ import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SearchBar } from "@/components/playground/SearchBar";
-import { InviteUserModal } from "@/components/modals/InviteUserModal";
+import { InviteButton } from "@/components/ui/invite-button";
+import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
-import { DataTable } from '@/components/ui/data-table'; // Changed to named import
-
+import { DataTable } from '@/components/ui/data-table';
 
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -390,13 +390,11 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               className="w-full"
             />
           </div>
-          <Button
+          <InviteButton
+            variant="user"
+            pulse={true}
             onClick={() => setShowInviteModal(true)}
-            className="w-full md:w-auto whitespace-nowrap"
-          >
-            <UserPlus className="h-4 w-4 mr-2" />
-            Invite User
-          </Button>
+          />
         </div>
 
         <Card>
@@ -590,7 +588,8 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
         </div>
 
         {showInviteModal && (
-          <InviteUserModal
+          <InviteModal
+            variant="user"
             open={showInviteModal}
             onOpenChange={setShowInviteModal}
             companyId={company?.id || 0}

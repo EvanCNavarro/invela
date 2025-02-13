@@ -5,16 +5,6 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { AccreditationStatus } from "@/types/company";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Fuse from 'fuse.js';
@@ -28,6 +18,12 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { InviteButton } from "@/components/ui/invite-button";
+import { InviteModal } from "@/components/playground/InviteModal";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { AccreditationStatus } from "@/types/company";
+
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -128,6 +124,7 @@ export default function NetworkPage() {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
+  const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const { user } = useAuth();
 
   // Load filters from URL on mount
@@ -266,6 +263,11 @@ export default function NetworkPage() {
           <PageHeader
             title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
             description="View and manage companies in your network."
+          />
+          <InviteButton
+            variant="fintech"
+            pulse={true}
+            onClick={() => setOpenFinTechModal(true)}
           />
         </div>
 
@@ -427,6 +429,11 @@ export default function NetworkPage() {
             )}
           </div>
         </div>
+        <InviteModal
+          variant="fintech"
+          open={openFinTechModal}
+          onOpenChange={setOpenFinTechModal}
+        />
       </div>
     </DashboardLayout>
   );
