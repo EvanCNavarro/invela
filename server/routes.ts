@@ -575,7 +575,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update the fintech invite endpoint to use the same URL structure
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -605,7 +604,7 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Database transaction for atomicity
-      await db.transaction(async (tx) => {
+      const result = await db.transaction(async (tx) => {
         // Check for existing company with same name
         const [existingCompany] = await tx.select()
           .from(companies)
@@ -666,7 +665,8 @@ export function registerRoutes(app: Express): Express {
               inviteeName: full_name,
               inviteeCompany: company_name,
               senderName: sender_name,
-              companyCreatedAt: newCompany.createdAt
+              companyCreatedAt: newCompany.createdAt,
+              invitationCode: code
             }
           })
           .returning();
@@ -696,8 +696,9 @@ export function registerRoutes(app: Express): Express {
             recipientName: full_name,
             senderName: sender_name,
             senderCompany: userCompany.name,
-            targetCompany: company_name, // Changed from company to targetCompany
-            inviteUrl
+            targetCompany: company_name,
+            inviteUrl,
+            code
           }
         };
 
@@ -714,28 +715,20 @@ export function registerRoutes(app: Express): Express {
               progress: taskStatusToProgress[TaskStatus.EMAIL_SENT]
             })
             .where(eq(tasks.id, task.id));
+
+          return { invitation, task, company: newCompany };
         } catch (emailError) {
           console.error("[FinTech Invite] Email sending failed:", emailError);
-          //Rollback
-          await tx.update(invitations)
-            .set({ status: 'failed' })
-            .where(eq(invitations.id, invitation.id));
-          await tx.update(tasks)
-            .set({
-              status: TaskStatus.FAILED,
-              progress: taskStatusToProgress[TaskStatus.FAILED]
-            })
-            .where(eq(tasks.id, task.id));
           throw new Error("Failed to send invitation email. Please try again.");
         }
-
-        console.log('[FinTech Invite] Invitation sent successfully');
-        res.json({
-          message: "Invitation sent successfully",
-          invitation,
-          company: newCompany
-        });
       });
+
+      res.json({
+        message: "Invitation sent successfully",
+        invitation: result.invitation,
+        company: result.company
+      });
+
     } catch (error: any) {
       console.error("Error sending invitation:", error);
       res.status(500).json({
