@@ -180,7 +180,7 @@ export default function RegisterPage() {
   // Handle full registration
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     console.log("[Registration] Starting registration with values:", values);
-    if (!validatedInvitation?.companyId) {
+    if (validatedInvitation?.companyId === undefined || validatedInvitation?.companyId === null) {
       console.error("[Registration] Missing companyId in validated invitation");
       return;
     }
