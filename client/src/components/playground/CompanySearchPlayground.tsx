@@ -23,7 +23,7 @@ interface CompanyData {
   category?: CompanyCategory;
   description?: string;
   logoId?: string;
-  websiteUrl?: string;
+  websiteUrl?: string; // Moved here
 
   // Business Information
   stockTicker?: string;
