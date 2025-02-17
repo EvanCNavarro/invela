@@ -23,20 +23,49 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
       As a financial data expert, analyze and clean the following company information. 
       Ensure data accuracy, fill in any missing fields if you can confidently derive them from other data, and format consistently.
       If you're not confident about a piece of information, leave it as null rather than guessing.
-      
+
       Raw company data:
       ${JSON.stringify(rawData, null, 2)}
-      
-      Provide a cleaned version with:
-      1. Consistent formatting (e.g., website URLs should be lowercase and include https://)
-      2. Verified stock ticker if applicable
-      3. Properly formatted legal structure (Corporation, LLC, etc.)
-      4. Cleaned up products/services description
-      5. Verified headquarters location
-      6. Accurate employee count (use the most recent data)
-      7. Concise but informative company description
-      
+
+      Validation rules and requirements:
+      1. Website URL:
+         - Must be the main company domain (e.g., tesla.com not ir.tesla.com)
+         - Must include https:// prefix
+         - Verify it's an active company website
+
+      2. Stock Ticker:
+         - Must be actual trading symbol
+         - Include exchange if known (e.g., "TSLA" for Tesla)
+
+      3. HQ Address:
+         - Should be current global headquarters
+         - Use standardized format: City, State/Region, Country
+
+      4. Incorporation Year:
+         - Must be historically accurate
+         - Cannot be future date
+         - For well-known companies, verify against public records
+
+      5. Products/Services:
+         - Provide comprehensive but concise list
+         - Focus on main revenue streams
+         - Use industry-standard terminology
+
+      6. Legal Structure:
+         - Must be one of: "Corporation", "LLC", "LLP", "Partnership"
+         - Verify against official filings if possible
+
+      7. Description:
+         - Should be clear and informative
+         - Include industry, main business activities
+         - Maximum 2-3 sentences
+
+      8. Employee Count:
+         - Use most recent reliable data
+         - Round to nearest significant figure
+
       Respond with a JSON object matching the CleanedCompanyData interface.
+      For any field where the data cannot be verified or is uncertain, return null instead of guessing.
     `;
 
     const response = await openai.chat.completions.create({
