@@ -68,12 +68,7 @@ interface DataFieldProps {
   isLoading?: boolean;
 }
 
-const DataField = ({
-  label,
-  value,
-  isNew = false,
-  isLoading = false,
-}: DataFieldProps) => {
+const DataField = ({ label, value, isNew = false, isLoading = false }: DataFieldProps) => {
   const containerClasses = cn(
     "flex flex-col space-y-1",
     isNew && "bg-green-50 dark:bg-green-900/20 rounded-lg p-2"
@@ -83,6 +78,13 @@ const DataField = ({
     "text-sm",
     isNew && "text-green-600 dark:text-green-400 font-medium"
   );
+
+  const isEmptyValue = (val: any) => {
+    if (val === undefined || val === null) return true;
+    if (typeof val === 'string') return val.trim() === '';
+    if (Array.isArray(val)) return val.length === 0;
+    return false;
+  };
 
   if (isLoading) {
     return (
@@ -167,11 +169,8 @@ const CompanyDataDisplay = ({
   };
 
   const isFieldLoading = (fieldName: string) => {
-    const isEmpty = !data[fieldName as keyof CompanyData] || 
-                   (typeof data[fieldName as keyof CompanyData] === 'string' && 
-                    data[fieldName as keyof CompanyData].toString().trim() === '') ||
-                   (Array.isArray(data[fieldName as keyof CompanyData]) && 
-                    data[fieldName as keyof CompanyData].length === 0);
+    const value = data[fieldName as keyof CompanyData];
+    const isEmpty = isEmptyValue(value);
     return isEmpty && loadingFields.includes(fieldName);
   };
 
@@ -221,16 +220,16 @@ const CompanyDataDisplay = ({
         <h3 className="text-sm font-semibold mb-3">Business Information</h3>
         <div className="grid grid-cols-2 gap-4">
           <DataField
-            label="Stock Ticker"
-            value={data.stockTicker}
-            isNew={isFieldNew("stockTicker")}
-            isLoading={isFieldLoading("stockTicker")}
-          />
-          <DataField
             label="Legal Structure"
             value={data.legalStructure}
             isNew={isFieldNew("legalStructure")}
             isLoading={isFieldLoading("legalStructure")}
+          />
+          <DataField
+            label="Stock Ticker"
+            value={data.stockTicker}
+            isNew={isFieldNew("stockTicker")}
+            isLoading={isFieldLoading("stockTicker")}
           />
           <DataField
             label="Market Position"
