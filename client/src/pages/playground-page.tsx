@@ -65,6 +65,8 @@ import TabsDemo from "@/components/playground/TabsDemo";
 import { useQueryClient } from "@tanstack/react-query";
 import { wsService } from "@/lib/websocket";
 import NetworkSearchPlayground from "@/components/playground/NetworkSearchPlayground";
+import { CompanySearchPlayground } from "@/components/playground/CompanySearchPlayground";
+
 
 // Define the Component interface
 interface PlaygroundComponent {
@@ -404,7 +406,8 @@ export function Example() {
       <AssociatedCompanyVariant companyName="Example Corp" />
     </div>
   );
-}`,
+}
+`,
     usageLocations: [
       {
         path: "/playground",
@@ -1506,6 +1509,19 @@ export default function PlaygroundPage() {
                   </CardContent>
                 </Card>
               )}
+              {currentComponent.id === "company-data-crawler" && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold">Preview</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-8">
+                      <CompanySearchPlayground />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-sm font-bold">Usage Examples</CardTitle>
