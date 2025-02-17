@@ -40,6 +40,49 @@ interface SearchAnalytics {
   duration: number;
 }
 
+// Helper function to clean OpenAI response data
+function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
+  const cleanedData: Partial<CleanedCompanyData> = {};
+
+  // Process each field from the result
+  Object.entries(result).forEach(([key, value]: [string, any]) => {
+    if (!value) return;
+
+    // Extract actual data from the OpenAI response structure
+    const data = value.data;
+    if (!data) return;
+
+    switch (key) {
+      case 'foundersAndLeadership':
+        if (Array.isArray(data)) {
+          cleanedData[key] = data
+            .map(person => `${person.name} (${person.role})`)
+            .join(", ");
+        }
+        break;
+
+      case 'keyClientsPartners':
+      case 'investors':
+      case 'certificationsCompliance':
+        if (Array.isArray(data)) {
+          cleanedData[key] = data;
+        }
+        break;
+
+      case 'revenue':
+      case 'fundingStage':
+      case 'exitStrategyHistory':
+        cleanedData[key] = typeof data === 'string' ? data : JSON.stringify(data);
+        break;
+
+      default:
+        cleanedData[key] = data;
+    }
+  });
+
+  return cleanedData;
+}
+
 async function logSearchAnalytics(analytics: SearchAnalytics) {
   try {
     await db.insert(openaiSearchAnalytics).values({
@@ -117,9 +160,15 @@ ${relevantMissingFields.map(field => `- ${field}`).join('\n')}
 
 **Instructions:**
 1. Find and return the missing fields only, matching the CleanedCompanyData interface.
-2. For each field, provide the source.
+2. For each field, provide the source and data.
 3. If unsure about a field, omit it. Do not guess.
-4. Return data as a JSON object.
+4. Return data in this JSON format:
+   {
+     "fieldName": {
+       "source": "Source Name",
+       "data": "actual data or array"
+     }
+   }
 `;
 }
 
@@ -155,14 +204,20 @@ export async function findMissingCompanyData(
     const duration = Date.now() - startTime;
     console.log("[OpenAI Search] ⏱️ Search completed in", duration, "ms");
 
-    const result = JSON.parse(response.choices[0].message.content);
-    console.log("[OpenAI Search] 📥 Received data:", result);
+    // Parse and clean the OpenAI response
+    const rawResult = JSON.parse(response.choices[0].message.content);
+    console.log("[OpenAI Search] 📥 Received raw data:", rawResult);
 
+    // Clean and format the data for storage
+    const cleanedResult = cleanOpenAIResponse(rawResult);
+    console.log("[OpenAI Search] 🧹 Cleaned data for storage:", cleanedResult);
+
+    // Log analytics with raw result
     await logSearchAnalytics({
       searchType: 'missing_data',
       companyId: companyInfo.id,
       searchPrompt: prompt,
-      searchResults: result,
+      searchResults: rawResult, // Store raw result in analytics for reference
       inputTokens: response.usage?.prompt_tokens || 0,
       outputTokens: response.usage?.completion_tokens || 0,
       estimatedCost: calculateOpenAICost(
@@ -176,16 +231,16 @@ export async function findMissingCompanyData(
     });
 
     // Parse numeric fields
-    if (result.incorporationYear) {
-      console.log("[OpenAI Search] 📅 Parsing incorporation year:", result.incorporationYear);
-      result.incorporationYear = parseInt(String(result.incorporationYear));
+    if (cleanedResult.incorporationYear) {
+      console.log("[OpenAI Search] 📅 Parsing incorporation year:", cleanedResult.incorporationYear);
+      cleanedResult.incorporationYear = parseInt(String(cleanedResult.incorporationYear));
     }
-    if (result.numEmployees) {
-      console.log("[OpenAI Search] 👥 Parsing employee count:", result.numEmployees);
-      result.numEmployees = parseInt(String(result.numEmployees));
+    if (cleanedResult.numEmployees) {
+      console.log("[OpenAI Search] 👥 Parsing employee count:", cleanedResult.numEmployees);
+      cleanedResult.numEmployees = parseInt(String(cleanedResult.numEmployees));
     }
 
-    return result;
+    return cleanedResult;
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error("[OpenAI Search] ❌ Error during search:", error);
@@ -285,13 +340,14 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         throw new Error("Empty response from OpenAI");
       }
 
-      const cleanedData = JSON.parse(response.choices[0].message.content) as CleanedCompanyData;
+      const rawResult = JSON.parse(response.choices[0].message.content);
+      const cleanedData = cleanOpenAIResponse(rawResult);
 
       await logSearchAnalytics({
         searchType: 'data_cleaning',
         companyId: rawData.id,
         searchPrompt: prompt,
-        searchResults: cleanedData,
+        searchResults: rawResult,
         inputTokens: response.usage?.prompt_tokens || 0,
         outputTokens: response.usage?.completion_tokens || 0,
         estimatedCost: calculateOpenAICost(
@@ -311,7 +367,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         cleanedData.numEmployees = parseInt(String(cleanedData.numEmployees));
       }
 
-      return cleanedData;
+      return cleanedData as CleanedCompanyData;
     } catch (error) {
       lastError = error;
       console.error(`OpenAI API attempt ${4 - retries} failed:`, error);
