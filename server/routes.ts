@@ -10,6 +10,7 @@ import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
 import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
+import companySearchRouter from "./routes/company-search";
 
 // Generate invitation code helper function (keep it DRY)
 function generateInviteCode(): string {
@@ -41,6 +42,7 @@ declare global {
 }
 
 export function registerRoutes(app: Express): Express {
+  app.use(companySearchRouter);
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
