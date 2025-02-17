@@ -213,6 +213,15 @@ export const googleOnlySearch = async (companyName: string) => {
 // Function for OpenAI-only search
 export const openaiOnlySearch = async (companyName: string) => {
   try {
+    // Simple in-memory cache implementation
+    const cacheKey = `openai_search_${companyName.toLowerCase()}`;
+    const cachedResult = global.searchCache?.[cacheKey];
+
+    if (cachedResult) {
+      console.log('Returning cached OpenAI search result');
+      return cachedResult;
+    }
+
     const prompt = `
       As a financial data expert, provide detailed information about the company "${companyName}".
       Focus on accuracy and current information.
@@ -245,12 +254,17 @@ export const openaiOnlySearch = async (companyName: string) => {
       For numbers, use only digits without commas or text.
     `;
 
-    // Add retries for OpenAI API calls
-    let retries = 2;
+    // Add retries for OpenAI API calls with longer delays
+    let retries = 3;
     let lastError = null;
 
     while (retries >= 0) {
       try {
+        // Add a small delay between retries to help with rate limiting
+        if (retries < 3) {
+          await new Promise(resolve => setTimeout(resolve, (3 - retries) * 2000));
+        }
+
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -264,6 +278,7 @@ export const openaiOnlySearch = async (companyName: string) => {
             },
           ],
           response_format: { type: "json_object" },
+          temperature: 0.5, // Add some consistency to responses
         });
 
         if (!response.choices[0].message.content) {
@@ -271,6 +286,11 @@ export const openaiOnlySearch = async (companyName: string) => {
         }
 
         const companyInfo = JSON.parse(response.choices[0].message.content);
+
+        // Cache successful results
+        if (!global.searchCache) global.searchCache = {};
+        global.searchCache[cacheKey] = companyInfo;
+
         return companyInfo;
 
       } catch (error) {
@@ -278,13 +298,14 @@ export const openaiOnlySearch = async (companyName: string) => {
         console.error(`OpenAI search attempt ${3 - retries} failed:`, error);
 
         if (error.status === 429) {
-          throw new Error("OpenAI API rate limit exceeded");
+          console.log("Rate limit hit, waiting longer before retry");
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 4 - retries) * 2000));
         }
 
         retries--;
         if (retries >= 0) {
-          // Wait before retrying, with exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 1000));
+          // Exponential backoff between retries
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 2000));
         }
       }
     }
