@@ -15,7 +15,7 @@ const fuseOptions = {
  */
 export function findMissingFields(company: typeof companies.$inferSelect): string[] {
   const missingFields: string[] = [];
-  
+
   // Core fields that should always be present
   const requiredFields = [
     'name', 'category', 'description', 'websiteUrl', 
@@ -45,13 +45,13 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
 }> {
   // Get all companies from the database
   const allCompanies = await db.select().from(companies);
-  
+
   // Initialize Fuse with our companies
   const fuse = new Fuse(allCompanies, fuseOptions);
-  
+
   // Search for matches
   const results = fuse.search(searchName);
-  
+
   // If we found a good match (score < 0.3 indicates good match)
   if (results.length > 0 && results[0].score < 0.3) {
     return {
@@ -60,7 +60,7 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
       score: results[0].score
     };
   }
-  
+
   return { found: false };
 }
 
@@ -75,15 +75,19 @@ export async function updateCompanyData(
   await db.update(companies)
     .set({
       ...newData,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date() // Use Date object directly
     })
     .where(eq(companies.id, companyId));
-  
+
   // Return updated company
   const updatedCompany = await db.query.companies.findFirst({
     where: eq(companies.id, companyId)
   });
-  
+
+  if (!updatedCompany) {
+    throw new Error(`Company with ID ${companyId} not found after update`);
+  }
+
   return updatedCompany;
 }
 
@@ -93,14 +97,16 @@ export async function updateCompanyData(
 export async function createCompanyInRegistry(
   data: typeof companies.$inferInsert
 ): Promise<typeof companies.$inferSelect> {
+  const now = new Date(); // Create a single Date object for all timestamps
+
   const [newCompany] = await db.insert(companies)
     .values({
       ...data,
-      registryDate: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      registryDate: now,
+      createdAt: now,
+      updatedAt: now
     })
     .returning();
-    
+
   return newCompany;
 }
