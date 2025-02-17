@@ -38,11 +38,33 @@ interface SearchAnalytics {
   success: boolean;
   errorMessage?: string;
   duration: number;
+  searchDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Helper function to clean OpenAI response data
 function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
   const cleanedData: Partial<CleanedCompanyData> = {};
+
+  // Helper function to clean array or string values
+  const cleanArrayOrString = (value: any): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+      return value.map(item => item.trim()).filter(Boolean);
+    }
+    if (typeof value === 'string') {
+      // Handle both comma-separated strings and PostgreSQL array format
+      const cleaned = value
+        .replace(/^\{|\}$/g, '') // Remove PostgreSQL array brackets
+        .replace(/\\"/g, '"') // Remove escaped quotes
+        .split(',')
+        .map(item => item.trim().replace(/^"/, '').replace(/"$/, '')) // Remove quotes and trim
+        .filter(Boolean);
+      return cleaned;
+    }
+    return [];
+  };
 
   // Process each field from the result
   Object.entries(result).forEach(([key, value]: [string, any]) => {
@@ -78,7 +100,6 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
           // Format each role group
           const formattedGroups = Object.entries(roleGroups).map(([role, names]) => {
-            // Handle plural for roles with multiple people
             const roleText = names.length > 1 ? `${role}(s)` : role;
             return `${roleText}: ${names.join(', ')}`;
           });
@@ -90,12 +111,16 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       case 'keyClientsPartners':
       case 'investors':
       case 'certificationsCompliance':
-        // Just store the array of values
+        // Convert to comma-separated string
+        cleanedData[key] = cleanArrayOrString(data).join(', ');
+        break;
+
+      case 'productsServices':
+        // Convert to comma-separated string, ensuring proper formatting
         if (Array.isArray(data)) {
-          cleanedData[key] = data;
+          cleanedData[key] = data.join(', ');
         } else if (typeof data === 'string') {
-          // Handle case where it's a comma-separated string
-          cleanedData[key] = data.split(',').map(item => item.trim());
+          cleanedData[key] = cleanArrayOrString(data).join(', ');
         }
         break;
 
@@ -123,15 +148,15 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         // Extract just the actual history text, removing any JSON structure
         if (typeof data === 'string') {
           cleanedData[key] = data.replace(/^.*?"data":"(.+?)".*$/, '$1')
-                               .replace(/\\"/g, '"');
+                              .replace(/\\"/g, '"');
         } else {
           cleanedData[key] = data;
         }
         break;
 
       default:
-        // For all other fields, just store the data value
-        cleanedData[key] = data;
+        // For all other fields, store the data value directly
+        cleanedData[key as keyof CleanedCompanyData] = data;
     }
   });
 
@@ -283,6 +308,9 @@ export async function findMissingCompanyData(
       model: 'gpt-4o',
       success: true,
       duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     // Parse numeric fields
@@ -313,6 +341,9 @@ export async function findMissingCompanyData(
       success: false,
       errorMessage,
       duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
 
     throw error;
@@ -413,6 +444,9 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         model: 'gpt-4o',
         success: true,
         duration,
+        searchDate: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
       if (cleanedData.incorporationYear) {
