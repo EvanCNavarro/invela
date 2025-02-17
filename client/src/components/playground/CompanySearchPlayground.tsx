@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Search } from "lucide-react";
 import { CompanyCategory } from "@/types/company";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { cn } from "@/lib/utils";
 
 interface CompanyData {
   // Core Fields
@@ -59,14 +60,31 @@ const emptyCompanyData: CompanyData = {
 interface DataFieldProps {
   label: string;
   value: any;
+  isNew?: boolean;
 }
 
-const DataField = ({ label, value }: DataFieldProps) => {
+const DataField = ({
+  label,
+  value,
+  isNew = false,
+}: DataFieldProps) => {
+  const containerClasses = cn(
+    "flex flex-col space-y-1",
+    isNew && "bg-green-50 dark:bg-green-900/20 rounded-lg p-2"
+  );
+
+  const valueClasses = cn(
+    "text-sm",
+    isNew && "text-green-600 dark:text-green-400 font-medium"
+  );
+
   if (Array.isArray(value)) {
     return (
-      <div className="flex flex-col space-y-1">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <div className="text-sm">
+      <div className={containerClasses}>
+        <span className="text-sm font-medium text-muted-foreground">
+          {label}
+        </span>
+        <div className={valueClasses}>
           {value.length > 0 ? value.join(", ") : "Not found"}
         </div>
       </div>
@@ -75,22 +93,37 @@ const DataField = ({ label, value }: DataFieldProps) => {
 
   if (typeof value === "boolean") {
     return (
-      <div className="flex flex-col space-y-1">
-        <span className="text-sm font-medium text-muted-foreground">{label}</span>
-        <span className="text-sm">{value ? "Yes" : "No"}</span>
+      <div className={containerClasses}>
+        <span className="text-sm font-medium text-muted-foreground">
+          {label}
+        </span>
+        <span className={valueClasses}>{value ? "Yes" : "No"}</span>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col space-y-1">
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
-      <span className="text-sm">{value || "Not found"}</span>
+    <div className={containerClasses}>
+      <span className="text-sm font-medium text-muted-foreground">
+        {label}
+      </span>
+      <span className={valueClasses}>{value || "Not found"}</span>
     </div>
   );
 };
 
-const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
+const CompanyDataDisplay = ({
+  data,
+  previousData,
+}: {
+  data: CompanyData;
+  previousData?: CompanyData;
+}) => {
+  const isFieldNew = (fieldName: keyof CompanyData) => {
+    if (!previousData) return false;
+    return data[fieldName] !== previousData[fieldName];
+  };
+
   if (data.error) {
     return (
       <div className="p-4 text-center text-red-500">
@@ -105,10 +138,22 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">Core Information</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Name" value={data.name} />
-          <DataField label="Category" value={data.category} />
-          <DataField label="Description" value={data.description} />
-          <DataField label="Logo ID" value={data.logoId} />
+          <DataField label="Name" value={data.name} isNew={isFieldNew("name")} />
+          <DataField
+            label="Category"
+            value={data.category}
+            isNew={isFieldNew("category")}
+          />
+          <DataField
+            label="Description"
+            value={data.description}
+            isNew={isFieldNew("description")}
+          />
+          <DataField
+            label="Logo ID"
+            value={data.logoId}
+            isNew={isFieldNew("logoId")}
+          />
         </div>
       </div>
 
@@ -116,16 +161,56 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">Business Information</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Stock Ticker" value={data.stockTicker} />
-          <DataField label="Website" value={data.websiteUrl} />
-          <DataField label="Legal Structure" value={data.legalStructure} />
-          <DataField label="Market Position" value={data.marketPosition} />
-          <DataField label="HQ Address" value={data.hqAddress} />
-          <DataField label="Products/Services" value={data.productsServices} />
-          <DataField label="Incorporation Year" value={data.incorporationYear} />
-          <DataField label="Founders & Leadership" value={data.foundersAndLeadership} />
-          <DataField label="Number of Employees" value={data.numEmployees} />
-          <DataField label="Revenue" value={data.revenue} />
+          <DataField
+            label="Stock Ticker"
+            value={data.stockTicker}
+            isNew={isFieldNew("stockTicker")}
+          />
+          <DataField
+            label="Website"
+            value={data.websiteUrl}
+            isNew={isFieldNew("websiteUrl")}
+          />
+          <DataField
+            label="Legal Structure"
+            value={data.legalStructure}
+            isNew={isFieldNew("legalStructure")}
+          />
+          <DataField
+            label="Market Position"
+            value={data.marketPosition}
+            isNew={isFieldNew("marketPosition")}
+          />
+          <DataField
+            label="HQ Address"
+            value={data.hqAddress}
+            isNew={isFieldNew("hqAddress")}
+          />
+          <DataField
+            label="Products/Services"
+            value={data.productsServices}
+            isNew={isFieldNew("productsServices")}
+          />
+          <DataField
+            label="Incorporation Year"
+            value={data.incorporationYear}
+            isNew={isFieldNew("incorporationYear")}
+          />
+          <DataField
+            label="Founders & Leadership"
+            value={data.foundersAndLeadership}
+            isNew={isFieldNew("foundersAndLeadership")}
+          />
+          <DataField
+            label="Number of Employees"
+            value={data.numEmployees}
+            isNew={isFieldNew("numEmployees")}
+          />
+          <DataField
+            label="Revenue"
+            value={data.revenue}
+            isNew={isFieldNew("revenue")}
+          />
         </div>
       </div>
 
@@ -133,10 +218,26 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">Relationships & Status</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Key Clients & Partners" value={data.keyClientsPartners} />
-          <DataField label="Investors" value={data.investors} />
-          <DataField label="Funding Stage" value={data.fundingStage} />
-          <DataField label="Exit Strategy History" value={data.exitStrategyHistory} />
+          <DataField
+            label="Key Clients & Partners"
+            value={data.keyClientsPartners}
+            isNew={isFieldNew("keyClientsPartners")}
+          />
+          <DataField
+            label="Investors"
+            value={data.investors}
+            isNew={isFieldNew("investors")}
+          />
+          <DataField
+            label="Funding Stage"
+            value={data.fundingStage}
+            isNew={isFieldNew("fundingStage")}
+          />
+          <DataField
+            label="Exit Strategy History"
+            value={data.exitStrategyHistory}
+            isNew={isFieldNew("exitStrategyHistory")}
+          />
         </div>
       </div>
 
@@ -144,9 +245,21 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">Compliance & Security</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Certifications & Compliance" value={data.certificationsCompliance} />
-          <DataField label="Risk Score" value={data.riskScore} />
-          <DataField label="Accreditation Status" value={data.accreditationStatus} />
+          <DataField
+            label="Certifications & Compliance"
+            value={data.certificationsCompliance}
+            isNew={isFieldNew("certificationsCompliance")}
+          />
+          <DataField
+            label="Risk Score"
+            value={data.riskScore}
+            isNew={isFieldNew("riskScore")}
+          />
+          <DataField
+            label="Accreditation Status"
+            value={data.accreditationStatus}
+            isNew={isFieldNew("accreditationStatus")}
+          />
         </div>
       </div>
 
@@ -154,10 +267,26 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">Timestamps & Status</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Registry Date" value={data.registryDate} />
-          <DataField label="Created At" value={data.createdAt} />
-          <DataField label="Updated At" value={data.updatedAt} />
-          <DataField label="Onboarding Completed" value={data.onboardingCompanyCompleted} />
+          <DataField
+            label="Registry Date"
+            value={data.registryDate}
+            isNew={isFieldNew("registryDate")}
+          />
+          <DataField
+            label="Created At"
+            value={data.createdAt}
+            isNew={isFieldNew("createdAt")}
+          />
+          <DataField
+            label="Updated At"
+            value={data.updatedAt}
+            isNew={isFieldNew("updatedAt")}
+          />
+          <DataField
+            label="Onboarding Completed"
+            value={data.onboardingCompanyCompleted}
+            isNew={isFieldNew("onboardingCompanyCompleted")}
+          />
         </div>
       </div>
 
@@ -165,8 +294,16 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
       <div>
         <h3 className="text-sm font-semibold mb-3">File Management</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField label="Public Files" value={data.filesPublic} />
-          <DataField label="Private Files" value={data.filesPrivate} />
+          <DataField
+            label="Public Files"
+            value={data.filesPublic}
+            isNew={isFieldNew("filesPublic")}
+          />
+          <DataField
+            label="Private Files"
+            value={data.filesPrivate}
+            isNew={isFieldNew("filesPrivate")}
+          />
         </div>
       </div>
     </div>
@@ -200,11 +337,10 @@ const SearchResultSection = ({
 
 export const CompanySearchPlayground = () => {
   const [companyName, setCompanyName] = useState("");
-  const [searchResults, setSearchResults] = useState({
-    googleOnly: emptyCompanyData,
-    hybrid: emptyCompanyData,
-    openaiOnly: emptyCompanyData,
-  });
+  const [searchResult, setSearchResult] = useState<{
+    company: CompanyData;
+    previousData?: CompanyData;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchStartTime, setSearchStartTime] = useState<number | null>(null);
 
@@ -213,11 +349,7 @@ export const CompanySearchPlayground = () => {
 
     setIsLoading(true);
     setSearchStartTime(Date.now());
-    setSearchResults({
-      googleOnly: emptyCompanyData,
-      hybrid: emptyCompanyData,
-      openaiOnly: emptyCompanyData,
-    });
+    setSearchResult(null);
 
     try {
       console.log(`[Search] Starting search for: ${companyName}`);
@@ -236,13 +368,16 @@ export const CompanySearchPlayground = () => {
       const { data } = await response.json();
       const endTime = Date.now();
       console.log(`[Search] Completed in ${endTime - startTime}ms. Results:`, data);
-      setSearchResults(data);
+
+      setSearchResult({
+        company: data.company,
+        previousData: data.isNewData ? searchResult?.company : undefined,
+      });
     } catch (error) {
       console.error("[Search] Error:", error);
-      setSearchResults({
-        googleOnly: { name: companyName, error: "Search failed" },
-        hybrid: { name: companyName, error: "Search failed" },
-        openaiOnly: { name: companyName, error: "Search failed" },
+      setSearchResult({
+        company: { name: companyName, error: "Search failed" },
+        previousData: undefined,
       });
     } finally {
       setIsLoading(false);
@@ -276,23 +411,19 @@ export const CompanySearchPlayground = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <SearchResultSection
-          title="Google Search Only"
-          data={searchResults.googleOnly}
-          isLoading={isLoading}
-        />
-        <SearchResultSection
-          title="Hybrid Search"
-          data={searchResults.hybrid}
-          isLoading={isLoading}
-        />
-        <SearchResultSection
-          title="OpenAI Search Only"
-          data={searchResults.openaiOnly}
-          isLoading={isLoading}
-        />
-      </div>
+      {searchResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Search Results</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CompanyDataDisplay
+              data={searchResult.company}
+              previousData={searchResult.previousData}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

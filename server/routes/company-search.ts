@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { companySearchSchema, searchCompanyInfo, googleOnlySearch, openaiOnlySearch } from "../services/companySearch";
+import { companySearchSchema } from "../services/companySearch";
+import { findCompanyInRegistry, findMissingFields, updateCompanyData, createCompanyInRegistry } from "../services/companyMatching";
+import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
 
 const router = Router();
@@ -7,39 +9,57 @@ const router = Router();
 router.post("/api/company-search", async (req, res) => {
   try {
     const { companyName } = companySearchSchema.parse(req.body);
+    console.log(`[Company Search] Starting search for: ${companyName}`);
 
-    // Execute Google search first, as it's most reliable
-    const googleResults = await googleOnlySearch(companyName);
+    // Step 1: Try to find company in registry
+    const registryResult = await findCompanyInRegistry(companyName);
+    let companyData;
+    let isNewData = false;
 
-    // Try OpenAI-based searches, but handle failures gracefully
-    let hybridResults = googleResults;
-    let openaiResults = null;
+    if (registryResult.found && registryResult.company) {
+      console.log(`[Company Search] Found existing company: ${registryResult.company.name}`);
 
-    try {
-      // Attempt hybrid search
-      hybridResults = await searchCompanyInfo(companyName);
-    } catch (error) {
-      console.error("Hybrid search error:", error);
-      // Keep the Google results as fallback
-    }
+      // Find missing fields
+      const missingFields = findMissingFields(registryResult.company);
 
-    try {
-      // Attempt OpenAI-only search
-      openaiResults = await openaiOnlySearch(companyName);
-    } catch (error) {
-      console.error("OpenAI-only search error:", error);
-      // Return null for OpenAI results if it fails
+      if (missingFields.length > 0) {
+        console.log(`[Company Search] Found ${missingFields.length} missing fields, searching for data`);
+
+        // Search for missing data
+        const newData = await findMissingCompanyData(registryResult.company, missingFields);
+
+        // Update company with new data
+        companyData = await updateCompanyData(registryResult.company.id, newData);
+        isNewData = true;
+      } else {
+        companyData = registryResult.company;
+      }
+    } else {
+      console.log(`[Company Search] Company not found in registry, searching for new data`);
+
+      // Search for all company data
+      const newData = await findMissingCompanyData({ name: companyName }, [
+        'description', 'category', 'websiteUrl', 'stockTicker', 'legalStructure',
+        'marketPosition', 'hqAddress', 'productsServices', 'incorporationYear',
+        'foundersAndLeadership', 'numEmployees', 'revenue'
+      ]);
+
+      // Create new company in registry
+      companyData = await createCompanyInRegistry({
+        ...newData,
+        name: companyName,
+        category: newData.category || 'FinTech', // Default category
+        onboardingCompanyCompleted: false
+      });
+      isNewData = true;
     }
 
     res.json({
       success: true,
       data: {
-        googleOnly: googleResults,
-        hybrid: hybridResults,
-        openaiOnly: openaiResults || {
-          name: companyName,
-          error: "OpenAI search temporarily unavailable"
-        }
+        company: companyData,
+        isNewData,
+        source: registryResult.found ? 'registry' : 'new'
       }
     });
   } catch (error) {
