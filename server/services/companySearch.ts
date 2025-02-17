@@ -245,27 +245,55 @@ export const openaiOnlySearch = async (companyName: string) => {
       For numbers, use only digits without commas or text.
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a financial data expert with access to comprehensive company information.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
+    // Add retries for OpenAI API calls
+    let retries = 2;
+    let lastError = null;
 
-    const companyInfo = JSON.parse(response.choices[0].message.content);
-    return companyInfo;
+    while (retries >= 0) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are a financial data expert with access to comprehensive company information.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
+
+        if (!response.choices[0].message.content) {
+          throw new Error("Empty response from OpenAI");
+        }
+
+        const companyInfo = JSON.parse(response.choices[0].message.content);
+        return companyInfo;
+
+      } catch (error) {
+        lastError = error;
+        console.error(`OpenAI search attempt ${3 - retries} failed:`, error);
+
+        if (error.status === 429) {
+          throw new Error("OpenAI API rate limit exceeded");
+        }
+
+        retries--;
+        if (retries >= 0) {
+          // Wait before retrying, with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 1000));
+        }
+      }
+    }
+
+    throw lastError || new Error('Failed to get response from OpenAI');
 
   } catch (error) {
     console.error('Error in OpenAI-only search:', error);
-    throw new Error('Failed to search company information using OpenAI');
+    throw new Error(error.message || 'Failed to search company information using OpenAI');
   }
 };
 
