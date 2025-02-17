@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { companies } from "@db/schema";
+import { validateAndCleanCompanyData } from "./openai";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
 const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
@@ -208,7 +209,10 @@ export const searchCompanyInfo = async (companyName: string) => {
       }
     }
 
-    return companyInfo;
+    // Clean and validate the gathered data using AI
+    const cleanedData = await validateAndCleanCompanyData(companyInfo);
+    return cleanedData;
+
   } catch (error) {
     console.error('Error searching company info:', error);
     throw new Error('Failed to search company information');
