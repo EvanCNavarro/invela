@@ -89,12 +89,14 @@ interface DataFieldProps {
   label: string;
   value: any;
   isNew?: boolean;
+  isLoading?: boolean;
 }
 
 const DataField = ({
   label,
   value,
   isNew = false,
+  isLoading = false,
 }: DataFieldProps) => {
   const containerClasses = cn(
     "flex flex-col space-y-1",
@@ -105,6 +107,20 @@ const DataField = ({
     "text-sm",
     isNew && "text-green-600 dark:text-green-400 font-medium"
   );
+
+  if (isLoading) {
+    return (
+      <div className={containerClasses}>
+        <span className="text-sm font-medium text-muted-foreground">
+          {label}
+        </span>
+        <div className="flex items-center space-x-2">
+          <LoadingSpinner size="sm" />
+          <span className="text-sm text-muted-foreground">Searching...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (Array.isArray(value)) {
     return (
@@ -143,13 +159,19 @@ const DataField = ({
 const CompanyDataDisplay = ({
   data,
   previousData,
+  loadingFields = [],
 }: {
   data: CompanyData;
   previousData?: CompanyData;
+  loadingFields?: string[];
 }) => {
   const isFieldNew = (fieldName: keyof CompanyData) => {
     if (!previousData) return false;
     return data[fieldName] !== previousData[fieldName];
+  };
+
+  const isFieldLoading = (fieldName: string) => {
+    return loadingFields.includes(fieldName);
   };
 
   if (data.error) {
@@ -177,6 +199,7 @@ const CompanyDataDisplay = ({
             label="Description"
             value={data.description}
             isNew={isFieldNew("description")}
+            isLoading={isFieldLoading("description")}
           />
           <DataField
             label="Logo ID"
@@ -194,51 +217,61 @@ const CompanyDataDisplay = ({
             label="Stock Ticker"
             value={data.stockTicker}
             isNew={isFieldNew("stockTicker")}
+            isLoading={isFieldLoading("stockTicker")}
           />
           <DataField
             label="Website"
             value={data.websiteUrl}
             isNew={isFieldNew("websiteUrl")}
+            isLoading={isFieldLoading("websiteUrl")}
           />
           <DataField
             label="Legal Structure"
             value={data.legalStructure}
             isNew={isFieldNew("legalStructure")}
+            isLoading={isFieldLoading("legalStructure")}
           />
           <DataField
             label="Market Position"
             value={data.marketPosition}
             isNew={isFieldNew("marketPosition")}
+            isLoading={isFieldLoading("marketPosition")}
           />
           <DataField
             label="HQ Address"
             value={data.hqAddress}
             isNew={isFieldNew("hqAddress")}
+            isLoading={isFieldLoading("hqAddress")}
           />
           <DataField
             label="Products/Services"
             value={data.productsServices}
             isNew={isFieldNew("productsServices")}
+            isLoading={isFieldLoading("productsServices")}
           />
           <DataField
             label="Incorporation Year"
             value={data.incorporationYear}
             isNew={isFieldNew("incorporationYear")}
+            isLoading={isFieldLoading("incorporationYear")}
           />
           <DataField
             label="Founders & Leadership"
             value={data.foundersAndLeadership}
             isNew={isFieldNew("foundersAndLeadership")}
+            isLoading={isFieldLoading("foundersAndLeadership")}
           />
           <DataField
             label="Number of Employees"
             value={data.numEmployees}
             isNew={isFieldNew("numEmployees")}
+            isLoading={isFieldLoading("numEmployees")}
           />
           <DataField
             label="Revenue"
             value={data.revenue}
             isNew={isFieldNew("revenue")}
+            isLoading={isFieldLoading("revenue")}
           />
         </div>
       </div>
@@ -251,21 +284,25 @@ const CompanyDataDisplay = ({
             label="Key Clients & Partners"
             value={data.keyClientsPartners}
             isNew={isFieldNew("keyClientsPartners")}
+            isLoading={isFieldLoading("keyClientsPartners")}
           />
           <DataField
             label="Investors"
             value={data.investors}
             isNew={isFieldNew("investors")}
+            isLoading={isFieldLoading("investors")}
           />
           <DataField
             label="Funding Stage"
             value={data.fundingStage}
             isNew={isFieldNew("fundingStage")}
+            isLoading={isFieldLoading("fundingStage")}
           />
           <DataField
             label="Exit Strategy History"
             value={data.exitStrategyHistory}
             isNew={isFieldNew("exitStrategyHistory")}
+            isLoading={isFieldLoading("exitStrategyHistory")}
           />
         </div>
       </div>
@@ -278,11 +315,13 @@ const CompanyDataDisplay = ({
             label="Certifications & Compliance"
             value={data.certificationsCompliance}
             isNew={isFieldNew("certificationsCompliance")}
+            isLoading={isFieldLoading("certificationsCompliance")}
           />
           <DataField
             label="Risk Score"
             value={data.riskScore}
             isNew={isFieldNew("riskScore")}
+            isLoading={isFieldLoading("riskScore")}
           />
           <DataField
             label="Accreditation Status"
@@ -347,17 +386,23 @@ export const CompanySearchPlayground = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchStartTime, setSearchStartTime] = useState<number | null>(null);
+  const [loadingFields, setLoadingFields] = useState<string[]>([]);
 
   const handleSearch = async () => {
     if (!companyName.trim()) return;
 
     setIsLoading(true);
     setSearchStartTime(Date.now());
-    setSearchResult(null);
 
     try {
       console.log(`[Search] Starting search for: ${companyName}`);
       const startTime = Date.now();
+
+      // Start with empty data
+      setSearchResult({
+        company: { ...emptyCompanyData, name: companyName },
+        previousData: undefined,
+      });
 
       const response = await fetch("/api/company-search", {
         method: "POST",
@@ -386,6 +431,7 @@ export const CompanySearchPlayground = () => {
     } finally {
       setIsLoading(false);
       setSearchStartTime(null);
+      setLoadingFields([]);
     }
   };
 
@@ -399,56 +445,25 @@ export const CompanySearchPlayground = () => {
           onKeyPress={(e) => e.key === "Enter" && handleSearch()}
         />
         <Button onClick={handleSearch} disabled={isLoading}>
-          {isLoading ? (
-            <>
-              <LoadingSpinner size="sm" className="mr-2" />
-              {searchStartTime && (
-                <span className="text-xs">
-                  {Math.floor((Date.now() - searchStartTime) / 1000)}s
-                </span>
-              )}
-            </>
-          ) : (
-            <Search className="h-4 w-4 mr-2" />
-          )}
+          <Search className="h-4 w-4 mr-2" />
           {isLoading ? "Searching..." : "Search"}
         </Button>
       </div>
 
-      {/* Show empty state when no search has been performed */}
-      {!searchResult && !isLoading && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Company Data Structure</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CompanyDataDisplay data={emptyCompanyData} />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Show search results or loading state */}
-      {(searchResult || isLoading) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Search Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <LoadingSpinner size="lg" />
-              </div>
-            ) : (
-              searchResult && (
-                <CompanyDataDisplay
-                  data={searchResult.company}
-                  previousData={searchResult.previousData}
-                />
-              )
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">
+            {searchResult ? "Search Results" : "Company Data Structure"}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CompanyDataDisplay 
+            data={searchResult?.company || emptyCompanyData}
+            previousData={searchResult?.previousData}
+            loadingFields={loadingFields}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 };
