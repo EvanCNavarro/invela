@@ -7,6 +7,14 @@ import { CompanyCategory } from "@/types/company";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 
+// Move isEmptyValue outside components so it's accessible everywhere
+const isEmptyValue = (val: any) => {
+  if (val === undefined || val === null) return true;
+  if (typeof val === 'string') return val.trim() === '';
+  if (Array.isArray(val)) return val.length === 0;
+  return false;
+};
+
 // Define the complete company data structure
 interface CompanyData {
   // Core Fields
@@ -78,13 +86,6 @@ const DataField = ({ label, value, isNew = false, isLoading = false }: DataField
     "text-sm",
     isNew && "text-green-600 dark:text-green-400 font-medium"
   );
-
-  const isEmptyValue = (val: any) => {
-    if (val === undefined || val === null) return true;
-    if (typeof val === 'string') return val.trim() === '';
-    if (Array.isArray(val)) return val.length === 0;
-    return false;
-  };
 
   if (isLoading) {
     return (
