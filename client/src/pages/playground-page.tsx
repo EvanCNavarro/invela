@@ -389,6 +389,30 @@ export function Example() {
 }
 `,
   },
+  {
+    id: "company-data-crawler",
+    name: "Company Data Crawler",
+    code: `import { CompanySearchPlayground } from "@/components/playground/CompanySearchPlayground";
+
+export function Example() {
+  return (
+    <div className="space-y-8">
+      {/* Manual Search Variant */}
+      <ManualSearchVariant />
+
+      {/* Associated Company Variant */}
+      <AssociatedCompanyVariant companyName="Example Corp" />
+    </div>
+  );
+}`,
+    usageLocations: [
+      {
+        path: "/playground",
+        description: "Company data crawler with manual and associated company search variants",
+        viewInApp: true
+      }
+    ],
+  },
 ];
 
 // Update availableIcons mapping to include all options in sidebar order with proper labels
