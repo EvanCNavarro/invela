@@ -374,7 +374,7 @@ const CompanyDataDisplay = ({
   );
 };
 
-// Component implementation with both named and default export
+// Export as both named and default export
 export const CompanySearchPlayground = () => {
   const [companyName, setCompanyName] = useState("");
   const [searchResult, setSearchResult] = useState<{
@@ -388,19 +388,31 @@ export const CompanySearchPlayground = () => {
   const handleSearch = async () => {
     if (!companyName.trim()) return;
 
+    console.log("[Search] 🔍 Initializing search process...");
     setIsLoading(true);
     setSearchStartTime(Date.now());
 
     try {
-      console.log(`[Search] Starting search for: ${companyName}`);
+      console.log(`[Search] 📝 Starting search for company: ${companyName}`);
       const startTime = Date.now();
 
-      // Start with empty data
+      // Start with empty data, keeping just the company name
+      console.log("[Search] 🏗️ Setting up initial empty data structure");
       setSearchResult({
         company: { ...emptyCompanyData, name: companyName },
         previousData: undefined,
       });
 
+      // Set loading state for fields that will be searched
+      console.log("[Search] ⏳ Setting loading state for searchable fields");
+      setLoadingFields([
+        'description', 'websiteUrl', 'legalStructure', 'hqAddress',
+        'productsServices', 'incorporationYear', 'foundersAndLeadership',
+        'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+        'fundingStage', 'certificationsCompliance'
+      ]);
+
+      console.log("[Search] 🌐 Making API request to company search endpoint");
       const response = await fetch("/api/company-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -413,19 +425,23 @@ export const CompanySearchPlayground = () => {
 
       const { data } = await response.json();
       const endTime = Date.now();
-      console.log(`[Search] Completed in ${endTime - startTime}ms. Results:`, data);
+      console.log(`[Search] ✅ Search completed in ${endTime - startTime}ms`);
+      console.log("[Search] 📊 Search results:", data);
 
+      // Update search results with visual indicators for changes
+      console.log("[Search] 🎨 Updating UI with search results and visual indicators");
       setSearchResult({
         company: data.company,
         previousData: data.isNewData ? searchResult?.company : undefined,
       });
     } catch (error) {
-      console.error("[Search] Error:", error);
+      console.error("[Search] ❌ Error during search:", error);
       setSearchResult({
         company: { name: companyName, error: "Search failed" },
         previousData: undefined,
       });
     } finally {
+      console.log("[Search] 🏁 Cleaning up search process");
       setIsLoading(false);
       setSearchStartTime(null);
       setLoadingFields([]);
