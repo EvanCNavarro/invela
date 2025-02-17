@@ -48,8 +48,19 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
   Object.entries(result).forEach(([key, value]: [string, any]) => {
     if (!value) return;
 
+    // Handle both direct values and JSON strings that need parsing
+    let parsedValue = value;
+    if (typeof value === 'string' && value.includes('"source"')) {
+      try {
+        parsedValue = JSON.parse(value);
+      } catch (e) {
+        console.log("[OpenAI Search] Failed to parse JSON string:", value);
+        return;
+      }
+    }
+
     // Extract actual data from the OpenAI response structure
-    const data = value.data;
+    const data = parsedValue.data || parsedValue;
     if (!data) return;
 
     switch (key) {
@@ -57,10 +68,11 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         if (Array.isArray(data)) {
           // Group people by role
           const roleGroups = data.reduce((acc: Record<string, string[]>, person: any) => {
-            if (!acc[person.role]) {
-              acc[person.role] = [];
+            const role = person.role || 'Unknown';
+            if (!acc[role]) {
+              acc[role] = [];
             }
-            acc[person.role].push(person.name);
+            acc[role].push(person.name);
             return acc;
           }, {});
 
@@ -78,29 +90,43 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       case 'keyClientsPartners':
       case 'investors':
       case 'certificationsCompliance':
-        // Just store the array of names/values
+        // Just store the array of values
         if (Array.isArray(data)) {
           cleanedData[key] = data;
+        } else if (typeof data === 'string') {
+          // Handle case where it's a comma-separated string
+          cleanedData[key] = data.split(',').map(item => item.trim());
         }
         break;
 
       case 'revenue':
         // Extract just the revenue value
-        cleanedData[key] = typeof data === 'string' ? 
-          data.replace(/^.*?(\$[\d.]+ [a-z]+ annually).*$/i, '$1') : 
-          data;
+        if (typeof data === 'string') {
+          const match = data.match(/\$[\d.]+ [a-z]+ annually/i);
+          cleanedData[key] = match ? match[0] : data;
+        } else {
+          cleanedData[key] = data;
+        }
         break;
 
       case 'fundingStage':
         // Extract just the stage value
-        cleanedData[key] = typeof data === 'string' ? 
-          data.replace(/^.*?(Series [A-Z]).*$/i, '$1') : 
-          data;
+        if (typeof data === 'string') {
+          const match = data.match(/Series [A-Z]/i);
+          cleanedData[key] = match ? match[0] : data;
+        } else {
+          cleanedData[key] = data;
+        }
         break;
 
       case 'exitStrategyHistory':
-        // Extract just the actual history text
-        cleanedData[key] = typeof data === 'string' ? data : JSON.stringify(data);
+        // Extract just the actual history text, removing any JSON structure
+        if (typeof data === 'string') {
+          cleanedData[key] = data.replace(/^.*?"data":"(.+?)".*$/, '$1')
+                               .replace(/\\"/g, '"');
+        } else {
+          cleanedData[key] = data;
+        }
         break;
 
       default:
