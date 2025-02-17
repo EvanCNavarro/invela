@@ -137,6 +137,24 @@ export const invitations = pgTable("invitations", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const openaiSearchAnalytics = pgTable("openai_search_analytics", {
+  id: serial("id").primaryKey(),
+  searchType: text("search_type").notNull(), // 'missing_data', 'validation', etc.
+  companyId: integer("company_id").references(() => companies.id),
+  searchPrompt: text("search_prompt").notNull(),
+  searchResults: jsonb("search_results").$type<Record<string, any>>().notNull(),
+  inputTokens: integer("input_tokens").notNull(),
+  outputTokens: integer("output_tokens").notNull(),
+  estimatedCost: real("estimated_cost").notNull(),
+  searchDate: timestamp("search_date").notNull().defaultNow(),
+  model: text("model").notNull(),
+  success: boolean("success").notNull(),
+  errorMessage: text("error_message"),
+  duration: integer("duration").notNull(), // in milliseconds
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.companyId],
@@ -178,6 +196,13 @@ export const invitationsRelations = relations(invitations, ({ one }) => ({
   task: one(tasks, {
     fields: [invitations.taskId],
     references: [tasks.id],
+  }),
+}));
+
+export const openaiSearchAnalyticsRelations = relations(openaiSearchAnalytics, ({ one }) => ({
+  company: one(companies, {
+    fields: [openaiSearchAnalytics.companyId],
+    references: [companies.id],
   }),
 }));
 
