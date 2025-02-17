@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Search } from "lucide-react";
 import { CompanyCategory } from "@/types/company";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CompanyData {
   name: string;
@@ -100,7 +101,11 @@ const ManualSearchVariant = () => {
             onChange={(e) => setCompanyName(e.target.value)}
           />
           <Button onClick={handleSearch} disabled={isLoading}>
-            <Search className="h-4 w-4 mr-2" />
+            {isLoading ? (
+              <LoadingSpinner size="sm" className="mr-2" />
+            ) : (
+              <Search className="h-4 w-4 mr-2" />
+            )}
             {isLoading ? "Searching..." : "Search"}
           </Button>
         </div>
@@ -143,7 +148,11 @@ const AssociatedCompanyVariant = ({ companyName }: { companyName: string }) => {
       </CardHeader>
       <CardContent className="space-y-6">
         <Button onClick={handleSearch} disabled={isLoading} className="w-full">
-          <Building2 className="h-4 w-4 mr-2" />
+          {isLoading ? (
+            <LoadingSpinner size="sm" className="mr-2" />
+          ) : (
+            <Building2 className="h-4 w-4 mr-2" />
+          )}
           {isLoading ? "Searching..." : "Fetch Company Data"}
         </Button>
         <CompanyDataDisplay data={companyData} />
