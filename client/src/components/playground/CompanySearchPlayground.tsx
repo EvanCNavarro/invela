@@ -7,44 +7,88 @@ import { CompanyCategory } from "@/types/company";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface CompanyData {
+  // Core Fields
+  id?: number;
   name: string;
+  category?: CompanyCategory;
+  description?: string;
+  logoId?: string;
+
+  // Business Information
   stockTicker?: string;
   websiteUrl?: string;
   legalStructure?: string;
+  marketPosition?: string;
   hqAddress?: string;
   productsServices?: string;
   incorporationYear?: number;
+  foundersAndLeadership?: string;
   numEmployees?: number;
-  category?: CompanyCategory;
-  description?: string;
+  revenue?: string;
+
+  // Relationships & Status
+  keyClientsPartners?: string[];
+  investors?: string[];
+  fundingStage?: string;
+  exitStrategyHistory?: string;
+
+  // Compliance & Security
+  certificationsCompliance?: string[];
+  riskScore?: number;
+  accreditationStatus?: string;
+
+  // File Management
+  filesPublic?: string[];
+  filesPrivate?: string[];
+
+  // Timestamps
+  registryDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+
+  // Additional Features
+  onboardingCompanyCompleted?: boolean;
+
   error?: string;
 }
 
 const emptyCompanyData: CompanyData = {
   name: "",
-  stockTicker: undefined,
-  websiteUrl: undefined,
-  legalStructure: undefined,
-  hqAddress: undefined,
-  productsServices: undefined,
-  incorporationYear: undefined,
-  numEmployees: undefined,
-  category: undefined,
-  description: undefined,
-  error: undefined,
 };
 
 interface DataFieldProps {
   label: string;
-  value: string | number | undefined;
+  value: any;
 }
 
-const DataField = ({ label, value }: DataFieldProps) => (
-  <div className="flex flex-col space-y-1">
-    <span className="text-sm font-medium text-muted-foreground">{label}</span>
-    <span className="text-sm">{value || "Not found"}</span>
-  </div>
-);
+const DataField = ({ label, value }: DataFieldProps) => {
+  if (Array.isArray(value)) {
+    return (
+      <div className="flex flex-col space-y-1">
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <div className="text-sm">
+          {value.length > 0 ? value.join(", ") : "Not found"}
+        </div>
+      </div>
+    );
+  }
+
+  if (typeof value === "boolean") {
+    return (
+      <div className="flex flex-col space-y-1">
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <span className="text-sm">{value ? "Yes" : "No"}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col space-y-1">
+      <span className="text-sm font-medium text-muted-foreground">{label}</span>
+      <span className="text-sm">{value || "Not found"}</span>
+    </div>
+  );
+};
 
 const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
   if (data.error) {
@@ -56,17 +100,75 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <DataField label="Name" value={data.name} />
-      <DataField label="Stock Ticker" value={data.stockTicker} />
-      <DataField label="Website" value={data.websiteUrl} />
-      <DataField label="Legal Structure" value={data.legalStructure} />
-      <DataField label="HQ Address" value={data.hqAddress} />
-      <DataField label="Products/Services" value={data.productsServices} />
-      <DataField label="Incorporation Year" value={data.incorporationYear} />
-      <DataField label="Number of Employees" value={data.numEmployees} />
-      <DataField label="Category" value={data.category} />
-      <DataField label="Description" value={data.description} />
+    <div className="space-y-6">
+      {/* Core Fields */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Core Information</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Name" value={data.name} />
+          <DataField label="Category" value={data.category} />
+          <DataField label="Description" value={data.description} />
+          <DataField label="Logo ID" value={data.logoId} />
+        </div>
+      </div>
+
+      {/* Business Information */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Business Information</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Stock Ticker" value={data.stockTicker} />
+          <DataField label="Website" value={data.websiteUrl} />
+          <DataField label="Legal Structure" value={data.legalStructure} />
+          <DataField label="Market Position" value={data.marketPosition} />
+          <DataField label="HQ Address" value={data.hqAddress} />
+          <DataField label="Products/Services" value={data.productsServices} />
+          <DataField label="Incorporation Year" value={data.incorporationYear} />
+          <DataField label="Founders & Leadership" value={data.foundersAndLeadership} />
+          <DataField label="Number of Employees" value={data.numEmployees} />
+          <DataField label="Revenue" value={data.revenue} />
+        </div>
+      </div>
+
+      {/* Relationships & Status */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Relationships & Status</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Key Clients & Partners" value={data.keyClientsPartners} />
+          <DataField label="Investors" value={data.investors} />
+          <DataField label="Funding Stage" value={data.fundingStage} />
+          <DataField label="Exit Strategy History" value={data.exitStrategyHistory} />
+        </div>
+      </div>
+
+      {/* Compliance & Security */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Compliance & Security</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Certifications & Compliance" value={data.certificationsCompliance} />
+          <DataField label="Risk Score" value={data.riskScore} />
+          <DataField label="Accreditation Status" value={data.accreditationStatus} />
+        </div>
+      </div>
+
+      {/* Timestamps & Status */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Timestamps & Status</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Registry Date" value={data.registryDate} />
+          <DataField label="Created At" value={data.createdAt} />
+          <DataField label="Updated At" value={data.updatedAt} />
+          <DataField label="Onboarding Completed" value={data.onboardingCompanyCompleted} />
+        </div>
+      </div>
+
+      {/* File Management */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">File Management</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField label="Public Files" value={data.filesPublic} />
+          <DataField label="Private Files" value={data.filesPrivate} />
+        </div>
+      </div>
     </div>
   );
 };
