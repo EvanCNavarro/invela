@@ -90,7 +90,7 @@ const ManualSearchVariant = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Manual Company Search</CardTitle>
+        <CardTitle>Manual Company Data Search</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex gap-4">
@@ -139,7 +139,7 @@ const AssociatedCompanyVariant = ({ companyName }: { companyName: string }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Associated Company: {companyName}</CardTitle>
+        <CardTitle>Associated Company Data Search</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <Button onClick={handleSearch} disabled={isLoading} className="w-full">
