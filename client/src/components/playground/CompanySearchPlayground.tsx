@@ -71,13 +71,13 @@ const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
   );
 };
 
-const SearchResultSection = ({ 
-  title, 
-  data, 
-  isLoading 
-}: { 
-  title: string; 
-  data: CompanyData; 
+const SearchResultSection = ({
+  title,
+  data,
+  isLoading,
+}: {
+  title: string;
+  data: CompanyData;
   isLoading: boolean;
 }) => (
   <Card className="flex-1">
@@ -104,11 +104,13 @@ export const CompanySearchPlayground = () => {
     openaiOnly: emptyCompanyData,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [searchStartTime, setSearchStartTime] = useState<number | null>(null);
 
   const handleSearch = async () => {
     if (!companyName.trim()) return;
 
     setIsLoading(true);
+    setSearchStartTime(Date.now());
     setSearchResults({
       googleOnly: emptyCompanyData,
       hybrid: emptyCompanyData,
@@ -116,6 +118,9 @@ export const CompanySearchPlayground = () => {
     });
 
     try {
+      console.log(`[Search] Starting search for: ${companyName}`);
+      const startTime = Date.now();
+
       const response = await fetch("/api/company-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -123,14 +128,15 @@ export const CompanySearchPlayground = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Search failed");
+        throw new Error(`Search failed: ${response.statusText}`);
       }
 
       const { data } = await response.json();
-      console.log("Search results:", data); 
+      const endTime = Date.now();
+      console.log(`[Search] Completed in ${endTime - startTime}ms. Results:`, data);
       setSearchResults(data);
     } catch (error) {
-      console.error("Search error:", error);
+      console.error("[Search] Error:", error);
       setSearchResults({
         googleOnly: { name: companyName, error: "Search failed" },
         hybrid: { name: companyName, error: "Search failed" },
@@ -138,6 +144,7 @@ export const CompanySearchPlayground = () => {
       });
     } finally {
       setIsLoading(false);
+      setSearchStartTime(null);
     }
   };
 
@@ -148,11 +155,18 @@ export const CompanySearchPlayground = () => {
           placeholder="Enter company name..."
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+          onKeyPress={(e) => e.key === "Enter" && handleSearch()}
         />
         <Button onClick={handleSearch} disabled={isLoading}>
           {isLoading ? (
-            <LoadingSpinner size="sm" className="mr-2" />
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              {searchStartTime && (
+                <span className="text-xs">
+                  {Math.floor((Date.now() - searchStartTime) / 1000)}s
+                </span>
+              )}
+            </>
           ) : (
             <Search className="h-4 w-4 mr-2" />
           )}

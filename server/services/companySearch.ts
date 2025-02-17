@@ -88,6 +88,9 @@ const extractStockTicker = (text: string): string | null => {
 
 // Function for Google-only search
 export const googleOnlySearch = async (companyName: string) => {
+  console.log(`[Google Search] Starting search for company: ${companyName}`);
+  const startTime = Date.now();
+
   try {
     const queries = [
       `${companyName} site:wikipedia.org`,
@@ -100,6 +103,7 @@ export const googleOnlySearch = async (companyName: string) => {
       `${companyName} products services revenue employees`,
     ];
 
+    console.log(`[Google Search] Executing ${queries.length} parallel queries`);
     const searchPromises = queries.map(async (query) => {
       const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
       const response = await fetch(url);
@@ -112,6 +116,7 @@ export const googleOnlySearch = async (companyName: string) => {
     });
 
     const searchResults = await Promise.all(searchPromises);
+    console.log(`[Google Search] Retrieved ${searchResults.length} results`);
 
     // Combine and score results
     const scoredResults = searchResults.flatMap(result =>
@@ -202,23 +207,29 @@ export const googleOnlySearch = async (companyName: string) => {
       }
     }
 
+    const endTime = Date.now();
+    console.log(`[Google Search] Completed in ${endTime - startTime}ms`, companyInfo);
+
     return companyInfo;
 
   } catch (error) {
-    console.error('Error in Google-only search:', error);
+    console.error('[Google Search] Error:', error);
     throw new Error('Failed to search company information using Google');
   }
 };
 
 // Function for OpenAI-only search
 export const openaiOnlySearch = async (companyName: string) => {
+  console.log(`[OpenAI Search] Starting search for company: ${companyName}`);
+  const startTime = Date.now();
+
   try {
-    // Simple in-memory cache implementation
+    // Check cache first
     const cacheKey = `openai_search_${companyName.toLowerCase()}`;
-    const cachedResult = global.searchCache?.[cacheKey];
+    const cachedResult = (global as any).searchCache?.[cacheKey];
 
     if (cachedResult) {
-      console.log('Returning cached OpenAI search result');
+      console.log('[OpenAI Search] Returning cached result');
       return cachedResult;
     }
 
@@ -254,16 +265,12 @@ export const openaiOnlySearch = async (companyName: string) => {
       For numbers, use only digits without commas or text.
     `;
 
-    // Add retries for OpenAI API calls with longer delays
-    let retries = 3;
+    let retries = 2;
     let lastError = null;
 
     while (retries >= 0) {
       try {
-        // Add a small delay between retries to help with rate limiting
-        if (retries < 3) {
-          await new Promise(resolve => setTimeout(resolve, (3 - retries) * 2000));
-        }
+        console.log(`[OpenAI Search] Attempt ${3 - retries}`);
 
         const response = await openai.chat.completions.create({
           model: "gpt-4o",
@@ -278,7 +285,7 @@ export const openaiOnlySearch = async (companyName: string) => {
             },
           ],
           response_format: { type: "json_object" },
-          temperature: 0.5, // Add some consistency to responses
+          temperature: 0.5,
         });
 
         if (!response.choices[0].message.content) {
@@ -288,24 +295,26 @@ export const openaiOnlySearch = async (companyName: string) => {
         const companyInfo = JSON.parse(response.choices[0].message.content);
 
         // Cache successful results
-        if (!global.searchCache) global.searchCache = {};
-        global.searchCache[cacheKey] = companyInfo;
+        if (!(global as any).searchCache) (global as any).searchCache = {};
+        (global as any).searchCache[cacheKey] = companyInfo;
+
+        const endTime = Date.now();
+        console.log(`[OpenAI Search] Completed in ${endTime - startTime}ms`, companyInfo);
 
         return companyInfo;
 
-      } catch (error) {
+      } catch (error: any) {
         lastError = error;
-        console.error(`OpenAI search attempt ${3 - retries} failed:`, error);
+        console.error(`[OpenAI Search] Attempt ${3 - retries} failed:`, error);
 
         if (error.status === 429) {
-          console.log("Rate limit hit, waiting longer before retry");
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 4 - retries) * 2000));
+          console.log("[OpenAI Search] Rate limit hit, waiting before retry");
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 1000));
         }
 
         retries--;
         if (retries >= 0) {
-          // Exponential backoff between retries
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 2000));
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
@@ -313,23 +322,32 @@ export const openaiOnlySearch = async (companyName: string) => {
     throw lastError || new Error('Failed to get response from OpenAI');
 
   } catch (error) {
-    console.error('Error in OpenAI-only search:', error);
-    throw new Error(error.message || 'Failed to search company information using OpenAI');
+    console.error('[OpenAI Search] Error:', error);
+    throw error;
   }
 };
 
 // Function for hybrid search (Google + OpenAI)
 export const searchCompanyInfo = async (companyName: string) => {
+  console.log(`[Hybrid Search] Starting search for company: ${companyName}`);
+  const startTime = Date.now();
+
   try {
     // First get data from Google Search
+    console.log('[Hybrid Search] Fetching Google data');
     const googleData = await googleOnlySearch(companyName);
 
     // Then validate and clean with OpenAI
+    console.log('[Hybrid Search] Validating with OpenAI');
     const cleanedData = await validateAndCleanCompanyData(googleData);
+
+    const endTime = Date.now();
+    console.log(`[Hybrid Search] Completed in ${endTime - startTime}ms`, cleanedData);
+
     return cleanedData;
 
   } catch (error) {
-    console.error('Error searching company info:', error);
+    console.error('[Hybrid Search] Error:', error);
     throw new Error('Failed to search company information');
   }
 };
