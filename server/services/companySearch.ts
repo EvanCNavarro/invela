@@ -2,7 +2,7 @@ import { z } from "zod";
 import { companies } from "@db/schema";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
-const SEARCH_ENGINE_ID = "YOUR_SEARCH_ENGINE_ID"; // Need to get this from user
+const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
 interface SearchResult {
   items: {
@@ -39,16 +39,16 @@ export const searchCompanyInfo = async (companyName: string) => {
     const searchPromises = queries.map(async (query) => {
       const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`Google API error: ${response.statusText}`);
       }
-      
+
       return response.json() as Promise<SearchResult>;
     });
 
     const searchResults = await Promise.all(searchPromises);
-    
+
     // Extract information from search results
     const companyInfo: Partial<typeof companies.$inferInsert> = {
       name: companyName,
