@@ -81,26 +81,22 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
 }
 
 function generateMissingDataPrompt(companyInfo: Partial<CleanedCompanyData>, missingFields: string[]): string {
+  console.log("[OpenAI Search] 📋 Generating search prompt for fields:", missingFields);
+
   // Filter out excluded fields from company info
   const relevantInfo = { ...companyInfo };
-  delete relevantInfo.id;
-  delete relevantInfo.category;
-  delete relevantInfo.riskScore;
-  delete relevantInfo.accreditationStatus;
-  delete relevantInfo.onboardingCompanyCompleted;
-  delete relevantInfo.registryDate;
-  delete relevantInfo.filesPublic;
-  delete relevantInfo.filesPrivate;
-  delete relevantInfo.createdAt;
-  delete relevantInfo.updatedAt;
-  delete relevantInfo.logoId;
-
-  // Filter out excluded fields from missing fields list
-  const relevantMissingFields = missingFields.filter(field => ![
+  const excludedFields = [
     'category', 'riskScore', 'accreditationStatus', 'onboardingCompanyCompleted',
     'registryDate', 'filesPublic', 'filesPrivate', 'createdAt', 'updatedAt',
     'id', 'logoId'
-  ].includes(field));
+  ];
+
+  console.log("[OpenAI Search] 🔍 Filtering out excluded fields:", excludedFields);
+  excludedFields.forEach(field => delete relevantInfo[field as keyof typeof relevantInfo]);
+
+  // Filter out excluded fields from missing fields list
+  const relevantMissingFields = missingFields.filter(field => !excludedFields.includes(field));
+  console.log("[OpenAI Search] 🎯 Relevant missing fields to search for:", relevantMissingFields);
 
   return `
 As a financial data expert, use the following known details to find accurate company information. Focus on the missing fields and prioritize data from the sources listed below:
@@ -131,10 +127,15 @@ export async function findMissingCompanyData(
   companyInfo: Partial<CleanedCompanyData>,
   missingFields: string[]
 ): Promise<Partial<CleanedCompanyData>> {
+  console.log("[OpenAI Search] 🚀 Starting search for missing company data");
+  console.log("[OpenAI Search] 📊 Company:", companyInfo.name);
+  console.log("[OpenAI Search] 🔍 Missing fields:", missingFields);
+
   const startTime = Date.now();
   const prompt = generateMissingDataPrompt(companyInfo, missingFields);
 
   try {
+    console.log("[OpenAI Search] 📤 Sending request to OpenAI");
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -152,7 +153,10 @@ export async function findMissingCompanyData(
     });
 
     const duration = Date.now() - startTime;
+    console.log("[OpenAI Search] ⏱️ Search completed in", duration, "ms");
+
     const result = JSON.parse(response.choices[0].message.content);
+    console.log("[OpenAI Search] 📥 Received data:", result);
 
     await logSearchAnalytics({
       searchType: 'missing_data',
@@ -171,16 +175,20 @@ export async function findMissingCompanyData(
       duration,
     });
 
+    // Parse numeric fields
     if (result.incorporationYear) {
+      console.log("[OpenAI Search] 📅 Parsing incorporation year:", result.incorporationYear);
       result.incorporationYear = parseInt(String(result.incorporationYear));
     }
     if (result.numEmployees) {
+      console.log("[OpenAI Search] 👥 Parsing employee count:", result.numEmployees);
       result.numEmployees = parseInt(String(result.numEmployees));
     }
 
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
+    console.error("[OpenAI Search] ❌ Error during search:", error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
     await logSearchAnalytics({
