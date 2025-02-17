@@ -15,10 +15,10 @@ interface CompanyData {
   category?: CompanyCategory;
   description?: string;
   logoId?: string;
+  websiteUrl?: string; // Moved here
 
   // Business Information
   stockTicker?: string;
-  websiteUrl?: string;
   legalStructure?: string;
   marketPosition?: string;
   hqAddress?: string;
@@ -127,8 +127,8 @@ const emptyCompanyData: CompanyData = {
   category: undefined,
   description: undefined,
   logoId: undefined,
-  stockTicker: undefined,
   websiteUrl: undefined,
+  stockTicker: undefined,
   legalStructure: undefined,
   marketPosition: undefined,
   hqAddress: undefined,
@@ -167,7 +167,12 @@ const CompanyDataDisplay = ({
   };
 
   const isFieldLoading = (fieldName: string) => {
-    return loadingFields.includes(fieldName);
+    const isEmpty = !data[fieldName as keyof CompanyData] || 
+                   (typeof data[fieldName as keyof CompanyData] === 'string' && 
+                    data[fieldName as keyof CompanyData].toString().trim() === '') ||
+                   (Array.isArray(data[fieldName as keyof CompanyData]) && 
+                    data[fieldName as keyof CompanyData].length === 0);
+    return isEmpty && loadingFields.includes(fieldName);
   };
 
   if (data.error) {
@@ -198,6 +203,12 @@ const CompanyDataDisplay = ({
             isLoading={isFieldLoading("description")}
           />
           <DataField
+            label="Website"
+            value={data.websiteUrl}
+            isNew={isFieldNew("websiteUrl")}
+            isLoading={isFieldLoading("websiteUrl")}
+          />
+          <DataField
             label="Logo ID"
             value={data.logoId}
             isNew={isFieldNew("logoId")}
@@ -214,12 +225,6 @@ const CompanyDataDisplay = ({
             value={data.stockTicker}
             isNew={isFieldNew("stockTicker")}
             isLoading={isFieldLoading("stockTicker")}
-          />
-          <DataField
-            label="Website"
-            value={data.websiteUrl}
-            isNew={isFieldNew("websiteUrl")}
-            isLoading={isFieldLoading("websiteUrl")}
           />
           <DataField
             label="Legal Structure"
@@ -404,8 +409,7 @@ export const CompanySearchPlayground = () => {
         previousData: undefined,
       });
 
-      // Determine which fields are empty and need to be searched
-      console.log("[Search] ⏳ Determining fields that need searching");
+      // Define searchable fields that will be queried via OpenAI
       const searchableFields = [
         'description', 'websiteUrl', 'legalStructure', 'hqAddress',
         'productsServices', 'incorporationYear', 'foundersAndLeadership',
@@ -413,6 +417,7 @@ export const CompanySearchPlayground = () => {
         'fundingStage', 'certificationsCompliance'
       ];
 
+      // Only show loading for fields that are both empty and will be searched
       const missingFields = searchableFields.filter(field => {
         const value = initialData[field as keyof CompanyData];
         return value === undefined || value === null || 
