@@ -17,6 +17,7 @@ interface CompanyData {
   numEmployees?: number;
   category?: CompanyCategory;
   description?: string;
+  error?: string;
 }
 
 const emptyCompanyData: CompanyData = {
@@ -30,6 +31,7 @@ const emptyCompanyData: CompanyData = {
   numEmployees: undefined,
   category: undefined,
   description: undefined,
+  error: undefined,
 };
 
 interface DataFieldProps {
@@ -44,20 +46,30 @@ const DataField = ({ label, value }: DataFieldProps) => (
   </div>
 );
 
-const CompanyDataDisplay = ({ data }: { data: CompanyData }) => (
-  <div className="grid grid-cols-2 gap-4">
-    <DataField label="Name" value={data.name} />
-    <DataField label="Stock Ticker" value={data.stockTicker} />
-    <DataField label="Website" value={data.websiteUrl} />
-    <DataField label="Legal Structure" value={data.legalStructure} />
-    <DataField label="HQ Address" value={data.hqAddress} />
-    <DataField label="Products/Services" value={data.productsServices} />
-    <DataField label="Incorporation Year" value={data.incorporationYear} />
-    <DataField label="Number of Employees" value={data.numEmployees} />
-    <DataField label="Category" value={data.category} />
-    <DataField label="Description" value={data.description} />
-  </div>
-);
+const CompanyDataDisplay = ({ data }: { data: CompanyData }) => {
+  if (data.error) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        {data.error}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <DataField label="Name" value={data.name} />
+      <DataField label="Stock Ticker" value={data.stockTicker} />
+      <DataField label="Website" value={data.websiteUrl} />
+      <DataField label="Legal Structure" value={data.legalStructure} />
+      <DataField label="HQ Address" value={data.hqAddress} />
+      <DataField label="Products/Services" value={data.productsServices} />
+      <DataField label="Incorporation Year" value={data.incorporationYear} />
+      <DataField label="Number of Employees" value={data.numEmployees} />
+      <DataField label="Category" value={data.category} />
+      <DataField label="Description" value={data.description} />
+    </div>
+  );
+};
 
 const SearchResultSection = ({ 
   title, 
@@ -115,9 +127,15 @@ export const CompanySearchPlayground = () => {
       }
 
       const { data } = await response.json();
+      console.log("Search results:", data); 
       setSearchResults(data);
     } catch (error) {
       console.error("Search error:", error);
+      setSearchResults({
+        googleOnly: { name: companyName, error: "Search failed" },
+        hybrid: { name: companyName, error: "Search failed" },
+        openaiOnly: { name: companyName, error: "Search failed" },
+      });
     } finally {
       setIsLoading(false);
     }
@@ -130,6 +148,7 @@ export const CompanySearchPlayground = () => {
           placeholder="Enter company name..."
           value={companyName}
           onChange={(e) => setCompanyName(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         <Button onClick={handleSearch} disabled={isLoading}>
           {isLoading ? (
