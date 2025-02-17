@@ -15,7 +15,7 @@ const isEmptyValue = (val: any) => {
   return false;
 };
 
-// Define the complete company data structure
+// Update CompanyData interface to remove deprecated fields
 interface CompanyData {
   // Core Fields
   id?: number;
@@ -23,7 +23,7 @@ interface CompanyData {
   category?: CompanyCategory;
   description?: string;
   logoId?: string;
-  websiteUrl?: string; // Moved here
+  websiteUrl?: string;
 
   // Business Information
   stockTicker?: string;
@@ -35,6 +35,7 @@ interface CompanyData {
   foundersAndLeadership?: string;
   numEmployees?: number;
   revenue?: string;
+  riskScore?: number;
 
   // Relationships & Status
   keyClientsPartners?: string[];
@@ -44,7 +45,6 @@ interface CompanyData {
 
   // Compliance & Security
   certificationsCompliance?: string[];
-  riskScore?: number;
   accreditationStatus?: string;
 
   // File Management
@@ -77,6 +77,10 @@ interface DataFieldProps {
 }
 
 const DataField = ({ label, value, isNew = false, isLoading = false }: DataFieldProps) => {
+  // Only show loading if the value is empty and loading is true
+  const isEmpty = isEmptyValue(value);
+  const shouldShowLoading = isEmpty && isLoading;
+
   const containerClasses = cn(
     "flex flex-col space-y-1",
     isNew && "bg-green-50 dark:bg-green-900/20 rounded-lg p-2"
@@ -87,7 +91,7 @@ const DataField = ({ label, value, isNew = false, isLoading = false }: DataField
     isNew && "text-green-600 dark:text-green-400 font-medium"
   );
 
-  if (isLoading) {
+  if (shouldShowLoading) {
     return (
       <div className={containerClasses}>
         <span className="text-sm font-medium text-muted-foreground">
@@ -220,14 +224,12 @@ const CompanyDataDisplay = ({
       <div>
         <h3 className="text-sm font-semibold mb-3">Business Information</h3>
         <div className="grid grid-cols-2 gap-4">
-          <DataField
-            label="Legal Structure"
+          <DataField label="Legal Structure"
             value={data.legalStructure}
             isNew={isFieldNew("legalStructure")}
             isLoading={isFieldLoading("legalStructure")}
           />
-          <DataField
-            label="Stock Ticker"
+          <DataField label="Stock Ticker"
             value={data.stockTicker}
             isNew={isFieldNew("stockTicker")}
             isLoading={isFieldLoading("stockTicker")}
@@ -420,7 +422,7 @@ export const CompanySearchPlayground = () => {
       // Only show loading for fields that are both empty and will be searched
       const missingFields = searchableFields.filter(field => {
         const value = initialData[field as keyof CompanyData];
-        return value === undefined || value === null || 
+        return value === undefined || value === null ||
                (typeof value === 'string' && value.trim() === '') ||
                (Array.isArray(value) && value.length === 0);
       });
