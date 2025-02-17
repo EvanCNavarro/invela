@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { CompanyCategory } from "@/types/company";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
@@ -54,36 +54,12 @@ interface CompanyData {
   error?: string;
 }
 
-// Initial empty state
-const emptyCompanyData: CompanyData = {
-  name: "",
-  category: undefined,
-  description: undefined,
-  logoId: undefined,
-  stockTicker: undefined,
-  websiteUrl: undefined,
-  legalStructure: undefined,
-  marketPosition: undefined,
-  hqAddress: undefined,
-  productsServices: undefined,
-  incorporationYear: undefined,
-  foundersAndLeadership: undefined,
-  numEmployees: undefined,
-  revenue: undefined,
-  keyClientsPartners: undefined,
-  investors: undefined,
-  fundingStage: undefined,
-  exitStrategyHistory: undefined,
-  certificationsCompliance: undefined,
-  riskScore: undefined,
-  accreditationStatus: undefined,
-  filesPublic: undefined,
-  filesPrivate: undefined,
-  registryDate: undefined,
-  createdAt: undefined,
-  updatedAt: undefined,
-  onboardingCompanyCompleted: undefined,
-};
+const PulsingDot = () => (
+  <span className="relative flex h-2 w-2">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+  </span>
+);
 
 interface DataFieldProps {
   label: string;
@@ -122,38 +98,58 @@ const DataField = ({
     );
   }
 
-  if (Array.isArray(value)) {
-    return (
-      <div className={containerClasses}>
-        <span className="text-sm font-medium text-muted-foreground">
-          {label}
-        </span>
-        <div className={valueClasses}>
-          {value.length > 0 ? value.join(", ") : "Not found"}
-        </div>
-      </div>
-    );
-  }
-
-  if (typeof value === "boolean") {
-    return (
-      <div className={containerClasses}>
-        <span className="text-sm font-medium text-muted-foreground">
-          {label}
-        </span>
-        <span className={valueClasses}>{value ? "Yes" : "No"}</span>
-      </div>
-    );
-  }
+  const renderValue = () => {
+    if (Array.isArray(value)) {
+      return value.length > 0 ? value.join(", ") : "Not found";
+    }
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+    return value || "Not found";
+  };
 
   return (
     <div className={containerClasses}>
-      <span className="text-sm font-medium text-muted-foreground">
-        {label}
-      </span>
-      <span className={valueClasses}>{value || "Not found"}</span>
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-muted-foreground">
+          {label}
+        </span>
+        {isNew && <PulsingDot />}
+      </div>
+      <span className={valueClasses}>{renderValue()}</span>
     </div>
   );
+};
+
+// Initial empty state
+const emptyCompanyData: CompanyData = {
+  name: "",
+  category: undefined,
+  description: undefined,
+  logoId: undefined,
+  stockTicker: undefined,
+  websiteUrl: undefined,
+  legalStructure: undefined,
+  marketPosition: undefined,
+  hqAddress: undefined,
+  productsServices: undefined,
+  incorporationYear: undefined,
+  foundersAndLeadership: undefined,
+  numEmployees: undefined,
+  revenue: undefined,
+  keyClientsPartners: undefined,
+  investors: undefined,
+  fundingStage: undefined,
+  exitStrategyHistory: undefined,
+  certificationsCompliance: undefined,
+  riskScore: undefined,
+  accreditationStatus: undefined,
+  filesPublic: undefined,
+  filesPrivate: undefined,
+  registryDate: undefined,
+  createdAt: undefined,
+  updatedAt: undefined,
+  onboardingCompanyCompleted: undefined,
 };
 
 const CompanyDataDisplay = ({
@@ -378,6 +374,7 @@ const CompanyDataDisplay = ({
   );
 };
 
+// Component implementation with both named and default export
 export const CompanySearchPlayground = () => {
   const [companyName, setCompanyName] = useState("");
   const [searchResult, setSearchResult] = useState<{
@@ -457,7 +454,7 @@ export const CompanySearchPlayground = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <CompanyDataDisplay 
+          <CompanyDataDisplay
             data={searchResult?.company || emptyCompanyData}
             previousData={searchResult?.previousData}
             loadingFields={loadingFields}
@@ -467,3 +464,5 @@ export const CompanySearchPlayground = () => {
     </div>
   );
 };
+
+export default CompanySearchPlayground;
