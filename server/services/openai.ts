@@ -8,26 +8,22 @@ export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 interface CleanedCompanyData {
   name: string;
+  description?: string;
   stockTicker?: string;
   websiteUrl?: string;
   legalStructure?: string;
+  marketPosition?: string;
   hqAddress?: string;
   productsServices?: string;
   incorporationYear?: number;
-  numEmployees?: number;
-  category?: string;
-  description?: string;
-  marketPosition?: string;
   foundersAndLeadership?: string;
+  numEmployees?: number;
   revenue?: string;
   keyClientsPartners?: string[];
   investors?: string[];
   fundingStage?: string;
   exitStrategyHistory?: string;
   certificationsCompliance?: string[];
-  riskScore?: number;
-  accreditationStatus?: string;
-  id?: number;
 }
 
 interface SearchAnalytics {
@@ -58,7 +54,7 @@ async function logSearchAnalytics(analytics: SearchAnalytics) {
       success: analytics.success,
       errorMessage: analytics.errorMessage,
       duration: analytics.duration,
-      searchDate: new Date(), // Use Date object directly
+      searchDate: new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -70,8 +66,8 @@ async function logSearchAnalytics(analytics: SearchAnalytics) {
 function calculateOpenAICost(inputTokens: number, outputTokens: number, model: string): number {
   const PRICING = {
     'gpt-4o': {
-      input: 0.01, 
-      output: 0.03, 
+      input: 0.01,
+      output: 0.03,
     }
   };
 
@@ -85,29 +81,54 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
 }
 
 function generateMissingDataPrompt(companyInfo: Partial<CleanedCompanyData>, missingFields: string[]): string {
+  // Filter out excluded fields from company info
+  const relevantInfo = { ...companyInfo };
+  delete relevantInfo.id;
+  delete relevantInfo.category;
+  delete relevantInfo.riskScore;
+  delete relevantInfo.accreditationStatus;
+  delete relevantInfo.onboardingCompanyCompleted;
+  delete relevantInfo.registryDate;
+  delete relevantInfo.filesPublic;
+  delete relevantInfo.filesPrivate;
+  delete relevantInfo.createdAt;
+  delete relevantInfo.updatedAt;
+  delete relevantInfo.logoId;
+
+  // Filter out excluded fields from missing fields list
+  const relevantMissingFields = missingFields.filter(field => ![
+    'category', 'riskScore', 'accreditationStatus', 'onboardingCompanyCompleted',
+    'registryDate', 'filesPublic', 'filesPrivate', 'createdAt', 'updatedAt',
+    'id', 'logoId'
+  ].includes(field));
+
   return `
-    As a financial data expert, find accurate information about the company with these known details:
-    ${JSON.stringify(companyInfo, null, 2)}
+As a financial data expert, use the following known details to find accurate company information. Focus on the missing fields and prioritize data from the sources listed below:
 
-    Focus specifically on finding these missing fields:
-    ${missingFields.join(', ')}
+**Company Details:**
+${JSON.stringify(relevantInfo, null, 2)}
 
-    Prioritize data from these sources in order:
-    1. Wikipedia
-    2. Company's official website
-    3. LinkedIn
-    4. Crunchbase
-    5. ZoomInfo
-    6. Dun & Bradstreet
+**Missing Fields to Focus On:**
+${relevantMissingFields.map(field => `- ${field}`).join('\n')}
 
-    For each field, cite the source of the information.
-    Return only the missing fields in a JSON object matching the CleanedCompanyData interface.
-    If you're not confident about any piece of information, omit it rather than guessing.
-  `;
+**Sources (Prioritized Order):**
+1. Wikipedia
+2. Official Website
+3. LinkedIn
+4. Crunchbase
+5. ZoomInfo
+6. Dun & Bradstreet
+
+**Instructions:**
+1. Find and return the missing fields only, matching the CleanedCompanyData interface.
+2. For each field, provide the source.
+3. If unsure about a field, omit it. Do not guess.
+4. Return data as a JSON object.
+`;
 }
 
 export async function findMissingCompanyData(
-  companyInfo: Partial<CleanedCompanyData>, 
+  companyInfo: Partial<CleanedCompanyData>,
   missingFields: string[]
 ): Promise<Partial<CleanedCompanyData>> {
   const startTime = Date.now();
@@ -156,12 +177,8 @@ export async function findMissingCompanyData(
     if (result.numEmployees) {
       result.numEmployees = parseInt(String(result.numEmployees));
     }
-    if (result.riskScore) {
-      result.riskScore = parseInt(String(result.riskScore));
-    }
 
     return result;
-
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -291,7 +308,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
       lastError = error;
       console.error(`OpenAI API attempt ${4 - retries} failed:`, error);
 
-      if (error.status === 429) {
+      if (error instanceof Error && error.message.includes('429')) {
         console.log("Rate limit hit, returning original data");
         return rawData as CleanedCompanyData;
       }
