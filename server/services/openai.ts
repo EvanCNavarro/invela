@@ -89,21 +89,38 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
       case 'foundersAndLeadership':
         if (Array.isArray(data)) {
-          // Group people by role
+          // Group people by role without adding "Unknown" text
           const roleGroups = data.reduce((acc: Record<string, string[]>, person: any) => {
-            const role = person.role || 'Unknown';
+            const role = person.role || '';
             if (!acc[role]) acc[role] = [];
             acc[role].push(person.name);
             return acc;
           }, {});
 
           // Format each role group
-          const formattedGroups = Object.entries(roleGroups).map(([role, names]) => {
-            const roleText = names.length > 1 ? `${role}(s)` : role;
-            return `${roleText}: ${names.join(', ')}`;
-          });
+          const formattedGroups = Object.entries(roleGroups)
+            .filter(([role, names]) => role && names.length > 0)
+            .map(([role, names]) => {
+              const roleText = names.length > 1 ? `${role}(s)` : role;
+              return `${roleText}: ${names.join(', ')}`;
+            });
 
           cleanedData[key] = formattedGroups.join(', ');
+        } else if (typeof data === 'string') {
+          cleanedData[key] = data.trim();
+        }
+        break;
+
+      case 'exitStrategyHistory':
+        // Clean and format exit strategy history
+        if (typeof data === 'string') {
+          cleanedData[key] = data
+            .replace(/^.*?"data":"(.+?)".*$/, '$1')
+            .replace(/\\"/g, '"')
+            .replace(/[{}]/g, '')
+            .trim();
+        } else {
+          cleanedData[key] = data;
         }
         break;
 
@@ -138,16 +155,6 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         if (typeof data === 'string') {
           const match = data.match(/Series [A-Z]/i);
           cleanedData[key] = match ? match[0] : data;
-        } else {
-          cleanedData[key] = data;
-        }
-        break;
-
-      case 'exitStrategyHistory':
-        // Extract just the actual history text
-        if (typeof data === 'string') {
-          cleanedData[key] = data.replace(/^.*?"data":"(.+?)".*$/, '$1')
-                              .replace(/\\"/g, '"');
         } else {
           cleanedData[key] = data;
         }
