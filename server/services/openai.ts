@@ -68,32 +68,62 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
       For any field where the data cannot be verified or is uncertain, return null instead of guessing.
     `;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a financial data expert helping to clean and validate company information.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      response_format: { type: "json_object" },
-    });
+    // Add retries for OpenAI API calls
+    let retries = 3;
+    let lastError = null;
 
-    const cleanedData = JSON.parse(response.choices[0].message.content) as CleanedCompanyData;
+    while (retries > 0) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are a financial data expert helping to clean and validate company information.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: { type: "json_object" },
+        });
 
-    // Additional validation to ensure numbers are properly typed
-    if (cleanedData.incorporationYear) {
-      cleanedData.incorporationYear = parseInt(String(cleanedData.incorporationYear));
+        if (!response.choices[0].message.content) {
+          throw new Error("Empty response from OpenAI");
+        }
+
+        const cleanedData = JSON.parse(response.choices[0].message.content) as CleanedCompanyData;
+
+        // Additional validation to ensure numbers are properly typed
+        if (cleanedData.incorporationYear) {
+          cleanedData.incorporationYear = parseInt(String(cleanedData.incorporationYear));
+        }
+        if (cleanedData.numEmployees) {
+          cleanedData.numEmployees = parseInt(String(cleanedData.numEmployees));
+        }
+
+        return cleanedData;
+      } catch (error) {
+        lastError = error;
+        console.error(`OpenAI API attempt ${4 - retries} failed:`, error);
+
+        if (error.status === 429) {
+          console.log("Rate limit hit, returning original data");
+          return rawData as CleanedCompanyData;
+        }
+
+        retries--;
+        if (retries > 0) {
+          // Wait before retrying, with exponential backoff
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 4 - retries) * 1000));
+        }
+      }
     }
-    if (cleanedData.numEmployees) {
-      cleanedData.numEmployees = parseInt(String(cleanedData.numEmployees));
-    }
 
-    return cleanedData;
+    // If all retries failed, log the error and return the original data
+    console.error("All OpenAI validation attempts failed:", lastError);
+    return rawData as CleanedCompanyData;
   } catch (error) {
     console.error("OpenAI validation error:", error);
     return rawData as CleanedCompanyData;
