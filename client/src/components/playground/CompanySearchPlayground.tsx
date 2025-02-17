@@ -398,19 +398,30 @@ export const CompanySearchPlayground = () => {
 
       // Start with empty data, keeping just the company name
       console.log("[Search] 🏗️ Setting up initial empty data structure");
+      const initialData = { ...emptyCompanyData, name: companyName };
       setSearchResult({
-        company: { ...emptyCompanyData, name: companyName },
+        company: initialData,
         previousData: undefined,
       });
 
-      // Set loading state for fields that will be searched
-      console.log("[Search] ⏳ Setting loading state for searchable fields");
-      setLoadingFields([
+      // Determine which fields are empty and need to be searched
+      console.log("[Search] ⏳ Determining fields that need searching");
+      const searchableFields = [
         'description', 'websiteUrl', 'legalStructure', 'hqAddress',
         'productsServices', 'incorporationYear', 'foundersAndLeadership',
         'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
         'fundingStage', 'certificationsCompliance'
-      ]);
+      ];
+
+      const missingFields = searchableFields.filter(field => {
+        const value = initialData[field as keyof CompanyData];
+        return value === undefined || value === null || 
+               (typeof value === 'string' && value.trim() === '') ||
+               (Array.isArray(value) && value.length === 0);
+      });
+
+      console.log("[Search] 🔍 Missing fields to search:", missingFields);
+      setLoadingFields(missingFields);
 
       console.log("[Search] 🌐 Making API request to company search endpoint");
       const response = await fetch("/api/company-search", {
