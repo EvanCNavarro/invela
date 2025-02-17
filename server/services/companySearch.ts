@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { companies } from "@db/schema";
-import { validateAndCleanCompanyData } from "./openai";
+import { validateAndCleanCompanyData, openai } from "./openai";
 
 const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
 const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
@@ -86,9 +86,9 @@ const extractStockTicker = (text: string): string | null => {
   return null;
 };
 
-export const searchCompanyInfo = async (companyName: string) => {
+// Function for Google-only search
+export const googleOnlySearch = async (companyName: string) => {
   try {
-    // Enhanced search queries targeting priority sources
     const queries = [
       `${companyName} site:wikipedia.org`,
       `${companyName} company profile site:crunchbase.com`,
@@ -138,7 +138,6 @@ export const searchCompanyInfo = async (companyName: string) => {
       const { title, snippet, link } = item;
       const combinedText = `${title} ${snippet}`.toLowerCase();
 
-      // Extract website URL with priority for main domain
       if (!companyInfo.websiteUrl && /official|website|homepage/.test(combinedText)) {
         try {
           const url = cleanUrl(link);
@@ -150,7 +149,6 @@ export const searchCompanyInfo = async (companyName: string) => {
         }
       }
 
-      // Extract number of employees with better pattern matching
       if (!companyInfo.numEmployees && /employees|workforce|staff|team size/i.test(combinedText)) {
         const employeeCount = extractNumberRange(combinedText);
         if (employeeCount) {
@@ -158,7 +156,6 @@ export const searchCompanyInfo = async (companyName: string) => {
         }
       }
 
-      // Enhanced incorporation year extraction
       if (!companyInfo.incorporationYear && /founded|established|incorporated|started|began operations/i.test(combinedText)) {
         const year = extractYear(combinedText);
         if (year) {
@@ -166,18 +163,16 @@ export const searchCompanyInfo = async (companyName: string) => {
         }
       }
 
-      // Improved products and services extraction
       if (!companyInfo.productsServices && /products|services|offerings|specializes|provides|manufactures/i.test(combinedText)) {
         const productsMatch = snippet.match(/(?:products?|services?|offerings?|provides?|manufactures?|specializes? in):?\s*([^.]+)/i);
         if (productsMatch) {
           const products = productsMatch[1].trim();
-          if (products.length > 1) { // Avoid single character results
+          if (products.length > 1) {
             companyInfo.productsServices = products;
           }
         }
       }
 
-      // Enhanced legal structure extraction
       if (!companyInfo.legalStructure) {
         if (/corporation|inc\.?|incorporated/i.test(combinedText)) {
           companyInfo.legalStructure = 'Corporation';
@@ -186,7 +181,6 @@ export const searchCompanyInfo = async (companyName: string) => {
         }
       }
 
-      // Enhanced description extraction prioritizing Wikipedia content
       if (!companyInfo.description) {
         if (link.includes('wikipedia.org') && snippet.length > 50) {
           companyInfo.description = snippet.trim();
@@ -200,7 +194,6 @@ export const searchCompanyInfo = async (companyName: string) => {
         }
       }
 
-      // HQ address extraction
       if (!companyInfo.hqAddress && /headquarters|located|based|office/i.test(combinedText)) {
         const addressMatch = combinedText.match(/(?:headquarters|based|located)(?:\s+in)?\s+([^.]+)/i);
         if (addressMatch) {
@@ -209,8 +202,81 @@ export const searchCompanyInfo = async (companyName: string) => {
       }
     }
 
-    // Clean and validate the gathered data using AI
-    const cleanedData = await validateAndCleanCompanyData(companyInfo);
+    return companyInfo;
+
+  } catch (error) {
+    console.error('Error in Google-only search:', error);
+    throw new Error('Failed to search company information using Google');
+  }
+};
+
+// Function for OpenAI-only search
+export const openaiOnlySearch = async (companyName: string) => {
+  try {
+    const prompt = `
+      As a financial data expert, provide detailed information about the company "${companyName}".
+      Focus on accuracy and current information.
+
+      Required information:
+      1. Company Name
+      2. Stock Ticker (if publicly traded)
+      3. Website URL
+      4. Legal Structure
+      5. Headquarters Address
+      6. Products/Services
+      7. Incorporation Year
+      8. Number of Employees
+      9. Company Description
+
+      Provide the information in a JSON format matching this interface:
+      {
+        name: string;
+        stockTicker?: string;
+        websiteUrl?: string;
+        legalStructure?: string;
+        hqAddress?: string;
+        productsServices?: string;
+        incorporationYear?: number;
+        numEmployees?: number;
+        description?: string;
+      }
+
+      If you're not confident about any piece of information, omit it from the JSON rather than guessing.
+      For numbers, use only digits without commas or text.
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are a financial data expert with access to comprehensive company information.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const companyInfo = JSON.parse(response.choices[0].message.content);
+    return companyInfo;
+
+  } catch (error) {
+    console.error('Error in OpenAI-only search:', error);
+    throw new Error('Failed to search company information using OpenAI');
+  }
+};
+
+// Function for hybrid search (Google + OpenAI)
+export const searchCompanyInfo = async (companyName: string) => {
+  try {
+    // First get data from Google Search
+    const googleData = await googleOnlySearch(companyName);
+
+    // Then validate and clean with OpenAI
+    const cleanedData = await validateAndCleanCompanyData(googleData);
     return cleanedData;
 
   } catch (error) {
