@@ -15,6 +15,110 @@ interface CleanedCompanyData {
   numEmployees?: number;
   category?: string;
   description?: string;
+  marketPosition?: string;
+  foundersAndLeadership?: string;
+  revenue?: string;
+  keyClientsPartners?: string[];
+  investors?: string[];
+  fundingStage?: string;
+  exitStrategyHistory?: string;
+  certificationsCompliance?: string[];
+  riskScore?: number;
+  accreditationStatus?: string;
+}
+
+/**
+ * Generate a specialized prompt for finding missing company data
+ */
+function generateMissingDataPrompt(companyInfo: Partial<CleanedCompanyData>, missingFields: string[]): string {
+  return `
+    As a financial data expert, find accurate information about the company with these known details:
+    ${JSON.stringify(companyInfo, null, 2)}
+
+    Focus specifically on finding these missing fields:
+    ${missingFields.join(', ')}
+
+    Prioritize data from these sources in order:
+    1. Wikipedia
+    2. Company's official website
+    3. LinkedIn
+    4. Crunchbase
+    5. ZoomInfo
+    6. Dun & Bradstreet
+
+    For each field, cite the source of the information.
+    Return only the missing fields in a JSON object matching the CleanedCompanyData interface.
+    If you're not confident about any piece of information, omit it rather than guessing.
+  `;
+}
+
+export async function findMissingCompanyData(
+  companyInfo: Partial<CleanedCompanyData>, 
+  missingFields: string[]
+): Promise<Partial<CleanedCompanyData>> {
+  try {
+    const prompt = generateMissingDataPrompt(companyInfo, missingFields);
+
+    let retries = 3;
+    let lastError = null;
+
+    while (retries > 0) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content: "You are a financial data expert specializing in company information research.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.5,
+        });
+
+        if (!response.choices[0].message.content) {
+          throw new Error("Empty response from OpenAI");
+        }
+
+        const newData = JSON.parse(response.choices[0].message.content) as Partial<CleanedCompanyData>;
+
+        // Additional validation for numeric fields
+        if (newData.incorporationYear) {
+          newData.incorporationYear = parseInt(String(newData.incorporationYear));
+        }
+        if (newData.numEmployees) {
+          newData.numEmployees = parseInt(String(newData.numEmployees));
+        }
+        if (newData.riskScore) {
+          newData.riskScore = parseInt(String(newData.riskScore));
+        }
+
+        return newData;
+      } catch (error) {
+        lastError = error;
+        console.error(`OpenAI API attempt ${4 - retries} failed:`, error);
+
+        if (error.status === 429) {
+          console.log("Rate limit hit, waiting before retry");
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 4 - retries) * 1000));
+        }
+
+        retries--;
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    throw lastError || new Error('Failed to get response from OpenAI');
+  } catch (error) {
+    console.error("OpenAI data search error:", error);
+    throw error;
+  }
 }
 
 export async function validateAndCleanCompanyData(rawData: Partial<typeof companies.$inferInsert>): Promise<CleanedCompanyData> {
