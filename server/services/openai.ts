@@ -55,27 +55,56 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
     switch (key) {
       case 'foundersAndLeadership':
         if (Array.isArray(data)) {
-          cleanedData[key] = data
-            .map(person => `${person.name} (${person.role})`)
-            .join(", ");
+          // Group people by role
+          const roleGroups = data.reduce((acc: Record<string, string[]>, person: any) => {
+            if (!acc[person.role]) {
+              acc[person.role] = [];
+            }
+            acc[person.role].push(person.name);
+            return acc;
+          }, {});
+
+          // Format each role group
+          const formattedGroups = Object.entries(roleGroups).map(([role, names]) => {
+            // Handle plural for roles with multiple people
+            const roleText = names.length > 1 ? `${role}(s)` : role;
+            return `${roleText}: ${names.join(', ')}`;
+          });
+
+          cleanedData[key] = formattedGroups.join(', ');
         }
         break;
 
       case 'keyClientsPartners':
       case 'investors':
       case 'certificationsCompliance':
+        // Just store the array of names/values
         if (Array.isArray(data)) {
           cleanedData[key] = data;
         }
         break;
 
       case 'revenue':
+        // Extract just the revenue value
+        cleanedData[key] = typeof data === 'string' ? 
+          data.replace(/^.*?(\$[\d.]+ [a-z]+ annually).*$/i, '$1') : 
+          data;
+        break;
+
       case 'fundingStage':
+        // Extract just the stage value
+        cleanedData[key] = typeof data === 'string' ? 
+          data.replace(/^.*?(Series [A-Z]).*$/i, '$1') : 
+          data;
+        break;
+
       case 'exitStrategyHistory':
+        // Extract just the actual history text
         cleanedData[key] = typeof data === 'string' ? data : JSON.stringify(data);
         break;
 
       default:
+        // For all other fields, just store the data value
         cleanedData[key] = data;
     }
   });
