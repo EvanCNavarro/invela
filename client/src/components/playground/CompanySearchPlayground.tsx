@@ -7,6 +7,7 @@ import { CompanyCategory } from "@/types/company";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 
+// Define the complete company data structure
 interface CompanyData {
   // Core Fields
   id?: number;
@@ -53,8 +54,35 @@ interface CompanyData {
   error?: string;
 }
 
+// Initial empty state
 const emptyCompanyData: CompanyData = {
   name: "",
+  category: undefined,
+  description: undefined,
+  logoId: undefined,
+  stockTicker: undefined,
+  websiteUrl: undefined,
+  legalStructure: undefined,
+  marketPosition: undefined,
+  hqAddress: undefined,
+  productsServices: undefined,
+  incorporationYear: undefined,
+  foundersAndLeadership: undefined,
+  numEmployees: undefined,
+  revenue: undefined,
+  keyClientsPartners: undefined,
+  investors: undefined,
+  fundingStage: undefined,
+  exitStrategyHistory: undefined,
+  certificationsCompliance: undefined,
+  riskScore: undefined,
+  accreditationStatus: undefined,
+  filesPublic: undefined,
+  filesPrivate: undefined,
+  registryDate: undefined,
+  createdAt: undefined,
+  updatedAt: undefined,
+  onboardingCompanyCompleted: undefined,
 };
 
 interface DataFieldProps {
@@ -138,6 +166,7 @@ const CompanyDataDisplay = ({
       <div>
         <h3 className="text-sm font-semibold mb-3">Core Information</h3>
         <div className="grid grid-cols-2 gap-4">
+          <DataField label="ID" value={data.id} isNew={isFieldNew("id")} />
           <DataField label="Name" value={data.name} isNew={isFieldNew("name")} />
           <DataField
             label="Category"
@@ -263,9 +292,26 @@ const CompanyDataDisplay = ({
         </div>
       </div>
 
-      {/* Timestamps & Status */}
+      {/* File Management */}
       <div>
-        <h3 className="text-sm font-semibold mb-3">Timestamps & Status</h3>
+        <h3 className="text-sm font-semibold mb-3">File Management</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <DataField
+            label="Public Files"
+            value={data.filesPublic}
+            isNew={isFieldNew("filesPublic")}
+          />
+          <DataField
+            label="Private Files"
+            value={data.filesPrivate}
+            isNew={isFieldNew("filesPrivate")}
+          />
+        </div>
+      </div>
+
+      {/* Timestamps & Additional Features */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3">Timestamps & Additional Features</h3>
         <div className="grid grid-cols-2 gap-4">
           <DataField
             label="Registry Date"
@@ -289,51 +335,9 @@ const CompanyDataDisplay = ({
           />
         </div>
       </div>
-
-      {/* File Management */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3">File Management</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <DataField
-            label="Public Files"
-            value={data.filesPublic}
-            isNew={isFieldNew("filesPublic")}
-          />
-          <DataField
-            label="Private Files"
-            value={data.filesPrivate}
-            isNew={isFieldNew("filesPrivate")}
-          />
-        </div>
-      </div>
     </div>
   );
 };
-
-const SearchResultSection = ({
-  title,
-  data,
-  isLoading,
-}: {
-  title: string;
-  data: CompanyData;
-  isLoading: boolean;
-}) => (
-  <Card className="flex-1">
-    <CardHeader>
-      <CardTitle className="text-lg">{title}</CardTitle>
-    </CardHeader>
-    <CardContent>
-      {isLoading ? (
-        <div className="flex justify-center items-center py-8">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : (
-        <CompanyDataDisplay data={data} />
-      )}
-    </CardContent>
-  </Card>
-);
 
 export const CompanySearchPlayground = () => {
   const [companyName, setCompanyName] = useState("");
@@ -411,16 +415,37 @@ export const CompanySearchPlayground = () => {
         </Button>
       </div>
 
-      {searchResult && (
+      {/* Show empty state when no search has been performed */}
+      {!searchResult && !isLoading && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Company Data Structure</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CompanyDataDisplay data={emptyCompanyData} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Show search results or loading state */}
+      {(searchResult || isLoading) && (
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Search Results</CardTitle>
           </CardHeader>
           <CardContent>
-            <CompanyDataDisplay
-              data={searchResult.company}
-              previousData={searchResult.previousData}
-            />
+            {isLoading ? (
+              <div className="flex justify-center items-center py-8">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : (
+              searchResult && (
+                <CompanyDataDisplay
+                  data={searchResult.company}
+                  previousData={searchResult.previousData}
+                />
+              )
+            )}
           </CardContent>
         </Card>
       )}
