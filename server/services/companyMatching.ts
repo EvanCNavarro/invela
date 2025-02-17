@@ -19,17 +19,26 @@ export function findMissingFields(company: typeof companies.$inferSelect): strin
 
   // Core fields that should always be present
   const requiredFields = [
-    'name', 'category', 'description', 'websiteUrl', 
-    'legalStructure', 'hqAddress', 'productsServices',
-    'incorporationYear', 'numEmployees'
+    'description', 'websiteUrl', 'legalStructure', 'hqAddress', 
+    'productsServices', 'incorporationYear', 'foundersAndLeadership',
+    'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+    'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
   ];
 
   // Check each field
   for (const field of requiredFields) {
-    if (!company[field] || 
-        (typeof company[field] === 'string' && company[field].trim() === '') ||
-        (Array.isArray(company[field]) && company[field].length === 0)) {
+    const value = company[field as keyof typeof company];
+    const isEmpty = 
+      value === null || 
+      value === undefined || 
+      (typeof value === 'string' && value.trim() === '') ||
+      (Array.isArray(value) && value.length === 0);
+
+    if (isEmpty) {
+      console.log(`[Company Matching] 🔍 Field '${field}' is ${value === null ? 'null' : value === undefined ? 'undefined' : 'empty'}`);
       missingFields.push(field);
+    } else {
+      console.log(`[Company Matching] ✓ Field '${field}' has value:`, value);
     }
   }
 

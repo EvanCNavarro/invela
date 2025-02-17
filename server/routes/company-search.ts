@@ -22,11 +22,13 @@ router.post("/api/company-search", async (req, res) => {
       // Find missing fields
       const missingFields = findMissingFields(registryResult.company);
 
+      // Always try to supplement data if there are any null or empty fields
       if (missingFields.length > 0) {
-        console.log(`[Company Search] Found ${missingFields.length} missing fields, searching for data`);
+        console.log(`[Company Search] Found ${missingFields.length} missing fields, searching for data:`, missingFields);
 
         // Search for missing data
         const newData = await findMissingCompanyData(registryResult.company, missingFields);
+        console.log('[Company Search] Retrieved new data from OpenAI:', newData);
 
         // Update company with new data
         companyData = await updateCompanyData(registryResult.company.id, newData);
@@ -39,16 +41,17 @@ router.post("/api/company-search", async (req, res) => {
 
       // Search for all company data
       const newData = await findMissingCompanyData({ name: companyName }, [
-        'description', 'category', 'websiteUrl', 'stockTicker', 'legalStructure',
-        'marketPosition', 'hqAddress', 'productsServices', 'incorporationYear',
-        'foundersAndLeadership', 'numEmployees', 'revenue'
+        'description', 'websiteUrl', 'legalStructure', 'hqAddress', 
+        'productsServices', 'incorporationYear', 'foundersAndLeadership',
+        'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+        'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
       ]);
 
       // Create new company in registry
       companyData = await createCompanyInRegistry({
         ...newData,
         name: companyName,
-        category: newData.category || 'FinTech', // Default category
+        category: 'FinTech', // Default category
         onboardingCompanyCompleted: false
       });
       isNewData = true;
