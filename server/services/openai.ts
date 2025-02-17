@@ -26,21 +26,18 @@ interface CleanedCompanyData {
   certificationsCompliance?: string[];
 }
 
-interface SearchAnalytics {
-  searchType: string;
-  companyId?: number;
-  searchPrompt: string;
-  searchResults: Record<string, any>;
-  inputTokens: number;
-  outputTokens: number;
-  estimatedCost: number;
-  model: string;
-  success: boolean;
-  errorMessage?: string;
-  duration: number;
-  searchDate: Date;
-  createdAt: Date;
-  updatedAt: Date;
+// Update helper function to handle URL formatting
+function formatWebsiteUrl(url: string): string {
+  if (!url) return '';
+
+  // Remove any existing protocol and www
+  let cleanUrl = url.replace(/^(https?:\/\/)?(www\.)?/, '');
+
+  // Remove any paths or query parameters
+  cleanUrl = cleanUrl.split('/')[0];
+
+  // Add https://www. prefix
+  return `https://www.${cleanUrl}`;
 }
 
 // Helper function to clean OpenAI response data
@@ -86,14 +83,16 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
     if (!data) return;
 
     switch (key) {
+      case 'websiteUrl':
+        cleanedData[key] = formatWebsiteUrl(data);
+        break;
+
       case 'foundersAndLeadership':
         if (Array.isArray(data)) {
           // Group people by role
           const roleGroups = data.reduce((acc: Record<string, string[]>, person: any) => {
             const role = person.role || 'Unknown';
-            if (!acc[role]) {
-              acc[role] = [];
-            }
+            if (!acc[role]) acc[role] = [];
             acc[role].push(person.name);
             return acc;
           }, {});
@@ -145,7 +144,7 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         break;
 
       case 'exitStrategyHistory':
-        // Extract just the actual history text, removing any JSON structure
+        // Extract just the actual history text
         if (typeof data === 'string') {
           cleanedData[key] = data.replace(/^.*?"data":"(.+?)".*$/, '$1')
                               .replace(/\\"/g, '"');
@@ -393,9 +392,6 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
        - Include industry, main business activities
        - Maximum 2-3 sentences
 
-    8. Employee Count:
-       - Use most recent reliable data
-       - Round to nearest significant figure
 
     Respond with a JSON object matching the CleanedCompanyData interface.
     For any field where the data cannot be verified or is uncertain, return null instead of guessing.
@@ -475,4 +471,21 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
 
   console.error("All OpenAI validation attempts failed:", lastError);
   return rawData as CleanedCompanyData;
+}
+
+interface SearchAnalytics {
+  searchType: string;
+  companyId?: number;
+  searchPrompt: string;
+  searchResults: Record<string, any>;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCost: number;
+  model: string;
+  success: boolean;
+  errorMessage?: string;
+  duration: number;
+  searchDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
