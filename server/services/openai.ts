@@ -27,7 +27,7 @@ interface CleanedCompanyData {
   certificationsCompliance?: string[];
   riskScore?: number;
   accreditationStatus?: string;
-  id?: number; // Added id field
+  id?: number;
 }
 
 interface SearchAnalytics {
@@ -42,7 +42,6 @@ interface SearchAnalytics {
   success: boolean;
   errorMessage?: string;
   duration: number;
-  searchDate: string;
 }
 
 async function logSearchAnalytics(analytics: SearchAnalytics) {
@@ -59,7 +58,9 @@ async function logSearchAnalytics(analytics: SearchAnalytics) {
       success: analytics.success,
       errorMessage: analytics.errorMessage,
       duration: analytics.duration,
-      searchDate: new Date().toISOString(),
+      searchDate: new Date(), // Use Date object directly
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   } catch (error) {
     console.error('[OpenAI Analytics] Failed to log search analytics:', error);
@@ -147,7 +148,6 @@ export async function findMissingCompanyData(
       model: 'gpt-4o',
       success: true,
       duration,
-      searchDate: new Date().toISOString()
     });
 
     if (result.incorporationYear) {
@@ -178,7 +178,6 @@ export async function findMissingCompanyData(
       success: false,
       errorMessage,
       duration,
-      searchDate: new Date().toISOString()
     });
 
     throw error;
@@ -278,9 +277,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         model: 'gpt-4o',
         success: true,
         duration,
-        searchDate: new Date().toISOString()
       });
-
 
       if (cleanedData.incorporationYear) {
         cleanedData.incorporationYear = parseInt(String(cleanedData.incorporationYear));
