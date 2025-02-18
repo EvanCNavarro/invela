@@ -48,7 +48,7 @@ export function PageSideDrawer({
 
   return (
     <div 
-      className="fixed right-0 top-[57px] bottom-0 pt-6 transition-all duration-300"
+      className="fixed right-0 top-[57px] bottom-0 transition-all duration-300"
       style={{ width }}
     >
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -67,7 +67,7 @@ export function PageSideDrawer({
               </button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto px-6">
+          <div className="flex-1 overflow-y-auto px-6 py-6">
             {children}
           </div>
         </div>
@@ -92,7 +92,7 @@ export function PageTemplate({
   return (
     <div className="flex-1 flex overflow-x-hidden">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300",
+        "flex-1 min-w-0 transition-all duration-300 p-6",
         drawerOpen ? "mr-[25.75rem]" : ""
       )}>
         {children}
