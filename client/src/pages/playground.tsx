@@ -63,12 +63,6 @@ export default function PlaygroundPage() {
     }
   };
 
-  console.log("[PlaygroundPage] Current state:", {
-    selectedComponent,
-    isCompanySearchAvailable: !!CompanySearchPlayground,
-    isHeadlessCrawlerAvailable: !!HeadlessCrawlerPlayground
-  });
-
   return (
     <div className="container mx-auto py-6 space-y-8">
       <div className="flex flex-col space-y-2">
