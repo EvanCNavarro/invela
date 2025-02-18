@@ -21,13 +21,6 @@ import {
   CheckCircle2
 } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -77,7 +70,7 @@ export default function DashboardPage() {
         drawer={
           <BuilderPageDrawer
             title="Dashboard Information"
-            defaultOpen={drawerOpen}
+            defaultOpen={false}
           >
             <div className="space-y-4">
               <p className="text-muted-foreground">
@@ -93,64 +86,62 @@ export default function DashboardPage() {
           </BuilderPageDrawer>
         }
         drawerOpen={drawerOpen}
+        onDrawerOpenChange={setDrawerOpen}
       >
-        <div className="flex items-center justify-between mb-6">
-          <PageHeader
-            title="Dashboard"
-            description="Get an overview of your company's performance and recent activities."
-            action={
-              <div className="flex items-center space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="gap-2">
-                      <Settings className="h-4 w-4" />
-                      Customize Dashboard
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="w-56"
-                    sideOffset={4}
-                  >
-                    <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                      <DropdownMenuItem
-                        key={key}
-                        onSelect={(event) => {
-                          event.preventDefault();
-                          toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
-                        }}
-                        className="flex items-center gap-2"
-                      >
-                        <div className="w-4">
-                          {isVisible ? (
-                            <Check className="h-4 w-4 text-primary" />
-                          ) : (
-                            <div className="h-4 w-4" />
-                          )}
-                        </div>
-                        <span className={cn(
-                          "flex-1",
-                          isVisible ? "text-foreground" : "text-muted-foreground"
-                        )}>
-                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                        </span>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  variant="outline"
-                  onClick={() => setDrawerOpen(!drawerOpen)}
+        <PageHeader
+          title="Dashboard"
+          description="Get an overview of your company's performance and recent activities."
+          actions={
+            <div className="flex items-center space-x-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Settings className="h-4 w-4" />
+                    Customize Dashboard
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56"
+                  sideOffset={4}
                 >
-                  {drawerOpen ? "Hide Info" : "Show Info"}
-                </Button>
-              </div>
-            }
-          />
-        </div>
-
+                  <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                    <DropdownMenuItem
+                      key={key}
+                      onSelect={(event) => {
+                        event.preventDefault();
+                        toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                      }}
+                      className="flex items-center gap-2"
+                    >
+                      <div className="w-4">
+                        {isVisible ? (
+                          <Check className="h-4 w-4 text-primary" />
+                        ) : (
+                          <div className="h-4 w-4" />
+                        )}
+                      </div>
+                      <span className={cn(
+                        "flex-1",
+                        isVisible ? "text-foreground" : "text-muted-foreground"
+                      )}>
+                        {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="outline"
+                onClick={() => setDrawerOpen(!drawerOpen)}
+              >
+                {drawerOpen ? "Hide Info" : "Show Info"}
+              </Button>
+            </div>
+          }
+        />
         <div className="space-y-6">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
