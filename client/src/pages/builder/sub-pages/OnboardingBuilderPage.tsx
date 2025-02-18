@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { PageSideDrawer } from "@/components/playground/PageSideDrawerPlayground";
+import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 import { Info } from "lucide-react";
 import { useState } from "react";
 
@@ -47,28 +47,26 @@ export function OnboardingBuilderPage() {
           </div>
         </div>
 
-        {drawerOpen && (
-          <PageSideDrawer 
-            title="Onboarding Settings"
-            titleIcon={<Info className="h-5 w-5" />}
-            defaultOpen={drawerOpen}
-            isClosable={true}
-            onOpenChange={setDrawerOpen}
-          >
-            <div className="text-sm space-y-4">
-              <h4 className="font-medium">Configuration Options</h4>
-              <p className="text-muted-foreground">
-                Customize the onboarding experience by configuring:
-              </p>
-              <ul className="space-y-2">
-                <li>• Questionnaire steps</li>
-                <li>• Required documents</li>
-                <li>• Verification processes</li>
-                <li>• Welcome messages</li>
-              </ul>
-            </div>
-          </PageSideDrawer>
-        )}
+        <PageSideDrawer 
+          title="Onboarding Settings"
+          titleIcon={<Info className="h-5 w-5" />}
+          defaultOpen={true}
+          isClosable={false}
+          onOpenChange={setDrawerOpen}
+        >
+          <div className="text-sm space-y-4">
+            <h4 className="font-medium">Configuration Options</h4>
+            <p className="text-muted-foreground">
+              Customize the onboarding experience by configuring:
+            </p>
+            <ul className="space-y-2">
+              <li>• Questionnaire steps</li>
+              <li>• Required documents</li>
+              <li>• Verification processes</li>
+              <li>• Welcome messages</li>
+            </ul>
+          </div>
+        </PageSideDrawer>
       </div>
     </DashboardLayout>
   );
