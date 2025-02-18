@@ -21,6 +21,19 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 
+// Sample data for DataTable demo
+const sampleTableData = [
+  { id: 1, name: "John Doe", email: "john@example.com", role: "Admin" },
+  { id: 2, name: "Jane Smith", email: "jane@example.com", role: "User" },
+  { id: 3, name: "Bob Johnson", email: "bob@example.com", role: "Editor" },
+];
+
+const sampleTableColumns = [
+  { key: "name", header: "Name", sortable: true },
+  { key: "email", header: "Email", sortable: true },
+  { key: "role", header: "Role", sortable: true },
+];
+
 // Define component interface for consistent handling
 interface PlaygroundComponent {
   id: string;
@@ -46,7 +59,12 @@ const components: PlaygroundComponent[] = [
   {
     id: "data-table",
     name: "Data Table",
-    component: DataTable,
+    component: () => (
+      <DataTable
+        data={sampleTableData}
+        columns={sampleTableColumns}
+      />
+    ),
     description: "Interactive data table with sorting and filtering"
   },
   {
