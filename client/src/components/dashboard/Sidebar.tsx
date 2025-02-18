@@ -8,7 +8,8 @@ import {
   BarChartIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  MousePointer2Icon
+  MousePointer2Icon,
+  HardDriveIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -140,6 +141,12 @@ export function Sidebar({
       icon: BarChartIcon,
       label: "Insights",
       href: "/insights",
+      locked: variant === 'company-locked' || isNewUser
+    },
+    {
+      icon: HardDriveIcon,
+      label: "Builder",
+      href: "/builder",
       locked: variant === 'company-locked' || isNewUser
     }
   ];
