@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
@@ -22,6 +22,12 @@ import {
   MoreVerticalIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
+import { useSidebarContext } from "@/hooks/use-sidebar";
+import type { Column } from "@/components/ui/table";
+import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
 import {
   Select,
   SelectContent,
@@ -37,286 +43,18 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { SearchBar } from "@/components/ui/search-bar";
-import { Table, TableCell, TableRow } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { Column } from "@/components/ui/table";
-import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useColumnVisibility } from "@/hooks/use-column-visibility";
-import { useSidebarContext } from "@/hooks/use-sidebar";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchBar } from "@/components/ui/search-bar";
+import { Table } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import crypto from 'crypto';
 
-// Type definitions
-type FileTableColumn = Column<TableRowData>;
-
-// Utility functions
-const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-const getStatusStyles = (status: FileStatus) => {
-  const baseStyles = "rounded-full px-2.5 py-1 text-xs font-medium";
-  const statusMap = {
-    uploaded: "bg-[#ECFDF3] text-[#027A48]",
-    restored: "bg-[#ECFDF3] text-[#027A48]",
-    uploading: "bg-[#FFF4ED] text-[#B93815]",
-    paused: "bg-[#F2F4F7] text-[#344054]",
-    canceled: "bg-[#FFF1F3] text-[#C01048]",
-    deleted: "bg-[#FFF1F3] text-[#C01048]"
-  };
-  return `${baseStyles} ${statusMap[status] || "text-muted-foreground"}`;
-};
-
-const FileNameCell = React.memo(({ file }: { file: TableRowData }) => {
-  const nameRef = useRef<HTMLSpanElement>(null);
-  const [isTextTruncated, setIsTextTruncated] = useState(false);
-
-  useEffect(() => {
-    if (nameRef.current) {
-      setIsTextTruncated(nameRef.current.scrollWidth > nameRef.current.clientWidth);
-    }
-  }, []);
-
-  return (
-    <div className="flex items-center gap-2 min-w-0 max-w-[14rem]" role="cell">
-      <div
-        className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0"
-        aria-hidden="true"
-      >
-        <FileIcon className="w-3 h-3 text-primary" />
-      </div>
-      <span
-        ref={nameRef}
-        className="truncate block min-w-0 flex-1"
-        aria-label={`File name: ${file.name}`}
-      >
-        {file.name}
-      </span>
-      {isTextTruncated && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="sr-only">Show full file name</span>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{file.name}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </div>
-  );
-});
-
-FileNameCell.displayName = 'FileNameCell';
-
-const formatTimeWithZone = (date: Date) => {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    timeZoneName: 'short'
-  }).format(date);
-};
-
-const formatTimestampForFilename = () => {
-  const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(now.getUTCDate()).padStart(2, '0');
-  const hours = String(now.getUTCHours()).padStart(2, '0');
-  const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(now.getUTCSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day}_${hours}${minutes}${seconds}`;
-};
-
-const FileConflictModal = ({
-  conflicts,
-  onResolve,
-  onCancel
-}: {
-  conflicts: { file: File; existingFile: FileItem }[];
-  onResolve: (overrideAll: boolean) => void;
-  onCancel: () => void;
-}) => {
-  return (
-    <Dialog open={conflicts.length > 0} onOpenChange={() => onCancel()}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>File Conflict Detected</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <p className="text-sm text-muted-foreground">
-            The following files already exist:
-          </p>
-          <div className="max-h-[200px] overflow-y-auto space-y-2">
-            {conflicts.map(({ file, existingFile }) => (
-              <div key={file.name} className="flex items-center gap-2 text-sm">
-                <FileIcon className="w-4 h-4" />
-                <span>{file.name}</span>
-                <span className="text-muted-foreground ml-auto">
-                  Current version: v{existingFile.version?.toFixed(1) || '1.0'}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="text-sm font-medium">
-            Do you want to override these files with new versions?
-          </p>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onCancel()}>
-            Cancel
-          </Button>
-          <Button onClick={() => onResolve(true)}>
-            Override All
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-const formatDate = (dateString?: string) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
-
-const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void }) => {
-
-  const { data: freshFileData } = useQuery({
-    queryKey: ['/api/files', file.id],
-    queryFn: async () => {
-      const response = await fetch(`/api/files/${file.id}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch file details');
-      }
-      return response.json();
-    },
-  });
-
-  const currentFile = freshFileData || file;
-
-  const downloadMutation = useMutation({
-    mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/download`);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = currentFile.name;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    },
-    onSuccess: () => {
-    },
-    onError: (error) => {
-    }
-  });
-
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="text-xl">File Details</DialogTitle>
-          <DialogDescription>
-            Detailed information about {currentFile.name}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-muted/30 rounded-md p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-muted-foreground">File Information</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Name</span>
-                <span className="font-medium truncate ml-2 max-w-[200px]">{currentFile.name}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Size</span>
-                <span className="font-medium">{formatFileSize(currentFile.size)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Type</span>
-                <span className="font-medium">{currentFile.type || 'Unknown'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Version</span>
-                <span className="font-medium">v{currentFile.version?.toFixed(1) || '1.0'}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Status</span>
-                <span className={getStatusStyles(currentFile.status)}>
-                  {currentFile.status.charAt(0).toUpperCase() + currentFile.status.slice(1)}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-muted/30 rounded-md p-4 space-y-3">
-            <h3 className="font-semibold text-sm text-muted-foreground">Upload Information</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Upload Date</span>
-                <span className="font-medium">{formatDate(currentFile.createdAt)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Last Modified</span>
-                <span className="font-medium">{formatDate(currentFile.updatedAt)}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Downloads</span>
-                <span className="font-medium">{currentFile.downloadCount || 0}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
-            Close
-          </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              downloadMutation.mutate(currentFile.id);
-              onClose();
-            }}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+// Define component types
+interface FileTableColumn extends Column<TableRowData> {}
 
 const FileVault: React.FC = () => {
   const { toast } = useToast();
@@ -340,275 +78,36 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
-    const downloadMutation = useMutation({
-      mutationFn: async (fileId: string) => {
-        const response = await fetch(`/api/files/${fileId}/download`);
-        if (!response.ok) throw new Error('Download failed');
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = file.name;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      },
-      onSuccess: () => {
-      },
-      onError: (error) => {
-      }
-    });
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="hover:bg-muted/80 transition-colors rounded-full mx-auto"
-          >
-            <MoreVerticalIcon className="w-4 h-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setSelectedFileDetails(file)}>
-            <FileTextIcon className="w-4 h-4 mr-2" />
-            View Details
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => downloadMutation.mutate(file.id)}>
-            <Download className="w-4 h-4 mr-2" />
-            Download
-          </DropdownMenuItem>
-          {file.status === 'deleted' ? (
-            <DropdownMenuItem onClick={() => restoreMutation.mutate(file.id)}>
-              <RefreshCcwIcon className="w-4 h-4 mr-2" />
-              Restore
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => onDelete(file.id)}
-            >
-              <Trash2Icon className="w-4 h-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  };
-
-  const { data: files = [], isLoading } = useQuery<TableRowData[]>({
-    queryKey: ['/api/files']
+  const { data: files = [] } = useQuery(['/api/files'], {
+    enabled: true,
+    staleTime: Infinity
   });
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const startTime = performance.now();
-      const response = await fetch('/api/files', {
+      const res = await fetch('/api/files', {
         method: 'POST',
-        body: formData,
+        body: formData
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Upload failed');
       }
-
-      const result = await response.json();
-      result.uploadTimeMs = performance.now() - startTime;
-      return result;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      toast({
-        title: "Success",
-        description: "File uploaded successfully",
-        duration: 3000,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload file",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
+      const data = await res.json();
+      return data;
+    }
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}`, {
-        method: 'DELETE',
+      const res = await fetch(`/api/files/${fileId}`, {
+        method: 'DELETE'
       });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(error);
+      if (!res.ok) {
+        throw new Error('File deletion failed');
       }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      toast({
-        title: "Success",
-        description: "File deleted successfully",
-        duration: 3000,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete file",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
-  });
-
-  const restoreMutation = useMutation({
-    mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/restore`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error('Invalid JSON response:', text);
-        throw new Error('Server returned an invalid response format');
-      }
-
-      if (!response.ok) {
-        throw new Error(data?.message || 'Failed to restore file');
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      toast({
-        title: "Success",
-        description: "File restored successfully",
-        duration: 3000,
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Restore error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to restore file. Please try again.",
-        variant: "destructive",
-        duration: 3000,
-      });
-    },
-  });
-
-  const downloadMutation = useMutation({
-    mutationFn: async (fileId: string) => {
-      const response = await fetch(`/api/files/${fileId}/download`);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = files.find(f => f.id === fileId)?.name || 'download';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    },
-    onSuccess: (_, fileId) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-      queryClient.invalidateQueries({ queryKey: [`/api/files/${fileId}`] });
-    },
-    onError: (error, fileId) => {
-      const fileName = files.find(f => f.id === fileId)?.name || 'file';
     }
   });
-
-  const bulkDownloadMutation = useMutation({
-    mutationFn: async (fileIds: string[]) => {
-      if (fileIds.length === 0) {
-        throw new Error('No files selected for download');
-      }
-
-      const toastId = toast({
-        title: "Preparing Download",
-        description: (
-          <div className="flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Preparing {fileIds.length} files for download...</span>
-          </div>
-        ),
-      });
-
-      try {
-        const response = await fetch('/api/files/download-bulk', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ fileIds }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Bulk download failed');
-        }
-
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `invela_download_${formatTimestampForFilename()}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-
-        if (toastId) {
-          toast.update(toastId, {
-            title: "Download Complete",
-            description: `${fileIds.length} files have been downloaded successfully.`,
-            duration: 3000,
-          });
-        }
-
-        return true;
-      } catch (error) {
-        if (toastId) {
-          toast.update(toastId, {
-            title: "Error",
-            description: error instanceof Error ? error.message : "Failed to download files",
-            variant: "destructive",
-            duration: 3000,
-          });
-        }
-        console.error('Bulk download error:', error);
-        throw error;
-      }
-    },
-  });
-
-  const showDownloadToast = (fileName: string) => {
-    toast({
-      title: "Downloading File",
-      description: (
-        <div className="flex items-center gap-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Downloading {fileName}...</span>
-        </div>
-      ),
-      duration: 2000,
-    });
-  };
 
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev => {
@@ -884,6 +383,77 @@ const FileVault: React.FC = () => {
     return highlightedText;
   };
 
+  const formatFileSize = (size: number): string => {
+    if (size < 1024) {
+      return `${size} bytes`;
+    } else if (size < 1048576) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    } else {
+      return `${(size / 1048576).toFixed(1)} MB`;
+    }
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  };
+
+  const getStatusStyles = (status: FileStatus): string => {
+    switch (status) {
+      case 'uploaded':
+        return 'text-green-500';
+      case 'uploading':
+        return 'text-blue-500';
+      case 'paused':
+        return 'text-yellow-500';
+      case 'deleted':
+        return 'text-red-500';
+      case 'canceled':
+        return 'text-gray-500';
+      default:
+        return '';
+    }
+  };
+
+
+  const FileNameCell: React.FC<{ file: TableRowData }> = ({ file }) => (
+    <div className="flex items-center gap-2">
+      <FileIcon className="h-4 w-4" />
+      <span>{file.name}</span>
+    </div>
+  );
+
+
+  const FileActions: React.FC<{ file: TableRowData; onDelete: (fileId: string) => void }> = ({ file, onDelete }) => {
+    const handleAction = (action: string) => {
+      if (action === 'delete') {
+        onDelete(file.id);
+      } else if (action === 'viewDetails') {
+        setSelectedFileDetails(file);
+      }
+    };
+
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <MoreVerticalIcon className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleAction('viewDetails')}>
+            View Details
+          </DropdownMenuItem>
+          {file.status !== 'deleted' && (
+            <DropdownMenuItem onClick={() => handleAction('delete')}>
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  };
+
   const columns: FileTableColumn[] = [
     {
       id: 'select',
@@ -904,7 +474,8 @@ const FileVault: React.FC = () => {
     },
     {
       id: 'name',
-      header: 'Name',      cell: ({ row }) => <FileNameCell file={row} />,
+      header: 'Name',
+      cell: ({ row }) => <FileNameCell file={row} />,
       sortable: true
     },
     {
@@ -944,7 +515,7 @@ const FileVault: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center justify-between mb-6">
           <PageHeader
             title="File Vault"
@@ -1002,10 +573,10 @@ const FileVault: React.FC = () => {
             </div>
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
+          <div className="w-full">
             <div className="overflow-x-auto">
               <Table
-                data={paginatedFiles as TableRowData[]}
+                data={paginatedFiles}
                 columns={visibleColumns}
                 onSort={handleSort}
                 sortConfig={sortConfig}
@@ -1075,27 +646,46 @@ const FileVault: React.FC = () => {
       />
 
       {showConflictModal && (
-        <FileConflictModal
-          conflicts={conflictFiles}
-          onResolve={(overrideAll) => {
-            setShowConflictModal(false);
-            if (overrideAll) {
-              uploadFiles(conflictFiles.map(c => c.file), true);
-            }
-            setConflictFiles([]);
-          }}
-          onCancel={() => {
-            setShowConflictModal(false);
-            setConflictFiles([]);
-          }}
-        />
+        <Dialog open>
+          <DialogHeader>
+            <DialogTitle>File Upload Conflict</DialogTitle>
+            <DialogDescription>
+              Some files already exist. Do you want to override them?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogContent className="grid gap-4 grid-cols-2">
+            {conflictFiles.map((conflict, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <FileTextIcon className="h-4 w-4" />
+                <span>{conflict.file.name}</span>
+              </div>
+            ))}
+          </DialogContent>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => { setShowConflictModal(false); setConflictFiles([]) }} variant="outline">Cancel</Button>
+            <Button onClick={() => { setShowConflictModal(false); uploadFiles(conflictFiles.map(c => c.file), true); setConflictFiles([]) }}>Override All</Button>
+          </div>
+        </Dialog>
       )}
 
       {selectedFileDetails && (
-        <FileDetails
-          file={selectedFileDetails}
-          onClose={() => setSelectedFileDetails(null)}
-        />
+        <Dialog open>
+          <DialogHeader>
+            <DialogTitle>{selectedFileDetails.name}</DialogTitle>
+          </DialogHeader>
+          <DialogContent>
+            <div className="flex flex-col">
+              <div className="mb-2">Name: {selectedFileDetails.name}</div>
+              <div className="mb-2">Size: {formatFileSize(selectedFileDetails.size)}</div>
+              <div className="mb-2">Created: {formatDate(selectedFileDetails.createdAt)}</div>
+              <div className="mb-2">Status: {selectedFileDetails.status}</div>
+              <div>Version: {selectedFileDetails.version}</div>
+            </div>
+          </DialogContent>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setSelectedFileDetails(null)} >Close</Button>
+          </div>
+        </Dialog>
       )}
     </DashboardLayout>
   );
