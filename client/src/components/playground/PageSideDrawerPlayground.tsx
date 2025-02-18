@@ -57,7 +57,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   )
 }
 
-const PageSideDrawerPlayground = () => {
+export default function PageSideDrawerPlayground() {
   const [isClosable, setIsClosable] = React.useState(true)
   const [showIcon, setShowIcon] = React.useState(true)
   const [defaultOpen, setDefaultOpen] = React.useState(true)
@@ -94,8 +94,8 @@ const PageSideDrawerPlayground = () => {
         </div>
       </Card>
 
-      <div className="flex relative min-h-[400px] border rounded-lg">
-        <div className={`flex-1 transition-all duration-300 ${defaultOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
+      <div className="relative min-h-[400px] border rounded-lg">
+        <div className={`transition-all duration-300 ${defaultOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
           <div className="p-4">
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
@@ -104,6 +104,7 @@ const PageSideDrawerPlayground = () => {
             </p>
           </div>
         </div>
+
         <PageSideDrawer
           title="Sample Drawer Content"
           titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
@@ -131,5 +132,3 @@ const PageSideDrawerPlayground = () => {
     </div>
   )
 }
-
-export default PageSideDrawerPlayground

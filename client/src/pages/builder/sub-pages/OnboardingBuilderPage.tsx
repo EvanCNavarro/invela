@@ -14,21 +14,29 @@ export function OnboardingBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="h-full">
-        <BreadcrumbNav items={breadcrumbItems} />
-        <div className="mt-6 h-[calc(100%-3rem)] relative">
-          <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
-            <PageHeader
-              title="Onboarding Configuration"
-              description="Design and manage the onboarding process."
-            />
-            <div className="container mx-auto p-6">
-              <div className="text-muted-foreground">
-                Configure onboarding workflows and requirements here.
+      <div className="flex flex-col h-full">
+        {/* Main content container */}
+        <div className="flex-1">
+          {/* Content area with drawer margin */}
+          <div className={`transition-all duration-300 ${drawerOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
+            {/* Navigation */}
+            <BreadcrumbNav items={breadcrumbItems} />
+
+            {/* Page content */}
+            <div className="mt-6">
+              <PageHeader
+                title="Onboarding Configuration"
+                description="Design and manage the onboarding process."
+              />
+              <div className="container mx-auto p-6">
+                <div className="text-muted-foreground">
+                  Configure onboarding workflows and requirements here.
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Drawer positioned absolutely relative to main content */}
           <BuilderPageDrawer 
             title="Onboarding Settings" 
             defaultOpen={drawerOpen}
