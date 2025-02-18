@@ -1,34 +1,39 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { BuilderCard } from "@/components/builder/BuilderCard";
+import { ClipboardList, Scale, Bell, Users } from "lucide-react";
 
 const builderCards = [
   {
     title: "Onboarding Configuration",
-    description: "Set up questionnaires, surveys, and file requests for fintech onboarding process",
+    description: "Configure fintech onboarding questionnaires and requirements.",
     imagePath: "/builder/onboarding.svg",
     route: "/builder/onboarding",
-    ctaText: "Configure Onboarding"
+    ctaText: "Configure Onboarding",
+    icon: ClipboardList
   },
   {
     title: "Risk Score Rules",
-    description: "Define dynamic risk scoring rules based on fintech data and certification standards",
+    description: "Define risk scoring rules based on fintech data standards.",
     imagePath: "/builder/risk-rules.svg",
     route: "/builder/risk-rules",
-    ctaText: "Set Up Rules"
+    ctaText: "Set Up Rules",
+    icon: Scale
   },
   {
     title: "Automated Reporting",
-    description: "Configure system monitoring, audits, alerts, and notification settings",
+    description: "Configure system monitoring and notification settings.",
     imagePath: "/builder/reporting.svg",
     route: "/builder/reporting",
-    ctaText: "Manage Reports"
+    ctaText: "Manage Reports",
+    icon: Bell
   },
   {
     title: "User Groups",
-    description: "Create and manage user groups with custom permissions and notification settings",
+    description: "Create and manage user groups with custom permissions.",
     imagePath: "/builder/groups.svg",
     route: "/builder/groups",
-    ctaText: "Manage Groups"
+    ctaText: "Manage Groups",
+    icon: Users
   }
 ];
 
@@ -36,8 +41,8 @@ export function BuilderPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        heading="Builder"
-        subtext="Configure and customize your platform's core functionalities"
+        title="Builder"
+        description="Configure and customize your platform's core functionalities"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

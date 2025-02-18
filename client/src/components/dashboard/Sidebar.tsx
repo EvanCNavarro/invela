@@ -9,7 +9,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MousePointer2Icon,
-  HardDriveIcon
+  Construction
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -144,7 +144,7 @@ export function Sidebar({
       locked: variant === 'company-locked' || isNewUser
     },
     {
-      icon: HardDriveIcon,
+      icon: Construction,
       label: "Builder",
       href: "/builder",
       locked: variant === 'company-locked' || isNewUser
