@@ -22,9 +22,25 @@ export const HeadlessCrawlerPlayground = () => {
     try {
       const result = await headlessCompanySearch(companyName.trim());
       setSearchResult(result);
+
+      // Log the search results to console
+      console.log("[HeadlessCrawler] 📊 Search Results:", {
+        existingData: result.existingData,
+        companyData: result.companyData,
+        enrichedFields: result.enrichedFields,
+        missingFields: result.missingFields
+      });
+
+      // Log detailed field analysis
+      if (result.enrichedFields.length > 0) {
+        console.log("[HeadlessCrawler] ✨ Enriched Fields:", result.enrichedFields);
+      }
+      if (result.missingFields.length > 0) {
+        console.log("[HeadlessCrawler] ❌ Missing Fields:", result.missingFields);
+      }
     } catch (error) {
-      console.error("Headless search failed:", error);
-      setSearchResult({ error: "Search failed" });
+      console.error("[HeadlessCrawler] ❌ Search failed:", error);
+      setSearchResult({ error: error.message || "Search failed" });
     } finally {
       setIsSearching(false);
     }
@@ -59,10 +75,13 @@ export const HeadlessCrawlerPlayground = () => {
                 <Info className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="right" className="max-w-[300px]">
-              <pre className="text-xs whitespace-pre-wrap">
-                {searchResult ? JSON.stringify(searchResult, null, 2) : 'No data'}
-              </pre>
+            <TooltipContent side="right" className="max-w-[300px] p-4">
+              <div className="space-y-2">
+                <h4 className="font-semibold">Search Results</h4>
+                <pre className="text-xs whitespace-pre-wrap bg-secondary p-2 rounded">
+                  {searchResult ? JSON.stringify(searchResult, null, 2) : 'No data'}
+                </pre>
+              </div>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
