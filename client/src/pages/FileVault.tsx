@@ -1056,15 +1056,39 @@ const FileVault = () => {
 
   return (
     <DashboardLayout>
-      <div className="h-full flex flex-col min-h-0">
-        <PageHeader
-          title="File Vault"
-          description="Securely store and manage your files"
-          className="px-4 sm:px-6"
-        />
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <PageHeader
+            title="File Vault"
+            description="Securely store and manage your company's files"
+            actions={
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleUploadClick}
+                  className="gap-2"
+                >
+                  <UploadIcon className="h-4 w-4" />
+                  Upload Files
+                </Button>
+                {selectedFiles.size > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
+                      className="gap-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download ({selectedFiles.size})
+                    </Button>
+                  </>
+                )}
+              </div>
+            }
+          />
+        </div>
 
-        <div className="flex-1 flex flex-col min-h-0 space-y-4 p-4 sm:px-6">
-          {/* Upload Area */}
+        <div className="space-y-4">
+          {/* File upload and table content */}
           <div className="w-full">
             <DragDropProvider
               onFilesAccepted={onDrop}
@@ -1081,7 +1105,6 @@ const FileVault = () => {
             </DragDropProvider>
           </div>
 
-          {/* Controls */}
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="w-full sm:max-w-md">
               <SearchBar
@@ -1108,15 +1131,20 @@ const FileVault = () => {
                   <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
               </Select>
-
-              <Button onClick={handleUploadClick}>
-                <UploadIcon className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Upload</span>
-              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    onDrop(Array.from(e.target.files));
+                  }
+                }}
+              />
             </div>
           </div>
 
-          {/* Table */}
           <div className="flex-1 min-h-0">
             <div className="border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
@@ -1135,7 +1163,6 @@ const FileVault = () => {
               </div>
             </div>
 
-            {/* Pagination */}
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground order-2 sm:order-1">
                 Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
@@ -1184,45 +1211,8 @@ const FileVault = () => {
             </div>
           </div>
         </div>
+
       </div>
-
-      {/* Hidden file input */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        className="hidden"
-        multiple
-        onChange={(e) => {
-          if (e.target.files) {
-            onDrop(Array.from(e.target.files));
-          }
-        }}
-      />
-
-      {/* Modals */}
-      {showConflictModal && (
-        <FileConflictModal
-          conflicts={conflictFiles}
-          onResolve={(overrideAll) => {
-            setShowConflictModal(false);
-            if (overrideAll) {
-              uploadFiles(conflictFiles.map(c => c.file), true);
-            }
-            setConflictFiles([]);
-          }}
-          onCancel={() => {
-            setShowConflictModal(false);
-            setConflictFiles([]);
-          }}
-        />
-      )}
-
-      {selectedFileDetails && (
-        <FileDetails
-          file={selectedFileDetails}
-          onClose={() => setSelectedFileDetails(null)}
-        />
-      )}
     </DashboardLayout>
   );
 };
