@@ -93,9 +93,8 @@ const PageSideDrawerPlayground = () => {
         </div>
       </Card>
 
-      <Card className="p-4">
-        <h3 className="text-lg font-semibold mb-4">Demo Content</h3>
-        <div className="relative min-h-[400px] border rounded-lg">
+      <div className="relative min-h-[400px] border rounded-lg">
+        <div className={`transition-all duration-300 ${defaultOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
           <div className="p-4">
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
@@ -103,32 +102,32 @@ const PageSideDrawerPlayground = () => {
               The drawer can be toggled using the close button.
             </p>
           </div>
-          
-          <PageSideDrawer
-            title="Extra Info Drawer"
-            titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
-            isClosable={isClosable}
-            defaultOpen={defaultOpen}
-          >
-            <div className="space-y-4">
-              <h4 className="font-medium">Sample Drawer Content</h4>
-              <p className="text-sm text-muted-foreground">
-                This drawer can contain any content, including other components,
-                forms, or informational displays.
-              </p>
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium">Features</h5>
-                <ul className="text-sm space-y-1">
-                  <li>• Responsive layout</li>
-                  <li>• Customizable width</li>
-                  <li>• Optional close button</li>
-                  <li>• Optional header icon</li>
-                </ul>
-              </div>
-            </div>
-          </PageSideDrawer>
         </div>
-      </Card>
+
+        <PageSideDrawer
+          title="Extra Info Drawer"
+          titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
+          isClosable={isClosable}
+          defaultOpen={defaultOpen}
+        >
+          <div className="space-y-4">
+            <h4 className="font-medium">Sample Drawer Content</h4>
+            <p className="text-sm text-muted-foreground">
+              This drawer can contain any content, including other components,
+              forms, or informational displays.
+            </p>
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium">Features</h5>
+              <ul className="text-sm space-y-1">
+                <li>• Responsive layout</li>
+                <li>• Customizable width</li>
+                <li>• Optional close button</li>
+                <li>• Optional header icon</li>
+              </ul>
+            </div>
+          </div>
+        </PageSideDrawer>
+      </div>
     </div>
   )
 }
