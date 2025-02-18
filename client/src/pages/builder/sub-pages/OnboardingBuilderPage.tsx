@@ -16,7 +16,7 @@ export function OnboardingBuilderPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 flex overflow-x-hidden">
-        <div className="flex-1 min-w-0">
+        <div className={`flex-1 min-w-0 ${drawerOpen ? 'mr-[27.25rem]' : ''}`}>
           <BreadcrumbNav items={breadcrumbItems} />
           <div className="mt-6">
             <PageHeader
