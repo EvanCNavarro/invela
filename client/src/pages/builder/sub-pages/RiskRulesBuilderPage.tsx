@@ -16,7 +16,7 @@ export function RiskRulesBuilderPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 flex overflow-x-hidden">
-        <div className="flex-1 min-w-0 p-8 pt-6">
+        <div className="flex-1 min-w-0">
           <BreadcrumbNav items={breadcrumbItems} />
           <div className="mt-6">
             <PageHeader
