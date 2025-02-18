@@ -14,10 +14,10 @@ export function GroupsBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="flex flex-col h-full space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
-        <div className="flex relative min-h-[calc(100vh-12rem)]">
-          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
+        <div className="flex-1 relative">
+          <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
             <PageHeader
               title="User Groups"
               description="Manage user groups and permissions."
