@@ -1,13 +1,20 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
+
+const breadcrumbItems = [
+  { label: "Builder", href: "/builder" },
+  { label: "Risk Score Rules", href: "/builder/risk-rules" }
+];
 
 export function RiskRulesBuilderPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           heading="Risk Score Rules"
-          subtext="Define dynamic risk scoring rules based on fintech data and certification standards"
+          subtext="Set up risk assessment criteria based on fintech data standards"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
