@@ -34,9 +34,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,7 +83,7 @@ export default function DashboardPage() {
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
   return (
-    <DashboardLayout drawerOpen={drawerOpen}>
+    <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <PageHeader
