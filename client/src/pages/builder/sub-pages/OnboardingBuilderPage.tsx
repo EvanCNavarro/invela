@@ -26,7 +26,7 @@ export function OnboardingBuilderPage() {
                 title="Onboarding Configuration"
                 description="Design and manage the onboarding process."
               />
-              <div className="container mx-auto p-6">
+              <div className="container mx-auto">
                 <div className="text-muted-foreground">
                   Configure onboarding workflows and requirements here.
                 </div>
@@ -34,24 +34,28 @@ export function OnboardingBuilderPage() {
             </div>
           </div>
 
-          {/* Right section */}
-          <BuilderPageDrawer 
-            title="Onboarding Settings" 
-            defaultOpen={drawerOpen}
-          >
-            <div className="text-sm space-y-4">
-              <h4 className="font-medium">Configuration Options</h4>
-              <p className="text-muted-foreground">
-                Customize the onboarding experience by configuring:
-              </p>
-              <ul className="space-y-2">
-                <li>• Questionnaire steps</li>
-                <li>• Required documents</li>
-                <li>• Verification processes</li>
-                <li>• Welcome messages</li>
-              </ul>
+          {/* Right section with margin */}
+          <div className="absolute right-0 top-0 bottom-0 w-[25.75rem]">
+            <div className="h-[calc(100%-3rem)] mx-8 mt-6">
+              <BuilderPageDrawer 
+                title="Onboarding Settings" 
+                defaultOpen={drawerOpen}
+              >
+                <div className="text-sm space-y-4">
+                  <h4 className="font-medium">Configuration Options</h4>
+                  <p className="text-muted-foreground">
+                    Customize the onboarding experience by configuring:
+                  </p>
+                  <ul className="space-y-2">
+                    <li>• Questionnaire steps</li>
+                    <li>• Required documents</li>
+                    <li>• Verification processes</li>
+                    <li>• Welcome messages</li>
+                  </ul>
+                </div>
+              </BuilderPageDrawer>
             </div>
-          </BuilderPageDrawer>
+          </div>
         </div>
       </div>
     </DashboardLayout>
