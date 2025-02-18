@@ -9,6 +9,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { headlessCompanySearch } from "@/components/playground/HeadlessCompanySearch";
 import { Search, Info } from "lucide-react";
 
@@ -33,9 +40,16 @@ export default function PlaygroundPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-12">
-      {/* Dropdown heading */}
+      {/* Component Selector */}
       <div>
-        <h2 className="text-xl mb-4">Company Data Crawler</h2>
+        <Select defaultValue="company-crawler">
+          <SelectTrigger className="w-[300px]">
+            <SelectValue placeholder="Select component" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="company-crawler">Company Data Crawler</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Preview Section */}
