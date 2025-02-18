@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
 
 // Sample data for DataTable demo
 const sampleTableData = [
@@ -45,6 +46,12 @@ interface PlaygroundComponent {
 
 // Define all available components
 const components: PlaygroundComponent[] = [
+  {
+    id: "page-side-drawer",
+    name: "Page Side Drawer",
+    component: PageSideDrawerPlayground,
+    description: "Page-embedded side drawer with customizable features"
+  },
   {
     id: "loading-spinner",
     name: "Loading Spinner",
