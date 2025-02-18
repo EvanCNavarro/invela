@@ -26,19 +26,17 @@ export function PageTemplate({
         drawerOpen ? "mr-[25.75rem]" : "",
         className
       )}>
-        <div className="p-6 space-y-6">
+        <div className="p-6">
           {showBreadcrumbs && <BreadcrumbNav />}
-          
+
           {(title || description || headerActions) && (
-            <div className="flex items-center justify-between">
-              <PageHeader
-                title={title}
-                description={description}
-              />
-              {headerActions}
-            </div>
+            <PageHeader
+              title={title}
+              description={description}
+              actions={headerActions}
+            />
           )}
-          
+
           {children}
         </div>
       </div>
