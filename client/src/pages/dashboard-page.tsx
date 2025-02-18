@@ -9,6 +9,12 @@ import {
   Settings,
   Check,
   Info,
+  Activity,
+  Bell,
+  Zap,
+  Globe,
+  AlertTriangle,
+  LayoutGrid
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -18,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
@@ -59,7 +66,6 @@ export default function DashboardPage() {
         drawer={drawerOpen ? (
           <BuilderPageDrawer
             title="Dashboard Information"
-            defaultOpen={true}
           >
             <div className="space-y-4">
               <p className="text-muted-foreground">
@@ -149,134 +155,123 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-3 gap-4">
             {visibleWidgets.updates && (
-                <Widget
-                  title="Recent Updates"
-                  icon={<Activity className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('updates')}
-                  isVisible={visibleWidgets.updates}
-                >
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      No recent updates to show.
-                    </p>
-                  </div>
-                </Widget>
-              )}
+              <Widget
+                title="Recent Updates"
+                icon={<Activity className="h-5 w-5" />}
+                size="double"
+                onVisibilityToggle={() => toggleWidget('updates')}
+                isVisible={visibleWidgets.updates}
+              >
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    No recent updates to show.
+                  </p>
+                </div>
+              </Widget>
+            )}
 
-              {visibleWidgets.announcements && (
-                <Widget
-                  title="Announcements"
-                  icon={<Bell className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('announcements')}
-                  isVisible={visibleWidgets.announcements}
-                >
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Welcome to Invela! Check out our latest features.
-                    </p>
-                  </div>
-                </Widget>
-              )}
+            {visibleWidgets.announcements && (
+              <Widget
+                title="Announcements"
+                icon={<Bell className="h-5 w-5" />}
+                onVisibilityToggle={() => toggleWidget('announcements')}
+                isVisible={visibleWidgets.announcements}
+              >
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Welcome to Invela! Check out our latest features.
+                  </p>
+                </div>
+              </Widget>
+            )}
 
-              {visibleWidgets.quickActions && (
-                <Widget
-                  title="Quick Actions"
-                  icon={<Zap className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('quickActions')}
-                  isVisible={visibleWidgets.quickActions}
-                  actions={[
-                    {
-                      label: "Customize Actions",
-                      onClick: () => console.log("Customize actions"),
-                      icon: <Settings className="h-4 w-4" />
-                    }
-                  ]}
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    <InviteButton
-                      variant="fintech"
-                      pulse={true}
-                      onClick={() => setOpenFinTechModal(true)}
-                    />
-                    <Button variant="outline" className="w-full font-medium">
-                      Add User
-                    </Button>
-                    <Button variant="outline" className="w-full font-medium">
-                      Set Risk Tracker
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full font-medium"
-                      onClick={() => setDrawerOpen(!drawerOpen)}
-                    >
-                      {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
-                    </Button>
-                  </div>
+            {visibleWidgets.quickActions && (
+              <Widget
+                title="Quick Actions"
+                icon={<Zap className="h-5 w-5" />}
+                size="double"
+                onVisibilityToggle={() => toggleWidget('quickActions')}
+                isVisible={visibleWidgets.quickActions}
+              >
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="default" 
+                    className="w-full font-medium"
+                    onClick={() => setOpenFinTechModal(true)}
+                  >
+                    Invite a New FinTech
+                  </Button>
+                  <Button variant="outline" className="w-full font-medium">
+                    Add User
+                  </Button>
+                  <Button variant="outline" className="w-full font-medium">
+                    Set Risk Tracker
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full font-medium"
+                    onClick={() => setDrawerOpen(!drawerOpen)}
+                  >
+                    {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
+                  </Button>
+                </div>
+              </Widget>
+            )}
 
-                  <InviteModal
-                    variant="fintech"
-                    open={openFinTechModal}
-                    onOpenChange={setOpenFinTechModal}
-                  />
-                </Widget>
-              )}
-
-              {visibleWidgets.companyScore && companyData && (
-                <Widget
-                  title="Company Score"
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('companyScore')}
-                  isVisible={visibleWidgets.companyScore}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">Loading company data...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              console.debug(`Failed to load logo for company: ${companyData.name}`);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">
-                              {companyData.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">{companyData.name}</span>
-                      </div>
-                      <RiskMeter score={companyData.riskScore || 0} />
-                    </div>
-                  )}
-                </Widget>
-              )}
-
-              {visibleWidgets.networkVisualization && (
-                <Widget
-                  title="Network Visualization"
-                  icon={<Globe className="h-5 w-5" />}
-                  size="triple"
-                  onVisibilityToggle={() => toggleWidget('networkVisualization')}
-                  isVisible={visibleWidgets.networkVisualization}
-                >
+            {visibleWidgets.companyScore && companyData && (
+              <Widget
+                title="Company Score"
+                icon={<AlertTriangle className="h-5 w-5" />}
+                onVisibilityToggle={() => toggleWidget('companyScore')}
+                isVisible={visibleWidgets.companyScore}
+              >
+                {isLoading ? (
                   <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">
-                      Network visualization coming soon
-                    </p>
+                    <p className="text-sm text-muted-foreground">Loading company data...</p>
                   </div>
-                </Widget>
-              )}
+                ) : (
+                  <div className="space-y-1">
+                    <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                      {companyData.logoId ? (
+                        <img
+                          src={`/api/companies/${companyData.id}/logo`}
+                          alt={`${companyData.name} logo`}
+                          className="w-6 h-6 object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            console.debug(`Failed to load logo for company: ${companyData.name}`);
+                          }}
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-xs font-medium text-primary">
+                            {companyData.name.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">{companyData.name}</span>
+                    </div>
+                    <RiskMeter score={companyData.riskScore || 0} />
+                  </div>
+                )}
+              </Widget>
+            )}
+
+            {visibleWidgets.networkVisualization && (
+              <Widget
+                title="Network Visualization"
+                icon={<Globe className="h-5 w-5" />}
+                size="triple"
+                onVisibilityToggle={() => toggleWidget('networkVisualization')}
+                isVisible={visibleWidgets.networkVisualization}
+              >
+                <div className="flex items-center justify-center min-h-[200px]">
+                  <p className="text-sm text-muted-foreground">
+                    Network visualization coming soon
+                  </p>
+                </div>
+              </Widget>
+            )}
           </div>
         )}
 
