@@ -1,0 +1,76 @@
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+export interface PageSideDrawerProps {
+  title?: string
+  titleIcon?: React.ReactNode
+  children?: React.ReactNode
+  isClosable?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+export function PageSideDrawer({
+  title = "Info Drawer",
+  titleIcon,
+  children,
+  isClosable = true,
+  defaultOpen = false,
+  onOpenChange
+}: PageSideDrawerProps) {
+  const [isOpen, setIsOpen] = React.useState(defaultOpen)
+
+  React.useEffect(() => {
+    setIsOpen(defaultOpen)
+  }, [defaultOpen])
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isClosable && defaultOpen) return // Prevent closing if not closable and default open
+    setIsOpen(newOpen)
+    onOpenChange?.(newOpen)
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] px-8 pt-6">
+      <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
+        <div className="flex flex-col h-full">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-2">
+              {titleIcon}
+              <h3 className="font-semibold">{title}</h3>
+            </div>
+            {isClosable && (
+              <button
+                className="p-2 hover:bg-muted rounded-md"
+                onClick={() => handleOpenChange(!isOpen)}
+              >
+                {isOpen ? "×" : "→"}
+              </button>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              {children}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// HOC to add drawer-aware margin to main content
+export function withPageSideDrawer<P extends object>(
+  Component: React.ComponentType<P>,
+  drawerOpen: boolean
+) {
+  return function WithPageSideDrawer(props: P) {
+    return (
+      <div className={cn("flex-1 min-w-0", drawerOpen ? "mr-[27.25rem]" : "")}>
+        <Component {...props} />
+      </div>
+    )
+  }
+}
