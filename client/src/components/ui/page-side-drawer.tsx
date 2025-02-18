@@ -45,9 +45,7 @@ export function PageSideDrawer({
   if (!isOpen) return null
 
   return (
-    <div 
-      className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] transition-all duration-300"
-    >
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] transition-all duration-300">
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
@@ -60,11 +58,11 @@ export function PageSideDrawer({
                 className="p-2 hover:bg-muted rounded-md"
                 onClick={() => handleOpenChange(!isOpen)}
               >
-                {isOpen ? "×" : "→"}
+                ×
               </button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          <div className="flex-1 overflow-y-auto p-6">
             {children}
           </div>
         </div>
