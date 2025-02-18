@@ -14,9 +14,9 @@ export function RiskRulesBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-full space-y-6">
+      <div className="h-full">
         <BreadcrumbNav items={breadcrumbItems} />
-        <div className="flex-1 relative">
+        <div className="mt-6 h-[calc(100%-3rem)] relative">
           <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
             <PageHeader
               title="Risk Score Rules"
