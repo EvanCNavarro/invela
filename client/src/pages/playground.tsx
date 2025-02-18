@@ -1,13 +1,7 @@
 import { useState } from "react";
 import { CompanySearchPlayground } from "@/components/playground/CompanySearchPlayground";
-import { Input } from "@/components/ui/input";
+import { HeadlessCompanyCrawler } from "@/components/playground/HeadlessCompanyCrawler";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -15,28 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { headlessCompanySearch } from "@/components/playground/HeadlessCompanySearch";
-import { Search, Info } from "lucide-react";
 
 export default function PlaygroundPage() {
-  const [companyName, setCompanyName] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResult, setSearchResult] = useState<any>(null);
   const [activeVariant, setActiveVariant] = useState<'headless' | 'ui'>('headless');
-
-  const handleHeadlessSearch = async () => {
-    if (!companyName.trim()) return;
-
-    setIsSearching(true);
-    try {
-      const result = await headlessCompanySearch(companyName.trim());
-      setSearchResult(result);
-    } catch (error) {
-      console.error("Headless search failed:", error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   return (
     <div className="container mx-auto py-6 space-y-12">
@@ -80,41 +55,7 @@ export default function PlaygroundPage() {
             /* Headless Variant */
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-3">Headless Variant</h4>
-              <div className="flex gap-4 items-start">
-                <Input
-                  placeholder="Enter company name..."
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleHeadlessSearch()}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={handleHeadlessSearch}
-                  disabled={isSearching || !companyName.trim()}
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  {isSearching ? "Searching..." : "Search"}
-                </Button>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="w-10"
-                        disabled={!searchResult}
-                      >
-                        <Info className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right" className="max-w-[300px]">
-                      <pre className="text-xs whitespace-pre-wrap">
-                        {searchResult ? JSON.stringify(searchResult, null, 2) : 'No data'}
-                      </pre>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              <HeadlessCompanyCrawler />
             </div>
           ) : (
             /* UI Variant */
