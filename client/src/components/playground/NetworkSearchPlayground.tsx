@@ -29,7 +29,7 @@ const sampleCompanies: Company[] = [
   }
 ]
 
-export default function NetworkSearchPlayground() {
+const NetworkSearchPlayground = () => {
   const [recentSearches, setRecentSearches] = React.useState<string[]>([
     "Digital Dynamics",
     "Cloud Systems",
@@ -74,3 +74,5 @@ export default function NetworkSearchPlayground() {
     </div>
   )
 }
+
+export default NetworkSearchPlayground

@@ -6,7 +6,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 
-export const DropdownPlayground = () => {
+const DropdownPlayground = () => {
   // State for regular dropdown
   const [selectedWidgets, setSelectedWidgets] = React.useState<string[]>(['announcements', 'quick_actions'])
   const [showIcons, setShowIcons] = React.useState(false)
@@ -175,3 +175,5 @@ export const DropdownPlayground = () => {
     </div>
   )
 }
+
+export default DropdownPlayground
