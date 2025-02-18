@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 
 export default function PlaygroundPage() {
   console.log("[PlaygroundPage] Component mounting");
-  const [selectedComponent, setSelectedComponent] = useState("company-crawler");
+  const [selectedComponent, setSelectedComponent] = useState("loading-spinner");
 
   useEffect(() => {
     console.log("[PlaygroundPage] Initial mount effect");
@@ -29,12 +29,31 @@ export default function PlaygroundPage() {
   const renderComponent = () => {
     console.log("[PlaygroundPage] Rendering component:", selectedComponent);
     switch (selectedComponent) {
-      case "company-crawler":
-        console.log("[PlaygroundPage] Rendering CompanySearchPlayground");
+      case "loading-spinner":
+        return <div>Loading Spinner Component</div>;
+      case "data-table":
+        return <div>Data Table Component</div>;
+      case "sidebar-menu":
+        return <div>Sidebar Menu Component</div>;
+      case "sidebar-tab":
+        return <div>Sidebar Tab Component</div>;
+      case "search-bar":
+        return <div>Search Bar Component</div>;
+      case "network-search":
+        return <div>Network Search Component</div>;
+      case "unified-dropdown":
+        return <div>Unified Dropdown Component</div>;
+      case "download-button":
+        return <div>Download Button Component</div>;
+      case "file-upload":
+        return <div>File Upload Component</div>;
+      case "navigational-tab-pane":
+        return <div>Navigational Tab Pane Component</div>;
+      case "invite-button":
+        return <div>Invite Button/Modal Component</div>;
+      case "company-data-crawler":
+        console.log("[PlaygroundPage] Rendering Company Data Crawler");
         return <CompanySearchPlayground />;
-      case "headless-crawler":
-        console.log("[PlaygroundPage] Rendering HeadlessCrawlerPlayground");
-        return <HeadlessCrawlerPlayground />;
       default:
         console.log("[PlaygroundPage] No matching component");
         return <div>Select a component to preview</div>;
@@ -43,8 +62,7 @@ export default function PlaygroundPage() {
 
   console.log("[PlaygroundPage] Current state:", {
     selectedComponent,
-    isCompanySearchAvailable: !!CompanySearchPlayground,
-    isHeadlessCrawlerAvailable: !!HeadlessCrawlerPlayground
+    isCompanySearchAvailable: !!CompanySearchPlayground
   });
 
   return (
@@ -62,8 +80,18 @@ export default function PlaygroundPage() {
             <SelectValue placeholder="Select component" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="company-crawler">Company Data Crawler</SelectItem>
-            <SelectItem value="headless-crawler">Headless Company Crawler</SelectItem>
+            <SelectItem value="loading-spinner">Loading Spinner</SelectItem>
+            <SelectItem value="data-table">Data Table</SelectItem>
+            <SelectItem value="sidebar-menu">Sidebar Menu</SelectItem>
+            <SelectItem value="sidebar-tab">Sidebar Tab</SelectItem>
+            <SelectItem value="search-bar">Search Bar</SelectItem>
+            <SelectItem value="network-search">Network Search</SelectItem>
+            <SelectItem value="unified-dropdown">Unified Dropdown</SelectItem>
+            <SelectItem value="download-button">Download Button</SelectItem>
+            <SelectItem value="file-upload">File Upload</SelectItem>
+            <SelectItem value="navigational-tab-pane">Navigational Tab Pane</SelectItem>
+            <SelectItem value="invite-button">Invite Button/Modal</SelectItem>
+            <SelectItem value="company-data-crawler">Company Data Crawler</SelectItem>
           </SelectContent>
         </Select>
       </div>
