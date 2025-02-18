@@ -261,20 +261,19 @@ export default function NetworkPage() {
     <DashboardLayout>
       <PageTemplate
         showBreadcrumbs
-        headerContent={
-          <div className="flex items-center justify-between">
-            <PageHeader
-              title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
-              description="View and manage companies in your network."
-            />
+      >
+        <PageHeader
+          title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
+          description="View and manage companies in your network."
+          action={
             <InviteButton
               variant="fintech"
               pulse={true}
               onClick={() => setOpenFinTechModal(true)}
             />
-          </div>
-        }
-      >
+          }
+        />
+
         <div className="flex-1 space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <Button
