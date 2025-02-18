@@ -6,7 +6,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocket } from "@/hooks/use-websocket";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 const carouselImages = [
   {
@@ -68,19 +68,23 @@ export function WelcomeModal() {
       const data = await response.json();
       console.log('[WelcomeModal] Onboarding completion response:', data);
 
-      // Send WebSocket update
+      // Send WebSocket update if connected
       if (connected && socket && data.task) {
-        socket.send(JSON.stringify({
-          type: 'task_update',
-          data: {
-            taskId: data.task.id,
-            status: 'completed',
-            metadata: {
-              onboardingCompleted: true,
-              completionTime: new Date().toISOString()
+        try {
+          socket.send(JSON.stringify({
+            type: 'task_update',
+            data: {
+              taskId: data.task.id,
+              status: 'completed',
+              metadata: {
+                onboardingCompleted: true,
+                completionTime: new Date().toISOString()
+              }
             }
-          }
-        }));
+          }));
+        } catch (error) {
+          console.error('[WelcomeModal] Error sending WebSocket message:', error);
+        }
       }
 
       return data;

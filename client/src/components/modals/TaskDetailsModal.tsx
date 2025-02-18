@@ -6,7 +6,7 @@ import { TaskStatus } from "@db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
-import { wsService } from "@/lib/websocket";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 interface TaskDetailsModalProps {
   task: any;
@@ -15,61 +15,49 @@ interface TaskDetailsModalProps {
 }
 
 const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
-  [TaskStatus.COMPLETED]: 'Completed',
+  EMAIL_SENT: 'Email Sent',
+  COMPLETED: 'Completed',
 } as const;
 
 const statusProgressMap = {
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.IN_PROGRESS]: 50,
-  [TaskStatus.COMPLETED]: 100,
+  EMAIL_SENT: 25,
+  COMPLETED: 100,
 } as const;
 
 const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: TaskDetailsModalProps) {
   const [task, setTask] = useState(initialTask);
+  const { socket, connected } = useWebSocket();
 
   useEffect(() => {
     setTask(initialTask);
   }, [initialTask]);
 
   useEffect(() => {
-    if (!task) return;
+    if (!socket || !connected || !task) return;
 
-    const setupWebSocket = async () => {
+    const handleMessage = (event: MessageEvent) => {
       try {
-        const unsubscribe = await wsService.subscribe('task_status_updated', (data) => {
-          if (data.taskId === task.id) {
-            setTask(current => ({
-              ...current,
-              status: data.status,
-              progress: statusProgressMap[data.status as TaskStatus]
-            }));
-          }
-        });
-
-        return unsubscribe;
+        const data = JSON.parse(event.data);
+        if (data.type === 'task_update' && data.payload?.taskId === task.id) {
+          setTask(current => ({
+            ...current,
+            status: data.payload.status,
+            progress: statusProgressMap[data.payload.status as TaskStatus] || current.progress
+          }));
+        }
       } catch (error) {
-        console.error('Error setting up WebSocket subscription:', error);
+        console.error('Error handling WebSocket message:', error);
       }
     };
 
-    const unsubscribePromise = setupWebSocket();
+    socket.addEventListener('message', handleMessage);
 
     return () => {
-      unsubscribePromise.then(unsubscribe => {
-        if (unsubscribe) {
-          try {
-            unsubscribe();
-          } catch (error) {
-            console.error('Error unsubscribing from WebSocket:', error);
-          }
-        }
-      });
+      socket.removeEventListener('message', handleMessage);
     };
-  }, [task]);
+  }, [socket, connected, task]);
 
   if (!task) return null;
 

@@ -1,50 +1,133 @@
-import { useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-export function useWebSocket() {
-  const wsRef = useRef<WebSocket | null>(null);
+interface UseWebSocketReturn {
+  socket: WebSocket | null;
+  connected: boolean;
+  error: Error | null;
+}
+
+const INITIAL_RETRY_DELAY = 1000;
+const MAX_RETRY_DELAY = 30000;
+const MAX_RETRIES = 5;
+
+export function useWebSocket(): UseWebSocketReturn {
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const reconnectAttempt = useRef(0);
+  const pingInterval = useRef<number>();
+  const pongTimeout = useRef<number>();
+  const connectTimeout = useRef<number>();
   const queryClient = useQueryClient();
 
-  useEffect(() => {
-    // Create WebSocket connection
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    console.log('[WebSocket] Connecting to:', wsUrl);
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+  const resetTimers = () => {
+    if (pingInterval.current) window.clearInterval(pingInterval.current);
+    if (pongTimeout.current) window.clearTimeout(pongTimeout.current);
+    if (connectTimeout.current) window.clearTimeout(connectTimeout.current);
+  };
 
-    ws.onopen = () => {
-      console.log('[WebSocket] Connected');
-    };
+  const connect = useCallback(() => {
+    try {
+      resetTimers();
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log('[WebSocket] Received message:', data);
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      console.log('[WebSocket] Connecting to:', wsUrl);
 
-        if (data.type === 'task_update') {
-          // Invalidate the tasks query to trigger a refetch
-          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      const ws = new WebSocket(wsUrl);
+      let pongReceived = false;
+
+      ws.onopen = () => {
+        console.log('[WebSocket] Connected successfully');
+        setConnected(true);
+        setError(null);
+        reconnectAttempt.current = 0;
+
+        // Setup ping/pong heartbeat
+        pingInterval.current = window.setInterval(() => {
+          if (!pongReceived) {
+            console.log('[WebSocket] No pong received, reconnecting...');
+            ws.close();
+            return;
+          }
+          pongReceived = false;
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }, 30000);
+      };
+
+      ws.onclose = (event) => {
+        console.log('[WebSocket] Connection closed:', event.code, event.reason);
+        setConnected(false);
+        resetTimers();
+
+        // Implement exponential backoff for reconnection
+        if (reconnectAttempt.current < MAX_RETRIES) {
+          const delay = Math.min(
+            INITIAL_RETRY_DELAY * Math.pow(2, reconnectAttempt.current),
+            MAX_RETRY_DELAY
+          );
+          console.log(`[WebSocket] Attempting to reconnect (${reconnectAttempt.current + 1}/${MAX_RETRIES})...`);
+          setTimeout(connect, delay);
+          reconnectAttempt.current++;
+        } else {
+          console.log('[WebSocket] Max reconnection attempts reached');
+          setError(new Error('Max reconnection attempts reached'));
         }
-      } catch (error) {
-        console.error('[WebSocket] Error parsing message:', error);
-      }
-    };
+      };
 
-    ws.onerror = (error) => {
-      console.error('[WebSocket] Error:', error);
-    };
+      ws.onerror = (event) => {
+        console.error('[WebSocket] Error:', event);
+        setError(new Error('WebSocket connection error'));
+      };
 
-    ws.onclose = () => {
-      console.log('[WebSocket] Disconnected');
-    };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('[WebSocket] Received message:', data);
 
-    // Cleanup on unmount
+          // Handle specific message types
+          switch (data.type) {
+            case 'pong':
+              pongReceived = true;
+              break;
+            case 'task_update':
+              queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+              break;
+            case 'file_update':
+              queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+              break;
+          }
+        } catch (err) {
+          console.error('[WebSocket] Error parsing message:', err);
+        }
+      };
+
+      setSocket(ws);
+
+      // Set connection timeout
+      connectTimeout.current = window.setTimeout(() => {
+        if (!connected) {
+          console.log('[WebSocket] Connection timeout, closing socket');
+          ws.close();
+        }
+      }, 10000);
+
+    } catch (err) {
+      console.error('[WebSocket] Setup error:', err);
+      setError(err as Error);
+    }
+  }, [connected, queryClient]);
+
+  useEffect(() => {
+    connect();
     return () => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.close();
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close();
       }
+      resetTimers();
     };
-  }, [queryClient]);
+  }, [connect]);
+
+  return { socket, connected, error };
 }

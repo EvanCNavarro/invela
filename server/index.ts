@@ -1,9 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
-import { WebSocketServer, WebSocket } from 'ws';
-import { createServer } from 'http';
 import { setupAuth } from "./auth";
+import { setupWebSocket } from "./services/websocket";
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -20,9 +20,6 @@ export class APIError extends Error {
 
 const app = express();
 const server = createServer(app);
-
-// WebSocket clients store
-const wsClients = new Set<WebSocket>();
 
 // Configure body parsing middleware first
 app.use(express.json());
@@ -86,6 +83,9 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
+// Setup WebSocket server
+setupWebSocket(server);
+
 // Set up development environment
 if (app.get("env") === "development") {
   await setupVite(app, server);
@@ -93,54 +93,6 @@ if (app.get("env") === "development") {
   // Serve static files only in production, after API routes
   serveStatic(app);
 }
-
-// Setup WebSocket server after Vite in development
-const wss = new WebSocketServer({ 
-  noServer: true, // Important: Use noServer mode
-  perMessageDeflate: false // Disable compression for better compatibility
-});
-
-// Handle upgrade requests manually
-server.on('upgrade', (request, socket, head) => {
-  const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
-
-  if (pathname === '/api/ws') {
-    wss.handleUpgrade(request, socket, head, (ws) => {
-      wss.emit('connection', ws, request);
-    });
-  }
-});
-
-// WebSocket connection handling
-wss.on('connection', (ws: WebSocket, req) => {
-  console.log('New WebSocket client connected from:', req.headers.origin);
-  wsClients.add(ws);
-
-  // Send initial connection confirmation
-  ws.send(JSON.stringify({ 
-    type: 'connection_established', 
-    data: { timestamp: new Date().toISOString() } 
-  }));
-
-  ws.on('message', (message: string) => {
-    try {
-      const data = JSON.parse(message.toString());
-      console.log('Received WebSocket message:', data);
-    } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
-    }
-  });
-
-  ws.on('close', () => {
-    console.log('WebSocket client disconnected');
-    wsClients.delete(ws);
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-    wsClients.delete(ws);
-  });
-});
 
 // Error handling middleware
 app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
