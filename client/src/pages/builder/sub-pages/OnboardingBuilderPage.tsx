@@ -17,7 +17,7 @@ export function OnboardingBuilderPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex relative">
-          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
+          <div className="flex-1 transition-all duration-300">
             <BreadcrumbNav items={breadcrumbItems} />
 
             <div className="mt-6">
@@ -37,6 +37,8 @@ export function OnboardingBuilderPage() {
             title="Onboarding Settings"
             titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={drawerOpen}
+            isClosable={true}
+            onOpenChange={setDrawerOpen}
           >
             <div className="text-sm space-y-4">
               <h4 className="font-medium">Configuration Options</h4>

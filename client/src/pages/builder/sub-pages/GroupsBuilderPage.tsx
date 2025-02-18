@@ -18,7 +18,7 @@ export function GroupsBuilderPage() {
       <div className="flex flex-col h-full space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <div className="flex-1 relative">
-          <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
+          <div className="transition-all duration-300">
             <PageHeader
               title="User Groups"
               description="Manage user groups and permissions."
@@ -34,6 +34,8 @@ export function GroupsBuilderPage() {
             title="Group Settings"
             titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={drawerOpen}
+            isClosable={true}
+            onOpenChange={setDrawerOpen}
           >
             <div className="text-sm space-y-4">
               <h4 className="font-medium">Group Configuration</h4>
