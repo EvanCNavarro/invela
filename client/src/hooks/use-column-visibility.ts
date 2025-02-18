@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { Column } from '@/components/ui/table';
 
 // Define breakpoints
 const BREAKPOINTS = {
@@ -8,7 +9,9 @@ const BREAKPOINTS = {
   xl: 1280,
 };
 
-export function useColumnVisibility(sidebarWidth: number) {
+export type VisibleColumns = Column<any>[];
+
+export function useColumnVisibility(sidebarWidth: number): VisibleColumns {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   useEffect(() => {
@@ -23,10 +26,40 @@ export function useColumnVisibility(sidebarWidth: number) {
   // Calculate available space after sidebar
   const availableWidth = windowWidth - sidebarWidth;
 
-  return {
-    showSize: availableWidth >= BREAKPOINTS.sm,
-    showCreatedAt: availableWidth >= BREAKPOINTS.md,
-    showStatus: availableWidth >= BREAKPOINTS.lg,
-    showActions: true, // Always show actions
-  };
+  return [
+    {
+      id: 'select',
+      header: 'select',
+      cell: () => null,
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      cell: () => null,
+      sortable: true
+    },
+    ...(availableWidth >= BREAKPOINTS.sm ? [{
+      id: 'size',
+      header: 'Size',
+      cell: () => null,
+      sortable: true
+    }] : []),
+    ...(availableWidth >= BREAKPOINTS.md ? [{
+      id: 'createdAt',
+      header: 'Created',
+      cell: () => null,
+      sortable: true
+    }] : []),
+    ...(availableWidth >= BREAKPOINTS.lg ? [{
+      id: 'status',
+      header: 'Status',
+      cell: () => null,
+      sortable: true
+    }] : []),
+    {
+      id: 'actions',
+      header: '',
+      cell: () => null
+    }
+  ];
 }
