@@ -37,27 +37,25 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="w-[25.75rem] border-l bg-background">
-      <div className="h-full overflow-hidden">
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-2">
-              {titleIcon}
-              <h3 className="font-semibold">{title}</h3>
-            </div>
-            {isClosable && (
-              <button
-                className="p-2 hover:bg-muted rounded-md"
-                onClick={() => handleOpenChange(!isOpen)}
-              >
-                {isOpen ? "×" : "→"}
-              </button>
-            )}
+    <div className="fixed top-[57px] right-0 bottom-0 w-[25.75rem] border-l bg-background">
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center gap-2">
+            {titleIcon}
+            <h3 className="font-semibold">{title}</h3>
           </div>
-          <div className="flex-1 p-4 overflow-y-auto">
-            <div className="space-y-4">
-              {children}
-            </div>
+          {isClosable && (
+            <button
+              className="p-2 hover:bg-muted rounded-md"
+              onClick={() => handleOpenChange(!isOpen)}
+            >
+              {isOpen ? "×" : "→"}
+            </button>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4">
+            {children}
           </div>
         </div>
       </div>
@@ -103,8 +101,8 @@ export default function PageSideDrawerPlayground() {
       </Card>
 
       <div className="relative min-h-[400px] border rounded-lg">
-        <div className={`transition-all duration-300 ${defaultOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
-          <div className="p-4">
+        <div className={`transition-all duration-300`}>
+          <div className="p-4 ml-24"> {/* Added margin to compensate for fixed drawer */}
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
               This area demonstrates how content responds to the drawer state.
