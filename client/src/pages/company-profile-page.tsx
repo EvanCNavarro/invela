@@ -1,7 +1,7 @@
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { PageContainer } from "@/components/ui/page-container";
+import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,7 +102,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   if (companiesLoading) {
     return (
       <DashboardLayout>
-        <PageContainer>
+        <PageTemplate>
           <div className="animate-pulse space-y-4">
             <div className="h-8 w-64 bg-muted rounded"></div>
             <div className="h-4 w-48 bg-muted rounded"></div>
@@ -112,7 +112,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               <div className="h-32 bg-muted rounded"></div>
             </div>
           </div>
-        </PageContainer>
+        </PageTemplate>
       </DashboardLayout>
     );
   }
@@ -120,7 +120,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   if (!companiesData || companiesData.length === 0) {
     return (
       <DashboardLayout>
-        <PageContainer>
+        <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Ban className="h-12 w-12 text-destructive" />
             <h2 className="text-2xl font-semibold">Access Restricted</h2>
@@ -132,7 +132,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               Go Back
             </Button>
           </div>
-        </PageContainer>
+        </PageTemplate>
       </DashboardLayout>
     );
   }
@@ -145,7 +145,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
 
     return (
       <DashboardLayout>
-        <PageContainer>
+        <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <AlertTriangle className="h-12 w-12 text-warning" />
             <h2 className="text-2xl font-semibold">Company Not Found</h2>
@@ -157,7 +157,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               Go Back
             </Button>
           </div>
-        </PageContainer>
+        </PageTemplate>
       </DashboardLayout>
     );
   }
@@ -217,7 +217,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </CardContent>
           </Card>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -309,7 +308,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             </CardContent>
           </Card>
         </div>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
@@ -520,20 +518,21 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
 
   return (
     <DashboardLayout>
-      <PageContainer>
+      <PageTemplate
+        showBreadcrumbs
+        headerActions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-sm font-medium bg-white border-muted-foreground/20"
+            onClick={handleBackClick}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Network
+          </Button>
+        }
+      >
         <div className="space-y-6">
-          <div className="flex items-center justify-start">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={handleBackClick}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Network
-            </Button>
-          </div>
-
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-center gap-6">
               <div className="relative w-20 h-20 rounded-lg shadow-[4px_4px_10px_0px_rgba(0,0,0,0.1),-4px_-4px_10px_0px_rgba(255,255,255,0.9)] aspect-square">
@@ -596,7 +595,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             companyName={company?.name || ''}
           />
         )}
-      </PageContainer>
+      </PageTemplate>
     </DashboardLayout>
   );
 }
