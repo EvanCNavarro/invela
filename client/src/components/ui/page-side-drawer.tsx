@@ -7,7 +7,6 @@ export interface PageSideDrawerProps {
   children?: React.ReactNode
   isClosable?: boolean
   defaultOpen?: boolean
-  width?: string
   onOpenChange?: (open: boolean) => void
 }
 
@@ -17,7 +16,6 @@ export function PageSideDrawer({
   children,
   isClosable = true,
   defaultOpen = false,
-  width = "25.75rem",
   onOpenChange
 }: PageSideDrawerProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
@@ -48,8 +46,7 @@ export function PageSideDrawer({
 
   return (
     <div 
-      className="fixed right-0 top-[57px] bottom-0 transition-all duration-300"
-      style={{ width }}
+      className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] transition-all duration-300"
     >
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
         <div className="flex flex-col h-full">
