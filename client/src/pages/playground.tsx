@@ -55,47 +55,54 @@ export default function PlaygroundPage() {
       {/* Preview Section */}
       <div>
         <h3 className="text-base font-medium mb-4">Preview</h3>
-        <div className="flex gap-4 items-start">
-          <Input
-            placeholder="Enter company name..."
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleHeadlessSearch()}
-            className="flex-1"
-          />
-          <Button 
-            onClick={handleHeadlessSearch}
-            disabled={isSearching || !companyName.trim()}
-          >
-            <Search className="h-4 w-4 mr-2" />
-            {isSearching ? "Searching..." : "Search"}
-          </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-10"
-                  disabled={!searchResult}
-                >
-                  <Info className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="max-w-[300px]">
-                <pre className="text-xs whitespace-pre-wrap">
-                  {searchResult ? JSON.stringify(searchResult, null, 2) : 'No data'}
-                </pre>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </div>
 
-      {/* Company Data Structure */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Company Data Structure</h2>
-        <CompanySearchPlayground />
+        {/* Headless Variant */}
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Headless Variant</h4>
+            <div className="flex gap-4 items-start">
+              <Input
+                placeholder="Enter company name..."
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && handleHeadlessSearch()}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleHeadlessSearch}
+                disabled={isSearching || !companyName.trim()}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                {isSearching ? "Searching..." : "Search"}
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-10"
+                      disabled={!searchResult}
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" className="max-w-[300px]">
+                    <pre className="text-xs whitespace-pre-wrap">
+                      {searchResult ? JSON.stringify(searchResult, null, 2) : 'No data'}
+                    </pre>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+
+          {/* UI Variant */}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">UI Variant</h4>
+            <CompanySearchPlayground />
+          </div>
+        </div>
       </div>
 
       {/* Headless Service Demo */}
