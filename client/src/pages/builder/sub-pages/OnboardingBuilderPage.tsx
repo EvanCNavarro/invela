@@ -15,46 +15,41 @@ export function OnboardingBuilderPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-8 pt-6">
-        {/* Main content area with split layout */}
-        <div className="flex relative">
-          {/* Left section */}
-          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
-            <BreadcrumbNav items={breadcrumbItems} />
+        <BreadcrumbNav items={breadcrumbItems} />
 
-            <div className="mt-6">
-              <PageHeader
-                title="Onboarding Configuration"
-                description="Design and manage the onboarding process."
-              />
-              <div className="container mx-auto">
-                <div className="text-muted-foreground">
-                  Configure onboarding workflows and requirements here.
-                </div>
+        <div className="mt-6">
+          <PageHeader
+            title="Onboarding Configuration"
+            description="Design and manage the onboarding process."
+          />
+
+          {/* Main content area with split layout */}
+          <div className="flex gap-8">
+            {/* Left content section */}
+            <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
+              <div className="text-muted-foreground">
+                Configure onboarding workflows and requirements here.
               </div>
             </div>
-          </div>
 
-          {/* Right section with margin */}
-          <div className="absolute right-0 top-0 bottom-0 w-[25.75rem]">
-            <div className="h-[calc(100%-3rem)] mx-8 mt-6">
-              <BuilderPageDrawer 
-                title="Onboarding Settings" 
-                defaultOpen={drawerOpen}
-              >
-                <div className="text-sm space-y-4">
-                  <h4 className="font-medium">Configuration Options</h4>
-                  <p className="text-muted-foreground">
-                    Customize the onboarding experience by configuring:
-                  </p>
-                  <ul className="space-y-2">
-                    <li>• Questionnaire steps</li>
-                    <li>• Required documents</li>
-                    <li>• Verification processes</li>
-                    <li>• Welcome messages</li>
-                  </ul>
-                </div>
-              </BuilderPageDrawer>
-            </div>
+            {/* Right drawer section */}
+            <BuilderPageDrawer 
+              title="Onboarding Settings" 
+              defaultOpen={drawerOpen}
+            >
+              <div className="text-sm space-y-4">
+                <h4 className="font-medium">Configuration Options</h4>
+                <p className="text-muted-foreground">
+                  Customize the onboarding experience by configuring:
+                </p>
+                <ul className="space-y-2">
+                  <li>• Questionnaire steps</li>
+                  <li>• Required documents</li>
+                  <li>• Verification processes</li>
+                  <li>• Welcome messages</li>
+                </ul>
+              </div>
+            </BuilderPageDrawer>
           </div>
         </div>
       </div>
