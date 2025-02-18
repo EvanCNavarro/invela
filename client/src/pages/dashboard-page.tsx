@@ -4,6 +4,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { InviteButton } from "@/components/ui/invite-button";
+import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 import {
   Settings,
   BarChart3,
@@ -15,6 +16,7 @@ import {
   LayoutGrid,
   AlertTriangle,
   Send,
+  Info,
   CheckCircle2
 } from "lucide-react";
 import {
@@ -63,7 +65,8 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
-  const [openFinTechModal, setOpenFinTechModal] = useState(false); // Added Fintech Modal State
+  const [openFinTechModal, setOpenFinTechModal] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
@@ -205,8 +208,12 @@ export default function DashboardPage() {
                   <Button variant="outline" className="w-full font-medium">
                     Set Risk Tracker
                   </Button>
-                  <Button variant="outline" className="w-full font-medium">
-                    View Reports
+                  <Button
+                    variant="outline"
+                    className="w-full font-medium"
+                    onClick={() => setDrawerOpen(!drawerOpen)}
+                  >
+                    {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
                   </Button>
                 </div>
 
@@ -275,6 +282,26 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      <PageSideDrawer
+        title="Dashboard Information"
+        titleIcon={<Info className="h-5 w-5" />}
+        defaultOpen={drawerOpen}
+        isClosable={true}
+        onOpenChange={setDrawerOpen}
+      >
+        <div className="text-sm space-y-4">
+          <h4 className="font-medium">Dashboard Overview</h4>
+          <p className="text-muted-foreground">
+            This drawer provides additional information and context about your dashboard:
+          </p>
+          <ul className="space-y-2">
+            <li>• Widget customization options</li>
+            <li>• Data refresh schedules</li>
+            <li>• Dashboard shortcuts</li>
+            <li>• Notification settings</li>
+          </ul>
+        </div>
+      </PageSideDrawer>
     </DashboardLayout>
   );
 }
