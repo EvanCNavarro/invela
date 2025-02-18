@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 
-interface PageSideDrawerProps {
+export interface PageSideDrawerProps {
   title?: string
   titleIcon?: React.ReactNode
   children?: React.ReactNode
@@ -13,7 +13,7 @@ interface PageSideDrawerProps {
   width?: string
 }
 
-const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
+export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   title = "Info Drawer",
   titleIcon,
   children,
