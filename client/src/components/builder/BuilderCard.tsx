@@ -25,7 +25,7 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
               className="object-cover w-full h-full"
             />
           ) : (
-            <div className="w-full h-full bg-[#F5F8FA] flex items-center justify-center">
+            <div className="w-full h-full bg-emerald-950/5 flex items-center justify-center">
               <Icon className="w-10 h-10 text-[#0F52BA]" />
             </div>
           )}
@@ -36,7 +36,7 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
           <div className="mt-4 flex justify-end">
             <Button className="group">
               {ctaText}
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="ml-4 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </div>
         </div>
