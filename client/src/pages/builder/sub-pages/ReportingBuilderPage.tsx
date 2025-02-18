@@ -10,7 +10,7 @@ const breadcrumbItems = [
 ];
 
 export function ReportingBuilderPage() {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
     <DashboardLayout>
@@ -31,7 +31,7 @@ export function ReportingBuilderPage() {
 
           <BuilderPageDrawer 
             title="Reporting Settings" 
-            defaultOpen={drawerOpen}
+            defaultOpen={false}
           >
             <div className="text-sm space-y-4">
               <h4 className="font-medium">Report Configuration</h4>
