@@ -4,7 +4,7 @@ import { InviteButton } from "@/components/ui/invite-button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 
-export function InvitePlayground() {
+const InvitePlayground = () => {
   const [openUserModal, setOpenUserModal] = React.useState(false)
   const [openFinTechModal, setOpenFinTechModal] = React.useState(false)
   const [pulseEnabled, setPulseEnabled] = React.useState(true)
@@ -57,3 +57,5 @@ export function InvitePlayground() {
     </div>
   )
 }
+
+export default InvitePlayground
