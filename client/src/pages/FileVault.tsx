@@ -942,11 +942,6 @@ const FileVault: React.FC = () => {
     onDrop(files);
   };
 
-  const toast = useToast();
-  const { isCollapsed } = useSidebarContext();
-  const sidebarWidth = isCollapsed ? 64 : 256;
-  const visibleColumns = useColumnVisibility(sidebarWidth);
-
   return (
     <DashboardLayout>
       <div className="container mx-auto p-6 space-y-6">
@@ -1011,7 +1006,7 @@ const FileVault: React.FC = () => {
             <div className="overflow-x-auto">
               <Table
                 data={paginatedFiles as TableRowData[]}
-                columns={columns}
+                columns={visibleColumns}
                 onSort={handleSort}
                 sortConfig={sortConfig}
               />
