@@ -18,7 +18,7 @@ export function RiskRulesBuilderPage() {
       <div className="h-full">
         <BreadcrumbNav items={breadcrumbItems} />
         <div className="mt-6 h-[calc(100%-3rem)] relative">
-          <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
+          <div className="transition-all duration-300">
             <PageHeader
               title="Risk Score Rules"
               description="Set up risk assessment criteria."
@@ -34,6 +34,8 @@ export function RiskRulesBuilderPage() {
             title="Risk Rules Settings"
             titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={drawerOpen}
+            isClosable={true}
+            onOpenChange={setDrawerOpen}
           >
             <div className="text-sm space-y-4">
               <h4 className="font-medium">Rule Configuration</h4>

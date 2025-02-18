@@ -11,6 +11,7 @@ export interface PageSideDrawerProps {
   isClosable?: boolean
   defaultOpen?: boolean
   width?: string
+  onOpenChange?: (open: boolean) => void
 }
 
 export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
@@ -20,12 +21,18 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   isClosable = true,
   defaultOpen = true,
   width = "23.75rem",
+  onOpenChange
 }) => {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
   React.useEffect(() => {
     setIsOpen(defaultOpen)
   }, [defaultOpen])
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setIsOpen(newOpen)
+    onOpenChange?.(newOpen)
+  }
 
   if (!isOpen) return null
 
@@ -41,7 +48,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
             {isClosable && (
               <button
                 className="p-2 hover:bg-muted rounded-md"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => handleOpenChange(!isOpen)}
               >
                 {isOpen ? "×" : "→"}
               </button>
@@ -111,6 +118,7 @@ export default function PageSideDrawerPlayground() {
           titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
           isClosable={isClosable}
           defaultOpen={defaultOpen}
+          onOpenChange={setDefaultOpen}
         >
           <div className="space-y-4">
             <h4 className="font-medium">Configuration Options</h4>
