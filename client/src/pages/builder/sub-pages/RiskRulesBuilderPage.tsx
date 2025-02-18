@@ -14,7 +14,7 @@ export function RiskRulesBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="Risk Score Rules"
-          description="Set up risk assessment criteria"
+          description="Set up risk assessment criteria."
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}

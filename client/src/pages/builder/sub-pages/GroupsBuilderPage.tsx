@@ -14,7 +14,7 @@ export function GroupsBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="User Groups"
-          description="Manage user groups and permissions"
+          description="Manage user groups and permissions."
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}

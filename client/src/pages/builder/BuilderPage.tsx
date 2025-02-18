@@ -46,7 +46,7 @@ export function BuilderPage() {
         {console.log('BuilderPage: About to render PageHeader')}
         <PageHeader
           title="Builder"
-          description="Customize your fintech platform's core functionality"
+          description="Customize your fintech platform's core functionality."
         />
         {console.log('BuilderPage: PageHeader rendered')}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
