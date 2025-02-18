@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
+import { PageSideDrawer } from "@/components/playground/PageSideDrawerPlayground";
+import { Info } from "lucide-react";
 import { useState } from "react";
 
 const breadcrumbItems = [
@@ -29,8 +30,9 @@ export function GroupsBuilderPage() {
             </div>
           </div>
 
-          <BuilderPageDrawer 
-            title="Group Settings" 
+          <PageSideDrawer 
+            title="Group Settings"
+            titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={drawerOpen}
           >
             <div className="text-sm space-y-4">
@@ -45,7 +47,7 @@ export function GroupsBuilderPage() {
                 <li>• Permission sets</li>
               </ul>
             </div>
-          </BuilderPageDrawer>
+          </PageSideDrawer>
         </div>
       </div>
     </DashboardLayout>

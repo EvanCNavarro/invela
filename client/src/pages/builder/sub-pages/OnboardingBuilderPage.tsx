@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
+import { PageSideDrawer } from "@/components/playground/PageSideDrawerPlayground";
+import { Info } from "lucide-react";
 import { useState } from "react";
 
 const breadcrumbItems = [
@@ -15,9 +16,7 @@ export function OnboardingBuilderPage() {
   return (
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-8 pt-6">
-        {/* Main content area with split layout */}
         <div className="flex relative">
-          {/* Left section */}
           <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[25.75rem]' : 'mr-0'}`}>
             <BreadcrumbNav items={breadcrumbItems} />
 
@@ -34,28 +33,24 @@ export function OnboardingBuilderPage() {
             </div>
           </div>
 
-          {/* Right section with margin */}
-          <div className="absolute right-0 top-0 bottom-0 w-[25.75rem]">
-            <div className="h-[calc(100%-3rem)] mx-8 mt-6">
-              <BuilderPageDrawer 
-                title="Onboarding Settings" 
-                defaultOpen={drawerOpen}
-              >
-                <div className="text-sm space-y-4">
-                  <h4 className="font-medium">Configuration Options</h4>
-                  <p className="text-muted-foreground">
-                    Customize the onboarding experience by configuring:
-                  </p>
-                  <ul className="space-y-2">
-                    <li>• Questionnaire steps</li>
-                    <li>• Required documents</li>
-                    <li>• Verification processes</li>
-                    <li>• Welcome messages</li>
-                  </ul>
-                </div>
-              </BuilderPageDrawer>
+          <PageSideDrawer 
+            title="Onboarding Settings"
+            titleIcon={<Info className="h-5 w-5" />}
+            defaultOpen={drawerOpen}
+          >
+            <div className="text-sm space-y-4">
+              <h4 className="font-medium">Configuration Options</h4>
+              <p className="text-muted-foreground">
+                Customize the onboarding experience by configuring:
+              </p>
+              <ul className="space-y-2">
+                <li>• Questionnaire steps</li>
+                <li>• Required documents</li>
+                <li>• Verification processes</li>
+                <li>• Welcome messages</li>
+              </ul>
             </div>
-          </div>
+          </PageSideDrawer>
         </div>
       </div>
     </DashboardLayout>
