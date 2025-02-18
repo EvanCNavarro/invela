@@ -22,11 +22,23 @@ export function PageSideDrawer({
 }: PageSideDrawerProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
+  // Use a ref to track mounted state
+  const isMounted = React.useRef(false)
+
   React.useEffect(() => {
+    isMounted.current = true
     setIsOpen(defaultOpen)
-  }, [defaultOpen])
+    return () => {
+      isMounted.current = false
+      // Only call onOpenChange if the component is unmounting and was open
+      if (isOpen) {
+        onOpenChange?.(false)
+      }
+    }
+  }, [defaultOpen, onOpenChange, isOpen])
 
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
+    if (!isMounted.current) return
     if (!isClosable && defaultOpen) return // Prevent closing if not closable and default open
     setIsOpen(newOpen)
     onOpenChange?.(newOpen)
@@ -64,7 +76,6 @@ export function PageSideDrawer({
   )
 }
 
-// Base page template that implements drawer and content layout
 export interface PageTemplateProps {
   children: React.ReactNode
   drawer?: React.ReactNode
