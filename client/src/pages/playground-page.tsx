@@ -148,15 +148,15 @@ export default function PlaygroundPage() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between mb-6">
           <PageHeader
             title="Component Playground"
             description="Test and preview UI components in different states"
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium">Select Component</label>
             <Select 

@@ -1,21 +1,25 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
-import { cn, formatFileSize } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   FileIcon,
   UploadIcon,
-  RefreshCcwIcon,
-  FileTextIcon,
-  Trash2Icon,
+  Download,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  Download,
-  Loader2
+  Loader2,
+  RefreshCcwIcon,
+  FileTextIcon,
+  Trash2Icon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ArrowUpDownIcon,
+  MoreVerticalIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,104 +39,36 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipTrigger,
   TooltipProvider,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SearchBar } from "@/components/ui/search-bar";
+import { Table, TableCell, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Column } from "@/components/ui/table";
+import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import React from 'react';
-import { SearchBar } from "@/components/playground/SearchBar";
-import { Table } from "@/components/playground/Table";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MoreVerticalIcon } from "lucide-react";
-import { TableCell, TableRow } from "@/components/ui/table";
-import { getFileColumns } from "@/components/files/FileTableColumns";
+import { useColumnVisibility } from "@/hooks/use-column-visibility";
+import { useSidebarContext } from "@/hooks/use-sidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpIcon, ArrowDownIcon, ArrowUpDownIcon } from "lucide-react";
-import { useColumnVisibility } from "@/components/files/useColumnVisibility";
-import { useSidebarContext } from "@/hooks/use-sidebar";
 
-type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
+// Type definitions
+type FileTableColumn = Column<TableRowData>;
 
-interface FileItem {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  status: FileStatus;
-  createdAt: string;
-  updatedAt: string;
-  uploadTime: string;  // New field for upload time
-  uploader?: string;
-  uploadTimeMs?: number;
-  downloadCount?: number;
-  lastAccessed?: string;
-  version?: number;
-  checksum?: string;
-
-  // New suggested metrics
-  // File lifecycle tracking
-  expiryDate?: string;               // Optional expiration date for temporary files
-  retentionPeriod?: number;          // How long to keep the file in days
-  lastModifiedBy?: string;           // User who last modified the file
-  modificationHistory?: string[];     // Array of modification timestamps
-
-  // Security and compliance
-  accessLevel?: 'public' | 'private' | 'restricted';  // File visibility level
-  encryptionStatus?: boolean;        // Whether file is encrypted
-  classificationType?: string;       // e.g., 'confidential', 'internal', 'public'
-  complianceTags?: string[];        // e.g., ['GDPR', 'HIPAA', 'PCI']
-
-  // Access patterns
-  lastDownloadDate?: string;        // Date of last download
-  uniqueViewers?: number;           // Number of unique users who viewed
-  averageViewDuration?: number;     // Average time spent viewing (for viewable files)
-  peakAccessTimes?: string[];      // Times of high access frequency
-
-  // Storage optimization
-  compressionRatio?: number;        // Compression effectiveness
-  duplicateCount?: number;          // Number of duplicate copies
-  storageLocation?: string;         // e.g., 'hot-storage', 'cold-storage'
-  storageOptimizationFlag?: boolean; // Whether file needs optimization
-
-  // Collaboration
-  sharedWith?: string[];           // List of users with access
-  collaboratorCount?: number;      // Number of users with access
-  commentCount?: number;           // Number of comments/annotations
-  lastCollaborationDate?: string;  // Last collaborative action date
-}
-
-interface FileApiResponse {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  status: FileStatus;
-  createdAt: string;
-  updatedAt: string;
-  uploadTime: string;  // Added to match FileItem
-  uploader?: string;
-  uploadTimeMs?: number;
-  downloadCount?: number;
-  lastAccessed?: string;
-  version?: number;
-  checksum?: string;
-  // Add other optional fields...
-}
-
-type SortField = 'name' | 'size' | 'createdAt' | 'status';
-type SortOrder = 'asc' | 'desc';
-
-interface UploadingFile extends Omit<FileItem, 'id'> {
-  id: string;
-  progress: number;
-}
+// Utility functions
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const getStatusStyles = (status: FileStatus) => {
   const baseStyles = "rounded-full px-2.5 py-1 text-xs font-medium";
@@ -140,14 +76,14 @@ const getStatusStyles = (status: FileStatus) => {
     uploaded: "bg-[#ECFDF3] text-[#027A48]",
     restored: "bg-[#ECFDF3] text-[#027A48]",
     uploading: "bg-[#FFF4ED] text-[#B93815]",
-    paused: "bg-[#F2F4F7] text-[#344054]", // Improved contrast from #475467
+    paused: "bg-[#F2F4F7] text-[#344054]",
     canceled: "bg-[#FFF1F3] text-[#C01048]",
     deleted: "bg-[#FFF1F3] text-[#C01048]"
   };
   return `${baseStyles} ${statusMap[status] || "text-muted-foreground"}`;
 };
 
-const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFile }) => {
+const FileNameCell = React.memo(({ file }: { file: TableRowData }) => {
   const nameRef = useRef<HTMLSpanElement>(null);
   const [isTextTruncated, setIsTextTruncated] = useState(false);
 
@@ -190,79 +126,15 @@ const FileNameCell = React.memo(({ file }: { file: FileApiResponse | UploadingFi
 
 FileNameCell.displayName = 'FileNameCell';
 
-const columnPriorities = {
-  fileName: 0,      // Always visible
-  size: 1,         // First to show
-  uploadDate: 2,    // Second to show
-  uploadTime: 3,    // Third to show
-  status: 4,        // Fourth to show
-  version: 5,       // Fifth to show (new priority)
-  actions: 0,       // Always visible
-  textPreview: 6,   // Sixth to show
-} as const;
-
-const useBreakpoint = () => {
-  const [breakpoint, setBreakpoint] = useState(() => {
-    if (typeof window === 'undefined') return 0;
-    return window.innerWidth;
-  });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setBreakpoint(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return breakpoint;
-};
-
 const formatTimeWithZone = (date: Date) => {
-  // Format time with timezone abbreviation
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    timeZoneName: 'short' // Shows 'ET', 'CT', 'PT', etc.
+    timeZoneName: 'short'
   }).format(date);
 };
-
-const TableSkeleton = () => (
-  <>
-    {Array.from({ length: 5 }).map((_, index) => (
-      <TableRow key={index} className="animate-pulse">
-        <TableCell className="w-[40px]">
-          <div className="h-4 w-4 bg-muted rounded" />
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 bg-muted rounded" />
-            <div className="h-4 w-32 bg-muted rounded" />
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="h-4 w-16 bg-muted rounded ml-auto" />
-        </TableCell>
-        <TableCell>
-          <div className="h-4 w-24 bg-muted rounded ml-auto" />
-        </TableCell>
-        <TableCell>
-          <div className="h-4 w-20 bg-muted rounded ml-auto" />
-        </TableCell>
-        <TableCell>
-          <div className="h-6 w-20 bg-muted rounded mx-auto" />
-        </TableCell>
-        <TableCell>
-          <div className="h-8 w-8 bg-muted rounded mx-auto" />
-        </TableCell>
-      </TableRow>
-    ))}
-  </>
-);
-
 
 const formatTimestampForFilename = () => {
   const now = new Date();
@@ -323,20 +195,6 @@ const FileConflictModal = ({
   );
 };
 
-const MetricBox = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-muted/30 rounded-md p-4 space-y-3">
-    <h3 className="font-semibold text-sm text-muted-foreground">{title}</h3>
-    <div className="space-y-2">{children}</div>
-  </div>
-);
-
-const MetricItem = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <div className="flex justify-between items-center text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium">{value}</span>
-  </div>
-);
-
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'N/A';
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -361,6 +219,27 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
 
   const currentFile = freshFileData || file;
 
+  const downloadMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const response = await fetch(`/api/files/${fileId}/download`);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = currentFile.name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    },
+    onSuccess: () => {
+    },
+    onError: (error) => {
+    }
+  });
+
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
@@ -372,7 +251,6 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Basic Information */}
           <div className="bg-muted/30 rounded-md p-4 space-y-3">
             <h3 className="font-semibold text-sm text-muted-foreground">File Information</h3>
             <div className="space-y-2">
@@ -401,7 +279,6 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
             </div>
           </div>
 
-          {/* Upload Information */}
           <div className="bg-muted/30 rounded-md p-4 space-y-3">
             <h3 className="font-semibold text-sm text-muted-foreground">Upload Information</h3>
             <div className="space-y-2">
@@ -441,7 +318,7 @@ const FileDetails = ({ file, onClose }: { file: FileItem; onClose: () => void })
   );
 };
 
-const FileVault = () => {
+const FileVault: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -450,22 +327,39 @@ const FileVault = () => {
     field: 'createdAt',
     order: 'desc'
   });
-  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [selectedFileDetails, setSelectedFileDetails] = useState<FileItem | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
-  const breakpoint = useBreakpoint();
   const { isCollapsed } = useSidebarContext();
-  const sidebarWidth = isCollapsed ? 64 : 256; // Sidebar widths
+  const sidebarWidth = isCollapsed ? 64 : 256;
   const visibleColumns = useColumnVisibility(sidebarWidth);
   const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
   const FileActions = ({ file, onDelete }: { file: FileItem, onDelete: (fileId: string) => void }) => {
+    const downloadMutation = useMutation({
+      mutationFn: async (fileId: string) => {
+        const response = await fetch(`/api/files/${fileId}/download`);
+        if (!response.ok) throw new Error('Download failed');
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      },
+      onSuccess: () => {
+      },
+      onError: (error) => {
+      }
+    });
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -505,7 +399,7 @@ const FileVault = () => {
     );
   };
 
-  const { data: files = [], isLoading } = useQuery<FileApiResponse[]>({
+  const { data: files = [], isLoading } = useQuery<TableRowData[]>({
     queryKey: ['/api/files']
   });
 
@@ -527,7 +421,6 @@ const FileVault = () => {
       return result;
     },
     onSuccess: () => {
-      // Force a fresh reload of files data
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       toast({
         title: "Success",
@@ -632,14 +525,11 @@ const FileVault = () => {
       document.body.removeChild(a);
     },
     onSuccess: (_, fileId) => {
-      // Invalidate both the file list and the specific file queries
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
       queryClient.invalidateQueries({ queryKey: [`/api/files/${fileId}`] });
     },
     onError: (error, fileId) => {
       const fileName = files.find(f => f.id === fileId)?.name || 'file';
-      //Assuming fileToast is defined elsewhere and has a showDownloadError method
-      //fileToast.showDownloadError(fileName); //This line assumes fileToast exists and has this function
     }
   });
 
@@ -649,7 +539,7 @@ const FileVault = () => {
         throw new Error('No files selected for download');
       }
 
-      const downloadToast = toast({
+      const toastId = toast({
         title: "Preparing Download",
         description: (
           <div className="flex items-center gap-2">
@@ -657,7 +547,6 @@ const FileVault = () => {
             <span>Preparing {fileIds.length} files for download...</span>
           </div>
         ),
-        duration: 0,
       });
 
       try {
@@ -684,27 +573,25 @@ const FileVault = () => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
-        // Dismiss the preparing toast
-        toast.dismiss(downloadToast.id);
-
-        toast({
-          title: "Download Complete",
-          description: `${fileIds.length} files have been downloaded successfully.`,
-          duration: 3000,
-        });
+        if (toastId) {
+          toast.update(toastId, {
+            title: "Download Complete",
+            description: `${fileIds.length} files have been downloaded successfully.`,
+            duration: 3000,
+          });
+        }
 
         return true;
       } catch (error) {
-        // Dismiss the preparing toast
-        toast.dismiss(downloadToast.id);
-
+        if (toastId) {
+          toast.update(toastId, {
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to download files",
+            variant: "destructive",
+            duration: 3000,
+          });
+        }
         console.error('Bulk download error:', error);
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to download files",
-          variant: "destructive",
-          duration: 3000,
-        });
         throw error;
       }
     },
@@ -723,7 +610,6 @@ const FileVault = () => {
     });
   };
 
-
   const toggleFileSelection = (fileId: string) => {
     setSelectedFiles(prev => {
       const newSet = new Set(prev);
@@ -736,7 +622,7 @@ const FileVault = () => {
     });
   };
 
-  const toggleAllFiles = (files: (FileApiResponse | UploadingFile)[]) => {
+  const toggleAllFiles = (files: TableRowData[]) => {
     setSelectedFiles(prev => {
       if (prev.size === files.length) {
         return new Set();
@@ -746,7 +632,6 @@ const FileVault = () => {
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
-    // Check for duplicate files
     const duplicates = acceptedFiles.filter(file =>
       files.some(existingFile => existingFile.name === file.name)
     );
@@ -769,13 +654,11 @@ const FileVault = () => {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Always set override to true if a file with the same name exists
       const existingFile = files.find(f => f.name === file.name);
       if (existingFile) {
         formData.append('override', 'true');
       }
 
-      // Create temporary upload state
       const tempId = crypto.randomUUID();
       const uploadingFile: UploadingFile = {
         id: tempId,
@@ -787,22 +670,18 @@ const FileVault = () => {
         updatedAt: new Date().toISOString(),
         uploadTime: new Date().toISOString(),
         progress: 0,
-        version: existingFile?.version || 1.0 // Keep existing version during upload
+        version: existingFile?.version || 1.0
       };
 
-      // If file exists, update its status to uploading
       if (existingFile) {
-        // Remove the old file entry from the list while uploading
-        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+        queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
           return oldFiles.filter(f => f.name !== file.name);
         });
       }
 
-      // Add the uploading file to the list
       setUploadingFiles(prev => [...prev.filter(f => f.name !== file.name), uploadingFile]);
 
       try {
-        // Show upload progress toast
         toast({
           title: "Uploading File",
           description: (
@@ -816,17 +695,14 @@ const FileVault = () => {
 
         const uploadedFile = await uploadMutation.mutateAsync(formData);
 
-        // Remove temporary uploading state
         setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
 
-        // Update the query cache with the uploaded file information
-        queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
-          // Remove any existing file with the same name
+        queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
           const filteredFiles = oldFiles.filter(f => f.name !== file.name);
           const newFile = {
             ...uploadedFile,
             uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-            version: existingFile ? existingFile.version + 1.0 : 1.0, // Increment by 1.0
+            version: existingFile ? existingFile.version + 1.0 : 1.0,
             status: 'uploaded' as FileStatus,
           };
           return [...filteredFiles, newFile];
@@ -846,8 +722,7 @@ const FileVault = () => {
         );
 
         if (existingFile) {
-          // Restore the original file on error
-          queryClient.setQueryData(['/api/files'], (oldFiles: FileApiResponse[] = []) => {
+          queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
             return [...oldFiles.filter(f => f.name !== file.name), existingFile];
           });
         }
@@ -860,14 +735,6 @@ const FileVault = () => {
         });
       }
     }
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
@@ -883,8 +750,8 @@ const FileVault = () => {
 
   const allFiles = useMemo(() => {
     return [
-            ...uploadingFiles,
-      ...(files as FileApiResponse[])
+      ...uploadingFiles,
+      ...(files as TableRowData[])
     ];
   }, [files, uploadingFiles]);
 
@@ -892,11 +759,9 @@ const FileVault = () => {
     let result = [...allFiles];
 
     if (searchQuery && searchResults.length > 0) {
-      // Use fuzzy search results when available
       const matchedIds = new Set(searchResults.map(result => result.item.id));
       result = result.filter(file => matchedIds.has(file.id));
     } else if (searchQuery) {
-      // Fallback to basic filtering if no fuzzy results
       const query = searchQuery.toLowerCase();
       result = result.filter(file =>
         file.name.toLowerCase().includes(query) ||
@@ -1002,15 +867,6 @@ const FileVault = () => {
     deleteMutation.mutate(fileId);
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   const handleSearch = (value: string) => {
     setSearchQuery(value);
   };
@@ -1022,14 +878,13 @@ const FileVault = () => {
       const startIndex = match.indices[0][0];
       const endIndex = match.indices[0][1];
       highlightedText = highlightedText.substring(0, startIndex) +
-                        `<mark>${highlightedText.substring(startIndex, endIndex)}</mark>` +
-                        highlightedText.substring(endIndex);
+        `<mark>${highlightedText.substring(startIndex, endIndex)}</mark>` +
+        highlightedText.substring(endIndex);
     });
     return highlightedText;
   };
 
-  // Define table columns
-  const columns = [
+  const columns: FileTableColumn[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -1041,36 +896,35 @@ const FileVault = () => {
       ),
       cell: ({ row }) => (
         <Checkbox
-          checked={selectedFiles.has(row.original.id)}
-          onCheckedChange={() => toggleFileSelection(row.original.id)}
+          checked={selectedFiles.has(row.id)}
+          onCheckedChange={() => toggleFileSelection(row.id)}
           aria-label="Select row"
         />
       ),
     },
     {
       id: 'name',
-      header: 'Name',
-      cell: ({ row }) => <FileNameCell file={row.original} />,
+      header: 'Name',      cell: ({ row }) => <FileNameCell file={row} />,
       sortable: true
     },
     {
       id: 'size',
       header: 'Size',
-      cell: ({ row }) => formatFileSize(row.original.size),
+      cell: ({ row }) => formatFileSize(row.size),
       sortable: true
     },
     {
       id: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => formatDate(row.original.createdAt),
+      cell: ({ row }) => formatDate(row.createdAt),
       sortable: true
     },
     {
       id: 'status',
       header: 'Status',
       cell: ({ row }) => (
-        <span className={getStatusStyles(row.original.status)}>
-          {row.original.status}
+        <span className={getStatusStyles(row.status)}>
+          {row.status}
         </span>
       ),
       sortable: true
@@ -1079,15 +933,24 @@ const FileVault = () => {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <FileActions file={row.original} onDelete={handleDelete} />
+        <FileActions file={row} onDelete={handleDelete} />
       )
     }
   ];
 
+  const handleFileUpload = (files: File[]) => {
+    onDrop(files);
+  };
+
+  const toast = useToast();
+  const { isCollapsed } = useSidebarContext();
+  const sidebarWidth = isCollapsed ? 64 : 256;
+  const visibleColumns = useColumnVisibility(sidebarWidth);
+
   return (
     <DashboardLayout>
-      <div className="container mx-auto space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center justify-between mb-6">
           <PageHeader
             title="File Vault"
             description="Securely store and manage your company's files"
@@ -1100,38 +963,26 @@ const FileVault = () => {
               <UploadIcon className="h-4 w-4" />
               Upload Files
             </Button>
-            {selectedFiles.size > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
-                className="gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download ({selectedFiles.size})
-              </Button>
-            )}
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="w-full">
-            <DragDropProvider
-              onFilesAccepted={onDrop}
-              maxFiles={10}
-              maxSize={50 * 1024 * 1024} // 50MB
-            >
-              <FileUploadZone
-                onDrop={onDrop}
-                acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
-              />
-            </DragDropProvider>
-          </div>
+        <div className="space-y-6">
+          <DragDropProvider
+            onDrop={handleFileUpload}
+            maxFiles={10}
+            maxSize={50 * 1024 * 1024}
+          >
+            <FileUploadZone
+              onDrop={handleFileUpload}
+              acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
+            />
+          </DragDropProvider>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="w-full sm:max-w-md">
               <SearchBar
                 value={searchQuery}
-                onChange={setSearchQuery}
+                onChange={handleSearch}
                 placeholder="Search files..."
                 className="w-full"
               />
@@ -1159,43 +1010,11 @@ const FileVault = () => {
           <div className="border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
               <Table
-                data={paginatedFiles}
+                data={paginatedFiles as TableRowData[]}
                 columns={columns}
                 onSort={handleSort}
                 sortConfig={sortConfig}
-              >
-                {isLoading ? (
-                  <TableSkeleton />
-                ) : (
-                  paginatedFiles.map((file) => (
-                    <TableRow key={file.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedFiles.has(file.id)}
-                          onCheckedChange={() => toggleFileSelection(file.id)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FileNameCell file={file} />
-                      </TableCell>
-                      <TableCell>
-                        {formatFileSize(file.size)}
-                      </TableCell>
-                      <TableCell>
-                        {formatDate(file.createdAt)}
-                      </TableCell>
-                      <TableCell>
-                        <span className={getStatusStyles(file.status)}>
-                          {file.status}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <FileActions file={file} onDelete={handleDelete} />
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </Table>
+              />
             </div>
           </div>
 
@@ -1248,7 +1067,6 @@ const FileVault = () => {
         </div>
       </div>
 
-      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -1256,12 +1074,11 @@ const FileVault = () => {
         multiple
         onChange={(e) => {
           if (e.target.files) {
-            onDrop(Array.from(e.target.files));
+            handleFileUpload(Array.from(e.target.files));
           }
         }}
       />
 
-      {/* Modals */}
       {showConflictModal && (
         <FileConflictModal
           conflicts={conflictFiles}
@@ -1287,23 +1104,6 @@ const FileVault = () => {
       )}
     </DashboardLayout>
   );
-}
+};
 
 export default FileVault;
-
-const FilePreview = ({ fileId }: { fileId: string }) => {
-  const { data: previewData } = useQuery({
-    queryKey: [`/api/files/${fileId}/preview`],
-    enabled: !!fileId,
-  });
-
-  if (!previewData) {
-    return <div className="text-sm text-muted-foreground">Loading preview...</div>;
-  }
-
-  return (
-    <pre className="text-sm whitespace-pre-wrap">
-      {previewData.preview}
-    </pre>
-  );
-};
