@@ -7,7 +7,7 @@ const builderCards = [
   {
     title: "Onboarding Configuration",
     description: "Configure fintech onboarding questionnaires and requirements.",
-    imagePath: "/builder/thumbnail_onboarding.png",
+    imagePath: "/thumbnail_onboarding.png",
     route: "/builder/onboarding",
     ctaText: "Configure Onboarding",
     icon: ClipboardList
@@ -15,7 +15,7 @@ const builderCards = [
   {
     title: "Risk Score Rules",
     description: "Define risk scoring rules based on fintech data standards.",
-    imagePath: "/builder/thumbnail_rules.png",
+    imagePath: "/thumbnail_rules.png",
     route: "/builder/risk-rules",
     ctaText: "Set Up Rules",
     icon: Scale
@@ -23,7 +23,7 @@ const builderCards = [
   {
     title: "Automated Reporting",
     description: "Configure system monitoring and notification settings.",
-    imagePath: "/builder/thumbnail_reports.png",
+    imagePath: "/thumbnail_reports.png",
     route: "/builder/reporting",
     ctaText: "Manage Reports",
     icon: Bell
@@ -31,7 +31,7 @@ const builderCards = [
   {
     title: "User Groups",
     description: "Create and manage user groups with custom permissions.",
-    imagePath: "/builder/thumbnail_groups.png",
+    imagePath: "/thumbnail_groups.png",
     route: "/builder/groups",
     ctaText: "Manage Groups",
     icon: Users
