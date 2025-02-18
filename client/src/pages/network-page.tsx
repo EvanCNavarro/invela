@@ -265,7 +265,7 @@ export default function NetworkPage() {
         <PageHeader
           title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
           description="View and manage companies in your network."
-          action={
+          actions={
             <InviteButton
               variant="fintech"
               pulse={true}
