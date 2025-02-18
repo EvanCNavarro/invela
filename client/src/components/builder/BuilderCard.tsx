@@ -14,16 +14,24 @@ interface BuilderCardProps {
 }
 
 export function BuilderCard({ title, description, imagePath, icon: Icon, route, ctaText }: BuilderCardProps) {
+  console.log('Loading builder card with image:', imagePath); // Debug log
+
   return (
     <Link href={route}>
       <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer">
-        <div className="aspect-[16/7] relative bg-muted">
+        <div className="aspect-[16/9] relative bg-muted">
           {imagePath ? (
-            <img
-              src={imagePath}
-              alt={title}
-              className="object-cover w-full h-full"
-            />
+            <>
+              <img
+                src={imagePath}
+                alt={title}
+                className="object-cover w-full h-full"
+                onError={(e) => {
+                  console.error('Failed to load image:', imagePath, e);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </>
           ) : (
             <div className="w-full h-full bg-emerald-950/5 flex items-center justify-center">
               <Icon className="w-10 h-10 text-[#0F52BA]" />
@@ -36,7 +44,7 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
           <div className="mt-4 flex justify-end">
             <Button className="group">
               {ctaText}
-              <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="ml-1.5 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </div>
         </div>
