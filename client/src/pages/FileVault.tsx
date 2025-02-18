@@ -883,7 +883,7 @@ const FileVault = () => {
 
   const allFiles = useMemo(() => {
     return [
-      ...uploadingFiles,
+            ...uploadingFiles,
       ...(files as FileApiResponse[])
     ];
   }, [files, uploadingFiles]);
@@ -1056,51 +1056,43 @@ const FileVault = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="container mx-auto space-y-4">
         <div className="flex items-center justify-between">
           <PageHeader
             title="File Vault"
             description="Securely store and manage your company's files"
-            actions={
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleUploadClick}
-                  className="gap-2"
-                >
-                  <UploadIcon className="h-4 w-4" />
-                  Upload Files
-                </Button>
-                {selectedFiles.size > 0 && (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
-                      className="gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download ({selectedFiles.size})
-                    </Button>
-                  </>
-                )}
-              </div>
-            }
           />
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleUploadClick}
+              className="gap-2"
+            >
+              <UploadIcon className="h-4 w-4" />
+              Upload Files
+            </Button>
+            {selectedFiles.size > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => bulkDownloadMutation.mutate(Array.from(selectedFiles))}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download ({selectedFiles.size})
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
-          {/* File upload and table content */}
           <div className="w-full">
             <DragDropProvider
               onFilesAccepted={onDrop}
-              className="min-h-[200px] rounded-lg transition-colors duration-200"
-              activeClassName="bg-primary/5 border-2 border-dashed border-primary/30"
+              maxFiles={10}
+              maxSize={50 * 1024 * 1024} // 50MB
             >
               <FileUploadZone
-                onFilesAccepted={onDrop}
-                variant="box"
-                maxFiles={10}
-                maxSize={5 * 1024 * 1024}
-                className="min-h-[200px]"
+                onUpload={handleUploadClick}
+                acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
               />
             </DragDropProvider>
           </div>
@@ -1108,114 +1100,173 @@ const FileVault = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div className="w-full sm:max-w-md">
               <SearchBar
-                data={allFiles}
-                keys={['name', 'type', 'status']}
-                onResults={setSearchResults}
-                containerClassName="w-full"
+                value={searchQuery}
+                onChange={handleSearch}
                 placeholder="Search files..."
+                className="w-full"
               />
             </div>
 
-            <div className="flex gap-2 items-center w-full sm:w-auto">
+            <div className="flex items-center gap-2">
               <Select
                 value={statusFilter}
-                onValueChange={(value) => setStatusFilter(value as FileStatus | 'all')}
+                onValueChange={(value: FileStatus | 'all') => setStatusFilter(value)}
               >
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-[130px]">
+                  <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="uploaded">Uploaded</SelectItem>
                   <SelectItem value="uploading">Uploading</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
                   <SelectItem value="deleted">Deleted</SelectItem>
                 </SelectContent>
               </Select>
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                multiple
-                onChange={(e) => {
-                  if (e.target.files) {
-                    onDrop(Array.from(e.target.files));
-                  }
-                }}
-              />
             </div>
           </div>
 
-          <div className="flex-1 min-h-0">
-            <div className="border rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table
-                  data={paginatedFiles}
-                  columns={columns}
-                  searchResults={searchResults}
-                  selectable
-                  selectedItems={selectedFiles}
-                  onSelectionChange={setSelectedFiles}
-                  onSort={handleSort}
-                  sortField={sortConfig.field}
-                  sortDirection={sortConfig.order}
-                  className="w-full"
-                />
-              </div>
+          <div className="border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                {isLoading ? (
+                  <TableSkeleton />
+                ) : (
+                  <>
+                    {paginatedFiles.map((file) => (
+                      <TableRow key={file.id}>
+                        <TableCell>
+                          <Checkbox
+                            id={file.id}
+                            checked={selectedFiles.has(file.id)}
+                            onCheckedChange={() => toggleFileSelection(file.id)}
+                          />
+                        </TableCell>
+                        <FileNameCell file={file} />
+                        <TableCell>
+                          {formatFileSize(file.size)}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(file.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(file.uploadTime)}
+                        </TableCell>
+                        <TableCell>
+                          <span className={getStatusStyles(file.status)}>
+                            {file.status}
+                          </span>
+                        </TableCell>
+                        {visibleColumns.has('version') && (
+                          <TableCell>
+                            v{file.version?.toFixed(1) || '1.0'}
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('actions') && (
+                          <TableCell>
+                            <FileActions file={file} onDelete={handleDelete} />
+                          </TableCell>
+                        )}
+                        {visibleColumns.has('textPreview') && (
+                          <TableCell className="whitespace-nowrap">
+                            <FilePreview fileId={file.id} />
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  </>
+                )}
+              </Table>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-sm text-muted-foreground order-2 sm:order-1">
+              Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
+              {filteredAndSortedFiles.length} files
             </div>
 
-            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-sm text-muted-foreground order-2 sm:order-1">
-                Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
-                {filteredAndSortedFiles.length} files
-              </div>
+            <div className="flex items-center gap-2 order-1 sm:order-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeftIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
 
-              <div className="flex items-center gap-2 order-1 sm:order-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronsLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeftIcon className="h-4 w-4" />
-                </Button>
+              <span className="text-sm">
+                Page {currentPage} of {totalPages}
+              </span>
 
-                <span className="text-sm whitespace-nowrap">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handlePageChange(totalPages)}
-                  disabled={currentPage === totalPages}
-                >
-                  <ChevronsRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRightIcon className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
-
       </div>
+
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        multiple
+        onChange={(e) => {
+          if (e.target.files) {
+            onDrop(Array.from(e.target.files));
+          }
+        }}
+      />
+
+      {showConflictModal && (
+        <FileConflictModal
+          conflicts={conflictFiles}
+          onResolve={(overrideAll) => {
+            setShowConflictModal(false);
+            if (overrideAll) {
+              uploadFiles(conflictFiles.map(c => c.file), true);
+            }
+            setConflictFiles([]);
+          }}
+          onCancel={() => {
+            setShowConflictModal(false);
+            setConflictFiles([]);
+          }}
+        />
+      )}
+
+      {selectedFileDetails && (
+        <FileDetails
+          file={selectedFileDetails}
+          onClose={() => setSelectedFileDetails(null)}
+        />
+      )}
     </DashboardLayout>
   );
-};
+}
 
 export default FileVault;
 
