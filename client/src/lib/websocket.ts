@@ -17,6 +17,7 @@ class WebSocketService {
   private isConnecting = false;
   private connectionPromise: Promise<void> | null = null;
   private connectionResolve: (() => void) | null = null;
+  private connectionReject: ((error: Error) => void) | null = null;
 
   constructor() {
     this.connect();
@@ -58,6 +59,7 @@ class WebSocketService {
           this.socket.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
 
           // Set timeout for pong response
+          if (this.pongTimeout) clearTimeout(this.pongTimeout);
           this.pongTimeout = setTimeout(() => {
             console.log('[WebSocket] No pong received, reconnecting...');
             this.reconnect();
@@ -71,13 +73,18 @@ class WebSocketService {
   }
 
   private async connect(): Promise<void> {
-    if (this.isConnecting || this.connectionPromise) {
+    if (this.isConnecting || (this.socket?.readyState === WebSocket.CONNECTING)) {
       return this.connectionPromise!;
     }
 
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      return Promise.resolve();
+    }
+
     this.isConnecting = true;
-    this.connectionPromise = new Promise((resolve) => {
+    this.connectionPromise = new Promise((resolve, reject) => {
       this.connectionResolve = resolve;
+      this.connectionReject = reject;
 
       try {
         const wsUrl = this.getWebSocketUrl();
@@ -92,6 +99,7 @@ class WebSocketService {
             this.socket?.close();
             this.cleanup();
             this.handleReconnect();
+            reject(new Error('Connection timeout'));
           }
         }, CONNECTION_TIMEOUT);
 
@@ -101,11 +109,7 @@ class WebSocketService {
           this.reconnectAttempts = 0;
           this.startHeartbeat();
           this.isConnecting = false;
-          if (this.connectionResolve) {
-            this.connectionResolve();
-            this.connectionResolve = null;
-          }
-          this.connectionPromise = null;
+          resolve();
         };
 
         this.socket.onmessage = (event) => {
@@ -135,20 +139,26 @@ class WebSocketService {
           console.log('[WebSocket] Connection closed:', event.code, event.reason);
           this.cleanup();
           this.handleReconnect();
+          reject(new Error(`Connection closed: ${event.code}`));
         };
 
         this.socket.onerror = (error) => {
           console.error('[WebSocket] Error:', error);
+          reject(error);
         };
 
       } catch (error) {
         console.error('[WebSocket] Error establishing connection:', error);
         this.cleanup();
         this.handleReconnect();
+        reject(error);
       }
     });
 
-    return this.connectionPromise;
+    return this.connectionPromise.catch((error) => {
+      console.error('[WebSocket] Connection attempt failed:', error);
+      throw error;
+    });
   }
 
   private cleanup() {
@@ -157,6 +167,7 @@ class WebSocketService {
     this.isConnecting = false;
     this.connectionPromise = null;
     this.connectionResolve = null;
+    this.connectionReject = null;
   }
 
   private getRetryDelay(): number {
@@ -199,31 +210,41 @@ class WebSocketService {
   }
 
   public async subscribe(type: string, handler: MessageHandler): Promise<() => void> {
-    await this.connect();
+    try {
+      await this.connect();
 
-    if (!this.messageHandlers.has(type)) {
-      this.messageHandlers.set(type, new Set());
-    }
-    this.messageHandlers.get(type)!.add(handler);
-
-    return () => {
-      const handlers = this.messageHandlers.get(type);
-      if (handlers) {
-        handlers.delete(handler);
-        if (handlers.size === 0) {
-          this.messageHandlers.delete(type);
-        }
+      if (!this.messageHandlers.has(type)) {
+        this.messageHandlers.set(type, new Set());
       }
-    };
+      this.messageHandlers.get(type)!.add(handler);
+
+      return () => {
+        const handlers = this.messageHandlers.get(type);
+        if (handlers) {
+          handlers.delete(handler);
+          if (handlers.size === 0) {
+            this.messageHandlers.delete(type);
+          }
+        }
+      };
+    } catch (error) {
+      console.error('[WebSocket] Error in subscribe:', error);
+      throw error;
+    }
   }
 
   public async send(type: string, data: any): Promise<void> {
-    await this.connect();
+    try {
+      await this.connect();
 
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify({ type, data }));
-    } else {
-      throw new Error('[WebSocket] Connection not ready');
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({ type, data }));
+      } else {
+        throw new Error('[WebSocket] Connection not ready');
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error in send:', error);
+      throw error;
     }
   }
 
