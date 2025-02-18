@@ -21,13 +21,13 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
 
   return (
     <Link href={route}>
-      <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer">
-        <div className="aspect-[16/9] relative bg-muted">
+      <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer h-full">
+        <div className="h-48 relative bg-muted">
           {imagePath && !imageError ? (
             <img
               src={imagePath}
               alt={title}
-              className="object-cover w-full h-full"
+              className="w-full h-full object-cover"
               onError={(e) => {
                 console.error('BuilderCard: Failed to load image:', {
                   path: imagePath,
