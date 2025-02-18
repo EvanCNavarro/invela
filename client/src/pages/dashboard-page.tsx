@@ -76,15 +76,19 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
+  const handleDrawerChange = (open: boolean) => {
+    setDrawerOpen(open);
+  };
+
   const drawer = (
     <PageSideDrawer
       title="Dashboard Information"
       titleIcon={<Info className="h-5 w-5" />}
       defaultOpen={drawerOpen}
       isClosable={true}
-      onOpenChange={setDrawerOpen}
+      onOpenChange={handleDrawerChange}
     >
-      <div className="text-sm space-y-4">
+      <div className="space-y-4">
         <h4 className="font-medium">Dashboard Overview</h4>
         <p className="text-muted-foreground">
           This drawer provides additional information and context about your dashboard:
@@ -104,7 +108,7 @@ export default function DashboardPage() {
       <PageTemplate
         drawer={drawer}
         drawerOpen={drawerOpen}
-        onDrawerOpenChange={setDrawerOpen}
+        onDrawerOpenChange={handleDrawerChange}
       >
         <div className="space-y-6">
           <div className="flex items-center justify-between">

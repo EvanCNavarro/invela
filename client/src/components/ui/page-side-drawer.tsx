@@ -24,11 +24,7 @@ export function PageSideDrawer({
 
   React.useEffect(() => {
     setIsOpen(defaultOpen)
-    return () => {
-      // Cleanup effect
-      onOpenChange?.(false)
-    }
-  }, [defaultOpen, onOpenChange])
+  }, [defaultOpen])
 
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
     if (!isClosable && defaultOpen) return // Prevent closing if not closable and default open
@@ -40,7 +36,7 @@ export function PageSideDrawer({
 
   return (
     <div 
-      className="fixed right-0 top-[57px] bottom-0 px-8 pt-6 transition-all duration-300"
+      className="fixed right-0 top-[57px] bottom-0 pt-6 transition-all duration-300"
       style={{ width }}
     >
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -59,10 +55,8 @@ export function PageSideDrawer({
               </button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4">
-              {children}
-            </div>
+          <div className="flex-1 overflow-y-auto px-6">
+            {children}
           </div>
         </div>
       </div>
@@ -88,7 +82,7 @@ export function PageTemplate({
     <div className="flex-1 flex overflow-x-hidden">
       <div className={cn(
         "flex-1 min-w-0 transition-all duration-300",
-        drawerOpen ? "mr-[27.25rem]" : ""
+        drawerOpen ? "mr-[25.75rem]" : ""
       )}>
         {children}
       </div>
