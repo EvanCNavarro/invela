@@ -4,10 +4,6 @@ import { PageHeader } from "@/components/ui/page-header";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import type { PageTemplateProps } from "@/types/layout";
 
-/**
- * Standard page template component that MUST be used for all pages
- * in the application (except auth, error pages).
- */
 export function PageTemplate({
   children,
   drawer,
@@ -26,19 +22,23 @@ export function PageTemplate({
         drawerOpen ? "mr-[25.75rem]" : "",
         className
       )}>
+        {showBreadcrumbs && (
+          <div className="px-6 pt-6">
+            <BreadcrumbNav />
+          </div>
+        )}
+
+        {(title || description || headerActions) && (
+          <div className="px-6 pt-6">
+            <PageHeader
+              title={title}
+              description={description}
+              actions={headerActions}
+            />
+          </div>
+        )}
+
         <div className="p-6">
-          {showBreadcrumbs && <BreadcrumbNav />}
-
-          {(title || description || headerActions) && (
-            <div className="mb-6">
-              <PageHeader
-                title={title}
-                description={description}
-                actions={headerActions}
-              />
-            </div>
-          )}
-
           {children}
         </div>
       </div>
