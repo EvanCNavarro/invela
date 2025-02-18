@@ -19,23 +19,22 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   children,
   isClosable = true,
   defaultOpen = true,
-  width = "23.75rem", // 380px converted to rem
+  width = "23.75rem",
 }) => {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
-  // Update isOpen when defaultOpen prop changes
   React.useEffect(() => {
     setIsOpen(defaultOpen)
   }, [defaultOpen])
 
   return (
     <div 
-      className={`absolute right-0 inset-y-0 transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
+      className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
       style={{ width }}
     >
-      <div className="h-full">
+      <div className="flex flex-col h-full">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             {titleIcon}
@@ -50,7 +49,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
             </button>
           )}
         </div>
-        <div className="p-4 overflow-y-auto h-[calc(100%-4rem)]">
+        <div className="flex-1 p-4 overflow-y-auto">
           {children}
         </div>
       </div>
