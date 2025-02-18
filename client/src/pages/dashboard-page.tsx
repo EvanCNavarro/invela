@@ -6,6 +6,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageTemplate } from "@/components/ui/page-template";
 import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   Settings,
   BarChart3,
   Globe,
@@ -81,31 +87,34 @@ export default function DashboardPage() {
   };
 
   const drawer = (
-    <PageSideDrawer
-      title="Dashboard Information"
-      titleIcon={<Info className="h-5 w-5" />}
-      defaultOpen={drawerOpen}
-      isClosable={true}
-      onOpenChange={handleDrawerChange}
-    >
-      <div className="space-y-4">
-        <h4 className="font-medium">Dashboard Overview</h4>
-        <p className="text-muted-foreground">
-          This drawer provides additional information and context about your dashboard:
-        </p>
-        <ul className="space-y-2">
-          <li>• Widget customization options</li>
-          <li>• Data refresh schedules</li>
-          <li>• Dashboard shortcuts</li>
-          <li>• Notification settings</li>
-        </ul>
-      </div>
-    </PageSideDrawer>
+    <Drawer open={drawerOpen} onOpenChange={handleDrawerChange}>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle className="flex items-center gap-2">
+            <Info className="h-5 w-5" />
+            Dashboard Information
+          </DrawerTitle>
+          <div className="space-y-4">
+            <h4 className="font-medium">Dashboard Overview</h4>
+            <p className="text-muted-foreground">
+              This drawer provides additional information and context about your dashboard:
+            </p>
+            <ul className="space-y-2">
+              <li>• Widget customization options</li>
+              <li>• Data refresh schedules</li>
+              <li>• Dashboard shortcuts</li>
+              <li>• Notification settings</li>
+            </ul>
+          </div>
+        </DrawerHeader>
+      </DrawerContent>
+    </Drawer>
   );
 
   return (
     <DashboardLayout>
       <PageTemplate
+        showBreadcrumbs
         drawer={drawer}
         drawerOpen={drawerOpen}
         onDrawerOpenChange={handleDrawerChange}
