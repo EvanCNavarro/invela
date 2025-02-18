@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CompanySearchPlayground } from "@/components/playground/CompanySearchPlayground";
-import { HeadlessSearchDemo } from "@/components/playground/HeadlessSearchDemo";
+import { HeadlessSearchDemo } from "@/components/playground/HeadlessSearchDemo"; //Re-added import
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
