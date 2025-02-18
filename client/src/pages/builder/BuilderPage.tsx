@@ -43,8 +43,8 @@ export function BuilderPage() {
     <DashboardLayout>
       <div className="space-y-6">
         <PageHeader
-          heading="Builder"
-          subtext="Configure and customize your platform's core functionalities"
+          heading="Platform Builder"
+          subtext="Design and customize your fintech platform's functionality with our comprehensive suite of builder tools"
         />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {builderCards.map((card) => (
