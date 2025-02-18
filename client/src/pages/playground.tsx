@@ -9,9 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Play } from "lucide-react";
 
 export default function PlaygroundPage() {
   const [activeVariant, setActiveVariant] = useState<'headless' | 'ui'>('headless');
+  const [showHeadlessSearch, setShowHeadlessSearch] = useState(false);
+
+  const handleHeadlessExecute = () => {
+    setShowHeadlessSearch(true);
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-12">
@@ -54,8 +60,18 @@ export default function PlaygroundPage() {
           {activeVariant === 'headless' ? (
             /* Headless Variant */
             <div>
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">Headless Variant</h4>
-              <HeadlessCompanyCrawler />
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-sm font-medium text-muted-foreground">Headless Variant</h4>
+                <Button
+                  size="sm"
+                  onClick={handleHeadlessExecute}
+                  className="gap-2"
+                >
+                  <Play className="h-4 w-4" />
+                  Execute Headless Search
+                </Button>
+              </div>
+              {showHeadlessSearch && <HeadlessCompanyCrawler />}
             </div>
           ) : (
             /* UI Variant */
