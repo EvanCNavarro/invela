@@ -7,6 +7,7 @@ export interface PageSideDrawerProps {
   children?: React.ReactNode
   isClosable?: boolean
   defaultOpen?: boolean
+  width?: string
   onOpenChange?: (open: boolean) => void
 }
 
@@ -16,6 +17,7 @@ export function PageSideDrawer({
   children,
   isClosable = true,
   defaultOpen = false,
+  width = "25.75rem",
   onOpenChange
 }: PageSideDrawerProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
@@ -33,7 +35,10 @@ export function PageSideDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] px-8 pt-6">
+    <div 
+      className="fixed right-0 top-[57px] bottom-0 px-8 pt-6"
+      style={{ width }}
+    >
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
@@ -68,9 +73,39 @@ export function withPageSideDrawer<P extends object>(
 ) {
   return function WithPageSideDrawer(props: P) {
     return (
-      <div className={cn("flex-1 min-w-0", drawerOpen ? "mr-[27.25rem]" : "")}>
+      <div className={cn(
+        "flex-1 min-w-0 transition-all duration-300",
+        drawerOpen ? "mr-[27.25rem]" : ""
+      )}>
         <Component {...props} />
       </div>
     )
   }
+}
+
+// Base page template that implements drawer and content layout
+export interface PageTemplateProps {
+  children: React.ReactNode
+  drawer?: React.ReactNode
+  drawerOpen?: boolean
+  onDrawerOpenChange?: (open: boolean) => void
+}
+
+export function PageTemplate({
+  children,
+  drawer,
+  drawerOpen = false,
+  onDrawerOpenChange
+}: PageTemplateProps) {
+  return (
+    <div className="flex-1 flex overflow-x-hidden">
+      <div className={cn(
+        "flex-1 min-w-0 transition-all duration-300",
+        drawerOpen ? "mr-[27.25rem]" : ""
+      )}>
+        {children}
+      </div>
+      {drawer}
+    </div>
+  )
 }
