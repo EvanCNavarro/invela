@@ -1028,31 +1028,61 @@ const FileVault = () => {
     return highlightedText;
   };
 
-  const columns = useMemo(() => {
-    const baseColumns = getFileColumns(visibleColumns);
-
-    // Only add actions column if it's visible
-    if (visibleColumns.has('actions')) {
-      return [
-        ...baseColumns.filter(col => col.id !== 'actions'),
-        {
-          id: 'actions',
-          header: '',
-          cell: (item: FileItem) => (
-            <div className="flex justify-end">
-              <FileActions
-                file={item}
-                onDelete={handleDelete}
-              />
-            </div>
-          ),
-          className: 'w-[48px]'
-        }
-      ];
+  // Define table columns
+  const columns = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllSelected()}
+          onCheckedChange={(value) => toggleAllFiles(paginatedFiles)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedFiles.has(row.original.id)}
+          onCheckedChange={() => toggleFileSelection(row.original.id)}
+          aria-label="Select row"
+        />
+      ),
+    },
+    {
+      id: 'name',
+      header: 'Name',
+      cell: ({ row }) => <FileNameCell file={row.original} />,
+      sortable: true
+    },
+    {
+      id: 'size',
+      header: 'Size',
+      cell: ({ row }) => formatFileSize(row.original.size),
+      sortable: true
+    },
+    {
+      id: 'createdAt',
+      header: 'Created',
+      cell: ({ row }) => formatDate(row.original.createdAt),
+      sortable: true
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <span className={getStatusStyles(row.original.status)}>
+          {row.original.status}
+        </span>
+      ),
+      sortable: true
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <FileActions file={row.original} onDelete={handleDelete} />
+      )
     }
-
-    return baseColumns;
-  }, [visibleColumns, handleDelete]);
+  ];
 
   return (
     <DashboardLayout>
@@ -1091,7 +1121,7 @@ const FileVault = () => {
               maxSize={50 * 1024 * 1024} // 50MB
             >
               <FileUploadZone
-                onUpload={handleUploadClick}
+                onDrop={onDrop}
                 acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
               />
             </DragDropProvider>
@@ -1101,7 +1131,7 @@ const FileVault = () => {
             <div className="w-full sm:max-w-md">
               <SearchBar
                 value={searchQuery}
-                onChange={handleSearch}
+                onChange={setSearchQuery}
                 placeholder="Search files..."
                 className="w-full"
               />
@@ -1128,53 +1158,42 @@ const FileVault = () => {
 
           <div className="border rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <Table>
+              <Table
+                data={paginatedFiles}
+                columns={columns}
+                onSort={handleSort}
+                sortConfig={sortConfig}
+              >
                 {isLoading ? (
                   <TableSkeleton />
                 ) : (
-                  <>
-                    {paginatedFiles.map((file) => (
-                      <TableRow key={file.id}>
-                        <TableCell>
-                          <Checkbox
-                            id={file.id}
-                            checked={selectedFiles.has(file.id)}
-                            onCheckedChange={() => toggleFileSelection(file.id)}
-                          />
-                        </TableCell>
+                  paginatedFiles.map((file) => (
+                    <TableRow key={file.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedFiles.has(file.id)}
+                          onCheckedChange={() => toggleFileSelection(file.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <FileNameCell file={file} />
-                        <TableCell>
-                          {formatFileSize(file.size)}
-                        </TableCell>
-                        <TableCell>
-                          {formatDate(file.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          {formatDate(file.uploadTime)}
-                        </TableCell>
-                        <TableCell>
-                          <span className={getStatusStyles(file.status)}>
-                            {file.status}
-                          </span>
-                        </TableCell>
-                        {visibleColumns.has('version') && (
-                          <TableCell>
-                            v{file.version?.toFixed(1) || '1.0'}
-                          </TableCell>
-                        )}
-                        {visibleColumns.has('actions') && (
-                          <TableCell>
-                            <FileActions file={file} onDelete={handleDelete} />
-                          </TableCell>
-                        )}
-                        {visibleColumns.has('textPreview') && (
-                          <TableCell className="whitespace-nowrap">
-                            <FilePreview fileId={file.id} />
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </>
+                      </TableCell>
+                      <TableCell>
+                        {formatFileSize(file.size)}
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(file.createdAt)}
+                      </TableCell>
+                      <TableCell>
+                        <span className={getStatusStyles(file.status)}>
+                          {file.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <FileActions file={file} onDelete={handleDelete} />
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </Table>
             </div>
@@ -1229,6 +1248,7 @@ const FileVault = () => {
         </div>
       </div>
 
+      {/* Hidden file input */}
       <input
         type="file"
         ref={fileInputRef}
@@ -1241,6 +1261,7 @@ const FileVault = () => {
         }}
       />
 
+      {/* Modals */}
       {showConflictModal && (
         <FileConflictModal
           conflicts={conflictFiles}
