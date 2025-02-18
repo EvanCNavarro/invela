@@ -18,12 +18,7 @@ interface Task {
   // Add other task properties as needed
 }
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  drawerOpen?: boolean; // Add prop for drawer state
-}
-
-export function DashboardLayout({ children, drawerOpen = false }: DashboardLayoutProps) {
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
   const [location, navigate] = useLocation();
   const { user } = useAuth();
@@ -39,8 +34,8 @@ export function DashboardLayout({ children, drawerOpen = false }: DashboardLayou
   // Fetch current company data
   const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 0, // Don't cache this data
+    gcTime: 0, // Remove from cache immediately
   });
 
   // Company hasn't completed onboarding
@@ -49,10 +44,15 @@ export function DashboardLayout({ children, drawerOpen = false }: DashboardLayou
   // Handle navigation for locked companies
   useEffect(() => {
     if (isCompanyLocked) {
+      // List of locked routes for companies that haven't completed onboarding
       const lockedRoutes = ['/', '/network', '/file-vault', '/insights'];
+
+      // If user is on a locked route, redirect to task center
       if (lockedRoutes.includes(location)) {
         navigate('/task-center');
       }
+
+      // If user just logged in and lands on dashboard (root), redirect to task center
       if (location === '/') {
         navigate('/task-center');
       }
@@ -102,11 +102,7 @@ export function DashboardLayout({ children, drawerOpen = false }: DashboardLayou
         </div>
 
         <main className="flex-1 pt-16">
-          <div className={cn(
-            "px-6 md:px-8 py-4 w-full overflow-x-hidden",
-            "transition-all duration-300 ease-in-out",
-            drawerOpen ? "mr-[27.25rem]" : ""
-          )}>
+          <div className="px-6 md:px-8 py-4 w-full overflow-x-hidden">
             {children}
           </div>
         </main>
