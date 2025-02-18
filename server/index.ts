@@ -71,55 +71,63 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Set up development environment
-if (app.get("env") === "development") {
-  await setupVite(app, server);
-} else {
-  // Serve static files only in production
-  serveStatic(app);
-}
+// Initialize development environment and start server
+(async () => {
+  try {
+    // Set up development environment
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      // Serve static files only in production
+      serveStatic(app);
+    }
 
-// Setup WebSocket server
-setupWebSocket(server);
+    // Setup WebSocket server
+    setupWebSocket(server);
 
-// Error handling middleware
-app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-  const isAPIError = err instanceof APIError;
-  const status = isAPIError ? err.status : err.status || err.statusCode || 500;
-  const timestamp = new Date().toISOString();
+    // Error handling middleware
+    app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+      const isAPIError = err instanceof APIError;
+      const status = isAPIError ? err.status : err.status || err.statusCode || 500;
+      const timestamp = new Date().toISOString();
 
-  const isProduction = process.env.NODE_ENV === 'production';
-  const shouldExposeError = !isProduction || status < 500;
+      const isProduction = process.env.NODE_ENV === 'production';
+      const shouldExposeError = !isProduction || status < 500;
 
-  const errorResponse = {
-    status,
-    message: shouldExposeError ? err.message : 'Internal Server Error',
-    code: isAPIError ? err.code : undefined,
-    timestamp,
-    path: req.path,
-    method: req.method,
-    ...(shouldExposeError && err.details ? { details: err.details } : {}),
-    ...((!isProduction && err.stack) ? { stack: err.stack } : {})
-  };
+      const errorResponse = {
+        status,
+        message: shouldExposeError ? err.message : 'Internal Server Error',
+        code: isAPIError ? err.code : undefined,
+        timestamp,
+        path: req.path,
+        method: req.method,
+        ...(shouldExposeError && err.details ? { details: err.details } : {}),
+        ...((!isProduction && err.stack) ? { stack: err.stack } : {})
+      };
 
-  // Log error details
-  const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
-  if (status >= 500) {
-    console.error(logMessage, {
-      error: err,
-      stack: err.stack,
-      body: req.body,
-      query: req.query,
-      user: req.user
+      // Log error details
+      const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
+      if (status >= 500) {
+        console.error(logMessage, {
+          error: err,
+          stack: err.stack,
+          body: req.body,
+          query: req.query,
+          user: req.user
+        });
+      } else {
+        console.warn(logMessage, { error: err });
+      }
+
+      res.status(status).json(errorResponse);
     });
-  } else {
-    console.warn(logMessage, { error: err });
+
+    const PORT = process.env.PORT || 5000;
+    server.listen(PORT, () => {
+      log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
   }
-
-  res.status(status).json(errorResponse);
-});
-
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  log(`Server running on port ${PORT}`);
-});
+})();
