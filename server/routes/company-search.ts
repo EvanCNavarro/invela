@@ -6,6 +6,35 @@ import { ZodError } from "zod";
 
 const router = Router();
 
+// Search by company name endpoint
+router.get("/api/companies/search", async (req, res) => {
+  try {
+    const companyName = req.query.name as string;
+    if (!companyName) {
+      return res.status(400).json({
+        success: false,
+        error: "Company name is required"
+      });
+    }
+
+    console.log(`[Company Search] 🔍 Searching for company: ${companyName}`);
+    const result = await findCompanyInRegistry(companyName);
+
+    return res.json({
+      success: true,
+      company: result.found ? result.company : null,
+      score: result.score
+    });
+  } catch (error) {
+    console.error("[Company Search] Search error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to search company"
+    });
+  }
+});
+
+// Full company search and enrichment
 router.post("/api/company-search", async (req, res) => {
   try {
     const { companyName } = companySearchSchema.parse(req.body);
