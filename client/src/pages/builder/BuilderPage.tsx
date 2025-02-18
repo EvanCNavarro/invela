@@ -46,7 +46,6 @@ export function BuilderPage() {
           heading="Builder"
           subtext="Configure and customize your platform's core functionalities"
         />
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {builderCards.map((card) => (
             <BuilderCard key={card.route} {...card} />
