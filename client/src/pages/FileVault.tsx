@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useRef, useMemo } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
@@ -53,7 +54,6 @@ import { Table } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import crypto from 'crypto';
 
-// Define component types
 interface FileTableColumn extends Column<TableRowData> {}
 
 const FileVault: React.FC = () => {
@@ -76,9 +76,9 @@ const FileVault: React.FC = () => {
   const visibleColumns = useColumnVisibility(sidebarWidth);
   const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
   const [showConflictModal, setShowConflictModal] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
-  const { data: files = [] } = useQuery({
+  const { data: files = [] } = useQuery<TableRowData[]>({
     queryKey: ['/api/files'],
     enabled: true,
     staleTime: Infinity
