@@ -22,27 +22,17 @@ export function PageTemplate({
         drawerOpen ? "mr-[25.75rem]" : "",
         className
       )}>
-        {showBreadcrumbs && (
-          <div className="px-6 pt-6">
-            <BreadcrumbNav />
-          </div>
-        )}
-
+        {showBreadcrumbs && <BreadcrumbNav />}
         {(title || description || headerActions) && (
-          <div className="px-6 pt-6">
-            <PageHeader
-              title={title}
-              description={description}
-              actions={headerActions}
-            />
-          </div>
+          <PageHeader
+            title={title}
+            description={description}
+            actions={headerActions}
+          />
         )}
-
-        <div className="p-6">
-          {children}
-        </div>
+        {children}
       </div>
-      {drawer}
+      {drawerOpen && drawer}
     </div>
   );
 }
