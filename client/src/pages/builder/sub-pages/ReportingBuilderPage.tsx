@@ -17,13 +17,12 @@ export function ReportingBuilderPage() {
       <div className="space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <div className="flex relative min-h-[calc(100vh-12rem)]">
-          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
+          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
             <PageHeader
               title="Automated Reporting"
               description="Configure monitoring and alert workflows."
             />
             <div className="container mx-auto p-6">
-              {/* Main content will be implemented later */}
               <div className="text-muted-foreground">
                 Configure monitoring and reporting workflows here.
               </div>
