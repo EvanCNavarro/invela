@@ -14,11 +14,10 @@ export function RiskRulesBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="Risk Score Rules"
-          description="Set up risk assessment criteria based on fintech data standards"
+          description="Set up risk assessment criteria"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
-          <p className="text-muted-foreground">Set up risk assessment criteria and scoring rules.</p>
         </div>
       </div>
     </DashboardLayout>

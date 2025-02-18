@@ -14,11 +14,10 @@ export function ReportingBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="Automated Reporting"
-          description="Configure monitoring, alerts, and notification workflows"
+          description="Configure monitoring and alert workflows"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
-          <p className="text-muted-foreground">Set up automated reporting and monitoring rules.</p>
         </div>
       </div>
     </DashboardLayout>
