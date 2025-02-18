@@ -24,6 +24,11 @@ const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 }) => {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
 
+  // Update isOpen when defaultOpen prop changes
+  React.useEffect(() => {
+    setIsOpen(defaultOpen)
+  }, [defaultOpen])
+
   return (
     <div
       className={`fixed right-0 top-0 h-full transition-transform duration-300 ease-in-out ${
@@ -31,7 +36,7 @@ const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
       }`}
       style={{ width }}
     >
-      <div className="h-full bg-background border-l">
+      <div className="h-full bg-background border-l shadow-lg">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             {titleIcon}
