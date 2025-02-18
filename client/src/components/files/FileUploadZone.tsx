@@ -13,7 +13,7 @@ import {
 
 export interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement> {
   onFilesAccepted: (files: File[]) => void;
-  acceptedFileTypes?: string[];
+  acceptedFormats?: string;
   maxFiles?: number;
   maxSize?: number;
   variant?: 'box' | 'row';
@@ -23,26 +23,50 @@ export interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement
   showAcceptedFormats?: boolean;
 }
 
-const DEFAULT_ACCEPTED_FORMATS = {
-  'text/csv': ['.csv'],
-  'application/msword': ['.doc'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'application/vnd.oasis.opendocument.text': ['.odt'],
-  'application/pdf': ['.pdf'],
-  'application/rtf': ['.rtf'],
-  'text/plain': ['.txt'],
-  'application/vnd.ms-works': ['.wpd'],
-  'application/wordperfect': ['.wpf'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'image/png': ['.png'],
-  'image/gif': ['.gif'],
-  'image/webp': ['.webp'],
-  'image/svg+xml': ['.svg']
+// Helper function to convert format string to accept object
+const getAcceptFromFormats = (formats?: string) => {
+  if (!formats) return undefined;
+
+  const formatMap: Record<string, string[]> = {
+    '.csv': ['text/csv'],
+    '.doc': ['application/msword'],
+    '.docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    '.odt': ['application/vnd.oasis.opendocument.text'],
+    '.pdf': ['application/pdf'],
+    '.rtf': ['application/rtf'],
+    '.txt': ['text/plain'],
+    '.wpd': ['application/vnd.ms-works'],
+    '.wpf': ['application/wordperfect'],
+    '.jpg': ['image/jpeg'],
+    '.jpeg': ['image/jpeg'],
+    '.png': ['image/png'],
+    '.gif': ['image/gif'],
+    '.webp': ['image/webp'],
+    '.svg': ['image/svg+xml']
+  };
+
+  const accept: Record<string, string[]> = {};
+  const formatList = formats.split(',').map(f => f.trim().toLowerCase());
+
+  formatList.forEach(format => {
+    const mimeTypes = formatMap[format];
+    if (mimeTypes) {
+      mimeTypes.forEach(mime => {
+        if (!accept[mime]) {
+          accept[mime] = [format];
+        } else {
+          accept[mime].push(format);
+        }
+      });
+    }
+  });
+
+  return accept;
 };
 
 export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
   onFilesAccepted,
-  acceptedFileTypes = Object.values(DEFAULT_ACCEPTED_FORMATS).flat(),
+  acceptedFormats,
   maxFiles = 10,
   maxSize = 5 * 1024 * 1024,
   variant = 'box',
@@ -62,14 +86,7 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
     isDragAccept,
     isDragReject
   } = useDropzone({
-    accept: acceptedFileTypes.reduce((acc, type) => {
-      const mimeType = Object.entries(DEFAULT_ACCEPTED_FORMATS)
-        .find(([, extensions]) => extensions.includes(type))?.[0];
-      if (mimeType) {
-        acc[mimeType] = [type];
-      }
-      return acc;
-    }, {} as Record<string, string[]>),
+    accept: getAcceptFromFormats(acceptedFormats),
     maxFiles,
     maxSize,
     disabled,
@@ -109,8 +126,10 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
   );
 
   const formatFileTypes = () => {
-    const types = acceptedFileTypes
-      .map(type => type.toUpperCase())
+    if (!acceptedFormats) return '';
+    const types = acceptedFormats
+      .split(',')
+      .map(type => type.trim().toUpperCase())
       .join(', ');
 
     // Split into groups of 6 for better readability with less wrapping

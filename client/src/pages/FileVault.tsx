@@ -56,6 +56,8 @@ import crypto from 'crypto';
 
 interface FileTableColumn extends Column<TableRowData> {}
 
+const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG";
+
 const FileVault: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -534,13 +536,13 @@ const FileVault: React.FC = () => {
 
         <div className="space-y-6">
           <DragDropProvider
-            onDrop={handleFileUpload}
+            onFilesAccepted={handleFileUpload}
             maxFiles={10}
             maxSize={50 * 1024 * 1024}
           >
             <FileUploadZone
-              onDrop={handleFileUpload}
-              acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
+              onFilesAccepted={handleFileUpload}
+              acceptedFormats={ACCEPTED_FORMATS}
             />
           </DragDropProvider>
 
