@@ -7,7 +7,7 @@ import { PageSideDrawer, PageTemplate } from "@/components/ui/page-side-drawer"
 
 export default function PageSideDrawerPlayground() {
   const [showIcon, setShowIcon] = React.useState(true)
-  const [drawerOpen] = React.useState(true) // Always open, not controlled
+  const [drawerOpen] = React.useState(false) // Not open by default for playground
 
   const drawer = (
     <PageSideDrawer
@@ -19,8 +19,7 @@ export default function PageSideDrawerPlayground() {
       <div className="space-y-4">
         <h4 className="font-medium">Configuration Options</h4>
         <p className="text-muted-foreground">
-          This drawer demonstrates the default open, not closeable variant.
-          For a closeable variant, see the dashboard page.
+          This drawer demonstrates how the drawer behaves when integrated with PageTemplate.
         </p>
         <div className="space-y-2">
           <h5 className="text-sm font-medium">Features</h5>
@@ -53,13 +52,13 @@ export default function PageSideDrawerPlayground() {
       <div className="relative min-h-[400px] border rounded-lg overflow-hidden">
         <PageTemplate
           drawer={drawer}
-          drawerOpen={true}
+          drawerOpen={false}
         >
           <div className="p-4">
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
               This area demonstrates how content responds to the drawer state.
-              The drawer in this playground is always open and not closeable.
+              The drawer in this playground starts closed.
             </p>
           </div>
         </PageTemplate>
