@@ -15,7 +15,7 @@ export function BuilderPageDrawer({
 }: BuilderPageDrawerProps) {
   return (
     <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem]">
-      <div className="h-[calc(100%-3rem)] p-8 pt-6">
+      <div className="h-[calc(100%-3rem)] mx-8 mt-6">
         <div className="h-full rounded-lg border bg-background shadow-sm">
           <PageSideDrawer
             title={title}
