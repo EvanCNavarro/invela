@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, LucideIcon } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface BuilderCardProps {
   title: string;
@@ -19,6 +19,14 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
 
   const [imageError, setImageError] = useState(false);
 
+  // Preload image
+  useEffect(() => {
+    if (imagePath) {
+      const img = new Image();
+      img.src = imagePath;
+    }
+  }, [imagePath]);
+
   return (
     <Link href={route}>
       <Card className="flex flex-col overflow-hidden transition-all hover:shadow-lg cursor-pointer h-full">
@@ -28,6 +36,9 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
               src={imagePath}
               alt={title}
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
+              crossOrigin="anonymous"
               onError={(e) => {
                 console.error('BuilderCard: Failed to load image:', {
                   path: imagePath,

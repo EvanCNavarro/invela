@@ -14,11 +14,10 @@ export function GroupsBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="User Groups"
-          description="Create and manage user groups with custom permissions"
+          description="Manage user groups and permissions"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
-          <p className="text-muted-foreground">Manage user groups and permissions.</p>
         </div>
       </div>
     </DashboardLayout>

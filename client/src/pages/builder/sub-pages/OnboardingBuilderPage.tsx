@@ -14,11 +14,10 @@ export function OnboardingBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="Onboarding Configuration"
-          description="Design and manage the onboarding process for fintech companies"
+          description="Design and manage the onboarding process"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
-          <p className="text-muted-foreground">Configure onboarding workflows and requirements.</p>
         </div>
       </div>
     </DashboardLayout>
