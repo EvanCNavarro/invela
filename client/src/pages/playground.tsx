@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { CompanySearchPlayground } from "@/components/playground/CompanySearchPlayground";
-import { HeadlessSearchDemo } from "@/components/playground/HeadlessSearchDemo"; //Re-added import
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -125,15 +124,6 @@ export default function PlaygroundPage() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Headless Service Demo */}
-      <div>
-        <h2 className="text-xl font-bold mb-4">Headless Search Technical Demo</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Technical demonstration of the headless search service with detailed debugging output
-        </p>
-        <HeadlessSearchDemo />
       </div>
     </div>
   );
