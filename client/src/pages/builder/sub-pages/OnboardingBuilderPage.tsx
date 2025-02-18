@@ -11,14 +11,14 @@ const breadcrumbItems = [
 ];
 
 export function OnboardingBuilderPage() {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const drawer = (
     <PageSideDrawer 
       title="Onboarding Settings"
       titleIcon={<Info className="h-5 w-5" />}
-      defaultOpen={true}
-      isClosable={false}
+      defaultOpen={false}
+      isClosable={true}
       onOpenChange={setDrawerOpen}
     >
       <div className="text-sm space-y-4">

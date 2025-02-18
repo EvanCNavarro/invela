@@ -11,13 +11,13 @@ const breadcrumbItems = [
 ];
 
 export function RiskRulesBuilderPage() {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const drawer = (
     <PageSideDrawer 
       title="Risk Rules Settings"
       titleIcon={<Info className="h-5 w-5" />}
-      defaultOpen={drawerOpen}
+      defaultOpen={false}
       isClosable={true}
       onOpenChange={setDrawerOpen}
     >
