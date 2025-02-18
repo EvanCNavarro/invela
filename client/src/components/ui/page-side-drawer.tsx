@@ -36,7 +36,7 @@ export function PageSideDrawer({
 
   return (
     <div 
-      className="fixed right-0 top-[57px] bottom-0 px-8 pt-6"
+      className="fixed right-0 top-[57px] bottom-0 px-8 pt-6 transition-all duration-300"
       style={{ width }}
     >
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
@@ -64,23 +64,6 @@ export function PageSideDrawer({
       </div>
     </div>
   )
-}
-
-// HOC to add drawer-aware margin to main content
-export function withPageSideDrawer<P extends object>(
-  Component: React.ComponentType<P>,
-  drawerOpen: boolean
-) {
-  return function WithPageSideDrawer(props: P) {
-    return (
-      <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300",
-        drawerOpen ? "mr-[27.25rem]" : ""
-      )}>
-        <Component {...props} />
-      </div>
-    )
-  }
 }
 
 // Base page template that implements drawer and content layout
