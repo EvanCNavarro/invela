@@ -54,6 +54,9 @@ export default function PlaygroundPage() {
       case "company-data-crawler":
         console.log("[PlaygroundPage] Rendering Company Data Crawler");
         return <CompanySearchPlayground />;
+      case "headless-company-crawler":
+        console.log("[PlaygroundPage] Rendering Headless Company Crawler");
+        return <HeadlessCrawlerPlayground />;
       default:
         console.log("[PlaygroundPage] No matching component");
         return <div>Select a component to preview</div>;
@@ -62,7 +65,8 @@ export default function PlaygroundPage() {
 
   console.log("[PlaygroundPage] Current state:", {
     selectedComponent,
-    isCompanySearchAvailable: !!CompanySearchPlayground
+    isCompanySearchAvailable: !!CompanySearchPlayground,
+    isHeadlessCrawlerAvailable: !!HeadlessCrawlerPlayground
   });
 
   return (
@@ -92,6 +96,7 @@ export default function PlaygroundPage() {
             <SelectItem value="navigational-tab-pane">Navigational Tab Pane</SelectItem>
             <SelectItem value="invite-button">Invite Button/Modal</SelectItem>
             <SelectItem value="company-data-crawler">Company Data Crawler</SelectItem>
+            <SelectItem value="headless-company-crawler">Headless Company Crawler</SelectItem>
           </SelectContent>
         </Select>
       </div>
