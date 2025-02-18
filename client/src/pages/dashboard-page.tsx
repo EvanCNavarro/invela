@@ -3,22 +3,12 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { InviteButton } from "@/components/ui/invite-button";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
 import {
   Settings,
-  BarChart3,
-  Globe,
-  Zap,
-  Bell,
   Check,
-  Activity,
-  LayoutGrid,
-  AlertTriangle,
-  Send,
   Info,
-  CheckCircle2
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -28,7 +18,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
@@ -67,10 +56,10 @@ export default function DashboardPage() {
     <DashboardLayout>
       <PageTemplate
         showBreadcrumbs
-        drawer={
+        drawer={drawerOpen ? (
           <BuilderPageDrawer
             title="Dashboard Information"
-            defaultOpen={false}
+            defaultOpen={true}
           >
             <div className="space-y-4">
               <p className="text-muted-foreground">
@@ -84,9 +73,7 @@ export default function DashboardPage() {
               </ul>
             </div>
           </BuilderPageDrawer>
-        }
-        drawerOpen={drawerOpen}
-        onDrawerOpenChange={setDrawerOpen}
+        ) : null}
       >
         <PageHeader
           title="Dashboard"
@@ -142,26 +129,26 @@ export default function DashboardPage() {
             </div>
           }
         />
-        <div className="space-y-6">
-          {allWidgetsHidden ? (
-            <div className="grid grid-cols-3 gap-4 min-h-[400px]">
-              {[...Array(6)].map((_, i) => (
-                <div
-                  key={i}
-                  className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
-                >
-                  <div className="space-y-2">
-                    <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      No widgets selected. Click "Customize Dashboard" to add widgets.
-                    </p>
-                  </div>
+
+        {allWidgetsHidden ? (
+          <div className="grid grid-cols-3 gap-4 min-h-[400px]">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
+              >
+                <div className="space-y-2">
+                  <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No widgets selected. Click "Customize Dashboard" to add widgets.
+                  </p>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-4">
-              {visibleWidgets.updates && (
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-4">
+            {visibleWidgets.updates && (
                 <Widget
                   title="Recent Updates"
                   icon={<Activity className="h-5 w-5" />}
@@ -290,9 +277,9 @@ export default function DashboardPage() {
                   </div>
                 </Widget>
               )}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
         <InviteModal
           variant="fintech"
           open={openFinTechModal}
