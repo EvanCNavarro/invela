@@ -87,8 +87,8 @@ export default function DashboardPage() {
   };
 
   const drawer = (
-    <Drawer open={drawerOpen} onOpenChange={handleDrawerChange}>
-      <DrawerContent>
+    <Drawer open={drawerOpen} onOpenChange={handleDrawerChange} side="right">
+      <DrawerContent side="right">
         <DrawerHeader>
           <DrawerTitle className="flex items-center gap-2">
             <Info className="h-5 w-5" />
