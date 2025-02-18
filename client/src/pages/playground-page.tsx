@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
 import CompanySearchPlayground from "@/components/playground/CompanySearchPlayground";
 import HeadlessCrawlerPlayground from "@/components/playground/HeadlessCrawlerPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -98,6 +99,18 @@ const components: PlaygroundComponent[] = [
     description: "File upload component with drag and drop"
   },
   {
+    id: "sidebar-menu",
+    name: "Sidebar Menu",
+    component: () => <div>Sidebar Menu Playground</div>,
+    description: "Sidebar navigation menu component"
+  },
+  {
+    id: "sidebar-tab",
+    name: "Sidebar Tab",
+    component: () => <div>Sidebar Tab Playground</div>,
+    description: "Individual sidebar tab component"
+  },
+  {
     id: "navigational-tab-pane",
     name: "Navigational Tab Pane",
     component: TabsDemo,
@@ -135,51 +148,53 @@ export default function PlaygroundPage() {
   };
 
   return (
-    <div className="container mx-auto py-6 space-y-8">
-      <PageHeader
-        title="Component Playground"
-        description="Test and preview UI components in different states"
-      />
+    <DashboardLayout>
+      <div className="container mx-auto py-6 space-y-8">
+        <PageHeader
+          title="Component Playground"
+          description="Test and preview UI components in different states"
+        />
 
-      <div className="flex flex-col space-y-2">
-        <label className="text-sm font-medium">Select Component</label>
-        <Select 
-          value={selectedComponent} 
-          onValueChange={setSelectedComponent}
-        >
-          <SelectTrigger className="w-[300px]">
-            <SelectValue placeholder="Select component">
-              {currentComponent?.name || "Select a component"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {components.map(component => (
-              <SelectItem 
-                key={component.id} 
-                value={component.id}
-              >
-                {component.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Card className="p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Preview</h3>
-            {currentComponent?.description && (
-              <p className="text-sm text-muted-foreground">
-                {currentComponent.description}
-              </p>
-            )}
-          </div>
-          <div className="space-y-6">
-            {renderComponent()}
-          </div>
+        <div className="flex flex-col space-y-2">
+          <label className="text-sm font-medium">Select Component</label>
+          <Select 
+            value={selectedComponent} 
+            onValueChange={setSelectedComponent}
+          >
+            <SelectTrigger className="w-[300px]">
+              <SelectValue placeholder="Select component">
+                {currentComponent?.name || "Select a component"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {components.map(component => (
+                <SelectItem 
+                  key={component.id} 
+                  value={component.id}
+                >
+                  {component.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </Card>
-    </div>
+
+        <Card className="p-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">Preview</h3>
+              {currentComponent?.description && (
+                <p className="text-sm text-muted-foreground">
+                  {currentComponent.description}
+                </p>
+              )}
+            </div>
+            <div className="space-y-6">
+              {renderComponent()}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 }
