@@ -17,7 +17,7 @@ export function OnboardingBuilderPage() {
       <div className="space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <div className="flex relative min-h-[calc(100vh-12rem)]">
-          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
+          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
             <PageHeader
               title="Onboarding Configuration"
               description="Design and manage the onboarding process."

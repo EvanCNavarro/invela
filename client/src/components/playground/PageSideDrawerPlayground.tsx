@@ -30,7 +30,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 
   return (
     <div 
-      className={`absolute right-0 top-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
+      className={`absolute right-0 inset-y-0 transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
       style={{ width }}
@@ -96,7 +96,7 @@ const PageSideDrawerPlayground = () => {
       </Card>
 
       <div className="flex relative min-h-[400px] border rounded-lg">
-        <div className={`flex-1 transition-all duration-300 ${defaultOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
+        <div className={`flex-1 transition-all duration-300 ${defaultOpen ? 'pr-[25.75rem]' : 'pr-0'}`}>
           <div className="p-4">
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
