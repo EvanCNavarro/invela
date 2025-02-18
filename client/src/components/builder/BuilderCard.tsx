@@ -2,7 +2,6 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, LucideIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface BuilderCardProps {
   title: string;
@@ -34,15 +33,10 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
                     component: title
                   });
                   e.currentTarget.style.display = 'none';
-                  // Show placeholder on error
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
                     parent.className = "w-full h-full bg-emerald-950/5 flex items-center justify-center";
-                    const iconEl = document.createElement('div');
-                    iconEl.appendChild(document.createElement('span')); // added a span for the icon
-                    const icon = new Icon();
-                    iconEl.firstChild.appendChild(icon.render()); // render the icon
-                    parent.appendChild(iconEl);
+                    parent.innerHTML = `<div class="text-[#0F52BA]"><Icon class="w-10 h-10" /></div>`;
                   }
                 }}
               />
@@ -59,7 +53,7 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
           <div className="mt-4 flex justify-end">
             <Button className="group">
               {ctaText}
-              <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="ml-0 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </div>
         </div>
