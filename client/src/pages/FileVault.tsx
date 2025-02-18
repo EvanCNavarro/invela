@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import * as React from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
@@ -78,7 +78,8 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
 
-  const { data: files = [] } = useQuery(['/api/files'], {
+  const { data: files = [] } = useQuery({
+    queryKey: ['/api/files'],
     enabled: true,
     staleTime: Infinity
   });
@@ -422,7 +423,6 @@ const FileVault: React.FC = () => {
       <span>{file.name}</span>
     </div>
   );
-
 
   const FileActions: React.FC<{ file: TableRowData; onDelete: (fileId: string) => void }> = ({ file, onDelete }) => {
     const handleAction = (action: string) => {
