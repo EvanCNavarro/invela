@@ -3,7 +3,6 @@ import { Info } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { Button } from "@/components/ui/button"
 
 interface PageSideDrawerProps {
   title?: string
@@ -30,27 +29,25 @@ const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   }, [defaultOpen])
 
   return (
-    <div
-      className={`fixed right-0 top-0 h-full transition-transform duration-300 ease-in-out ${
-        isOpen ? "translate-x-0" : "translate-x-full"
+    <div 
+      className={`absolute right-0 top-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
+        isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
       style={{ width }}
     >
-      <div className="h-full bg-background border-l shadow-lg">
+      <div className="h-full">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-2">
             {titleIcon}
             <h3 className="font-semibold">{title}</h3>
           </div>
           {isClosable && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+            <button
+              className="p-2 hover:bg-muted rounded-md"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? "×" : "→"}
-            </Button>
+            </button>
           )}
         </div>
         <div className="p-4 overflow-y-auto h-[calc(100%-4rem)]">
@@ -98,8 +95,8 @@ const PageSideDrawerPlayground = () => {
         </div>
       </Card>
 
-      <div className="relative min-h-[400px] border rounded-lg">
-        <div className={`transition-all duration-300 ${defaultOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
+      <div className="flex relative min-h-[400px] border rounded-lg">
+        <div className={`flex-1 transition-all duration-300 ${defaultOpen ? 'pr-[23.75rem]' : 'pr-0'}`}>
           <div className="p-4">
             <h4 className="text-lg font-medium mb-2">Main Content Area</h4>
             <p className="text-muted-foreground">
@@ -108,7 +105,6 @@ const PageSideDrawerPlayground = () => {
             </p>
           </div>
         </div>
-
         <PageSideDrawer
           title="Extra Info Drawer"
           titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
