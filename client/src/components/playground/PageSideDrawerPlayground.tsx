@@ -29,7 +29,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 
   return (
     <div 
-      className={`absolute top-0 right-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
+      className={`absolute right-0 top-0 bottom-0 transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
       style={{ width }}
