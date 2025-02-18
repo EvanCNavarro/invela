@@ -5,12 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { InviteButton } from "@/components/ui/invite-button";
 import { PageTemplate } from "@/components/ui/page-template";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
+import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
 import {
   Settings,
   BarChart3,
@@ -32,10 +27,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import confetti from 'canvas-confetti';
-import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,9 +39,8 @@ import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import Fuse from 'fuse.js';
 import { InviteModal } from "@/components/playground/InviteModal";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -61,8 +51,6 @@ const DEFAULT_WIDGETS = {
 };
 
 export default function DashboardPage() {
-  const { toast } = useToast();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
@@ -82,91 +70,87 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
-  const handleDrawerChange = (open: boolean) => {
-    setDrawerOpen(open);
-  };
-
-  const drawer = (
-    <Drawer open={drawerOpen} onOpenChange={handleDrawerChange} side="right">
-      <DrawerContent side="right">
-        <DrawerHeader>
-          <DrawerTitle className="flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            Dashboard Information
-          </DrawerTitle>
-          <div className="space-y-4">
-            <h4 className="font-medium">Dashboard Overview</h4>
-            <p className="text-muted-foreground">
-              This drawer provides additional information and context about your dashboard:
-            </p>
-            <ul className="space-y-2">
-              <li>• Widget customization options</li>
-              <li>• Data refresh schedules</li>
-              <li>• Dashboard shortcuts</li>
-              <li>• Notification settings</li>
-            </ul>
-          </div>
-        </DrawerHeader>
-      </DrawerContent>
-    </Drawer>
-  );
-
   return (
     <DashboardLayout>
       <PageTemplate
         showBreadcrumbs
-        drawer={drawer}
-        drawerOpen={drawerOpen}
-        onDrawerOpenChange={handleDrawerChange}
-        headerContent={
-          <div className="flex items-center justify-between">
-            <PageHeader
-              title="Dashboard"
-              description="Get an overview of your company's performance and recent activities."
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <Settings className="h-4 w-4" />
-                  Customize Dashboard
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-56"
-                sideOffset={4}
-              >
-                <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                  <DropdownMenuItem
-                    key={key}
-                    onSelect={(event) => {
-                      event.preventDefault();
-                      toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="w-4">
-                      {isVisible ? (
-                        <Check className="h-4 w-4 text-primary" />
-                      ) : (
-                        <div className="h-4 w-4" />
-                      )}
-                    </div>
-                    <span className={cn(
-                      "flex-1",
-                      isVisible ? "text-foreground" : "text-muted-foreground"
-                    )}>
-                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        drawer={
+          <BuilderPageDrawer
+            title="Dashboard Information"
+            defaultOpen={drawerOpen}
+          >
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                This drawer provides additional information and context about your dashboard:
+              </p>
+              <ul className="space-y-2">
+                <li>• Widget customization options</li>
+                <li>• Data refresh schedules</li>
+                <li>• Dashboard shortcuts</li>
+                <li>• Notification settings</li>
+              </ul>
+            </div>
+          </BuilderPageDrawer>
         }
+        drawerOpen={drawerOpen}
       >
+        <div className="flex items-center justify-between mb-6">
+          <PageHeader
+            title="Dashboard"
+            description="Get an overview of your company's performance and recent activities."
+            action={
+              <div className="flex items-center space-x-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-2">
+                      <Settings className="h-4 w-4" />
+                      Customize Dashboard
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56"
+                    sideOffset={4}
+                  >
+                    <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                      <DropdownMenuItem
+                        key={key}
+                        onSelect={(event) => {
+                          event.preventDefault();
+                          toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <div className="w-4">
+                          {isVisible ? (
+                            <Check className="h-4 w-4 text-primary" />
+                          ) : (
+                            <div className="h-4 w-4" />
+                          )}
+                        </div>
+                        <span className={cn(
+                          "flex-1",
+                          isVisible ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                        </span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <Button
+                  variant="outline"
+                  onClick={() => setDrawerOpen(!drawerOpen)}
+                >
+                  {drawerOpen ? "Hide Info" : "Show Info"}
+                </Button>
+              </div>
+            }
+          />
+        </div>
+
         <div className="space-y-6">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
@@ -318,6 +302,11 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+        <InviteModal
+          variant="fintech"
+          open={openFinTechModal}
+          onOpenChange={setOpenFinTechModal}
+        />
       </PageTemplate>
     </DashboardLayout>
   );
