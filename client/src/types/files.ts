@@ -1,4 +1,6 @@
 export type FileStatus = 'uploading' | 'uploaded' | 'paused' | 'canceled' | 'deleted' | 'restored';
+export type SortField = 'name' | 'size' | 'createdAt' | 'status';
+export type SortOrder = 'asc' | 'desc';
 
 export interface FileItem {
   id: string;
@@ -15,32 +17,22 @@ export interface FileItem {
   lastAccessed?: string;
   version?: number;
   checksum?: string;
-
-  // File lifecycle tracking
   expiryDate?: string;
   retentionPeriod?: number;
   lastModifiedBy?: string;
   modificationHistory?: string[];
-
-  // Security and compliance
   accessLevel?: 'public' | 'private' | 'restricted';
   encryptionStatus?: boolean;
   classificationType?: string;
   complianceTags?: string[];
-
-  // Access patterns
   lastDownloadDate?: string;
   uniqueViewers?: number;
   averageViewDuration?: number;
   peakAccessTimes?: string[];
-
-  // Storage optimization
   compressionRatio?: number;
   duplicateCount?: number;
   storageLocation?: string;
   storageOptimizationFlag?: boolean;
-
-  // Collaboration
   sharedWith?: string[];
   collaboratorCount?: number;
   commentCount?: number;
@@ -58,3 +50,5 @@ export interface UploadingFile extends Omit<FileItem, 'id'> {
   id: string;
   progress: number;
 }
+
+export interface TableRowData extends FileItem {}

@@ -1,11 +1,24 @@
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
+
+export interface Column<T> {
+  id: string;
+  header: string | ((props: any) => React.ReactNode);
+  cell: (props: { row: T }) => React.ReactNode;
+  sortable?: boolean;
+}
+
+interface TableProps<T> {
+  data?: T[];
+  columns?: Column<T>[];
+  onSort?: (field: string, direction: 'asc' | 'desc') => void;
+  sortConfig?: { field: string; order: 'asc' | 'desc' };
+}
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
+  TableProps<any> & React.HTMLAttributes<HTMLTableElement>
+>(({ className, data, columns, onSort, sortConfig, ...props }, ref) => (
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
