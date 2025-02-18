@@ -1,8 +1,8 @@
-import WebSocket from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import type { TaskStatus } from '@db/schema';
 
-let wss: WebSocket.Server;
+let wss: WebSocketServer;
 
 interface TaskUpdate {
   id: number;
@@ -12,21 +12,27 @@ interface TaskUpdate {
 }
 
 export function setupWebSocket(server: Server) {
-  wss = new WebSocket.Server({ 
-    server,
+  // Create WebSocket server with proper configuration
+  wss = new WebSocketServer({ 
+    noServer: true,
     path: '/ws',
-    // Increase timeout values for Replit environment
     clientTracking: true,
     perMessageDeflate: false,
-    maxPayload: 1024 * 1024, // 1MB
-    // Skip certificate verification in Replit environment
-    verifyClient: (info, cb) => {
-      // Skip verification for vite-hmr
-      if (info.req.headers['sec-websocket-protocol'] === 'vite-hmr') {
-        cb(false);
-        return;
-      }
-      cb(true);
+    maxPayload: 1024 * 1024 // 1MB
+  });
+
+  // Handle upgrade requests manually
+  server.on('upgrade', (request, socket, head) => {
+    // Skip vite-hmr websocket connections
+    if (request.headers['sec-websocket-protocol'] === 'vite-hmr') {
+      return;
+    }
+
+    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+    if (pathname === '/ws') {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
     }
   });
 
