@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
+import { PageSideDrawer } from "@/components/playground/PageSideDrawerPlayground";
+import { Info } from "lucide-react";
 import { useState } from "react";
 
 const breadcrumbItems = [
@@ -29,8 +30,9 @@ export function RiskRulesBuilderPage() {
             </div>
           </div>
 
-          <BuilderPageDrawer 
-            title="Risk Rules Settings" 
+          <PageSideDrawer 
+            title="Risk Rules Settings"
+            titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={drawerOpen}
           >
             <div className="text-sm space-y-4">
@@ -45,7 +47,7 @@ export function RiskRulesBuilderPage() {
                 <li>• Alert triggers</li>
               </ul>
             </div>
-          </BuilderPageDrawer>
+          </PageSideDrawer>
         </div>
       </div>
     </DashboardLayout>

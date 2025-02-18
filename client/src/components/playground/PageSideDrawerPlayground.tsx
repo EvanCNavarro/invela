@@ -28,29 +28,34 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   }, [defaultOpen])
 
   return (
-    <div 
-      className={`absolute right-0 top-0 bottom-0 transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}
-      style={{ width }}
-    >
-      <div className="flex flex-col h-full">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-2">
-            {titleIcon}
-            <h3 className="font-semibold">{title}</h3>
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] px-8 pt-6">
+      <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
+        <div 
+          className={`h-full transition-all duration-300 ease-in-out ${
+            isOpen ? 'translate-x-0' : 'translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center gap-2">
+                {titleIcon}
+                <h3 className="font-semibold">{title}</h3>
+              </div>
+              {isClosable && (
+                <button
+                  className="p-2 hover:bg-muted rounded-md"
+                  onClick={() => setIsOpen(!isOpen)}
+                >
+                  {isOpen ? "×" : "→"}
+                </button>
+              )}
+            </div>
+            <div className="flex-1 p-4 overflow-y-auto">
+              <div className="space-y-4">
+                {children}
+              </div>
+            </div>
           </div>
-          {isClosable && (
-            <button
-              className="p-2 hover:bg-muted rounded-md"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              {isOpen ? "×" : "→"}
-            </button>
-          )}
-        </div>
-        <div className="flex-1 p-4 overflow-y-auto">
-          {children}
         </div>
       </div>
     </div>
