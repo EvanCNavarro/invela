@@ -117,6 +117,26 @@ export default function DashboardPage() {
             </Button>
           </div>
         }
+        drawer={
+          <BuilderPageDrawer
+            title="Dashboard Information"
+            isClosable={true}
+            defaultOpen={drawerOpen}
+            onOpenChange={setDrawerOpen}
+          >
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                This drawer provides additional information and context about your dashboard:
+              </p>
+              <ul className="space-y-2">
+                <li>• Widget customization options</li>
+                <li>• Data refresh schedules</li>
+                <li>• Dashboard shortcuts</li>
+                <li>• Notification settings</li>
+              </ul>
+            </div>
+          </BuilderPageDrawer>
+        }
       >
         {allWidgetsHidden ? (
           <div className="grid grid-cols-3 gap-4 min-h-[400px]">
