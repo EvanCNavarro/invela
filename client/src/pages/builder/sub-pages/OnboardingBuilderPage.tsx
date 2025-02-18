@@ -15,16 +15,16 @@ export function OnboardingBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 p-8 pt-6 overflow-hidden">
-        <div className="relative w-full">
-          <div className={`transition-all duration-300 ${drawerOpen ? 'pr-[33.75rem]' : 'pr-0'}`}>
+      <div className="flex-1 overflow-x-hidden">
+        <div className="p-8 pt-6">
+          <div className={`transition-all duration-300 ${drawerOpen ? 'max-w-[calc(100%-33.75rem)]' : 'w-full'}`}>
             <BreadcrumbNav items={breadcrumbItems} />
             <div className="mt-6">
               <PageHeader
                 title="Onboarding Configuration"
                 description="Design and manage the onboarding process."
               />
-              <div className="w-full">
+              <div className="mt-4">
                 <div className="text-muted-foreground">
                   Configure onboarding workflows and requirements here.
                 </div>
