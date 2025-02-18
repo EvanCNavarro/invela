@@ -1,43 +1,50 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { wsService } from '../lib/websocket';
-import { useToast } from '@/hooks/use-toast';
 
 export function useWebSocket() {
+  const wsRef = useRef<WebSocket | null>(null);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const handleTaskUpdate = useCallback((data: any) => {
-    // Invalidate the tasks query to trigger a refetch
-    queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-  }, [queryClient]);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+    // Create WebSocket connection
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    console.log('[WebSocket] Connecting to:', wsUrl);
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    // Subscribe to task updates
-    const setupSubscription = async () => {
+    ws.onopen = () => {
+      console.log('[WebSocket] Connected');
+    };
+
+    ws.onmessage = (event) => {
       try {
-        unsubscribe = await wsService.subscribe('task_update', handleTaskUpdate);
+        const data = JSON.parse(event.data);
+        console.log('[WebSocket] Received message:', data);
+
+        if (data.type === 'task_update') {
+          // Invalidate the tasks query to trigger a refetch
+          queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        }
       } catch (error) {
-        console.error('[WebSocket] Subscription error:', error);
-        toast({
-          title: 'Connection Error',
-          description: 'Failed to establish real-time connection. Updates may be delayed.',
-          variant: 'destructive',
-        });
+        console.error('[WebSocket] Error parsing message:', error);
       }
     };
 
-    setupSubscription();
+    ws.onerror = (error) => {
+      console.error('[WebSocket] Error:', error);
+    };
 
-    // Cleanup subscription on unmount
+    ws.onclose = () => {
+      console.log('[WebSocket] Disconnected');
+    };
+
+    // Cleanup on unmount
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
       }
     };
-  }, [queryClient, handleTaskUpdate, toast]);
+  }, [queryClient]);
 }
-
-export default useWebSocket;

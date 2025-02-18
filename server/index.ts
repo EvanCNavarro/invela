@@ -1,13 +1,28 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
+import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import { setupAuth } from "./auth";
-import { setupWebSocket } from "./services/websocket";
-import { APIError } from "./types";
+
+// Custom error class for API errors
+export class APIError extends Error {
+  constructor(
+    public message: string,
+    public status: number = 500,
+    public code?: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'APIError';
+  }
+}
 
 const app = express();
 const server = createServer(app);
+
+// WebSocket clients store
+const wsClients = new Set<WebSocket>();
 
 // Configure body parsing middleware first
 app.use(express.json());
@@ -71,63 +86,100 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Initialize development environment and start server
-(async () => {
-  try {
-    // Set up development environment
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    } else {
-      // Serve static files only in production
-      serveStatic(app);
-    }
+// Set up development environment
+if (app.get("env") === "development") {
+  await setupVite(app, server);
+} else {
+  // Serve static files only in production, after API routes
+  serveStatic(app);
+}
 
-    // Setup WebSocket server
-    setupWebSocket(server);
+// Setup WebSocket server after Vite in development
+const wss = new WebSocketServer({ 
+  noServer: true, // Important: Use noServer mode
+  perMessageDeflate: false // Disable compression for better compatibility
+});
 
-    // Error handling middleware
-    app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-      const isAPIError = err instanceof APIError;
-      const status = isAPIError ? err.status : err.status || err.statusCode || 500;
-      const timestamp = new Date().toISOString();
+// Handle upgrade requests manually
+server.on('upgrade', (request, socket, head) => {
+  const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
 
-      const isProduction = process.env.NODE_ENV === 'production';
-      const shouldExposeError = !isProduction || status < 500;
-
-      const errorResponse = {
-        status,
-        message: shouldExposeError ? err.message : 'Internal Server Error',
-        code: isAPIError ? err.code : undefined,
-        timestamp,
-        path: req.path,
-        method: req.method,
-        ...(shouldExposeError && err.details ? { details: err.details } : {}),
-        ...((!isProduction && err.stack) ? { stack: err.stack } : {})
-      };
-
-      // Log error details
-      const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
-      if (status >= 500) {
-        console.error(logMessage, {
-          error: err,
-          stack: err.stack,
-          body: req.body,
-          query: req.query,
-          user: req.user
-        });
-      } else {
-        console.warn(logMessage, { error: err });
-      }
-
-      res.status(status).json(errorResponse);
+  if (pathname === '/api/ws') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
     });
-
-    const PORT = process.env.PORT || 5000;
-    server.listen(PORT, () => {
-      log(`Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
   }
-})();
+});
+
+// WebSocket connection handling
+wss.on('connection', (ws: WebSocket, req) => {
+  console.log('New WebSocket client connected from:', req.headers.origin);
+  wsClients.add(ws);
+
+  // Send initial connection confirmation
+  ws.send(JSON.stringify({ 
+    type: 'connection_established', 
+    data: { timestamp: new Date().toISOString() } 
+  }));
+
+  ws.on('message', (message: string) => {
+    try {
+      const data = JSON.parse(message.toString());
+      console.log('Received WebSocket message:', data);
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
+  });
+
+  ws.on('close', () => {
+    console.log('WebSocket client disconnected');
+    wsClients.delete(ws);
+  });
+
+  ws.on('error', (error) => {
+    console.error('WebSocket error:', error);
+    wsClients.delete(ws);
+  });
+});
+
+// Error handling middleware
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+  const isAPIError = err instanceof APIError;
+  const status = isAPIError ? err.status : err.status || err.statusCode || 500;
+  const timestamp = new Date().toISOString();
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const shouldExposeError = !isProduction || status < 500;
+
+  const errorResponse = {
+    status,
+    message: shouldExposeError ? err.message : 'Internal Server Error',
+    code: isAPIError ? err.code : undefined,
+    timestamp,
+    path: req.path,
+    method: req.method,
+    ...(shouldExposeError && err.details ? { details: err.details } : {}),
+    ...((!isProduction && err.stack) ? { stack: err.stack } : {})
+  };
+
+  // Log error details
+  const logMessage = `${status} ${req.method} ${req.path} :: ${err.message}`;
+  if (status >= 500) {
+    console.error(logMessage, {
+      error: err,
+      stack: err.stack,
+      body: req.body,
+      query: req.query,
+      user: req.user
+    });
+  } else {
+    console.warn(logMessage, { error: err });
+  }
+
+  res.status(status).json(errorResponse);
+});
+
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+  log(`Server running on port ${PORT}`);
+});
