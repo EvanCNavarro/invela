@@ -14,7 +14,8 @@ interface BuilderCardProps {
 }
 
 export function BuilderCard({ title, description, imagePath, icon: Icon, route, ctaText }: BuilderCardProps) {
-  console.log('Loading builder card with image:', imagePath); // Debug log
+  console.log('BuilderCard: Rendering card for:', title);
+  console.log('BuilderCard: Image path:', imagePath);
 
   return (
     <Link href={route}>
@@ -27,8 +28,22 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
                 alt={title}
                 className="object-cover w-full h-full"
                 onError={(e) => {
-                  console.error('Failed to load image:', imagePath, e);
+                  console.error('BuilderCard: Failed to load image:', {
+                    path: imagePath,
+                    error: e,
+                    component: title
+                  });
                   e.currentTarget.style.display = 'none';
+                  // Show placeholder on error
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.className = "w-full h-full bg-emerald-950/5 flex items-center justify-center";
+                    const iconEl = document.createElement('div');
+                    iconEl.appendChild(document.createElement('span')); // added a span for the icon
+                    const icon = new Icon();
+                    iconEl.firstChild.appendChild(icon.render()); // render the icon
+                    parent.appendChild(iconEl);
+                  }
                 }}
               />
             </>
@@ -44,7 +59,7 @@ export function BuilderCard({ title, description, imagePath, icon: Icon, route, 
           <div className="mt-4 flex justify-end">
             <Button className="group">
               {ctaText}
-              <ArrowRight className="ml-1.5 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="ml-1 h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </div>
         </div>
