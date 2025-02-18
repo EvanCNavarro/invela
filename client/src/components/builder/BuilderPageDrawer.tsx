@@ -14,19 +14,21 @@ export function BuilderPageDrawer({
   defaultOpen = true 
 }: BuilderPageDrawerProps) {
   return (
-    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] p-8 pt-6">
-      <div className="h-full rounded-lg border bg-background shadow-sm">
-        <PageSideDrawer
-          title={title}
-          titleIcon={<Info className="h-5 w-5" />}
-          isClosable={true}
-          defaultOpen={defaultOpen}
-          width="100%"
-        >
-          <div className="space-y-4">
-            {children}
-          </div>
-        </PageSideDrawer>
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem]">
+      <div className="h-[calc(100%-3rem)] p-8 pt-6">
+        <div className="h-full rounded-lg border bg-background shadow-sm">
+          <PageSideDrawer
+            title={title}
+            titleIcon={<Info className="h-5 w-5" />}
+            isClosable={true}
+            defaultOpen={defaultOpen}
+            width="100%"
+          >
+            <div className="space-y-4">
+              {children}
+            </div>
+          </PageSideDrawer>
+        </div>
       </div>
     </div>
   );
