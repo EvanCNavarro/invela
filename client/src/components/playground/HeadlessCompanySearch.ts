@@ -47,6 +47,8 @@ const getMissingFields = (company: Partial<Company>): string[] => {
 const validateJsonResponse = async (response: Response): Promise<any> => {
   const contentType = response.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {
+    const text = await response.text();
+    console.error('[HeadlessSearch] ❌ Non-JSON response:', text.substring(0, 200));
     throw new Error(`Expected JSON response but got ${contentType}`);
   }
 
@@ -68,13 +70,22 @@ export async function headlessCompanySearch(
   try {
     // Step 1: Search internal registry
     console.log("[HeadlessSearch] 📚 Searching internal registry");
-    const registryResponse = await fetch(`/api/companies/search?name=${encodeURIComponent(companyName)}`);
+    const registryResponse = await fetch(`/api/companies/search?name=${encodeURIComponent(companyName)}`, {
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
 
     if (!registryResponse.ok) {
+      console.error('[HeadlessSearch] ❌ Registry search failed:', registryResponse.status, registryResponse.statusText);
       throw new Error(`Registry search failed with status ${registryResponse.status}`);
     }
 
     const registryData = await validateJsonResponse(registryResponse);
+    if (!registryData.success) {
+      throw new Error(registryData.error || 'Registry search failed');
+    }
+
     const existingCompany = registryData.company;
 
     // Step 2: Handle existing vs new company
@@ -98,7 +109,10 @@ export async function headlessCompanySearch(
       console.log(`[HeadlessSearch] 🔄 Enriching ${missingFields.length} missing fields`);
       const enrichmentResponse = await fetch("/api/company-search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
           companyName,
           existingData: existingCompany,
@@ -107,10 +121,16 @@ export async function headlessCompanySearch(
       });
 
       if (!enrichmentResponse.ok) {
+        console.error('[HeadlessSearch] ❌ Enrichment failed:', enrichmentResponse.status, enrichmentResponse.statusText);
         throw new Error(`Enrichment failed with status ${enrichmentResponse.status}`);
       }
 
-      const { data: enrichedData } = await validateJsonResponse(enrichmentResponse);
+      const enrichResult = await validateJsonResponse(enrichmentResponse);
+      if (!enrichResult.success) {
+        throw new Error(enrichResult.error || 'Enrichment failed');
+      }
+
+      const { data: enrichedData } = enrichResult;
 
       // Determine which fields were actually enriched
       const enrichedFields = missingFields.filter(field => 
@@ -132,15 +152,24 @@ export async function headlessCompanySearch(
 
       const searchResponse = await fetch("/api/company-search", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({ companyName: companyName.trim() }),
       });
 
       if (!searchResponse.ok) {
+        console.error('[HeadlessSearch] ❌ Search failed:', searchResponse.status, searchResponse.statusText);
         throw new Error(`Search failed with status ${searchResponse.status}`);
       }
 
-      const { data } = await validateJsonResponse(searchResponse);
+      const searchResult = await validateJsonResponse(searchResponse);
+      if (!searchResult.success) {
+        throw new Error(searchResult.error || 'Search failed');
+      }
+
+      const { data } = searchResult;
       const missingFields = getMissingFields(data);
       const foundFields = Object.keys(data).filter(key => !missingFields.includes(key));
 
@@ -171,17 +200,3 @@ export function isSearchResultComplete(result: CompanySearchResult): boolean {
     result.companyData[field as keyof Company] !== null
   );
 }
-
-// Example usage:
-/*
-try {
-  const result = await headlessCompanySearch("Example Corp");
-  if (result.existingData) {
-    console.log("Found existing company with enriched data:", result);
-  } else {
-    console.log("Found new company data:", result);
-  }
-} catch (error) {
-  console.error("Search failed:", error);
-}
-*/
