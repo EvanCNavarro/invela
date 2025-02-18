@@ -20,7 +20,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   children,
   isClosable = true,
   defaultOpen = true,
-  width = "23.75rem",
+  width = "25.75rem",
   onOpenChange
 }) => {
   const [isOpen, setIsOpen] = React.useState(defaultOpen)
@@ -37,8 +37,8 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] px-8 pt-6">
-      <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
+    <div className="w-[25.75rem] border-l bg-background">
+      <div className="h-full overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">

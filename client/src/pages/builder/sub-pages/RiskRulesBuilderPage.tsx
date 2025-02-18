@@ -15,23 +15,23 @@ export function RiskRulesBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 overflow-x-hidden">
-        <div className="p-8 pt-6">
-          <div className={`transition-all duration-300 ${drawerOpen ? 'max-w-[calc(100%-33.75rem)]' : 'w-full'}`}>
-            <BreadcrumbNav items={breadcrumbItems} />
-            <div className="mt-6">
-              <PageHeader
-                title="Risk Score Rules"
-                description="Set up risk assessment criteria."
-              />
-              <div className="mt-4">
-                <div className="text-muted-foreground">
-                  Define and manage risk scoring rules here.
-                </div>
+      <div className="flex-1 flex overflow-x-hidden">
+        <div className="flex-1 min-w-0 p-8 pt-6">
+          <BreadcrumbNav items={breadcrumbItems} />
+          <div className="mt-6">
+            <PageHeader
+              title="Risk Score Rules"
+              description="Set up risk assessment criteria."
+            />
+            <div className="mt-4">
+              <div className="text-muted-foreground">
+                Define and manage risk scoring rules here.
               </div>
             </div>
           </div>
+        </div>
 
+        {drawerOpen && (
           <PageSideDrawer 
             title="Risk Rules Settings"
             titleIcon={<Info className="h-5 w-5" />}
@@ -52,7 +52,7 @@ export function RiskRulesBuilderPage() {
               </ul>
             </div>
           </PageSideDrawer>
-        </div>
+        )}
       </div>
     </DashboardLayout>
   );
