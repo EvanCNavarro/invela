@@ -29,7 +29,7 @@ export const PageSideDrawer: React.FC<PageSideDrawerProps> = ({
 
   return (
     <div 
-      className={`fixed top-0 right-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
+      className={`absolute top-0 right-0 h-full transition-all duration-300 ease-in-out border-l shadow-lg bg-background ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
       style={{ width }}
@@ -105,14 +105,14 @@ const PageSideDrawerPlayground = () => {
           </div>
         </div>
         <PageSideDrawer
-          title="Extra Info Drawer"
+          title="Sample Drawer Content"
           titleIcon={showIcon ? <Info className="h-5 w-5" /> : undefined}
           isClosable={isClosable}
           defaultOpen={defaultOpen}
         >
           <div className="space-y-4">
-            <h4 className="font-medium">Sample Drawer Content</h4>
-            <p className="text-sm text-muted-foreground">
+            <h4 className="font-medium">Configuration Options</h4>
+            <p className="text-muted-foreground">
               This drawer can contain any content, including other components,
               forms, or informational displays.
             </p>
