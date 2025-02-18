@@ -4,7 +4,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { InviteButton } from "@/components/ui/invite-button";
-import { PageSideDrawer } from "@/components/ui/page-side-drawer";
+import { PageSideDrawer, PageTemplate } from "@/components/ui/page-side-drawer";
 import {
   Settings,
   BarChart3,
@@ -43,7 +43,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
-import Fuse from 'fuse.js'
+import Fuse from 'fuse.js';
 import { InviteModal } from "@/components/playground/InviteModal";
 
 const DEFAULT_WIDGETS = {
@@ -52,12 +52,6 @@ const DEFAULT_WIDGETS = {
   quickActions: true,
   companyScore: true,
   networkVisualization: true
-};
-
-const toTitleCase = (str: string) => {
-  return str.split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
 };
 
 export default function DashboardPage() {
@@ -82,226 +76,235 @@ export default function DashboardPage() {
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
+  const drawer = (
+    <PageSideDrawer
+      title="Dashboard Information"
+      titleIcon={<Info className="h-5 w-5" />}
+      defaultOpen={drawerOpen}
+      isClosable={true}
+      onOpenChange={setDrawerOpen}
+    >
+      <div className="text-sm space-y-4">
+        <h4 className="font-medium">Dashboard Overview</h4>
+        <p className="text-muted-foreground">
+          This drawer provides additional information and context about your dashboard:
+        </p>
+        <ul className="space-y-2">
+          <li>• Widget customization options</li>
+          <li>• Data refresh schedules</li>
+          <li>• Dashboard shortcuts</li>
+          <li>• Notification settings</li>
+        </ul>
+      </div>
+    </PageSideDrawer>
+  );
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title="Dashboard"
-            description="Get an overview of your company's performance and recent activities."
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="gap-2">
-                <Settings className="h-4 w-4" />
-                Customize Dashboard
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="w-56"
-              sideOffset={4}
-            >
-              <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {Object.entries(visibleWidgets).map(([key, isVisible]) => (
-                <DropdownMenuItem
-                  key={key}
-                  onSelect={(event) => {
-                    event.preventDefault();
-                    toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
-                  }}
-                  className="flex items-center gap-2"
-                >
-                  <div className="w-4">
-                    {isVisible ? (
-                      <Check className="h-4 w-4 text-primary" />
-                    ) : (
-                      <div className="h-4 w-4" />
-                    )}
-                  </div>
-                  <span className={cn(
-                    "flex-1",
-                    isVisible ? "text-foreground" : "text-muted-foreground"
-                  )}>
-                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                  </span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
-        {allWidgetsHidden ? (
-          <div className="grid grid-cols-3 gap-4 min-h-[400px]">
-            {[...Array(6)].map((_, i) => (
-              <div
-                key={i}
-                className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
-              >
-                <div className="space-y-2">
-                  <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    No widgets selected. Click "Customize Dashboard" to add widgets.
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-4">
-            {visibleWidgets.updates && (
-              <Widget
-                title="Recent Updates"
-                icon={<Activity className="h-5 w-5" />}
-                size="double"
-                onVisibilityToggle={() => toggleWidget('updates')}
-                isVisible={visibleWidgets.updates}
-              >
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    No recent updates to show.
-                  </p>
-                </div>
-              </Widget>
-            )}
-
-            {visibleWidgets.announcements && (
-              <Widget
-                title="Announcements"
-                icon={<Bell className="h-5 w-5" />}
-                onVisibilityToggle={() => toggleWidget('announcements')}
-                isVisible={visibleWidgets.announcements}
-              >
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Welcome to Invela! Check out our latest features.
-                  </p>
-                </div>
-              </Widget>
-            )}
-
-            {visibleWidgets.quickActions && (
-              <Widget
-                title="Quick Actions"
-                icon={<Zap className="h-5 w-5" />}
-                size="double"
-                onVisibilityToggle={() => toggleWidget('quickActions')}
-                isVisible={visibleWidgets.quickActions}
-                actions={[
-                  {
-                    label: "Customize Actions",
-                    onClick: () => console.log("Customize actions"),
-                    icon: <Settings className="h-4 w-4" />
-                  }
-                ]}
-              >
-                <div className="grid grid-cols-2 gap-2">
-                  <InviteButton
-                    variant="fintech"
-                    pulse={true}
-                    onClick={() => setOpenFinTechModal(true)}
-                  />
-                  <Button variant="outline" className="w-full font-medium">
-                    Add User
-                  </Button>
-                  <Button variant="outline" className="w-full font-medium">
-                    Set Risk Tracker
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full font-medium"
-                    onClick={() => setDrawerOpen(!drawerOpen)}
-                  >
-                    {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
-                  </Button>
-                </div>
-
-                <InviteModal
-                  variant="fintech"
-                  open={openFinTechModal}
-                  onOpenChange={setOpenFinTechModal}
-                />
-              </Widget>
-            )}
-
-            {visibleWidgets.companyScore && companyData && (
-              <Widget
-                title="Company Score"
-                icon={<AlertTriangle className="h-5 w-5" />}
-                onVisibilityToggle={() => toggleWidget('companyScore')}
-                isVisible={visibleWidgets.companyScore}
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">Loading company data...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                      {companyData.logoId ? (
-                        <img
-                          src={`/api/companies/${companyData.id}/logo`}
-                          alt={`${companyData.name} logo`}
-                          className="w-6 h-6 object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                            console.debug(`Failed to load logo for company: ${companyData.name}`);
-                          }}
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-xs font-medium text-primary">
-                            {companyData.name.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <span className="text-sm font-medium">{companyData.name}</span>
-                    </div>
-                    <RiskMeter score={companyData.riskScore || 0} />
-                  </div>
-                )}
-              </Widget>
-            )}
-
-            {visibleWidgets.networkVisualization && (
-              <Widget
-                title="Network Visualization"
-                icon={<Globe className="h-5 w-5" />}
-                size="triple"
-                onVisibilityToggle={() => toggleWidget('networkVisualization')}
-                isVisible={visibleWidgets.networkVisualization}
-              >
-                <div className="flex items-center justify-center min-h-[200px]">
-                  <p className="text-sm text-muted-foreground">
-                    Network visualization coming soon
-                  </p>
-                </div>
-              </Widget>
-            )}
-          </div>
-        )}
-      </div>
-      <PageSideDrawer
-        title="Dashboard Information"
-        titleIcon={<Info className="h-5 w-5" />}
-        defaultOpen={drawerOpen}
-        isClosable={true}
-        onOpenChange={setDrawerOpen}
+      <PageTemplate
+        drawer={drawer}
+        drawerOpen={drawerOpen}
+        onDrawerOpenChange={setDrawerOpen}
       >
-        <div className="text-sm space-y-4">
-          <h4 className="font-medium">Dashboard Overview</h4>
-          <p className="text-muted-foreground">
-            This drawer provides additional information and context about your dashboard:
-          </p>
-          <ul className="space-y-2">
-            <li>• Widget customization options</li>
-            <li>• Data refresh schedules</li>
-            <li>• Dashboard shortcuts</li>
-            <li>• Notification settings</li>
-          </ul>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <PageHeader
+              title="Dashboard"
+              description="Get an overview of your company's performance and recent activities."
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Settings className="h-4 w-4" />
+                  Customize Dashboard
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-56"
+                sideOffset={4}
+              >
+                <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {Object.entries(visibleWidgets).map(([key, isVisible]) => (
+                  <DropdownMenuItem
+                    key={key}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      toggleWidget(key as keyof typeof DEFAULT_WIDGETS);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-4">
+                      {isVisible ? (
+                        <Check className="h-4 w-4 text-primary" />
+                      ) : (
+                        <div className="h-4 w-4" />
+                      )}
+                    </div>
+                    <span className={cn(
+                      "flex-1",
+                      isVisible ? "text-foreground" : "text-muted-foreground"
+                    )}>
+                      {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {allWidgetsHidden ? (
+            <div className="grid grid-cols-3 gap-4 min-h-[400px]">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
+                >
+                  <div className="space-y-2">
+                    <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      No widgets selected. Click "Customize Dashboard" to add widgets.
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              {visibleWidgets.updates && (
+                <Widget
+                  title="Recent Updates"
+                  icon={<Activity className="h-5 w-5" />}
+                  size="double"
+                  onVisibilityToggle={() => toggleWidget('updates')}
+                  isVisible={visibleWidgets.updates}
+                >
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      No recent updates to show.
+                    </p>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.announcements && (
+                <Widget
+                  title="Announcements"
+                  icon={<Bell className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('announcements')}
+                  isVisible={visibleWidgets.announcements}
+                >
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Welcome to Invela! Check out our latest features.
+                    </p>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.quickActions && (
+                <Widget
+                  title="Quick Actions"
+                  icon={<Zap className="h-5 w-5" />}
+                  size="double"
+                  onVisibilityToggle={() => toggleWidget('quickActions')}
+                  isVisible={visibleWidgets.quickActions}
+                  actions={[
+                    {
+                      label: "Customize Actions",
+                      onClick: () => console.log("Customize actions"),
+                      icon: <Settings className="h-4 w-4" />
+                    }
+                  ]}
+                >
+                  <div className="grid grid-cols-2 gap-2">
+                    <InviteButton
+                      variant="fintech"
+                      pulse={true}
+                      onClick={() => setOpenFinTechModal(true)}
+                    />
+                    <Button variant="outline" className="w-full font-medium">
+                      Add User
+                    </Button>
+                    <Button variant="outline" className="w-full font-medium">
+                      Set Risk Tracker
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full font-medium"
+                      onClick={() => setDrawerOpen(!drawerOpen)}
+                    >
+                      {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
+                    </Button>
+                  </div>
+
+                  <InviteModal
+                    variant="fintech"
+                    open={openFinTechModal}
+                    onOpenChange={setOpenFinTechModal}
+                  />
+                </Widget>
+              )}
+
+              {visibleWidgets.companyScore && companyData && (
+                <Widget
+                  title="Company Score"
+                  icon={<AlertTriangle className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('companyScore')}
+                  isVisible={visibleWidgets.companyScore}
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center min-h-[200px]">
+                      <p className="text-sm text-muted-foreground">Loading company data...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
+                        {companyData.logoId ? (
+                          <img
+                            src={`/api/companies/${companyData.id}/logo`}
+                            alt={`${companyData.name} logo`}
+                            className="w-6 h-6 object-contain"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              console.debug(`Failed to load logo for company: ${companyData.name}`);
+                            }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-xs font-medium text-primary">
+                              {companyData.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <span className="text-sm font-medium">{companyData.name}</span>
+                      </div>
+                      <RiskMeter score={companyData.riskScore || 0} />
+                    </div>
+                  )}
+                </Widget>
+              )}
+
+              {visibleWidgets.networkVisualization && (
+                <Widget
+                  title="Network Visualization"
+                  icon={<Globe className="h-5 w-5" />}
+                  size="triple"
+                  onVisibilityToggle={() => toggleWidget('networkVisualization')}
+                  isVisible={visibleWidgets.networkVisualization}
+                >
+                  <div className="flex items-center justify-center min-h-[200px]">
+                    <p className="text-sm text-muted-foreground">
+                      Network visualization coming soon
+                    </p>
+                  </div>
+                </Widget>
+              )}
+            </div>
+          )}
         </div>
-      </PageSideDrawer>
+      </PageTemplate>
     </DashboardLayout>
   );
 }
