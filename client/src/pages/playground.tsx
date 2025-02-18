@@ -33,21 +33,22 @@ export default function PlaygroundPage() {
 
   return (
     <div className="container mx-auto py-6 space-y-12">
-      {/* Simple Headless Demo Section */}
+      {/* Dropdown heading */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Quick Company Data Search</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Simple demonstration of the headless company data search functionality
-        </p>
+        <h2 className="text-xl mb-4">Company Data Crawler</h2>
+      </div>
+
+      {/* Preview Section */}
+      <div>
+        <h3 className="text-base font-medium mb-4">Preview</h3>
         <div className="flex gap-4 items-start">
-          <div className="flex-1">
-            <Input
-              placeholder="Enter company name..."
-              value={companyName}
-              onChange={(e) => setCompanyName(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && handleHeadlessSearch()}
-            />
-          </div>
+          <Input
+            placeholder="Enter company name..."
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleHeadlessSearch()}
+            className="flex-1"
+          />
           <Button 
             onClick={handleHeadlessSearch}
             disabled={isSearching || !companyName.trim()}
