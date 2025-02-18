@@ -14,7 +14,7 @@ export function OnboardingBuilderPage() {
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
           title="Onboarding Configuration"
-          description="Design and manage the onboarding process"
+          description="Design and manage the onboarding process."
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
