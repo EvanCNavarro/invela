@@ -24,13 +24,17 @@ export function PageSideDrawer({
 
   React.useEffect(() => {
     setIsOpen(defaultOpen)
-  }, [defaultOpen])
+    return () => {
+      // Cleanup effect
+      onOpenChange?.(false)
+    }
+  }, [defaultOpen, onOpenChange])
 
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = React.useCallback((newOpen: boolean) => {
     if (!isClosable && defaultOpen) return // Prevent closing if not closable and default open
     setIsOpen(newOpen)
     onOpenChange?.(newOpen)
-  }
+  }, [isClosable, defaultOpen, onOpenChange])
 
   if (!isOpen) return null
 
