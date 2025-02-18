@@ -78,12 +78,9 @@ export default function PlaygroundPage() {
         </div>
       </div>
 
-      {/* Comprehensive Search UI */}
+      {/* Company Data Structure */}
       <div>
-        <h2 className="text-xl font-bold mb-4">Advanced Company Data Crawler</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Full-featured company data search interface with detailed results display
-        </p>
+        <h2 className="text-xl font-bold mb-4">Company Data Structure</h2>
         <CompanySearchPlayground />
       </div>
 
