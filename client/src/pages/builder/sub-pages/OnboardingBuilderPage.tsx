@@ -13,8 +13,8 @@ export function OnboardingBuilderPage() {
       <div className="space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
-          heading="Onboarding Configuration"
-          subtext="Design and manage the onboarding process for fintech companies"
+          title="Onboarding Configuration"
+          description="Design and manage the onboarding process for fintech companies"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}

@@ -13,8 +13,8 @@ export function GroupsBuilderPage() {
       <div className="space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
-          heading="User Groups"
-          subtext="Create and manage user groups with custom permissions"
+          title="User Groups"
+          description="Create and manage user groups with custom permissions"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
