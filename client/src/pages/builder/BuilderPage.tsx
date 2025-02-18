@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { BuilderCard } from "@/components/builder/BuilderCard";
 import { ClipboardList, Scale, Bell, Users } from "lucide-react";
+import { DashboardLayout } from "@/layouts/DashboardLayout";
 
 const builderCards = [
   {
@@ -39,17 +40,19 @@ const builderCards = [
 
 export function BuilderPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Builder"
-        description="Configure and customize your platform's core functionalities"
-      />
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {builderCards.map((card) => (
-          <BuilderCard key={card.route} {...card} />
-        ))}
+    <DashboardLayout>
+      <div className="space-y-6">
+        <PageHeader
+          heading="Builder"
+          subtext="Configure and customize your platform's core functionalities"
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {builderCards.map((card) => (
+            <BuilderCard key={card.route} {...card} />
+          ))}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
