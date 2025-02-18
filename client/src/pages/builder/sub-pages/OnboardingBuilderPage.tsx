@@ -17,7 +17,7 @@ export function OnboardingBuilderPage() {
     <DashboardLayout>
       <div className="flex-1 space-y-4 p-8 pt-6">
         <div className="flex relative">
-          <div className="flex-1 transition-all duration-300">
+          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[33.75rem]' : 'mr-0'}`}>
             <BreadcrumbNav items={breadcrumbItems} />
 
             <div className="mt-6">

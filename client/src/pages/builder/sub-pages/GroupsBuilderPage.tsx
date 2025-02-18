@@ -15,17 +15,19 @@ export function GroupsBuilderPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-full space-y-6">
-        <BreadcrumbNav items={breadcrumbItems} />
-        <div className="flex-1 relative">
-          <div className="transition-all duration-300">
-            <PageHeader
-              title="User Groups"
-              description="Manage user groups and permissions."
-            />
-            <div className="container mx-auto p-6">
-              <div className="text-muted-foreground">
-                Create and manage user groups here.
+      <div className="flex-1 space-y-4 p-8 pt-6">
+        <div className="flex relative">
+          <div className={`flex-1 transition-all duration-300 ${drawerOpen ? 'mr-[33.75rem]' : 'mr-0'}`}>
+            <BreadcrumbNav items={breadcrumbItems} />
+            <div className="mt-6">
+              <PageHeader
+                title="User Groups"
+                description="Manage user groups and permissions."
+              />
+              <div className="container mx-auto">
+                <div className="text-muted-foreground">
+                  Create and manage user groups here.
+                </div>
               </div>
             </div>
           </div>
