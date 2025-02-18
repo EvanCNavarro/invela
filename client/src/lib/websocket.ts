@@ -1,23 +1,15 @@
 type MessageHandler = (data: any) => void;
 
-const INITIAL_RETRY_DELAY = 1000;
-const MAX_RETRY_DELAY = 30000;
-const MAX_RETRIES = 5;
-const CONNECTION_TIMEOUT = 10000;
-const HEARTBEAT_INTERVAL = 30000;
-
 class WebSocketService {
   private socket: WebSocket | null = null;
   private messageHandlers = new Map<string, Set<MessageHandler>>();
   private reconnectAttempts = 0;
-  private reconnectTimeout: NodeJS.Timeout | null = null;
-  private heartbeatInterval: NodeJS.Timeout | null = null;
-  private pongTimeout: NodeJS.Timeout | null = null;
-  private connectionTimeout: NodeJS.Timeout | null = null;
-  private isConnecting = false;
+  private maxReconnectAttempts = 5;
+  private reconnectTimeout = 1000;
   private connectionPromise: Promise<void> | null = null;
   private connectionResolve: (() => void) | null = null;
-  private connectionReject: ((error: Error) => void) | null = null;
+  private heartbeatInterval: NodeJS.Timeout | null = null;
+  private pongTimeout: NodeJS.Timeout | null = null;
 
   constructor() {
     this.connect();
@@ -29,62 +21,32 @@ class WebSocketService {
     return `${protocol}//${host}/ws`;
   }
 
-  private clearTimers() {
-    if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval);
-      this.heartbeatInterval = null;
-    }
-    if (this.pongTimeout) {
-      clearTimeout(this.pongTimeout);
-      this.pongTimeout = null;
-    }
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-      this.connectionTimeout = null;
-    }
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-  }
-
   private startHeartbeat() {
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
     }
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+    }
 
     this.heartbeatInterval = setInterval(() => {
       if (this.socket?.readyState === WebSocket.OPEN) {
-        try {
-          this.socket.send(JSON.stringify({ type: 'ping', timestamp: Date.now() }));
+        this.socket.send(JSON.stringify({ type: 'ping' }));
 
-          // Set timeout for pong response
-          if (this.pongTimeout) clearTimeout(this.pongTimeout);
-          this.pongTimeout = setTimeout(() => {
-            console.log('[WebSocket] No pong received, reconnecting...');
-            this.reconnect();
-          }, 10000);
-        } catch (error) {
-          console.error('[WebSocket] Error sending heartbeat:', error);
+        // Set a timeout for pong response
+        this.pongTimeout = setTimeout(() => {
+          console.log('[WebSocket] No pong received, reconnecting...');
           this.reconnect();
-        }
+        }, 15000); // Wait 15s for pong before reconnecting
       }
-    }, HEARTBEAT_INTERVAL);
+    }, 45000); // Send heartbeat every 45s
   }
 
   private async connect(): Promise<void> {
-    if (this.isConnecting || (this.socket?.readyState === WebSocket.CONNECTING)) {
-      return this.connectionPromise!;
-    }
+    if (this.connectionPromise) return this.connectionPromise;
 
-    if (this.socket?.readyState === WebSocket.OPEN) {
-      return Promise.resolve();
-    }
-
-    this.isConnecting = true;
-    this.connectionPromise = new Promise((resolve, reject) => {
+    this.connectionPromise = new Promise((resolve) => {
       this.connectionResolve = resolve;
-      this.connectionReject = reject;
 
       try {
         const wsUrl = this.getWebSocketUrl();
@@ -92,34 +54,36 @@ class WebSocketService {
 
         this.socket = new WebSocket(wsUrl);
 
-        // Set connection timeout
-        this.connectionTimeout = setTimeout(() => {
+        // Set a generous timeout for the initial connection
+        const connectionTimeout = setTimeout(() => {
           if (this.socket?.readyState !== WebSocket.OPEN) {
             console.log('[WebSocket] Connection timeout, attempting reconnect...');
             this.socket?.close();
             this.cleanup();
             this.handleReconnect();
-            reject(new Error('Connection timeout'));
           }
-        }, CONNECTION_TIMEOUT);
+        }, 20000); // 20 second timeout for initial connection
 
         this.socket.onopen = () => {
           console.log('[WebSocket] Connected successfully');
-          if (this.connectionTimeout) clearTimeout(this.connectionTimeout);
+          clearTimeout(connectionTimeout);
           this.reconnectAttempts = 0;
+          this.reconnectTimeout = 1000;
           this.startHeartbeat();
-          this.isConnecting = false;
-          resolve();
+          if (this.connectionResolve) {
+            this.connectionResolve();
+            this.connectionResolve = null;
+          }
         };
 
         this.socket.onmessage = (event) => {
           try {
             const message = JSON.parse(event.data);
 
+            // Handle pong responses
             if (message.type === 'pong') {
               if (this.pongTimeout) {
                 clearTimeout(this.pongTimeout);
-                this.pongTimeout = null;
               }
               return;
             }
@@ -137,62 +101,59 @@ class WebSocketService {
 
         this.socket.onclose = (event) => {
           console.log('[WebSocket] Connection closed:', event.code, event.reason);
+          clearTimeout(connectionTimeout);
           this.cleanup();
           this.handleReconnect();
-          reject(new Error(`Connection closed: ${event.code}`));
         };
 
         this.socket.onerror = (error) => {
           console.error('[WebSocket] Error:', error);
-          reject(error);
+          // Don't close the socket here, let the onclose handler deal with reconnection
         };
 
       } catch (error) {
         console.error('[WebSocket] Error establishing connection:', error);
         this.cleanup();
         this.handleReconnect();
-        reject(error);
       }
     });
 
-    return this.connectionPromise.catch((error) => {
-      console.error('[WebSocket] Connection attempt failed:', error);
-      throw error;
-    });
+    return this.connectionPromise;
   }
 
   private cleanup() {
-    this.clearTimers();
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+    if (this.pongTimeout) {
+      clearTimeout(this.pongTimeout);
+      this.pongTimeout = null;
+    }
     this.socket = null;
-    this.isConnecting = false;
     this.connectionPromise = null;
-    this.connectionResolve = null;
-    this.connectionReject = null;
-  }
-
-  private getRetryDelay(): number {
-    // Exponential backoff with jitter
-    const baseDelay = Math.min(
-      INITIAL_RETRY_DELAY * Math.pow(2, this.reconnectAttempts),
-      MAX_RETRY_DELAY
-    );
-    const jitter = Math.random() * 1000; // Add up to 1 second of jitter
-    return baseDelay + jitter;
   }
 
   private handleReconnect() {
-    if (this.reconnectAttempts < MAX_RETRIES) {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${MAX_RETRIES})...`);
+      console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
 
-      const delay = this.getRetryDelay();
-      this.reconnectTimeout = setTimeout(() => {
+      setTimeout(() => {
         this.connect().catch(error => {
           console.error('[WebSocket] Reconnection attempt failed:', error);
         });
-      }, delay);
+        // Exponential backoff with max of 30 seconds
+        this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
+      }, this.reconnectTimeout);
     } else {
       console.error('[WebSocket] Max reconnection attempts reached');
+    }
+  }
+
+  private reconnect() {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.close();
     }
   }
 
@@ -210,47 +171,31 @@ class WebSocketService {
   }
 
   public async subscribe(type: string, handler: MessageHandler): Promise<() => void> {
-    try {
-      await this.connect();
+    await this.connect();
 
-      if (!this.messageHandlers.has(type)) {
-        this.messageHandlers.set(type, new Set());
-      }
-      this.messageHandlers.get(type)!.add(handler);
-
-      return () => {
-        const handlers = this.messageHandlers.get(type);
-        if (handlers) {
-          handlers.delete(handler);
-          if (handlers.size === 0) {
-            this.messageHandlers.delete(type);
-          }
-        }
-      };
-    } catch (error) {
-      console.error('[WebSocket] Error in subscribe:', error);
-      throw error;
+    if (!this.messageHandlers.has(type)) {
+      this.messageHandlers.set(type, new Set());
     }
+    this.messageHandlers.get(type)!.add(handler);
+
+    return () => {
+      const handlers = this.messageHandlers.get(type);
+      if (handlers) {
+        handlers.delete(handler);
+        if (handlers.size === 0) {
+          this.messageHandlers.delete(type);
+        }
+      }
+    };
   }
 
   public async send(type: string, data: any): Promise<void> {
-    try {
-      await this.connect();
+    await this.connect();
 
-      if (this.socket?.readyState === WebSocket.OPEN) {
-        this.socket.send(JSON.stringify({ type, data }));
-      } else {
-        throw new Error('[WebSocket] Connection not ready');
-      }
-    } catch (error) {
-      console.error('[WebSocket] Error in send:', error);
-      throw error;
-    }
-  }
-
-  public reconnect() {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.close();
+    if (this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({ type, data }));
+    } else {
+      throw new Error('[WebSocket] Connection not ready');
     }
   }
 }
