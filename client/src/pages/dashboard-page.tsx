@@ -4,7 +4,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { InviteButton } from "@/components/ui/invite-button";
-import { PageSideDrawer, PageTemplate } from "@/components/ui/page-side-drawer";
+import { PageTemplate } from "@/components/ui/page-template";
 import {
   Settings,
   BarChart3,
@@ -109,8 +109,7 @@ export default function DashboardPage() {
         drawer={drawer}
         drawerOpen={drawerOpen}
         onDrawerOpenChange={handleDrawerChange}
-      >
-        <div className="space-y-6">
+        headerContent={
           <div className="flex items-center justify-between">
             <PageHeader
               title="Dashboard"
@@ -157,7 +156,9 @@ export default function DashboardPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-
+        }
+      >
+        <div className="space-y-6">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (

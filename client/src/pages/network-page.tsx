@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { SearchIcon, ArrowUpDown, ArrowRight, ArrowUpIcon, ArrowDownIcon, X, FilterX } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
+import { PageTemplate } from "@/components/ui/page-template";
 import { cn } from "@/lib/utils";
 import Fuse from 'fuse.js';
 import {
@@ -258,21 +259,24 @@ export default function NetworkPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex-1 space-y-6">
-        <div className="flex items-center justify-between">
-          <PageHeader
-            title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
-            description="View and manage companies in your network."
-          />
-          <InviteButton
-            variant="fintech"
-            pulse={true}
-            onClick={() => setOpenFinTechModal(true)}
-          />
-        </div>
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <div className="flex flex-col sm:flex-row gap-3 w-full">
+      <PageTemplate
+        showBreadcrumbs
+        headerContent={
+          <div className="flex items-center justify-between">
+            <PageHeader
+              title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
+              description="View and manage companies in your network."
+            />
+            <InviteButton
+              variant="fintech"
+              pulse={true}
+              onClick={() => setOpenFinTechModal(true)}
+            />
+          </div>
+        }
+      >
+        <div className="flex-1 space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -331,110 +335,110 @@ export default function NetworkPage() {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="bg-background rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[300px]">
-                  <Button
-                    variant="ghost"
-                    className="p-0 hover:bg-transparent text-left w-full justify-start"
-                    onClick={() => handleSort("name")}
-                  >
-                    <span>Company</span>
-                    {getSortIcon("name")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-right">
-                  <Button
-                    variant="ghost"
-                    className="p-0 hover:bg-transparent text-right w-full justify-end"
-                    onClick={() => handleSort("riskScore")}
-                  >
-                    <span>Risk Score</span>
-                    {getSortIcon("riskScore")}
-                  </Button>
-                </TableHead>
-                <TableHead className="text-center">Status</TableHead>
-                <TableHead className="w-[100px] text-center"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-[400px]">
-                    <div className="flex items-center justify-center w-full h-full">
-                      <LoadingSpinner size="lg" />
-                    </div>
-                  </TableCell>
+          <div className="bg-background rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="w-[300px]">
+                    <Button
+                      variant="ghost"
+                      className="p-0 hover:bg-transparent text-left w-full justify-start"
+                      onClick={() => handleSort("name")}
+                    >
+                      <span>Company</span>
+                      {getSortIcon("name")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-right">
+                    <Button
+                      variant="ghost"
+                      className="p-0 hover:bg-transparent text-right w-full justify-end"
+                      onClick={() => handleSort("riskScore")}
+                    >
+                      <span>Risk Score</span>
+                      {getSortIcon("riskScore")}
+                    </Button>
+                  </TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                  <TableHead className="w-[100px] text-center"></TableHead>
                 </TableRow>
-              ) : filteredCompanies.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-center py-4">
-                    No companies found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedCompanies.map((company: Company) => (
-                  <CompanyRow
-                    key={company.id}
-                    company={company}
-                    isHovered={hoveredRow === company.id}
-                    onRowClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
-                    onHoverChange={(isHovered) => setHoveredRow(isHovered ? company.id : null)}
-                    searchTerm={searchQuery}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-[400px]">
+                      <div className="flex items-center justify-center w-full h-full">
+                        <LoadingSpinner size="lg" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : filteredCompanies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4">
+                      No companies found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedCompanies.map((company: Company) => (
+                    <CompanyRow
+                      key={company.id}
+                      company={company}
+                      isHovered={hoveredRow === company.id}
+                      onRowClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
+                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? company.id : null)}
+                      searchTerm={searchQuery}
+                    />
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
-          <div className="flex items-center justify-between px-4 py-4 border-t">
-            <div className="text-sm text-muted-foreground">
-              {isLoading ? (
-                "Loading results..."
-              ) : filteredCompanies.length > 0 ? (
-                <>
-                  Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} results
-                </>
-              ) : (
-                "No results found"
+            <div className="flex items-center justify-between px-4 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                {isLoading ? (
+                  "Loading results..."
+                ) : filteredCompanies.length > 0 ? (
+                  <>
+                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} results
+                  </>
+                ) : (
+                  "No results found"
+                )}
+              </div>
+
+              {!isLoading && filteredCompanies.length > itemsPerPage && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
               )}
             </div>
-
-            {!isLoading && filteredCompanies.length > itemsPerPage && (
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
           </div>
+          <InviteModal
+            variant="fintech"
+            open={openFinTechModal}
+            onOpenChange={setOpenFinTechModal}
+          />
         </div>
-        <InviteModal
-          variant="fintech"
-          open={openFinTechModal}
-          onOpenChange={setOpenFinTechModal}
-        />
-      </div>
+      </PageTemplate>
     </DashboardLayout>
   );
 }
