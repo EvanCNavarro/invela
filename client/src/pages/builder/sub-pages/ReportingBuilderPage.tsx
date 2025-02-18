@@ -13,8 +13,8 @@ export function ReportingBuilderPage() {
       <div className="space-y-6">
         <BreadcrumbNav items={breadcrumbItems} />
         <PageHeader
-          heading="Automated Reporting"
-          subtext="Configure monitoring, alerts, and notification workflows"
+          title="Automated Reporting"
+          description="Configure monitoring, alerts, and notification workflows"
         />
         <div className="container mx-auto">
           {/* Content will be implemented later */}
