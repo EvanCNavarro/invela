@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
+import FormPlayground from "@/components/playground/FormPlayground";
 
 // Sample data for DataTable demo
 const sampleTableData = [
@@ -46,6 +47,12 @@ interface PlaygroundComponent {
 
 // Define all available components
 const components: PlaygroundComponent[] = [
+  {
+    id: "form",
+    name: "Form",
+    component: FormPlayground,
+    description: "Multi-step form with wizard navigation and progress tracking"
+  },
   {
     id: "form-field",
     name: "Form Field",
