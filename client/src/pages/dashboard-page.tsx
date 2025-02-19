@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -54,6 +55,10 @@ export default function DashboardPage() {
       ...prev,
       [widgetId]: !prev[widgetId]
     }));
+  };
+
+  const toggleDrawer = () => {
+    setDrawerOpen(prev => !prev);
   };
 
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
@@ -109,7 +114,7 @@ export default function DashboardPage() {
           <PageSideDrawer
             title="Dashboard Information"
             titleIcon={<Info className="h-5 w-5" />}
-            defaultOpen={false}
+            defaultOpen={drawerOpen}
             isClosable={true}
             onOpenChange={setDrawerOpen}
           >
@@ -201,7 +206,7 @@ export default function DashboardPage() {
                   <Button
                     variant="outline"
                     className="w-full font-medium"
-                    onClick={() => setDrawerOpen(!drawerOpen)}
+                    onClick={toggleDrawer}
                   >
                     {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
                   </Button>
