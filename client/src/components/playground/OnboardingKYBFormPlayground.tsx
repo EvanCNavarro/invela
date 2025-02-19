@@ -21,7 +21,7 @@ const FORM_STEPS = [
     ],
     validation: (data: Record<string, string>) => {
       const requiredFields = ['legalEntityName', 'registrationNumber', 'incorporationDate'];
-      return requiredFields.every(field => 
+      return requiredFields.every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -37,7 +37,7 @@ const FORM_STEPS = [
     ],
     validation: (data: Record<string, string>) => {
       const requiredFields = ['directorsAndOfficers', 'ultimateBeneficialOwners'];
-      return requiredFields.every(field => 
+      return requiredFields.every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -53,12 +53,11 @@ const FORM_STEPS = [
     ],
     validation: (data: Record<string, string>) => {
       const requiredFields = ['corporateRegistration', 'goodStanding'];
-      return requiredFields.every(field => 
+      return requiredFields.every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
-  }
-  ,
+  },
   {
     id: 'financial-operational',
     title: 'Financial & Operational',
@@ -70,7 +69,7 @@ const FORM_STEPS = [
     ],
     validation: (data: Record<string, string>) => {
       const requiredFields = ['taxId', 'financialStatements'];
-      return requiredFields.every(field => 
+      return requiredFields.every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -85,7 +84,7 @@ const FORM_STEPS = [
     ],
     validation: (data: Record<string, string>) => {
       const requiredFields = ['sanctionsCheck', 'dueDiligence'];
-      return requiredFields.every(field => 
+      return requiredFields.every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -143,8 +142,8 @@ export const OnboardingKYBFormPlayground = () => {
   const isLastStep = currentStep === FORM_STEPS.length - 1;
 
   // Calculate progress based on current step
-  const progress = isSubmitted 
-    ? 100 
+  const progress = isSubmitted
+    ? 100
     : Math.round((currentStep / (FORM_STEPS.length - 1)) * 75);
 
   // Check if current step is valid
@@ -177,14 +176,12 @@ export const OnboardingKYBFormPlayground = () => {
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`px-2 py-1 text-xs rounded ${
-                  isSubmitted 
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
-                </div>
+              <div className={`px-2 py-1 text-xs rounded ${
+                isSubmitted
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
               </div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">KYB Survey</h2>
@@ -203,7 +200,7 @@ export const OnboardingKYBFormPlayground = () => {
           {/* Progress bar - only show when not submitted */}
           {!isSubmitted && (
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-blue-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
@@ -221,8 +218,8 @@ export const OnboardingKYBFormPlayground = () => {
                 {/* Step circle */}
                 <div className={`
                   flex items-center justify-center w-6 h-6 rounded-full text-sm
-                  ${index < currentStep || isSubmitted 
-                    ? 'bg-green-600 text-white' 
+                  ${index < currentStep || isSubmitted
+                    ? 'bg-green-600 text-white'
                     : index === currentStep && !isSubmitted
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-500'
@@ -269,8 +266,9 @@ export const OnboardingKYBFormPlayground = () => {
 
             <div className="space-y-4">
               {currentStepData.fields.map(field => {
-                const isEmpty = !formData[field.name]?.trim();
-                const isTouched = formData[field.name] !== undefined;
+                const value = formData[field.name];
+                const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
+                const isTouched = value !== undefined;
                 const suggestion = getSuggestionForField(field.name);
 
                 // Determine field variant based on validation
@@ -289,7 +287,7 @@ export const OnboardingKYBFormPlayground = () => {
                     <FormField
                       type="text"
                       variant={variant}
-                      value={formData[field.name] || ''}
+                      value={value || ''}
                       onChange={(e) => setFormData(prev => ({
                         ...prev,
                         [field.name]: e.target.value
@@ -318,7 +316,7 @@ export const OnboardingKYBFormPlayground = () => {
           )}
           {isSubmitted ? (
             <div className="ml-auto">
-              <Button 
+              <Button
                 disabled
                 className="bg-green-600 hover:bg-green-600 text-white"
               >
@@ -326,7 +324,7 @@ export const OnboardingKYBFormPlayground = () => {
               </Button>
             </div>
           ) : (
-            <Button 
+            <Button
               onClick={handleNext}
               disabled={!isCurrentStepValid}
               className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
