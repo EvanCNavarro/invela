@@ -102,6 +102,54 @@ export const FormPlayground = () => {
           )}
         </div>
 
+        <hr className="border-t border-gray-200 my-6" />
+
+        {/* Form Wizard Steps */}
+        <div className="mb-8">
+          <div className="flex items-center">
+            {FORM_STEPS.map((step, index) => (
+              <div key={step.id} className="flex items-center">
+                {/* Step circle */}
+                <div className={`
+                  flex items-center justify-center w-8 h-8 rounded-full 
+                  ${index < currentStep || isSubmitted 
+                    ? 'bg-green-500 text-white' 
+                    : index === currentStep && !isSubmitted
+                      ? 'bg-blue-500 text-white border-2 border-blue-200'
+                      : 'bg-gray-100 text-gray-500'
+                  }
+                `}>
+                  {index < currentStep || isSubmitted ? '✓' : index + 1}
+                </div>
+                {/* Step title */}
+                <div className="ml-3">
+                  <p className={`text-sm font-medium ${
+                    index === currentStep && !isSubmitted
+                      ? 'text-blue-500'
+                      : index < currentStep || isSubmitted
+                        ? 'text-green-500'
+                        : 'text-gray-500'
+                  }`}>
+                    {step.title}
+                  </p>
+                </div>
+                {/* Connector line */}
+                {index < FORM_STEPS.length - 1 && (
+                  <div className={`
+                    w-12 h-[2px] mx-2
+                    ${index < currentStep || isSubmitted
+                      ? 'bg-green-500'
+                      : 'bg-gray-200'
+                    }
+                  `} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <hr className="border-t border-gray-200 my-6" />
+
         {/* Form Fields Section */}
         <div className="space-y-6">
           <div className="mb-6">
@@ -130,25 +178,29 @@ export const FormPlayground = () => {
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8 pt-4 border-t">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            disabled={currentStep === 0}
-          >
-            {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
-            Back
-          </Button>
-          {isSubmitted ? (
-            <Button 
-              disabled
-              className="bg-green-500 hover:bg-green-500 text-white"
+          {!isSubmitted && (
+            <Button
+              variant="ghost"
+              onClick={handleBack}
+              disabled={currentStep === 0}
             >
-              Submitted
+              {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
+              Back
             </Button>
+          )}
+          {isSubmitted ? (
+            <div className="ml-auto">
+              <Button 
+                disabled
+                className="bg-green-600 hover:bg-green-600 text-white"
+              >
+                Submitted
+              </Button>
+            </div>
           ) : (
             <Button 
               onClick={handleNext}
-              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
             >
               {isLastStep ? 'Submit' : 'Next'}
             </Button>
