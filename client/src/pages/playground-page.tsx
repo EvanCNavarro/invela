@@ -23,6 +23,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
 import FormPlayground from "@/components/playground/FormPlayground";
+import OnboardingKYBFormPlayground from "@/components/playground/OnboardingKYBFormPlayground";
 
 // Sample data for DataTable demo
 const sampleTableData = [
@@ -153,6 +154,12 @@ const components: PlaygroundComponent[] = [
     name: "Headless Company Crawler",
     component: HeadlessCrawlerPlayground,
     description: "Headless company data crawler"
+  },
+  {
+    id: "kyb-form",
+    name: "KYB Form",
+    component: OnboardingKYBFormPlayground,
+    description: "Interactive KYB form with company data suggestions"
   }
 ];
 
