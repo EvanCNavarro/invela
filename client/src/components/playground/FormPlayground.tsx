@@ -10,19 +10,25 @@ const FORM_STEPS = [
     id: 'company-details',
     title: 'Company Details',
     description: 'Basic information about your company',
-    fields: ['name', 'legalStructure']
+    fields: ['name', 'legalStructure'],
+    validation: (data: Record<string, string>) => 
+      data.name.trim() !== '' && data.legalStructure.trim() !== ''
   },
   {
     id: 'location',
     title: 'Location',
     description: 'Where your company operates',
-    fields: ['address', 'country']
+    fields: ['address', 'country'],
+    validation: (data: Record<string, string>) => 
+      data.address.trim() !== '' && data.country.trim() !== ''
   },
   {
     id: 'additional-info',
     title: 'Additional Information',
     description: 'Other important details',
-    fields: ['description', 'website']
+    fields: ['description', 'website'],
+    validation: (data: Record<string, string>) => 
+      data.description.trim() !== '' && data.website.trim() !== ''
   }
 ];
 
@@ -61,6 +67,9 @@ export const FormPlayground = () => {
     ? 100 
     : Math.round((currentStep / (FORM_STEPS.length - 1)) * 75);
 
+  // Check if current step is valid
+  const isCurrentStepValid = currentStepData.validation(formData);
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -71,7 +80,7 @@ export const FormPlayground = () => {
               <div className="flex items-center gap-2 mb-2">
                 <div className={`px-2 py-1 text-xs rounded ${
                   isSubmitted 
-                    ? 'bg-green-100 text-green-800'
+                    ? 'bg-green-100 text-green-600'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
                   {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
@@ -106,28 +115,28 @@ export const FormPlayground = () => {
 
         {/* Form Wizard Steps */}
         <div className="mb-8">
-          <div className="flex items-center">
+          <div className="flex justify-between items-center">
             {FORM_STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center">
+              <div key={step.id} className="flex items-center flex-1">
                 {/* Step circle */}
                 <div className={`
-                  flex items-center justify-center w-8 h-8 rounded-full 
+                  flex items-center justify-center w-6 h-6 rounded-full text-sm
                   ${index < currentStep || isSubmitted 
-                    ? 'bg-green-500 text-white' 
+                    ? 'bg-green-600 text-white' 
                     : index === currentStep && !isSubmitted
-                      ? 'bg-blue-500 text-white border-2 border-blue-200'
+                      ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-500'
                   }
                 `}>
                   {index < currentStep || isSubmitted ? '✓' : index + 1}
                 </div>
                 {/* Step title */}
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${
+                <div className="mx-2">
+                  <p className={`text-xs font-medium ${
                     index === currentStep && !isSubmitted
                       ? 'text-blue-500'
                       : index < currentStep || isSubmitted
-                        ? 'text-green-500'
+                        ? 'text-green-600'
                         : 'text-gray-500'
                   }`}>
                     {step.title}
@@ -136,9 +145,9 @@ export const FormPlayground = () => {
                 {/* Connector line */}
                 {index < FORM_STEPS.length - 1 && (
                   <div className={`
-                    w-12 h-[2px] mx-2
+                    flex-1 h-[1px]
                     ${index < currentStep || isSubmitted
-                      ? 'bg-green-500'
+                      ? 'bg-green-600'
                       : 'bg-gray-200'
                     }
                   `} />
@@ -200,6 +209,7 @@ export const FormPlayground = () => {
           ) : (
             <Button 
               onClick={handleNext}
+              disabled={!isCurrentStepValid}
               className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
             >
               {isLastStep ? 'Submit' : 'Next'}
