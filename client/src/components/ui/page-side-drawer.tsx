@@ -54,7 +54,7 @@ export function PageSideDrawer({
               {titleIcon}
               <h3 className="font-semibold">{title}</h3>
             </div>
-            {(!defaultOpen || isClosable) && (
+            {(!defaultOpen && isClosable) && (
               <button
                 className="p-2 hover:bg-muted rounded-md"
                 onClick={() => handleOpenChange(false)}
