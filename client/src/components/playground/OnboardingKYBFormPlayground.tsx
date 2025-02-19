@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
@@ -208,24 +208,6 @@ export const OnboardingKYBFormPlayground = () => {
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Initialize form data with suggestions when company data changes
-  useEffect(() => {
-    if (companyData) {
-      const newFormData = { ...formData };
-
-      // Go through all form steps and find fields with suggestions
-      FORM_STEPS.forEach(step => {
-        step.fields.forEach(field => {
-          if (field.suggestion && companyData[field.suggestion]) {
-            newFormData[field.name] = companyData[field.suggestion];
-          }
-        });
-      });
-
-      setFormData(newFormData);
-    }
-  }, [companyData]);
-
   const handleCompanySearch = async () => {
     if (!companyName.trim()) return;
 
@@ -287,13 +269,6 @@ export const OnboardingKYBFormPlayground = () => {
   const getSuggestionForField = (fieldName: string) => {
     const field = currentStepData.fields.find(f => f.name === fieldName);
     if (field?.suggestion && companyData?.[field.suggestion]) {
-      // If we have a suggestion and it's not already in formData, add it
-      if (!formData[fieldName]) {
-        setFormData(prev => ({
-          ...prev,
-          [fieldName]: companyData[field.suggestion]
-        }));
-      }
       return companyData[field.suggestion];
     }
     return undefined;
