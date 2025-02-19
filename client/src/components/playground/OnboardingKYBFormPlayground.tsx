@@ -332,12 +332,14 @@ export const OnboardingKYBFormPlayground = () => {
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <div className="flex-1">
-              <div className={`px-2 py-1 text-xs rounded ${
-                isSubmitted
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                  isSubmitted 
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">KYB Survey</h2>
