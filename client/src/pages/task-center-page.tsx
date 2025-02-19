@@ -35,20 +35,15 @@ const taskStatusMap = {
   [TaskStatus.APPROVED]: 'Approved',
 } as const;
 
-const getStatusVariant = (status: string) => {
+const getStatusVariant = (status: string): "default" | "secondary" | "success" => {
   switch (status) {
     case TaskStatus.NOT_STARTED:
     case TaskStatus.EMAIL_SENT:
       return "secondary"; // grey
-    case TaskStatus.IN_PROGRESS:
-    case TaskStatus.READY_FOR_SUBMISSION:
-      return "warning"; // yellow
-    case TaskStatus.SUBMITTED:
-    case TaskStatus.APPROVED:
     case TaskStatus.COMPLETED:
       return "success"; // green
     default:
-      return "default";
+      return "default"; // fallback
   }
 };
 
