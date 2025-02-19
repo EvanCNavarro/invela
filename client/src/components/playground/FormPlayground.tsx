@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 // Define the steps for the wizard
 const FORM_STEPS = [
@@ -56,10 +56,10 @@ export const FormPlayground = () => {
   const currentStepData = FORM_STEPS[currentStep];
   const isLastStep = currentStep === FORM_STEPS.length - 1;
 
-  // Calculate progress (only reaches 100% after submission)
+  // Calculate progress based on current step (25% per step)
   const progress = isSubmitted 
     ? 100 
-    : Math.round(((currentStep) / FORM_STEPS.length) * 75); // Max 75% before submission
+    : Math.round((currentStep / (FORM_STEPS.length - 1)) * 75);
 
   return (
     <div className="space-y-6">
@@ -69,8 +69,12 @@ export const FormPlayground = () => {
           <div className="flex items-center mb-4">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <div className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 rounded">
-                  IN PROGRESS
+                <div className={`px-2 py-1 text-xs rounded ${
+                  isSubmitted 
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -80,18 +84,22 @@ export const FormPlayground = () => {
                 Questionnaire | Task
               </p>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {progress}% Complete
-            </div>
+            {!isSubmitted && (
+              <div className="text-sm text-muted-foreground">
+                {progress}% Complete
+              </div>
+            )}
           </div>
 
-          {/* Progress bar */}
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-blue-500 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
+          {/* Progress bar - only show when not submitted */}
+          {!isSubmitted && (
+            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Form Fields Section */}
@@ -127,15 +135,24 @@ export const FormPlayground = () => {
             onClick={handleBack}
             disabled={currentStep === 0}
           >
-            {currentStep > 0 && <ChevronLeft className="h-4 w-4 mr-2" />}
+            {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
             Back
           </Button>
-          <Button 
-            onClick={handleNext}
-            className={isLastStep ? 'animate-pulse' : ''}
-          >
-            {isLastStep ? 'Submit' : 'Next'}
-          </Button>
+          {isSubmitted ? (
+            <Button 
+              disabled
+              className="bg-green-500 hover:bg-green-500 text-white"
+            >
+              Submitted
+            </Button>
+          ) : (
+            <Button 
+              onClick={handleNext}
+              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+            >
+              {isLastStep ? 'Submit' : 'Next'}
+            </Button>
+          )}
         </div>
       </Card>
     </div>
