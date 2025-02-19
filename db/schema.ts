@@ -16,6 +16,11 @@ import { z } from "zod";
 export const TaskStatus = {
   EMAIL_SENT: 'email_sent',
   COMPLETED: 'completed',
+  NOT_STARTED: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  READY_FOR_SUBMISSION: 'ready_for_submission',
+  SUBMITTED: 'submitted',
+  APPROVED: 'approved',
 } as const;
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
@@ -24,11 +29,11 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  taskType: text("task_type").notNull(), // 'user_onboarding' or 'file_request'
+  taskType: text("task_type").notNull(), // 'user_onboarding', 'file_request', or 'company_onboarding_KYB'
   taskScope: text("task_scope").notNull(), // 'user' or 'company'
   status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.EMAIL_SENT),
   priority: text("priority").notNull().default('medium'),
-  progress: real("progress").notNull().default(25),
+  progress: real("progress").notNull().default(0),
   assignedTo: integer("assigned_to").references(() => users.id),
   createdBy: integer("created_by").references(() => users.id),
   companyId: integer("company_id").references(() => companies.id),
@@ -221,7 +226,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  taskType: z.enum(["user_onboarding", "file_request"]),
+  taskType: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB"]),
   taskScope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -231,9 +236,17 @@ export const insertTaskSchema = z.object({
   assignedTo: z.number().nullable().optional(),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   filesRequested: z.array(z.string()).optional(),
-  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.COMPLETED])
+  status: z.enum([
+    TaskStatus.EMAIL_SENT,
+    TaskStatus.COMPLETED,
+    TaskStatus.NOT_STARTED,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.READY_FOR_SUBMISSION,
+    TaskStatus.SUBMITTED,
+    TaskStatus.APPROVED,
+  ])
     .optional()
-    .default(TaskStatus.EMAIL_SENT),
+    .default(TaskStatus.NOT_STARTED),
 }).superRefine((data, ctx) => {
   if (data.taskType === "user_onboarding") {
     if (!data.userEmail) {
@@ -272,6 +285,15 @@ export const insertTaskSchema = z.object({
         path: ["companyId"],
       });
     }
+  } else if (data.taskType === "company_onboarding_KYB") {
+    if (!data.companyId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Company is required for KYB tasks",
+        path: ["companyId"],
+      });
+    }
+    data.taskScope = "company";
   }
 });
 export const selectTaskSchema = createSelectSchema(tasks);

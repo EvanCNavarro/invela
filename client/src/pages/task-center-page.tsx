@@ -27,16 +27,35 @@ import { wsService } from "@/lib/websocket";
 
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
   [TaskStatus.COMPLETED]: 'Completed',
-  pending: 'Email Sent', // Backward compatibility for existing tasks
+  [TaskStatus.NOT_STARTED]: 'Not Started',
+  [TaskStatus.IN_PROGRESS]: 'In Progress',
+  [TaskStatus.READY_FOR_SUBMISSION]: 'Ready for Submission',
+  [TaskStatus.SUBMITTED]: 'Submitted',
+  [TaskStatus.APPROVED]: 'Approved',
+} as const;
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case TaskStatus.NOT_STARTED:
+      return "secondary"; // grey
+    case TaskStatus.IN_PROGRESS:
+    case TaskStatus.READY_FOR_SUBMISSION:
+      return "warning"; // yellow
+    case TaskStatus.SUBMITTED:
+    case TaskStatus.APPROVED:
+    case TaskStatus.COMPLETED:
+      return "success"; // green
+    default:
+      return "default";
+  }
 };
 
 interface Task {
   id: number;
   title: string;
   description: string;
-  taskType: 'user_onboarding' | 'file_request' | 'user_invitation';
+  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
   taskScope?: 'user' | 'company';
   status: string;
   progress: number;
@@ -146,9 +165,9 @@ export default function TaskCenterPage() {
       // For "For Others" tab:
       // Show tasks created by the user AND are onboarding/invitation type
       // BUT exclude tasks that are assigned to the user (those go in My Tasks)
-      : (task.createdBy === user?.id && 
-         (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') &&
-         task.assignedTo !== user?.id);
+      : (task.createdBy === user?.id &&
+        (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
+        task.assignedTo !== user?.id);
 
     console.log('[TaskCenter] Task matches tab:', matchesTab);
 
@@ -209,9 +228,9 @@ export default function TaskCenterPage() {
       if (tabId === "my-tasks") {
         return task.assignedTo === user?.id;
       } else {
-        return (task.createdBy === user?.id && 
-                (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation') &&
-                task.assignedTo !== user?.id);
+        return (task.createdBy === user?.id &&
+          (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
+          task.assignedTo !== user?.id);
       }
     }).length;
   };
@@ -253,14 +272,18 @@ export default function TaskCenterPage() {
       <TableRow key={task.id}>
         <TableCell className="font-medium">{task.title}</TableCell>
         <TableCell>
-          <Badge variant="secondary">
+          <Badge variant={getStatusVariant(task.status)}>
             {taskStatusMap[task.status] || task.status.replace(/_/g, ' ')}
           </Badge>
         </TableCell>
         <TableCell>
           <div className="w-full bg-secondary h-2 rounded-full">
             <div
-              className="bg-primary h-2 rounded-full"
+              className={cn("h-2 rounded-full", {
+                "bg-primary": !task.status.includes("progress"),
+                "bg-warning": task.status === TaskStatus.IN_PROGRESS,
+                "bg-success": task.status === TaskStatus.APPROVED || task.status === TaskStatus.COMPLETED
+              })}
               style={{ width: `${task.progress}%` }}
             />
           </div>
@@ -368,26 +391,30 @@ export default function TaskCenterPage() {
                   </Button>
 
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[140px]">
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue>{statusFilter}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value="Email Sent">Email Sent</SelectItem>
+                      <SelectItem value="Not Started">Not Started</SelectItem>
                       <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Ready for Submission">Ready for Submission</SelectItem>
+                      <SelectItem value="Submitted">Submitted</SelectItem>
+                      <SelectItem value="Approved">Approved</SelectItem>
+                      <SelectItem value="Email Sent">Email Sent</SelectItem>
                       <SelectItem value="Completed">Completed</SelectItem>
-                      <SelectItem value="Failed">Failed</SelectItem>
                     </SelectContent>
                   </Select>
 
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[160px]">
+                    <SelectTrigger className="w-[180px]">
                       <SelectValue>{typeFilter}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Task Types">All Task Types</SelectItem>
                       <SelectItem value="User Onboarding">User Onboarding</SelectItem>
                       <SelectItem value="File Request">File Request</SelectItem>
+                      <SelectItem value="Company KYB">Company KYB</SelectItem>
                     </SelectContent>
                   </Select>
 
