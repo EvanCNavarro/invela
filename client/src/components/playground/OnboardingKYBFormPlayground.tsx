@@ -348,7 +348,7 @@ export const OnboardingKYBFormPlayground = () => {
             </div>
             {!isSubmitted && (
               <div className="text-sm text-muted-foreground">
-                {progress}% Complete
+                {progress === 100 ? 'Ready for Submission' : `${progress}% Complete`}
               </div>
             )}
           </div>
