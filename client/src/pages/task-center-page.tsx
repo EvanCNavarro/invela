@@ -38,6 +38,7 @@ const taskStatusMap = {
 const getStatusVariant = (status: string) => {
   switch (status) {
     case TaskStatus.NOT_STARTED:
+    case TaskStatus.EMAIL_SENT:
       return "secondary"; // grey
     case TaskStatus.IN_PROGRESS:
     case TaskStatus.READY_FOR_SUBMISSION:
