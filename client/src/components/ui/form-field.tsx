@@ -1,4 +1,4 @@
-import { FC, InputHTMLAttributes, useState } from "react";
+import { FC, InputHTMLAttributes, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Check, Lock, X, Sparkles, CornerRightUp } from "lucide-react";
@@ -20,6 +20,11 @@ export const FormField: FC<FormFieldProps> = ({
 }) => {
   const [currentValue, setCurrentValue] = useState(value || '');
   const [currentVariant, setCurrentVariant] = useState(variant);
+
+  // Update currentVariant when variant prop changes
+  useEffect(() => {
+    setCurrentVariant(variant);
+  }, [variant]);
 
   const getVariantStyles = () => {
     switch (currentVariant) {
