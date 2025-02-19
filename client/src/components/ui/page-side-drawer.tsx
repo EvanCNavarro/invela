@@ -46,7 +46,7 @@ export function PageSideDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] z-50">
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] z-50 pr-4 pt-4">
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b bg-background">
