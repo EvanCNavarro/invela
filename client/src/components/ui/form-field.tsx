@@ -1,4 +1,4 @@
-import { FC, InputHTMLAttributes, useState, useEffect } from "react";
+import { FC, InputHTMLAttributes, useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Check, Lock, X, Sparkles, CornerRightUp } from "lucide-react";
@@ -20,6 +20,7 @@ export const FormField: FC<FormFieldProps> = ({
 }) => {
   const [currentValue, setCurrentValue] = useState(value || '');
   const [currentVariant, setCurrentVariant] = useState(variant);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Update currentVariant when variant prop changes
   useEffect(() => {
@@ -44,14 +45,22 @@ export const FormField: FC<FormFieldProps> = ({
   };
 
   const handleSuggestionClick = () => {
-    if (aiSuggestion && onChange && variant === 'ai-suggestion') {
-      const event = {
-        target: { value: aiSuggestion }
-      } as React.ChangeEvent<HTMLInputElement>;
-
+    if (aiSuggestion && variant === 'ai-suggestion') {
       setCurrentValue(aiSuggestion);
       setCurrentVariant('active');
-      onChange(event);
+
+      // Create and dispatch change event
+      if (onChange) {
+        const event = {
+          target: { value: aiSuggestion }
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(event);
+      }
+
+      // Focus the input field
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
     }
   };
 
@@ -59,6 +68,7 @@ export const FormField: FC<FormFieldProps> = ({
     <div className="relative w-full">
       <div className="relative">
         <Input
+          ref={inputRef}
           type={type}
           value={currentValue}
           onChange={(e) => {
