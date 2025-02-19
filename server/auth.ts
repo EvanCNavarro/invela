@@ -19,28 +19,41 @@ const SALT_ROUNDS = 10;
 const PostgresSessionStore = connectPg(session);
 
 async function hashPassword(password: string) {
-  return bcrypt.hash(password, SALT_ROUNDS);
+  try {
+    return await bcrypt.hash(password, SALT_ROUNDS);
+  } catch (error) {
+    console.error('[Auth] Password hashing error:', error);
+    throw new Error('Failed to hash password');
+  }
 }
 
 async function comparePasswords(supplied: string, stored: string) {
   try {
     if (!stored) {
-      console.error("No stored password provided");
+      console.error("[Auth] No stored password provided");
       return false;
     }
     return await bcrypt.compare(supplied, stored);
   } catch (error) {
-    console.error("Password comparison error:", error);
+    console.error("[Auth] Password comparison error:", error);
     return false;
   }
 }
 
 async function getUserByEmail(email: string) {
-  const normalizedEmail = email.toLowerCase();
-  return db.select()
-    .from(users)
-    .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
-    .limit(1);
+  try {
+    const normalizedEmail = email.toLowerCase();
+    const users = await db.select()
+      .from(users)
+      .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
+      .limit(1);
+
+    console.log('[Auth] Found user:', users[0] ? users[0].id : 'not found');
+    return users;
+  } catch (error) {
+    console.error('[Auth] Error getting user by email:', error);
+    throw error;
+  }
 }
 
 export function setupAuth(app: Express) {
