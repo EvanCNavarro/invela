@@ -256,7 +256,15 @@ export const OnboardingKYBFormPlayground = () => {
     : Math.round((currentStep / (FORM_STEPS.length - 1)) * 75);
 
   // Check if current step is valid
-  const isCurrentStepValid = currentStepData.validation(formData);
+  const isCurrentStepValid = (() => {
+    const result = currentStepData.validation(formData);
+    console.log('Current step validation:', {
+      step: currentStepData.id,
+      formData,
+      isValid: result
+    });
+    return result;
+  })();
 
   const getSuggestionForField = (fieldName: string) => {
     const field = currentStepData.fields.find(f => f.name === fieldName);
