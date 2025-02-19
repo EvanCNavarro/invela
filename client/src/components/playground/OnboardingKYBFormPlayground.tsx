@@ -271,13 +271,20 @@ export const OnboardingKYBFormPlayground = () => {
   };
 
   const handleSuggestionClick = (fieldName: string, suggestion: string) => {
-    setFormData(prev => ({
-      ...prev,
+    // Update form data state
+    const updatedFormData = {
+      ...formData,
       [fieldName]: suggestion
-    }));
+    };
+
+    setFormData(updatedFormData);
+
+    // Log the update for debugging
     console.log('Updated form data with suggestion:', {
       field: fieldName,
-      value: suggestion
+      value: suggestion,
+      allFormData: updatedFormData,
+      isValid: currentStepData.validation(updatedFormData)
     });
   };
 
