@@ -37,9 +37,11 @@ export function PageSideDrawer({
 
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
     if (!isMounted.current) return
-    if (!isClosable && defaultOpen) return // Prevent closing if not closable and default open
-    setIsOpen(newOpen)
-    onOpenChange?.(newOpen)
+    // Show close button if drawer is not set to defaultOpen
+    if (!defaultOpen || isClosable) {
+      setIsOpen(newOpen)
+      onOpenChange?.(newOpen)
+    }
   }, [isClosable, defaultOpen, onOpenChange])
 
   if (!isOpen) return null
@@ -53,10 +55,10 @@ export function PageSideDrawer({
               {titleIcon}
               <h3 className="font-semibold">{title}</h3>
             </div>
-            {isClosable && (
+            {(!defaultOpen || isClosable) && (
               <button
                 className="p-2 hover:bg-muted rounded-md"
-                onClick={() => handleOpenChange(!isOpen)}
+                onClick={() => handleOpenChange(false)}
               >
                 ×
               </button>
@@ -87,12 +89,12 @@ export function PageTemplate({
   return (
     <div className="flex-1 flex overflow-x-hidden">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300 p-6",
+        "flex-1 min-w-0 transition-all duration-300",
         drawerOpen ? "mr-[25.75rem]" : ""
       )}>
         {children}
       </div>
-      {drawer}
+      {drawerOpen && drawer}
     </div>
   )
 }
