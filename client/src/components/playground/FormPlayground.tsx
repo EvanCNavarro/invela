@@ -159,31 +159,46 @@ export const FormPlayground = () => {
 
         <hr className="border-t border-gray-200 my-6" />
 
-        {/* Form Fields Section */}
-        <div className="space-y-6">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">{currentStepData.title}</h3>
-            <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
-          </div>
+        {/* Form Fields Section - Only show when not submitted */}
+        {!isSubmitted && (
+          <div className="space-y-6">
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold mb-2">{currentStepData.title}</h3>
+              <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
+            </div>
 
-          <div className="space-y-4">
-            {currentStepData.fields.map(field => (
-              <div key={field} className="space-y-2">
-                <label className="text-sm font-medium">{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                <FormField
-                  type="text"
-                  variant="default"
-                  value={formData[field as keyof typeof formData]}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    [field]: e.target.value
-                  }))}
-                  placeholder={`Enter ${field.toLowerCase()}`}
-                />
-              </div>
-            ))}
+            <div className="space-y-4">
+              {currentStepData.fields.map(field => {
+                const isEmpty = !formData[field as keyof typeof formData]?.trim();
+                const isTouched = formData[field as keyof typeof formData] !== '';
+
+                // Determine field variant based on validation
+                let variant: 'default' | 'error' | 'successful' = 'default';
+                if (isTouched) {
+                  variant = isEmpty ? 'error' : 'successful';
+                }
+
+                return (
+                  <div key={field} className="space-y-2">
+                    <label className="text-sm font-medium">
+                      {field.charAt(0).toUpperCase() + field.slice(1)}
+                    </label>
+                    <FormField
+                      type="text"
+                      variant={variant}
+                      value={formData[field as keyof typeof formData]}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        [field]: e.target.value
+                      }))}
+                      placeholder={`Enter ${field.toLowerCase()}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Buttons */}
         <div className="flex justify-between mt-8 pt-4 border-t">
