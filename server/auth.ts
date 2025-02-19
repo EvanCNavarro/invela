@@ -47,6 +47,10 @@ async function comparePasswords(supplied: string, stored: string) {
     console.log('[Auth] - Stored hash:', stored);
     console.log('[Auth] - Supplied password (first 4 chars):', supplied.substring(0, 4));
 
+    // Test the hash generation with the supplied password
+    const testHash = await hashPassword(supplied);
+    console.log('[Auth] - Test hash generated:', testHash);
+
     const isValid = await bcrypt.compare(supplied, stored);
     console.log('[Auth] Password comparison result:', isValid);
     return isValid;
