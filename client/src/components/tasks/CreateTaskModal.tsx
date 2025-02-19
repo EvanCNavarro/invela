@@ -28,6 +28,7 @@ interface Company {
 const TaskType = {
   USER_ONBOARDING: "user_onboarding",
   FILE_REQUEST: "file_request",
+  COMPANY_KYB: "company_onboarding_KYB",
 } as const;
 
 const TaskScope = {
@@ -70,10 +71,19 @@ const fileRequestSchema = z.object({
   ...baseSchema,
 });
 
+// Define the company KYB schema
+const companyKybSchema = z.object({
+  taskType: z.literal(TaskType.COMPANY_KYB),
+  companyId: z.number({ required_error: "Company ID is required for KYB" }),
+  ...baseSchema,
+});
+
+
 // Combined schema using discriminated union
 const taskSchema = z.discriminatedUnion("taskType", [
   userOnboardingSchema,
   fileRequestSchema,
+  companyKybSchema,
 ]);
 
 type TaskFormData = z.infer<typeof taskSchema>;
@@ -125,6 +135,20 @@ export function CreateTaskModal() {
             statusFlow: [TaskStatus.EMAIL_SENT]
           }
         };
+      } else if (data.taskType === TaskType.COMPANY_KYB) {
+        const company = companies.find((c) => c.id === data.companyId);
+        const companyName = company ? company.name : 'the company';
+        taskData = {
+          ...data,
+          title: `KYB for ${companyName}`,
+          description: `KYB task initiated for ${companyName}`,
+          status: TaskStatus.EMAIL_SENT,
+          progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
+          metadata: {
+            emailSentAt: new Date().toISOString(),
+            statusFlow: [TaskStatus.EMAIL_SENT]
+          }
+        };
       } else {
         const assignee = data.taskScope === TaskScope.COMPANY
           ? companies.find((c) => c.id === data.companyId)?.name
@@ -164,7 +188,9 @@ export function CreateTaskModal() {
         title: "Success",
         description: taskType === TaskType.FILE_REQUEST
           ? "File request task created successfully"
-          : "Invite sent successfully and task created",
+          : taskType === TaskType.COMPANY_KYB
+            ? "KYB task created successfully"
+            : "Invite sent successfully and task created",
       });
       setOpen(false);
       form.reset(defaultValues);
@@ -199,7 +225,7 @@ export function CreateTaskModal() {
         <DialogHeader>
           <DialogTitle>Create New Task</DialogTitle>
           <DialogDescription>
-            Create a new task for user onboarding or file requests.
+            Create a new task for user onboarding, file requests, or company KYB.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -222,6 +248,11 @@ export function CreateTaskModal() {
                               <Send className="h-4 w-4 mr-2" />
                               <span>Invite New FinTech User</span>
                             </div>
+                          ) : field.value === TaskType.COMPANY_KYB ? (
+                            <div className="flex items-center">
+                              <Building2 className="h-4 w-4 mr-2" />
+                              <span>Company KYB</span>
+                            </div>
                           ) : (
                             <div className="flex items-center">
                               <FileText className="h-4 w-4 mr-2" />
@@ -242,6 +273,12 @@ export function CreateTaskModal() {
                         <div className="flex items-center">
                           <FileText className="h-4 w-4 mr-2" />
                           <span>Request Files</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value={TaskType.COMPANY_KYB}>
+                        <div className="flex items-center">
+                          <Building2 className="h-4 w-4 mr-2" />
+                          <span>Company KYB</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -316,7 +353,7 @@ export function CreateTaskModal() {
               />
             )}
 
-            {((taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.COMPANY) || taskType === TaskType.USER_ONBOARDING) && (
+            {(taskType === TaskType.FILE_REQUEST && taskScope === TaskScope.COMPANY) || taskType === TaskType.USER_ONBOARDING || taskType === TaskType.COMPANY_KYB ? (
               <FormField
                 control={form.control}
                 name="companyId"
@@ -374,7 +411,7 @@ export function CreateTaskModal() {
                   </FormItem>
                 )}
               />
-            )}
+            ) : null}
 
             {taskType === TaskType.FILE_REQUEST && (
               <FormField
@@ -436,6 +473,11 @@ export function CreateTaskModal() {
                   <div className="flex items-center">
                     <FileText className="h-4 w-4 mr-2" />
                     <span>Create File Task</span>
+                  </div>
+                ) : taskType === TaskType.COMPANY_KYB ? (
+                  <div className="flex items-center">
+                    <Building2 className="h-4 w-4 mr-2" />
+                    <span>Create KYB Task</span>
                   </div>
                 ) : (
                   <div className="flex items-center">
