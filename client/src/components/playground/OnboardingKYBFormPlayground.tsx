@@ -33,36 +33,42 @@ const FORM_STEPS = [
       { 
         name: 'legalEntityName', 
         label: 'Legal Entity Name', 
-        question: 'What is the full, registered name of the business?',
+        question: 'What is the registered business name?',
+        tooltip: 'The full legal name as it appears on official registration documents',
         suggestion: 'name' 
       },
       { 
         name: 'registrationNumber', 
         label: 'Registration Number',
-        question: 'What is your corporation number or business number (e.g., issued by Corporations Canada or the relevant state authority)?'
+        question: 'What is the corporation or business number?',
+        tooltip: 'Issued by Corporations Canada or the relevant state authority',
       },
       { 
         name: 'incorporationDate', 
         label: 'Date of Incorporation',
-        question: 'When was the business legally formed?',
+        question: 'When was the business formed?',
+        tooltip: 'The official date when the business was legally incorporated',
         suggestion: 'incorporationYear' 
       },
       { 
         name: 'jurisdiction', 
         label: 'Jurisdiction of Incorporation',
-        question: 'In which state or province is your business incorporated (e.g., Ontario, British Columbia, or U.S. state)?',
+        question: 'In which jurisdiction is the business incorporated?',
+        tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
         suggestion: 'hqAddress' 
       },
       { 
         name: 'registeredAddress', 
         label: 'Registered Business Address',
-        question: 'What is your principal place of business or registered address?',
+        question: 'What is the principal business address?',
+        tooltip: 'The official registered address where the business operates',
         suggestion: 'hqAddress' 
       },
       { 
         name: 'businessType', 
         label: 'Business Type/Legal Structure',
-        question: 'Is your entity structured as a corporation, limited liability company (LLC), partnership, or another form?',
+        question: 'What is the legal structure of the business?',
+        tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
         suggestion: 'legalStructure' 
       }
     ],
@@ -81,18 +87,21 @@ const FORM_STEPS = [
       { 
         name: 'directorsAndOfficers', 
         label: 'Directors and Officers',
-        question: 'Who are the directors and senior officers? Please include full legal names, dates of birth, and contact details.',
+        question: 'Who are the current directors and senior officers?',
+        tooltip: 'Include full legal names, dates of birth, and contact details',
         suggestion: 'foundersAndLeadership' 
       },
       { 
         name: 'ultimateBeneficialOwners', 
         label: 'Ultimate Beneficial Owners (UBOs)',
-        question: 'Which individuals directly or indirectly own 25% or more of the business? Please provide supporting documentation.'
+        question: 'Which individuals hold 25% or more ownership?',
+        tooltip: 'Include direct and indirect ownership with supporting documentation',
       },
       { 
         name: 'authorizedSigners', 
         label: 'Authorized Signers',
-        question: 'Who is authorized to sign legally binding documents on behalf of the business, and how is their authority documented?'
+        question: 'Who has legal signing authority for the business?',
+        tooltip: 'Include documentation of signing authority',
       }
     ],
     validation: (data: Record<string, string>) => {
@@ -110,17 +119,20 @@ const FORM_STEPS = [
       { 
         name: 'corporateRegistration', 
         label: 'Corporate Registration Documents',
-        question: 'Can you provide the official document(s) that confirm your business registration and legal status?'
+        question: 'What are the official registration documents?',
+        tooltip: 'Documents that confirm business registration and legal status',
       },
       { 
         name: 'goodStanding', 
         label: 'Proof of Good Standing',
-        question: 'Is your business current and in good standing with the regulatory body?'
+        question: 'Is the business in good standing with regulators?',
+        tooltip: 'Current status with the regulatory body',
       },
       { 
         name: 'licenses', 
         label: 'Licensing and Regulatory Documents',
-        question: 'What additional licenses or permits do you hold that relate to your business activities?'
+        question: 'What business licenses and permits are held?',
+        tooltip: 'All current licenses and permits related to business activities',
       }
     ],
     validation: (data: Record<string, string>) => {
@@ -138,17 +150,20 @@ const FORM_STEPS = [
       { 
         name: 'taxId', 
         label: 'Tax Identification',
-        question: 'What is your tax ID (e.g., EIN in the U.S. or CRA Business Number in Canada)?'
+        question: 'What is the business tax ID?',
+        tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
       },
       { 
         name: 'financialStatements', 
         label: 'Financial Statements',
-        question: 'Can you provide recent audited financial statements or other financial documentation that demonstrates your business\'s financial health?'
+        question: 'Are recent financial statements available?',
+        tooltip: 'Recent audited financial statements or documentation of financial health',
       },
       { 
         name: 'operationalPolicies', 
         label: 'Operational Policies',
-        question: 'Do you have documented policies for data protection, cybersecurity (especially for API security related to OpenBanking), and business continuity plans?'
+        question: 'What security and compliance policies are in place?',
+        tooltip: 'Policies for data protection, cybersecurity (API security for OpenBanking), and business continuity',
       }
     ],
     validation: (data: Record<string, string>) => {
@@ -166,12 +181,14 @@ const FORM_STEPS = [
       { 
         name: 'sanctionsCheck', 
         label: 'Sanctions and Adverse Media Checks',
-        question: 'Has your business ever been flagged on sanctions or adverse media watchlists?'
+        question: 'Are there any sanctions or adverse media flags?',
+        tooltip: 'History of sanctions or adverse media watchlist appearances',
       },
       { 
         name: 'dueDiligence', 
         label: 'Due Diligence Reports',
-        question: 'Do you have any recent third-party due diligence or risk assessment reports that can verify your compliance?'
+        question: 'What due diligence reports are available?',
+        tooltip: 'Recent third-party due diligence or risk assessment reports verifying compliance',
       }
     ],
     validation: (data: Record<string, string>) => {
@@ -382,14 +399,14 @@ export const OnboardingKYBFormPlayground = () => {
                         <span className="text-sm font-medium text-foreground">
                           {mainText}
                         </span>
-                        {tooltipText && (
+                        {field.tooltip && (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="text-sm">{tooltipText}</p>
+                                <p className="text-sm">{field.tooltip}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
