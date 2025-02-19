@@ -20,7 +20,10 @@ const PostgresSessionStore = connectPg(session);
 
 async function hashPassword(password: string) {
   try {
-    return await bcrypt.hash(password, SALT_ROUNDS);
+    console.log('[Auth] Starting password hashing with bcrypt');
+    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    console.log('[Auth] Password hashed successfully, hash length:', hashedPassword.length);
+    return hashedPassword;
   } catch (error) {
     console.error('[Auth] Password hashing error:', error);
     throw new Error('Failed to hash password');
@@ -33,7 +36,13 @@ async function comparePasswords(supplied: string, stored: string) {
       console.error("[Auth] No stored password provided");
       return false;
     }
-    return await bcrypt.compare(supplied, stored);
+    console.log('[Auth] Comparing passwords:');
+    console.log('[Auth] - Stored hash length:', stored.length);
+    console.log('[Auth] - Stored hash format check:', stored.startsWith('$2b$'));
+
+    const isValid = await bcrypt.compare(supplied, stored);
+    console.log('[Auth] Password comparison result:', isValid);
+    return isValid;
   } catch (error) {
     console.error("[Auth] Password comparison error:", error);
     return false;
@@ -43,12 +52,20 @@ async function comparePasswords(supplied: string, stored: string) {
 async function getUserByEmail(email: string) {
   try {
     const normalizedEmail = email.toLowerCase();
+    console.log('[Auth] Looking up user by email:', normalizedEmail);
+
     const users = await db.select()
       .from(users)
       .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
       .limit(1);
 
-    console.log('[Auth] Found user:', users[0] ? users[0].id : 'not found');
+    console.log('[Auth] User lookup result:', {
+      found: users.length > 0,
+      userId: users[0]?.id,
+      hasPassword: !!users[0]?.password,
+      passwordLength: users[0]?.password?.length
+    });
+
     return users;
   } catch (error) {
     console.error('[Auth] Error getting user by email:', error);
@@ -142,6 +159,12 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     console.log('[Auth] Processing login request');
+    console.log('[Auth] Login request body:', {
+      email: req.body.email,
+      hasPassword: !!req.body.password,
+      passwordLength: req.body.password?.length
+    });
+
     passport.authenticate('local', (err: Error, user: Express.User, info: { message: string }) => {
       if (err) {
         console.error('[Auth] Login error:', err);
