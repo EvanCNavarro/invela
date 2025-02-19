@@ -35,15 +35,20 @@ const taskStatusMap = {
   [TaskStatus.APPROVED]: 'Approved',
 } as const;
 
-const getStatusVariant = (status: string): "default" | "secondary" | "success" => {
+const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
   switch (status) {
     case TaskStatus.NOT_STARTED:
     case TaskStatus.EMAIL_SENT:
       return "secondary"; // grey
     case TaskStatus.COMPLETED:
-      return "success"; // green
+    case TaskStatus.APPROVED:
+      return "default"; // primary color
+    case TaskStatus.IN_PROGRESS:
+    case TaskStatus.READY_FOR_SUBMISSION:
+    case TaskStatus.SUBMITTED:
+      return "outline"; // outlined style
     default:
-      return "default"; // fallback
+      return "default"; // fallback to primary color
   }
 };
 
@@ -269,13 +274,13 @@ export default function TaskCenterPage() {
         <TableCell className="font-medium">{task.title}</TableCell>
         <TableCell>
           <Badge variant={getStatusVariant(task.status)}>
-            {taskStatusMap[task.status] || task.status.replace(/_/g, ' ')}
+            {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
           </Badge>
         </TableCell>
         <TableCell>
           <div className="w-full bg-secondary h-2 rounded-full">
             <div
-              className="bg-primary h-2 rounded-full"
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${task.progress}%` }}
             />
           </div>
