@@ -32,6 +32,7 @@ export default function LoginPage() {
       email: "",
       password: "",
     },
+    mode: "onChange" // Validate on change instead of just on submit
   });
 
   // Redirect if already logged in
@@ -40,6 +41,11 @@ export default function LoginPage() {
   }
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
+    if (!form.formState.isValid) {
+      console.log('[Login] Form validation failed:', form.formState.errors);
+      return;
+    }
+
     console.log('[Login] Submitting form with email:', values.email);
     console.log('[Login] Password length:', values.password.length);
     loginMutation.mutate(values);
@@ -143,7 +149,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full font-bold hover:opacity-90"
-                disabled={loginMutation.isPending}
+                disabled={!form.formState.isValid || loginMutation.isPending}
                 onClick={() => {
                   console.log('[Login] Submit button clicked');
                   console.log('[Login] Form state:', {
@@ -153,7 +159,13 @@ export default function LoginPage() {
                   });
                 }}
               >
-                Log in
+                {loginMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    Logging in...
+                  </span>
+                ) : (
+                  'Log in'
+                )}
               </Button>
 
               <div className="text-center mt-4">
