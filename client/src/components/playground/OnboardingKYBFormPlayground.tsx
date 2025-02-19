@@ -270,11 +270,14 @@ export const OnboardingKYBFormPlayground = () => {
     return undefined;
   };
 
-  const handleSuggestionClick = (fieldName: string, suggestion: string) => {
+  const handleSuggestionClick = (fieldName: string, suggestion: any) => {
+    // Ensure suggestion is converted to string
+    const stringValue = String(suggestion);
+
     // Update form data state
     const updatedFormData = {
       ...formData,
-      [fieldName]: suggestion
+      [fieldName]: stringValue
     };
 
     setFormData(updatedFormData);
@@ -282,7 +285,8 @@ export const OnboardingKYBFormPlayground = () => {
     // Log the update for debugging
     console.log('Updated form data with suggestion:', {
       field: fieldName,
-      value: suggestion,
+      value: stringValue,
+      originalType: typeof suggestion,
       allFormData: updatedFormData,
       isValid: currentStepData.validation(updatedFormData)
     });
