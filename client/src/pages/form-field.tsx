@@ -19,7 +19,7 @@ export default function FormFieldPlayground() {
   return (
     <div className="container mx-auto p-8">
       <h1 className="text-3xl font-bold mb-8">Form Field Component</h1>
-      
+
       <Card className="p-6">
         <div className="flex gap-4 mb-8">
           <div className="flex flex-col gap-2">
@@ -28,7 +28,7 @@ export default function FormFieldPlayground() {
               value={type} 
               onValueChange={(value) => setType(value as typeof types[number])}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-[120px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -40,20 +40,21 @@ export default function FormFieldPlayground() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex flex-col gap-2">
             <label className="text-sm font-medium">State</label>
             <Select 
               value={state} 
               onValueChange={(value) => setState(value as typeof states[number])}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-[150px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {states.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {s.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    {s === 'ai-suggestion' ? 'AI Suggestion' : 
+                      s.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </SelectItem>
                 ))}
               </SelectContent>
