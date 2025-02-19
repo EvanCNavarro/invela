@@ -29,7 +29,7 @@ export function PageTemplate({
             actions={headerActions}
           />
         )}
-        <div className={cn("mt-6", className)}>
+        <div className={cn(className)}>
           {children}
         </div>
       </div>
