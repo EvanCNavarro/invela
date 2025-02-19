@@ -28,7 +28,6 @@ export function PageSideDrawer({
     setIsOpen(defaultOpen)
     return () => {
       isMounted.current = false
-      // Only call onOpenChange if the component is unmounting and was open
       if (isOpen) {
         onOpenChange?.(false)
       }
@@ -47,7 +46,7 @@ export function PageSideDrawer({
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] transition-all duration-300">
+    <div className="fixed right-0 top-[57px] bottom-0 w-[25.75rem] transition-all duration-300 bg-background">
       <div className="h-[calc(100%-2rem)] rounded-lg border bg-background shadow-sm overflow-hidden">
         <div className="flex flex-col h-full">
           <div className="flex items-center justify-between p-4 border-b">
