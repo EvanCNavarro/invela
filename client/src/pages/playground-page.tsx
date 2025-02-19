@@ -49,34 +49,10 @@ interface PlaygroundComponent {
 // Define all available components
 const components: PlaygroundComponent[] = [
   {
-    id: "form",
-    name: "Form",
-    component: FormPlayground,
-    description: "Multi-step form with wizard navigation and progress tracking"
-  },
-  {
-    id: "form-field",
-    name: "Form Field",
-    component: FormFieldPlayground,
-    description: "Interactive form field component with various states and types"
-  },
-  {
-    id: "page-side-drawer",
-    name: "Page Side Drawer",
-    component: PageSideDrawerPlayground,
-    description: "Page-embedded side drawer with customizable features"
-  },
-  {
-    id: "loading-spinner",
-    name: "Loading Spinner",
-    component: () => (
-      <div className="flex items-center gap-8">
-        <LoadingSpinner size="sm" />
-        <LoadingSpinner size="md" />
-        <LoadingSpinner size="lg" />
-      </div>
-    ),
-    description: "Loading spinner component in different sizes"
+    id: "company-data-crawler",
+    name: "Company Data Crawler",
+    component: CompanySearchPlayground,
+    description: "Company data search and crawling tool"
   },
   {
     id: "data-table",
@@ -88,24 +64,6 @@ const components: PlaygroundComponent[] = [
       />
     ),
     description: "Interactive data table with sorting and filtering"
-  },
-  {
-    id: "search-bar",
-    name: "Search Bar",
-    component: SearchBarPlayground,
-    description: "Search bar with autocomplete"
-  },
-  {
-    id: "network-search",
-    name: "Network Search",
-    component: NetworkSearchPlayground,
-    description: "Network visualization search component"
-  },
-  {
-    id: "unified-dropdown",
-    name: "Unified Dropdown",
-    component: DropdownPlayground,
-    description: "Unified dropdown menu component"
   },
   {
     id: "download-button",
@@ -120,6 +78,72 @@ const components: PlaygroundComponent[] = [
     description: "File upload component with drag and drop"
   },
   {
+    id: "form",
+    name: "Form",
+    component: FormPlayground,
+    description: "Multi-step form with wizard navigation and progress tracking"
+  },
+  {
+    id: "form-field",
+    name: "Form Field",
+    component: FormFieldPlayground,
+    description: "Interactive form field component with various states and types"
+  },
+  {
+    id: "headless-company-crawler",
+    name: "Headless Company Crawler",
+    component: HeadlessCrawlerPlayground,
+    description: "Headless company data crawler"
+  },
+  {
+    id: "invite-button",
+    name: "Invite Button/Modal",
+    component: InvitePlayground,
+    description: "User invitation component"
+  },
+  {
+    id: "kyb-form",
+    name: "KYB Form",
+    component: OnboardingKYBFormPlayground,
+    description: "Interactive KYB form with company data suggestions"
+  },
+  {
+    id: "loading-spinner",
+    name: "Loading Spinner",
+    component: () => (
+      <div className="flex items-center gap-8">
+        <LoadingSpinner size="sm" />
+        <LoadingSpinner size="md" />
+        <LoadingSpinner size="lg" />
+      </div>
+    ),
+    description: "Loading spinner component in different sizes"
+  },
+  {
+    id: "navigational-tab-pane",
+    name: "Navigational Tab Pane",
+    component: TabsDemo,
+    description: "Navigation tabs with content"
+  },
+  {
+    id: "network-search",
+    name: "Network Search",
+    component: NetworkSearchPlayground,
+    description: "Network visualization search component"
+  },
+  {
+    id: "page-side-drawer",
+    name: "Page Side Drawer",
+    component: PageSideDrawerPlayground,
+    description: "Page-embedded side drawer with customizable features"
+  },
+  {
+    id: "search-bar",
+    name: "Search Bar",
+    component: SearchBarPlayground,
+    description: "Search bar with autocomplete"
+  },
+  {
     id: "sidebar-menu",
     name: "Sidebar Menu",
     component: () => <div>Sidebar Menu Playground</div>,
@@ -132,34 +156,10 @@ const components: PlaygroundComponent[] = [
     description: "Individual sidebar tab component"
   },
   {
-    id: "navigational-tab-pane",
-    name: "Navigational Tab Pane",
-    component: TabsDemo,
-    description: "Navigation tabs with content"
-  },
-  {
-    id: "invite-button",
-    name: "Invite Button/Modal",
-    component: InvitePlayground,
-    description: "User invitation component"
-  },
-  {
-    id: "company-data-crawler",
-    name: "Company Data Crawler",
-    component: CompanySearchPlayground,
-    description: "Company data search and crawling tool"
-  },
-  {
-    id: "headless-company-crawler",
-    name: "Headless Company Crawler",
-    component: HeadlessCrawlerPlayground,
-    description: "Headless company data crawler"
-  },
-  {
-    id: "kyb-form",
-    name: "KYB Form",
-    component: OnboardingKYBFormPlayground,
-    description: "Interactive KYB form with company data suggestions"
+    id: "unified-dropdown",
+    name: "Unified Dropdown",
+    component: DropdownPlayground,
+    description: "Unified dropdown menu component"
   }
 ];
 
@@ -186,8 +186,8 @@ export default function PlaygroundPage() {
         <div className="space-y-6">
           <div className="flex flex-col space-y-2">
             <label className="text-sm font-medium">Select Component</label>
-            <Select 
-              value={selectedComponent} 
+            <Select
+              value={selectedComponent}
               onValueChange={setSelectedComponent}
             >
               <SelectTrigger className="w-[300px]">
@@ -196,9 +196,9 @@ export default function PlaygroundPage() {
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {components.map(component => (
-                  <SelectItem 
-                    key={component.id} 
+                {components.sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map(component => (
+                  <SelectItem
+                    key={component.id}
                     value={component.id}
                   >
                     {component.name}
