@@ -73,8 +73,8 @@ const FORM_STEPS = [
       }
     ],
     validation: (data: Record<string, string>) => {
-      const requiredFields = ['legalEntityName', 'registrationNumber', 'incorporationDate'];
-      return requiredFields.every(field =>
+      // Check all fields in the step
+      return ['legalEntityName', 'registrationNumber', 'incorporationDate', 'jurisdiction', 'registeredAddress', 'businessType'].every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -105,8 +105,7 @@ const FORM_STEPS = [
       }
     ],
     validation: (data: Record<string, string>) => {
-      const requiredFields = ['directorsAndOfficers', 'ultimateBeneficialOwners'];
-      return requiredFields.every(field =>
+      return ['directorsAndOfficers', 'ultimateBeneficialOwners', 'authorizedSigners'].every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -136,8 +135,7 @@ const FORM_STEPS = [
       }
     ],
     validation: (data: Record<string, string>) => {
-      const requiredFields = ['corporateRegistration', 'goodStanding'];
-      return requiredFields.every(field =>
+      return ['corporateRegistration', 'goodStanding', 'licenses'].every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -167,8 +165,7 @@ const FORM_STEPS = [
       }
     ],
     validation: (data: Record<string, string>) => {
-      const requiredFields = ['taxId', 'financialStatements'];
-      return requiredFields.every(field =>
+      return ['taxId', 'financialStatements', 'operationalPolicies'].every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
@@ -192,8 +189,7 @@ const FORM_STEPS = [
       }
     ],
     validation: (data: Record<string, string>) => {
-      const requiredFields = ['sanctionsCheck', 'dueDiligence'];
-      return requiredFields.every(field =>
+      return ['sanctionsCheck', 'dueDiligence'].every(field =>
         typeof data[field] === 'string' && data[field].trim() !== ''
       );
     }
