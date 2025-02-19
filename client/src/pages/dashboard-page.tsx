@@ -109,19 +109,13 @@ export default function DashboardPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button
-              variant="outline"
-              onClick={() => setDrawerOpen(!drawerOpen)}
-            >
-              {drawerOpen ? "Hide Info" : "Show Info"}
-            </Button>
           </div>
         }
         drawer={
           <BuilderPageDrawer
             title="Dashboard Information"
             isClosable={true}
-            defaultOpen={drawerOpen}
+            defaultOpen={false}
             onOpenChange={setDrawerOpen}
           >
             <div className="space-y-4">
@@ -196,8 +190,8 @@ export default function DashboardPage() {
                 isVisible={visibleWidgets.quickActions}
               >
                 <div className="grid grid-cols-2 gap-2">
-                  <Button 
-                    variant="default" 
+                  <Button
+                    variant="default"
                     className="w-full font-medium"
                     onClick={() => setOpenFinTechModal(true)}
                   >

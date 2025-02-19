@@ -15,7 +15,6 @@ interface Company {
 
 interface Task {
   id: string;
-  // Add other task properties as needed
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -34,8 +33,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Fetch current company data
   const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    staleTime: 0, // Don't cache this data
-    gcTime: 0, // Remove from cache immediately
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Company hasn't completed onboarding
@@ -44,15 +43,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Handle navigation for locked companies
   useEffect(() => {
     if (isCompanyLocked) {
-      // List of locked routes for companies that haven't completed onboarding
       const lockedRoutes = ['/', '/network', '/file-vault', '/insights'];
-
-      // If user is on a locked route, redirect to task center
       if (lockedRoutes.includes(location)) {
         navigate('/task-center');
       }
-
-      // If user just logged in and lands on dashboard (root), redirect to task center
       if (location === '/') {
         navigate('/task-center');
       }
@@ -94,15 +88,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className={cn(
           "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80",
           "transition-all duration-300 ease-in-out",
-          isExpanded 
-            ? "left-64" 
-            : "left-20"
+          isExpanded ? "left-64" : "left-20"
         )}>
           <TopNav />
         </div>
 
         <main className="flex-1 pt-16">
-          <div className="px-6 md:px-8 py-4 w-full overflow-x-hidden">
+          <div className="px-8 py-4 w-full overflow-x-hidden">
             {children}
           </div>
         </main>
