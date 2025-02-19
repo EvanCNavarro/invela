@@ -16,6 +16,8 @@ export const FormField: FC<FormFieldProps> = ({
   className,
   value,
   onChange,
+  onFocus,
+  onBlur,
   ...props 
 }) => {
   const [currentValue, setCurrentValue] = useState(value || '');
@@ -26,6 +28,24 @@ export const FormField: FC<FormFieldProps> = ({
   useEffect(() => {
     setCurrentVariant(variant);
   }, [variant]);
+
+  // Handle input focus - set active state
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (currentVariant !== 'disabled') {
+      setCurrentVariant('active');
+    }
+    onFocus?.(e);
+  };
+
+  // Handle input blur - revert to appropriate state based on validation
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (currentVariant === 'active') {
+      // Here you would typically check validation and set appropriate state
+      // For now, we'll revert to the variant prop's state
+      setCurrentVariant(variant);
+    }
+    onBlur?.(e);
+  };
 
   const getVariantStyles = () => {
     switch (currentVariant) {
@@ -75,6 +95,8 @@ export const FormField: FC<FormFieldProps> = ({
             setCurrentValue(e.target.value);
             onChange?.(e);
           }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className={cn(
             "pr-10 transition-all duration-200",
             getVariantStyles(),
