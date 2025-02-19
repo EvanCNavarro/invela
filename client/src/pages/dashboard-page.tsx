@@ -4,7 +4,7 @@ import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
-import { BuilderPageDrawer } from "@/components/builder/BuilderPageDrawer";
+import { PageSideDrawer } from "@/components/ui/page-side-drawer";
 import {
   Settings,
   Check,
@@ -76,11 +76,7 @@ export default function DashboardPage() {
                   Customize Dashboard
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="w-56"
-                sideOffset={4}
-              >
+              <DropdownMenuContent align="end" className="w-56" sideOffset={4}>
                 <DropdownMenuLabel>Visible Widgets</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {Object.entries(visibleWidgets).map(([key, isVisible]) => (
@@ -112,10 +108,11 @@ export default function DashboardPage() {
           </div>
         }
         drawer={
-          <BuilderPageDrawer
+          <PageSideDrawer
             title="Dashboard Information"
-            isClosable={true}
+            titleIcon={<Info className="h-5 w-5" />}
             defaultOpen={false}
+            isClosable={true}
             onOpenChange={setDrawerOpen}
           >
             <div className="space-y-4">
@@ -129,8 +126,9 @@ export default function DashboardPage() {
                 <li>• Notification settings</li>
               </ul>
             </div>
-          </BuilderPageDrawer>
+          </PageSideDrawer>
         }
+        className="mt-6"
       >
         {allWidgetsHidden ? (
           <div className="grid grid-cols-3 gap-4 min-h-[400px]">

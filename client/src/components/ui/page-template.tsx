@@ -24,11 +24,13 @@ export function PageTemplate({
       )}>
         {showBreadcrumbs && <BreadcrumbNav />}
         {(title || description || headerActions) && (
-          <PageHeader
-            title={title}
-            description={description}
-            actions={headerActions}
-          />
+          <div className="mb-6">
+            <PageHeader
+              title={title || ""}
+              description={description}
+              actions={headerActions}
+            />
+          </div>
         )}
         {children}
       </div>
