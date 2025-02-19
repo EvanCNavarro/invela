@@ -72,11 +72,15 @@ const FORM_STEPS = [
         suggestion: 'legalStructure' 
       }
     ],
-    validation: (data: Record<string, string>) => {
+    validation: (data: Record<string, unknown>) => {
       // Check all fields in the step
-      return ['legalEntityName', 'registrationNumber', 'incorporationDate', 'jurisdiction', 'registeredAddress', 'businessType'].every(field =>
-        typeof data[field] === 'string' && data[field].trim() !== ''
-      );
+      return ['legalEntityName', 'registrationNumber', 'incorporationDate', 'jurisdiction', 'registeredAddress', 'businessType'].every(field => {
+        const value = data[field];
+        if (value === null || value === undefined) return false;
+        if (typeof value === 'string') return value.trim() !== '';
+        if (typeof value === 'number') return true;  // Numbers are always valid
+        return false;  // Any other type is invalid
+      });
     }
   },
   {
