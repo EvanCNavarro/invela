@@ -20,19 +20,18 @@ export function PageTemplate({
       <div className={cn(
         "flex-1 min-w-0 transition-all duration-300",
         drawerOpen ? "mr-[25.75rem]" : "",
-        className
       )}>
         {showBreadcrumbs && <BreadcrumbNav />}
         {(title || description || headerActions) && (
-          <div className="mb-6">
-            <PageHeader
-              title={title || ""}
-              description={description}
-              actions={headerActions}
-            />
-          </div>
+          <PageHeader
+            title={title || ""}
+            description={description}
+            actions={headerActions}
+          />
         )}
-        {children}
+        <div className={cn("mt-6", className)}>
+          {children}
+        </div>
       </div>
       {drawerOpen && drawer}
     </div>

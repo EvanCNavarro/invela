@@ -62,7 +62,6 @@ export default function DashboardPage() {
   return (
     <DashboardLayout>
       <PageTemplate
-        showBreadcrumbs
         drawerOpen={drawerOpen}
         onDrawerOpenChange={setDrawerOpen}
         title="Dashboard"
@@ -128,7 +127,6 @@ export default function DashboardPage() {
             </div>
           </PageSideDrawer>
         }
-        className="mt-6"
       >
         {allWidgetsHidden ? (
           <div className="grid grid-cols-3 gap-4 min-h-[400px]">
