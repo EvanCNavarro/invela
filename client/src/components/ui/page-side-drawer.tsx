@@ -36,8 +36,8 @@ export function PageSideDrawer({
 
   const handleOpenChange = React.useCallback((newOpen: boolean) => {
     if (!isMounted.current) return
-    // Show close button if drawer is not set to defaultOpen
-    if (!defaultOpen || isClosable) {
+    // Only allow state changes if drawer is closable and not set to defaultOpen
+    if (!defaultOpen && isClosable) {
       setIsOpen(newOpen)
       onOpenChange?.(newOpen)
     }
@@ -54,6 +54,7 @@ export function PageSideDrawer({
               {titleIcon}
               <h3 className="font-semibold">{title}</h3>
             </div>
+            {/* Show close button only when drawer is not opened by default and is closable */}
             {(!defaultOpen && isClosable) && (
               <button
                 className="p-2 hover:bg-muted rounded-md"
