@@ -280,12 +280,7 @@ export default function TaskCenterPage() {
         <TableCell>
           <div className="w-full bg-secondary h-2 rounded-full">
             <div
-              className={cn("h-2 rounded-full", {
-                "bg-secondary": task.status === TaskStatus.EMAIL_SENT,
-                "bg-warning": task.status === TaskStatus.IN_PROGRESS || task.status === TaskStatus.READY_FOR_SUBMISSION,
-                "bg-success": task.status === TaskStatus.SUBMITTED || task.status === TaskStatus.APPROVED || task.status === TaskStatus.COMPLETED,
-                "bg-primary": !task.status.includes("progress") && task.status !== TaskStatus.EMAIL_SENT && task.status !== TaskStatus.COMPLETED
-              })}
+              className="bg-primary h-2 rounded-full"
               style={{ width: `${task.progress}%` }}
             />
           </div>
