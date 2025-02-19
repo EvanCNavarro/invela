@@ -20,9 +20,10 @@ const FORM_STEPS = [
       { name: 'businessType', label: 'Business Type/Legal Structure', suggestion: 'legalStructure' }
     ],
     validation: (data: Record<string, string>) => {
-      return data.legalEntityName?.trim() !== '' && 
-             data.registrationNumber?.trim() !== '' &&
-             data.incorporationDate?.trim() !== '';
+      const requiredFields = ['legalEntityName', 'registrationNumber', 'incorporationDate'];
+      return requiredFields.every(field => 
+        typeof data[field] === 'string' && data[field].trim() !== ''
+      );
     }
   },
   {
@@ -35,8 +36,10 @@ const FORM_STEPS = [
       { name: 'authorizedSigners', label: 'Authorized Signers' }
     ],
     validation: (data: Record<string, string>) => {
-      return data.directorsAndOfficers?.trim() !== '' &&
-             data.ultimateBeneficialOwners?.trim() !== '';
+      const requiredFields = ['directorsAndOfficers', 'ultimateBeneficialOwners'];
+      return requiredFields.every(field => 
+        typeof data[field] === 'string' && data[field].trim() !== ''
+      );
     }
   },
   {
@@ -49,10 +52,13 @@ const FORM_STEPS = [
       { name: 'licenses', label: 'Licensing and Regulatory Documents' }
     ],
     validation: (data: Record<string, string>) => {
-      return data.corporateRegistration?.trim() !== '' &&
-             data.goodStanding?.trim() !== '';
+      const requiredFields = ['corporateRegistration', 'goodStanding'];
+      return requiredFields.every(field => 
+        typeof data[field] === 'string' && data[field].trim() !== ''
+      );
     }
-  },
+  }
+  ,
   {
     id: 'financial-operational',
     title: 'Financial & Operational',
@@ -63,8 +69,10 @@ const FORM_STEPS = [
       { name: 'operationalPolicies', label: 'Operational Policies' }
     ],
     validation: (data: Record<string, string>) => {
-      return data.taxId?.trim() !== '' &&
-             data.financialStatements?.trim() !== '';
+      const requiredFields = ['taxId', 'financialStatements'];
+      return requiredFields.every(field => 
+        typeof data[field] === 'string' && data[field].trim() !== ''
+      );
     }
   },
   {
@@ -76,8 +84,10 @@ const FORM_STEPS = [
       { name: 'dueDiligence', label: 'Due Diligence Reports' }
     ],
     validation: (data: Record<string, string>) => {
-      return data.sanctionsCheck?.trim() !== '' &&
-             data.dueDiligence?.trim() !== '';
+      const requiredFields = ['sanctionsCheck', 'dueDiligence'];
+      return requiredFields.every(field => 
+        typeof data[field] === 'string' && data[field].trim() !== ''
+      );
     }
   }
 ];
