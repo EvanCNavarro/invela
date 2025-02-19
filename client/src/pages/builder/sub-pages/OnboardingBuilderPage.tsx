@@ -11,14 +11,14 @@ const breadcrumbItems = [
 ];
 
 export function OnboardingBuilderPage() {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const drawer = (
     <PageSideDrawer 
       title="Onboarding Settings"
       titleIcon={<Info className="h-5 w-5" />}
-      defaultOpen={true}
-      isClosable={false}
+      defaultOpen={false}
+      isClosable={true}
       onOpenChange={setDrawerOpen}
     >
       <div className="text-sm space-y-4">
@@ -44,15 +44,13 @@ export function OnboardingBuilderPage() {
         onDrawerOpenChange={setDrawerOpen}
       >
         <BreadcrumbNav items={breadcrumbItems} />
+        <PageHeader
+          title="Onboarding Configuration"
+          description="Design and manage the onboarding process."
+        />
         <div className="mt-6">
-          <PageHeader
-            title="Onboarding Configuration"
-            description="Design and manage the onboarding process."
-          />
-          <div className="mt-4">
-            <div className="text-muted-foreground">
-              Configure onboarding workflows and requirements here.
-            </div>
+          <div className="text-muted-foreground">
+            Configure onboarding workflows and requirements here.
           </div>
         </div>
       </PageTemplate>

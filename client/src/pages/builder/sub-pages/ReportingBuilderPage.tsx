@@ -44,15 +44,13 @@ export function ReportingBuilderPage() {
         onDrawerOpenChange={setDrawerOpen}
       >
         <BreadcrumbNav items={breadcrumbItems} />
+        <PageHeader
+          title="Automated Reporting"
+          description="Configure monitoring and alert workflows."
+        />
         <div className="mt-6">
-          <PageHeader
-            title="Automated Reporting"
-            description="Configure monitoring and alert workflows."
-          />
-          <div className="mt-4">
-            <div className="text-muted-foreground">
-              Configure monitoring and reporting workflows here.
-            </div>
+          <div className="text-muted-foreground">
+            Configure monitoring and reporting workflows here.
           </div>
         </div>
       </PageTemplate>
