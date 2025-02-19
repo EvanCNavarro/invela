@@ -20,13 +20,17 @@ const PostgresSessionStore = connectPg(session);
 
 async function hashPassword(password: string) {
   try {
-    console.log('[Auth] Starting password hashing with bcrypt');
+    console.log('[Auth] Starting to hash password');
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-    console.log('[Auth] Password hashed successfully, hash length:', hashedPassword.length);
+    console.log('[Auth] Password hashed successfully:', {
+      hashLength: hashedPassword.length,
+      startsWithBcrypt: hashedPassword.startsWith('$2b$'),
+      rounds: SALT_ROUNDS
+    });
     return hashedPassword;
   } catch (error) {
-    console.error('[Auth] Password hashing error:', error);
-    throw new Error('Failed to hash password');
+    console.error('[Auth] Error hashing password:', error);
+    throw error;
   }
 }
 
