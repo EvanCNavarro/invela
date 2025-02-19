@@ -42,7 +42,7 @@ async function comparePasswords(supplied: string, stored: string) {
     }
     console.log('[Auth] Comparing passwords:');
     console.log('[Auth] - Stored hash length:', stored.length);
-    console.log('[Auth] - Stored hash format check:', stored.startsWith('$2b$'));
+    console.log('[Auth] - Stored hash format check:', stored.startsWith('$2a$') || stored.startsWith('$2b$'));
     console.log('[Auth] - Supplied password length:', supplied.length);
     console.log('[Auth] - Stored hash:', stored);
     console.log('[Auth] - Supplied password (first 4 chars):', supplied.substring(0, 4));
@@ -126,8 +126,8 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: 'Invalid email or password' });
         }
 
-        // Verify the stored password format
-        if (!user.password || !user.password.startsWith('$2b$')) {
+        // Accept both $2a$ and $2b$ bcrypt formats
+        if (!user.password || !(user.password.startsWith('$2a$') || user.password.startsWith('$2b$'))) {
           console.log('[Auth] Invalid stored password format:', {
             exists: !!user.password,
             format: user.password?.substring(0, 4)
