@@ -199,6 +199,14 @@ const FORM_STEPS = [
 // Calculate total fields across all steps
 const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.fields.length, 0);
 
+// Helper function to safely check if a value is empty
+const isEmptyValue = (value: unknown): boolean => {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  if (typeof value === 'number') return false;
+  return true;
+};
+
 export const OnboardingKYBFormPlayground = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -253,7 +261,7 @@ export const OnboardingKYBFormPlayground = () => {
   const progress = isSubmitted
     ? 100
     : Math.round(
-        (Object.values(formData).filter(value => value && value.trim() !== '').length / TOTAL_FIELDS) * 100
+        (Object.values(formData).filter(value => !isEmptyValue(value)).length / TOTAL_FIELDS) * 100
       );
 
   // Check if current step is valid
