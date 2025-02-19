@@ -2,8 +2,26 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+// Function to extract tooltip content from question text
+const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
+  const match = question.match(/^(.*?)(?:\s*\((e\.g\.|i\.e\.,|example:)?(.*?)\))?$/i);
+  if (!match || !match[2]) {
+    return { mainText: question, tooltipText: null };
+  }
+  return {
+    mainText: match[1].trim(),
+    tooltipText: match[2].replace(/^(?:e\.g\.|i\.e\.,|example:)\s*/i, '').trim()
+  };
+};
 
 // Define the form steps based on KYB requirements
 const FORM_STEPS = [
@@ -344,6 +362,7 @@ export const OnboardingKYBFormPlayground = () => {
                 const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
                 const isTouched = value !== undefined;
                 const suggestion = getSuggestionForField(field.name);
+                const { mainText, tooltipText } = extractTooltipContent(field.question);
 
                 // Determine field variant based on validation
                 let variant: 'default' | 'error' | 'successful' | 'ai-suggestion' = 'default';
@@ -359,9 +378,23 @@ export const OnboardingKYBFormPlayground = () => {
                       <label className="text-xs font-medium text-muted-foreground">
                         {field.label}
                       </label>
-                      <span className="text-sm text-foreground">
-                        {field.question}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-sm font-medium text-foreground">
+                          {mainText}
+                        </span>
+                        {tooltipText && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-sm">{tooltipText}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
                     </div>
                     <FormField
                       type="text"
@@ -371,7 +404,6 @@ export const OnboardingKYBFormPlayground = () => {
                         ...prev,
                         [field.name]: e.target.value
                       }))}
-                      placeholder={`Enter ${field.label.toLowerCase()}`}
                       aiSuggestion={suggestion}
                     />
                   </div>
