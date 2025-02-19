@@ -196,6 +196,9 @@ const FORM_STEPS = [
   }
 ];
 
+// Calculate total fields across all steps
+const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.fields.length, 0);
+
 export const OnboardingKYBFormPlayground = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -246,10 +249,12 @@ export const OnboardingKYBFormPlayground = () => {
   const currentStepData = FORM_STEPS[currentStep];
   const isLastStep = currentStep === FORM_STEPS.length - 1;
 
-  // Calculate progress based on current step
+  // Calculate progress based on filled fields
   const progress = isSubmitted
     ? 100
-    : Math.round((currentStep / (FORM_STEPS.length - 1)) * 75);
+    : Math.round(
+        (Object.values(formData).filter(value => value && value.trim() !== '').length / TOTAL_FIELDS) * 100
+      );
 
   // Check if current step is valid
   const isCurrentStepValid = (() => {
@@ -274,21 +279,25 @@ export const OnboardingKYBFormPlayground = () => {
     // Ensure suggestion is converted to string
     const stringValue = String(suggestion);
 
-    // Update form data state
+    // Create new form data object
     const updatedFormData = {
       ...formData,
       [fieldName]: stringValue
     };
 
+    // Update form data state
     setFormData(updatedFormData);
 
-    // Log the update for debugging
-    console.log('Updated form data with suggestion:', {
-      field: fieldName,
-      value: stringValue,
+    // Debug logging
+    console.log('Suggestion click debug:', {
+      fieldName,
+      originalValue: suggestion,
       originalType: typeof suggestion,
-      allFormData: updatedFormData,
-      isValid: currentStepData.validation(updatedFormData)
+      convertedValue: stringValue,
+      convertedType: typeof stringValue,
+      formDataBefore: formData,
+      formDataAfter: updatedFormData,
+      currentStepValidation: currentStepData.validation(updatedFormData)
     });
   };
 
