@@ -44,6 +44,8 @@ async function comparePasswords(supplied: string, stored: string) {
     console.log('[Auth] - Stored hash length:', stored.length);
     console.log('[Auth] - Stored hash format check:', stored.startsWith('$2b$'));
     console.log('[Auth] - Supplied password length:', supplied.length);
+    console.log('[Auth] - Stored hash:', stored);
+    console.log('[Auth] - Supplied password (first 4 chars):', supplied.substring(0, 4));
 
     const isValid = await bcrypt.compare(supplied, stored);
     console.log('[Auth] Password comparison result:', isValid);
@@ -68,7 +70,8 @@ async function getUserByEmail(email: string) {
       found: !!user,
       userId: user?.id,
       hasPassword: !!user?.password,
-      passwordLength: user?.password?.length
+      passwordLength: user?.password?.length,
+      passwordStart: user?.password?.substring(0, 4)
     });
 
     return [user];
@@ -114,6 +117,8 @@ export function setupAuth(app: Express) {
     async (email, password, done) => {
       try {
         console.log('[Auth] Login attempt for:', email);
+        console.log('[Auth] Password received (first 4 chars):', password.substring(0, 4));
+
         const [user] = await getUserByEmail(email);
 
         if (!user) {
@@ -121,11 +126,21 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: 'Invalid email or password' });
         }
 
+        // Verify the stored password format
+        if (!user.password || !user.password.startsWith('$2b$')) {
+          console.log('[Auth] Invalid stored password format:', {
+            exists: !!user.password,
+            format: user.password?.substring(0, 4)
+          });
+          return done(null, false, { message: 'Invalid password format' });
+        }
+
         console.log('[Auth] Found user, checking password');
         const isValid = await comparePasswords(password, user.password);
         console.log('[Auth] Password validation result:', isValid);
 
         if (!isValid) {
+          console.log('[Auth] Login failed: Invalid password');
           return done(null, false, { message: 'Invalid email or password' });
         }
 
@@ -212,6 +227,35 @@ export function setupAuth(app: Express) {
     }
     console.log('[Auth] Returning user session data');
     res.json(req.user);
+  });
+
+  app.post("/api/auth/test-password", async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({ error: "Password required" });
+      }
+
+      console.log('[Auth] Testing password hashing');
+      const hashedPassword = await hashPassword(password);
+      console.log('[Auth] Test hash generated:', {
+        hashLength: hashedPassword.length,
+        startsWithBcrypt: hashedPassword.startsWith('$2b$')
+      });
+
+      const isValid = await comparePasswords(password, hashedPassword);
+      console.log('[Auth] Test comparison result:', isValid);
+
+      res.json({
+        success: true,
+        hashLength: hashedPassword.length,
+        startsWithBcrypt: hashedPassword.startsWith('$2b$'),
+        comparisonResult: isValid
+      });
+    } catch (error) {
+      console.error('[Auth] Test endpoint error:', error);
+      res.status(500).json({ error: "Password test failed" });
+    }
   });
 
   console.log('[Auth] Authentication setup completed');

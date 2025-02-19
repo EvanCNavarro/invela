@@ -23,18 +23,29 @@ const useLoginMutation = () => {
 
   return useMutation({
     mutationFn: async (credentials: LoginData) => {
+      console.log('[Auth] Login mutation called with:', {
+        email: credentials.email,
+        hasPassword: !!credentials.password,
+        passwordLength: credentials.password?.length
+      });
+
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
         const error = await res.text();
+        console.error('[Auth] Login request failed:', error);
         throw new Error(error || "Login failed");
       }
+
+      console.log('[Auth] Login request successful');
       return await res.json();
     },
     onSuccess: (user: User) => {
+      console.log('[Auth] Login mutation succeeded, user:', user.id);
       queryClient.setQueryData(["/api/user"], user);
       setLocation("/");
     },
     onError: (error: Error) => {
+      console.error('[Auth] Login mutation error:', error);
       toast({
         title: "Login failed",
         description: error.message,
