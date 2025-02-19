@@ -114,7 +114,7 @@ export default function DashboardPage() {
           <PageSideDrawer
             title="Dashboard Information"
             titleIcon={<Info className="h-5 w-5" />}
-            defaultOpen={false}
+            defaultOpen={drawerOpen}
             isClosable={true}
             onOpenChange={setDrawerOpen}
           >
