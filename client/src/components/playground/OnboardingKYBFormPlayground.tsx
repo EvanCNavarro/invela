@@ -274,6 +274,17 @@ export const OnboardingKYBFormPlayground = () => {
     return undefined;
   };
 
+  const handleSuggestionClick = (fieldName: string, suggestion: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: suggestion
+    }));
+    console.log('Updated form data with suggestion:', {
+      field: fieldName,
+      value: suggestion
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex gap-4 mb-4">
@@ -430,6 +441,11 @@ export const OnboardingKYBFormPlayground = () => {
                         [field.name]: e.target.value
                       }))}
                       aiSuggestion={suggestion}
+                      onSuggestionClick={() => {
+                        if (suggestion) {
+                          handleSuggestionClick(field.name, suggestion);
+                        }
+                      }}
                     />
                   </div>
                 );
