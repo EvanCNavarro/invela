@@ -43,6 +43,7 @@ async function comparePasswords(supplied: string, stored: string) {
     console.log('[Auth] Comparing passwords:');
     console.log('[Auth] - Stored hash length:', stored.length);
     console.log('[Auth] - Stored hash format check:', stored.startsWith('$2b$'));
+    console.log('[Auth] - Supplied password length:', supplied.length);
 
     const isValid = await bcrypt.compare(supplied, stored);
     console.log('[Auth] Password comparison result:', isValid);
@@ -120,6 +121,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: 'Invalid email or password' });
         }
 
+        console.log('[Auth] Found user, checking password');
         const isValid = await comparePasswords(password, user.password);
         console.log('[Auth] Password validation result:', isValid);
 
@@ -127,6 +129,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: 'Invalid email or password' });
         }
 
+        console.log('[Auth] Login successful for user:', user.id);
         return done(null, user);
       } catch (error) {
         console.error('[Auth] Login error:', error);
