@@ -3,8 +3,7 @@ import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
-import { promisify } from "util";
+import bcrypt from "bcrypt";
 import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
 import { db, pool } from "@db";
 import { sql, eq } from "drizzle-orm";
@@ -16,13 +15,11 @@ declare global {
   }
 }
 
-const scryptAsync = promisify(scrypt);
+const SALT_ROUNDS = 10;
 const PostgresSessionStore = connectPg(session);
 
 async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
+  return bcrypt.hash(password, SALT_ROUNDS);
 }
 
 async function comparePasswords(supplied: string, stored: string) {
@@ -31,17 +28,7 @@ async function comparePasswords(supplied: string, stored: string) {
       console.error("No stored password provided");
       return false;
     }
-
-    const [hashedStored, salt] = stored.split(".");
-    if (!hashedStored || !salt) {
-      console.error("Invalid stored password format");
-      return false;
-    }
-
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    const storedBuf = Buffer.from(hashedStored, 'hex');
-
-    return timingSafeEqual(suppliedBuf, storedBuf);
+    return await bcrypt.compare(supplied, stored);
   } catch (error) {
     console.error("Password comparison error:", error);
     return false;
@@ -142,7 +129,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     console.log('[Auth] Processing login request');
-    passport.authenticate('local', (err, user, info) => {
+    passport.authenticate('local', (err: Error, user: Express.User, info: { message: string }) => {
       if (err) {
         console.error('[Auth] Login error:', err);
         return next(err);
