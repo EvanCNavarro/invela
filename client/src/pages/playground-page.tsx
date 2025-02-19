@@ -3,7 +3,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import CompanySearchPlayground from "@/components/playground/CompanySearchPlayground";
 import HeadlessCrawlerPlayground from "@/components/playground/HeadlessCrawlerPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { RiskMeter } from "@/components/dashboard/RiskMeter";
+import FormFieldPlayground from "@/pages/form-field";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import SearchBarPlayground from "@/components/playground/SearchBarPlayground";
@@ -46,6 +46,12 @@ interface PlaygroundComponent {
 
 // Define all available components
 const components: PlaygroundComponent[] = [
+  {
+    id: "form-field",
+    name: "Form Field",
+    component: FormFieldPlayground,
+    description: "Interactive form field component with various states and types"
+  },
   {
     id: "page-side-drawer",
     name: "Page Side Drawer",
