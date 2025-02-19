@@ -54,19 +54,19 @@ async function getUserByEmail(email: string) {
     const normalizedEmail = email.toLowerCase();
     console.log('[Auth] Looking up user by email:', normalizedEmail);
 
-    const users = await db.select()
+    const [user] = await db.select()
       .from(users)
       .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
       .limit(1);
 
     console.log('[Auth] User lookup result:', {
-      found: users.length > 0,
-      userId: users[0]?.id,
-      hasPassword: !!users[0]?.password,
-      passwordLength: users[0]?.password?.length
+      found: !!user,
+      userId: user?.id,
+      hasPassword: !!user?.password,
+      passwordLength: user?.password?.length
     });
 
-    return users;
+    return [user];
   } catch (error) {
     console.error('[Auth] Error getting user by email:', error);
     throw error;
