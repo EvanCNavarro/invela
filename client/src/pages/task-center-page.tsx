@@ -153,22 +153,27 @@ export default function TaskCenterPage() {
     console.log('[TaskCenter] Filtering task:', {
       taskId: task.id,
       taskType: task.taskType,
-      createdBy: task.createdBy,
+      taskScope: task.taskScope,
       assignedTo: task.assignedTo,
+      userEmail: task.userEmail,
       currentUserId: user?.id,
       activeTab
     });
 
     // For "My Tasks" tab:
-    // Show tasks where the user is assigned
+    // 1. Show tasks where user is assigned
+    // 2. Show tasks matching user's email
+    // 3. Show company-wide tasks
     const matchesTab = activeTab === "my-tasks"
-      ? task.assignedTo === user?.id
+      ? (task.assignedTo === user?.id || 
+         (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) ||
+         (task.taskScope === 'company'))
       // For "For Others" tab:
       // Show tasks created by the user AND are onboarding/invitation type
       // BUT exclude tasks that are assigned to the user (those go in My Tasks)
       : (task.createdBy === user?.id &&
-        (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
-        task.assignedTo !== user?.id);
+         (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
+         task.assignedTo !== user?.id);
 
     console.log('[TaskCenter] Task matches tab:', matchesTab);
 
@@ -227,7 +232,7 @@ export default function TaskCenterPage() {
   const getTaskCountForTab = (tabId: string) => {
     return tasks.filter(task => {
       if (tabId === "my-tasks") {
-        return task.assignedTo === user?.id;
+        return task.assignedTo === user?.id || (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) || (task.taskScope === 'company');
       } else {
         return (task.createdBy === user?.id &&
           (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
