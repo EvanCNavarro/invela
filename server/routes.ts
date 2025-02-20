@@ -71,92 +71,70 @@ export function registerRoutes(app: Express): Express {
       console.log('[Tasks] ====== Starting task fetch =====');
       console.log('[Tasks] User details:', {
         id: req.user!.id,
-        companyId: req.user!.companyId,
+        company_id: req.user!.company_id,
         email: req.user!.email
       });
-
-      // Get all tasks that are either:
-      // 1. Assigned to the user
-      // 2. Created by the user
-      // 3. Company tasks (companyId matches user's company and no specific assignee)
-      console.log('[Tasks] Building query conditions');
 
       // First, let's check if there are any company-wide KYB tasks
       const kybTasks = await db.select()
         .from(tasks)
         .where(and(
-          eq(tasks.companyId, req.user!.companyId),
-          eq(tasks.taskType, 'company_kyb'),
-          eq(tasks.taskScope, 'company')
+          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.task_type, 'company_kyb'),
+          eq(tasks.task_scope, 'company')
         ));
 
       console.log('[Tasks] KYB tasks found:', {
         count: kybTasks.length,
         tasks: kybTasks.map(t => ({
           id: t.id,
-          companyId: t.companyId,
-          taskScope: t.taskScope,
-          taskType: t.taskType,
-          assignedTo: t.assignedTo
-        }))
-      });
-
-      // Check company tasks separately first
-      const companyTasks = await db.select()
-        .from(tasks)
-        .where(and(
-          eq(tasks.companyId, req.user!.companyId),
-          isNull(tasks.assignedTo),
-          eq(tasks.taskScope, 'company')
-        ));
-
-      console.log('[Tasks] Company-wide tasks found:', {
-        count: companyTasks.length,
-        tasks: companyTasks.map(t => ({
-          id: t.id,
-          title: t.title,
-          companyId: t.companyId,
-          taskScope: t.taskScope,
-          taskType: t.taskType,
-          assignedTo: t.assignedTo,
+          company_id: t.company_id,
+          task_scope: t.task_scope,
+          task_type: t.task_type,
+          assigned_to: t.assigned_to,
           status: t.status
         }))
       });
 
+      // Get all tasks that are either:
+      // 1. Assigned to the user
+      // 2. Created by the user
+      // 3. Company tasks (company_id matches user's company and no specific assignee)
+      // 4. KYB tasks for the user's company
       const query = or(
-        eq(tasks.assignedTo, req.user!.id),
-        eq(tasks.createdBy, req.user!.id),
+        eq(tasks.assigned_to, req.user!.id),
+        eq(tasks.created_by, req.user!.id),
         and(
-          eq(tasks.companyId, req.user!.companyId),
-          isNull(tasks.assignedTo),
-          eq(tasks.taskScope, 'company')
+          eq(tasks.company_id, req.user!.company_id),
+          isNull(tasks.assigned_to),
+          eq(tasks.task_scope, 'company')
         )
       );
 
       console.log('[Tasks] Query conditions:', {
         conditions: {
-          condition1: `tasks.assignedTo = ${req.user!.id}`,
-          condition2: `tasks.createdBy = ${req.user!.id}`,
-          condition3: `tasks.companyId = ${req.user!.companyId} AND tasks.assignedTo IS NULL AND tasks.taskScope = 'company'`
+          condition1: `tasks.assigned_to = ${req.user!.id}`,
+          condition2: `tasks.created_by = ${req.user!.id}`,
+          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`
         }
       });
 
-      console.log('[Tasks] Executing database query');
       const userTasks = await db.select()
         .from(tasks)
         .where(query);
 
-      console.log('[Tasks] Query completed');
-      console.log('[Tasks] Number of tasks found:', userTasks.length);
-      console.log('[Tasks] Task details:', userTasks.map(task => ({
-        id: task.id,
-        title: task.title,
-        assignedTo: task.assignedTo,
-        companyId: task.companyId,
-        taskScope: task.taskScope,
-        status: task.status,
-        taskType: task.taskType
-      })));
+      console.log('[Tasks] Tasks found:', {
+        count: userTasks.length,
+        tasks: userTasks.map(task => ({
+          id: task.id,
+          title: task.title,
+          assigned_to: task.assigned_to,
+          company_id: task.company_id,
+          task_scope: task.task_scope,
+          task_type: task.task_type,
+          status: task.status
+        }))
+      });
 
       res.json(userTasks);
     } catch (error) {

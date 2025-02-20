@@ -29,86 +29,86 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
-  taskType: text("task_type").notNull(), // 'user_onboarding', 'file_request', or 'company_onboarding_KYB'
-  taskScope: text("task_scope").notNull(), // 'user' or 'company'
+  task_type: text("task_type").notNull(), 
+  task_scope: text("task_scope").notNull(), 
   status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.EMAIL_SENT),
   priority: text("priority").notNull().default('medium'),
   progress: real("progress").notNull().default(0),
-  assignedTo: integer("assigned_to").references(() => users.id),
-  createdBy: integer("created_by").references(() => users.id),
-  companyId: integer("company_id").references(() => companies.id),
-  userEmail: text("user_email"),
-  dueDate: timestamp("due_date"),
-  completionDate: timestamp("completion_date"),
-  filesRequested: jsonb("files_requested").$type<string[]>().default([]),
-  filesUploaded: jsonb("files_uploaded").$type<string[]>().default([]),
+  assigned_to: integer("assigned_to").references(() => users.id), 
+  created_by: integer("created_by").references(() => users.id), 
+  company_id: integer("company_id").references(() => companies.id), 
+  user_email: text("user_email"), 
+  due_date: timestamp("due_date"), 
+  completion_date: timestamp("completion_date"), 
+  files_requested: jsonb("files_requested").$type<string[]>().default([]), 
+  files_uploaded: jsonb("files_uploaded").$type<string[]>().default([]), 
   metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(), 
+  updated_at: timestamp("updated_at").defaultNow(), 
 });
 
 export const companyLogos = pgTable("company_logos", {
   id: uuid("id").defaultRandom().primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  fileName: text("file_name").notNull(),
-  filePath: text("file_path").notNull(),
-  fileType: text("file_type").notNull(),
-  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  file_name: text("file_name").notNull(),
+  file_path: text("file_path").notNull(),
+  file_type: text("file_type").notNull(),
+  uploaded_at: timestamp("uploaded_at").defaultNow(),
 });
 
 export const companies = pgTable("companies", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  category: text("category").notNull(), // 'Invela', 'Bank', or 'FinTech'
-  logoId: uuid("logo_id").references(() => companyLogos.id),
-  stockTicker: text("stock_ticker"),
-  websiteUrl: text("website_url"),
-  legalStructure: text("legal_structure"),
-  marketPosition: text("market_position"),
-  hqAddress: text("hq_address"),
-  productsServices: text("products_services"),
-  incorporationYear: integer("incorporation_year"),
-  foundersAndLeadership: text("founders_and_leadership"),
-  numEmployees: integer("num_employees"),
+  category: text("category").notNull(), 
+  logo_id: uuid("logo_id").references(() => companyLogos.id),
+  stock_ticker: text("stock_ticker"),
+  website_url: text("website_url"),
+  legal_structure: text("legal_structure"),
+  market_position: text("market_position"),
+  hq_address: text("hq_address"),
+  products_services: text("products_services"),
+  incorporation_year: integer("incorporation_year"),
+  founders_and_leadership: text("founders_and_leadership"),
+  num_employees: integer("num_employees"),
   revenue: text("revenue"),
-  keyClientsPartners: text("key_clients_partners"),
+  key_clients_partners: text("key_clients_partners"),
   investors: text("investors"),
-  fundingStage: text("funding_stage"),
-  exitStrategyHistory: text("exit_strategy_history"),
-  certificationsCompliance: text("certifications_compliance"),
-  riskScore: integer("risk_score"),
-  accreditationStatus: text("accreditation_status"),
-  onboardingCompanyCompleted: boolean("onboarding_company_completed").notNull().default(true),
-  registryDate: timestamp("registry_date").notNull().defaultNow(),
-  filesPublic: jsonb("files_public").$type<string[]>().default([]),
-  filesPrivate: jsonb("files_private").$type<string[]>().default([]),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  funding_stage: text("funding_stage"),
+  exit_strategy_history: text("exit_strategy_history"),
+  certifications_compliance: text("certifications_compliance"),
+  risk_score: integer("risk_score"),
+  accreditation_status: text("accreditation_status"),
+  onboarding_company_completed: boolean("onboarding_company_completed").notNull().default(true),
+  registry_date: timestamp("registry_date").notNull().defaultNow(),
+  files_public: jsonb("files_public").$type<string[]>().default([]),
+  files_private: jsonb("files_private").$type<string[]>().default([]),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
-  fullName: text("full_name").notNull(),
-  firstName: text("first_name"),  // Changed to be nullable
-  lastName: text("last_name"),
+  full_name: text("full_name").notNull(),
+  first_name: text("first_name"),  
+  last_name: text("last_name"),
   password: text("password").notNull(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  onboardingUserCompleted: boolean("onboarding_user_completed").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  onboarding_user_completed: boolean("onboarding_user_completed").notNull().default(false),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const relationships = pgTable("relationships", {
   id: serial("id").primaryKey(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  relatedCompanyId: integer("related_company_id").references(() => companies.id).notNull(),
-  relationshipType: text("relationship_type").notNull(), // 'network_member'
-  status: text("status").notNull(), // 'active', 'inactive'
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  related_company_id: integer("related_company_id").references(() => companies.id).notNull(),
+  relationship_type: text("relationship_type").notNull(), 
+  status: text("status").notNull(), 
   metadata: jsonb("metadata").default({}),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const files = pgTable("files", {
@@ -118,51 +118,51 @@ export const files = pgTable("files", {
   type: text("type").notNull(),
   path: text("path").notNull(),
   status: text("status").notNull(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  uploadTime: timestamp("upload_time").notNull().defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  downloadCount: integer("download_count").default(0),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  upload_time: timestamp("upload_time").notNull().defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+  download_count: integer("download_count").default(0),
   version: real("version").notNull().default(1.0),
 });
 
 export const invitations = pgTable("invitations", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
-  code: text("code").notNull().unique(), // 6-digit hex code
-  status: text("status").notNull().default('pending'), // pending, used, expired
-  companyId: integer("company_id").references(() => companies.id).notNull(),
-  taskId: integer("task_id").references(() => tasks.id),
-  inviteeName: text("invitee_name").notNull(),
-  inviteeCompany: text("invitee_company").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  usedAt: timestamp("used_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  code: text("code").notNull().unique(), 
+  status: text("status").notNull().default('pending'), 
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  task_id: integer("task_id").references(() => tasks.id),
+  invitee_name: text("invitee_name").notNull(),
+  invitee_company: text("invitee_company").notNull(),
+  expires_at: timestamp("expires_at").notNull(),
+  used_at: timestamp("used_at"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const openaiSearchAnalytics = pgTable("openai_search_analytics", {
   id: serial("id").primaryKey(),
-  searchType: text("search_type").notNull(), // 'missing_data', 'validation', etc.
-  companyId: integer("company_id").references(() => companies.id),
-  searchPrompt: text("search_prompt").notNull(),
-  searchResults: jsonb("search_results").$type<Record<string, any>>().notNull(),
-  inputTokens: integer("input_tokens").notNull(),
-  outputTokens: integer("output_tokens").notNull(),
-  estimatedCost: real("estimated_cost").notNull(),
-  searchDate: timestamp("search_date").notNull().defaultNow(),
+  search_type: text("search_type").notNull(), 
+  company_id: integer("company_id").references(() => companies.id),
+  search_prompt: text("search_prompt").notNull(),
+  search_results: jsonb("search_results").$type<Record<string, any>>().notNull(),
+  input_tokens: integer("input_tokens").notNull(),
+  output_tokens: integer("output_tokens").notNull(),
+  estimated_cost: real("estimated_cost").notNull(),
+  search_date: timestamp("search_date").notNull().defaultNow(),
   model: text("model").notNull(),
   success: boolean("success").notNull(),
-  errorMessage: text("error_message"),
-  duration: integer("duration").notNull(), // in milliseconds
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  error_message: text("error_message"),
+  duration: integer("duration").notNull(), 
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
-    fields: [users.companyId],
+    fields: [users.company_id],
     references: [companies.id],
   }),
   files: many(files),
@@ -180,45 +180,45 @@ export const companiesRelations = relations(companies, ({ many }) => ({
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
   assignedUser: one(users, {
-    fields: [tasks.assignedTo],
+    fields: [tasks.assigned_to],
     references: [users.id],
   }),
   creator: one(users, {
-    fields: [tasks.createdBy],
+    fields: [tasks.created_by],
     references: [users.id],
   }),
   company: one(companies, {
-    fields: [tasks.companyId],
+    fields: [tasks.company_id],
     references: [companies.id],
   }),
 }));
 
 export const invitationsRelations = relations(invitations, ({ one }) => ({
   company: one(companies, {
-    fields: [invitations.companyId],
+    fields: [invitations.company_id],
     references: [companies.id],
   }),
   task: one(tasks, {
-    fields: [invitations.taskId],
+    fields: [invitations.task_id],
     references: [tasks.id],
   }),
 }));
 
 export const openaiSearchAnalyticsRelations = relations(openaiSearchAnalytics, ({ one }) => ({
   company: one(companies, {
-    fields: [openaiSearchAnalytics.companyId],
+    fields: [openaiSearchAnalytics.company_id],
     references: [companies.id],
   }),
 }));
 
 export const registrationSchema = z.object({
   email: z.string().email(),
-  fullName: z.string().min(1),
-  firstName: z.string().nullable().optional(),  // Changed to be nullable and optional
-  lastName: z.string().nullable(),
+  full_name: z.string().min(1),
+  first_name: z.string().nullable().optional(),  
+  last_name: z.string().nullable(),
   password: z.string().min(6),
   company: z.string().min(1),
-  invitationCode: z.string().min(1),
+  invitation_code: z.string().min(1),
 });
 
 export const insertUserSchema = createInsertSchema(users);
@@ -226,16 +226,16 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  taskType: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB"]),
-  taskScope: z.enum(["user", "company"]).optional(),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB"]),
+  task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
-  userEmail: z.string().email().optional(),
-  companyId: z.number().optional(),
-  dueDate: z.date().optional(),
-  assignedTo: z.number().nullable().optional(),
+  user_email: z.string().email().optional(),
+  company_id: z.number().optional(),
+  due_date: z.date().optional(),
+  assigned_to: z.number().nullable().optional(),
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
-  filesRequested: z.array(z.string()).optional(),
+  files_requested: z.array(z.string()).optional(),
   status: z.enum([
     TaskStatus.EMAIL_SENT,
     TaskStatus.COMPLETED,
@@ -248,52 +248,52 @@ export const insertTaskSchema = z.object({
     .optional()
     .default(TaskStatus.NOT_STARTED),
 }).superRefine((data, ctx) => {
-  if (data.taskType === "user_onboarding") {
-    if (!data.userEmail) {
+  if (data.task_type === "user_onboarding") {
+    if (!data.user_email) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Email is required for user onboarding tasks",
-        path: ["userEmail"],
+        path: ["user_email"],
       });
     }
-    if (!data.companyId) {
+    if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Company is required for user onboarding tasks",
-        path: ["companyId"],
+        path: ["company_id"],
       });
     }
-  } else if (data.taskType === "file_request") {
-    if (!data.taskScope) {
+  } else if (data.task_type === "file_request") {
+    if (!data.task_scope) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Task scope is required for file requests",
-        path: ["taskScope"],
+        path: ["task_scope"],
       });
     }
-    if (data.taskScope === "user" && !data.userEmail) {
+    if (data.task_scope === "user" && !data.user_email) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Email is required for user file requests",
-        path: ["userEmail"],
+        path: ["user_email"],
       });
     }
-    if (data.taskScope === "company" && !data.companyId) {
+    if (data.task_scope === "company" && !data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Company is required for company file requests",
-        path: ["companyId"],
+        path: ["company_id"],
       });
     }
-  } else if (data.taskType === "company_onboarding_KYB") {
-    if (!data.companyId) {
+  } else if (data.task_type === "company_onboarding_KYB") {
+    if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Company is required for KYB tasks",
-        path: ["companyId"],
+        path: ["company_id"],
       });
     }
-    data.taskScope = "company";
+    data.task_scope = "company";
   }
 });
 export const selectTaskSchema = createSelectSchema(tasks);
@@ -304,8 +304,8 @@ export const selectFileSchema = createSelectSchema(files);
 export const insertInvitationSchema = createInsertSchema(invitations, {
   code: z.string().length(6).regex(/^[0-9A-F]+$/, "Must be a 6-digit hex code"),
   email: z.string().email(),
-  inviteeName: z.string().min(1, "Invitee name is required"),
-  inviteeCompany: z.string().min(1, "Invitee company is required"),
+  invitee_name: z.string().min(1, "Invitee name is required"),
+  invitee_company: z.string().min(1, "Invitee company is required"),
 });
 export const selectInvitationSchema = createSelectSchema(invitations);
 
