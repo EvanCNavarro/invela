@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { eq, and, gt, sql, or } from 'drizzle-orm';
+import { eq, and, gt, sql, or, isNull } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
@@ -81,12 +81,54 @@ export function registerRoutes(app: Express): Express {
       // 3. Company tasks (companyId matches user's company and no specific assignee)
       console.log('[Tasks] Building query conditions');
 
+      // First, let's check if there are any company-wide KYB tasks
+      const kybTasks = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.companyId, req.user!.companyId),
+          eq(tasks.taskType, 'company_kyb'),
+          eq(tasks.taskScope, 'company')
+        ));
+
+      console.log('[Tasks] KYB tasks found:', {
+        count: kybTasks.length,
+        tasks: kybTasks.map(t => ({
+          id: t.id,
+          companyId: t.companyId,
+          taskScope: t.taskScope,
+          taskType: t.taskType,
+          assignedTo: t.assignedTo
+        }))
+      });
+
+      // Check company tasks separately first
+      const companyTasks = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.companyId, req.user!.companyId),
+          isNull(tasks.assignedTo),
+          eq(tasks.taskScope, 'company')
+        ));
+
+      console.log('[Tasks] Company-wide tasks found:', {
+        count: companyTasks.length,
+        tasks: companyTasks.map(t => ({
+          id: t.id,
+          title: t.title,
+          companyId: t.companyId,
+          taskScope: t.taskScope,
+          taskType: t.taskType,
+          assignedTo: t.assignedTo,
+          status: t.status
+        }))
+      });
+
       const query = or(
         eq(tasks.assignedTo, req.user!.id),
         eq(tasks.createdBy, req.user!.id),
         and(
           eq(tasks.companyId, req.user!.companyId),
-          eq(tasks.assignedTo, null),
+          isNull(tasks.assignedTo),
           eq(tasks.taskScope, 'company')
         )
       );
@@ -112,7 +154,8 @@ export function registerRoutes(app: Express): Express {
         assignedTo: task.assignedTo,
         companyId: task.companyId,
         taskScope: task.taskScope,
-        status: task.status
+        status: task.status,
+        taskType: task.taskType
       })));
 
       res.json(userTasks);
