@@ -37,10 +37,17 @@ const carouselImages = [
 
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { socket, connected } = useWebSocket();
+
+  // Only show modal if user exists and hasn't completed onboarding
+  useEffect(() => {
+    if (user && !user.onboarding_user_completed) {
+      setOpen(true);
+    }
+  }, [user]);
 
   // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
@@ -52,42 +59,47 @@ export function WelcomeModal() {
     mutationFn: async () => {
       console.log('[WelcomeModal] Starting onboarding completion for user:', user?.email);
 
-      const response = await fetch('/api/users/complete-onboarding', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
+      try {
+        const response = await fetch('/api/users/complete-onboarding', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('[WelcomeModal] Failed to complete onboarding:', errorData);
+          throw new Error(errorData.message || "Failed to complete onboarding");
         }
-      });
 
-      if (!response.ok) {
-        const error = await response.json();
-        console.error('[WelcomeModal] Failed to complete onboarding:', error);
-        throw new Error(error.message || "Failed to complete onboarding");
-      }
+        const data = await response.json();
+        console.log('[WelcomeModal] Onboarding completion response:', data);
 
-      const data = await response.json();
-      console.log('[WelcomeModal] Onboarding completion response:', data);
-
-      // Send WebSocket update if connected
-      if (connected && socket && data.task) {
-        try {
-          socket.send(JSON.stringify({
-            type: 'task_update',
-            data: {
-              taskId: data.task.id,
-              status: 'completed',
-              metadata: {
-                onboardingCompleted: true,
-                completionTime: new Date().toISOString()
+        // Send WebSocket update if connected
+        if (connected && socket && data.task) {
+          try {
+            socket.send(JSON.stringify({
+              type: 'task_update',
+              data: {
+                taskId: data.task.id,
+                status: 'completed',
+                metadata: {
+                  onboardingCompleted: true,
+                  completionTime: new Date().toISOString()
+                }
               }
-            }
-          }));
-        } catch (error) {
-          console.error('[WelcomeModal] Error sending WebSocket message:', error);
+            }));
+          } catch (error) {
+            console.error('[WelcomeModal] Error sending WebSocket message:', error);
+          }
         }
-      }
 
-      return data;
+        return data;
+      } catch (error) {
+        console.error('[WelcomeModal] Error in completeOnboarding:', error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
       console.log('[WelcomeModal] Successfully completed onboarding:', data);
@@ -133,8 +145,8 @@ export function WelcomeModal() {
     }
   };
 
-  // Don't show modal if user has completed onboarding or no user is logged in
-  if (!user || user.onboardingUserCompleted) {
+  // Don't show modal if no user or user has completed onboarding
+  if (!user || user.onboarding_user_completed) {
     return null;
   }
 

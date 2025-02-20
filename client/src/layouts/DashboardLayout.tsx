@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 interface Company {
-  onboardingCompanyCompleted: boolean;
+  onboarding_company_completed: boolean;
 }
 
 interface Task {
@@ -38,7 +38,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   });
 
   // Company hasn't completed onboarding
-  const isCompanyLocked = currentCompany?.onboardingCompanyCompleted === false;
+  const isCompanyLocked = currentCompany?.onboarding_company_completed === false;
 
   // Handle navigation for locked companies
   useEffect(() => {
