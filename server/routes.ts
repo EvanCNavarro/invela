@@ -146,7 +146,7 @@ export function registerRoutes(app: Express): Express {
         hint: error.hint
       });
       console.error("[Tasks] Full error:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching tasks",
         detail: error.message
       });
@@ -1342,6 +1342,48 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Add this endpoint to handle user onboarding completion
+  app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
+    try {
+      console.log('[Complete Onboarding] Processing request for user:', req.user!.id);
+
+      // Update user's onboarding status
+      const [updatedUser] = await db.update(users)
+        .set({
+          onboarding_user_completed: true,
+          updated_at: new Date()
+        })
+        .where(eq(users.id, req.user!.id))
+        .returning();
+
+      if (!updatedUser) {
+        console.error('[Complete Onboarding] Failed to update user:', req.user!.id);
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+
+      // Try to update the onboarding task status
+      const updatedTask = await updateOnboardingTaskStatus(req.user!.id);
+
+      console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
+        userId: updatedUser.id,
+        taskId: updatedTask?.id
+      });
+
+      res.json({
+        message: "Onboarding completed successfully",
+        user: updatedUser,
+        task: updatedTask
+      });
+
+    } catch (error) {
+      console.error("[Complete Onboarding] Error:", error);
+      res.status(500).json({
+        message: "Error completing onboarding",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Utility functions
   function generateInviteCode(): string {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -1362,6 +1404,24 @@ export function registerRoutes(app: Express): Express {
     return str.split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
       .join(' ');
+  }
+
+  async function updateOnboardingTaskStatus(userId: number): Promise<{ id: number; status: TaskStatus; } | null> {
+    try {
+      const [task] = await db.select().from(tasks).where(eq(tasks.userEmail, (await db.select().from(users).where(eq(users.id, userId))).find()?.email));
+
+      if (task && task.taskType === 'user_onboarding') {
+        const [updatedTask] = await db.update(tasks)
+          .set({ status: TaskStatus.COMPLETED, progress: 100 })
+          .where(eq(tasks.id, task.id))
+          .returning();
+        return updatedTask;
+      }
+      return null;
+    } catch (error) {
+      console.error('[updateOnboardingTaskStatus] Error updating task status:', error);
+      return null;
+    }
   }
 
   console.log('[Routes] Routes setup completed');
