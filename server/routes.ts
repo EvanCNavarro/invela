@@ -50,17 +50,29 @@ export function registerRoutes(app: Express): Express {
 
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
+      console.log('[Current Company] Fetching company for user:', {
+        userId: req.user!.id,
+        companyId: req.user!.company_id
+      });
+
       const [company] = await db.select()
         .from(companies)
-        .where(eq(companies.id, req.user!.companyId));
+        .where(eq(companies.id, req.user!.company_id));
 
       if (!company) {
+        console.error('[Current Company] Company not found:', req.user!.company_id);
         return res.status(404).json({ message: "Company not found" });
       }
 
+      console.log('[Current Company] Found company:', {
+        id: company.id,
+        name: company.name,
+        onboardingCompleted: company.onboarding_company_completed
+      });
+
       res.json(company);
     } catch (error) {
-      console.error("Error fetching current company:", error);
+      console.error("[Current Company] Error fetching company:", error);
       res.status(500).json({ message: "Error fetching company details" });
     }
   });
