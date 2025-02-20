@@ -18,7 +18,14 @@ export function OnboardingWrapper({ children }: OnboardingWrapperProps) {
   );
 }
 
-export function shouldShowTask(task: any, userId: number, activeTab: string = 'my-tasks'): boolean {
+interface TaskFilterParams {
+  task: any;
+  userId: number;
+  userEmail: string;
+  activeTab?: string;
+}
+
+export function shouldShowTask({ task, userId, userEmail, activeTab = 'my-tasks' }: TaskFilterParams): boolean {
   // Always show company-wide tasks (like KYB) in My Tasks if they belong to user's company
   if (task.task_scope === 'company' && activeTab === 'my-tasks') {
     return true;
@@ -26,7 +33,8 @@ export function shouldShowTask(task: any, userId: number, activeTab: string = 'm
 
   // For user-specific tasks
   if (activeTab === 'my-tasks') {
-    return task.assigned_to === userId || task.user_email?.toLowerCase() === user?.email?.toLowerCase();
+    return task.assigned_to === userId || 
+           (task.user_email && task.user_email.toLowerCase() === userEmail.toLowerCase());
   }
 
   // For "For Others" tab, show tasks not assigned to current user
