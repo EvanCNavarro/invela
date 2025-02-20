@@ -1,8 +1,7 @@
 import { db } from "@db";
 import { companies, tasks } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
-import { broadcastTaskUpdate } from "../services/websocket";
-import { eq } from "drizzle-orm";
+import { broadcastTaskUpdate } from "./websocket";
 
 /**
  * Creates a new company and handles all associated rules/tasks
@@ -39,7 +38,6 @@ export async function createCompany(
         progress: taskStatusToProgress[TaskStatus.PENDING],
         companyId: newCompany.id,
         createdBy: data.metadata?.invitedBy || null,
-        assignedTo: null, // Null means visible to all company users
         dueDate: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
