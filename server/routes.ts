@@ -68,43 +68,67 @@ export function registerRoutes(app: Express): Express {
   // Tasks endpoints
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
-      console.log('[Tasks] Fetching tasks for user:', req.user!.id);
-      console.log('[Tasks] User company ID:', req.user!.companyId);
+      console.log('[Tasks] ====== Starting task fetch =====');
+      console.log('[Tasks] User details:', {
+        id: req.user!.id,
+        companyId: req.user!.companyId,
+        email: req.user!.email
+      });
 
       // Get all tasks that are either:
       // 1. Assigned to the user
       // 2. Created by the user
       // 3. Company tasks (companyId matches user's company and no specific assignee)
-      const userTasks = await db.select()
-        .from(tasks)
-        .where(
-          or(
-            eq(tasks.assigned_to, req.user!.id),
-            eq(tasks.created_by, req.user!.id),
-            and(
-              eq(tasks.company_id, req.user!.companyId),
-              eq(tasks.assigned_to, null),
-              eq(tasks.task_scope, 'company')
-            )
-          )
-        );
+      console.log('[Tasks] Building query conditions');
 
-      console.log('[Tasks] Found tasks:', userTasks.length);
-      console.log('[Tasks] Tasks data:', JSON.stringify(userTasks, null, 2));
+      const query = or(
+        eq(tasks.assignedTo, req.user!.id),
+        eq(tasks.createdBy, req.user!.id),
+        and(
+          eq(tasks.companyId, req.user!.companyId),
+          eq(tasks.assignedTo, null),
+          eq(tasks.taskScope, 'company')
+        )
+      );
+
       console.log('[Tasks] Query conditions:', {
-        userId: req.user!.id,
-        companyId: req.user!.companyId,
-        or: {
-          condition1: 'assigned_to = user.id',
-          condition2: 'created_by = user.id',
-          condition3: 'company_id = user.companyId AND assigned_to IS NULL AND task_scope = company'
+        conditions: {
+          condition1: `tasks.assignedTo = ${req.user!.id}`,
+          condition2: `tasks.createdBy = ${req.user!.id}`,
+          condition3: `tasks.companyId = ${req.user!.companyId} AND tasks.assignedTo IS NULL AND tasks.taskScope = 'company'`
         }
       });
 
+      console.log('[Tasks] Executing database query');
+      const userTasks = await db.select()
+        .from(tasks)
+        .where(query);
+
+      console.log('[Tasks] Query completed');
+      console.log('[Tasks] Number of tasks found:', userTasks.length);
+      console.log('[Tasks] Task details:', userTasks.map(task => ({
+        id: task.id,
+        title: task.title,
+        assignedTo: task.assignedTo,
+        companyId: task.companyId,
+        taskScope: task.taskScope,
+        status: task.status
+      })));
+
       res.json(userTasks);
     } catch (error) {
-      console.error("Error fetching tasks:", error);
-      res.status(500).json({ message: "Error fetching tasks" });
+      console.error("[Tasks] Error details:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        position: error.position,
+        hint: error.hint
+      });
+      console.error("[Tasks] Full error:", error);
+      res.status(500).json({ 
+        message: "Error fetching tasks",
+        detail: error.message
+      });
     }
   });
 
@@ -906,7 +930,7 @@ export function registerRoutes(app: Express): Express {
           relationshipType: 'network_member',
           status: 'active',
           metadata: {
-            addedAt: newDate().toISOString(),
+            addedAt: new Date().toISOString(),
             addedBy: req.user!.id
           }
         })
