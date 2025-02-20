@@ -25,20 +25,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 
-// Define task interface to match database schema
+// Matching the snake_case from the database.  This is the key change to align with the backend.
 interface Task {
   id: number;
   title: string;
   description: string;
-  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
-  taskScope: 'user' | 'company';
+  task_type: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
+  task_scope: 'user' | 'company';
   status: TaskStatus;
   progress: number;
-  assignedTo?: number;
-  createdBy: number;
-  userEmail?: string;
-  companyId?: number;
-  dueDate?: string;
+  assigned_to?: number;
+  created_by: number;
+  user_email?: string;
+  company_id?: number;
+  due_date?: string;
 }
 
 const taskStatusMap = {
@@ -75,22 +75,38 @@ export default function TaskCenterPage() {
   const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
-  const [sortConfig, setSortConfig] = useState({ key: 'dueDate', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'due_date', direction: 'asc' });
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch tasks with proper typing
-  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
+  // Add detailed logging for data fetching
+  const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 1000,
     gcTime: 5 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('[TaskCenter] Fetched tasks:', {
+        count: data.length,
+        tasks: data.map(t => ({
+          id: t.id,
+          title: t.title,
+          task_scope: t.task_scope,
+          task_type: t.task_type,
+          assigned_to: t.assigned_to,
+          company_id: t.company_id,
+          status: t.status
+        }))
+      });
+    }
   });
 
-  // Fetch current user's company
   const { data: currentCompany } = useQuery({
     queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 5 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('[TaskCenter] Current company:', data);
+    }
   });
 
   // Set up WebSocket subscription for real-time updates
@@ -144,66 +160,91 @@ export default function TaskCenterPage() {
   }, [queryClient]);
 
   const filteredTasks = tasks.filter((task) => {
-    // Debug logging
-    console.log('[TaskCenter] Filtering task:', {
-      taskId: task.id,
-      taskType: task.taskType,
-      taskScope: task.taskScope,
-      companyId: task.companyId,
-      userCompanyId: currentCompany?.id,
-      assignedTo: task.assignedTo,
-      userEmail: task.userEmail,
-      currentUserId: user?.id,
-      currentUserEmail: user?.email,
-      activeTab
+    console.group(`[TaskCenter] Filtering task ${task.id}`);
+    console.log('Task details:', {
+      id: task.id,
+      title: task.title,
+      task_type: task.task_type,
+      task_scope: task.task_scope,
+      company_id: task.company_id,
+      user_company_id: currentCompany?.id,
+      assigned_to: task.assigned_to,
+      user_email: task.user_email,
+      current_user_id: user?.id,
+      current_user_email: user?.email,
+      active_tab: activeTab
     });
 
-    // First, check if task belongs to user's company
-    if (task.companyId !== currentCompany?.id) {
-      console.log('[TaskCenter] Task filtered out - wrong company');
+    // First, check company match
+    const companyMatches = task.company_id === currentCompany?.id;
+    console.log('Company match check:', { companyMatches, reason: !companyMatches ? 'Wrong company' : 'Company matches' });
+
+    if (!companyMatches) {
+      console.groupEnd();
       return false;
     }
 
     // For "My Tasks" tab
     if (activeTab === "my-tasks") {
-      // Show all company-wide tasks from user's company
-      if (task.taskScope === 'company') {
-        console.log('[TaskCenter] Including company-wide task');
+      // Check if it's a company-wide task
+      if (task.task_scope === 'company') {
+        console.log('Company-wide task - including in My Tasks');
+        console.groupEnd();
         return true;
       }
 
-      // For user-specific tasks, check if:
-      // 1. Task is assigned to the user directly
-      // 2. Task's email matches user's email
-      if (task.taskScope === 'user') {
-        const isAssignedToUser = task.assignedTo === user?.id;
-        const matchesUserEmail = task.userEmail?.toLowerCase() === user?.email?.toLowerCase();
+      // For user-specific tasks
+      if (task.task_scope === 'user') {
+        const isAssignedToUser = task.assigned_to === user?.id;
+        const matchesUserEmail = task.user_email?.toLowerCase() === user?.email?.toLowerCase();
 
-        console.log('[TaskCenter] User-specific task checks:', { isAssignedToUser, matchesUserEmail });
+        console.log('User-specific task checks:', {
+          isAssignedToUser,
+          matchesUserEmail,
+          result: isAssignedToUser || matchesUserEmail
+        });
+
+        console.groupEnd();
         return isAssignedToUser || matchesUserEmail;
       }
     }
 
     // For "For Others" tab
     if (activeTab === "for-others") {
-      // Only show user-specific tasks where:
-      // 1. Current user is the creator
-      // 2. Task is not assigned to current user
-      const isCreatedByUser = task.createdBy === user?.id;
-      const isNotAssignedToUser = task.assignedTo !== user?.id;
-      const isUserTask = task.taskScope === 'user';
+      const isCreatedByUser = task.created_by === user?.id;
+      const isNotAssignedToUser = task.assigned_to !== user?.id;
+      const isUserTask = task.task_scope === 'user';
 
-      console.log('[TaskCenter] For Others tab checks:', { isCreatedByUser, isNotAssignedToUser, isUserTask });
+      console.log('For Others tab checks:', {
+        isCreatedByUser,
+        isNotAssignedToUser,
+        isUserTask,
+        result: isCreatedByUser && isNotAssignedToUser && isUserTask
+      });
+
+      console.groupEnd();
       return isCreatedByUser && isNotAssignedToUser && isUserTask;
     }
 
+    console.groupEnd();
     return false;
   });
 
+  console.log('[TaskCenter] After filtering:', {
+    totalTasks: tasks.length,
+    filteredCount: filteredTasks.length,
+    filteredTasks: filteredTasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      task_scope: t.task_scope,
+      assigned_to: t.assigned_to
+    }))
+  });
+
   const sortedAndFilteredTasks = [...filteredTasks].sort((a, b) => {
-    if (sortConfig.key === 'dueDate') {
-      const aDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
-      const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+    if (sortConfig.key === 'due_date') {
+      const aDate = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const bDate = b.due_date ? new Date(b.due_date).getTime() : Infinity;
       return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
     } else if (sortConfig.key === 'status') {
       return sortConfig.direction === 'asc' ?
@@ -238,11 +279,11 @@ export default function TaskCenterPage() {
   const getTaskCountForTab = (tabId: string) => {
     return tasks.filter(task => {
       if (tabId === "my-tasks") {
-        return task.assignedTo === user?.id || (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) || (task.taskScope === 'company' && task.companyId === currentCompany?.id);
+        return task.assigned_to === user?.id || (task.user_email?.toLowerCase() === user?.email?.toLowerCase()) || (task.task_scope === 'company' && task.company_id === currentCompany?.id);
       } else {
-        return (task.createdBy === user?.id &&
-          (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
-          task.assignedTo !== user?.id && task.companyId === currentCompany?.id);
+        return (task.created_by === user?.id &&
+          (task.task_type === 'user_onboarding' || task.task_type === 'user_invitation' || task.task_type === 'company_kyb') &&
+          task.assigned_to !== user?.id && task.company_id === currentCompany?.id);
       }
     }).length;
   };
@@ -300,7 +341,7 @@ export default function TaskCenterPage() {
           </span>
         </TableCell>
         <TableCell>
-          {task.dueDate ? format(new Date(task.dueDate), 'PP') : '-'}
+          {task.due_date ? format(new Date(task.due_date), 'PP') : '-'}
         </TableCell>
       </TableRow>
     ));
@@ -472,7 +513,7 @@ export default function TaskCenterPage() {
                   </TabsContent>
                 </div>
 
-                {!isLoading && !error && totalPages > 1 && (
+                {!isLoading && totalPages > 1 && (
                   <div className="flex items-center justify-between pt-4 border-t">
                     <div className="text-sm text-muted-foreground">
                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredTasks.length)} of {sortedAndFilteredTasks.length} tasks
