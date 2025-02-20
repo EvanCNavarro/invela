@@ -69,22 +69,16 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] Fetching tasks for user:', req.user!.id);
-      console.log('[Tasks] User company:', req.user!.companyId);
 
       // Get all tasks that are either:
       // 1. Assigned to the user
       // 2. Created by the user
-      // 3. Company-wide tasks for the user's company
       const userTasks = await db.select()
         .from(tasks)
         .where(
           or(
             eq(tasks.assignedTo, req.user!.id),
-            eq(tasks.createdBy, req.user!.id),
-            and(
-              eq(tasks.companyId, req.user!.companyId),
-              eq(tasks.taskScope, 'company')
-            )
+            eq(tasks.createdBy, req.user!.id)
           )
         );
 
@@ -924,7 +918,7 @@ export function registerRoutes(app: Express): Express {
         senderCompany: req.body.sender_company || (req.user?.companyId === 0 ? 'Invela' : undefined)
       };
 
-      console.log('[Invite] Validated invitedata:', inviteData);
+      console.log('[Invite] Validated invite data:', inviteData);
 
       if (!inviteData.senderCompany) {
         console.error('[Invite] Missing sender company:', inviteData);
