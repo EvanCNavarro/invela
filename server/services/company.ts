@@ -37,6 +37,7 @@ export async function createCompany(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         companyId: newCompany.id,
+        assignedTo: null, // Explicitly set to null so all company users can see it
         createdBy: data.metadata?.invitedBy || null,
         dueDate: (() => {
           const date = new Date();

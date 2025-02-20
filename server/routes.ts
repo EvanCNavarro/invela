@@ -73,12 +73,18 @@ export function registerRoutes(app: Express): Express {
       // Get all tasks that are either:
       // 1. Assigned to the user
       // 2. Created by the user
+      // 3. Company tasks (companyId matches user's company and no specific assignee)
       const userTasks = await db.select()
         .from(tasks)
         .where(
           or(
             eq(tasks.assignedTo, req.user!.id),
-            eq(tasks.createdBy, req.user!.id)
+            eq(tasks.createdBy, req.user!.id),
+            and(
+              eq(tasks.companyId, req.user!.companyId),
+              eq(tasks.assignedTo, null),
+              eq(tasks.taskScope, 'company')
+            )
           )
         );
 
