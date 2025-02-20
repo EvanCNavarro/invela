@@ -25,6 +25,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 
+// Define task interface to match our database schema
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
+  taskScope?: 'user' | 'company';
+  status: TaskStatus;
+  progress: number;
+  assignedTo?: number;
+  createdBy: number;
+  userEmail?: string;
+  companyId?: number;
+  dueDate?: string;
+}
+
 const taskStatusMap = {
   [TaskStatus.EMAIL_SENT]: 'Email Sent',
   [TaskStatus.COMPLETED]: 'Completed',
@@ -52,21 +68,6 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
   }
 };
 
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
-  taskScope?: 'user' | 'company';
-  status: string;
-  progress: number;
-  assignedTo?: number;
-  createdBy: number;
-  userEmail?: string;
-  companyId?: number;
-  dueDate?: string;
-}
-
 export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -79,10 +80,11 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading, error } = useQuery({
+  // Add proper typing to useQuery
+  const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 0, // Always fetch fresh data
-    cacheTime: 0, // Don't cache the results
+    staleTime: 1000, // Consider data stale after 1 second
+    gcTime: 5 * 60 * 1000, // Keep unused data in cache for 5 minutes
   });
 
   // Set up WebSocket subscription for real-time updates
@@ -157,6 +159,7 @@ export default function TaskCenterPage() {
       assignedTo: task.assignedTo,
       userEmail: task.userEmail,
       currentUserId: user?.id,
+      currentUserEmail: user?.email,
       activeTab
     });
 
@@ -167,7 +170,7 @@ export default function TaskCenterPage() {
     const matchesTab = activeTab === "my-tasks"
       ? (task.assignedTo === user?.id || 
          (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) ||
-         (task.taskScope === 'company'))
+         task.taskScope === 'company')
       // For "For Others" tab:
       // Show tasks created by the user AND are onboarding/invitation type
       // BUT exclude tasks that are assigned to the user (those go in My Tasks)
@@ -398,13 +401,13 @@ export default function TaskCenterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value="Not Started">Not Started</SelectItem>
-                      <SelectItem value="In Progress">In Progress</SelectItem>
-                      <SelectItem value="Ready for Submission">Ready for Submission</SelectItem>
-                      <SelectItem value="Submitted">Submitted</SelectItem>
-                      <SelectItem value="Approved">Approved</SelectItem>
-                      <SelectItem value="Email Sent">Email Sent</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value={TaskStatus.NOT_STARTED}>Not Started</SelectItem>
+                      <SelectItem value={TaskStatus.IN_PROGRESS}>In Progress</SelectItem>
+                      <SelectItem value={TaskStatus.READY_FOR_SUBMISSION}>Ready for Submission</SelectItem>
+                      <SelectItem value={TaskStatus.SUBMITTED}>Submitted</SelectItem>
+                      <SelectItem value={TaskStatus.APPROVED}>Approved</SelectItem>
+                      <SelectItem value={TaskStatus.EMAIL_SENT}>Email Sent</SelectItem>
+                      <SelectItem value={TaskStatus.COMPLETED}>Completed</SelectItem>
                     </SelectContent>
                   </Select>
 
