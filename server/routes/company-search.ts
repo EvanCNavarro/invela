@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { companySearchSchema } from "../services/companySearch";
-import { findCompanyInRegistry, findMissingFields, updateCompanyData, createCompanyInRegistry } from "../services/companyMatching";
+import { findCompanyInRegistry, findMissingFields, updateCompanyData, } from "../services/companyMatching";
 import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
+import { createCompany } from "../services/company";
 
 const router = Router();
 
@@ -70,14 +71,14 @@ router.post("/api/company-search", async (req, res) => {
 
       // Search for all company data
       const newData = await findMissingCompanyData({ name: companyName }, [
-        'description', 'websiteUrl', 'legalStructure', 'hqAddress', 
+        'description', 'websiteUrl', 'legalStructure', 'hqAddress',
         'productsServices', 'incorporationYear', 'foundersAndLeadership',
         'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
         'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
       ]);
 
       // Create new company in registry
-      companyData = await createCompanyInRegistry({
+      companyData = await createCompany({
         ...newData,
         name: companyName,
         category: 'FinTech', // Default category

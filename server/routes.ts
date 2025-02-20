@@ -11,27 +11,21 @@ import { logoUpload } from './middleware/upload';
 import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
+import { createCompany } from "./services/company";
+import { TaskStatus, taskStatusToProgress } from './types';
 
 // Generate invitation code helper function (keep it DRY)
 function generateInviteCode(): string {
   return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
 
-// Task status enum
-export enum TaskStatus {
-  PENDING = 'pending',
-  EMAIL_SENT = 'email_sent',
-  COMPLETED = 'completed',
-  FAILED = 'failed'
-};
-
 // Progress mapping for task statuses
-const taskStatusToProgress: Record<TaskStatus, number> = {
-  [TaskStatus.PENDING]: 0,
-  [TaskStatus.EMAIL_SENT]: 25,
-  [TaskStatus.COMPLETED]: 100,
-  [TaskStatus.FAILED]: 100,
-};
+//const taskStatusToProgress: Record<TaskStatus, number> = {
+//  [TaskStatus.PENDING]: 0,
+//  [TaskStatus.EMAIL_SENT]: 25,
+//  [TaskStatus.COMPLETED]: 100,
+//  [TaskStatus.FAILED]: 100,
+//};
 
 declare global {
   namespace Express {
@@ -648,10 +642,9 @@ export function registerRoutes(app: Express): Express {
             name: company_name.trim(),
             description: `FinTech partner company ${company_name}`,
             category: 'FinTech',
-            status: 'active', // Set proper status
+            status: 'active',
             accreditationStatus: 'PENDING',
             onboardingCompanyCompleted: false,
-            registryDate: new Date(),
             metadata: {
               invitedBy: req.user!.id,
               invitedAt: new Date().toISOString(),
@@ -662,11 +655,7 @@ export function registerRoutes(app: Express): Express {
 
           console.log('[FinTech Invite] Attempting to insert company with data:', JSON.stringify(companyData, null, 2));
 
-          const [newCompany] = await tx.insert(companies)
-            .values(companyData)
-            .returning();
-
-          console.log('[FinTech Invite] Raw database response:', JSON.stringify(newCompany, null, 2));
+          const newCompany = await createCompany(companyData);
 
           if (!newCompany) {
             console.error('[FinTech Invite] Failed to create company - null response');
