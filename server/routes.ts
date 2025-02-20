@@ -69,6 +69,7 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] Fetching tasks for user:', req.user!.id);
+      console.log('[Tasks] User company ID:', req.user!.companyId);
 
       // Get all tasks that are either:
       // 1. Assigned to the user
@@ -78,18 +79,28 @@ export function registerRoutes(app: Express): Express {
         .from(tasks)
         .where(
           or(
-            eq(tasks.assignedTo, req.user!.id),
-            eq(tasks.createdBy, req.user!.id),
+            eq(tasks.assigned_to, req.user!.id),
+            eq(tasks.created_by, req.user!.id),
             and(
-              eq(tasks.companyId, req.user!.companyId),
-              eq(tasks.assignedTo, null),
-              eq(tasks.taskScope, 'company')
+              eq(tasks.company_id, req.user!.companyId),
+              eq(tasks.assigned_to, null),
+              eq(tasks.task_scope, 'company')
             )
           )
         );
 
       console.log('[Tasks] Found tasks:', userTasks.length);
       console.log('[Tasks] Tasks data:', JSON.stringify(userTasks, null, 2));
+      console.log('[Tasks] Query conditions:', {
+        userId: req.user!.id,
+        companyId: req.user!.companyId,
+        or: {
+          condition1: 'assigned_to = user.id',
+          condition2: 'created_by = user.id',
+          condition3: 'company_id = user.companyId AND assigned_to IS NULL AND task_scope = company'
+        }
+      });
+
       res.json(userTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -895,7 +906,7 @@ export function registerRoutes(app: Express): Express {
           relationshipType: 'network_member',
           status: 'active',
           metadata: {
-            addedAt: new Date().toISOString(),
+            addedAt: newDate().toISOString(),
             addedBy: req.user!.id
           }
         })
