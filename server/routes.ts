@@ -113,6 +113,7 @@ export function registerRoutes(app: Express): Express {
       // 2. Created by the user
       // 3. Company tasks (company_id matches user's company and no specific assignee)
       // 4. KYB tasks for the user's company
+      // 5. User onboarding tasks for the user's email
       const query = or(
         eq(tasks.assigned_to, req.user!.id),
         eq(tasks.created_by, req.user!.id),
@@ -120,6 +121,10 @@ export function registerRoutes(app: Express): Express {
           eq(tasks.company_id, req.user!.company_id),
           isNull(tasks.assigned_to),
           eq(tasks.task_scope, 'company')
+        ),
+        and(
+          eq(tasks.task_type, 'user_onboarding'),
+          sql`LOWER(${tasks.user_email}) = LOWER(${req.user!.email})`
         )
       );
 
@@ -127,13 +132,15 @@ export function registerRoutes(app: Express): Express {
         conditions: {
           condition1: `tasks.assigned_to = ${req.user!.id}`,
           condition2: `tasks.created_by = ${req.user!.id}`,
-          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`
+          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
+          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user!.email}')`
         }
       });
 
       const userTasks = await db.select()
         .from(tasks)
-        .where(query);
+        .where(query)
+        .orderBy(sql`created_at DESC`);
 
       console.log('[Tasks] Tasks found:', {
         count: userTasks.length,
