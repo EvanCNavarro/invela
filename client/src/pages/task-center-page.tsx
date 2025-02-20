@@ -25,13 +25,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 
-// Define task interface to match our database schema
+// Define task interface to match database schema
 interface Task {
   id: number;
   title: string;
   description: string;
   taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
-  taskScope?: 'user' | 'company';
+  taskScope: 'user' | 'company';
   status: TaskStatus;
   progress: number;
   assignedTo?: number;
@@ -55,16 +55,16 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
   switch (status) {
     case TaskStatus.NOT_STARTED:
     case TaskStatus.EMAIL_SENT:
-      return "secondary"; // grey
+      return "secondary";
     case TaskStatus.COMPLETED:
     case TaskStatus.APPROVED:
-      return "default"; // primary color
+      return "default";
     case TaskStatus.IN_PROGRESS:
     case TaskStatus.READY_FOR_SUBMISSION:
     case TaskStatus.SUBMITTED:
-      return "outline"; // outlined style
+      return "outline";
     default:
-      return "default"; // fallback to primary color
+      return "default";
   }
 };
 
@@ -80,11 +80,17 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Add proper typing to useQuery
+  // Fetch tasks with proper typing
   const { data: tasks = [], isLoading, error } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000, // Consider data stale after 1 second
-    gcTime: 5 * 60 * 1000, // Keep unused data in cache for 5 minutes
+    staleTime: 1000,
+    gcTime: 5 * 60 * 1000,
+  });
+
+  // Fetch current user's company
+  const { data: currentCompany } = useQuery({
+    queryKey: ["/api/companies/current"],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Set up WebSocket subscription for real-time updates
@@ -119,14 +125,6 @@ export default function TaskCenterPage() {
         });
         subscriptions.push(unsubTaskUpdate);
 
-        // Subscribe to task deletion
-        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
-          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            return oldTasks.filter(task => task.id !== data.taskId);
-          });
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-        });
-        subscriptions.push(unsubTaskDelete);
       } catch (error) {
         console.error('Error setting up WebSocket subscriptions:', error);
       }
@@ -145,17 +143,14 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  const handleSort = (key: string) => {
-    setSortConfig({ key, direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc' });
-  };
-
-  const itemsPerPage = 10;
-
   const filteredTasks = tasks.filter((task) => {
+    // Debug logging
     console.log('[TaskCenter] Filtering task:', {
       taskId: task.id,
       taskType: task.taskType,
       taskScope: task.taskScope,
+      companyId: task.companyId,
+      userCompanyId: currentCompany?.id,
       assignedTo: task.assignedTo,
       userEmail: task.userEmail,
       currentUserId: user?.id,
@@ -163,39 +158,46 @@ export default function TaskCenterPage() {
       activeTab
     });
 
-    // For "My Tasks" tab:
-    // 1. Show tasks where user is assigned
-    // 2. Show tasks matching user's email
-    // 3. Show company-wide tasks
-    const matchesTab = activeTab === "my-tasks"
-      ? (task.assignedTo === user?.id || 
-         (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) ||
-         task.taskScope === 'company')
-      // For "For Others" tab:
-      // Show tasks created by the user AND are onboarding/invitation type
-      // BUT exclude tasks that are assigned to the user (those go in My Tasks)
-      : (task.createdBy === user?.id &&
-         (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
-         task.assignedTo !== user?.id);
+    // First, check if task belongs to user's company
+    if (task.companyId !== currentCompany?.id) {
+      console.log('[TaskCenter] Task filtered out - wrong company');
+      return false;
+    }
 
-    console.log('[TaskCenter] Task matches tab:', matchesTab);
+    // For "My Tasks" tab
+    if (activeTab === "my-tasks") {
+      // Show all company-wide tasks from user's company
+      if (task.taskScope === 'company') {
+        console.log('[TaskCenter] Including company-wide task');
+        return true;
+      }
 
-    if (!matchesTab) return false;
+      // For user-specific tasks, check if:
+      // 1. Task is assigned to the user directly
+      // 2. Task's email matches user's email
+      if (task.taskScope === 'user') {
+        const isAssignedToUser = task.assignedTo === user?.id;
+        const matchesUserEmail = task.userEmail?.toLowerCase() === user?.email?.toLowerCase();
 
-    const matchesSearch = searchQuery === "" ||
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase());
+        console.log('[TaskCenter] User-specific task checks:', { isAssignedToUser, matchesUserEmail });
+        return isAssignedToUser || matchesUserEmail;
+      }
+    }
 
-    const matchesStatus = statusFilter === "All Statuses" ||
-      task.status === statusFilter.toLowerCase().replace(/ /g, '_');
+    // For "For Others" tab
+    if (activeTab === "for-others") {
+      // Only show user-specific tasks where:
+      // 1. Current user is the creator
+      // 2. Task is not assigned to current user
+      const isCreatedByUser = task.createdBy === user?.id;
+      const isNotAssignedToUser = task.assignedTo !== user?.id;
+      const isUserTask = task.taskScope === 'user';
 
-    const matchesType = typeFilter === "All Task Types" ||
-      task.taskType === typeFilter.toLowerCase().replace(/ /g, '_');
+      console.log('[TaskCenter] For Others tab checks:', { isCreatedByUser, isNotAssignedToUser, isUserTask });
+      return isCreatedByUser && isNotAssignedToUser && isUserTask;
+    }
 
-    const matchesScope = scopeFilter === "All Assignee Types" ||
-      task.taskScope === scopeFilter.toLowerCase();
-
-    return matchesSearch && matchesStatus && matchesType && matchesScope;
+    return false;
   });
 
   const sortedAndFilteredTasks = [...filteredTasks].sort((a, b) => {
@@ -213,6 +215,7 @@ export default function TaskCenterPage() {
     return 0;
   });
 
+  const itemsPerPage = 10;
   const totalPages = Math.ceil(sortedAndFilteredTasks.length / itemsPerPage);
   const currentTasks = sortedAndFilteredTasks.slice(
     (currentPage - 1) * itemsPerPage,
@@ -235,11 +238,11 @@ export default function TaskCenterPage() {
   const getTaskCountForTab = (tabId: string) => {
     return tasks.filter(task => {
       if (tabId === "my-tasks") {
-        return task.assignedTo === user?.id || (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) || (task.taskScope === 'company');
+        return task.assignedTo === user?.id || (task.userEmail?.toLowerCase() === user?.email?.toLowerCase()) || (task.taskScope === 'company' && task.companyId === currentCompany?.id);
       } else {
         return (task.createdBy === user?.id &&
           (task.taskType === 'user_onboarding' || task.taskType === 'user_invitation' || task.taskType === 'company_kyb') &&
-          task.assignedTo !== user?.id);
+          task.assignedTo !== user?.id && task.companyId === currentCompany?.id);
       }
     }).length;
   };

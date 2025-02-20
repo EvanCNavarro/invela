@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -8,59 +8,39 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useWebSocket } from "@/hooks/useWebSocket";
 import { useToast } from "@/hooks/use-toast";
-
-// Define task status mappings and constants
-const taskStatusFlow = {
-  [TaskStatus.EMAIL_SENT]: {
-    next: TaskStatus.COMPLETED,
-    progress: 50,
-  },
-  [TaskStatus.COMPLETED]: {
-    next: null,
-    progress: 100,
-  },
-} as const;
-
-const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.COMPLETED]: 'Completed',
-} as const;
-
-const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 50,
-  [TaskStatus.COMPLETED]: 100,
-} as const;
+import cn from 'classnames';
 
 interface Task {
   id: number;
   title: string;
+  description: string;
+  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
+  taskScope: 'user' | 'company';
   status: TaskStatus;
-  progress?: number;
-  dueDate?: string | Date;
+  progress: number;
+  assignedTo?: number;
+  createdBy: number;
+  userEmail?: string;
+  companyId?: number;
+  dueDate?: string;
 }
 
-interface TaskCount {
-  total: number;
-  emailSent: number;
-  completed: number;
-}
+const taskStatusMap = {
+  [TaskStatus.EMAIL_SENT]: 'Email Sent',
+  [TaskStatus.COMPLETED]: 'Completed',
+  [TaskStatus.NOT_STARTED]: 'Not Started',
+  [TaskStatus.IN_PROGRESS]: 'In Progress',
+  [TaskStatus.READY_FOR_SUBMISSION]: 'Ready for Submission',
+  [TaskStatus.SUBMITTED]: 'Submitted',
+  [TaskStatus.APPROVED]: 'Approved',
+} as const;
 
 export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [taskCounts, setTaskCounts] = useState<TaskCount>({
-    total: initialTasks.length,
-    emailSent: initialTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    completed: initialTasks.filter(t => t.status === TaskStatus.COMPLETED).length
-  });
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
-
-  // Initialize WebSocket connection
-  useWebSocket();
 
   // Add mutation for updating task status
   const updateTaskStatus = useMutation({
@@ -85,34 +65,25 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
       });
     },
     onError: (error) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      console.error('Failed to update task status:', error);
       toast({
         title: "Error",
         description: "Failed to update task status. Please try again.",
         variant: "destructive",
       });
-      console.error('Failed to update task status:', error);
     },
   });
 
-  // Handle status transition
-  const handleStatusUpdate = async (task: Task) => {
-    const nextStatus = taskStatusFlow[task.status]?.next;
-    if (!nextStatus) return;
-
-    try {
-      await updateTaskStatus.mutateAsync({
-        taskId: task.id,
-        newStatus: nextStatus,
-      });
-    } catch (error) {
-      console.error('Failed to update task status:', error);
-    }
-  };
-
-  const getProgress = (task: Task) => {
-    return task.progress ?? STATUS_PROGRESS[task.status] ?? 0;
-  };
+  // Show loading state
+  if (!initialTasks || initialTasks.length === 0) {
+    return (
+      <TableRow>
+        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+          No tasks found
+        </TableCell>
+      </TableRow>
+    );
+  }
 
   return (
     <>
@@ -128,29 +99,29 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map((task) => (
+            {initialTasks.map((task) => (
               <TableRow key={task.id}>
                 <TableCell className="font-medium">{task.title}</TableCell>
                 <TableCell>
                   <Badge
-                    variant="secondary"
-                    className={`cursor-pointer hover:bg-secondary/80 ${
-                      task.status === TaskStatus.COMPLETED ? 'bg-green-100' : ''
-                    }`}
-                    onClick={() => handleStatusUpdate(task)}
+                    variant={task.status === TaskStatus.COMPLETED ? "default" : "secondary"}
+                    className={cn(
+                      "cursor-pointer hover:bg-secondary/80",
+                      task.status === TaskStatus.COMPLETED && "bg-green-100"
+                    )}
                   >
-                    {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status}
+                    {taskStatusMap[task.status] || task.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <div className="w-full bg-secondary h-2 rounded-full">
                     <div
                       className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${getProgress(task)}%` }}
+                      style={{ width: `${task.progress}%` }}
                     />
                   </div>
                   <span className="text-xs text-muted-foreground mt-1">
-                    {getProgress(task)}%
+                    {task.progress}%
                   </span>
                 </TableCell>
                 <TableCell>
@@ -178,14 +149,6 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                       >
                         View Details
                       </DropdownMenuItem>
-                      {taskStatusFlow[task.status]?.next && (
-                        <DropdownMenuItem
-                          onClick={() => handleStatusUpdate(task)}
-                          className="cursor-pointer"
-                        >
-                          Update Status
-                        </DropdownMenuItem>
-                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
