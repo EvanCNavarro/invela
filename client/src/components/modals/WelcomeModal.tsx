@@ -37,17 +37,17 @@ const carouselImages = [
 
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { socket, connected } = useWebSocket();
 
   // Only show modal if user exists and hasn't completed onboarding
   useEffect(() => {
-    if (user && !user.onboarding_user_completed) {
-      setOpen(true);
+    if (user && !user.onboardingUserCompleted) {
+      setIsOpen(true);
     }
-  }, [user]);
+  }, [user?.onboardingUserCompleted]);
 
   // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
@@ -57,63 +57,53 @@ export function WelcomeModal() {
 
   const completeOnboardingMutation = useMutation({
     mutationFn: async () => {
-      console.log('[WelcomeModal] Starting onboarding completion for user:', user?.email);
-
-      try {
-        const response = await fetch('/api/users/complete-onboarding', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error('[WelcomeModal] Failed to complete onboarding:', errorData);
-          throw new Error(errorData.message || "Failed to complete onboarding");
-        }
-
-        const data = await response.json();
-        console.log('[WelcomeModal] Onboarding completion response:', data);
-
-        // Send WebSocket update if connected
-        if (connected && socket && data.task) {
-          try {
-            socket.send(JSON.stringify({
-              type: 'task_update',
-              data: {
-                taskId: data.task.id,
-                status: 'completed',
-                metadata: {
-                  onboardingCompleted: true,
-                  completionTime: new Date().toISOString()
-                }
-              }
-            }));
-          } catch (error) {
-            console.error('[WelcomeModal] Error sending WebSocket message:', error);
-          }
-        }
-
-        return data;
-      } catch (error) {
-        console.error('[WelcomeModal] Error in completeOnboarding:', error);
-        throw error;
+      if (!user?.email) {
+        throw new Error("User email not found");
       }
+
+      const response = await fetch('/api/users/complete-onboarding', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to complete onboarding");
+      }
+
+      return response.json();
     },
     onSuccess: (data) => {
-      console.log('[WelcomeModal] Successfully completed onboarding:', data);
-      // Invalidate relevant queries to trigger UI updates
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+
+      // Send WebSocket update if connected
+      if (connected && socket && data.task) {
+        try {
+          socket.send(JSON.stringify({
+            type: 'task_update',
+            data: {
+              taskId: data.task.id,
+              status: 'completed',
+              metadata: {
+                onboardingCompleted: true,
+                completionTime: new Date().toISOString()
+              }
+            }
+          }));
+        } catch (error) {
+          console.error('[WelcomeModal] WebSocket send error');
+        }
+      }
 
       toast({
         title: "Welcome aboard!",
         description: "Your onboarding has been completed successfully.",
       });
     },
-    onError: (error) => {
-      console.error('[WelcomeModal] Error completing onboarding:', error);
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message || "Failed to complete onboarding",
@@ -139,24 +129,19 @@ export function WelcomeModal() {
   const handleComplete = async () => {
     try {
       await completeOnboardingMutation.mutateAsync();
-      setOpen(false);
+      setIsOpen(false);
     } catch (error) {
-      console.error('[WelcomeModal] Error in handleComplete:', error);
+      // Error is handled by mutation error handler
     }
   };
 
   // Don't show modal if no user or user has completed onboarding
-  if (!user || user.onboarding_user_completed) {
+  if (!user || user.onboardingUserCompleted) {
     return null;
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        handleComplete();
-      }
-      setOpen(isOpen);
-    }}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="sm:max-w-xl">
         <DialogTitle>{carouselImages[currentSlide].title}</DialogTitle>
         <DialogDescription>
@@ -164,7 +149,7 @@ export function WelcomeModal() {
         </DialogDescription>
         <div className="relative px-4 pb-8 pt-6">
           <button
-            onClick={handleComplete}
+            onClick={() => setIsOpen(false)}
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           >
             <X className="h-4 w-4" />
