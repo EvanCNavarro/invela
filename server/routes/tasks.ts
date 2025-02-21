@@ -18,10 +18,12 @@ const KYB_STATUS_THRESHOLDS = {
 
 // Helper function to determine KYB task status based on progress
 function getKybStatusFromProgress(progress: number): TaskStatus {
-  if (progress === 0) return TaskStatus.NOT_STARTED;
-  if (progress >= 1 && progress < 100) return TaskStatus.IN_PROGRESS;
-  if (progress === 100) return TaskStatus.READY_FOR_SUBMISSION;
-  return TaskStatus.IN_PROGRESS; // Default fallback
+  console.log('[Task Routes] Calculating status for progress:', progress);
+  const status = progress === 0 ? TaskStatus.NOT_STARTED : 
+                progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS : 
+                TaskStatus.READY_FOR_SUBMISSION;
+  console.log('[Task Routes] Determined status:', status);
+  return status;
 }
 
 const updateTaskStatusSchema = z.object({
@@ -59,7 +61,7 @@ router.post("/api/tasks", async (req, res) => {
       .values({
         ...req.body,
         status: TaskStatus.EMAIL_SENT,
-        progress: 50, //Using the old progress value here.  No clear indication in edited code how to handle initial progress for new tasks.
+        progress: 50, 
         createdAt: new Date(),
         updatedAt: new Date(),
         metadata: {
@@ -119,14 +121,31 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
     const taskId = parseInt(req.params.id);
     const { status, progress } = updateTaskStatusSchema.parse(req.body);
 
+    console.log('[Task Routes] Received status update request:', {
+      taskId,
+      requestedStatus: status,
+      requestedProgress: progress,
+      body: req.body
+    });
+
     // Get current task
     const [currentTask] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
 
     if (!currentTask) {
+      console.log('[Task Routes] Task not found:', taskId);
       return res.status(404).json({ message: "Task not found" });
     }
+
+    console.log('[Task Routes] Current task state:', {
+      id: currentTask.id,
+      type: currentTask.task_type,
+      currentStatus: currentTask.status,
+      currentProgress: currentTask.progress,
+      requestedStatus: status,
+      requestedProgress: progress
+    });
 
     // For KYB tasks, validate status matches progress
     if (currentTask.task_type === 'company_kyb') {
@@ -135,6 +154,11 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
       // Only allow explicit status changes for submission and approval
       if (status !== TaskStatus.SUBMITTED && status !== TaskStatus.APPROVED) {
         if (status !== expectedStatus) {
+          console.log('[Task Routes] Invalid status for progress:', {
+            requestedStatus: status,
+            expectedStatus,
+            progress
+          });
           return res.status(400).json({
             message: `Invalid status ${status} for progress ${progress}. Expected status: ${expectedStatus}`,
             expectedStatus,
@@ -146,6 +170,11 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
       // Validate progress threshold for the requested status
       const threshold = KYB_STATUS_THRESHOLDS[status];
       if (!threshold || progress < threshold.min || progress > threshold.max) {
+        console.log('[Task Routes] Invalid progress value:', {
+          status,
+          progress,
+          threshold
+        });
         return res.status(400).json({
           message: `Invalid progress value ${progress} for status ${status}`,
           required: threshold
@@ -156,11 +185,34 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
     // For user onboarding tasks, only allow EMAIL_SENT -> COMPLETED transition
     if (currentTask.task_type === 'user_onboarding') {
       if (currentTask.status === TaskStatus.EMAIL_SENT && status !== TaskStatus.COMPLETED) {
+        console.log('[Task Routes] Invalid user onboarding transition:', {
+          from: currentTask.status,
+          to: status
+        });
         return res.status(400).json({ 
           message: "Invalid status transition. User onboarding tasks can only move from EMAIL_SENT to COMPLETED" 
         });
       }
     }
+
+    console.log('[Task Routes] Updating task:', {
+      taskId,
+      newStatus: status,
+      newProgress: progress,
+      metadata: {
+        ...currentTask.metadata,
+        statusFlow: [...(currentTask.metadata?.statusFlow || []), status],
+        statusUpdates: [
+          ...(currentTask.metadata?.statusUpdates || []),
+          {
+            from: currentTask.status,
+            to: status,
+            timestamp: new Date().toISOString(),
+            progress
+          }
+        ]
+      }
+    });
 
     const [updatedTask] = await db
       .update(tasks)
@@ -184,6 +236,12 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
       })
       .where(eq(tasks.id, taskId))
       .returning();
+
+    console.log('[Task Routes] Task updated successfully:', {
+      id: updatedTask.id,
+      newStatus: updatedTask.status,
+      newProgress: updatedTask.progress
+    });
 
     // Get updated counts and broadcast task update
     const taskCount = await getTaskCount();
