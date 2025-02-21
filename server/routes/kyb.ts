@@ -52,7 +52,9 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       id: transformedTask.id,
       status: transformedTask.status,
       progress: transformedTask.progress,
-      hasFormData: Object.keys(transformedTask.savedFormData).length > 0
+      hasFormData: Object.keys(transformedTask.savedFormData).length > 0,
+      metadata: transformedTask.metadata,
+      savedFormData: transformedTask.savedFormData
     });
 
     res.json(transformedTask);
@@ -66,7 +68,12 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData } = req.body;
-    console.log('[KYB API] Saving progress:', { taskId, progress });
+    console.log('[KYB API] Saving progress:', { 
+      taskId, 
+      progress,
+      formDataKeys: Object.keys(formData || {}),
+      formData
+    });
 
     if (!taskId) {
       return res.status(400).json({ error: 'Task ID is required' });
@@ -86,7 +93,8 @@ router.post('/api/kyb/progress', async (req, res) => {
     console.log('[KYB API] Existing task data:', {
       id: existingTask.id,
       currentMetadata: existingTask.metadata,
-      currentProgress: existingTask.progress
+      currentProgress: existingTask.progress,
+      currentStatus: existingTask.status
     });
 
     // Determine appropriate status based on progress
@@ -114,7 +122,8 @@ router.post('/api/kyb/progress', async (req, res) => {
       newStatus,
       existingMetadata: existingTask.metadata,
       updatedMetadata,
-      formDataKeys: Object.keys(formData)
+      formDataKeys: Object.keys(formData || {}),
+      metadataKeys: Object.keys(updatedMetadata)
     });
 
     // Update task with progress and save form data
@@ -126,6 +135,13 @@ router.post('/api/kyb/progress', async (req, res) => {
         updated_at: new Date()
       })
       .where(eq(tasks.id, taskId));
+
+    console.log('[KYB API] Successfully saved progress:', {
+      taskId,
+      newStatus,
+      newProgress: Math.min(progress, 100),
+      savedMetadataKeys: Object.keys(updatedMetadata)
+    });
 
     res.json({ 
       success: true,
@@ -161,7 +177,9 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       id: task.id,
       metadata: task.metadata,
       progress: task.progress,
-      status: task.status
+      status: task.status,
+      hasMetadata: !!task.metadata,
+      metadataKeys: Object.keys(task.metadata || {})
     });
 
     // Return saved form data and progress

@@ -31,6 +31,7 @@ interface Task {
     company?: any;
     [key: string]: any;
   } | null;
+  savedFormData?: Record<string, any>;
 }
 
 export default function TaskPage({ params }: TaskPageProps) {
@@ -41,21 +42,39 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
+  console.log('[TaskPage] Initializing with params:', {
+    taskType,
+    companyName,
+    taskSlug: params.taskSlug
+  });
+
   // Only fetch if it's a KYB task
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: ['/api/tasks/kyb', companyName],
     queryFn: async () => {
+      console.log('[TaskPage] Fetching KYB task for company:', companyName);
       const response = await fetch(`/api/tasks/kyb/${companyName}`);
       if (!response.ok) {
         throw new Error('Failed to fetch KYB task');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('[TaskPage] Received task data:', {
+        taskId: data.id,
+        status: data.status,
+        progress: data.progress,
+        hasMetadata: !!data.metadata,
+        hasSavedFormData: !!data.savedFormData,
+        metadataKeys: Object.keys(data.metadata || {}),
+        savedFormDataKeys: Object.keys(data.savedFormData || {})
+      });
+      return data;
     },
     enabled: taskType === 'kyb'
   });
 
   useEffect(() => {
     if (error) {
+      console.error('[TaskPage] Error loading task:', error);
       toast({
         title: "Error",
         description: "Failed to load KYB task. Please try again.",
@@ -80,6 +99,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   }
 
   if (!task) {
+    console.log('[TaskPage] No task found for:', companyName);
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -96,6 +116,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   // Currently only supporting KYB tasks
   if (taskType !== 'kyb') {
+    console.log('[TaskPage] Unsupported task type:', taskType);
     navigate('/task-center');
     return null;
   }
@@ -105,6 +126,16 @@ export default function TaskPage({ params }: TaskPageProps) {
     name: task.metadata?.companyName || companyName,
     description: task.metadata?.description,
   };
+
+  console.log('[TaskPage] Rendering KYB form with data:', {
+    taskId: task.id,
+    companyName,
+    hasCompanyData: !!companyData,
+    hasSavedFormData: !!task.savedFormData,
+    savedFormDataKeys: Object.keys(task.savedFormData || {}),
+    currentProgress: task.progress,
+    currentStatus: task.status
+  });
 
   return (
     <DashboardLayout>
@@ -127,7 +158,13 @@ export default function TaskPage({ params }: TaskPageProps) {
             taskId={task.id}
             companyName={companyName}
             companyData={companyData}
+            savedFormData={task.savedFormData}
             onSubmit={(formData) => {
+              console.log('[TaskPage] Submitting form data:', {
+                taskId: task.id,
+                formDataKeys: Object.keys(formData)
+              });
+
               fetch('/api/kyb/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -142,6 +179,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 return response.json();
               })
               .then(() => {
+                console.log('[TaskPage] Form submitted successfully');
                 toast({
                   title: "KYB Form Submitted",
                   description: "Your KYB form has been saved and the task has been updated.",
@@ -149,7 +187,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 navigate('/task-center');
               })
               .catch(error => {
-                console.error('Failed to save KYB form:', error);
+                console.error('[TaskPage] Failed to save KYB form:', error);
                 toast({
                   title: "Error",
                   description: "Failed to save KYB form. Please try again.",
