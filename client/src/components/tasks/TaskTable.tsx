@@ -29,26 +29,26 @@ interface Task {
 }
 
 const taskStatusMap = {
-  email_sent: 'Email Sent',
-  completed: 'Completed',
-  not_started: 'Not Started',
-  in_progress: 'In Progress',
-  ready_for_submission: 'Ready for Submission',
-  submitted: 'Submitted',
-  approved: 'Approved',
+  EMAIL_SENT: 'Email Sent',
+  COMPLETED: 'Completed',
+  NOT_STARTED: 'Not Started',
+  IN_PROGRESS: 'In Progress',
+  READY_FOR_SUBMISSION: 'Ready for Submission',
+  SUBMITTED: 'Submitted',
+  APPROVED: 'Approved',
 } as const;
 
 const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  switch (status) {
-    case 'not_started':
-    case 'email_sent':
+  switch (status.toUpperCase()) {
+    case 'NOT_STARTED':
+    case 'EMAIL_SENT':
       return "secondary";
-    case 'completed':
-    case 'approved':
+    case 'COMPLETED':
+    case 'APPROVED':
       return "default";
-    case 'in_progress':
-    case 'ready_for_submission':
-    case 'submitted':
+    case 'IN_PROGRESS':
+    case 'READY_FOR_SUBMISSION':
+    case 'SUBMITTED':
       return "outline";
     default:
       return "default";

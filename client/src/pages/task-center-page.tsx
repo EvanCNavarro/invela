@@ -73,34 +73,31 @@ export default function TaskCenterPage() {
 
     const setupSubscriptions = async () => {
       try {
-        // Subscribe to task creation
-        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
-          queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            const newTasks = [...oldTasks];
-            if (!newTasks.find(t => t.id === data.task.id)) {
-              newTasks.push(data.task);
-            }
-            return newTasks;
-          });
-          queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
-        });
-        subscriptions.push(unsubTaskCreate);
-
         // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+          console.log('[TaskCenter] Received task update:', data);
           queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            return oldTasks.map(task =>
+            console.log('[TaskCenter] Updating task in cache:', {
+              taskId: data.taskId,
+              newStatus: data.status,
+              newProgress: data.progress
+            });
+            const updatedTasks = oldTasks.map(task =>
               task.id === data.taskId
                 ? { ...task, status: data.status, progress: data.progress }
                 : task
             );
+            console.log('[TaskCenter] Updated tasks in cache:', updatedTasks);
+            return updatedTasks;
           });
+
+          // Force a refetch to ensure we have the latest data
           queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         });
         subscriptions.push(unsubTaskUpdate);
 
       } catch (error) {
-        console.error('Error setting up WebSocket subscriptions:', error);
+        console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
       }
     };
 
@@ -111,7 +108,7 @@ export default function TaskCenterPage() {
         try {
           unsubscribe();
         } catch (error) {
-          console.error('Error unsubscribing from WebSocket:', error);
+          console.error('[TaskCenter] Error unsubscribing from WebSocket:', error);
         }
       });
     };
