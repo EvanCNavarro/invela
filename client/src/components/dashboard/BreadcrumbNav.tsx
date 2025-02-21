@@ -13,6 +13,7 @@ interface RouteSegment {
   label: string;
   href: string;
   skipLink?: boolean;
+  fallbackHref?: string; // Added fallback href for invalid routes
 }
 
 // Helper function to apply APA title case
@@ -52,7 +53,11 @@ function toAPACase(text: string): string {
   }).join(' ');
 }
 
-export function BreadcrumbNav() {
+interface BreadcrumbNavProps {
+  forceFallback?: boolean; // Add prop to force fallback behavior
+}
+
+export function BreadcrumbNav({ forceFallback }: BreadcrumbNavProps) {
   const [location] = useLocation();
 
   // Don't show breadcrumbs for root or single-level routes
@@ -62,7 +67,19 @@ export function BreadcrumbNav() {
 
   const segments = location.split("/").filter(Boolean);
   const breadcrumbs: RouteSegment[] = segments.map((segment, index) => {
-    const href = `/${segments.slice(0, index + 1).join("/")}`;
+    const currentPath = `/${segments.slice(0, index + 1).join("/")}`;
+    let nextValidPath = null;
+
+    // Find the next valid parent path for fallback
+    if (forceFallback || segment === "task") {
+      for (let i = index - 1; i >= 0; i--) {
+        const parentPath = `/${segments.slice(0, i + 1).join("/")}`;
+        if (parentPath === "/task-center") {
+          nextValidPath = parentPath;
+          break;
+        }
+      }
+    }
 
     // Convert URL-friendly format to display format
     let label = segment.split("-").join(" ");
@@ -78,7 +95,12 @@ export function BreadcrumbNav() {
     // Skip linking for the "company" segment
     const skipLink = segment === "company";
 
-    return { label, href, skipLink };
+    return {
+      label,
+      href: currentPath,
+      skipLink,
+      fallbackHref: nextValidPath
+    };
   });
 
   return (
@@ -115,6 +137,9 @@ export function BreadcrumbNav() {
             .reverse()
             .find(segment => !segment.skipLink);
 
+          // Determine the href to use
+          const linkHref = item.fallbackHref || (item.skipLink ? (previousValidItem?.href || "/") : item.href);
+
           return (
             <BreadcrumbItem key={item.href}>
               {isLast ? (
@@ -122,7 +147,7 @@ export function BreadcrumbNav() {
               ) : (
                 <>
                   <BreadcrumbLink asChild>
-                    <Link href={item.skipLink ? (previousValidItem?.href || "/") : item.href}>
+                    <Link href={linkHref}>
                       <span className={cn(
                         "text-sm hover:underline",
                         "text-[#64758B] hover:text-[#020817]"
