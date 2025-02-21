@@ -1,9 +1,12 @@
 import { Router } from "express";
 import { companySearchSchema } from "../services/companySearch";
-import { findCompanyInRegistry, findMissingFields, updateCompanyData, } from "../services/companyMatching";
+import { findCompanyInRegistry, findMissingFields, updateCompanyData } from "../services/companyMatching";
 import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
 import { createCompany } from "../services/company";
+import { eq } from "drizzle-orm";
+import { companies } from "@db/schema";
+import { db } from "@db";
 
 const router = Router();
 
@@ -41,60 +44,87 @@ router.post("/api/company-search", async (req, res) => {
     const { companyName } = companySearchSchema.parse(req.body);
     console.log(`[Company Search] Starting search for: ${companyName}`);
 
-    // Step 1: Try to find company in registry
-    const registryResult = await findCompanyInRegistry(companyName);
-    let companyData;
-    let isNewData = false;
+    // First try to find in database directly
+    const [existingCompany] = await db.select()
+      .from(companies)
+      .where(eq(companies.name, companyName));
 
-    if (registryResult.found && registryResult.company) {
-      console.log(`[Company Search] Found existing company: ${registryResult.company.name}`);
+    if (existingCompany) {
+      console.log(`[Company Search] Found existing company in database: ${existingCompany.name}`);
 
       // Find missing fields
-      const missingFields = findMissingFields(registryResult.company);
+      const missingFields = findMissingFields(existingCompany);
 
       // Always try to supplement data if there are any null or empty fields
       if (missingFields.length > 0) {
         console.log(`[Company Search] Found ${missingFields.length} missing fields, searching for data:`, missingFields);
 
-        // Search for missing data
-        const newData = await findMissingCompanyData(registryResult.company, missingFields);
-        console.log('[Company Search] Retrieved new data from OpenAI:', newData);
+        try {
+          // Search for missing data
+          const newData = await findMissingCompanyData(existingCompany, missingFields);
+          console.log('[Company Search] Retrieved new data:', newData);
 
-        // Update company with new data
-        companyData = await updateCompanyData(registryResult.company.id, newData);
-        isNewData = true;
-      } else {
-        companyData = registryResult.company;
+          // Update company with new data
+          const updatedCompany = await updateCompanyData(existingCompany.id, newData);
+
+          return res.json({
+            success: true,
+            data: {
+              company: updatedCompany,
+              isNewData: true,
+              source: 'registry_enriched'
+            }
+          });
+        } catch (enrichError) {
+          console.error("[Company Search] Enrichment failed:", enrichError);
+          // Return existing data if enrichment fails
+          return res.json({
+            success: true,
+            data: {
+              company: existingCompany,
+              isNewData: false,
+              source: 'registry'
+            }
+          });
+        }
       }
-    } else {
-      console.log(`[Company Search] Company not found in registry, searching for new data`);
 
-      // Search for all company data
-      const newData = await findMissingCompanyData({ name: companyName }, [
-        'description', 'websiteUrl', 'legalStructure', 'hqAddress',
-        'productsServices', 'incorporationYear', 'foundersAndLeadership',
-        'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
-        'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
-      ]);
-
-      // Create new company in registry
-      companyData = await createCompany({
-        ...newData,
-        name: companyName,
-        category: 'FinTech', // Default category
-        onboardingCompanyCompleted: false
+      return res.json({
+        success: true,
+        data: {
+          company: existingCompany,
+          isNewData: false,
+          source: 'registry'
+        }
       });
-      isNewData = true;
     }
+
+    // If company not found, search for all company data
+    console.log(`[Company Search] Company not found in registry, searching for new data`);
+    const newData = await findMissingCompanyData({ name: companyName }, [
+      'description', 'websiteUrl', 'legalStructure', 'hqAddress',
+      'productsServices', 'incorporationYear', 'foundersAndLeadership',
+      'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+      'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
+    ]);
+
+    // Create new company in registry
+    const newCompany = await createCompany({
+      ...newData,
+      name: companyName,
+      category: 'FinTech', // Default category
+      onboardingCompanyCompleted: false
+    });
 
     res.json({
       success: true,
       data: {
-        company: companyData,
-        isNewData,
-        source: registryResult.found ? 'registry' : 'new'
+        company: newCompany,
+        isNewData: true,
+        source: 'new'
       }
     });
+
   } catch (error) {
     console.error("Company search error:", error);
 
