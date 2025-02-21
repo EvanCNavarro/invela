@@ -228,12 +228,15 @@ export const OnboardingKYBFormPlayground = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyData, setCompanyData] = useState<any>(null);
+  const [companyData, setCompanyData] = useState<any>(initialCompanyData || null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Always perform the company search when mounted or when companyName changes
+  // Load form immediately and perform company search in background
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCompanyData = async () => {
       if (!companyName) {
         console.log("[Company Search Debug] No company name provided, skipping search");
@@ -247,6 +250,8 @@ export const OnboardingKYBFormPlayground = ({
       });
 
       setIsSearching(true);
+      setSearchError(null);
+
       try {
         console.log("[Company Search Debug] Making API request to /api/company-search");
         const response = await fetch("/api/company-search", {
@@ -268,35 +273,44 @@ export const OnboardingKYBFormPlayground = ({
         const responseData = await response.json();
         console.log("[Company Search Debug] Parsed response data:", responseData);
 
-        // Invalidate any cached company data
-        console.log("[Company Search Debug] Invalidating related query caches");
-        queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+        if (isMounted) {
+          if (responseData.success) {
+            console.log("[Company Search Debug] Setting company data:", responseData.data.company);
+            setCompanyData(responseData.data.company);
 
-        if (responseData.success) {
-          console.log("[Company Search Debug] Setting company data:", responseData.data.company);
-          setCompanyData(responseData.data.company);
-        } else {
-          console.error("[Company Search Debug] API reported failure:", responseData.error);
-          throw new Error(responseData.error || 'API reported failure');
+            // Invalidate caches after successful update
+            console.log("[Company Search Debug] Invalidating related query caches");
+            queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+          } else {
+            console.error("[Company Search Debug] API reported failure:", responseData.error);
+            setSearchError(responseData.error || 'Failed to retrieve company data');
+          }
         }
-
       } catch (error) {
         console.error("[Company Search Debug] Error in search process:", {
           error,
-          message: error.message,
-          stack: error.stack
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
         });
-        // Don't fallback to initial data anymore - we want fresh data only
-        console.log("[Company Search Debug] Clearing company data due to error");
-        setCompanyData(null);
+
+        if (isMounted) {
+          setSearchError(error instanceof Error ? error.message : 'Failed to search company');
+        }
       } finally {
-        console.log("[Company Search Debug] Search process completed");
-        setIsSearching(false);
+        if (isMounted) {
+          console.log("[Company Search Debug] Search process completed");
+          setIsSearching(false);
+        }
       }
     };
 
+    // Start the search process in background
     fetchCompanyData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [companyName, queryClient]);
 
   const handleBack = () => {
