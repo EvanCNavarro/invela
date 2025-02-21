@@ -72,12 +72,11 @@ const getTaskCountForTab = (tabId: string, tasks: Task[], user?: { id: number },
   if (!user || !currentCompany) return 0;
 
   return tasks.filter(task => {
-    // First check company match for all cases
-    if (task.company_id !== currentCompany.id) {
-      return false;
-    }
-
+    // First check company match for "my-tasks" tab only
     if (tabId === "my-tasks") {
+      if (task.company_id !== currentCompany.id) {
+        return false;
+      }
       return task.assigned_to === user.id ||
              (task.task_scope === "company" && task.company_id === currentCompany.id);
     } else if (tabId === "for-others") {
