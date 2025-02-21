@@ -6,6 +6,14 @@ import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingK
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { 
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator
+} from "@/components/ui/breadcrumb";
 
 interface TaskPageProps {
   params: {
@@ -32,13 +40,9 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
 
-  console.log('[TaskPage] Rendering with params:', params);
-
   // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
-
-  console.log('[TaskPage] Parsed task info:', { taskType, companyName });
 
   // Only fetch if it's a KYB task
   const { data: task, isLoading, error } = useQuery<Task>({
@@ -54,14 +58,6 @@ export default function TaskPage({ params }: TaskPageProps) {
   });
 
   useEffect(() => {
-    console.log('[TaskPage] Task data loaded:', {
-      task,
-      isLoading,
-      error,
-      taskType,
-      companyName
-    });
-
     if (error) {
       toast({
         title: "Error",
@@ -70,12 +66,11 @@ export default function TaskPage({ params }: TaskPageProps) {
       });
       navigate('/task-center');
     }
-  }, [error, navigate, toast, task, isLoading]);
+  }, [error, navigate, toast]);
 
   if (isLoading) {
-    console.log('[TaskPage] Loading state');
     return (
-      <DashboardLayout>
+      <DashboardLayout activeTab="task-center">
         <div className="flex items-center justify-center min-h-[60vh]">
           <LoadingSpinner size="lg" />
         </div>
@@ -84,9 +79,8 @@ export default function TaskPage({ params }: TaskPageProps) {
   }
 
   if (!task) {
-    console.log('[TaskPage] No task found');
     return (
-      <DashboardLayout>
+      <DashboardLayout activeTab="task-center">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
@@ -101,16 +95,27 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   // Currently only supporting KYB tasks
   if (taskType !== 'kyb') {
-    console.log('[TaskPage] Unsupported task type:', taskType);
     navigate('/task-center');
     return null;
   }
 
-  console.log('[TaskPage] Rendering KYB form with task:', task);
-
   return (
-    <DashboardLayout>
+    <DashboardLayout activeTab="task-center">
       <div className="space-y-8">
+        <div className="container max-w-7xl mx-auto">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/task-center">Task Center</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{task.title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
         <PageHeader
           title={`KYB Form: ${task.metadata?.company_name || companyName}`}
           description="Complete the Know Your Business (KYB) verification form"
@@ -119,9 +124,8 @@ export default function TaskPage({ params }: TaskPageProps) {
         <div className="container max-w-7xl mx-auto">
           <OnboardingKYBFormPlayground 
             taskId={task.id}
+            companyName={task.metadata?.company_name || companyName}
             onSubmit={(formData) => {
-              console.log('[TaskPage] Submitting KYB form:', formData);
-              // Handle form submission
               fetch('/api/kyb/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -151,7 +155,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                 });
               });
             }}
-            companyName={task.metadata?.company_name}
           />
         </div>
       </div>
