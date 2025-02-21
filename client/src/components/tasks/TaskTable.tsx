@@ -61,6 +61,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [, navigate] = useLocation();
 
   const handleTaskClick = (task: Task) => {
+    console.log('Task clicked:', task);
     if (task.task_type === 'company_kyb') {
       // Navigate to KYB form page
       navigate(`/kyb-form/${task.id}`);
@@ -73,11 +74,9 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
 
   if (!tasks || tasks.length === 0) {
     return (
-      <TableRow>
-        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-          No tasks found
-        </TableCell>
-      </TableRow>
+      <div className="text-center py-8 text-muted-foreground">
+        No tasks found
+      </div>
     );
   }
 

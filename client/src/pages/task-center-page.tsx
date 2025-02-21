@@ -18,74 +18,31 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FilterX } from "lucide-react";
-import { format } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
+import { TaskTable } from "@/components/tasks/TaskTable";
 
-// Matching the snake_case from the database.  This is the key change to align with the backend.
+// Matching the snake_case from the database
 interface Task {
   id: number;
   title: string;
-  description: string;
-  task_type: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
-  task_scope: 'user' | 'company';
+  description: string | null;
+  task_type: string;
+  task_scope: string;
   status: TaskStatus;
+  priority: string;
   progress: number;
-  assigned_to?: number;
-  created_by: number;
-  user_email?: string;
-  company_id?: number;
-  due_date?: string;
+  assigned_to: number | null;
+  created_by: number | null;
+  user_email: string | null;
+  company_id: number | null;
+  due_date: string | null;
+  files_requested: string[] | null;
+  files_uploaded: string[] | null;
+  metadata: Record<string, any> | null;
 }
-
-const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.COMPLETED]: 'Completed',
-  [TaskStatus.NOT_STARTED]: 'Not Started',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
-  [TaskStatus.READY_FOR_SUBMISSION]: 'Ready for Submission',
-  [TaskStatus.SUBMITTED]: 'Submitted',
-  [TaskStatus.APPROVED]: 'Approved',
-} as const;
-
-const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  switch (status) {
-    case TaskStatus.NOT_STARTED:
-    case TaskStatus.EMAIL_SENT:
-      return "secondary";
-    case TaskStatus.COMPLETED:
-    case TaskStatus.APPROVED:
-      return "default";
-    case TaskStatus.IN_PROGRESS:
-    case TaskStatus.READY_FOR_SUBMISSION:
-    case TaskStatus.SUBMITTED:
-      return "outline";
-    default:
-      return "default";
-  }
-};
-
-const getTaskCountForTab = (tabId: string, tasks: Task[], user?: { id: number }, currentCompany?: { id: number }) => {
-  if (!user || !currentCompany) return 0;
-
-  return tasks.filter(task => {
-    // First check company match for "my-tasks" tab only
-    if (tabId === "my-tasks") {
-      if (task.company_id !== currentCompany.id) {
-        return false;
-      }
-      return task.assigned_to === user.id ||
-             (task.task_scope === "company" && task.company_id === currentCompany.id);
-    } else if (tabId === "for-others") {
-      return task.created_by === user.id && (!task.assigned_to || task.assigned_to !== user.id);
-    }
-
-    return false;
-  }).length;
-};
 
 export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -99,33 +56,15 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Add detailed logging for data fetching
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 1000,
-    gcTime: 5 * 60 * 1000,
-    onSuccess: (data) => {
-      console.log('[TaskCenter] Fetched tasks:', {
-        count: data.length,
-        tasks: data.map(t => ({
-          id: t.id,
-          title: t.title,
-          task_scope: t.task_scope,
-          task_type: t.task_type,
-          assigned_to: t.assigned_to,
-          company_id: t.company_id,
-          status: t.status
-        }))
-      });
-    }
+    gcTime: 5 * 60 * 1000
   });
 
   const { data: currentCompany } = useQuery({
     queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000,
-    onSuccess: (data) => {
-      console.log('[TaskCenter] Current company:', data);
-    }
+    staleTime: 5 * 60 * 1000
   });
 
   // Set up WebSocket subscription for real-time updates
@@ -178,50 +117,12 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  useEffect(() => {
-    console.group('[TaskCenter] Task Count Analysis');
-    console.log('All tasks:', tasks.map(t => ({
-      id: t.id,
-      title: t.title,
-      company_id: t.company_id,
-      task_scope: t.task_scope,
-      created_by: t.created_by,
-      assigned_to: t.assigned_to
-    })));
-    console.log('Current user:', {
-      id: user?.id,
-      email: user?.email,
-      company_id: currentCompany?.id
-    });
-    console.log('My Tasks count:', getTaskCountForTab('my-tasks', tasks, user, currentCompany));
-    console.log('For Others count:', getTaskCountForTab('for-others', tasks, user, currentCompany));
-    console.groupEnd();
-  }, [tasks, user, currentCompany]);
-
   // Update the filtering logic to not restrict by company for "For Others" tab
   const filteredTasks = tasks.filter((task) => {
-    console.group(`[TaskCenter] Filtering task ${task.id}`);
-    console.log('Task details:', {
-      id: task.id,
-      title: task.title,
-      task_type: task.task_type,
-      task_scope: task.task_scope,
-      company_id: task.company_id,
-      user_company_id: currentCompany?.id,
-      assigned_to: task.assigned_to,
-      user_email: task.user_email,
-      current_user_id: user?.id,
-      current_user_email: user?.email,
-      active_tab: activeTab
-    });
-
     // Only check company match for "my-tasks" tab
     if (activeTab === "my-tasks") {
       const companyMatches = task.company_id === currentCompany?.id;
-      console.log('Company match check:', { companyMatches, reason: !companyMatches ? 'Wrong company' : 'Company matches' });
-
       if (!companyMatches) {
-        console.groupEnd();
         return false;
       }
     }
@@ -233,19 +134,7 @@ export default function TaskCenterPage() {
       return task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id);
     }
 
-    console.groupEnd();
     return false;
-  });
-
-  console.log('[TaskCenter] After filtering:', {
-    totalTasks: tasks.length,
-    filteredCount: filteredTasks.length,
-    filteredTasks: filteredTasks.map(t => ({
-      id: t.id,
-      title: t.title,
-      task_scope: t.task_scope,
-      assigned_to: t.assigned_to
-    }))
   });
 
   const sortedAndFilteredTasks = [...filteredTasks].sort((a, b) => {
@@ -283,56 +172,6 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
-
-  const renderTaskList = () => {
-    if (isLoading) {
-      return (
-        <TableRow>
-          <TableCell colSpan={4} className="text-center py-8">
-            <div className="flex items-center justify-center">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          </TableCell>
-        </TableRow>
-      );
-    }
-
-    if (currentTasks.length === 0) {
-      return (
-        <TableRow>
-          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-            No tasks found
-          </TableCell>
-        </TableRow>
-      );
-    }
-
-    return currentTasks.map((task) => (
-      <TableRow key={task.id}>
-        <TableCell className="font-medium">{task.title}</TableCell>
-        <TableCell>
-          <Badge variant={getStatusVariant(task.status)}>
-            {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <div className="w-full bg-secondary h-2 rounded-full">
-            <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${task.progress}%` }}
-            />
-          </div>
-          <span className="text-xs text-muted-foreground mt-1">
-            {task.progress}%
-          </span>
-        </TableCell>
-        <TableCell>
-          {task.due_date ? format(new Date(task.due_date), 'PP') : '-'}
-        </TableCell>
-      </TableRow>
-    ));
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -363,17 +202,7 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <User className="h-4 w-4" />
-                  <span className="flex items-center gap-2">
-                    My Tasks
-                    {getTaskCountForTab("my-tasks", tasks, user, currentCompany) > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
-                      >
-                        {getTaskCountForTab("my-tasks", tasks, user, currentCompany)}
-                      </Badge>
-                    )}
-                  </span>
+                  <span>My Tasks</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="for-others"
@@ -383,17 +212,7 @@ export default function TaskCenterPage() {
                   )}
                 >
                   <Users2 className="h-4 w-4" />
-                  <span className="flex items-center gap-2">
-                    For Others
-                    {getTaskCountForTab("for-others", tasks, user, currentCompany) > 0 && (
-                      <Badge
-                        variant="secondary"
-                        className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
-                      >
-                        {getTaskCountForTab("for-others", tasks, user, currentCompany)}
-                      </Badge>
-                    )}
-                  </span>
+                  <span>For Others</span>
                 </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-auto">
@@ -447,9 +266,9 @@ export default function TaskCenterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Task Types">All Task Types</SelectItem>
-                      <SelectItem value="User Onboarding">User Onboarding</SelectItem>
-                      <SelectItem value="File Request">File Request</SelectItem>
-                      <SelectItem value="Company KYB">Company KYB</SelectItem>
+                      <SelectItem value="user_onboarding">User Onboarding</SelectItem>
+                      <SelectItem value="file_request">File Request</SelectItem>
+                      <SelectItem value="company_kyb">Company KYB</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -459,43 +278,19 @@ export default function TaskCenterPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All Assignee Types">All Assignee Types</SelectItem>
-                      <SelectItem value="User">User</SelectItem>
-                      <SelectItem value="Company">Company</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="company">Company</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="min-h-[400px]">
                   <TabsContent value="my-tasks" className="m-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Task</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Progress</TableHead>
-                          <TableHead>Due Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {renderTaskList()}
-                      </TableBody>
-                    </Table>
+                    <TaskTable tasks={currentTasks} />
                   </TabsContent>
 
                   <TabsContent value="for-others" className="m-0">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Task</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Progress</TableHead>
-                          <TableHead>Due Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {renderTaskList()}
-                      </TableBody>
-                    </Table>
+                    <TaskTable tasks={currentTasks} />
                   </TabsContent>
                 </div>
 
