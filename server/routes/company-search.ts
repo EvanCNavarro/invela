@@ -4,39 +4,11 @@ import { findCompanyInRegistry, findMissingFields, updateCompanyData } from "../
 import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
 import { createCompany } from "../services/company";
-import { eq, ilike } from "drizzle-orm";
+import { ilike } from "drizzle-orm";
 import { companies } from "@db/schema";
 import { db } from "@db";
 
 const router = Router();
-
-// Search by company name endpoint
-router.get("/api/companies/search", async (req, res) => {
-  try {
-    const companyName = req.query.name as string;
-    if (!companyName) {
-      return res.status(400).json({
-        success: false,
-        error: "Company name is required"
-      });
-    }
-
-    console.log(`[Company Search] 🔍 Searching for company: ${companyName}`);
-    const result = await findCompanyInRegistry(companyName);
-
-    return res.json({
-      success: true,
-      company: result.found ? result.company : null,
-      score: result.score
-    });
-  } catch (error) {
-    console.error("[Company Search] Search error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Failed to search company"
-    });
-  }
-});
 
 // Full company search and enrichment
 router.post("/api/company-search", async (req, res) => {
@@ -73,11 +45,21 @@ router.post("/api/company-search", async (req, res) => {
 
         try {
           // Search for missing data using OpenAI
-          const newData = await findMissingCompanyData(existingCompany, missingFields);
+          const newData = await findMissingCompanyData(
+            { ...existingCompany, search_type: 'company_enrichment' },
+            missingFields
+          );
           console.log('[Company Search Debug] Retrieved new data:', newData);
 
+          // Format numeric fields appropriately before updating
+          const formattedData = {
+            ...newData,
+            num_employees: newData.num_employees ? 
+              parseInt(newData.num_employees.replace(/[^\d]/g, ''), 10) || null : null
+          };
+
           // Update company with new data
-          const updatedCompany = await updateCompanyData(existingCompany.id, newData);
+          const updatedCompany = await updateCompanyData(existingCompany.id, formattedData);
           console.log('[Company Search Debug] Updated company data:', updatedCompany);
 
           return res.json({
@@ -114,18 +96,28 @@ router.post("/api/company-search", async (req, res) => {
 
     // If company not found, search for all company data using OpenAI
     console.log(`[Company Search Debug] Company not found in registry, searching for new data`);
-    const newData = await findMissingCompanyData({ name: companyName }, [
-      'description', 'websiteUrl', 'legalStructure', 'hqAddress',
-      'productsServices', 'incorporationYear', 'foundersAndLeadership',
-      'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
-      'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
-    ]);
+    const newData = await findMissingCompanyData(
+      { name: companyName, search_type: 'company_creation' },
+      [
+        'description', 'websiteUrl', 'legalStructure', 'hqAddress',
+        'productsServices', 'incorporationYear', 'foundersAndLeadership',
+        'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+        'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
+      ]
+    );
 
     console.log('[Company Search Debug] Retrieved new company data:', newData);
 
+    // Format numeric fields appropriately before creating
+    const formattedData = {
+      ...newData,
+      num_employees: newData.num_employees ? 
+        parseInt(newData.num_employees.replace(/[^\d]/g, ''), 10) || null : null
+    };
+
     // Create new company in registry
     const newCompany = await createCompany({
-      ...newData,
+      ...formattedData,
       name: companyName,
       category: 'FinTech', // Default category
       onboardingCompanyCompleted: false
