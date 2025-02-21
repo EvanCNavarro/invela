@@ -370,92 +370,60 @@ export const OnboardingKYBFormPlayground = ({
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
 
-  // Load initial form data
+  // Load initial form data with forced refresh
   useEffect(() => {
-    console.log('[Form Debug] Starting initial data load:', {
-      taskId,
-      hasSavedData: !!initialSavedFormData,
-      timestamp: new Date().toISOString()
-    });
-
-    if (initialSavedFormData) {
-      const extractedData = extractFormData(initialSavedFormData);
-      const calculatedProgress = calculateProgress(extractedData);
-
-      setFormData(extractedData);
-      setProgress(calculatedProgress);
-      lastProgressRef.current = calculatedProgress;
-
-      console.log('[Form Debug] Initial form state set:', {
-        progress: calculatedProgress,
-        fieldCount: Object.keys(extractedData).length,
+    const loadInitialData = async () => {
+      console.log('[Form Debug] Starting initial data load:', {
+        taskId,
+        hasSavedData: !!initialSavedFormData,
         timestamp: new Date().toISOString()
       });
-    }
 
-    setInitialLoadDone(true);
-  }, [initialSavedFormData]);
+      if (taskId) {
+        try {
+          // Force fresh data fetch from server
+          const response = await fetch(`/api/kyb/progress/${taskId}`);
+          if (!response.ok) throw new Error('Failed to fetch latest progress');
+          const { formData: latestFormData, progress: latestProgress } = await response.json();
 
-  // Load company data
-  useEffect(() => {
-    let isMounted = true;
+          console.log('[Form Debug] Fetched latest data:', {
+            progress: latestProgress,
+            fieldCount: Object.keys(latestFormData).length,
+            timestamp: new Date().toISOString()
+          });
 
-    const fetchCompanyData = async () => {
-      if (!companyName || !initialLoadDone) {
-        setIsCompanyDataLoading(false);
-        return;
-      }
-
-      setIsSearching(true);
-      setSearchError(null);
-
-      try {
-        console.log('[KYB Form Debug] Starting company search:', {
-          companyName,
-          timestamp: new Date().toISOString()
-        });
-
-        const response = await fetch("/api/company-search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companyName: companyName.trim() }),
-        });
-
-        if (!response.ok) throw new Error(`Search failed: ${response.statusText}`);
-
-        const responseData = await response.json();
-
-        if (isMounted) {
-          if (responseData.success && responseData.data.searchComplete) {
-            console.log('[KYB Form Debug] Company data received:', {
-              dataFields: Object.keys(responseData.data.company),
-              timestamp: new Date().toISOString()
-            });
-
-            setCompanyData(responseData.data.company);
-            setSearchCompleted(true);
-          } else {
-            setSearchError(responseData.error || 'Failed to retrieve company data');
+          setFormData(latestFormData);
+          setProgress(latestProgress);
+          lastProgressRef.current = latestProgress;
+        } catch (error) {
+          console.error('[Form Debug] Error fetching latest data:', error);
+          // Fallback to initial data if fetch fails
+          if (initialSavedFormData) {
+            const extractedData = extractFormData(initialSavedFormData);
+            const calculatedProgress = calculateProgress(extractedData);
+            setFormData(extractedData);
+            setProgress(calculatedProgress);
+            lastProgressRef.current = calculatedProgress;
           }
         }
-      } catch (error) {
-        if (isMounted) {
-          setSearchError(error instanceof Error ? error.message : 'Failed to search company');
-        }
-      } finally {
-        if (isMounted) {
-          setIsSearching(false);
-          setIsCompanyDataLoading(false);
-        }
+      }
+
+      setInitialLoadDone(true);
+    };
+
+    loadInitialData();
+  }, [taskId, initialSavedFormData]);
+
+  // Clean up and invalidate cache when unmounting
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (taskId) {
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks/kyb'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       }
     };
-
-    fetchCompanyData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [companyName, initialLoadDone]);
+  }, [taskId, queryClient]);
 
   // Handle form updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
@@ -713,6 +681,67 @@ export const OnboardingKYBFormPlayground = ({
       isMountedRef.current = false;
     };
   }, []);
+
+  // Load company data
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchCompanyData = async () => {
+      if (!companyName || !initialLoadDone) {
+        setIsCompanyDataLoading(false);
+        return;
+      }
+
+      setIsSearching(true);
+      setSearchError(null);
+
+      try {
+        console.log('[KYB Form Debug] Starting company search:', {
+          companyName,
+          timestamp: new Date().toISOString()
+        });
+
+        const response = await fetch("/api/company-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyName: companyName.trim() }),
+        });
+
+        if (!response.ok) throw new Error(`Search failed: ${response.statusText}`);
+
+        const responseData = await response.json();
+
+        if (isMounted) {
+          if (responseData.success && responseData.data.searchComplete) {
+            console.log('[KYB Form Debug] Company data received:', {
+              dataFields: Object.keys(responseData.data.company),
+              timestamp: new Date().toISOString()
+            });
+
+            setCompanyData(responseData.data.company);
+            setSearchCompleted(true);
+          } else {
+            setSearchError(responseData.error || 'Failed to retrieve company data');
+          }
+        }
+      } catch (error) {
+        if (isMounted) {
+          setSearchError(error instanceof Error ? error.message : 'Failed to search company');
+        }
+      } finally {
+        if (isMounted) {
+          setIsSearching(false);
+          setIsCompanyDataLoading(false);
+        }
+      }
+    };
+
+    fetchCompanyData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [companyName, initialLoadDone]);
 
   return (
     <div className="space-y-6">
