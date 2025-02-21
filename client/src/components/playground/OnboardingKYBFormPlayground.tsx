@@ -49,28 +49,28 @@ const FORM_STEPS = [
         label: 'Date of Incorporation',
         question: 'When was the business formed?',
         tooltip: 'The official date when the business was legally incorporated',
-        suggestion: 'incorporationYear' 
+        suggestion: 'incorporation_year' 
       },
       { 
         name: 'jurisdiction', 
         label: 'Jurisdiction of Incorporation',
         question: 'In which jurisdiction is the business incorporated?',
         tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
-        suggestion: 'hqAddress' 
+        suggestion: 'hq_address' 
       },
       { 
         name: 'registeredAddress', 
         label: 'Registered Business Address',
         question: 'What is the principal business address?',
         tooltip: 'The official registered address where the business operates',
-        suggestion: 'hqAddress' 
+        suggestion: 'hq_address' 
       },
       { 
         name: 'businessType', 
         label: 'Business Type/Legal Structure',
         question: 'What is the legal structure of the business?',
         tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
-        suggestion: 'legalStructure' 
+        suggestion: 'legal_structure' 
       }
     ],
     validation: (data: Record<string, unknown>) => {
@@ -94,19 +94,21 @@ const FORM_STEPS = [
         label: 'Directors and Officers',
         question: 'Who are the current directors and senior officers?',
         tooltip: 'Include full legal names, dates of birth, and contact details',
-        suggestion: 'foundersAndLeadership' 
+        suggestion: 'founders_and_leadership' 
       },
       { 
         name: 'ultimateBeneficialOwners', 
         label: 'Ultimate Beneficial Owners (UBOs)',
         question: 'Which individuals hold 25% or more ownership?',
         tooltip: 'Include direct and indirect ownership with supporting documentation',
+        suggestion: 'investors'
       },
       { 
         name: 'authorizedSigners', 
         label: 'Authorized Signers',
         question: 'Who has legal signing authority for the business?',
         tooltip: 'Include documentation of signing authority',
+        suggestion: 'founders_and_leadership'
       }
     ],
     validation: (data: Record<string, string>) => {
@@ -357,18 +359,44 @@ export const OnboardingKYBFormPlayground = ({
 
   const getSuggestionForField = (fieldName: string) => {
     // Only return suggestions if search is completed
-    if (!searchCompleted || !companyData) return undefined;
+    if (!searchCompleted || !companyData) {
+      console.log("[KYB Form Debug] No suggestions available:", {
+        searchCompleted,
+        hasCompanyData: !!companyData,
+        fieldName
+      });
+      return undefined;
+    }
 
     const field = currentStepData.fields.find(f => f.name === fieldName);
-    if (field?.suggestion && companyData[field.suggestion]) {
-      console.log("[KYB Form Debug] Found suggestion for field:", {
-        fieldName,
-        suggestion: field.suggestion,
-        value: companyData[field.suggestion]
-      });
-      return companyData[field.suggestion];
+
+    if (!field?.suggestion) {
+      console.log("[KYB Form Debug] No suggestion mapping for field:", fieldName);
+      return undefined;
     }
-    return undefined;
+
+    const suggestionValue = companyData[field.suggestion];
+
+    console.log("[KYB Form Debug] Processing suggestion for field:", {
+      fieldName,
+      suggestionKey: field.suggestion,
+      rawValue: suggestionValue,
+      companyDataKeys: Object.keys(companyData)
+    });
+
+    if (suggestionValue === undefined || suggestionValue === null) {
+      console.log("[KYB Form Debug] No suggestion value found for field:", fieldName);
+      return undefined;
+    }
+
+    // Handle different data types appropriately
+    if (Array.isArray(suggestionValue)) {
+      return suggestionValue.join(', ');
+    } else if (typeof suggestionValue === 'object') {
+      return JSON.stringify(suggestionValue);
+    }
+
+    return String(suggestionValue);
   };
 
   const handleSuggestionClick = (fieldName: string, suggestion: any) => {
