@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Check, Lock, X, Sparkles, CornerRightUp } from "lucide-react";
 
-interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
+interface FormFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onSuggestionClick'> {
   variant: 'default' | 'disabled' | 'active' | 'successful' | 'error' | 'ai-suggestion';
   type: 'text';
   aiSuggestion?: string;
+  onSuggestionClick?: () => void;
 }
 
 export const FormField: FC<FormFieldProps> = ({ 
@@ -18,6 +19,7 @@ export const FormField: FC<FormFieldProps> = ({
   onChange,
   onFocus,
   onBlur,
+  onSuggestionClick,
   ...props 
 }) => {
   const [currentValue, setCurrentValue] = useState(value || '');
@@ -40,8 +42,6 @@ export const FormField: FC<FormFieldProps> = ({
   // Handle input blur - revert to appropriate state based on validation
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     if (currentVariant === 'active') {
-      // Here you would typically check validation and set appropriate state
-      // For now, we'll revert to the variant prop's state
       setCurrentVariant(variant);
     }
     onBlur?.(e);
@@ -64,7 +64,7 @@ export const FormField: FC<FormFieldProps> = ({
     }
   };
 
-  const handleSuggestionClick = () => {
+  const handleSuggestionClickInternal = () => {
     if (aiSuggestion && variant === 'ai-suggestion') {
       setCurrentValue(aiSuggestion);
       setCurrentVariant('active');
@@ -81,6 +81,9 @@ export const FormField: FC<FormFieldProps> = ({
       if (inputRef.current) {
         inputRef.current.focus();
       }
+
+      // Call external handler if provided
+      onSuggestionClick?.();
     }
   };
 
@@ -115,7 +118,7 @@ export const FormField: FC<FormFieldProps> = ({
       {currentVariant === 'ai-suggestion' && aiSuggestion && (
         <div 
           className="mt-1 flex items-center gap-2 rounded-md bg-purple-50 p-2 text-sm cursor-pointer hover:bg-purple-100 transition-colors"
-          onClick={handleSuggestionClick}
+          onClick={handleSuggestionClickInternal}
         >
           <Sparkles className="h-4 w-4 text-purple-500" />
           <span className="font-semibold text-gray-900">Suggestion: </span>
