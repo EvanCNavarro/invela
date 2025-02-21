@@ -68,6 +68,7 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData } = req.body;
+
     console.log('[KYB API] Saving progress:', { 
       taskId, 
       progress,
@@ -76,7 +77,18 @@ router.post('/api/kyb/progress', async (req, res) => {
     });
 
     if (!taskId) {
-      return res.status(400).json({ error: 'Task ID is required' });
+      return res.status(400).json({ 
+        error: 'Task ID is required',
+        code: 'MISSING_TASK_ID'
+      });
+    }
+
+    // Validate form data
+    if (!formData || typeof formData !== 'object') {
+      return res.status(400).json({
+        error: 'Invalid form data format',
+        code: 'INVALID_FORM_DATA'
+      });
     }
 
     // Get existing task data
@@ -86,7 +98,10 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     if (!existingTask) {
       console.log('[KYB API] Task not found:', taskId);
-      return res.status(404).json({ error: 'Task not found' });
+      return res.status(404).json({
+        error: 'Task not found',
+        code: 'TASK_NOT_FOUND'
+      });
     }
 
     // Log existing data
@@ -107,12 +122,12 @@ router.post('/api/kyb/progress', async (req, res) => {
       newStatus = TaskStatus.READY_FOR_SUBMISSION;
     }
 
-    // Merge existing metadata with new form data, preserving existing data
+    // Merge existing metadata with new form data
     const updatedMetadata = {
       ...(existingTask.metadata || {}),  // Keep existing metadata
       ...formData,                       // Merge new form data
       lastUpdated: new Date().toISOString(),
-      statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus]
+      statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus].filter((v, i, a) => a.indexOf(v) === i)
     };
 
     // Log the data we're about to save
@@ -129,7 +144,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     // Update task with progress and save form data
     await db.update(tasks)
       .set({
-        progress: Math.min(progress, 100), // Ensure progress doesn't exceed 100%
+        progress: Math.min(progress, 100),
         status: newStatus,
         metadata: updatedMetadata,
         updated_at: new Date()
@@ -143,17 +158,22 @@ router.post('/api/kyb/progress', async (req, res) => {
       savedMetadataKeys: Object.keys(updatedMetadata)
     });
 
+    // Return consistent response format
     res.json({ 
       success: true,
       savedData: {
-        progress,
+        progress: Math.min(progress, 100),
         status: newStatus,
         formData: updatedMetadata
       }
     });
   } catch (error) {
     console.error('[KYB API] Error saving progress:', error);
-    res.status(500).json({ error: 'Failed to save progress' });
+    res.status(500).json({
+      error: 'Failed to save progress',
+      code: 'INTERNAL_ERROR',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 

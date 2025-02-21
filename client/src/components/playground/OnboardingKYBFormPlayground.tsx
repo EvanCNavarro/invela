@@ -282,11 +282,11 @@ export const OnboardingKYBFormPlayground = ({
   savedFormData: initialSavedFormData
 }: OnboardingKYBFormPlaygroundProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -301,13 +301,14 @@ export const OnboardingKYBFormPlayground = ({
     });
 
     if (initialSavedFormData) {
-      // Set form data and progress in one go to prevent flicker
-      const savedData = extractFormData(initialSavedFormData);
-      setFormData(savedData);
-      setProgress(calculateProgress(savedData));
+      const extractedData = extractFormData(initialSavedFormData);
+      setFormData(extractedData);
+      const calculatedProgress = calculateProgress(extractedData);
+      setProgress(calculatedProgress);
+
       console.log('[Form Debug] Loaded saved form data:', {
-        dataKeys: Object.keys(savedData),
-        progress: calculateProgress(savedData)
+        dataKeys: Object.keys(extractedData),
+        progress: calculatedProgress
       });
     }
 
@@ -381,14 +382,19 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [companyName, initialLoadDone]);
 
-  // Handle form field updates
+  // Handle form field updates with optimistic updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
-    console.log('[Form Debug] Updating field:', { fieldName, value });
+    if (!taskId) {
+      console.warn('[Form Debug] No taskId provided, skipping update');
+      return;
+    }
+
+    console.log('[Form Debug] Updating field:', { fieldName, value, taskId });
 
     // Prepare new form data
     const updatedFormData = {
       ...formData,
-      [fieldName]: value.trim() // Ensure we store trimmed values
+      [fieldName]: value.trim()
     };
 
     // Remove empty fields
@@ -396,33 +402,16 @@ export const OnboardingKYBFormPlayground = ({
       delete updatedFormData[fieldName];
     }
 
-    // Calculate new progress before state updates
+    // Calculate new progress
     const newProgress = calculateProgress(updatedFormData);
 
-    // Update states synchronously
+    // Optimistic update
     setFormData(updatedFormData);
     setProgress(newProgress);
 
-    if (!taskId) return;
-
     try {
-      // Update task status and progress
-      const newStatus = getStatusFromProgress(newProgress);
-      console.log('[Task Debug] Updating task:', { taskId, newProgress, newStatus });
-
-      const response = await fetch(`/api/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          progress: newProgress
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update task status');
-
-      // Save form data
-      const saveResponse = await fetch('/api/kyb/progress', {
+      // Single API call to update all state
+      const response = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -432,13 +421,25 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
-      if (!saveResponse.ok) throw new Error('Failed to save form progress');
+      if (!response.ok) {
+        throw new Error('Failed to save progress');
+      }
+
+      const result = await response.json();
+
+      // Verify server-side progress matches client-side calculation
+      if (result.savedData.progress !== newProgress) {
+        console.warn('[Form Debug] Progress mismatch:', {
+          client: newProgress,
+          server: result.savedData.progress
+        });
+      }
 
       // Notify via WebSocket
       await wsService.send('task_updated', {
         taskId,
-        progress: newProgress,
-        status: newStatus
+        progress: result.savedData.progress,
+        status: result.savedData.status
       });
 
       // Invalidate queries to refresh UI
@@ -446,6 +447,13 @@ export const OnboardingKYBFormPlayground = ({
 
     } catch (error) {
       console.error('[Form Debug] Error updating task:', error);
+
+      // Revert optimistic update on error
+      if (initialSavedFormData) {
+        setFormData(extractFormData(initialSavedFormData));
+        setProgress(calculateProgress(initialSavedFormData));
+      }
+
       toast({
         title: "Error",
         description: "Failed to save progress. Please try again.",
@@ -453,7 +461,6 @@ export const OnboardingKYBFormPlayground = ({
       });
     }
   };
-
 
   const handleBack = () => {
     if (currentStep > 0) {
