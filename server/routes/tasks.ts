@@ -3,19 +3,39 @@ import { db } from "@db";
 import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastMessage } from "../index";
+import { broadcastMessage } from "../websocket";
 
 const router = Router();
 
-const updateTaskStatusSchema = z.object({
-  status: z.enum([TaskStatus.EMAIL_SENT, TaskStatus.COMPLETED]),
-});
-
-// Initial progress values for each status
-const STATUS_PROGRESS = {
-  [TaskStatus.EMAIL_SENT]: 50,
-  [TaskStatus.COMPLETED]: 100,
+// Define progress thresholds for KYB tasks
+const KYB_STATUS_THRESHOLDS = {
+  [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
+  [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
+  [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
+  [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
+  [TaskStatus.APPROVED]: { min: 100, max: 100 },
 } as const;
+
+// Helper function to determine KYB task status based on progress
+function getKybStatusFromProgress(progress: number): TaskStatus {
+  if (progress === 0) return TaskStatus.NOT_STARTED;
+  if (progress >= 1 && progress < 100) return TaskStatus.IN_PROGRESS;
+  if (progress === 100) return TaskStatus.READY_FOR_SUBMISSION;
+  return TaskStatus.IN_PROGRESS; // Default fallback
+}
+
+const updateTaskStatusSchema = z.object({
+  status: z.enum([
+    TaskStatus.NOT_STARTED,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.READY_FOR_SUBMISSION,
+    TaskStatus.SUBMITTED,
+    TaskStatus.APPROVED,
+    TaskStatus.EMAIL_SENT,
+    TaskStatus.COMPLETED
+  ]),
+  progress: z.number().min(0).max(100)
+});
 
 // Helper function to get task counts
 async function getTaskCount() {
@@ -23,7 +43,11 @@ async function getTaskCount() {
   return {
     total: allTasks.length,
     emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length
+    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
+    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    readyForSubmission: allTasks.filter(t => t.status === TaskStatus.READY_FOR_SUBMISSION).length,
+    submitted: allTasks.filter(t => t.status === TaskStatus.SUBMITTED).length,
+    approved: allTasks.filter(t => t.status === TaskStatus.APPROVED).length
   };
 }
 
@@ -35,7 +59,7 @@ router.post("/api/tasks", async (req, res) => {
       .values({
         ...req.body,
         status: TaskStatus.EMAIL_SENT,
-        progress: STATUS_PROGRESS[TaskStatus.EMAIL_SENT],
+        progress: 50, //Using the old progress value here.  No clear indication in edited code how to handle initial progress for new tasks.
         createdAt: new Date(),
         updatedAt: new Date(),
         metadata: {
@@ -89,12 +113,13 @@ router.delete("/api/tasks/:id", async (req, res) => {
   }
 });
 
-// Update task status
+// Update task status and progress
 router.patch("/api/tasks/:id/status", async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
-    const { status } = updateTaskStatusSchema.parse(req.body);
+    const { status, progress } = updateTaskStatusSchema.parse(req.body);
 
+    // Get current task
     const [currentTask] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
@@ -103,14 +128,39 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Only allow transition from EMAIL_SENT to COMPLETED
-    if (currentTask.status === TaskStatus.EMAIL_SENT && status !== TaskStatus.COMPLETED) {
-      return res.status(400).json({ 
-        message: "Invalid status transition. Tasks can only move from EMAIL_SENT to COMPLETED" 
-      });
+    // For KYB tasks, validate status matches progress
+    if (currentTask.task_type === 'company_kyb') {
+      const expectedStatus = getKybStatusFromProgress(progress);
+
+      // Only allow explicit status changes for submission and approval
+      if (status !== TaskStatus.SUBMITTED && status !== TaskStatus.APPROVED) {
+        if (status !== expectedStatus) {
+          return res.status(400).json({
+            message: `Invalid status ${status} for progress ${progress}. Expected status: ${expectedStatus}`,
+            expectedStatus,
+            progress
+          });
+        }
+      }
+
+      // Validate progress threshold for the requested status
+      const threshold = KYB_STATUS_THRESHOLDS[status];
+      if (!threshold || progress < threshold.min || progress > threshold.max) {
+        return res.status(400).json({
+          message: `Invalid progress value ${progress} for status ${status}`,
+          required: threshold
+        });
+      }
     }
 
-    const progress = STATUS_PROGRESS[status];
+    // For user onboarding tasks, only allow EMAIL_SENT -> COMPLETED transition
+    if (currentTask.task_type === 'user_onboarding') {
+      if (currentTask.status === TaskStatus.EMAIL_SENT && status !== TaskStatus.COMPLETED) {
+        return res.status(400).json({ 
+          message: "Invalid status transition. User onboarding tasks can only move from EMAIL_SENT to COMPLETED" 
+        });
+      }
+    }
 
     const [updatedTask] = await db
       .update(tasks)
@@ -151,7 +201,7 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
     console.error("[Task Routes] Error updating task status:", error);
     if (error instanceof z.ZodError) {
       return res.status(400).json({ 
-        message: "Invalid status value. Only EMAIL_SENT and COMPLETED are allowed.", 
+        message: "Invalid status value", 
         errors: error.errors 
       });
     }
