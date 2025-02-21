@@ -786,6 +786,35 @@ export const OnboardingKYBFormPlayground = ({
               </div>
             )}
           </div>
+
+          {/* Step Wizard */}
+          {!isSubmitted && (
+            <div className="flex items-center justify-between mt-4">
+              {FORM_STEPS.map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                      index === currentStep
+                        ? 'border-primary bg-primary text-white'
+                        : index < currentStep
+                        ? 'border-primary text-primary bg-white'
+                        : 'border-gray-300 text-gray-500 bg-white'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{index + 1}</span>
+                  </div>
+                  {index < FORM_STEPS.length - 1 && (
+                    <div
+                      className={`w-full h-[2px] mx-2 ${
+                        index < currentStep ? 'bg-primary' : 'bg-gray-300'
+                      }`}
+                      style={{ width: '100px' }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Progress bar */}
