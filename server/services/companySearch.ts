@@ -2,9 +2,6 @@ import { z } from "zod";
 import { companies } from "@db/schema";
 import { validateAndCleanCompanyData, openai } from "./openai";
 
-const GOOGLE_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY;
-const SEARCH_ENGINE_ID = process.env.GOOGLE_SEARCH_ENGINE_ID;
-
 // Define priority sources and their weights
 const PRIORITY_SOURCES = {
   'wikipedia.org': 5,
@@ -105,7 +102,7 @@ export const googleOnlySearch = async (companyName: string) => {
 
     console.log(`[Google Search] Executing ${queries.length} parallel queries`);
     const searchPromises = queries.map(async (query) => {
-      const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
+      const url = `https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_CUSTOM_SEARCH_API_KEY}&cx=${process.env.GOOGLE_SEARCH_ENGINE_ID}&q=${encodeURIComponent(query)}`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -218,9 +215,12 @@ export const googleOnlySearch = async (companyName: string) => {
   }
 };
 
-// Function for OpenAI-only search
+// Enhanced logging for OpenAI search
 export const openaiOnlySearch = async (companyName: string) => {
-  console.log(`[OpenAI Search] Starting search for company: ${companyName}`);
+  console.log(`[OpenAI Search] Starting comprehensive search for company: ${companyName}`, {
+    timestamp: new Date().toISOString(),
+    mode: 'openai_only'
+  });
   const startTime = Date.now();
 
   try {
@@ -229,7 +229,11 @@ export const openaiOnlySearch = async (companyName: string) => {
     const cachedResult = (global as any).searchCache?.[cacheKey];
 
     if (cachedResult) {
-      console.log('[OpenAI Search] Returning cached result');
+      console.log('[OpenAI Search] Returning cached result:', {
+        companyName,
+        cachedFields: Object.keys(cachedResult),
+        timestamp: new Date().toISOString()
+      });
       return cachedResult;
     }
 
@@ -247,6 +251,10 @@ export const openaiOnlySearch = async (companyName: string) => {
       7. Incorporation Year
       8. Number of Employees
       9. Company Description
+      10. Key Clients/Partners
+      11. Founders and Leadership
+      12. Revenue Range (if available)
+      13. Certifications and Compliance
 
       Provide the information in a JSON format matching this interface:
       {
@@ -259,6 +267,10 @@ export const openaiOnlySearch = async (companyName: string) => {
         incorporationYear?: number;
         numEmployees?: number;
         description?: string;
+        keyClientsPartners?: string[];
+        foundersAndLeadership?: string;
+        revenue?: string;
+        certificationsCompliance?: string[];
       }
 
       If you're not confident about any piece of information, omit it from the JSON rather than guessing.
@@ -270,10 +282,10 @@ export const openaiOnlySearch = async (companyName: string) => {
 
     while (retries >= 0) {
       try {
-        console.log(`[OpenAI Search] Attempt ${3 - retries}`);
+        console.log(`[OpenAI Search] Attempt ${3 - retries} for ${companyName}`);
 
         const response = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: "gpt-4",
           messages: [
             {
               role: "system",
@@ -294,6 +306,14 @@ export const openaiOnlySearch = async (companyName: string) => {
 
         const companyInfo = JSON.parse(response.choices[0].message.content);
 
+        console.log('[OpenAI Search] Successfully retrieved company data:', {
+          companyName,
+          retrievedFields: Object.keys(companyInfo),
+          hasProducts: !!companyInfo.productsServices,
+          hasFounders: !!companyInfo.foundersAndLeadership,
+          timestamp: new Date().toISOString()
+        });
+
         // Cache successful results
         if (!(global as any).searchCache) (global as any).searchCache = {};
         (global as any).searchCache[cacheKey] = companyInfo;
@@ -305,7 +325,11 @@ export const openaiOnlySearch = async (companyName: string) => {
 
       } catch (error: any) {
         lastError = error;
-        console.error(`[OpenAI Search] Attempt ${3 - retries} failed:`, error);
+        console.error(`[OpenAI Search] Attempt ${3 - retries} failed:`, {
+          error: error.message,
+          status: error.status,
+          timestamp: new Date().toISOString()
+        });
 
         if (error.status === 429) {
           console.log("[OpenAI Search] Rate limit hit, waiting before retry");

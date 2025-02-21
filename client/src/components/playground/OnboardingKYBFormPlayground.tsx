@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FormField } from "@/components/ui/form-field";
+import { FormField as OriginalFormField } from "@/components/ui/form-field";
 import { ArrowLeft, HelpCircle } from "lucide-react";
 import {
   Tooltip,
@@ -13,6 +13,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
+
+// Update the field type to include suggestion
+type FormField = {
+  name: string;
+  label: string;
+  question: string;
+  tooltip: string;
+  suggestion?: string;
+};
 
 // Function to extract tooltip content from question text
 const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
@@ -27,186 +36,131 @@ const extractTooltipContent = (question: string): { mainText: string; tooltipTex
 };
 
 // Define the form steps based on KYB requirements
-const FORM_STEPS = [
-  {
-    id: 'entity-identification',
-    title: 'Entity Identification',
-    description: 'Basic information about your company',
-    fields: [
-      {
-        name: 'legalEntityName',
-        label: 'Legal Entity Name',
-        question: 'What is the registered business name?',
-        tooltip: 'The full legal name as it appears on official registration documents',
-        suggestion: 'name'
-      },
-      {
-        name: 'registrationNumber',
-        label: 'Registration Number',
-        question: 'What is the corporation or business number?',
-        tooltip: 'Issued by Corporations Canada or the relevant state authority',
-      },
-      {
-        name: 'incorporationDate',
-        label: 'Date of Incorporation',
-        question: 'When was the business formed?',
-        tooltip: 'The official date when the business was legally incorporated',
-        suggestion: 'incorporation_year'
-      },
-      {
-        name: 'jurisdiction',
-        label: 'Jurisdiction of Incorporation',
-        question: 'In which jurisdiction is the business incorporated?',
-        tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
-        suggestion: 'hq_address'
-      },
-      {
-        name: 'registeredAddress',
-        label: 'Registered Business Address',
-        question: 'What is the principal business address?',
-        tooltip: 'The official registered address where the business operates',
-        suggestion: 'hq_address'
-      },
-      {
-        name: 'businessType',
-        label: 'Business Type/Legal Structure',
-        question: 'What is the legal structure of the business?',
-        tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
-        suggestion: 'legal_structure'
-      }
-    ],
-    validation: (data: Record<string, unknown>) => {
-      // Check all fields in the step
-      return ['legalEntityName', 'registrationNumber', 'incorporationDate', 'jurisdiction', 'registeredAddress', 'businessType'].every(field => {
-        const value = data[field];
-        if (value === null || value === undefined) return false;
-        if (typeof value === 'string') return value.trim() !== '';
-        if (typeof value === 'number') return true;  // Numbers are always valid
-        return false;  // Any other type is invalid
-      });
+const FORM_STEPS: FormField[][] = [
+  [
+    {
+      name: 'legalEntityName',
+      label: 'Legal Entity Name',
+      question: 'What is the registered business name?',
+      tooltip: 'The full legal name as it appears on official registration documents',
+      suggestion: 'name'
+    },
+    {
+      name: 'registrationNumber',
+      label: 'Registration Number',
+      question: 'What is the corporation or business number?',
+      tooltip: 'Issued by Corporations Canada or the relevant state authority',
+    },
+    {
+      name: 'incorporationDate',
+      label: 'Date of Incorporation',
+      question: 'When was the business formed?',
+      tooltip: 'The official date when the business was legally incorporated',
+      suggestion: 'incorporation_year'
+    },
+    {
+      name: 'jurisdiction',
+      label: 'Jurisdiction of Incorporation',
+      question: 'In which jurisdiction is the business incorporated?',
+      tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
+      suggestion: 'hq_address'
+    },
+    {
+      name: 'registeredAddress',
+      label: 'Registered Business Address',
+      question: 'What is the principal business address?',
+      tooltip: 'The official registered address where the business operates',
+      suggestion: 'hq_address'
+    },
+    {
+      name: 'businessType',
+      label: 'Business Type/Legal Structure',
+      question: 'What is the legal structure of the business?',
+      tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
+      suggestion: 'legal_structure'
     }
-  },
-  {
-    id: 'ownership-management',
-    title: 'Ownership & Management',
-    description: 'Details about company ownership and management',
-    fields: [
-      {
-        name: 'directorsAndOfficers',
-        label: 'Directors and Officers',
-        question: 'Who are the current directors and senior officers?',
-        tooltip: 'Include full legal names, dates of birth, and contact details',
-        suggestion: 'founders_and_leadership'
-      },
-      {
-        name: 'ultimateBeneficialOwners',
-        label: 'Ultimate Beneficial Owners (UBOs)',
-        question: 'Which individuals hold 25% or more ownership?',
-        tooltip: 'Include direct and indirect ownership with supporting documentation',
-        suggestion: 'investors'
-      },
-      {
-        name: 'authorizedSigners',
-        label: 'Authorized Signers',
-        question: 'Who has legal signing authority for the business?',
-        tooltip: 'Include documentation of signing authority',
-        suggestion: 'founders_and_leadership'
-      }
-    ],
-    validation: (data: Record<string, string>) => {
-      return ['directorsAndOfficers', 'ultimateBeneficialOwners', 'authorizedSigners'].every(field =>
-        typeof data[field] === 'string' && data[field].trim() !== ''
-      );
+  ],
+  [
+    {
+      name: 'directorsAndOfficers',
+      label: 'Directors and Officers',
+      question: 'Who are the current directors and senior officers?',
+      tooltip: 'Include full legal names, dates of birth, and contact details',
+      suggestion: 'founders_and_leadership'
+    },
+    {
+      name: 'ultimateBeneficialOwners',
+      label: 'Ultimate Beneficial Owners (UBOs)',
+      question: 'Which individuals hold 25% or more ownership?',
+      tooltip: 'Include direct and indirect ownership with supporting documentation',
+      suggestion: 'investors'
+    },
+    {
+      name: 'authorizedSigners',
+      label: 'Authorized Signers',
+      question: 'Who has legal signing authority for the business?',
+      tooltip: 'Include documentation of signing authority',
+      suggestion: 'founders_and_leadership'
     }
-  },
-  {
-    id: 'official-documentation',
-    title: 'Official Documentation',
-    description: 'Required legal and regulatory documents',
-    fields: [
-      {
-        name: 'corporateRegistration',
-        label: 'Corporate Registration Documents',
-        question: 'What are the official registration documents?',
-        tooltip: 'Documents that confirm business registration and legal status',
-      },
-      {
-        name: 'goodStanding',
-        label: 'Proof of Good Standing',
-        question: 'Is the business in good standing with regulators?',
-        tooltip: 'Current status with the regulatory body',
-      },
-      {
-        name: 'licenses',
-        label: 'Licensing and Regulatory Documents',
-        question: 'What business licenses and permits are held?',
-        tooltip: 'All current licenses and permits related to business activities',
-      }
-    ],
-    validation: (data: Record<string, string>) => {
-      return ['corporateRegistration', 'goodStanding', 'licenses'].every(field =>
-        typeof data[field] === 'string' && data[field].trim() !== ''
-      );
+  ],
+  [
+    {
+      name: 'corporateRegistration',
+      label: 'Corporate Registration Documents',
+      question: 'What are the official registration documents?',
+      tooltip: 'Documents that confirm business registration and legal status',
+    },
+    {
+      name: 'goodStanding',
+      label: 'Proof of Good Standing',
+      question: 'Is the business in good standing with regulators?',
+      tooltip: 'Current status with the regulatory body',
+    },
+    {
+      name: 'licenses',
+      label: 'Licensing and Regulatory Documents',
+      question: 'What business licenses and permits are held?',
+      tooltip: 'All current licenses and permits related to business activities',
     }
-  },
-  {
-    id: 'financial-operational',
-    title: 'Financial & Operational',
-    description: 'Financial and operational information',
-    fields: [
-      {
-        name: 'taxId',
-        label: 'Tax Identification',
-        question: 'What is the business tax ID?',
-        tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
-      },
-      {
-        name: 'financialStatements',
-        label: 'Financial Statements',
-        question: 'Are recent financial statements available?',
-        tooltip: 'Recent audited financial statements or documentation of financial health',
-      },
-      {
-        name: 'operationalPolicies',
-        label: 'Operational Policies',
-        question: 'What security and compliance policies are in place?',
-        tooltip: 'Policies for data protection, cybersecurity (API security for OpenBanking), and business continuity',
-      }
-    ],
-    validation: (data: Record<string, string>) => {
-      return ['taxId', 'financialStatements', 'operationalPolicies'].every(field =>
-        typeof data[field] === 'string' && data[field].trim() !== ''
-      );
+  ],
+  [
+    {
+      name: 'taxId',
+      label: 'Tax Identification',
+      question: 'What is the business tax ID?',
+      tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
+    },
+    {
+      name: 'financialStatements',
+      label: 'Financial Statements',
+      question: 'Are recent financial statements available?',
+      tooltip: 'Recent audited financial statements or documentation of financial health',
+    },
+    {
+      name: 'operationalPolicies',
+      label: 'Operational Policies',
+      question: 'What security and compliance policies are in place?',
+      tooltip: 'Policies for data protection, cybersecurity (API security for OpenBanking), and business continuity',
     }
-  },
-  {
-    id: 'compliance-risk',
-    title: 'Compliance & Risk',
-    description: 'Compliance and risk assessment information',
-    fields: [
-      {
-        name: 'sanctionsCheck',
-        label: 'Sanctions and Adverse Media Checks',
-        question: 'Are there any sanctions or adverse media flags?',
-        tooltip: 'History of sanctions or adverse media watchlist appearances',
-      },
-      {
-        name: 'dueDiligence',
-        label: 'Due Diligence Reports',
-        question: 'What due diligence reports are available?',
-        tooltip: 'Recent third-party due diligence or risk assessment reports verifying compliance',
-      }
-    ],
-    validation: (data: Record<string, string>) => {
-      return ['sanctionsCheck', 'dueDiligence'].every(field =>
-        typeof data[field] === 'string' && data[field].trim() !== ''
-      );
+  ],
+  [
+    {
+      name: 'sanctionsCheck',
+      label: 'Sanctions and Adverse Media Checks',
+      question: 'Are there any sanctions or adverse media flags?',
+      tooltip: 'History of sanctions or adverse media watchlist appearances',
+    },
+    {
+      name: 'dueDiligence',
+      label: 'Due Diligence Reports',
+      question: 'What due diligence reports are available?',
+      tooltip: 'Recent third-party due diligence or risk assessment reports verifying compliance',
     }
-  }
+  ]
 ];
 
 // Calculate total fields across all steps
-const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.fields.length, 0);
+const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.length, 0);
 
 // Simplified empty value check
 const isEmptyValue = (value: unknown): boolean => {
@@ -266,41 +220,54 @@ const extractFormData = (metadata: Record<string, any>) => {
 };
 
 // Current step validation enhancement
-const validateCurrentStep = (formData: Record<string, unknown>, step: typeof FORM_STEPS[number]) => {
-  const result = step.validation(formData);
+const validateCurrentStep = (formData: Record<string, unknown>, step: FormField[]) => {
+  const result = step.every(field => !isEmptyValue(formData[field.name]));
   console.log('Current step validation:', {
-    step: step.id,
+    step: step.map(s => s.name),
     formData,
     isValid: result
   });
   return result;
 };
 
-// Enhanced suggestion processing
-const processSuggestion = (fieldName: string, suggestion: any, companyData: any) => {
-  console.log('[KYB Form Debug] Processing suggestion for field:', {
+// Update the field processing functions with enhanced logging
+const processSuggestion = (fieldName: string, suggestion: string | undefined, companyData: any) => {
+  console.log('[KYB Form Debug] Processing suggestion:', {
     fieldName,
     suggestionKey: suggestion,
-    rawValue: companyData?.[suggestion],
-    companyDataKeys: companyData ? Object.keys(companyData) : [],
+    hasCompanyData: !!companyData,
+    availableCompanyKeys: companyData ? Object.keys(companyData) : [],
+    rawValue: companyData?.[suggestion ?? ''],
     timestamp: new Date().toISOString()
   });
 
-  if (!companyData?.[suggestion]) {
-    console.log('[KYB Form Debug] No suggestion mapping for field:', {
+  if (!suggestion || !companyData?.[suggestion]) {
+    console.log('[KYB Form Debug] No valid suggestion found:', {
       fieldName,
+      suggestion,
       timestamp: new Date().toISOString()
     });
     return undefined;
   }
 
   const value = companyData[suggestion];
-  return Array.isArray(value) ? value.join(', ') : String(value);
+  const processedValue = Array.isArray(value) ? value.join(', ') : String(value);
+
+  console.log('[KYB Form Debug] Processed suggestion value:', {
+    fieldName,
+    rawValue: value,
+    processedValue,
+    valueType: typeof value,
+    isArray: Array.isArray(value),
+    timestamp: new Date().toISOString()
+  });
+
+  return processedValue;
 };
 
 // Calculate progress by only counting KYB form fields
 const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
-  return [...acc, ...step.fields.map(field => field.name)];
+  return [...acc, ...step.map(field => field.name)];
 }, [] as string[]);
 
 // Status determination based on progress thresholds
@@ -384,8 +351,8 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   // Function to find first empty field in current step
-  const findFirstEmptyField = (step: typeof FORM_STEPS[number], formData: Record<string, string>): string | null => {
-    for (const field of step.fields) {
+  const findFirstEmptyField = (step: FormField[], formData: Record<string, string>): string | null => {
+    for (const field of step) {
       if (isEmptyValue(formData[field.name])) {
         return field.name;
       }
@@ -622,7 +589,7 @@ export const OnboardingKYBFormPlayground = ({
   const isCurrentStepValid = validateCurrentStep(formData, currentStepData);
 
 
-  // Enhanced logging for suggestion handling
+  // Enhanced getSuggestionForField function
   const getSuggestionForField = (fieldName: string) => {
     if (suggestionProcessingRef.current) {
       console.log('[KYB Form Debug] Skipping suggestion processing - already in progress');
@@ -642,19 +609,20 @@ export const OnboardingKYBFormPlayground = ({
     suggestionProcessingRef.current = true;
     try {
       const field = FORM_STEPS
-        .flatMap(step => step.fields)
+        .flatMap(step => step)
         .find(f => f.name === fieldName);
 
       if (!field?.suggestion) {
         console.log('[KYB Form Debug] No suggestion mapping found:', {
           fieldName,
+          fieldConfig: field,
           timestamp: new Date().toISOString()
         });
         return undefined;
       }
 
       const suggestion = processSuggestion(fieldName, field.suggestion, companyData);
-      console.log('[KYB Form Debug] Processed suggestion:', {
+      console.log('[KYB Form Debug] Final suggestion result:', {
         fieldName,
         suggestion,
         timestamp: new Date().toISOString()
@@ -688,12 +656,12 @@ export const OnboardingKYBFormPlayground = ({
       convertedType: typeof stringValue,
       formDataBefore: formData,
       formDataAfter: updatedFormData,
-      currentStepValidation: currentStepData.validation(updatedFormData)
+      currentStepValidation: currentStepData.every(f => !isEmptyValue(updatedFormData[f.name]))
     });
   };
 
   // Determine field variant based on validation and form state
-  const getFieldVariant = (field: any, value: string | undefined) => {
+  const getFieldVariant = (field: FormField, value: string | undefined) => {
     const isEmpty = isEmptyValue(value);
     const isTouched = value !== undefined;
     const suggestion = getSuggestionForField(field.name);
@@ -833,7 +801,7 @@ export const OnboardingKYBFormPlayground = ({
           {!isSubmitted && (
             <div className="flex items-center justify-between px-2 mb-2">
               {FORM_STEPS.map((step, index) => (
-                <div key={step.id} className="flex flex-col items-center relative">
+                <div key={step.map(s => s.name)} className="flex flex-col items-center relative">
                   <div
                     className={`flex items-center justify-center h-7 min-w-[28px] px-2.5 rounded-full border transition-all duration-200
                       ${index === currentStep
@@ -855,7 +823,7 @@ export const OnboardingKYBFormPlayground = ({
                     />
                   )}
                   <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
-                    {step.title}
+                    {step[0].title}
                   </span>
                 </div>
               ))}
@@ -869,12 +837,12 @@ export const OnboardingKYBFormPlayground = ({
         {!isSubmitted && (
           <div className="space-y-6">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">{currentStepData.title}</h3>
-              <p className="text-sm text-muted-foreground">{currentStepData.description}</p>
+              <h3 className="text-lg font-semibold mb-2">{currentStepData[0].title}</h3>
+              <p className="text-sm text-muted-foreground">{currentStepData[0].description}</p>
             </div>
 
             <div className="space-y-4">
-              {currentStepData.fields.map(field => {
+              {currentStepData.map(field => {
                 const value = formData[field.name] || '';
                 const { mainText, tooltipText } = extractTooltipContent(field.question);
                 const variant = getFieldVariant(field, value);
@@ -882,12 +850,12 @@ export const OnboardingKYBFormPlayground = ({
 
                 return (
                   <div key={field.name} className={`space-y-2 ${isEmpty ? 'animate-pulse-subtle' : ''}`}>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1.5 mb-2">
                       <label className="text-xs font-medium text-muted-foreground">
                         {field.label}
                       </label>
                       <div className="flex items-center gap-1">
-                        <span className="text-sm font-medium text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           {mainText}
                         </span>
                         {field.tooltip && (
@@ -904,7 +872,7 @@ export const OnboardingKYBFormPlayground = ({
                         )}
                       </div>
                     </div>
-                    <FormField
+                    <OriginalFormField
                       type="text"
                       name={field.name}
                       variant={variant}
@@ -917,8 +885,7 @@ export const OnboardingKYBFormPlayground = ({
                           handleSuggestionClick(field.name, suggestion);
                         }
                       }}
-                      className={isEmpty ? 'border-[#4F46E5] ring-1 ring-[#4F46E5]/10' : ''}
-                      placeholder={isEmpty ? 'Required field' : ''}
+                      className={`${isEmpty ? 'border-[#4F46E5] ring-1 ring-[#4F46E5]/10' : ''} mb-6`}
                     />
                   </div>
                 );
