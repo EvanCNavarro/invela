@@ -54,6 +54,7 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData } = req.body;
+    console.log('[KYB API] Saving progress:', { taskId, progress });
 
     if (!taskId) {
       return res.status(400).json({ error: 'Task ID is required' });
@@ -65,8 +66,16 @@ router.post('/api/kyb/progress', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     if (!existingTask) {
+      console.log('[KYB API] Task not found:', taskId);
       return res.status(404).json({ error: 'Task not found' });
     }
+
+    // Log existing data
+    console.log('[KYB API] Existing task data:', {
+      id: existingTask.id,
+      currentMetadata: existingTask.metadata,
+      currentProgress: existingTask.progress
+    });
 
     // Merge existing metadata with new form data
     const updatedMetadata = {
@@ -76,11 +85,12 @@ router.post('/api/kyb/progress', async (req, res) => {
     };
 
     // Log the data we're about to save
-    console.log('[KYB API] Saving progress:', {
+    console.log('[KYB API] Saving updated data:', {
       taskId,
       progress,
       existingMetadata: existingTask.metadata,
-      updatedMetadata
+      updatedMetadata,
+      formDataKeys: Object.keys(formData)
     });
 
     // Update task with progress and save form data
@@ -103,12 +113,14 @@ router.post('/api/kyb/progress', async (req, res) => {
 router.get('/api/kyb/progress/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
+    console.log('[KYB API] Loading progress for task:', taskId);
 
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, parseInt(taskId)));
 
     if (!task) {
+      console.log('[KYB API] Task not found:', taskId);
       return res.status(404).json({ error: 'Task not found' });
     }
 
@@ -116,7 +128,8 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     console.log('[KYB API] Retrieved task data:', {
       id: task.id,
       metadata: task.metadata,
-      progress: task.progress
+      progress: task.progress,
+      status: task.status
     });
 
     // Return saved form data and progress

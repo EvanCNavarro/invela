@@ -310,6 +310,8 @@ export const OnboardingKYBFormPlayground = ({
     const loadSavedProgress = async () => {
       if (!taskId) return;
 
+      console.log('[KYB Form Debug] Loading saved progress for task:', taskId);
+
       try {
         const response = await fetch(`/api/kyb/progress/${taskId}`);
         if (!response.ok) {
@@ -324,19 +326,40 @@ export const OnboardingKYBFormPlayground = ({
           const extractedData = extractFormData(data.formData);
           console.log('[KYB Form Debug] Extracted form data:', extractedData);
 
+          // Log form field states before updating
+          console.log('[KYB Form Debug] Current form state:', {
+            formData,
+            currentStep,
+            progress: lastSavedProgress
+          });
+
           setFormData(extractedData);
           setLastSavedProgress(data.progress || 0);
 
           // Set the current step based on the last completed step
           const lastCompletedStep = FORM_STEPS.reduce((lastStep, step, index) => {
-            const isStepValid = step.validation(extractedData);
-            console.log(`[KYB Form Debug] Validating step ${index}:`, { isValid: isStepValid, data: extractedData });
+            const stepFields = step.fields.map(f => f.name);
+            const stepData = Object.fromEntries(
+              Object.entries(extractedData).filter(([key]) => stepFields.includes(key))
+            );
+            const isStepValid = step.validation(stepData);
+
+            console.log(`[KYB Form Debug] Validating step ${index}:`, {
+              stepName: step.title,
+              fields: stepFields,
+              data: stepData,
+              isValid: isStepValid
+            });
+
             return isStepValid ? index : lastStep;
           }, 0);
 
+          console.log('[KYB Form Debug] Setting current step to:', lastCompletedStep);
           setCurrentStep(lastCompletedStep);
         }
+
         setInitialLoadDone(true);
+        console.log('[KYB Form Debug] Initial load completed');
       } catch (error) {
         console.error('[KYB Form Debug] Error loading saved progress:', error);
         setInitialLoadDone(true);
@@ -344,16 +367,39 @@ export const OnboardingKYBFormPlayground = ({
     };
 
     loadSavedProgress();
+
+    // Cleanup function to log when component unmounts
+    return () => {
+      console.log('[KYB Form Debug] Component unmounting, current state:', {
+        formData,
+        currentStep,
+        progress: lastSavedProgress
+      });
+    };
   }, [taskId]);
 
   // Save progress when form data changes
   useEffect(() => {
-    if (!initialLoadDone) return;
+    if (!initialLoadDone) {
+      console.log('[KYB Form Debug] Skipping save - initial load not done');
+      return;
+    }
 
     const progress = calculateProgress();
+    console.log('[KYB Form Debug] Calculated progress:', {
+      progress,
+      formData,
+      lastSavedProgress
+    });
+
     const debounceTimer = setTimeout(() => {
+      console.log('[KYB Form Debug] Saving progress:', {
+        progress,
+        formData,
+        taskId
+      });
       saveProgress(progress);
-    }, 1000); // Debounce save calls
+    }, 1000);
 
     return () => clearTimeout(debounceTimer);
   }, [formData, initialLoadDone]);
@@ -447,6 +493,7 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   const handleNext = () => {
+    console.log('[KYB Form Debug] Navigation Event: Next button clicked');
     if (currentStep < FORM_STEPS.length - 1) {
       setCurrentStep(current => current + 1);
     } else {
@@ -547,16 +594,23 @@ export const OnboardingKYBFormPlayground = ({
 
   // Update form data handler
   const handleFormDataUpdate = (fieldName: string, value: string) => {
+    console.log('[KYB Form Debug] Updating form field:', {
+      fieldName,
+      oldValue: formData[fieldName],
+      newValue: value
+    });
+
     setFormData(prev => {
       const newData = {
         ...prev,
         [fieldName]: value
       };
 
-      // Log form data update for debugging
-      console.log('Form data updated:', {
+      // Log detailed form update
+      console.log('[KYB Form Debug] Form data updated:', {
         fieldName,
         value,
+        previousData: prev,
         newData,
         progress: calculateProgress()
       });
