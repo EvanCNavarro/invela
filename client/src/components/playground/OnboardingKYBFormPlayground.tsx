@@ -222,6 +222,11 @@ interface OnboardingKYBFormPlaygroundProps {
   companyData?: any;
 }
 
+// Calculate progress by only counting KYB form fields
+const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
+  return [...acc, ...step.fields.map(field => field.name)];
+}, [] as string[]);
+
 export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
@@ -239,11 +244,23 @@ export const OnboardingKYBFormPlayground = ({
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const queryClient = useQueryClient();
 
-  // Calculate progress whenever form data changes
+  // Helper to filter out non-form fields from metadata
+  const extractFormData = (metadata: Record<string, any>) => {
+    const formData: Record<string, string> = {};
+    FORM_FIELD_NAMES.forEach(fieldName => {
+      if (metadata[fieldName]) {
+        formData[fieldName] = metadata[fieldName];
+      }
+    });
+    return formData;
+  };
+
+  // Calculate progress by only counting KYB form fields
   const calculateProgress = () => {
-    // Count only non-empty fields
-    const filledFields = Object.entries(formData).filter(([_, value]) => !isEmptyValue(value)).length;
-    // Ensure progress doesn't exceed 100%
+    // Only count fields that are part of the KYB form
+    const filledFields = FORM_FIELD_NAMES.filter(fieldName =>
+      !isEmptyValue(formData[fieldName])
+    ).length;
     return Math.min(Math.round((filledFields / TOTAL_FIELDS) * 100), 100);
   };
 
@@ -291,7 +308,8 @@ export const OnboardingKYBFormPlayground = ({
 
         const data = await response.json();
         if (data.formData) {
-          setFormData(data.formData);
+          // Only extract KYB form fields from metadata
+          setFormData(extractFormData(data.formData));
           setLastSavedProgress(data.progress || 0);
 
           // Set the current step based on the last completed step
@@ -529,6 +547,23 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
+  // Determine field variant based on validation and form state
+  const getFieldVariant = (field: any, value: string | undefined) => {
+    const isEmpty = !value || value.trim() === '';
+    const isTouched = value !== undefined;
+    const suggestion = getSuggestionForField(field.name);
+
+    // Only show error state when the field has been touched and is empty
+    if (suggestion && !isTouched) {
+      return 'ai-suggestion';
+    } else if (isTouched && !isEmpty) {
+      return 'successful';
+    }
+
+    // Return default state instead of error when loading the form
+    return 'default';
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -629,18 +664,8 @@ export const OnboardingKYBFormPlayground = ({
             <div className="space-y-4">
               {currentStepData.fields.map(field => {
                 const value = formData[field.name];
-                const isEmpty = !value || (typeof value === 'string' && value.trim() === '');
-                const isTouched = value !== undefined;
-                const suggestion = getSuggestionForField(field.name);
                 const { mainText, tooltipText } = extractTooltipContent(field.question);
-
-                // Determine field variant based on validation
-                let variant: 'default' | 'error' | 'successful' | 'ai-suggestion' = 'default';
-                if (suggestion && !isTouched) {
-                  variant = 'ai-suggestion';
-                } else if (isTouched) {
-                  variant = isEmpty ? 'error' : 'successful';
-                }
+                const variant = getFieldVariant(field, value);
 
                 return (
                   <div key={field.name} className="space-y-2">
@@ -671,8 +696,9 @@ export const OnboardingKYBFormPlayground = ({
                       variant={variant}
                       value={value || ''}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
-                      aiSuggestion={suggestion}
+                      aiSuggestion={getSuggestionForField(field.name)}
                       onSuggestionClick={() => {
+                        const suggestion = getSuggestionForField(field.name);
                         if (suggestion) {
                           handleSuggestionClick(field.name, suggestion);
                         }
