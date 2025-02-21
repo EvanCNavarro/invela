@@ -227,6 +227,13 @@ const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
   return [...acc, ...step.fields.map(field => field.name)];
 }, [] as string[]);
 
+// Helper function to get status from progress
+function getStatusFromProgress(progress: number): string {
+  if (progress === 0) return 'not_started';
+  if (progress >= 1 && progress < 100) return 'in_progress';
+  return 'ready_for_submission';
+}
+
 export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
@@ -277,7 +284,23 @@ export const OnboardingKYBFormPlayground = ({
     if (!taskId || !initialLoadDone) return;
 
     try {
-      const response = await fetch('/api/kyb/progress', {
+      // First update the task status based on progress
+      const newStatus = getStatusFromProgress(currentProgress);
+      const statusResponse = await fetch(`/api/tasks/${taskId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          progress: currentProgress
+        })
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error('Failed to update task status');
+      }
+
+      // Then save the form progress
+      const progressResponse = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -287,13 +310,13 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
-      if (!response.ok) throw new Error('Failed to save progress');
+      if (!progressResponse.ok) throw new Error('Failed to save progress');
 
       // Notify via WebSocket about progress update
       await wsService.send('task_updated', {
         taskId,
         progress: currentProgress,
-        status: currentProgress === 100 ? 'completed' : 'in_progress'
+        status: newStatus
       });
 
       setLastSavedProgress(currentProgress);
