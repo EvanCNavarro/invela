@@ -52,11 +52,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     // Include tasks that are either:
     // 1. Assigned to the current user
     // 2. Company-wide tasks for the user's company
-    // 3. Created by the user but not assigned to them
+    // 3. Created by the user but either unassigned or assigned to others
     return (
       task.assigned_to === user?.id || 
       (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
-      (task.created_by === user?.id && task.assigned_to !== user?.id)
+      (task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id))
     );
   });
 
