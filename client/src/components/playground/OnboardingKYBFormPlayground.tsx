@@ -290,19 +290,24 @@ export const OnboardingKYBFormPlayground = ({
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-
-  // Load saved form data on mount
+  // Single source of truth for initial data load
   useEffect(() => {
-    console.log('[Form Debug] Loading saved form data:', {
+    console.log('[Form Debug] Initial data load:', {
       hasSavedData: !!initialSavedFormData,
       savedDataKeys: initialSavedFormData ? Object.keys(initialSavedFormData) : []
     });
 
     if (initialSavedFormData) {
-      setFormData(initialSavedFormData);
-      const initialProgress = calculateProgress(initialSavedFormData);
-      setProgress(initialProgress);
+      // Set form data and progress in one go to prevent flicker
+      const savedData = extractFormData(initialSavedFormData);
+      setFormData(savedData);
+      setProgress(calculateProgress(savedData));
+      console.log('[Form Debug] Loaded saved form data:', {
+        dataKeys: Object.keys(savedData),
+        progress: calculateProgress(savedData)
+      });
     }
+
     setInitialLoadDone(true);
   }, [initialSavedFormData]);
 
@@ -382,10 +387,12 @@ export const OnboardingKYBFormPlayground = ({
       ...formData,
       [fieldName]: value
     };
-    setFormData(updatedFormData);
 
-    // Calculate new progress
+    // Calculate new progress before state updates
     const newProgress = calculateProgress(updatedFormData);
+
+    // Update states synchronously
+    setFormData(updatedFormData);
     setProgress(newProgress);
 
     if (!taskId) return;
@@ -438,52 +445,6 @@ export const OnboardingKYBFormPlayground = ({
       });
     }
   };
-
-  // Load saved form data on mount
-  useEffect(() => {
-    const loadSavedProgress = async () => {
-      if (!taskId) return;
-
-      console.log('[KYB Form Debug] === Initial Load ===');
-      console.log('[KYB Form Debug] Loading task:', taskId);
-
-      try {
-        const response = await fetch(`/api/kyb/progress/${taskId}`);
-        if (!response.ok) {
-          console.error('[KYB Form Debug] Failed to load progress:', response.statusText);
-          throw new Error('Failed to load progress');
-        }
-
-        const data = await response.json();
-        console.log('[KYB Form Debug] Loaded progress data:', {
-          progress: data.progress,
-          formDataKeys: data.formData ? Object.keys(data.formData) : [],
-          hasFormData: !!data.formData
-        });
-
-        if (data.formData) {
-          const extractedData = extractFormData(data.formData);
-          console.log('[KYB Form Debug] Extracted form fields:', {
-            extractedFields: Object.keys(extractedData),
-            totalFields: TOTAL_FIELDS,
-            filledFields: Object.values(extractedData).filter(val => !isEmptyValue(val)).length
-          });
-
-          setFormData(prev => ({...prev, ...extractedData}));
-          setProgress(data.progress || 0);
-          // Calculate initial progress
-
-        }
-
-        setInitialLoadDone(true);
-      } catch (error) {
-        console.error('[KYB Form Debug] Error in initial load:', error);
-        setInitialLoadDone(true);
-      }
-    };
-
-    loadSavedProgress();
-  }, [taskId]);
 
 
   const handleBack = () => {
@@ -645,52 +606,6 @@ export const OnboardingKYBFormPlayground = ({
             />
           </div>
         )}
-
-        <hr className="border-t border-gray-200 my-6" />
-
-        {/* Form Wizard Steps */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            {FORM_STEPS.map((step, index) => (
-              <div key={step.id} className="flex items-center flex-1">
-                {/* Step circle */}
-                <div className={`
-                  flex items-center justify-center w-6 h-6 rounded-full text-sm
-                  ${index < currentStep || isSubmitted
-                    ? 'bg-green-600 text-white'
-                    : index === currentStep && !isSubmitted
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-500'
-                  }
-                `}>
-                  {index < currentStep || isSubmitted ? '✓' : index + 1}
-                </div>
-                {/* Step title */}
-                <div className="mx-2">
-                  <p className={`text-xs font-medium ${
-                    index === currentStep && !isSubmitted
-                      ? 'text-blue-500'
-                      : index < currentStep || isSubmitted
-                        ? 'text-green-600'
-                        : 'text-gray-500'
-                  }`}>
-                    {step.title}
-                  </p>
-                </div>
-                {/* Connector line */}
-                {index < FORM_STEPS.length - 1 && (
-                  <div className={`
-                    flex-1 h-[1px]
-                    ${index < currentStep || isSubmitted
-                      ? 'bg-green-600'
-                      : 'bg-gray-200'
-                    }
-                  `} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
 
         <hr className="border-t border-gray-200 my-6" />
 
