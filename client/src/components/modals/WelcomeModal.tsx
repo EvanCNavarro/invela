@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,14 +42,11 @@ export function WelcomeModal() {
   const { toast } = useToast();
   const { socket, connected } = useWebSocket();
 
-  // Show modal only when user is loaded and hasn't completed onboarding
+  // Only set modal visibility once when component mounts
   useEffect(() => {
-    const shouldShow = user && !user.onboarding_user_completed;
-    // Only update state if it's different to avoid loops
-    if (shouldShow !== showModal) {
-      setShowModal(shouldShow);
-    }
-  }, [user?.onboarding_user_completed]);
+    if (!user) return;
+    setShowModal(!user.onboarding_user_completed);
+  }, []); // Empty dependency array ensures this only runs once on mount
 
   const { data: onboardingTask } = useQuery({
     queryKey: ["/api/tasks", { type: "user_invitation", email: user?.email }],
@@ -121,7 +118,7 @@ export function WelcomeModal() {
     if (currentSlide < carouselImages.length - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
-      completeOnboardingMutation.mutateAsync();
+      completeOnboardingMutation.mutate();
     }
   };
 
