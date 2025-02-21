@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
-import { useToast } from "@/hooks/use-toast"; // Fix: Import useToast hook instead of toast
+import { useToast } from "@/hooks/use-toast"; 
 
 // Function to extract tooltip content from question text
 const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
@@ -254,7 +254,7 @@ export const OnboardingKYBFormPlayground = ({
   const [lastSavedProgress, setLastSavedProgress] = useState(0);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const queryClient = useQueryClient();
-  const toast = useToast(); // Use the hook here
+  const { toast } = useToast(); 
 
   // Helper to filter out non-form fields from metadata
   const extractFormData = (metadata: Record<string, any>) => {
