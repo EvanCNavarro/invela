@@ -43,7 +43,6 @@ export function useWebSocket(): UseWebSocketReturn {
       }
 
       if (socket) {
-        // Only attempt to close if the socket is not already closing or closed
         if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
           socket.close();
         }
@@ -78,10 +77,8 @@ export function useWebSocket(): UseWebSocketReturn {
         reconnectAttempt.current = 0;
         pongReceived.current = true;
 
-        // Start ping interval
         pingTimer.current = setInterval(() => {
           if (!pongReceived.current) {
-            console.debug('[WebSocket] No pong received, reconnecting...');
             cleanup();
             connect();
             return;
@@ -95,25 +92,29 @@ export function useWebSocket(): UseWebSocketReturn {
       };
 
       ws.onclose = (event) => {
-        // Don't attempt to reconnect if we're cleaning up
         if (cleanupInProgress.current) return;
 
-        console.debug('[WebSocket] Connection closed:', event.code);
         cleanup();
+
+        if (event.code !== 1000 && event.code !== 1001) {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[WebSocket] Connection closed (${event.code})`);
+          }
+        }
 
         if (reconnectAttempt.current < MAX_RETRIES) {
           const delay = getBackoffDelay(reconnectAttempt.current);
-          console.debug(`[WebSocket] Reconnecting in ${delay}ms (attempt ${reconnectAttempt.current + 1}/${MAX_RETRIES})`);
           setTimeout(connect, delay);
           reconnectAttempt.current++;
         } else {
-          setError(new Error('Max reconnection attempts reached'));
+          setError(new Error('Connection lost. Please refresh the page.'));
         }
       };
 
-      ws.onerror = (event) => {
-        console.debug('[WebSocket] Error occurred:', event);
-        setError(new Error('WebSocket connection error'));
+      ws.onerror = () => {
+        if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
+          setError(new Error('Connection error. Please check your internet connection.'));
+        }
       };
 
       ws.onmessage = (event) => {
@@ -124,31 +125,26 @@ export function useWebSocket(): UseWebSocketReturn {
             case 'pong':
               pongReceived.current = true;
               break;
-            case 'connection_established':
-              console.debug('[WebSocket] Connection established:', data.data);
-              break;
             case 'task_update':
               queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
               break;
             case 'file_update':
               queryClient.invalidateQueries({ queryKey: ['/api/files'] });
               break;
-            default:
-              console.debug('[WebSocket] Message received:', data);
           }
         } catch (err) {
-          console.error('[WebSocket] Error parsing message:', err);
+          // Only log parse errors in development
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[WebSocket] Message parse error');
+          }
         }
       };
 
       setSocket(ws);
 
-      // Set connection timeout
       connectionTimeoutId = setTimeout(() => {
         if (!connected) {
-          console.debug('[WebSocket] Connection timeout');
           cleanup();
-          // Only attempt to reconnect if we haven't exceeded max retries
           if (reconnectAttempt.current < MAX_RETRIES) {
             connect();
           }
@@ -161,7 +157,9 @@ export function useWebSocket(): UseWebSocketReturn {
         }
       };
     } catch (err) {
-      console.error('[WebSocket] Setup error:', err);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[WebSocket] Setup error');
+      }
       setError(err as Error);
     }
   }, [cleanup, connected, queryClient]);
