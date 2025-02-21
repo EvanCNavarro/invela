@@ -213,16 +213,51 @@ const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim() === '';
   if (typeof value === 'number') return false;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
   return true;
 };
 
-interface OnboardingKYBFormPlaygroundProps {
-  taskId?: number;
-  onSubmit?: (formData: Record<string, any>) => void;
-  companyName: string;
-  companyData?: any;
-  savedFormData?: Record<string, any>;
-}
+// Calculate progress by only counting KYB form fields
+const calculateProgress = (formData: Record<string, any>) => {
+  console.log('[KYB Form Debug] Calculating progress for data:', {
+    formDataKeys: Object.keys(formData),
+    totalFields: TOTAL_FIELDS
+  });
+
+  const filledFields = FORM_FIELD_NAMES.filter(fieldName => {
+    const value = formData[fieldName];
+    const isEmpty = isEmptyValue(value);
+    console.log(`[KYB Form Debug] Field ${fieldName}:`, { value, isEmpty });
+    return !isEmpty;
+  }).length;
+
+  const progress = Math.min(Math.round((filledFields / TOTAL_FIELDS) * 100), 100);
+  console.log('[KYB Form Debug] Progress calculation result:', {
+    filledFields,
+    totalFields: TOTAL_FIELDS,
+    progress
+  });
+
+  return progress;
+};
+
+// Helper function to filter out non-form fields from metadata
+const extractFormData = (metadata: Record<string, any>) => {
+  const formData: Record<string, string> = {};
+  console.log('[KYB Form Debug] Extracting form data from metadata:', {
+    metadataKeys: Object.keys(metadata),
+    formFieldNames: FORM_FIELD_NAMES
+  });
+
+  FORM_FIELD_NAMES.forEach(fieldName => {
+    if (metadata[fieldName] !== undefined && metadata[fieldName] !== null) {
+      formData[fieldName] = String(metadata[fieldName]).trim();
+    }
+  });
+
+  return formData;
+};
+
 
 // Calculate progress by only counting KYB form fields
 const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
@@ -240,6 +275,14 @@ function getStatusFromProgress(progress: number): string {
 
   console.log('[KYB Form Debug] Calculated status:', status);
   return status;
+}
+
+interface OnboardingKYBFormPlaygroundProps {
+  taskId?: number;
+  onSubmit?: (formData: Record<string, any>) => void;
+  companyName: string;
+  companyData?: any;
+  savedFormData?: Record<string, any>;
 }
 
 export const OnboardingKYBFormPlayground = ({
@@ -273,12 +316,7 @@ export const OnboardingKYBFormPlayground = ({
     if (initialSavedFormData) {
       console.log('[KYB Form Debug] Setting initial form data from saved data');
       setFormData(initialSavedFormData);
-      const progress = calculateProgress();
-      setLastSavedProgress(progress);
-    } else if (initialCompanyData) {
-      console.log('[KYB Form Debug] Setting initial form data from company data');
-      setFormData(extractFormData(initialCompanyData));
-      const progress = calculateProgress();
+      const progress = calculateProgress(initialSavedFormData);
       setLastSavedProgress(progress);
     }
 
@@ -352,36 +390,43 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [companyName, initialLoadDone]);
 
-  // Helper to filter out non-form fields from metadata
-  const extractFormData = (metadata: Record<string, any>) => {
-    const formData: Record<string, string> = {};
-    console.log('[KYB Form Debug] Extracting form data from metadata:', {
-      metadataKeys: Object.keys(metadata),
-      formFieldNames: FORM_FIELD_NAMES
+  // Handle form field updates with proper progress tracking
+  const handleFormDataUpdate = (fieldName: string, value: string) => {
+    console.log('[KYB Form Debug] Updating form field:', {
+      fieldName,
+      oldValue: formData[fieldName],
+      newValue: value
     });
 
-    FORM_FIELD_NAMES.forEach(fieldName => {
-      if (metadata[fieldName] !== undefined && metadata[fieldName] !== null) {
-        formData[fieldName] = String(metadata[fieldName]).trim();
-      }
+    const updatedFormData = {
+      ...formData,
+      [fieldName]: value
+    };
+
+    setFormData(updatedFormData);
+
+    // Calculate new progress immediately
+    const newProgress = calculateProgress(updatedFormData);
+    console.log('[KYB Form Debug] Progress after field update:', {
+      oldProgress: lastSavedProgress,
+      newProgress,
+      fieldName,
+      isEmpty: isEmptyValue(value)
     });
 
-    return formData;
+    // Save progress if it has changed
+    if (newProgress !== lastSavedProgress) {
+      saveProgress(newProgress);
+    }
   };
 
-  // Calculate progress by only counting KYB form fields
-  const calculateProgress = () => {
-    // Only count fields that are part of the KYB form
-    const filledFields = FORM_FIELD_NAMES.filter(fieldName =>
-      !isEmptyValue(formData[fieldName])
-    ).length;
-    return Math.min(Math.round((filledFields / TOTAL_FIELDS) * 100), 100);
-  };
-
-  // Save progress to backend
+  // Save progress to backend with validation
   const saveProgress = async (currentProgress: number) => {
     if (!taskId || !initialLoadDone) {
-      console.log('[KYB Form Debug] Skipping progress save - no taskId or initial load not done:', { taskId, initialLoadDone });
+      console.log('[KYB Form Debug] Skipping progress save - no taskId or initial load not done:', { 
+        taskId, 
+        initialLoadDone 
+      });
       return;
     }
 
@@ -392,7 +437,8 @@ export const OnboardingKYBFormPlayground = ({
         taskId,
         currentProgress,
         newStatus,
-        previousProgress: lastSavedProgress
+        previousProgress: lastSavedProgress,
+        formDataKeys: Object.keys(formData)
       });
 
       const statusResponse = await fetch(`/api/tasks/${taskId}/status`, {
@@ -404,25 +450,11 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
-      console.log('[KYB Form Debug] Status update response:', {
-        ok: statusResponse.ok,
-        status: statusResponse.status,
-        statusText: statusResponse.statusText
-      });
-
       if (!statusResponse.ok) {
-        const errorData = await statusResponse.json();
-        console.error('[KYB Form Debug] Failed to update task status:', errorData);
-        throw new Error(`Failed to update task status: ${errorData.message}`);
+        throw new Error(`Failed to update task status: ${statusResponse.statusText}`);
       }
 
       // Then save the form progress
-      console.log('[KYB Form Debug] Saving form progress:', {
-        taskId,
-        progress: currentProgress,
-        formData
-      });
-
       const progressResponse = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -433,25 +465,11 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
-      console.log('[KYB Form Debug] Progress save response:', {
-        ok: progressResponse.ok,
-        status: progressResponse.status,
-        statusText: progressResponse.statusText
-      });
-
       if (!progressResponse.ok) {
-        const errorData = await progressResponse.json();
-        console.error('[KYB Form Debug] Failed to save progress:', errorData);
-        throw new Error(`Failed to save progress: ${errorData.message}`);
+        throw new Error(`Failed to save progress: ${progressResponse.statusText}`);
       }
 
       // Notify via WebSocket about progress update
-      console.log('[KYB Form Debug] Sending WebSocket update:', {
-        taskId,
-        progress: currentProgress,
-        status: newStatus
-      });
-
       await wsService.send('task_updated', {
         taskId,
         progress: currentProgress,
@@ -459,9 +477,8 @@ export const OnboardingKYBFormPlayground = ({
       });
 
       setLastSavedProgress(currentProgress);
-
-      // Invalidate task queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+
     } catch (error) {
       console.error('[KYB Form Debug] Error in saveProgress:', error);
       toast({
@@ -516,7 +533,7 @@ export const OnboardingKYBFormPlayground = ({
           setLastSavedProgress(data.progress || 0);
 
           // Calculate initial progress
-          const initialProgress = calculateProgress();
+          const initialProgress = calculateProgress(extractedData);
           console.log('[KYB Form Debug] Initial progress calculation:', {
             calculated: initialProgress,
             saved: data.progress,
@@ -541,7 +558,7 @@ export const OnboardingKYBFormPlayground = ({
       return;
     }
 
-    const progress = calculateProgress();
+    const progress = calculateProgress(formData);
     console.log('[KYB Form Debug] === Progress Update ===');
     console.log('[KYB Form Debug] Progress calculation:', {
       progress,
@@ -725,7 +742,7 @@ export const OnboardingKYBFormPlayground = ({
   // Calculate progress based on filled fields
   const progress = isSubmitted
     ? 100
-    : calculateProgress();
+    : calculateProgress(formData);
 
   // Check if current step is valid
   const isCurrentStepValid = (() => {
@@ -806,19 +823,6 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-  // Handle form field updates
-  const handleFormDataUpdate = (fieldName: string, value: string) => {
-    console.log('[KYB Form Debug] Updating form field:', {
-      fieldName,
-      oldValue: formData[fieldName],
-      newValue: value
-    });
-
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
-  };
 
   // Determine field variant based on validation and form state
   const getFieldVariant = (field: any, value: string | undefined) => {
@@ -965,8 +969,7 @@ export const OnboardingKYBFormPlayground = ({
                       </div>
                     </div>
                     <FormField
-                      type="text"
-                      variant={variant}
+                      type="text"                      variant={variant}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
                       aiSuggestion={getSuggestionForField(field.name)}
