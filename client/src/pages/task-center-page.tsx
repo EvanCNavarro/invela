@@ -81,7 +81,7 @@ const getTaskCountForTab = (tabId: string, tasks: Task[], user?: { id: number },
       return task.assigned_to === user.id ||
              (task.task_scope === "company" && task.company_id === currentCompany.id);
     } else if (tabId === "for-others") {
-      return task.created_by === user.id && task.assigned_to !== user.id;
+      return task.created_by === user.id && (!task.assigned_to || task.assigned_to !== user.id);
     }
 
     return false;
@@ -228,7 +228,7 @@ export default function TaskCenterPage() {
       return task.assigned_to === user?.id ||
              (task.task_scope === "company" && task.company_id === currentCompany?.id);
     } else if (activeTab === "for-others") {
-      return task.created_by === user?.id && task.assigned_to !== user?.id;
+      return task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id);
     }
 
     console.groupEnd();
