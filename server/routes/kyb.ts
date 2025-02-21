@@ -59,15 +59,28 @@ router.post('/api/kyb/progress', async (req, res) => {
       return res.status(400).json({ error: 'Task ID is required' });
     }
 
+    // Get existing task data
+    const [existingTask] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+
+    if (!existingTask) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Merge existing metadata with new form data
+    const updatedMetadata = {
+      ...(existingTask.metadata || {}),
+      ...formData,
+      lastUpdated: new Date().toISOString()
+    };
+
     // Update task with progress and save form data
     await db.update(tasks)
       .set({
-        progress,
-        status: progress === 100 ? TaskStatus.COMPLETED : TaskStatus.IN_PROGRESS,
-        metadata: {
-          ...formData,
-          lastUpdated: new Date().toISOString()
-        }
+        progress: Math.min(progress, 100), // Ensure progress doesn't exceed 100%
+        status: progress >= 100 ? TaskStatus.COMPLETED : TaskStatus.IN_PROGRESS,
+        metadata: updatedMetadata
       })
       .where(eq(tasks.id, taskId));
 
@@ -94,7 +107,7 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     // Return saved form data and progress
     res.json({
       formData: task.metadata || {},
-      progress: task.progress
+      progress: Math.min(task.progress || 0, 100) // Ensure progress doesn't exceed 100%
     });
   } catch (error) {
     console.error('[KYB API] Error loading progress:', error);

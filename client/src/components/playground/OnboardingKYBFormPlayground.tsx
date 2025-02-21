@@ -32,46 +32,46 @@ const FORM_STEPS = [
     title: 'Entity Identification',
     description: 'Basic information about your company',
     fields: [
-      { 
-        name: 'legalEntityName', 
-        label: 'Legal Entity Name', 
+      {
+        name: 'legalEntityName',
+        label: 'Legal Entity Name',
         question: 'What is the registered business name?',
         tooltip: 'The full legal name as it appears on official registration documents',
-        suggestion: 'name' 
+        suggestion: 'name'
       },
-      { 
-        name: 'registrationNumber', 
+      {
+        name: 'registrationNumber',
         label: 'Registration Number',
         question: 'What is the corporation or business number?',
         tooltip: 'Issued by Corporations Canada or the relevant state authority',
       },
-      { 
-        name: 'incorporationDate', 
+      {
+        name: 'incorporationDate',
         label: 'Date of Incorporation',
         question: 'When was the business formed?',
         tooltip: 'The official date when the business was legally incorporated',
-        suggestion: 'incorporation_year' 
+        suggestion: 'incorporation_year'
       },
-      { 
-        name: 'jurisdiction', 
+      {
+        name: 'jurisdiction',
         label: 'Jurisdiction of Incorporation',
         question: 'In which jurisdiction is the business incorporated?',
         tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
-        suggestion: 'hq_address' 
+        suggestion: 'hq_address'
       },
-      { 
-        name: 'registeredAddress', 
+      {
+        name: 'registeredAddress',
         label: 'Registered Business Address',
         question: 'What is the principal business address?',
         tooltip: 'The official registered address where the business operates',
-        suggestion: 'hq_address' 
+        suggestion: 'hq_address'
       },
-      { 
-        name: 'businessType', 
+      {
+        name: 'businessType',
         label: 'Business Type/Legal Structure',
         question: 'What is the legal structure of the business?',
         tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
-        suggestion: 'legal_structure' 
+        suggestion: 'legal_structure'
       }
     ],
     validation: (data: Record<string, unknown>) => {
@@ -90,22 +90,22 @@ const FORM_STEPS = [
     title: 'Ownership & Management',
     description: 'Details about company ownership and management',
     fields: [
-      { 
-        name: 'directorsAndOfficers', 
+      {
+        name: 'directorsAndOfficers',
         label: 'Directors and Officers',
         question: 'Who are the current directors and senior officers?',
         tooltip: 'Include full legal names, dates of birth, and contact details',
-        suggestion: 'founders_and_leadership' 
+        suggestion: 'founders_and_leadership'
       },
-      { 
-        name: 'ultimateBeneficialOwners', 
+      {
+        name: 'ultimateBeneficialOwners',
         label: 'Ultimate Beneficial Owners (UBOs)',
         question: 'Which individuals hold 25% or more ownership?',
         tooltip: 'Include direct and indirect ownership with supporting documentation',
         suggestion: 'investors'
       },
-      { 
-        name: 'authorizedSigners', 
+      {
+        name: 'authorizedSigners',
         label: 'Authorized Signers',
         question: 'Who has legal signing authority for the business?',
         tooltip: 'Include documentation of signing authority',
@@ -123,20 +123,20 @@ const FORM_STEPS = [
     title: 'Official Documentation',
     description: 'Required legal and regulatory documents',
     fields: [
-      { 
-        name: 'corporateRegistration', 
+      {
+        name: 'corporateRegistration',
         label: 'Corporate Registration Documents',
         question: 'What are the official registration documents?',
         tooltip: 'Documents that confirm business registration and legal status',
       },
-      { 
-        name: 'goodStanding', 
+      {
+        name: 'goodStanding',
         label: 'Proof of Good Standing',
         question: 'Is the business in good standing with regulators?',
         tooltip: 'Current status with the regulatory body',
       },
-      { 
-        name: 'licenses', 
+      {
+        name: 'licenses',
         label: 'Licensing and Regulatory Documents',
         question: 'What business licenses and permits are held?',
         tooltip: 'All current licenses and permits related to business activities',
@@ -153,20 +153,20 @@ const FORM_STEPS = [
     title: 'Financial & Operational',
     description: 'Financial and operational information',
     fields: [
-      { 
-        name: 'taxId', 
+      {
+        name: 'taxId',
         label: 'Tax Identification',
         question: 'What is the business tax ID?',
         tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
       },
-      { 
-        name: 'financialStatements', 
+      {
+        name: 'financialStatements',
         label: 'Financial Statements',
         question: 'Are recent financial statements available?',
         tooltip: 'Recent audited financial statements or documentation of financial health',
       },
-      { 
-        name: 'operationalPolicies', 
+      {
+        name: 'operationalPolicies',
         label: 'Operational Policies',
         question: 'What security and compliance policies are in place?',
         tooltip: 'Policies for data protection, cybersecurity (API security for OpenBanking), and business continuity',
@@ -183,14 +183,14 @@ const FORM_STEPS = [
     title: 'Compliance & Risk',
     description: 'Compliance and risk assessment information',
     fields: [
-      { 
-        name: 'sanctionsCheck', 
+      {
+        name: 'sanctionsCheck',
         label: 'Sanctions and Adverse Media Checks',
         question: 'Are there any sanctions or adverse media flags?',
         tooltip: 'History of sanctions or adverse media watchlist appearances',
       },
-      { 
-        name: 'dueDiligence', 
+      {
+        name: 'dueDiligence',
         label: 'Due Diligence Reports',
         question: 'What due diligence reports are available?',
         tooltip: 'Recent third-party due diligence or risk assessment reports verifying compliance',
@@ -236,17 +236,20 @@ export const OnboardingKYBFormPlayground = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [lastSavedProgress, setLastSavedProgress] = useState(0);
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
   const queryClient = useQueryClient();
 
   // Calculate progress whenever form data changes
   const calculateProgress = () => {
-    const filledFields = Object.values(formData).filter(value => !isEmptyValue(value)).length;
-    return Math.round((filledFields / TOTAL_FIELDS) * 100);
+    // Count only non-empty fields
+    const filledFields = Object.entries(formData).filter(([_, value]) => !isEmptyValue(value)).length;
+    // Ensure progress doesn't exceed 100%
+    return Math.min(Math.round((filledFields / TOTAL_FIELDS) * 100), 100);
   };
 
   // Save progress to backend
   const saveProgress = async (currentProgress: number) => {
-    if (!taskId || currentProgress === lastSavedProgress) return;
+    if (!taskId || !initialLoadDone) return;
 
     try {
       const response = await fetch('/api/kyb/progress', {
@@ -290,9 +293,17 @@ export const OnboardingKYBFormPlayground = ({
         if (data.formData) {
           setFormData(data.formData);
           setLastSavedProgress(data.progress || 0);
+
+          // Set the current step based on the last completed step
+          const lastCompletedStep = FORM_STEPS.reduce((lastStep, step, index) => {
+            return step.validation(data.formData) ? index : lastStep;
+          }, 0);
+          setCurrentStep(lastCompletedStep);
         }
+        setInitialLoadDone(true);
       } catch (error) {
         console.error('Error loading saved progress:', error);
+        setInitialLoadDone(true);
       }
     };
 
@@ -301,13 +312,15 @@ export const OnboardingKYBFormPlayground = ({
 
   // Save progress when form data changes
   useEffect(() => {
+    if (!initialLoadDone) return;
+
     const progress = calculateProgress();
     const debounceTimer = setTimeout(() => {
       saveProgress(progress);
     }, 1000); // Debounce save calls
 
     return () => clearTimeout(debounceTimer);
-  }, [formData]);
+  }, [formData, initialLoadDone]);
 
   // Load form and perform company search in background
   useEffect(() => {
@@ -327,7 +340,7 @@ export const OnboardingKYBFormPlayground = ({
 
       setIsSearching(true);
       setSearchError(null);
-      setSearchCompleted(false); 
+      setSearchCompleted(false);
 
       try {
         console.log("[KYB Form Debug] Making API request to /api/company-search");
@@ -498,10 +511,22 @@ export const OnboardingKYBFormPlayground = ({
 
   // Update form data handler
   const handleFormDataUpdate = (fieldName: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [fieldName]: value
+      };
+
+      // Log form data update for debugging
+      console.log('Form data updated:', {
+        fieldName,
+        value,
+        newData,
+        progress: calculateProgress()
+      });
+
+      return newData;
+    });
   };
 
   return (
@@ -513,7 +538,7 @@ export const OnboardingKYBFormPlayground = ({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                  isSubmitted 
+                  isSubmitted
                     ? 'bg-green-100 text-green-600'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
@@ -529,13 +554,13 @@ export const OnboardingKYBFormPlayground = ({
             </div>
             {!isSubmitted && (
               <div className="text-sm text-muted-foreground">
-                {progress === 100 ? 'Ready for Submission' : `${progress}% Complete`}
+                {progress}% Complete
               </div>
             )}
           </div>
         </div>
 
-        {/* Progress bar - only show when not submitted */}
+        {/* Progress bar */}
         {!isSubmitted && (
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
