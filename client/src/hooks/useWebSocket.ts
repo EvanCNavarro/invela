@@ -29,45 +29,45 @@ export function useWebSocket(): UseWebSocketReturn {
   const reconnectAttempt = useRef(0);
   const pingTimer = useRef<NodeJS.Timeout>();
   const pongReceived = useRef(true);
-  const cleanupInProgress = useRef(false);
   const queryClient = useQueryClient();
+  const mountedRef = useRef(true);
 
   const cleanup = useCallback(() => {
-    if (cleanupInProgress.current) return;
-    cleanupInProgress.current = true;
+    if (pingTimer.current) {
+      clearInterval(pingTimer.current);
+      pingTimer.current = undefined;
+    }
 
-    try {
-      if (pingTimer.current) {
-        clearInterval(pingTimer.current);
-        pingTimer.current = undefined;
+    if (socket) {
+      // Only attempt to close if socket is in OPEN or CONNECTING state
+      if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
+        socket.close();
       }
+    }
 
-      if (socket) {
-        if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
-          socket.close();
-        }
-        setSocket(null);
-      }
-
+    if (mountedRef.current) {
+      setSocket(null);
       setConnected(false);
-    } finally {
-      cleanupInProgress.current = false;
     }
   }, [socket]);
 
   const connect = useCallback(() => {
-    if (cleanupInProgress.current) return;
+    if (!mountedRef.current) return;
+
+    cleanup();
 
     try {
-      cleanup();
-
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
-
       const ws = new WebSocket(wsUrl);
       let connectionTimeoutId: NodeJS.Timeout;
 
       ws.onopen = () => {
+        if (!mountedRef.current) {
+          ws.close();
+          return;
+        }
+
         if (connectionTimeoutId) {
           clearTimeout(connectionTimeoutId);
         }
@@ -77,10 +77,13 @@ export function useWebSocket(): UseWebSocketReturn {
         reconnectAttempt.current = 0;
         pongReceived.current = true;
 
+        // Start ping interval
         pingTimer.current = setInterval(() => {
           if (!pongReceived.current) {
             cleanup();
-            connect();
+            if (mountedRef.current) {
+              connect();
+            }
             return;
           }
 
@@ -92,7 +95,7 @@ export function useWebSocket(): UseWebSocketReturn {
       };
 
       ws.onclose = (event) => {
-        if (cleanupInProgress.current) return;
+        if (!mountedRef.current) return;
 
         cleanup();
 
@@ -104,7 +107,11 @@ export function useWebSocket(): UseWebSocketReturn {
 
         if (reconnectAttempt.current < MAX_RETRIES) {
           const delay = getBackoffDelay(reconnectAttempt.current);
-          setTimeout(connect, delay);
+          setTimeout(() => {
+            if (mountedRef.current) {
+              connect();
+            }
+          }, delay);
           reconnectAttempt.current++;
         } else {
           setError(new Error('Connection lost. Please refresh the page.'));
@@ -112,12 +119,16 @@ export function useWebSocket(): UseWebSocketReturn {
       };
 
       ws.onerror = () => {
+        if (!mountedRef.current) return;
+
         if (ws.readyState !== WebSocket.CLOSING && ws.readyState !== WebSocket.CLOSED) {
           setError(new Error('Connection error. Please check your internet connection.'));
         }
       };
 
       ws.onmessage = (event) => {
+        if (!mountedRef.current) return;
+
         try {
           const data = JSON.parse(event.data);
 
@@ -133,17 +144,17 @@ export function useWebSocket(): UseWebSocketReturn {
               break;
           }
         } catch (err) {
-          // Only log parse errors in development
           if (process.env.NODE_ENV === 'development') {
-            console.error('[WebSocket] Message parse error');
+            console.error('[WebSocket] Message parse error:', err);
           }
         }
       };
 
       setSocket(ws);
 
+      // Set connection timeout
       connectionTimeoutId = setTimeout(() => {
-        if (!connected) {
+        if (mountedRef.current && !connected) {
           cleanup();
           if (reconnectAttempt.current < MAX_RETRIES) {
             connect();
@@ -151,22 +162,20 @@ export function useWebSocket(): UseWebSocketReturn {
         }
       }, CONNECTION_TIMEOUT);
 
-      return () => {
-        if (connectionTimeoutId) {
-          clearTimeout(connectionTimeoutId);
-        }
-      };
     } catch (err) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('[WebSocket] Setup error');
+        console.error('[WebSocket] Setup error:', err);
       }
       setError(err as Error);
     }
-  }, [cleanup, connected, queryClient]);
+  }, [cleanup, queryClient]);
 
   useEffect(() => {
+    mountedRef.current = true;
     connect();
+
     return () => {
+      mountedRef.current = false;
       cleanup();
     };
   }, [connect, cleanup]);
