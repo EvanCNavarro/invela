@@ -159,6 +159,26 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
+  useEffect(() => {
+    console.group('[TaskCenter] Task Count Analysis');
+    console.log('All tasks:', tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      company_id: t.company_id,
+      task_scope: t.task_scope,
+      created_by: t.created_by,
+      assigned_to: t.assigned_to
+    })));
+    console.log('Current user:', {
+      id: user?.id,
+      email: user?.email,
+      company_id: currentCompany?.id
+    });
+    console.log('My Tasks count:', getTaskCountForTab('my-tasks'));
+    console.log('For Others count:', getTaskCountForTab('for-others'));
+    console.groupEnd();
+  }, [tasks, user, currentCompany]);
+
   const filteredTasks = tasks.filter((task) => {
     console.group(`[TaskCenter] Filtering task ${task.id}`);
     console.log('Task details:', {
@@ -278,13 +298,36 @@ export default function TaskCenterPage() {
 
   const getTaskCountForTab = (tabId: string) => {
     return tasks.filter(task => {
-      if (tabId === "my-tasks") {
-        return task.assigned_to === user?.id || (task.user_email?.toLowerCase() === user?.email?.toLowerCase()) || (task.task_scope === 'company' && task.company_id === currentCompany?.id);
-      } else {
-        return (task.created_by === user?.id &&
-          (task.task_type === 'user_onboarding' || task.task_type === 'user_invitation' || task.task_type === 'company_kyb') &&
-          task.assigned_to !== user?.id && task.company_id === currentCompany?.id);
+      // First check company match for all cases
+      if (task.company_id !== currentCompany?.id) {
+        return false;
       }
+
+      if (tabId === "my-tasks") {
+        // Show all company-wide tasks from user's company
+        if (task.task_scope === 'company') {
+          return true;
+        }
+
+        // For user-specific tasks
+        if (task.task_scope === 'user') {
+          const isAssignedToUser = task.assigned_to === user?.id;
+          const matchesUserEmail = task.user_email?.toLowerCase() === user?.email?.toLowerCase();
+          return isAssignedToUser || matchesUserEmail;
+        }
+      } else if (tabId === "for-others") {
+        // Only show user-specific tasks where:
+        // 1. Current user is the creator
+        // 2. Task is not assigned to current user
+        // 3. Task is user-scoped
+        const isCreatedByUser = task.created_by === user?.id;
+        const isNotAssignedToUser = task.assigned_to !== user?.id;
+        const isUserTask = task.task_scope === 'user';
+
+        return isCreatedByUser && isNotAssignedToUser && isUserTask;
+      }
+
+      return false;
     }).length;
   };
 
