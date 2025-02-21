@@ -11,10 +11,14 @@ import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 interface Company {
   onboarding_company_completed: boolean;
+  id: number;
 }
 
 interface Task {
-  id: string;
+  id: number;
+  company_id: number;
+  assigned_to?: number;
+  created_by: number;
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +39,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     queryKey: ["/api/companies/current"],
     staleTime: 0,
     gcTime: 0,
+  });
+
+  // Filter tasks for notification count to match task-center-page.tsx logic
+  const relevantTasks = tasks.filter(task => {
+    // Only count tasks for the current company
+    if (task.company_id !== currentCompany?.id) {
+      return false;
+    }
+    // Count tasks that are either assigned to the user or created by them
+    return task.assigned_to === user?.id || task.created_by === user?.id;
   });
 
   // Company hasn't completed onboarding
@@ -77,7 +91,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <Sidebar 
           isExpanded={isExpanded}
           onToggleExpanded={toggleExpanded}
-          notificationCount={tasks.length}
+          notificationCount={relevantTasks.length}
           showInvelaTabs={false}
           isPlayground={false}
           variant={isCompanyLocked ? 'company-locked' : 'default'}
