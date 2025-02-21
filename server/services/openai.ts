@@ -44,6 +44,9 @@ function formatWebsiteUrl(url: string): string {
 function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
   const cleanedData: Partial<CleanedCompanyData> = {};
 
+  // First extract the actual data from the OpenAI response format
+  const extractedData = extractDataFromResponse(result);
+
   // Helper function to clean array or string values
   const cleanArrayOrString = (value: any): string[] => {
     if (!value) return [];
@@ -51,46 +54,49 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       return value.map(item => item.trim()).filter(Boolean);
     }
     if (typeof value === 'string') {
-      // Handle both comma-separated strings and PostgreSQL array format
-      const cleaned = value
-        .replace(/^\{|\}$/g, '') // Remove PostgreSQL array brackets
-        .replace(/\\"/g, '"') // Remove escaped quotes
+      return value
         .split(',')
-        .map(item => item.trim().replace(/^"/, '').replace(/"$/, '')) // Remove quotes and trim
+        .map(item => item.trim())
         .filter(Boolean);
-      return cleaned;
     }
     return [];
   };
 
-  // Process each field from the result
-  Object.entries(result).forEach(([key, value]: [string, any]) => {
+  // Process each field from the extracted data
+  Object.entries(extractedData).forEach(([key, value]: [string, any]) => {
     if (!value) return;
-
-    // Handle both direct values and JSON strings that need parsing
-    let parsedValue = value;
-    if (typeof value === 'string' && value.includes('"source"')) {
-      try {
-        parsedValue = JSON.parse(value);
-      } catch (e) {
-        console.log("[OpenAI Search] Failed to parse JSON string:", value);
-        return;
-      }
-    }
-
-    // Extract actual data from the OpenAI response structure
-    const data = parsedValue.data || parsedValue;
-    if (!data) return;
 
     switch (key) {
       case 'websiteUrl':
-        cleanedData[key] = formatWebsiteUrl(data);
+        cleanedData[key] = formatWebsiteUrl(value);
+        break;
+
+      case 'keyClientsPartners':
+      case 'investors':
+      case 'certificationsCompliance':
+        cleanedData[key] = cleanArrayOrString(value).join(', ');
+        break;
+
+      case 'numEmployees':
+        if (typeof value === 'string') {
+          const match = value.match(/\d+/);
+          cleanedData[key] = match ? parseInt(match[0], 10) : null;
+        } else if (typeof value === 'number') {
+          cleanedData[key] = value;
+        }
+        break;
+
+      case 'incorporationYear':
+        if (typeof value === 'string' || typeof value === 'number') {
+          const year = parseInt(String(value), 10);
+          cleanedData[key] = !isNaN(year) ? year : null;
+        }
         break;
 
       case 'foundersAndLeadership':
-        if (Array.isArray(data)) {
+        if (Array.isArray(value)) {
           // Group people by role without adding "Unknown" text
-          const roleGroups = data.reduce((acc: Record<string, string[]>, person: any) => {
+          const roleGroups = value.reduce((acc: Record<string, string[]>, person: any) => {
             const role = person.role || '';
             if (!acc[role]) acc[role] = [];
             acc[role].push(person.name);
@@ -106,86 +112,94 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
             });
 
           cleanedData[key] = formattedGroups.join(', ');
-        } else if (typeof data === 'string') {
-          cleanedData[key] = data.trim();
+        } else if (typeof value === 'string') {
+          cleanedData[key] = value.trim();
         }
         break;
 
       case 'exitStrategyHistory':
         // Clean and format exit strategy history
-        if (typeof data === 'string') {
-          cleanedData[key] = data
+        if (typeof value === 'string') {
+          cleanedData[key] = value
             .replace(/^.*?"data":"(.+?)".*$/, '$1')
             .replace(/\\"/g, '"')
             .replace(/[{}]/g, '')
             .trim();
         } else {
-          cleanedData[key] = data;
+          cleanedData[key] = value;
         }
-        break;
-
-      case 'keyClientsPartners':
-      case 'investors':
-      case 'certificationsCompliance':
-        // Convert to comma-separated string
-        cleanedData[key] = cleanArrayOrString(data).join(', ');
         break;
 
       case 'productsServices':
         // Convert to comma-separated string, ensuring proper formatting
-        if (Array.isArray(data)) {
-          cleanedData[key] = data.join(', ');
-        } else if (typeof data === 'string') {
-          cleanedData[key] = cleanArrayOrString(data).join(', ');
+        if (Array.isArray(value)) {
+          cleanedData[key] = value.join(', ');
+        } else if (typeof value === 'string') {
+          cleanedData[key] = cleanArrayOrString(value).join(', ');
         }
         break;
 
       case 'revenue':
         // Extract just the revenue value
-        if (typeof data === 'string') {
-          const match = data.match(/\$[\d.]+ [a-z]+ annually/i);
-          cleanedData[key] = match ? match[0] : data;
+        if (typeof value === 'string') {
+          const match = value.match(/\$[\d.]+ [a-z]+ annually/i);
+          cleanedData[key] = match ? match[0] : value;
         } else {
-          cleanedData[key] = data;
+          cleanedData[key] = value;
         }
         break;
 
       case 'fundingStage':
         // Extract just the stage value
-        if (typeof data === 'string') {
-          const match = data.match(/Series [A-Z]/i);
-          cleanedData[key] = match ? match[0] : data;
+        if (typeof value === 'string') {
+          const match = value.match(/Series [A-Z]/i);
+          cleanedData[key] = match ? match[0] : value;
         } else {
-          cleanedData[key] = data;
+          cleanedData[key] = value;
         }
         break;
 
       default:
         // For all other fields, store the data value directly
-        cleanedData[key as keyof CleanedCompanyData] = data;
+        cleanedData[key as keyof CleanedCompanyData] = value;
     }
   });
 
   return cleanedData;
 }
 
+// Helper function to extract data from OpenAI response
+function extractDataFromResponse(result: Record<string, any>): Record<string, any> {
+  const extracted: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(result)) {
+    if (value && typeof value === 'object' && 'data' in value) {
+      extracted[key] = value.data;
+    } else {
+      extracted[key] = value;
+    }
+  }
+
+  return extracted;
+}
+
 async function logSearchAnalytics(analytics: SearchAnalytics) {
   try {
     await db.insert(openaiSearchAnalytics).values({
-      searchType: analytics.searchType,
-      companyId: analytics.companyId,
-      searchPrompt: analytics.searchPrompt,
-      searchResults: analytics.searchResults,
-      inputTokens: analytics.inputTokens,
-      outputTokens: analytics.outputTokens,
-      estimatedCost: analytics.estimatedCost,
+      search_type: analytics.searchType || 'missing_data', // Ensure default value
+      company_id: analytics.companyId,
+      search_prompt: analytics.searchPrompt,
+      search_results: analytics.searchResults,
+      input_tokens: analytics.inputTokens,
+      output_tokens: analytics.outputTokens,
+      estimated_cost: analytics.estimatedCost,
       model: analytics.model,
       success: analytics.success,
-      errorMessage: analytics.errorMessage,
+      error_message: analytics.errorMessage,
       duration: analytics.duration,
-      searchDate: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      search_date: new Date(),
+      created_at: new Date(),
+      updated_at: new Date(),
     });
   } catch (error) {
     console.error('[OpenAI Analytics] Failed to log search analytics:', error);
