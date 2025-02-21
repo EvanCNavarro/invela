@@ -165,23 +165,4 @@ router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTran
   }
 });
 
-// Define progress thresholds for KYB tasks
-const KYB_STATUS_THRESHOLDS = {
-  [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
-  [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
-  [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
-  [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
-  [TaskStatus.APPROVED]: { min: 100, max: 100 },
-} as const;
-
-// Helper function to determine KYB task status based on progress
-function getKybStatusFromProgress(progress: number): TaskStatus {
-  console.log('[Task Routes] Calculating status for progress:', progress);
-  const status = progress === 0 ? TaskStatus.NOT_STARTED :
-    progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS :
-      TaskStatus.READY_FOR_SUBMISSION;
-  console.log('[Task Routes] Determined status:', status);
-  return status;
-}
-
 export default router;

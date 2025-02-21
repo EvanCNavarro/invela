@@ -81,35 +81,11 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
     });
   }
 
-  // Special case: Allow resetting KYB tasks from any state back to NOT_STARTED
+  // Special case: Allow resetting KYB tasks back to NOT_STARTED
   if (taskType === 'company_kyb' && newStatus === TaskStatus.NOT_STARTED) {
     console.log('[TaskValidation] Allowing reset to NOT_STARTED for KYB task');
-    const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
-    if (progress < threshold.min || progress > threshold.max) {
-      return res.status(400).json({
-        message: `Invalid progress value for status ${newStatus}`,
-        required: threshold
-      });
-    }
-    return next();
-  }
-
-  // If no current status (new task) or same status, check progress thresholds
-  if (!currentStatus || currentStatus === newStatus) {
-    const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
-    console.log('[TaskValidation] Checking progress threshold for same status:', {
-      status: newStatus,
-      progress,
-      threshold
-    });
-
-    if (progress < threshold.min || progress > threshold.max) {
-      return res.status(400).json({
-        message: `Invalid progress value for status ${newStatus}`,
-        required: threshold
-      });
-    }
-    return next();
+    next();
+    return;
   }
 
   // Check if transition is allowed for this task type
