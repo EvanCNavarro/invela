@@ -24,7 +24,7 @@ import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
 
-// Matching the snake_case from the database
+// Update Task interface to explicitly include progress
 interface Task {
   id: number;
   title: string;
@@ -33,7 +33,7 @@ interface Task {
   task_scope: string;
   status: TaskStatus;
   priority: string;
-  progress: number;
+  progress: number;  // Explicitly typing progress as number
   assigned_to: number | null;
   created_by: number | null;
   user_email: string | null;
@@ -56,55 +56,51 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  // Update query with explicit Task type and enable frequent refetching
   const { data: tasks = [], isLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000,
-    gcTime: 5 * 60 * 1000
+    staleTime: 1000, // Consider data stale after 1 second
+    refetchInterval: 5000, // Poll every 5 seconds for updates
   });
 
-  const { data: currentCompany } = useQuery({
-    queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000
-  });
-
-  // Set up WebSocket subscription for real-time updates
+  // WebSocket subscription for real-time updates
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
 
     const setupSubscriptions = async () => {
       try {
-        // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
-          console.log('[TaskCenter] === WebSocket Update Received ===');
-          console.log('[TaskCenter] Update data:', {
+          console.log('[TaskCenter] WebSocket Update Received:', {
             taskId: data.taskId,
             newStatus: data.status,
-            newProgress: data.progress
+            newProgress: data.progress,
+            timestamp: new Date().toISOString()
           });
 
           queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            console.log('[TaskCenter] Current tasks in cache:', oldTasks);
-
             const updatedTasks = oldTasks.map(task =>
               task.id === data.taskId
-                ? { ...task, status: data.status, progress: data.progress }
+                ? { 
+                    ...task, 
+                    status: data.status, 
+                    progress: data.progress || 0 // Ensure progress is always a number
+                  }
                 : task
             );
 
-            console.log('[TaskCenter] Tasks after update:', updatedTasks);
-            console.log('[TaskCenter] Updated task:', updatedTasks.find(t => t.id === data.taskId));
+            console.log('[TaskCenter] Updated task state:', {
+              taskId: data.taskId,
+              progress: data.progress,
+              updatedTask: updatedTasks.find(t => t.id === data.taskId)
+            });
 
             return updatedTasks;
           });
 
-          // Force a refetch to ensure we have the latest data
-          console.log('[TaskCenter] Invalidating tasks query cache');
           queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         });
 
         subscriptions.push(unsubTaskUpdate);
-        console.log('[TaskCenter] WebSocket subscription setup complete');
-
       } catch (error) {
         console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
       }
@@ -116,7 +112,6 @@ export default function TaskCenterPage() {
       subscriptions.forEach(unsubscribe => {
         try {
           unsubscribe();
-          console.log('[TaskCenter] Successfully unsubscribed from WebSocket');
         } catch (error) {
           console.error('[TaskCenter] Error unsubscribing from WebSocket:', error);
         }
@@ -187,6 +182,11 @@ export default function TaskCenterPage() {
     setScopeFilter("All Assignee Types");
     setSearchResults([]);
   };
+
+  const { data: currentCompany } = useQuery({
+    queryKey: ["/api/companies/current"],
+    staleTime: 5 * 60 * 1000
+  });
 
   return (
     <DashboardLayout>
