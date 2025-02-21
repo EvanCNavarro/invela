@@ -4,28 +4,9 @@ import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../websocket";
-import { validateTaskStatusTransition } from "../middleware/taskValidation";
+import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
 
 const router = Router();
-
-// Define progress thresholds for KYB tasks
-const KYB_STATUS_THRESHOLDS = {
-  [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
-  [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
-  [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
-  [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
-  [TaskStatus.APPROVED]: { min: 100, max: 100 },
-} as const;
-
-// Helper function to determine KYB task status based on progress
-function getKybStatusFromProgress(progress: number): TaskStatus {
-  console.log('[Task Routes] Calculating status for progress:', progress);
-  const status = progress === 0 ? TaskStatus.NOT_STARTED :
-    progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS :
-      TaskStatus.READY_FOR_SUBMISSION;
-  console.log('[Task Routes] Determined status:', status);
-  return status;
-}
 
 const updateTaskStatusSchema = z.object({
   status: z.enum([
@@ -117,34 +98,16 @@ router.delete("/api/tasks/:id", async (req, res) => {
 });
 
 // Update task status and progress
-router.patch("/api/tasks/:id/status", validateTaskStatusTransition, async (req, res) => {
+router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTransition, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
-    const { status, progress } = req.body;
+    const { status, progress } = updateTaskStatusSchema.parse(req.body);
 
     console.log('[Task Routes] Processing status update request:', {
       taskId,
       requestedStatus: status,
-      requestedProgress: progress
-    });
-
-    // Get current task
-    const [currentTask] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-
-    if (!currentTask) {
-      console.log('[Task Routes] Task not found:', taskId);
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    console.log('[Task Routes] Current task state:', {
-      id: currentTask.id,
-      type: currentTask.task_type,
-      currentStatus: currentTask.status,
-      currentProgress: currentTask.progress,
-      requestedStatus: status,
-      requestedProgress: progress
+      requestedProgress: progress,
+      currentTask: req.task
     });
 
     // Update task with new status and progress
@@ -153,14 +116,14 @@ router.patch("/api/tasks/:id/status", validateTaskStatusTransition, async (req, 
       .set({
         status,
         progress,
-        updatedAt: new Date(),
+        updated_at: new Date(),
         metadata: {
-          ...currentTask.metadata,
-          statusFlow: [...(currentTask.metadata?.statusFlow || []), status],
+          ...req.task?.metadata,
+          statusFlow: [...(req.task?.metadata?.statusFlow || []), status],
           statusUpdates: [
-            ...(currentTask.metadata?.statusUpdates || []),
+            ...(req.task?.metadata?.statusUpdates || []),
             {
-              from: currentTask.status,
+              from: req.task?.status,
               to: status,
               timestamp: new Date().toISOString(),
               progress
@@ -174,7 +137,8 @@ router.patch("/api/tasks/:id/status", validateTaskStatusTransition, async (req, 
     console.log('[Task Routes] Task updated successfully:', {
       id: updatedTask.id,
       newStatus: updatedTask.status,
-      newProgress: updatedTask.progress
+      newProgress: updatedTask.progress,
+      metadata: updatedTask.metadata
     });
 
     // Get updated counts and broadcast task update
@@ -200,5 +164,24 @@ router.patch("/api/tasks/:id/status", validateTaskStatusTransition, async (req, 
     res.status(500).json({ message: "Failed to update task status" });
   }
 });
+
+// Define progress thresholds for KYB tasks
+const KYB_STATUS_THRESHOLDS = {
+  [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
+  [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
+  [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
+  [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
+  [TaskStatus.APPROVED]: { min: 100, max: 100 },
+} as const;
+
+// Helper function to determine KYB task status based on progress
+function getKybStatusFromProgress(progress: number): TaskStatus {
+  console.log('[Task Routes] Calculating status for progress:', progress);
+  const status = progress === 0 ? TaskStatus.NOT_STARTED :
+    progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS :
+      TaskStatus.READY_FOR_SUBMISSION;
+  console.log('[Task Routes] Determined status:', status);
+  return status;
+}
 
 export default router;
