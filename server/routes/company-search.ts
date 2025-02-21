@@ -10,6 +10,25 @@ import { db } from "@db";
 
 const router = Router();
 
+// Utility function to convert camelCase to snake_case for database fields
+const convertToSnakeCase = (data: Record<string, any>): Record<string, any> => {
+  const converted: Record<string, any> = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    // Convert camelCase to snake_case
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+
+    // Handle special case for numEmployees -> num_employees
+    if (key === 'numEmployees') {
+      converted.num_employees = value ? parseInt(String(value).replace(/[^\d]/g, ''), 10) || null : null;
+    } else {
+      converted[snakeKey] = value;
+    }
+  });
+
+  return converted;
+};
+
 // Full company search and enrichment
 router.post("/api/company-search", async (req, res) => {
   try {
@@ -46,17 +65,17 @@ router.post("/api/company-search", async (req, res) => {
         try {
           // Search for missing data using OpenAI
           const newData = await findMissingCompanyData(
-            { ...existingCompany, search_type: 'company_enrichment' },
+            { 
+              ...existingCompany,
+              search_type: 'company_enrichment' 
+            },
             missingFields
           );
           console.log('[Company Search Debug] Retrieved new data:', newData);
 
-          // Format numeric fields appropriately before updating
-          const formattedData = {
-            ...newData,
-            num_employees: newData.num_employees ? 
-              parseInt(newData.num_employees.replace(/[^\d]/g, ''), 10) || null : null
-          };
+          // Format and convert the data to match database schema
+          const formattedData = convertToSnakeCase(newData);
+          console.log('[Company Search Debug] Formatted data for storage:', formattedData);
 
           // Update company with new data
           const updatedCompany = await updateCompanyData(existingCompany.id, formattedData);
@@ -108,12 +127,9 @@ router.post("/api/company-search", async (req, res) => {
 
     console.log('[Company Search Debug] Retrieved new company data:', newData);
 
-    // Format numeric fields appropriately before creating
-    const formattedData = {
-      ...newData,
-      num_employees: newData.num_employees ? 
-        parseInt(newData.num_employees.replace(/[^\d]/g, ''), 10) || null : null
-    };
+    // Format and convert the data to match database schema
+    const formattedData = convertToSnakeCase(newData);
+    console.log('[Company Search Debug] Formatted data for storage:', formattedData);
 
     // Create new company in registry
     const newCompany = await createCompany({
