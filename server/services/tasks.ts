@@ -2,38 +2,53 @@ import { db } from "@db";
 import { tasks, users, TaskStatus } from "@db/schema";
 import { eq, and, sql, or } from "drizzle-orm";
 
+type ValidStatus = typeof TaskStatus[keyof typeof TaskStatus];
+
+interface TaskStatusUpdate {
+  status: ValidStatus;
+  progress: number;
+  metadata?: Record<string, any>;
+}
+
 // Validate if a status transition is allowed based on task type
 function isValidStatusTransition(
   taskType: string,
-  currentStatus: TaskStatus,
-  newStatus: TaskStatus,
+  currentStatus: ValidStatus,
+  newStatus: ValidStatus,
   progress: number
 ): boolean {
   const TASK_TYPE_TRANSITIONS = {
     user_onboarding: {
-      [TaskStatus.EMAIL_SENT]: [TaskStatus.COMPLETED],
-      [TaskStatus.COMPLETED]: [], // Terminal state
+      [TaskStatus.EMAIL_SENT]: {
+        next: [TaskStatus.COMPLETED],
+        progress: { min: 25, max: 25 }
+      },
+      [TaskStatus.COMPLETED]: {
+        next: [], // Terminal state
+        progress: { min: 100, max: 100 }
+      }
     },
     company_kyb: {
-      [TaskStatus.NOT_STARTED]: [TaskStatus.IN_PROGRESS],
-      [TaskStatus.IN_PROGRESS]: [TaskStatus.READY_FOR_SUBMISSION],
-      [TaskStatus.READY_FOR_SUBMISSION]: [TaskStatus.SUBMITTED],
-      [TaskStatus.SUBMITTED]: [TaskStatus.APPROVED],
-      [TaskStatus.APPROVED]: [], // Terminal state
-    }
-  };
-
-  const PROGRESS_THRESHOLDS = {
-    company_kyb: {
-      [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
-      [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
-      [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
-      [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
-      [TaskStatus.APPROVED]: { min: 100, max: 100 },
-    },
-    user_onboarding: {
-      [TaskStatus.EMAIL_SENT]: { min: 25, max: 25 },
-      [TaskStatus.COMPLETED]: { min: 100, max: 100 },
+      [TaskStatus.NOT_STARTED]: {
+        next: [TaskStatus.IN_PROGRESS],
+        progress: { min: 0, max: 0 }
+      },
+      [TaskStatus.IN_PROGRESS]: {
+        next: [TaskStatus.READY_FOR_SUBMISSION],
+        progress: { min: 1, max: 99 }
+      },
+      [TaskStatus.READY_FOR_SUBMISSION]: {
+        next: [TaskStatus.SUBMITTED],
+        progress: { min: 100, max: 100 }
+      },
+      [TaskStatus.SUBMITTED]: {
+        next: [TaskStatus.APPROVED],
+        progress: { min: 100, max: 100 }
+      },
+      [TaskStatus.APPROVED]: {
+        next: [], // Terminal state
+        progress: { min: 100, max: 100 }
+      }
     }
   };
 
@@ -44,15 +59,16 @@ function isValidStatusTransition(
   }
 
   // Check if transition is allowed
-  const allowedTransitions = TASK_TYPE_TRANSITIONS[taskType][currentStatus] || [];
-  if (!allowedTransitions.includes(newStatus)) {
+  const currentState = TASK_TYPE_TRANSITIONS[taskType][currentStatus];
+  if (!currentState || !currentState.next.includes(newStatus)) {
     console.error(`[Task Service] Invalid transition from ${currentStatus} to ${newStatus}`);
     return false;
   }
 
   // Check if progress matches the new status
-  const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
-  if (progress < threshold.min || progress > threshold.max) {
+  const newState = TASK_TYPE_TRANSITIONS[taskType][newStatus];
+  const { min, max } = newState.progress;
+  if (progress < min || progress > max) {
     console.error(`[Task Service] Invalid progress ${progress} for status ${newStatus}`);
     return false;
   }
@@ -106,7 +122,7 @@ export async function updateOnboardingTaskStatus(userId: number) {
     const progress = nextStatus === TaskStatus.COMPLETED ? 100 : 25;
 
     // Validate status transition
-    if (!isValidStatusTransition(taskToUpdate.task_type, taskToUpdate.status, nextStatus, progress)) {
+    if (!isValidStatusTransition('user_onboarding', taskToUpdate.status, nextStatus, progress)) {
       console.error(`[Task Service] Invalid status transition from ${taskToUpdate.status} to ${nextStatus}`);
       return null;
     }
@@ -167,7 +183,7 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
     console.log(`[Task Service] Found task ${taskToUpdate.id} with status ${taskToUpdate.status}`);
 
     // Only allow transition from EMAIL_SENT to COMPLETED
-    if (!isValidStatusTransition(taskToUpdate.task_type, taskToUpdate.status, TaskStatus.COMPLETED, 100)) {
+    if (!isValidStatusTransition('user_onboarding', taskToUpdate.status, TaskStatus.COMPLETED, 100)) {
       console.error(`[Task Service] Invalid status transition from ${taskToUpdate.status} to COMPLETED`);
       return null;
     }

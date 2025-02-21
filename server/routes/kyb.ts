@@ -2,9 +2,8 @@ import { Router } from 'express';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { db } from '@db';
-import { tasks } from '@db/schema';
+import { tasks, TaskStatus } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
-import { TaskStatus } from '../types';
 
 const router = Router();
 
@@ -77,17 +76,29 @@ router.post('/api/kyb/progress', async (req, res) => {
       currentProgress: existingTask.progress
     });
 
+    // Determine appropriate status based on progress
+    let newStatus = existingTask.status;
+    if (progress === 0) {
+      newStatus = TaskStatus.NOT_STARTED;
+    } else if (progress < 100) {
+      newStatus = TaskStatus.IN_PROGRESS;
+    } else if (progress === 100) {
+      newStatus = TaskStatus.READY_FOR_SUBMISSION;
+    }
+
     // Merge existing metadata with new form data
     const updatedMetadata = {
       ...(existingTask.metadata || {}),
       ...formData,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus]
     };
 
     // Log the data we're about to save
     console.log('[KYB API] Saving updated data:', {
       taskId,
       progress,
+      newStatus,
       existingMetadata: existingTask.metadata,
       updatedMetadata,
       formDataKeys: Object.keys(formData)
@@ -97,7 +108,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     await db.update(tasks)
       .set({
         progress: Math.min(progress, 100), // Ensure progress doesn't exceed 100%
-        status: progress >= 100 ? TaskStatus.COMPLETED : TaskStatus.IN_PROGRESS,
+        status: newStatus,
         metadata: updatedMetadata
       })
       .where(eq(tasks.id, taskId));
@@ -156,12 +167,13 @@ router.post('/api/kyb/save', async (req, res) => {
     if (taskId) {
       await db.update(tasks)
         .set({
-          status: TaskStatus.COMPLETED,
+          status: TaskStatus.SUBMITTED,
           progress: 100,
           updated_at: new Date(),
           metadata: {
             ...formData,
-            kybFormFile: `${fileName}.json`
+            kybFormFile: `${fileName}.json`,
+            submissionDate: new Date().toISOString()
           }
         })
         .where(eq(tasks.id, taskId));

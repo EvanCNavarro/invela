@@ -4,35 +4,43 @@ import { db } from "@db";
 import { eq } from "drizzle-orm";
 import { tasks } from "@db/schema";
 
-// Define task type specific status transitions
+// Define task type specific status transitions with progress thresholds
 const TASK_TYPE_TRANSITIONS = {
   user_onboarding: {
-    [TaskStatus.EMAIL_SENT]: [TaskStatus.COMPLETED],
-    [TaskStatus.COMPLETED]: [], // Terminal state
+    [TaskStatus.EMAIL_SENT]: {
+      next: [TaskStatus.COMPLETED],
+      progress: { min: 25, max: 25 }
+    },
+    [TaskStatus.COMPLETED]: {
+      next: [], // Terminal state
+      progress: { min: 100, max: 100 }
+    }
   },
   company_kyb: {
-    [TaskStatus.NOT_STARTED]: [TaskStatus.IN_PROGRESS],
-    [TaskStatus.IN_PROGRESS]: [TaskStatus.READY_FOR_SUBMISSION],
-    [TaskStatus.READY_FOR_SUBMISSION]: [TaskStatus.SUBMITTED],
-    [TaskStatus.SUBMITTED]: [TaskStatus.APPROVED],
-    [TaskStatus.APPROVED]: [], // Terminal state
-    [TaskStatus.COMPLETED]: [TaskStatus.NOT_STARTED], // Allow transitioning back from completed
-  }
-} as const;
-
-// Define progress thresholds for status transitions
-const PROGRESS_THRESHOLDS = {
-  company_kyb: {
-    [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
-    [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
-    [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
-    [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
-    [TaskStatus.APPROVED]: { min: 100, max: 100 },
-    [TaskStatus.COMPLETED]: { min: 0, max: 100 }, // Allow any progress for completed state
-  },
-  user_onboarding: {
-    [TaskStatus.EMAIL_SENT]: { min: 25, max: 25 },
-    [TaskStatus.COMPLETED]: { min: 100, max: 100 },
+    [TaskStatus.NOT_STARTED]: {
+      next: [TaskStatus.IN_PROGRESS],
+      progress: { min: 0, max: 0 }
+    },
+    [TaskStatus.IN_PROGRESS]: {
+      next: [TaskStatus.READY_FOR_SUBMISSION],
+      progress: { min: 1, max: 99 }
+    },
+    [TaskStatus.READY_FOR_SUBMISSION]: {
+      next: [TaskStatus.SUBMITTED],
+      progress: { min: 100, max: 100 }
+    },
+    [TaskStatus.SUBMITTED]: {
+      next: [TaskStatus.APPROVED],
+      progress: { min: 100, max: 100 }
+    },
+    [TaskStatus.APPROVED]: {
+      next: [], // Terminal state
+      progress: { min: 100, max: 100 }
+    },
+    [TaskStatus.COMPLETED]: {
+      next: [TaskStatus.NOT_STARTED], // Allow reset
+      progress: { min: 0, max: 100 }
+    }
   }
 } as const;
 
@@ -47,7 +55,53 @@ export interface TaskRequest extends Request {
   };
 }
 
-// Middleware to validate task status transitions
+interface ProgressValidationResult {
+  isValid: boolean;
+  message?: string;
+  details?: {
+    currentStatus: TaskStatus;
+    newStatus: TaskStatus;
+    currentProgress: number;
+    newProgress: number;
+    allowedTransitions: TaskStatus[];
+    progressThreshold: { min: number; max: number };
+  };
+}
+
+// Helper function to validate progress against status
+function validateProgressForStatus(
+  taskType: keyof typeof TASK_TYPE_TRANSITIONS,
+  status: TaskStatus,
+  progress: number
+): ProgressValidationResult {
+  const statusConfig = TASK_TYPE_TRANSITIONS[taskType]?.[status];
+
+  if (!statusConfig) {
+    return {
+      isValid: false,
+      message: `Invalid status ${status} for task type ${taskType}`
+    };
+  }
+
+  const { min, max } = statusConfig.progress;
+  if (progress < min || progress > max) {
+    return {
+      isValid: false,
+      message: `Invalid progress value for status ${status}. Expected between ${min} and ${max}, got ${progress}`,
+      details: {
+        currentStatus: status,
+        newStatus: status,
+        currentProgress: progress,
+        newProgress: progress,
+        progressThreshold: { min, max }
+      }
+    };
+  }
+
+  return { isValid: true };
+}
+
+// Enhanced middleware to validate task status transitions
 export function validateTaskStatusTransition(req: TaskRequest, res: Response, next: NextFunction) {
   const { status: newStatus, progress } = req.body;
   const currentTask = req.task;
@@ -69,10 +123,10 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
     return res.status(400).json({ message: "Task not found" });
   }
 
-  const taskType = currentTask.task_type;
+  const taskType = currentTask.task_type as keyof typeof TASK_TYPE_TRANSITIONS;
   const currentStatus = currentTask.status;
 
-  // Validate task type has defined transitions
+  // Validate task type configuration exists
   if (!TASK_TYPE_TRANSITIONS[taskType]) {
     console.error('[TaskValidation] Invalid task type:', taskType);
     return res.status(400).json({
@@ -84,12 +138,21 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   // Special case: Allow resetting KYB tasks back to NOT_STARTED
   if (taskType === 'company_kyb' && newStatus === TaskStatus.NOT_STARTED) {
     console.log('[TaskValidation] Allowing reset to NOT_STARTED for KYB task');
+    const progressValidation = validateProgressForStatus(taskType, newStatus, progress);
+    if (!progressValidation.isValid) {
+      return res.status(400).json({
+        message: progressValidation.message,
+        details: progressValidation.details
+      });
+    }
     next();
     return;
   }
 
-  // Check if transition is allowed for this task type
-  const allowedTransitions = TASK_TYPE_TRANSITIONS[taskType][currentStatus] || [];
+  // Get allowed transitions and validate
+  const currentStateConfig = TASK_TYPE_TRANSITIONS[taskType][currentStatus];
+  const allowedTransitions = currentStateConfig?.next || [];
+
   console.log('[TaskValidation] Checking allowed transitions:', {
     currentStatus,
     newStatus,
@@ -106,17 +169,11 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   }
 
   // Validate progress matches the new status
-  const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
-  console.log('[TaskValidation] Checking progress threshold for transition:', {
-    status: newStatus,
-    progress,
-    threshold
-  });
-
-  if (progress < threshold.min || progress > threshold.max) {
+  const progressValidation = validateProgressForStatus(taskType, newStatus, progress);
+  if (!progressValidation.isValid) {
     return res.status(400).json({
-      message: `Invalid progress value for status ${newStatus}`,
-      required: threshold
+      message: progressValidation.message,
+      details: progressValidation.details
     });
   }
 
