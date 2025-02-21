@@ -2,6 +2,7 @@ import { db } from "@db";
 import { companies, tasks } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
 import { broadcastTaskUpdate } from "./websocket";
+import { eq } from "drizzle-orm";
 
 /**
  * Creates a new company and handles all associated rules/tasks
@@ -16,9 +17,9 @@ export async function createCompany(
     const [newCompany] = await tx.insert(companies)
       .values({
         ...data,
-        registryDate: new Date(),
-        createdAt: new Date(),
-        updatedAt: new Date()
+        registry_date: new Date(),
+        created_at: new Date(),
+        updated_at: new Date()
       })
       .returning();
 
@@ -31,24 +32,24 @@ export async function createCompany(
       .values({
         title: `Company KYB: ${newCompany.name}`,
         description: `Complete KYB verification for ${newCompany.name}`,
-        taskType: 'company_kyb',
-        taskScope: 'company',
+        task_type: 'company_kyb',
+        task_scope: 'company',
         status: TaskStatus.PENDING,
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
-        companyId: newCompany.id,
-        assignedTo: null, // Explicitly set to null so all company users can see it
-        createdBy: data.metadata?.invitedBy || null,
-        dueDate: (() => {
+        company_id: newCompany.id,
+        assigned_to: null, // Explicitly set to null so all company users can see it
+        created_by: data.metadata?.invited_by || null,
+        due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
           return date;
         })(),
         metadata: {
-          companyId: newCompany.id,
-          companyName: newCompany.name,
-          createdVia: data.metadata?.createdVia || 'company_creation',
-          statusFlow: [TaskStatus.PENDING]
+          company_id: newCompany.id,
+          company_name: newCompany.name,
+          created_via: data.metadata?.created_via || 'company_creation',
+          status_flow: [TaskStatus.PENDING]
         }
       })
       .returning();
@@ -57,9 +58,9 @@ export async function createCompany(
     if (kybTask) {
       broadcastTaskUpdate({
         id: kybTask.id,
-        status: kybTask.status as TaskStatus,
+        status: kybTask.status,
         progress: kybTask.progress,
-        metadata: kybTask.metadata
+        metadata: kybTask.metadata || undefined
       });
     }
 
@@ -77,7 +78,7 @@ export async function updateCompany(
   const [updatedCompany] = await db.update(companies)
     .set({
       ...data,
-      updatedAt: new Date()
+      updated_at: new Date()
     })
     .where(eq(companies.id, companyId))
     .returning();
