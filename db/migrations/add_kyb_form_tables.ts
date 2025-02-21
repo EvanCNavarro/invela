@@ -28,7 +28,7 @@ export async function addKybFormTables() {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS kyb_fields (
         id SERIAL PRIMARY KEY,
-        field_key TEXT NOT NULL,
+        field_key TEXT NOT NULL UNIQUE,
         display_name TEXT NOT NULL,
         field_type TEXT NOT NULL,
         required BOOLEAN NOT NULL DEFAULT true,
@@ -49,6 +49,9 @@ export async function addKybFormTables() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+
+      DROP INDEX IF EXISTS idx_kyb_responses_task_id;
+      DROP INDEX IF EXISTS idx_kyb_responses_field_id;
 
       CREATE INDEX idx_kyb_responses_task_id ON kyb_responses(task_id);
       CREATE INDEX idx_kyb_responses_field_id ON kyb_responses(field_id);
@@ -73,10 +76,10 @@ export async function addKybFormTables() {
 
     for (const task of kybTasks.rows) {
       const metadata = task.metadata;
-      
+
       // For each field in the metadata that matches our KYB fields
       for (const field of DEFAULT_KYB_FIELDS) {
-        if (metadata[field.key]) {
+        if (metadata && metadata[field.key]) {
           await db.execute(sql`
             INSERT INTO kyb_responses (
               task_id,
@@ -93,7 +96,8 @@ export async function addKybFormTables() {
                 ELSE 'complete'
               END
             FROM kyb_fields kf
-            WHERE kf.field_key = ${field.key};
+            WHERE kf.field_key = ${field.key}
+            ON CONFLICT DO NOTHING;
           `);
         }
       }
