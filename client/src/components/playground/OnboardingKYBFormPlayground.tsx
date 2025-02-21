@@ -216,19 +216,32 @@ const isEmptyValue = (value: unknown): boolean => {
   return false;
 };
 
-// Simplified progress calculation
+// Update progress calculation logging
 const calculateProgress = (formData: Record<string, any>) => {
-  console.log('[Progress Debug] Calculating form progress');
+  console.log('[Progress Debug] Starting progress calculation:', {
+    timestamp: new Date().toISOString(),
+    formDataKeys: Object.keys(formData)
+  });
 
   const filledFields = FORM_FIELD_NAMES.filter(fieldName => {
     const value = formData[fieldName];
     const isEmpty = isEmptyValue(value);
-    console.log(`[Progress Debug] Field ${fieldName}:`, { value, isEmpty });
+    console.log(`[Progress Debug] Field "${fieldName}":`, {
+      value,
+      isEmpty,
+      type: typeof value,
+      validation: value ? 'present' : 'missing'
+    });
     return !isEmpty;
   }).length;
 
   const progress = Math.round((filledFields / TOTAL_FIELDS) * 100);
-  console.log('[Progress Debug] Progress calculation:', { filledFields, totalFields: TOTAL_FIELDS, progress });
+  console.log('[Progress Debug] Final calculation:', {
+    filledFields,
+    totalFields: TOTAL_FIELDS,
+    progress,
+    timestamp: new Date().toISOString()
+  });
   return progress;
 };
 
@@ -295,20 +308,31 @@ export const OnboardingKYBFormPlayground = ({
 
   // Single source of truth for initial data load
   useEffect(() => {
-    console.log('[Form Debug] Initial data load:', {
+    console.log('[Form Debug] Starting initial data load:', {
+      taskId,
       hasSavedData: !!initialSavedFormData,
-      savedDataKeys: initialSavedFormData ? Object.keys(initialSavedFormData) : []
+      savedDataKeys: initialSavedFormData ? Object.keys(initialSavedFormData) : [],
+      timestamp: new Date().toISOString()
     });
 
     if (initialSavedFormData) {
       const extractedData = extractFormData(initialSavedFormData);
-      setFormData(extractedData);
       const calculatedProgress = calculateProgress(extractedData);
+
+      console.log('[Form Debug] Processing saved form data:', {
+        extractedDataKeys: Object.keys(extractedData),
+        calculatedProgress,
+        beforeSetProgress: progress,
+        timestamp: new Date().toISOString()
+      });
+
+      setFormData(extractedData);
       setProgress(calculatedProgress);
 
-      console.log('[Form Debug] Loaded saved form data:', {
-        dataKeys: Object.keys(extractedData),
-        progress: calculatedProgress
+      console.log('[Form Debug] Form state updated:', {
+        newProgress: calculatedProgress,
+        formDataKeys: Object.keys(extractedData),
+        timestamp: new Date().toISOString()
       });
     }
 
@@ -385,32 +409,52 @@ export const OnboardingKYBFormPlayground = ({
   // Handle form field updates with optimistic updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
     if (!taskId) {
-      console.warn('[Form Debug] No taskId provided, skipping update');
+      console.warn('[Form Debug] No taskId provided for update:', {
+        fieldName,
+        timestamp: new Date().toISOString()
+      });
       return;
     }
 
-    console.log('[Form Debug] Updating field:', { fieldName, value, taskId });
+    console.log('[Form Debug] Field update initiated:', {
+      fieldName,
+      value,
+      taskId,
+      currentProgress: progress,
+      timestamp: new Date().toISOString()
+    });
 
-    // Prepare new form data
     const updatedFormData = {
       ...formData,
       [fieldName]: value.trim()
     };
 
-    // Remove empty fields
     if (isEmptyValue(updatedFormData[fieldName])) {
       delete updatedFormData[fieldName];
     }
 
-    // Calculate new progress
     const newProgress = calculateProgress(updatedFormData);
+
+    console.log('[Form Debug] Preparing state update:', {
+      fieldName,
+      currentProgress: progress,
+      newProgress,
+      progressDiff: newProgress - progress,
+      timestamp: new Date().toISOString()
+    });
 
     // Optimistic update
     setFormData(updatedFormData);
     setProgress(newProgress);
 
     try {
-      // Single API call to update all state
+      console.log('[Form Debug] Saving to backend:', {
+        taskId,
+        newProgress,
+        fieldCount: Object.keys(updatedFormData).length,
+        timestamp: new Date().toISOString()
+      });
+
       const response = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -427,11 +471,19 @@ export const OnboardingKYBFormPlayground = ({
 
       const result = await response.json();
 
-      // Verify server-side progress matches client-side calculation
+      console.log('[Form Debug] Backend save result:', {
+        savedProgress: result.savedData.progress,
+        clientProgress: newProgress,
+        progressMatch: result.savedData.progress === newProgress,
+        timestamp: new Date().toISOString()
+      });
+
       if (result.savedData.progress !== newProgress) {
-        console.warn('[Form Debug] Progress mismatch:', {
+        console.warn('[Form Debug] Progress mismatch detected:', {
           client: newProgress,
-          server: result.savedData.progress
+          server: result.savedData.progress,
+          difference: Math.abs(newProgress - result.savedData.progress),
+          timestamp: new Date().toISOString()
         });
       }
 
@@ -442,16 +494,25 @@ export const OnboardingKYBFormPlayground = ({
         status: result.savedData.status
       });
 
-      // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
     } catch (error) {
-      console.error('[Form Debug] Error updating task:', error);
+      console.error('[Form Debug] Save operation failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fieldName,
+        timestamp: new Date().toISOString()
+      });
 
-      // Revert optimistic update on error
+      // Revert optimistic update
       if (initialSavedFormData) {
-        setFormData(extractFormData(initialSavedFormData));
-        setProgress(calculateProgress(initialSavedFormData));
+        const revertData = extractFormData(initialSavedFormData);
+        console.log('[Form Debug] Reverting to saved state:', {
+          revertedProgress: calculateProgress(revertData),
+          timestamp: new Date().toISOString()
+        });
+
+        setFormData(revertData);
+        setProgress(calculateProgress(revertData));
       }
 
       toast({

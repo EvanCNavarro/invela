@@ -69,22 +69,23 @@ router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData } = req.body;
 
-    console.log('[KYB API] Saving progress:', { 
+    console.log('[KYB API] Progress update initiated:', { 
       taskId, 
-      progress,
+      requestedProgress: progress,
       formDataKeys: Object.keys(formData || {}),
-      formData
+      timestamp: new Date().toISOString()
     });
 
     if (!taskId) {
+      console.warn('[KYB API] Missing task ID in request');
       return res.status(400).json({ 
         error: 'Task ID is required',
         code: 'MISSING_TASK_ID'
       });
     }
 
-    // Validate form data
     if (!formData || typeof formData !== 'object') {
+      console.warn('[KYB API] Invalid form data format:', { formData });
       return res.status(400).json({
         error: 'Invalid form data format',
         code: 'INVALID_FORM_DATA'
@@ -104,12 +105,14 @@ router.post('/api/kyb/progress', async (req, res) => {
       });
     }
 
-    // Log existing data
-    console.log('[KYB API] Existing task data:', {
-      id: existingTask.id,
-      currentMetadata: existingTask.metadata,
+    console.log('[KYB API] Current task state:', {
+      taskId,
       currentProgress: existingTask.progress,
-      currentStatus: existingTask.status
+      requestedProgress: progress,
+      progressDiff: progress - (existingTask.progress || 0),
+      currentStatus: existingTask.status,
+      currentMetadataKeys: Object.keys(existingTask.metadata || {}),
+      timestamp: new Date().toISOString()
     });
 
     // Determine appropriate status based on progress
@@ -124,21 +127,19 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     // Merge existing metadata with new form data
     const updatedMetadata = {
-      ...(existingTask.metadata || {}),  // Keep existing metadata
-      ...formData,                       // Merge new form data
+      ...(existingTask.metadata || {}),
+      ...formData,
       lastUpdated: new Date().toISOString(),
       statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus].filter((v, i, a) => a.indexOf(v) === i)
     };
 
-    // Log the data we're about to save
-    console.log('[KYB API] Saving updated data:', {
+    console.log('[KYB API] Preparing database update:', {
       taskId,
-      progress,
+      newProgress: Math.min(progress, 100),
       newStatus,
-      existingMetadata: existingTask.metadata,
-      updatedMetadata,
-      formDataKeys: Object.keys(formData || {}),
-      metadataKeys: Object.keys(updatedMetadata)
+      statusTransition: `${existingTask.status} -> ${newStatus}`,
+      updatedFields: Object.keys(formData),
+      timestamp: new Date().toISOString()
     });
 
     // Update task with progress and save form data
@@ -151,14 +152,14 @@ router.post('/api/kyb/progress', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
-    console.log('[KYB API] Successfully saved progress:', {
+    console.log('[KYB API] Task update completed:', {
       taskId,
-      newStatus,
-      newProgress: Math.min(progress, 100),
-      savedMetadataKeys: Object.keys(updatedMetadata)
+      finalProgress: Math.min(progress, 100),
+      finalStatus: newStatus,
+      metadataFieldCount: Object.keys(updatedMetadata).length,
+      timestamp: new Date().toISOString()
     });
 
-    // Return consistent response format
     res.json({ 
       success: true,
       savedData: {
@@ -168,7 +169,12 @@ router.post('/api/kyb/progress', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[KYB API] Error saving progress:', error);
+    console.error('[KYB API] Error processing progress update:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+
     res.status(500).json({
       error: 'Failed to save progress',
       code: 'INTERNAL_ERROR',

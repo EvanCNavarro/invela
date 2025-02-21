@@ -58,14 +58,17 @@ export default function TaskPage({ params }: TaskPageProps) {
         throw new Error('Failed to fetch KYB task');
       }
       const data = await response.json();
-      console.log('[TaskPage] Received task data:', {
+      console.log('[TaskPage] Task data loaded:', {
         taskId: data.id,
         status: data.status,
-        progress: data.progress,
+        currentProgress: data.progress,
         hasMetadata: !!data.metadata,
         hasSavedFormData: !!data.savedFormData,
         metadataKeys: Object.keys(data.metadata || {}),
-        savedFormDataKeys: Object.keys(data.savedFormData || {})
+        savedFormDataKeys: Object.keys(data.savedFormData || {}),
+        formFieldsPopulated: Object.entries(data.savedFormData || {})
+          .filter(([key, value]) => !!value)
+          .map(([key]) => key)
       });
       return data;
     },
@@ -160,9 +163,13 @@ export default function TaskPage({ params }: TaskPageProps) {
             companyData={companyData}
             savedFormData={task.metadata}
             onSubmit={(formData) => {
-              console.log('[TaskPage] Submitting form data:', {
+              console.log('[TaskPage] Form submission initiated:', {
                 taskId: task.id,
-                formDataKeys: Object.keys(formData)
+                currentProgress: task.progress,
+                formDataKeys: Object.keys(formData),
+                populatedFields: Object.entries(formData)
+                  .filter(([_, value]) => !!value)
+                  .map(([key]) => key)
               });
 
               fetch('/api/kyb/save', {
@@ -178,8 +185,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                   if (!response.ok) throw new Error('Failed to save KYB form');
                   return response.json();
                 })
-                .then(() => {
-                  console.log('[TaskPage] Form submitted successfully');
+                .then((result) => {
+                  console.log('[TaskPage] Form submission successful:', {
+                    taskId: task.id,
+                    savedProgress: result.progress,
+                    newStatus: result.status,
+                    timestamp: new Date().toISOString()
+                  });
                   toast({
                     title: "KYB Form Submitted",
                     description: "Your KYB form has been saved and the task has been updated.",
@@ -187,7 +199,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   navigate('/task-center');
                 })
                 .catch(error => {
-                  console.error('[TaskPage] Failed to save KYB form:', error);
+                  console.error('[TaskPage] Form submission failed:', error);
                   toast({
                     title: "Error",
                     description: "Failed to save KYB form. Please try again.",
