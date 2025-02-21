@@ -369,6 +369,7 @@ export const OnboardingKYBFormPlayground = ({
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const formDataRef = useRef<Record<string, string>>({});
 
   // Load initial form data with forced refresh
   useEffect(() => {
@@ -378,6 +379,8 @@ export const OnboardingKYBFormPlayground = ({
         hasSavedData: !!initialSavedFormData,
         timestamp: new Date().toISOString()
       });
+
+      let dataToLoad: Record<string, string> = {};
 
       if (taskId) {
         try {
@@ -389,25 +392,38 @@ export const OnboardingKYBFormPlayground = ({
           console.log('[Form Debug] Fetched latest data:', {
             progress: latestProgress,
             fieldCount: Object.keys(latestFormData).length,
+            formData: latestFormData,
             timestamp: new Date().toISOString()
           });
 
-          setFormData(latestFormData);
+          dataToLoad = latestFormData;
           setProgress(latestProgress);
           lastProgressRef.current = latestProgress;
         } catch (error) {
           console.error('[Form Debug] Error fetching latest data:', error);
           // Fallback to initial data if fetch fails
           if (initialSavedFormData) {
-            const extractedData = extractFormData(initialSavedFormData);
-            const calculatedProgress = calculateProgress(extractedData);
-            setFormData(extractedData);
+            dataToLoad = extractFormData(initialSavedFormData);
+            const calculatedProgress = calculateProgress(dataToLoad);
             setProgress(calculatedProgress);
             lastProgressRef.current = calculatedProgress;
           }
         }
+      } else if (initialSavedFormData) {
+        dataToLoad = extractFormData(initialSavedFormData);
+        const calculatedProgress = calculateProgress(dataToLoad);
+        setProgress(calculatedProgress);
+        lastProgressRef.current = calculatedProgress;
       }
 
+      console.log('[Form Debug] Setting initial form data:', {
+        dataToLoad,
+        fieldCount: Object.keys(dataToLoad).length,
+        timestamp: new Date().toISOString()
+      });
+
+      setFormData(dataToLoad);
+      formDataRef.current = dataToLoad;
       setInitialLoadDone(true);
     };
 
@@ -794,9 +810,17 @@ export const OnboardingKYBFormPlayground = ({
 
             <div className="space-y-4">
               {currentStepData.fields.map(field => {
-                const value = formData[field.name];
+                const value = formData[field.name] || '';
                 const { mainText, tooltipText } = extractTooltipContent(field.question);
                 const variant = getFieldVariant(field, value);
+
+                console.log('[Form Debug] Rendering field:', {
+                  fieldName: field.name,
+                  value,
+                  formDataValue: formData[field.name],
+                  variant,
+                  timestamp: new Date().toISOString()
+                });
 
                 return (
                   <div key={field.name} className="space-y-2">
@@ -825,7 +849,7 @@ export const OnboardingKYBFormPlayground = ({
                     <FormField
                       type="text"
                       variant={variant}
-                      value={formData[field.name] || ''}
+                      value={value}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
                       aiSuggestion={getSuggestionForField(field.name)}
                       onSuggestionClick={() => {
