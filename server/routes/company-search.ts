@@ -4,7 +4,7 @@ import { findCompanyInRegistry, findMissingFields, updateCompanyData } from "../
 import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
 import { createCompany } from "../services/company";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 import { companies } from "@db/schema";
 import { db } from "@db";
 
@@ -49,10 +49,13 @@ router.post("/api/company-search", async (req, res) => {
     const { companyName } = companySearchSchema.parse(req.body);
     console.log(`[Company Search Debug] Validated company name: ${companyName}`);
 
-    // First try to find in database directly - case insensitive match
+    // First try to find in database directly - case insensitive match using ilike
     console.log("[Company Search Debug] Executing database query");
-    const query = db.select().from(companies).where(db.sql`LOWER(name) = LOWER(${companyName})`);
-    console.log("[Company Search Debug] Query:", query.toSQL());
+    const query = db.select()
+      .from(companies)
+      .where(ilike(companies.name, companyName));
+
+    console.log("[Company Search Debug] Query:", query.toSQL?.());
 
     const [existingCompany] = await query;
     console.log("[Company Search Debug] Database query result:", existingCompany);
@@ -81,9 +84,9 @@ router.post("/api/company-search", async (req, res) => {
   } catch (error) {
     console.error("[Company Search Debug] Error details:", {
       error,
-      message: error.message,
-      stack: error.stack,
-      type: error.constructor.name
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: error?.constructor?.name
     });
 
     if (error instanceof ZodError) {
@@ -97,7 +100,7 @@ router.post("/api/company-search", async (req, res) => {
     res.status(500).json({
       success: false,
       error: "Failed to search company information",
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
