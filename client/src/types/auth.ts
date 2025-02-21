@@ -15,9 +15,11 @@ export type LoginData = {
 export type User = {
   id: number;
   email: string;
-  fullName: string | null;
-  firstName: string | null;
-  lastName: string | null;
-  companyId: number;
-  onboardingUserCompleted: boolean;
+  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  company_id: number;
+  onboarding_user_completed: boolean;
+  created_at: string;
+  updated_at: string;
 };
