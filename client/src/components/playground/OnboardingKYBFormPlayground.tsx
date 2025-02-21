@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -305,6 +305,7 @@ export const OnboardingKYBFormPlayground = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const lastUpdateRef = useRef(0);
 
   // Single source of truth for initial data load
   useEffect(() => {
@@ -411,6 +412,7 @@ export const OnboardingKYBFormPlayground = ({
     if (!taskId) {
       console.warn('[Form Debug] No taskId provided for update:', {
         fieldName,
+        value,
         timestamp: new Date().toISOString()
       });
       return;
@@ -443,6 +445,18 @@ export const OnboardingKYBFormPlayground = ({
       timestamp: new Date().toISOString()
     });
 
+    // Add debounce time stamp to prevent rapid updates
+    const currentTimestamp = Date.now();
+    const lastUpdateTimestamp = lastUpdateRef.current;
+    if (lastUpdateTimestamp && currentTimestamp - lastUpdateTimestamp < 500) {
+      console.log('[Form Debug] Debouncing update:', {
+        timeSinceLastUpdate: currentTimestamp - lastUpdateTimestamp,
+        skipped: true
+      });
+      return;
+    }
+    lastUpdateRef.current = currentTimestamp;
+
     // Optimistic update
     setFormData(updatedFormData);
     setProgress(newProgress);
@@ -455,6 +469,7 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
 
+      // Single API call to update all state
       const response = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -488,12 +503,20 @@ export const OnboardingKYBFormPlayground = ({
       }
 
       // Notify via WebSocket
+      console.log('[Form Debug] Sending WebSocket update:', {
+        taskId,
+        progress: result.savedData.progress,
+        status: result.savedData.status,
+        timestamp: new Date().toISOString()
+      });
+
       await wsService.send('task_updated', {
         taskId,
         progress: result.savedData.progress,
         status: result.savedData.status
       });
 
+      // Invalidate queries to refresh UI
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
     } catch (error) {
@@ -637,6 +660,22 @@ export const OnboardingKYBFormPlayground = ({
     }
     return 'default';
   };
+
+  useEffect(() => {
+    console.log('[Form Debug] Component mounted:', {
+      taskId,
+      hasInitialData: !!initialSavedFormData,
+      timestamp: new Date().toISOString()
+    });
+
+    return () => {
+      console.log('[Form Debug] Component unmounting:', {
+        taskId,
+        finalProgress: progress,
+        timestamp: new Date().toISOString()
+      });
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
