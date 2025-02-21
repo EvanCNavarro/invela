@@ -5,9 +5,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { TaskStatus } from "@db/schema";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
@@ -16,38 +13,55 @@ interface Task {
   id: number;
   title: string;
   description: string | null;
-  taskType: 'user_onboarding' | 'file_request' | 'company_onboarding_KYB';
-  taskScope: 'user' | 'company';
-  status: TaskStatus;
+  task_type: string;
+  task_scope: string;
+  status: string;
+  priority: string;
   progress: number;
-  assignedTo?: number;
-  createdBy: number;
-  userEmail?: string;
-  companyId?: number;
-  dueDate?: string;
-  filesRequested?: string[];
-  filesUploaded?: string[];
+  assigned_to: number | null;
+  created_by: number | null;
+  user_email: string | null;
+  company_id: number | null;
+  due_date: string | null;
+  files_requested: string[] | null;
+  files_uploaded: string[] | null;
+  metadata: Record<string, any> | null;
 }
 
 const taskStatusMap = {
-  [TaskStatus.EMAIL_SENT]: 'Email Sent',
-  [TaskStatus.COMPLETED]: 'Completed',
-  [TaskStatus.NOT_STARTED]: 'Not Started',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
-  [TaskStatus.READY_FOR_SUBMISSION]: 'Ready for Submission',
-  [TaskStatus.SUBMITTED]: 'Submitted',
-  [TaskStatus.APPROVED]: 'Approved',
+  email_sent: 'Email Sent',
+  completed: 'Completed',
+  not_started: 'Not Started',
+  in_progress: 'In Progress',
+  ready_for_submission: 'Ready for Submission',
+  submitted: 'Submitted',
+  approved: 'Approved',
 } as const;
 
-export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
+const getStatusVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
+  switch (status) {
+    case 'not_started':
+    case 'email_sent':
+      return "secondary";
+    case 'completed':
+    case 'approved':
+      return "default";
+    case 'in_progress':
+    case 'ready_for_submission':
+    case 'submitted':
+      return "outline";
+    default:
+      return "default";
+  }
+};
+
+export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [, navigate] = useLocation();
 
   const handleTaskClick = (task: Task) => {
-    if (task.taskType === 'company_onboarding_KYB') {
+    if (task.task_type === 'company_kyb') {
       // Navigate to KYB form page
       navigate(`/kyb-form/${task.id}`);
     } else {
@@ -57,40 +71,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
     }
   };
 
-  // Add mutation for updating task status
-  const updateTaskStatus = useMutation({
-    mutationFn: async ({ taskId, newStatus }: { taskId: number; newStatus: TaskStatus }) => {
-      const response = await fetch(`/api/tasks/${taskId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update task status');
-      }
-
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      toast({
-        title: "Task Updated",
-        description: "The task status has been updated successfully.",
-      });
-    },
-    onError: (error) => {
-      console.error('Failed to update task status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Show loading state
-  if (!initialTasks || initialTasks.length === 0) {
+  if (!tasks || tasks.length === 0) {
     return (
       <TableRow>
         <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
@@ -114,32 +95,26 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {initialTasks.map((task) => (
+            {tasks.map((task) => (
               <TableRow 
                 key={task.id}
                 className={classNames(
                   "cursor-pointer hover:bg-muted/50 transition-colors",
-                  task.taskType === 'company_onboarding_KYB' && "hover:bg-blue-50/50"
+                  task.task_type === 'company_kyb' && "hover:bg-blue-50/50"
                 )}
                 onClick={() => handleTaskClick(task)}
               >
                 <TableCell className="font-medium">
                   <div className="flex items-center space-x-2">
                     <span>{task.title}</span>
-                    {task.taskType === 'company_onboarding_KYB' && (
+                    {task.task_type === 'company_kyb' && (
                       <Badge variant="outline" className="ml-2">KYB</Badge>
                     )}
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={task.status === TaskStatus.COMPLETED ? "default" : "secondary"}
-                    className={classNames(
-                      "cursor-pointer hover:bg-secondary/80",
-                      task.status === TaskStatus.COMPLETED && "bg-green-100"
-                    )}
-                  >
-                    {taskStatusMap[task.status] || task.status}
+                  <Badge variant={getStatusVariant(task.status)}>
+                    {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -154,7 +129,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '-'}
+                  {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
                 </TableCell>
                 <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
