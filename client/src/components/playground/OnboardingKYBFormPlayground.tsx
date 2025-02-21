@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
+import { useToast } from "@/hooks/use-toast"; // Fix: Import useToast hook instead of toast
 
 // Function to extract tooltip content from question text
 const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
@@ -229,9 +230,12 @@ const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
 
 // Helper function to get status from progress
 function getStatusFromProgress(progress: number): string {
-  if (progress === 0) return 'not_started';
-  if (progress >= 1 && progress < 100) return 'in_progress';
-  return 'ready_for_submission';
+  console.log('[KYB Form Debug] Calculating status for progress:', progress);
+  const status = progress === 0 ? 'NOT_STARTED' :
+                progress >= 1 && progress < 100 ? 'IN_PROGRESS' :
+                'READY_FOR_SUBMISSION';
+  console.log('[KYB Form Debug] Determined status:', status);
+  return status;
 }
 
 export const OnboardingKYBFormPlayground = ({
@@ -250,6 +254,7 @@ export const OnboardingKYBFormPlayground = ({
   const [lastSavedProgress, setLastSavedProgress] = useState(0);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const queryClient = useQueryClient();
+  const toast = useToast(); // Use the hook here
 
   // Helper to filter out non-form fields from metadata
   const extractFormData = (metadata: Record<string, any>) => {
@@ -281,11 +286,21 @@ export const OnboardingKYBFormPlayground = ({
 
   // Save progress to backend
   const saveProgress = async (currentProgress: number) => {
-    if (!taskId || !initialLoadDone) return;
+    if (!taskId || !initialLoadDone) {
+      console.log('[KYB Form Debug] Skipping progress save - no taskId or initial load not done:', { taskId, initialLoadDone });
+      return;
+    }
 
     try {
       // First update the task status based on progress
       const newStatus = getStatusFromProgress(currentProgress);
+      console.log('[KYB Form Debug] Updating task status:', {
+        taskId,
+        currentProgress,
+        newStatus,
+        previousProgress: lastSavedProgress
+      });
+
       const statusResponse = await fetch(`/api/tasks/${taskId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -295,11 +310,25 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
+      console.log('[KYB Form Debug] Status update response:', {
+        ok: statusResponse.ok,
+        status: statusResponse.status,
+        statusText: statusResponse.statusText
+      });
+
       if (!statusResponse.ok) {
-        throw new Error('Failed to update task status');
+        const errorData = await statusResponse.json();
+        console.error('[KYB Form Debug] Failed to update task status:', errorData);
+        throw new Error(`Failed to update task status: ${errorData.message}`);
       }
 
       // Then save the form progress
+      console.log('[KYB Form Debug] Saving form progress:', {
+        taskId,
+        progress: currentProgress,
+        formData
+      });
+
       const progressResponse = await fetch('/api/kyb/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -310,9 +339,25 @@ export const OnboardingKYBFormPlayground = ({
         })
       });
 
-      if (!progressResponse.ok) throw new Error('Failed to save progress');
+      console.log('[KYB Form Debug] Progress save response:', {
+        ok: progressResponse.ok,
+        status: progressResponse.status,
+        statusText: progressResponse.statusText
+      });
+
+      if (!progressResponse.ok) {
+        const errorData = await progressResponse.json();
+        console.error('[KYB Form Debug] Failed to save progress:', errorData);
+        throw new Error(`Failed to save progress: ${errorData.message}`);
+      }
 
       // Notify via WebSocket about progress update
+      console.log('[KYB Form Debug] Sending WebSocket update:', {
+        taskId,
+        progress: currentProgress,
+        status: newStatus
+      });
+
       await wsService.send('task_updated', {
         taskId,
         progress: currentProgress,
@@ -324,7 +369,12 @@ export const OnboardingKYBFormPlayground = ({
       // Invalidate task queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
     } catch (error) {
-      console.error('Error saving progress:', error);
+      console.error('[KYB Form Debug] Error in saveProgress:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to save progress",
+        variant: "destructive",
+      });
     }
   };
 
