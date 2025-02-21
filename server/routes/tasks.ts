@@ -4,6 +4,7 @@ import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../websocket";
+import { validateTaskStatusTransition } from "../middleware/taskValidation";
 
 const router = Router();
 
@@ -19,9 +20,9 @@ const KYB_STATUS_THRESHOLDS = {
 // Helper function to determine KYB task status based on progress
 function getKybStatusFromProgress(progress: number): TaskStatus {
   console.log('[Task Routes] Calculating status for progress:', progress);
-  const status = progress === 0 ? TaskStatus.NOT_STARTED : 
-                progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS : 
-                TaskStatus.READY_FOR_SUBMISSION;
+  const status = progress === 0 ? TaskStatus.NOT_STARTED :
+    progress >= 1 && progress < 100 ? TaskStatus.IN_PROGRESS :
+      TaskStatus.READY_FOR_SUBMISSION;
   console.log('[Task Routes] Determined status:', status);
   return status;
 }
@@ -61,7 +62,7 @@ router.post("/api/tasks", async (req, res) => {
       .values({
         ...req.body,
         status: TaskStatus.EMAIL_SENT,
-        progress: 50, 
+        progress: 50,
         createdAt: new Date(),
         updatedAt: new Date(),
         metadata: {
@@ -116,16 +117,15 @@ router.delete("/api/tasks/:id", async (req, res) => {
 });
 
 // Update task status and progress
-router.patch("/api/tasks/:id/status", async (req, res) => {
+router.patch("/api/tasks/:id/status", validateTaskStatusTransition, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
-    const { status, progress } = updateTaskStatusSchema.parse(req.body);
+    const { status, progress } = req.body;
 
-    console.log('[Task Routes] Received status update request:', {
+    console.log('[Task Routes] Processing status update request:', {
       taskId,
       requestedStatus: status,
-      requestedProgress: progress,
-      body: req.body
+      requestedProgress: progress
     });
 
     // Get current task
@@ -147,73 +147,7 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
       requestedProgress: progress
     });
 
-    // For KYB tasks, validate status matches progress
-    if (currentTask.task_type === 'company_kyb') {
-      const expectedStatus = getKybStatusFromProgress(progress);
-
-      // Only allow explicit status changes for submission and approval
-      if (status !== TaskStatus.SUBMITTED && status !== TaskStatus.APPROVED) {
-        if (status !== expectedStatus) {
-          console.log('[Task Routes] Invalid status for progress:', {
-            requestedStatus: status,
-            expectedStatus,
-            progress
-          });
-          return res.status(400).json({
-            message: `Invalid status ${status} for progress ${progress}. Expected status: ${expectedStatus}`,
-            expectedStatus,
-            progress
-          });
-        }
-      }
-
-      // Validate progress threshold for the requested status
-      const threshold = KYB_STATUS_THRESHOLDS[status];
-      if (!threshold || progress < threshold.min || progress > threshold.max) {
-        console.log('[Task Routes] Invalid progress value:', {
-          status,
-          progress,
-          threshold
-        });
-        return res.status(400).json({
-          message: `Invalid progress value ${progress} for status ${status}`,
-          required: threshold
-        });
-      }
-    }
-
-    // For user onboarding tasks, only allow EMAIL_SENT -> COMPLETED transition
-    if (currentTask.task_type === 'user_onboarding') {
-      if (currentTask.status === TaskStatus.EMAIL_SENT && status !== TaskStatus.COMPLETED) {
-        console.log('[Task Routes] Invalid user onboarding transition:', {
-          from: currentTask.status,
-          to: status
-        });
-        return res.status(400).json({ 
-          message: "Invalid status transition. User onboarding tasks can only move from EMAIL_SENT to COMPLETED" 
-        });
-      }
-    }
-
-    console.log('[Task Routes] Updating task:', {
-      taskId,
-      newStatus: status,
-      newProgress: progress,
-      metadata: {
-        ...currentTask.metadata,
-        statusFlow: [...(currentTask.metadata?.statusFlow || []), status],
-        statusUpdates: [
-          ...(currentTask.metadata?.statusUpdates || []),
-          {
-            from: currentTask.status,
-            to: status,
-            timestamp: new Date().toISOString(),
-            progress
-          }
-        ]
-      }
-    });
-
+    // Update task with new status and progress
     const [updatedTask] = await db
       .update(tasks)
       .set({
@@ -258,9 +192,9 @@ router.patch("/api/tasks/:id/status", async (req, res) => {
   } catch (error) {
     console.error("[Task Routes] Error updating task status:", error);
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ 
-        message: "Invalid status value", 
-        errors: error.errors 
+      return res.status(400).json({
+        message: "Invalid status value",
+        errors: error.errors
       });
     }
     res.status(500).json({ message: "Failed to update task status" });
