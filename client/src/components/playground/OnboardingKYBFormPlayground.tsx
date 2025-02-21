@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
@@ -229,6 +230,7 @@ export const OnboardingKYBFormPlayground = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const queryClient = useQueryClient();
 
   // Always perform the company search when mounted or when companyName changes
   useEffect(() => {
@@ -249,33 +251,23 @@ export const OnboardingKYBFormPlayground = ({
 
         const { data } = await response.json();
 
-        // Merge search results with initial data if available
-        const mergedData = {
-          ...data.company,
-          ...(initialCompanyData || {}),
-        };
+        // Invalidate any cached company data
+        queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-        console.log('Company data fetched:', {
-          searchResults: data.company,
-          initialData: initialCompanyData,
-          mergedData
-        });
+        setCompanyData(data.company);
 
-        setCompanyData(mergedData);
       } catch (error) {
         console.error("Error searching company:", error);
-        // If search fails but we have initial data, use that
-        if (initialCompanyData) {
-          console.log('Using initial company data after search failure:', initialCompanyData);
-          setCompanyData(initialCompanyData);
-        }
+        // Don't fallback to initial data anymore - we want fresh data only
+        setCompanyData(null);
       } finally {
         setIsSearching(false);
       }
     };
 
     fetchCompanyData();
-  }, [companyName, initialCompanyData]);
+  }, [companyName, queryClient]);
 
   const handleBack = () => {
     if (currentStep > 0) {
