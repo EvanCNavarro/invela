@@ -230,13 +230,8 @@ export const OnboardingKYBFormPlayground = ({
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Use provided company data or fetch if not provided
+  // Always perform the company search when mounted or when companyName changes
   useEffect(() => {
-    if (initialCompanyData) {
-      setCompanyData(initialCompanyData);
-      return;
-    }
-
     const fetchCompanyData = async () => {
       if (!companyName) return;
 
@@ -253,9 +248,27 @@ export const OnboardingKYBFormPlayground = ({
         }
 
         const { data } = await response.json();
-        setCompanyData(data.company);
+
+        // Merge search results with initial data if available
+        const mergedData = {
+          ...data.company,
+          ...(initialCompanyData || {}),
+        };
+
+        console.log('Company data fetched:', {
+          searchResults: data.company,
+          initialData: initialCompanyData,
+          mergedData
+        });
+
+        setCompanyData(mergedData);
       } catch (error) {
         console.error("Error searching company:", error);
+        // If search fails but we have initial data, use that
+        if (initialCompanyData) {
+          console.log('Using initial company data after search failure:', initialCompanyData);
+          setCompanyData(initialCompanyData);
+        }
       } finally {
         setIsSearching(false);
       }
