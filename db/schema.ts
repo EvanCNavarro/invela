@@ -8,6 +8,7 @@ import {
   jsonb,
   real,
   uuid,
+  pgEnum
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
@@ -160,6 +161,45 @@ export const openaiSearchAnalytics = pgTable("openai_search_analytics", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+export const KYBFieldType = {
+  TEXT: 'text',
+  DATE: 'date',
+  NUMBER: 'number',
+  BOOLEAN: 'boolean',
+  MULTIPLE_CHOICE: 'multiple_choice'
+} as const;
+
+export const KYBFieldStatus = {
+  EMPTY: 'empty',
+  INCOMPLETE: 'incomplete',
+  COMPLETE: 'complete',
+  INVALID: 'invalid'
+} as const;
+
+export const kybFields = pgTable("kyb_fields", {
+  id: serial("id").primaryKey(),
+  field_key: text("field_key").notNull(),
+  display_name: text("display_name").notNull(),
+  field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
+  required: boolean("required").notNull().default(true),
+  order: integer("order").notNull(),
+  validation_rules: jsonb("validation_rules"),
+  help_text: text("help_text"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const kybResponses = pgTable("kyb_responses", {
+  id: serial("id").primaryKey(),
+  task_id: integer("task_id").references(() => tasks.id).notNull(),
+  field_id: integer("field_id").references(() => kybFields.id).notNull(),
+  response_value: text("response_value"),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default('empty'),
+  version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -208,6 +248,21 @@ export const openaiSearchAnalyticsRelations = relations(openaiSearchAnalytics, (
   company: one(companies, {
     fields: [openaiSearchAnalytics.company_id],
     references: [companies.id],
+  }),
+}));
+
+export const kybFieldsRelations = relations(kybFields, ({ many }) => ({
+  responses: many(kybResponses),
+}));
+
+export const kybResponsesRelations = relations(kybResponses, ({ one }) => ({
+  field: one(kybFields, {
+    fields: [kybResponses.field_id],
+    references: [kybFields.id],
+  }),
+  task: one(tasks, {
+    fields: [kybResponses.task_id],
+    references: [tasks.id],
   }),
 }));
 
@@ -320,3 +375,8 @@ export type SelectFile = typeof files.$inferSelect;
 export type RegistrationData = z.infer<typeof registrationSchema>;
 export type InsertInvitation = typeof invitations.$inferInsert;
 export type SelectInvitation = typeof invitations.$inferSelect;
+
+export const insertKybFieldSchema = createInsertSchema(kybFields);
+export const selectKybFieldSchema = createSelectSchema(kybFields);
+export const insertKybResponseSchema = createInsertSchema(kybResponses);
+export const selectKybResponseSchema = createSelectSchema(kybResponses);
