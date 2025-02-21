@@ -9,10 +9,24 @@ import { TaskStatus } from '../types';
 const router = Router();
 
 // Get KYB task by company name
-router.get('/api/tasks/kyb/:companyName', async (req, res) => {
+router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
   try {
     const { companyName } = req.params;
-    const formattedCompanyName = companyName.replace(/-/g, ' ');
+
+    // If no company name provided, return all KYB tasks
+    if (!companyName) {
+      const kybTasks = await db.select()
+        .from(tasks)
+        .where(eq(tasks.task_type, 'company_kyb'));
+      return res.json(kybTasks[0] || null);
+    }
+
+    // Format company name by removing the 'kyb-' prefix if present
+    const formattedCompanyName = companyName
+      .replace(/^kyb-/, '')  // Remove 'kyb-' prefix if present
+      .replace(/-/g, ' ');   // Replace dashes with spaces
+
+    console.log('[KYB API] Searching for company:', formattedCompanyName);
 
     const [task] = await db.select()
       .from(tasks)
@@ -24,12 +38,14 @@ router.get('/api/tasks/kyb/:companyName', async (req, res) => {
       );
 
     if (!task) {
+      console.log('[KYB API] Task not found for company:', formattedCompanyName);
       return res.status(404).json({ error: 'KYB task not found' });
     }
 
+    console.log('[KYB API] Found task:', task);
     res.json(task);
   } catch (error) {
-    console.error('Error fetching KYB task:', error);
+    console.error('[KYB API] Error fetching KYB task:', error);
     res.status(500).json({ error: 'Failed to fetch KYB task' });
   }
 });
@@ -60,7 +76,7 @@ router.post('/api/kyb/save', async (req, res) => {
 
     res.json({ success: true, filePath });
   } catch (error) {
-    console.error('Error saving KYB form:', error);
+    console.error('[KYB API] Error saving KYB form:', error);
     res.status(500).json({ error: 'Failed to save KYB form data' });
   }
 });
