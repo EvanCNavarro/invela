@@ -312,6 +312,35 @@ const createUpdateQueue = () => {
   };
 };
 
+// Enhanced debug logging for form data
+const logFormDataDebug = (stage: string, data: any) => {
+  console.log(`[KYB Form Data Debug] ${stage}:`, {
+    timestamp: new Date().toISOString(),
+    fieldCount: Object.keys(data || {}).length,
+    fields: Object.entries(data || {}).map(([key, value]) => ({
+      field: key,
+      value,
+      isEmpty: isEmptyValue(value)
+    }))
+  });
+};
+
+// Enhanced debug logging for company data
+const logCompanyDataDebug = (data: any) => {
+  console.log('[KYB Form Company Debug] Available company data:', {
+    timestamp: new Date().toISOString(),
+    hasData: !!data,
+    fields: data ? Object.keys(data) : [],
+    mappableFields: data ? Object.entries(data).map(([key, value]) => ({
+      field: key,
+      type: typeof value,
+      isArray: Array.isArray(value),
+      isEmpty: isEmptyValue(value)
+    })) : []
+  });
+};
+
+
 export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
@@ -363,9 +392,11 @@ export const OnboardingKYBFormPlayground = ({
   // Load initial form data with forced refresh and set initial step
   useEffect(() => {
     const loadInitialData = async () => {
-      console.log('[Form Debug] Starting initial data load:', {
+      console.log('[KYB Form Debug] Starting initial data load:', {
         taskId,
+        companyName,
         hasSavedData: !!initialSavedFormData,
+        hasCompanyData: !!initialCompanyData,
         timestamp: new Date().toISOString()
       });
 
@@ -377,23 +408,29 @@ export const OnboardingKYBFormPlayground = ({
           if (!response.ok) throw new Error('Failed to fetch latest progress');
           const { formData: latestFormData, progress: latestProgress } = await response.json();
 
-          console.log('[Form Debug] Fetched latest data:', {
+          console.log('[KYB Form Debug] Task data retrieved:', {
+            taskId,
             progress: latestProgress,
-            fieldCount: Object.keys(latestFormData).length,
-            formData: latestFormData,
+            formDataFields: Object.keys(latestFormData || {}),
             timestamp: new Date().toISOString()
           });
 
           dataToLoad = latestFormData;
           setProgress(latestProgress);
           lastProgressRef.current = latestProgress;
+
+          // Log detailed form data debug
+          logFormDataDebug('Initial task data', latestFormData);
         } catch (error) {
-          console.error('[Form Debug] Error fetching latest data:', error);
+          console.error('[KYB Form Debug] Error fetching latest data:', error);
           if (initialSavedFormData) {
             dataToLoad = extractFormData(initialSavedFormData);
             const calculatedProgress = calculateProgress(dataToLoad);
             setProgress(calculatedProgress);
             lastProgressRef.current = calculatedProgress;
+
+            // Log fallback data debug
+            logFormDataDebug('Fallback to initial saved data', dataToLoad);
           }
         }
       } else if (initialSavedFormData) {
@@ -401,19 +438,39 @@ export const OnboardingKYBFormPlayground = ({
         const calculatedProgress = calculateProgress(dataToLoad);
         setProgress(calculatedProgress);
         lastProgressRef.current = calculatedProgress;
+
+        // Log initial saved data debug
+        logFormDataDebug('Using initial saved data', dataToLoad);
       }
 
       // Set form data
       setFormData(dataToLoad);
       formDataRef.current = dataToLoad;
 
+      // Log company data when available
+      if (initialCompanyData) {
+        logCompanyDataDebug(initialCompanyData);
+      }
+
       // Find and set the first incomplete step
       const incompleteStepIndex = findFirstIncompleteStep(dataToLoad);
       setCurrentStep(incompleteStepIndex);
 
+      console.log('[KYB Form Debug] Initial data load complete:', {
+        currentStep: incompleteStepIndex,
+        formFields: Object.keys(dataToLoad),
+        timestamp: new Date().toISOString()
+      });
+
       // Focus on first empty field if any
       const firstEmptyField = findFirstEmptyField(FORM_STEPS[incompleteStepIndex], dataToLoad);
       if (firstEmptyField) {
+        console.log('[KYB Form Debug] Found first empty field:', {
+          field: firstEmptyField,
+          step: incompleteStepIndex,
+          timestamp: new Date().toISOString()
+        });
+
         setTimeout(() => {
           const fieldElement = document.querySelector(`[name="${firstEmptyField}"]`) as HTMLInputElement;
           if (fieldElement) {
@@ -426,7 +483,7 @@ export const OnboardingKYBFormPlayground = ({
     };
 
     loadInitialData();
-  }, [taskId, initialSavedFormData]);
+  }, [taskId, initialSavedFormData, initialCompanyData]);
 
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
@@ -442,6 +499,14 @@ export const OnboardingKYBFormPlayground = ({
   // Handle form updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
     if (!taskId || !isMountedRef.current) return;
+
+    console.log('[KYB Form Debug] Field update triggered:', {
+      fieldName,
+      newValue: value,
+      previousValue: formData[fieldName],
+      hasCompanyData: !!companyData,
+      timestamp: new Date().toISOString()
+    });
 
     const currentTimestamp = Date.now();
     if (currentTimestamp - lastUpdateRef.current < 500) {
