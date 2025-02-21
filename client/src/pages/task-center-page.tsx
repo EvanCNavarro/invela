@@ -199,6 +199,7 @@ export default function TaskCenterPage() {
     console.groupEnd();
   }, [tasks, user, currentCompany]);
 
+  // Update the filtering logic to not restrict by company for "For Others" tab
   const filteredTasks = tasks.filter((task) => {
     console.group(`[TaskCenter] Filtering task ${task.id}`);
     console.log('Task details:', {
@@ -215,13 +216,15 @@ export default function TaskCenterPage() {
       active_tab: activeTab
     });
 
-    // First, check company match
-    const companyMatches = task.company_id === currentCompany?.id;
-    console.log('Company match check:', { companyMatches, reason: !companyMatches ? 'Wrong company' : 'Company matches' });
+    // Only check company match for "my-tasks" tab
+    if (activeTab === "my-tasks") {
+      const companyMatches = task.company_id === currentCompany?.id;
+      console.log('Company match check:', { companyMatches, reason: !companyMatches ? 'Wrong company' : 'Company matches' });
 
-    if (!companyMatches) {
-      console.groupEnd();
-      return false;
+      if (!companyMatches) {
+        console.groupEnd();
+        return false;
+      }
     }
 
     if (activeTab === "my-tasks") {
