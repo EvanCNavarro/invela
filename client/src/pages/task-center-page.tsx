@@ -75,26 +75,35 @@ export default function TaskCenterPage() {
       try {
         // Subscribe to task updates
         const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
-          console.log('[TaskCenter] Received task update:', data);
+          console.log('[TaskCenter] === WebSocket Update Received ===');
+          console.log('[TaskCenter] Update data:', {
+            taskId: data.taskId,
+            newStatus: data.status,
+            newProgress: data.progress
+          });
+
           queryClient.setQueryData(["/api/tasks"], (oldTasks: Task[] = []) => {
-            console.log('[TaskCenter] Updating task in cache:', {
-              taskId: data.taskId,
-              newStatus: data.status,
-              newProgress: data.progress
-            });
+            console.log('[TaskCenter] Current tasks in cache:', oldTasks);
+
             const updatedTasks = oldTasks.map(task =>
               task.id === data.taskId
                 ? { ...task, status: data.status, progress: data.progress }
                 : task
             );
-            console.log('[TaskCenter] Updated tasks in cache:', updatedTasks);
+
+            console.log('[TaskCenter] Tasks after update:', updatedTasks);
+            console.log('[TaskCenter] Updated task:', updatedTasks.find(t => t.id === data.taskId));
+
             return updatedTasks;
           });
 
           // Force a refetch to ensure we have the latest data
+          console.log('[TaskCenter] Invalidating tasks query cache');
           queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
         });
+
         subscriptions.push(unsubTaskUpdate);
+        console.log('[TaskCenter] WebSocket subscription setup complete');
 
       } catch (error) {
         console.error('[TaskCenter] Error setting up WebSocket subscriptions:', error);
@@ -107,6 +116,7 @@ export default function TaskCenterPage() {
       subscriptions.forEach(unsubscribe => {
         try {
           unsubscribe();
+          console.log('[TaskCenter] Successfully unsubscribed from WebSocket');
         } catch (error) {
           console.error('[TaskCenter] Error unsubscribing from WebSocket:', error);
         }
@@ -114,8 +124,17 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  // Update the filtering logic to not restrict by company for "For Others" tab
+  // Add debugging to filtered tasks calculation
   const filteredTasks = tasks.filter((task) => {
+    console.log('[TaskCenter] Filtering task:', {
+      taskId: task.id,
+      status: task.status,
+      scope: task.task_scope,
+      activeTab,
+      userId: user?.id,
+      companyId: currentCompany?.id
+    });
+
     // Only check company match for "my-tasks" tab
     if (activeTab === "my-tasks") {
       const companyMatches = task.company_id === currentCompany?.id;
