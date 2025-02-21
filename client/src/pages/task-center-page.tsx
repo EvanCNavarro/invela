@@ -23,8 +23,14 @@ import { CardContent } from "@/components/ui/card";
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
-// Update Task interface to explicitly include progress
+interface Company {
+  id: number;
+  name: string;
+  onboarding_company_completed: boolean;
+}
+
 interface Task {
   id: number;
   title: string;
@@ -56,12 +62,21 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Update query with explicit Task type and enable frequent refetching
-  const { data: tasks = [], isLoading } = useQuery<Task[]>({
+  // Fetch tasks with proper typing
+  const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchInterval: 5000, // Poll every 5 seconds for updates
+    staleTime: 1000,
+    refetchInterval: 5000,
   });
+
+  // Fetch company data with proper typing
+  const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
+    queryKey: ["/api/companies/current"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Combined loading state
+  const isLoading = isTasksLoading || isCompanyLoading;
 
   // WebSocket subscription for real-time updates
   useEffect(() => {
@@ -119,34 +134,31 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  // Add debugging to filtered tasks calculation
-  const filteredTasks = tasks.filter((task) => {
-    console.log('[TaskCenter] Filtering task:', {
-      taskId: task.id,
-      status: task.status,
-      scope: task.task_scope,
-      activeTab,
-      userId: user?.id,
-      companyId: currentCompany?.id
-    });
+  // Only filter tasks when both data sources are available
+  const filteredTasks = (!isLoading && currentCompany?.id)
+    ? tasks.filter((task) => {
+        console.log('[TaskCenter] Filtering task:', {
+          taskId: task.id,
+          status: task.status,
+          scope: task.task_scope,
+          activeTab,
+          userId: user?.id,
+          companyId: currentCompany.id,
+          progress: task.progress
+        });
 
-    // Only check company match for "my-tasks" tab
-    if (activeTab === "my-tasks") {
-      const companyMatches = task.company_id === currentCompany?.id;
-      if (!companyMatches) {
+        // Only check company match for "my-tasks" tab
+        if (activeTab === "my-tasks") {
+          return task.company_id === currentCompany.id && 
+                 (task.assigned_to === user?.id || 
+                  (task.task_scope === "company" && task.company_id === currentCompany.id));
+        } else if (activeTab === "for-others") {
+          return task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id);
+        }
+
         return false;
-      }
-    }
-
-    if (activeTab === "my-tasks") {
-      return task.assigned_to === user?.id ||
-             (task.task_scope === "company" && task.company_id === currentCompany?.id);
-    } else if (activeTab === "for-others") {
-      return task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id);
-    }
-
-    return false;
-  });
+      })
+    : [];
 
   const sortedAndFilteredTasks = [...filteredTasks].sort((a, b) => {
     if (sortConfig.key === 'due_date') {
@@ -158,7 +170,9 @@ export default function TaskCenterPage() {
         (a.status || '').localeCompare(b.status || '') :
         (b.status || '').localeCompare(a.status || '');
     } else if (sortConfig.key === 'progress') {
-      return sortConfig.direction === 'asc' ? a.progress - b.progress : b.progress - a.progress;
+      return sortConfig.direction === 'asc' ? 
+        (a.progress || 0) - (b.progress || 0) : 
+        (b.progress || 0) - (a.progress || 0);
     }
     return 0;
   });
@@ -183,10 +197,15 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
-  const { data: currentCompany } = useQuery({
-    queryKey: ["/api/companies/current"],
-    staleTime: 5 * 60 * 1000
-  });
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
