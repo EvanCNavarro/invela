@@ -19,6 +19,7 @@ interface Task {
   company_id: number;
   assigned_to?: number;
   created_by: number;
+  task_scope: 'user' | 'company';
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -41,19 +42,22 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     gcTime: 0,
   });
 
-  // Filter tasks for notification count to match task-center-page.tsx logic
+  // Filter tasks for notification count
   const relevantTasks = tasks.filter(task => {
-    // Include tasks that are either:
-    // 1. System-level tasks (company_id = 0)
-    // 2. Or tasks that belong to the current company
-    const companyMatches = task.company_id === 0 || task.company_id === currentCompany?.id;
-
-    if (!companyMatches) {
+    // Only include tasks for the current company
+    if (task.company_id !== currentCompany?.id) {
       return false;
     }
 
-    // Count tasks that are either assigned to the user or created by them
-    return task.assigned_to === user?.id || task.created_by === user?.id;
+    // Include tasks that are either:
+    // 1. Assigned to the current user
+    // 2. Company-wide tasks for the user's company
+    // 3. Created by the user but not assigned to them
+    return (
+      task.assigned_to === user?.id || 
+      (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
+      (task.created_by === user?.id && task.assigned_to !== user?.id)
+    );
   });
 
   // Company hasn't completed onboarding
