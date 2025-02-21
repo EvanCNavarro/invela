@@ -25,6 +25,18 @@ interface CleanedCompanyData {
   exitStrategyHistory?: string;
   certificationsCompliance?: string[];
   search_type?: string;
+  id?: number;
+}
+
+// Helper function to parse PostgreSQL array string
+function parsePostgresArray(arrayStr: string): string[] {
+  if (!arrayStr) return [];
+  // Remove PostgreSQL array braces and split by comma
+  return arrayStr
+    .replace(/^\{|\}$/g, '')
+    .split(',')
+    .map(item => item.trim().replace(/^"/, '').replace(/"$/, ''))
+    .filter(Boolean);
 }
 
 // Helper function to extract data from OpenAI response
@@ -32,8 +44,18 @@ function extractDataFromResponse(result: Record<string, any>): Record<string, an
   const extracted: Record<string, any> = {};
 
   for (const [key, value] of Object.entries(result)) {
-    if (value && typeof value === 'object' && 'data' in value) {
+    if (!value) continue;
+
+    if (typeof value === 'object' && 'data' in value) {
       extracted[key] = value.data;
+    } else if (typeof value === 'string' && value.startsWith('{') && value.endsWith('}')) {
+      try {
+        // Try to parse as JSON first
+        extracted[key] = JSON.parse(value);
+      } catch {
+        // If not valid JSON, might be a PostgreSQL array
+        extracted[key] = parsePostgresArray(value);
+      }
     } else {
       extracted[key] = value;
     }
@@ -70,10 +92,10 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       return value.map(item => item.trim()).filter(Boolean);
     }
     if (typeof value === 'string') {
-      return value
-        .split(',')
-        .map(item => item.trim())
-        .filter(Boolean);
+      if (value.startsWith('{') && value.endsWith('}')) {
+        return parsePostgresArray(value);
+      }
+      return value.split(',').map(item => item.trim()).filter(Boolean);
     }
     return [];
   };
@@ -105,47 +127,7 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       case 'incorporationYear':
         if (typeof value === 'string' || typeof value === 'number') {
           const year = parseInt(String(value), 10);
-          cleanedData[key] = !isNaN(year) ? year : undefined;
-        }
-        break;
-
-      case 'foundersAndLeadership':
-        if (Array.isArray(value)) {
-          // Group people by role without adding "Unknown" text
-          const roleGroups = value.reduce((acc: Record<string, string[]>, person: any) => {
-            const role = person.role || '';
-            if (!acc[role]) acc[role] = [];
-            acc[role].push(person.name);
-            return acc;
-          }, {});
-
-          // Format each role group
-          const formattedGroups = Object.entries(roleGroups)
-            .filter(([role, names]) => role && names.length > 0)
-            .map(([role, names]) => {
-              const roleText = names.length > 1 ? `${role}(s)` : role;
-              return `${roleText}: ${names.join(', ')}`;
-            });
-
-          cleanedData[key] = formattedGroups.join(', ');
-        } else if (typeof value === 'string') {
-          cleanedData[key] = value.trim();
-        }
-        break;
-
-      case 'exitStrategyHistory':
-        if (typeof value === 'string') {
-          cleanedData[key] = value.trim();
-        } else {
-          cleanedData[key] = value;
-        }
-        break;
-
-      case 'productsServices':
-        if (Array.isArray(value)) {
-          cleanedData[key] = value.join(', ');
-        } else if (typeof value === 'string') {
-          cleanedData[key] = value.trim();
+          cleanedData[key] = !isNaN(year) && year > 1800 && year <= new Date().getFullYear() ? year : undefined;
         }
         break;
 
@@ -168,7 +150,11 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         break;
 
       default:
-        cleanedData[key as keyof CleanedCompanyData] = value;
+        if (typeof value === 'string') {
+          cleanedData[key as keyof CleanedCompanyData] = value.trim();
+        } else {
+          cleanedData[key as keyof CleanedCompanyData] = value;
+        }
     }
   });
 
