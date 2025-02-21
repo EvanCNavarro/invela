@@ -36,6 +36,7 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 
 function Router() {
   const [location] = useLocation();
+  console.log('[Router] Current location:', location);
   return (
     <Switch>
       <Route path="/login" component={LoginPage} />
@@ -91,11 +92,14 @@ function Router() {
       />
       <ProtectedRoute 
         path="/task-center/task/:taskSlug"
-        component={({ params }) => (
-          <ProtectedLayout>
-            <TaskPage params={params} />
-          </ProtectedLayout>
-        )}
+        component={({ params }) => {
+          console.log('[Router] Rendering task page with params:', params);
+          return (
+            <ProtectedLayout>
+              <TaskPage params={params} />
+            </ProtectedLayout>
+          );
+        }}
       />
       <ProtectedRoute 
         path="/file-vault" 

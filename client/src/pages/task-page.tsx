@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -30,10 +31,14 @@ interface Task {
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
+
+  console.log('[TaskPage] Rendering with params:', params);
+
   // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
+
+  console.log('[TaskPage] Parsed task info:', { taskType, companyName });
 
   // Only fetch if it's a KYB task
   const { data: task, isLoading, error } = useQuery<Task>({
@@ -41,7 +46,27 @@ export default function TaskPage({ params }: TaskPageProps) {
     enabled: taskType === 'kyb'
   });
 
+  useEffect(() => {
+    console.log('[TaskPage] Task data loaded:', {
+      task,
+      isLoading,
+      error,
+      taskType,
+      companyName
+    });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load KYB task. Please try again.",
+        variant: "destructive",
+      });
+      navigate('/task-center');
+    }
+  }, [error, navigate, toast, task, isLoading]);
+
   if (isLoading) {
+    console.log('[TaskPage] Loading state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -51,14 +76,15 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  if (error || !task) {
+  if (!task) {
+    console.log('[TaskPage] No task found');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
             <p className="text-muted-foreground">
-              Could not find the task. Please try again.
+              Could not find the KYB task for {companyName}. Please try again.
             </p>
           </div>
         </div>
@@ -68,9 +94,12 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   // Currently only supporting KYB tasks
   if (taskType !== 'kyb') {
+    console.log('[TaskPage] Unsupported task type:', taskType);
     navigate('/task-center');
     return null;
   }
+
+  console.log('[TaskPage] Rendering KYB form with task:', task);
 
   return (
     <DashboardLayout>
@@ -84,6 +113,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           <OnboardingKYBFormPlayground 
             taskId={task.id}
             onSubmit={(formData) => {
+              console.log('[TaskPage] Submitting KYB form:', formData);
               // Handle form submission
               fetch('/api/kyb/save', {
                 method: 'POST',
