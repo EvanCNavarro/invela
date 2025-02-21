@@ -63,6 +63,45 @@ router.post("/api/company-search", async (req, res) => {
     if (existingCompany) {
       console.log(`[Company Search Debug] Found existing company:`, existingCompany);
 
+      // Find missing fields
+      const missingFields = findMissingFields(existingCompany);
+      console.log(`[Company Search Debug] Missing fields:`, missingFields);
+
+      // Always try to supplement data if there are any null or empty fields
+      if (missingFields.length > 0) {
+        console.log(`[Company Search Debug] Found ${missingFields.length} missing fields, searching for data:`, missingFields);
+
+        try {
+          // Search for missing data using OpenAI
+          const newData = await findMissingCompanyData(existingCompany, missingFields);
+          console.log('[Company Search Debug] Retrieved new data:', newData);
+
+          // Update company with new data
+          const updatedCompany = await updateCompanyData(existingCompany.id, newData);
+          console.log('[Company Search Debug] Updated company data:', updatedCompany);
+
+          return res.json({
+            success: true,
+            data: {
+              company: updatedCompany,
+              isNewData: true,
+              source: 'registry_enriched'
+            }
+          });
+        } catch (enrichError) {
+          console.error("[Company Search Debug] Enrichment failed:", enrichError);
+          // Return existing data if enrichment fails
+          return res.json({
+            success: true,
+            data: {
+              company: existingCompany,
+              isNewData: false,
+              source: 'registry'
+            }
+          });
+        }
+      }
+
       return res.json({
         success: true,
         data: {
@@ -73,12 +112,34 @@ router.post("/api/company-search", async (req, res) => {
       });
     }
 
-    console.log(`[Company Search Debug] No company found with name: ${companyName}`);
-    // If company not found, return an appropriate error
-    return res.status(404).json({
-      success: false,
-      error: "Company not found",
-      details: `No company found with name: ${companyName}`
+    // If company not found, search for all company data using OpenAI
+    console.log(`[Company Search Debug] Company not found in registry, searching for new data`);
+    const newData = await findMissingCompanyData({ name: companyName }, [
+      'description', 'websiteUrl', 'legalStructure', 'hqAddress',
+      'productsServices', 'incorporationYear', 'foundersAndLeadership',
+      'numEmployees', 'revenue', 'keyClientsPartners', 'investors',
+      'fundingStage', 'exitStrategyHistory', 'certificationsCompliance'
+    ]);
+
+    console.log('[Company Search Debug] Retrieved new company data:', newData);
+
+    // Create new company in registry
+    const newCompany = await createCompany({
+      ...newData,
+      name: companyName,
+      category: 'FinTech', // Default category
+      onboardingCompanyCompleted: false
+    });
+
+    console.log('[Company Search Debug] Created new company:', newCompany);
+
+    res.json({
+      success: true,
+      data: {
+        company: newCompany,
+        isNewData: true,
+        source: 'new'
+      }
     });
 
   } catch (error) {
