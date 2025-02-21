@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { writeFile } from 'fs/promises';
 import { join } from 'path';
 import { db } from '@db';
-import { tasks, TaskStatus } from '@db/schema';
+import { tasks, TaskStatus, kybFields, kybResponses } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 
 const router = Router();
@@ -41,10 +41,23 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       return res.status(404).json({ error: 'KYB task not found' });
     }
 
-    // Transform the task data to include saved form data from metadata
+    // Get all KYB responses for this task
+    const responses = await db.select()
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, task.id));
+
+    // Transform responses into form data
+    const formData: Record<string, any> = {};
+    for (const response of responses) {
+      if (response.response_value !== null) {
+        formData[response.field_key] = response.response_value;
+      }
+    }
+
+    // Transform the task data to include saved form data
     const transformedTask = {
       ...task,
-      savedFormData: task.metadata || {},
+      savedFormData: formData,
       progress: task.progress || 0
     };
 
@@ -52,7 +65,7 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       id: transformedTask.id,
       status: transformedTask.status,
       progress: transformedTask.progress,
-      hasFormData: Object.keys(transformedTask.savedFormData).length > 0,
+      hasFormData: Object.keys(formData).length > 0,
       metadata: transformedTask.metadata,
       savedFormData: transformedTask.savedFormData
     });
@@ -105,15 +118,54 @@ router.post('/api/kyb/progress', async (req, res) => {
       });
     }
 
-    console.log('[KYB API] Current task state:', {
-      taskId,
-      currentProgress: existingTask.progress,
-      requestedProgress: progress,
-      progressDiff: progress - (existingTask.progress || 0),
-      currentStatus: existingTask.status,
-      currentMetadataKeys: Object.keys(existingTask.metadata || {}),
-      timestamp: new Date().toISOString()
-    });
+    // Get all KYB fields
+    const fields = await db.select().from(kybFields);
+    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+
+    // Update KYB responses for each field
+    const timestamp = new Date();
+    for (const [fieldKey, value] of Object.entries(formData)) {
+      const fieldId = fieldMap.get(fieldKey);
+      if (!fieldId) continue;
+
+      // Check if response exists
+      const [existingResponse] = await db.select()
+        .from(kybResponses)
+        .where(
+          and(
+            eq(kybResponses.task_id, taskId),
+            eq(kybResponses.field_id, fieldId)
+          )
+        );
+
+      const responseValue = value === '' ? null : String(value);
+      const status = responseValue === null ? 'empty' : 'complete';
+
+      if (existingResponse) {
+        // Update existing response
+        await db.update(kybResponses)
+          .set({
+            response_value: responseValue,
+            status,
+            version: existingResponse.version + 1,
+            updated_at: timestamp
+          })
+          .where(eq(kybResponses.id, existingResponse.id));
+      } else {
+        // Create new response
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: fieldId,
+            field_key: fieldKey,
+            response_value: responseValue,
+            status,
+            version: 1,
+            created_at: timestamp,
+            updated_at: timestamp
+          });
+      }
+    }
 
     // Determine appropriate status based on progress
     let newStatus = existingTask.status;
@@ -125,30 +177,18 @@ router.post('/api/kyb/progress', async (req, res) => {
       newStatus = TaskStatus.READY_FOR_SUBMISSION;
     }
 
-    // Merge existing metadata with new form data
-    const updatedMetadata = {
-      ...(existingTask.metadata || {}),
-      ...formData,
-      lastUpdated: new Date().toISOString(),
-      statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus].filter((v, i, a) => a.indexOf(v) === i)
-    };
-
-    console.log('[KYB API] Preparing database update:', {
-      taskId,
-      newProgress: Math.min(progress, 100),
-      newStatus,
-      statusTransition: `${existingTask.status} -> ${newStatus}`,
-      updatedFields: Object.keys(formData),
-      timestamp: new Date().toISOString()
-    });
-
-    // Update task with progress and save form data
+    // Update task progress and metadata
     await db.update(tasks)
       .set({
         progress: Math.min(progress, 100),
         status: newStatus,
-        metadata: updatedMetadata,
-        updated_at: new Date()
+        metadata: {
+          ...existingTask.metadata,
+          lastUpdated: timestamp.toISOString(),
+          statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus]
+            .filter((v, i, a) => a.indexOf(v) === i)
+        },
+        updated_at: timestamp
       })
       .where(eq(tasks.id, taskId));
 
@@ -156,16 +196,27 @@ router.post('/api/kyb/progress', async (req, res) => {
       taskId,
       finalProgress: Math.min(progress, 100),
       finalStatus: newStatus,
-      metadataFieldCount: Object.keys(updatedMetadata).length,
-      timestamp: new Date().toISOString()
+      timestamp: timestamp.toISOString()
     });
+
+    // Get updated responses
+    const updatedResponses = await db.select()
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, taskId));
+
+    const updatedFormData: Record<string, any> = {};
+    for (const response of updatedResponses) {
+      if (response.response_value !== null) {
+        updatedFormData[response.field_key] = response.response_value;
+      }
+    }
 
     res.json({ 
       success: true,
       savedData: {
         progress: Math.min(progress, 100),
         status: newStatus,
-        formData: updatedMetadata
+        formData: updatedFormData
       }
     });
   } catch (error) {
@@ -189,6 +240,7 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     const { taskId } = req.params;
     console.log('[KYB API] Loading progress for task:', taskId);
 
+    // Get task data
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, parseInt(taskId)));
@@ -198,20 +250,31 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // Log the task data we're returning
+    // Get all KYB responses for this task
+    const responses = await db.select()
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+
+    // Transform responses into form data
+    const formData: Record<string, any> = {};
+    for (const response of responses) {
+      if (response.response_value !== null) {
+        formData[response.field_key] = response.response_value;
+      }
+    }
+
     console.log('[KYB API] Retrieved task data:', {
       id: task.id,
-      metadata: task.metadata,
+      responseCount: responses.length,
       progress: task.progress,
       status: task.status,
-      hasMetadata: !!task.metadata,
-      metadataKeys: Object.keys(task.metadata || {})
+      formDataKeys: Object.keys(formData)
     });
 
     // Return saved form data and progress
     res.json({
-      formData: task.metadata || {},
-      progress: Math.min(task.progress || 0, 100) // Ensure progress doesn't exceed 100%
+      formData,
+      progress: Math.min(task.progress || 0, 100)
     });
   } catch (error) {
     console.error('[KYB API] Error loading progress:', error);
@@ -228,17 +291,66 @@ router.post('/api/kyb/save', async (req, res) => {
     const filePath = join(process.cwd(), 'uploads', 'kyb', `${fileName}.json`);
     await writeFile(filePath, JSON.stringify(formData, null, 2), 'utf-8');
 
-    // Update task status
+    // Update task status and save final responses
     if (taskId) {
+      const timestamp = new Date();
+
+      // Get all KYB fields
+      const fields = await db.select().from(kybFields);
+      const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+
+      // Save final responses
+      for (const [fieldKey, value] of Object.entries(formData)) {
+        const fieldId = fieldMap.get(fieldKey);
+        if (!fieldId) continue;
+
+        const responseValue = value === '' ? null : String(value);
+        const status = responseValue === null ? 'empty' : 'complete';
+
+        // Update or create response
+        const [existingResponse] = await db.select()
+          .from(kybResponses)
+          .where(
+            and(
+              eq(kybResponses.task_id, taskId),
+              eq(kybResponses.field_id, fieldId)
+            )
+          );
+
+        if (existingResponse) {
+          await db.update(kybResponses)
+            .set({
+              response_value: responseValue,
+              status,
+              version: existingResponse.version + 1,
+              updated_at: timestamp
+            })
+            .where(eq(kybResponses.id, existingResponse.id));
+        } else {
+          await db.insert(kybResponses)
+            .values({
+              task_id: taskId,
+              field_id: fieldId,
+              field_key: fieldKey,
+              response_value: responseValue,
+              status,
+              version: 1,
+              created_at: timestamp,
+              updated_at: timestamp
+            });
+        }
+      }
+
+      // Update task status
       await db.update(tasks)
         .set({
           status: TaskStatus.SUBMITTED,
           progress: 100,
-          updated_at: new Date(),
+          updated_at: timestamp,
           metadata: {
             ...formData,
             kybFormFile: `${fileName}.json`,
-            submissionDate: new Date().toISOString()
+            submissionDate: timestamp.toISOString()
           }
         })
         .where(eq(tasks.id, taskId));
