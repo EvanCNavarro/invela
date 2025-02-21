@@ -251,7 +251,8 @@ const extractFormData = (metadata: Record<string, any>) => {
 
   console.log('[Form Debug] Extracting form data from metadata:', {
     metadataKeys: Object.keys(metadata),
-    formFieldNames: FORM_FIELD_NAMES
+    formFieldNames: FORM_FIELD_NAMES,
+    timestamp: new Date().toISOString()
   });
 
   FORM_FIELD_NAMES.forEach(fieldName => {
@@ -281,15 +282,20 @@ const processSuggestion = (fieldName: string, suggestion: any, companyData: any)
     fieldName,
     suggestionKey: suggestion,
     rawValue: companyData?.[suggestion],
-    companyDataKeys: companyData ? Object.keys(companyData) : []
+    companyDataKeys: companyData ? Object.keys(companyData) : [],
+    timestamp: new Date().toISOString()
   });
 
   if (!companyData?.[suggestion]) {
-    console.log('[KYB Form Debug] No suggestion mapping for field:', fieldName);
+    console.log('[KYB Form Debug] No suggestion mapping for field:', {
+      fieldName,
+      timestamp: new Date().toISOString()
+    });
     return undefined;
   }
 
-  return String(companyData[suggestion]);
+  const value = companyData[suggestion];
+  return Array.isArray(value) ? value.join(', ') : String(value);
 };
 
 // Calculate progress by only counting KYB form fields
@@ -357,18 +363,18 @@ export const OnboardingKYBFormPlayground = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
+  const [isCompanyDataLoading, setIsCompanyDataLoading] = useState(true);
   const updateQueueRef = useRef(createUpdateQueue());
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
 
-  // Single source of truth for initial data load
+  // Load initial form data
   useEffect(() => {
     console.log('[Form Debug] Starting initial data load:', {
       taskId,
       hasSavedData: !!initialSavedFormData,
-      savedDataKeys: initialSavedFormData ? Object.keys(initialSavedFormData) : [],
       timestamp: new Date().toISOString()
     });
 
@@ -376,19 +382,13 @@ export const OnboardingKYBFormPlayground = ({
       const extractedData = extractFormData(initialSavedFormData);
       const calculatedProgress = calculateProgress(extractedData);
 
-      console.log('[Form Debug] Processing saved form data:', {
-        extractedDataKeys: Object.keys(extractedData),
-        calculatedProgress,
-        beforeSetProgress: progress,
-        timestamp: new Date().toISOString()
-      });
-
       setFormData(extractedData);
       setProgress(calculatedProgress);
+      lastProgressRef.current = calculatedProgress;
 
-      console.log('[Form Debug] Form state updated:', {
-        newProgress: calculatedProgress,
-        formDataKeys: Object.keys(extractedData),
+      console.log('[Form Debug] Initial form state set:', {
+        progress: calculatedProgress,
+        fieldCount: Object.keys(extractedData).length,
         timestamp: new Date().toISOString()
       });
     }
@@ -396,62 +396,56 @@ export const OnboardingKYBFormPlayground = ({
     setInitialLoadDone(true);
   }, [initialSavedFormData]);
 
-  // Load form and perform company search in background
+  // Load company data
   useEffect(() => {
     let isMounted = true;
 
     const fetchCompanyData = async () => {
       if (!companyName || !initialLoadDone) {
-        console.log("[KYB Form Debug] Skipping company search:", {
-          hasCompanyName: !!companyName,
-          initialLoadDone
-        });
+        setIsCompanyDataLoading(false);
         return;
       }
-
-      console.log("[KYB Form Debug] Starting company search:", {
-        companyName,
-        currentFormData: Object.keys(formData),
-        hasInitialCompanyData: !!initialCompanyData
-      });
 
       setIsSearching(true);
       setSearchError(null);
 
       try {
+        console.log('[KYB Form Debug] Starting company search:', {
+          companyName,
+          timestamp: new Date().toISOString()
+        });
+
         const response = await fetch("/api/company-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ companyName: companyName.trim() }),
         });
 
-        if (!response.ok) {
-          throw new Error(`Search failed: ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Search failed: ${response.statusText}`);
 
         const responseData = await response.json();
-        console.log("[KYB Form Debug] Company search response:", {
-          success: responseData.success,
-          hasCompanyData: !!responseData.data?.company
-        });
 
         if (isMounted) {
           if (responseData.success && responseData.data.searchComplete) {
+            console.log('[KYB Form Debug] Company data received:', {
+              dataFields: Object.keys(responseData.data.company),
+              timestamp: new Date().toISOString()
+            });
+
             setCompanyData(responseData.data.company);
             setSearchCompleted(true);
           } else {
-            console.error("[KYB Form Debug] API reported failure:", responseData.error);
             setSearchError(responseData.error || 'Failed to retrieve company data');
           }
         }
       } catch (error) {
-        console.error("[KYB Form Debug] Company search error:", error);
         if (isMounted) {
           setSearchError(error instanceof Error ? error.message : 'Failed to search company');
         }
       } finally {
         if (isMounted) {
           setIsSearching(false);
+          setIsCompanyDataLoading(false);
         }
       }
     };
@@ -463,7 +457,7 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [companyName, initialLoadDone]);
 
-  // Handle form field updates with queued processing
+  // Handle form updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
     if (!taskId || !isMountedRef.current) return;
 
@@ -480,12 +474,25 @@ export const OnboardingKYBFormPlayground = ({
     lastUpdateRef.current = currentTimestamp;
 
     const updateOperation = async () => {
-      console.log('[Form Debug] Processing queued update:', {
+      // Wait for company data loading to complete
+      if (isCompanyDataLoading) {
+        console.log('[Form Debug] Waiting for company data to load before update');
+        await new Promise(resolve => {
+          const checkLoading = () => {
+            if (!isCompanyDataLoading) {
+              resolve(true);
+            } else {
+              setTimeout(checkLoading, 100);
+            }
+          };
+          checkLoading();
+        });
+      }
+
+      console.log('[Form Debug] Processing update:', {
         fieldName,
         value,
-        taskId,
-        currentProgress: progress,
-        lastSavedProgress: lastProgressRef.current,
+        hasCompanyData: !!companyData,
         timestamp: new Date().toISOString()
       });
 
@@ -500,13 +507,11 @@ export const OnboardingKYBFormPlayground = ({
 
       const newProgress = calculateProgress(updatedFormData);
 
-      // Validate progress change
       if (Math.abs(newProgress - lastProgressRef.current) > 25) {
         console.warn('[Form Debug] Large progress change detected:', {
           previous: lastProgressRef.current,
           new: newProgress,
-          difference: newProgress - lastProgressRef.current,
-          timestamp: new Date().toISOString()
+          difference: newProgress - lastProgressRef.current
         });
       }
 
@@ -540,7 +545,6 @@ export const OnboardingKYBFormPlayground = ({
           timestamp: new Date().toISOString()
         });
 
-        // Only update WebSocket if the component is still mounted
         await wsService.send('task_updated', {
           taskId,
           progress: result.savedData.progress,
@@ -552,8 +556,7 @@ export const OnboardingKYBFormPlayground = ({
       } catch (error) {
         console.error('[Form Debug] Save operation failed:', {
           error: error instanceof Error ? error.message : 'Unknown error',
-          fieldName,
-          timestamp: new Date().toISOString()
+          fieldName
         });
 
         if (!isMountedRef.current) return;
@@ -791,7 +794,8 @@ export const OnboardingKYBFormPlayground = ({
                       </div>
                     </div>
                     <FormField
-                      type="text"                      variant={variant}
+                      type="text"
+                      variant={variant}
                       value={formData[field.name] || ''}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
                       aiSuggestion={getSuggestionForField(field.name)}
