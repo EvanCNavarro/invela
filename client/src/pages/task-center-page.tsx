@@ -204,46 +204,10 @@ export default function TaskCenterPage() {
       return false;
     }
 
-    // For "My Tasks" tab
     if (activeTab === "my-tasks") {
-      // Check if it's a company-wide task
-      if (task.task_scope === 'company') {
-        console.log('Company-wide task - including in My Tasks');
-        console.groupEnd();
-        return true;
-      }
-
-      // For user-specific tasks
-      if (task.task_scope === 'user') {
-        const isAssignedToUser = task.assigned_to === user?.id;
-        const matchesUserEmail = task.user_email?.toLowerCase() === user?.email?.toLowerCase();
-
-        console.log('User-specific task checks:', {
-          isAssignedToUser,
-          matchesUserEmail,
-          result: isAssignedToUser || matchesUserEmail
-        });
-
-        console.groupEnd();
-        return isAssignedToUser || matchesUserEmail;
-      }
-    }
-
-    // For "For Others" tab
-    if (activeTab === "for-others") {
-      const isCreatedByUser = task.created_by === user?.id;
-      const isNotAssignedToUser = task.assigned_to !== user?.id;
-      const isUserTask = task.task_scope === 'user';
-
-      console.log('For Others tab checks:', {
-        isCreatedByUser,
-        isNotAssignedToUser,
-        isUserTask,
-        result: isCreatedByUser && isNotAssignedToUser && isUserTask
-      });
-
-      console.groupEnd();
-      return isCreatedByUser && isNotAssignedToUser && isUserTask;
+      return task.assigned_to === user?.id;
+    } else if (activeTab === "for-others") {
+      return task.created_by === user?.id;
     }
 
     console.groupEnd();
@@ -308,31 +272,9 @@ export default function TaskCenterPage() {
       }
 
       if (tabId === "my-tasks") {
-        // Company-wide tasks are always shown in My Tasks
-        if (task.task_scope === 'company') {
-          console.log(`Task ${task.id} included in My Tasks - company scope`);
-          return true;
-        }
-
-        // For user-specific tasks, check if assigned or matches email
-        if (task.task_scope === 'user') {
-          const isAssignedToUser = task.assigned_to === user?.id;
-          const matchesUserEmail = task.user_email?.toLowerCase() === user?.email?.toLowerCase();
-          console.log(`Task ${task.id} ${isAssignedToUser || matchesUserEmail ? 'included in' : 'filtered from'} My Tasks - ${isAssignedToUser ? 'assigned' : ''} ${matchesUserEmail ? 'email matches' : ''}`);
-          return isAssignedToUser || matchesUserEmail;
-        }
+        return task.assigned_to === user?.id;
       } else if (tabId === "for-others") {
-        // Only include tasks that are:
-        // 1. Created by the current user
-        // 2. Not assigned to the current user
-        // 3. User-scoped tasks
-        const isCreatedByUser = task.created_by === user?.id;
-        const isNotAssignedToUser = task.assigned_to !== user?.id;
-        const isUserTask = task.task_scope === 'user';
-
-        const shouldInclude = isCreatedByUser && isNotAssignedToUser && isUserTask;
-        console.log(`Task ${task.id} ${shouldInclude ? 'included in' : 'filtered from'} For Others - created by user: ${isCreatedByUser}, not assigned: ${isNotAssignedToUser}, user task: ${isUserTask}`);
-        return shouldInclude;
+        return task.created_by === user?.id;
       }
 
       return false;
