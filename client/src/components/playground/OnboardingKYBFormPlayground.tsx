@@ -211,7 +211,8 @@ const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.fields.length, 
 // Simplified empty value check
 const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim() === '';
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
   return false;
 };
 
@@ -226,7 +227,7 @@ const calculateProgress = (formData: Record<string, any>) => {
     return !isEmpty;
   }).length;
 
-  const progress = Math.min(Math.round((filledFields / TOTAL_FIELDS) * 100), 100);
+  const progress = Math.round((filledFields / TOTAL_FIELDS) * 100);
   console.log('[Progress Debug] Progress calculation:', { filledFields, totalFields: TOTAL_FIELDS, progress });
   return progress;
 };
@@ -234,14 +235,16 @@ const calculateProgress = (formData: Record<string, any>) => {
 // Helper function to filter out non-form fields from metadata
 const extractFormData = (metadata: Record<string, any>) => {
   const formData: Record<string, string> = {};
-  console.log('[KYB Form Debug] Extracting form data from metadata:', {
+
+  console.log('[Form Debug] Extracting form data from metadata:', {
     metadataKeys: Object.keys(metadata),
     formFieldNames: FORM_FIELD_NAMES
   });
 
   FORM_FIELD_NAMES.forEach(fieldName => {
-    if (metadata[fieldName] !== undefined && metadata[fieldName] !== null) {
-      formData[fieldName] = String(metadata[fieldName]).trim();
+    const value = metadata[fieldName];
+    if (!isEmptyValue(value)) {
+      formData[fieldName] = String(value).trim();
     }
   });
 
@@ -382,11 +385,16 @@ export const OnboardingKYBFormPlayground = ({
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
     console.log('[Form Debug] Updating field:', { fieldName, value });
 
-    // Update form data
+    // Prepare new form data
     const updatedFormData = {
       ...formData,
-      [fieldName]: value
+      [fieldName]: value.trim() // Ensure we store trimmed values
     };
+
+    // Remove empty fields
+    if (isEmptyValue(updatedFormData[fieldName])) {
+      delete updatedFormData[fieldName];
+    }
 
     // Calculate new progress before state updates
     const newProgress = calculateProgress(updatedFormData);
@@ -548,21 +556,17 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-
   // Determine field variant based on validation and form state
   const getFieldVariant = (field: any, value: string | undefined) => {
-    const isEmpty = !value || value.trim() === '';
+    const isEmpty = isEmptyValue(value);
     const isTouched = value !== undefined;
     const suggestion = getSuggestionForField(field.name);
 
-    // Only show error state when the field has been touched and is empty
-    if (suggestion && !isTouched) {
-      return 'ai-suggestion';
-    } else if (isTouched && !isEmpty) {
+    if (isTouched && !isEmpty) {
       return 'successful';
+    } else if (suggestion && !isTouched) {
+      return 'ai-suggestion';
     }
-
-    // Return default state instead of error when loading the form
     return 'default';
   };
 
@@ -573,14 +577,12 @@ export const OnboardingKYBFormPlayground = ({
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                  isSubmitted
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
-                </div>
+              <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                isSubmitted
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
               </div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold">KYB Survey</h2>
