@@ -371,7 +371,29 @@ export const OnboardingKYBFormPlayground = ({
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
 
-  // Load initial form data with forced refresh
+  // Function to find the first incomplete step
+  const findFirstIncompleteStep = (formData: Record<string, string>): number => {
+    for (let i = 0; i < FORM_STEPS.length; i++) {
+      const step = FORM_STEPS[i];
+      const isStepValid = validateCurrentStep(formData, step);
+      if (!isStepValid) {
+        return i;
+      }
+    }
+    return 0; // Return to first step if all are complete
+  };
+
+  // Function to find first empty field in current step
+  const findFirstEmptyField = (step: typeof FORM_STEPS[number], formData: Record<string, string>): string | null => {
+    for (const field of step.fields) {
+      if (isEmptyValue(formData[field.name])) {
+        return field.name;
+      }
+    }
+    return null;
+  };
+
+  // Load initial form data with forced refresh and set initial step
   useEffect(() => {
     const loadInitialData = async () => {
       console.log('[Form Debug] Starting initial data load:', {
@@ -384,7 +406,6 @@ export const OnboardingKYBFormPlayground = ({
 
       if (taskId) {
         try {
-          // Force fresh data fetch from server
           const response = await fetch(`/api/kyb/progress/${taskId}`);
           if (!response.ok) throw new Error('Failed to fetch latest progress');
           const { formData: latestFormData, progress: latestProgress } = await response.json();
@@ -401,7 +422,6 @@ export const OnboardingKYBFormPlayground = ({
           lastProgressRef.current = latestProgress;
         } catch (error) {
           console.error('[Form Debug] Error fetching latest data:', error);
-          // Fallback to initial data if fetch fails
           if (initialSavedFormData) {
             dataToLoad = extractFormData(initialSavedFormData);
             const calculatedProgress = calculateProgress(dataToLoad);
@@ -416,14 +436,25 @@ export const OnboardingKYBFormPlayground = ({
         lastProgressRef.current = calculatedProgress;
       }
 
-      console.log('[Form Debug] Setting initial form data:', {
-        dataToLoad,
-        fieldCount: Object.keys(dataToLoad).length,
-        timestamp: new Date().toISOString()
-      });
-
+      // Set form data
       setFormData(dataToLoad);
       formDataRef.current = dataToLoad;
+
+      // Find and set the first incomplete step
+      const incompleteStepIndex = findFirstIncompleteStep(dataToLoad);
+      setCurrentStep(incompleteStepIndex);
+
+      // Focus on first empty field if any
+      const firstEmptyField = findFirstEmptyField(FORM_STEPS[incompleteStepIndex], dataToLoad);
+      if (firstEmptyField) {
+        setTimeout(() => {
+          const fieldElement = document.querySelector(`[name="${firstEmptyField}"]`) as HTMLInputElement;
+          if (fieldElement) {
+            fieldElement.focus();
+          }
+        }, 100);
+      }
+
       setInitialLoadDone(true);
     };
 
@@ -847,17 +878,10 @@ export const OnboardingKYBFormPlayground = ({
                 const value = formData[field.name] || '';
                 const { mainText, tooltipText } = extractTooltipContent(field.question);
                 const variant = getFieldVariant(field, value);
-
-                console.log('[Form Debug] Rendering field:', {
-                  fieldName: field.name,
-                  value,
-                  formDataValue: formData[field.name],
-                  variant,
-                  timestamp: new Date().toISOString()
-                });
+                const isEmpty = isEmptyValue(value);
 
                 return (
-                  <div key={field.name} className="space-y-2">
+                  <div key={field.name} className={`space-y-2 ${isEmpty ? 'animate-pulse-subtle' : ''}`}>
                     <div className="flex flex-col gap-1">
                       <label className="text-xs font-medium text-muted-foreground">
                         {field.label}
@@ -882,6 +906,7 @@ export const OnboardingKYBFormPlayground = ({
                     </div>
                     <FormField
                       type="text"
+                      name={field.name}
                       variant={variant}
                       value={value}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
@@ -892,6 +917,8 @@ export const OnboardingKYBFormPlayground = ({
                           handleSuggestionClick(field.name, suggestion);
                         }
                       }}
+                      className={isEmpty ? 'border-[#4F46E5] ring-1 ring-[#4F46E5]/10' : ''}
+                      placeholder={isEmpty ? 'Required field' : ''}
                     />
                   </div>
                 );
