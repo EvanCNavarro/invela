@@ -63,8 +63,11 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
   const handleTaskClick = (task: Task) => {
     console.log('Task clicked:', task);
     if (task.task_type === 'company_kyb') {
-      // Navigate to KYB form page
-      navigate(`/kyb-form/${task.id}`);
+      // Get company name from metadata or task title
+      const companyName = task.metadata?.company_name || 
+                         task.title.replace('Company KYB: ', '').toLowerCase().replace(/\s+/g, '-');
+      // Navigate to KYB form page with company name in URL
+      navigate(`/task-center/task/kyb-${companyName}`);
     } else {
       // Show modal for other task types
       setSelectedTask(task);
