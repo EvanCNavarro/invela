@@ -44,10 +44,10 @@ export function WelcomeModal() {
 
   // Only show modal if user exists and hasn't completed onboarding
   useEffect(() => {
-    if (user && !user.onboardingUserCompleted) {
+    if (user && !user.onboarding_user_completed) {
       setIsOpen(true);
     }
-  }, [user?.onboardingUserCompleted]);
+  }, [user?.onboarding_user_completed]);
 
   // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
@@ -79,7 +79,6 @@ export function WelcomeModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      // Send WebSocket update if connected
       if (connected && socket && data.task) {
         try {
           socket.send(JSON.stringify({
@@ -94,7 +93,9 @@ export function WelcomeModal() {
             }
           }));
         } catch (error) {
-          console.error('[WelcomeModal] WebSocket send error');
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[WelcomeModal] WebSocket send error');
+          }
         }
       }
 
@@ -136,7 +137,7 @@ export function WelcomeModal() {
   };
 
   // Don't show modal if no user or user has completed onboarding
-  if (!user || user.onboardingUserCompleted) {
+  if (!user || user.onboarding_user_completed) {
     return null;
   }
 
