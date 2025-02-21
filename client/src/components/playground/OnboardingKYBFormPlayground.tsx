@@ -235,33 +235,63 @@ export const OnboardingKYBFormPlayground = ({
   // Always perform the company search when mounted or when companyName changes
   useEffect(() => {
     const fetchCompanyData = async () => {
-      if (!companyName) return;
+      if (!companyName) {
+        console.log("[Company Search Debug] No company name provided, skipping search");
+        return;
+      }
+
+      console.log("[Company Search Debug] Starting search with params:", {
+        companyName,
+        initialData: initialCompanyData,
+        taskId
+      });
 
       setIsSearching(true);
       try {
+        console.log("[Company Search Debug] Making API request to /api/company-search");
         const response = await fetch("/api/company-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ companyName: companyName.trim() }),
         });
 
+        console.log("[Company Search Debug] Received API response:", {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText
+        });
+
         if (!response.ok) {
           throw new Error(`Search failed: ${response.statusText}`);
         }
 
-        const { data } = await response.json();
+        const responseData = await response.json();
+        console.log("[Company Search Debug] Parsed response data:", responseData);
 
         // Invalidate any cached company data
+        console.log("[Company Search Debug] Invalidating related query caches");
         queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-        setCompanyData(data.company);
+        if (responseData.success) {
+          console.log("[Company Search Debug] Setting company data:", responseData.data.company);
+          setCompanyData(responseData.data.company);
+        } else {
+          console.error("[Company Search Debug] API reported failure:", responseData.error);
+          throw new Error(responseData.error || 'API reported failure');
+        }
 
       } catch (error) {
-        console.error("Error searching company:", error);
+        console.error("[Company Search Debug] Error in search process:", {
+          error,
+          message: error.message,
+          stack: error.stack
+        });
         // Don't fallback to initial data anymore - we want fresh data only
+        console.log("[Company Search Debug] Clearing company data due to error");
         setCompanyData(null);
       } finally {
+        console.log("[Company Search Debug] Search process completed");
         setIsSearching(false);
       }
     };
