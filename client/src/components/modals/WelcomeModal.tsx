@@ -37,19 +37,20 @@ const carouselImages = [
 
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { socket, connected } = useWebSocket();
 
-  // Only show modal if user exists and hasn't completed onboarding
+  // Show modal only when user is loaded and hasn't completed onboarding
   useEffect(() => {
-    if (user && !user.onboarding_user_completed) {
-      setIsOpen(true);
+    const shouldShow = user && !user.onboarding_user_completed;
+    // Only update state if it's different to avoid loops
+    if (shouldShow !== showModal) {
+      setShowModal(shouldShow);
     }
   }, [user?.onboarding_user_completed]);
 
-  // Fetch onboarding task
   const { data: onboardingTask } = useQuery({
     queryKey: ["/api/tasks", { type: "user_invitation", email: user?.email }],
     enabled: !!user?.email,
@@ -94,7 +95,7 @@ export function WelcomeModal() {
           }));
         } catch (error) {
           if (process.env.NODE_ENV === 'development') {
-            console.error('[WelcomeModal] WebSocket send error');
+            console.error('[WelcomeModal] WebSocket send error:', error);
           }
         }
       }
@@ -103,6 +104,9 @@ export function WelcomeModal() {
         title: "Welcome aboard!",
         description: "Your onboarding has been completed successfully.",
       });
+
+      // Close modal after successful completion
+      setShowModal(false);
     },
     onError: (error: Error) => {
       toast({
@@ -117,7 +121,7 @@ export function WelcomeModal() {
     if (currentSlide < carouselImages.length - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
-      handleComplete();
+      completeOnboardingMutation.mutateAsync();
     }
   };
 
@@ -127,36 +131,19 @@ export function WelcomeModal() {
     }
   };
 
-  const handleComplete = async () => {
-    try {
-      await completeOnboardingMutation.mutateAsync();
-      setIsOpen(false);
-    } catch (error) {
-      // Error is handled by mutation error handler
-    }
-  };
-
-  // Don't show modal if no user or user has completed onboarding
+  // Don't render anything if user has completed onboarding
   if (!user || user.onboarding_user_completed) {
     return null;
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={showModal} onOpenChange={setShowModal}>
       <DialogContent className="sm:max-w-xl">
         <DialogTitle>{carouselImages[currentSlide].title}</DialogTitle>
         <DialogDescription>
           {carouselImages[currentSlide].description}
         </DialogDescription>
         <div className="relative px-4 pb-8 pt-6">
-          <button
-            onClick={() => setIsOpen(false)}
-            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </button>
-
           <div className="relative aspect-video overflow-hidden rounded-lg">
             <img
               src={carouselImages[currentSlide].src}
