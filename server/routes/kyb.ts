@@ -128,12 +128,13 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 // Save progress for KYB form
 router.post('/api/kyb/progress', async (req, res) => {
   try {
-    const { taskId, progress, formData } = req.body;
+    const { taskId, progress, formData, fieldUpdates } = req.body;
 
     console.log('[KYB API Debug] Progress update initiated:', { 
       taskId, 
       requestedProgress: progress,
       formDataKeys: Object.keys(formData || {}),
+      fieldUpdates: fieldUpdates ? Object.keys(fieldUpdates) : [],
       timestamp: new Date().toISOString()
     });
 
@@ -145,20 +146,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       });
     }
 
-    if (!formData || typeof formData !== 'object') {
-      console.warn('[KYB API Debug] Invalid form data format:', { formData });
-      return res.status(400).json({
-        error: 'Invalid form data format',
-        code: 'INVALID_FORM_DATA'
-      });
-    }
-
     // Get existing task data
     const [existingTask] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
-
-    logTaskDebug('Existing task', existingTask);
 
     if (!existingTask) {
       console.log('[KYB API Debug] Task not found:', taskId);
@@ -178,6 +169,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       const fieldId = fieldMap.get(fieldKey);
       if (!fieldId) continue;
 
+      const fieldUpdate = fieldUpdates?.[fieldKey];
+      const responseValue = value === '' ? null : String(value);
+      const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
+
       // Check if response exists
       const [existingResponse] = await db.select()
         .from(kybResponses)
@@ -187,9 +182,6 @@ router.post('/api/kyb/progress', async (req, res) => {
             eq(kybResponses.field_id, fieldId)
           )
         );
-
-      const responseValue = value === '' ? null : String(value);
-      const status = responseValue === null ? 'empty' : 'complete';
 
       if (existingResponse) {
         // Update existing response
@@ -201,19 +193,34 @@ router.post('/api/kyb/progress', async (req, res) => {
             updated_at: timestamp
           })
           .where(eq(kybResponses.id, existingResponse.id));
+
+        console.log('[KYB API Debug] Updated field response:', {
+          fieldKey,
+          oldValue: existingResponse.response_value,
+          newValue: responseValue,
+          oldStatus: existingResponse.status,
+          newStatus: status,
+          timestamp: timestamp.toISOString()
+        });
       } else {
         // Create new response
         await db.insert(kybResponses)
           .values({
             task_id: taskId,
             field_id: fieldId,
-            field_key: fieldKey,
             response_value: responseValue,
             status,
             version: 1,
             created_at: timestamp,
             updated_at: timestamp
           });
+
+        console.log('[KYB API Debug] Created new field response:', {
+          fieldKey,
+          value: responseValue,
+          status,
+          timestamp: timestamp.toISOString()
+        });
       }
     }
 
@@ -242,20 +249,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
-    console.log('[KYB API Debug] Task update completed:', {
-      taskId,
-      finalProgress: Math.min(progress, 100),
-      finalStatus: newStatus,
-      timestamp: timestamp.toISOString()
-    });
-
     // Get updated responses
     const updatedResponses = await db.select()
       .from(kybResponses)
       .where(eq(kybResponses.task_id, taskId));
-
-    logResponseDebug('Updated responses', updatedResponses);
-
 
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {

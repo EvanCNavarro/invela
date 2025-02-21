@@ -504,7 +504,6 @@ export const OnboardingKYBFormPlayground = ({
       fieldName,
       newValue: value,
       previousValue: formData[fieldName],
-      hasCompanyData: !!companyData,
       timestamp: new Date().toISOString()
     });
 
@@ -513,36 +512,13 @@ export const OnboardingKYBFormPlayground = ({
       console.log('[Form Debug] Debouncing update:', {
         timeSinceLastUpdate: currentTimestamp - lastUpdateRef.current,
         skipped: true,
-        fieldName,
         timestamp: new Date().toISOString()
       });
       return;
     }
     lastUpdateRef.current = currentTimestamp;
 
-    const updateOperation = async () => {
-      // Wait for company data loading to complete
-      if (isCompanyDataLoading) {
-        console.log('[Form Debug] Waiting for company data to load before update');
-        await new Promise(resolve => {
-          const checkLoading = () => {
-            if (!isCompanyDataLoading) {
-              resolve(true);
-            } else {
-              setTimeout(checkLoading, 100);
-            }
-          };
-          checkLoading();
-        });
-      }
-
-      console.log('[Form Debug] Processing update:', {
-        fieldName,
-        value,
-        hasCompanyData: !!companyData,
-        timestamp: new Date().toISOString()
-      });
-
+    try {
       const updatedFormData = {
         ...formData,
         [fieldName]: value.trim()
@@ -554,78 +530,100 @@ export const OnboardingKYBFormPlayground = ({
 
       const newProgress = calculateProgress(updatedFormData);
 
-      if (Math.abs(newProgress - lastProgressRef.current) > 25) {
-        console.warn('[Form Debug] Large progress change detected:', {
-          previous: lastProgressRef.current,
-          new: newProgress,
-          difference: newProgress - lastProgressRef.current
-        });
+      setFormData(updatedFormData);
+      formDataRef.current = updatedFormData;
+      setProgress(newProgress);
+      lastProgressRef.current = newProgress;
+
+      const response = await fetch('/api/kyb/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          progress: newProgress,
+          formData: updatedFormData,
+          fieldUpdates: {
+            [fieldName]: {
+              value: value.trim(),
+              status: isEmptyValue(value.trim()) ? 'empty' : 'complete',
+              updatedAt: new Date().toISOString()
+            }
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save progress');
+
+      const result = await response.json();
+      console.log('[Form Debug] Backend save result:', {
+        savedProgress: result.savedData.progress,
+        clientProgress: newProgress,
+        progressMatch: result.savedData.progress === newProgress,
+        timestamp: new Date().toISOString()
+      });
+
+      // Find and focus next empty field
+      const currentStepFields = FORM_STEPS[currentStep];
+      const currentFieldIndex = currentStepFields.findIndex(f => f.name === fieldName);
+      let nextEmptyField: string | null = null;
+
+      // First look for empty fields in current step
+      for (let i = currentFieldIndex + 1; i < currentStepFields.length; i++) {
+        if (isEmptyValue(updatedFormData[currentStepFields[i].name])) {
+          nextEmptyField = currentStepFields[i].name;
+          break;
+        }
       }
 
-      try {
-        if (!isMountedRef.current) return;
+      // If no empty fields in current step, check if we should move to next step
+      if (!nextEmptyField && !validateCurrentStep(updatedFormData, currentStepFields)) {
+        const nextStep = currentStep + 1;
+        if (nextStep < FORM_STEPS.length) {
+          setCurrentStep(nextStep);
+          nextEmptyField = findFirstEmptyField(FORM_STEPS[nextStep], updatedFormData);
+        }
+      } else if (!nextEmptyField){
+        nextEmptyField = findFirstEmptyField(currentStepFields, updatedFormData);
+      }
 
-        setFormData(updatedFormData);
-        setProgress(newProgress);
-        lastProgressRef.current = newProgress;
-
-        const response = await fetch('/api/kyb/progress', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            taskId,
-            progress: newProgress,
-            formData: updatedFormData
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to save progress');
-
-        const result = await response.json();
-
-        if (!isMountedRef.current) return;
-
-        console.log('[Form Debug] Backend save result:', {
-          savedProgress: result.savedData.progress,
-          clientProgress: newProgress,
-          progressMatch: result.savedData.progress === newProgress,
+      if (nextEmptyField) {
+        console.log('[Form Debug] Moving focus to next empty field:', {
+          currentField: fieldName,
+          nextField: nextEmptyField,
           timestamp: new Date().toISOString()
         });
 
-        await wsService.send('task_updated', {
-          taskId,
-          progress: result.savedData.progress,
-          status: result.savedData.status
-        });
-
-        queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-
-      } catch (error) {
-        console.error('[Form Debug] Save operation failed:', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          fieldName
-        });
-
-        if (!isMountedRef.current) return;
-
-        if (initialSavedFormData) {
-          const revertData = extractFormData(initialSavedFormData);
-          const revertProgress = calculateProgress(revertData);
-
-          setFormData(revertData);
-          setProgress(revertProgress);
-          lastProgressRef.current = revertProgress;
-        }
-
-        toast({
-          title: "Error",
-          description: "Failed to save progress. Please try again.",
-          variant: "destructive"
-        });
+        setTimeout(() => {
+          const fieldElement = document.querySelector(`[name="${nextEmptyField}"]`) as HTMLInputElement;
+          if (fieldElement) {
+            fieldElement.focus();
+          }
+        }, 100);
       }
-    };
 
-    updateQueueRef.current.enqueue(updateOperation);
+      await wsService.send('task_updated', {
+        taskId,
+        progress: result.savedData.progress,
+        status: result.savedData.status
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+
+    } catch (error) {
+      console.error('[Form Debug] Save operation failed:', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fieldName,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!isMountedRef.current) return;
+
+      toast({
+        title: "Error",
+        description: "Failed to save progress. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleBack = () => {
