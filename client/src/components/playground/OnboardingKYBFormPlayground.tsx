@@ -221,6 +221,7 @@ interface OnboardingKYBFormPlaygroundProps {
   onSubmit?: (formData: Record<string, any>) => void;
   companyName: string;
   companyData?: any;
+  savedFormData?: Record<string, any>;
 }
 
 // Calculate progress by only counting KYB form fields
@@ -245,7 +246,8 @@ export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
   companyName,
-  companyData: initialCompanyData
+  companyData: initialCompanyData,
+  savedFormData: initialSavedFormData
 }: OnboardingKYBFormPlaygroundProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -259,19 +261,108 @@ export const OnboardingKYBFormPlayground = ({
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Load saved form data and initialize form state
+  useEffect(() => {
+    console.log('[KYB Form Debug] Initial form data load:', {
+      hasTaskId: !!taskId,
+      hasSavedFormData: !!initialSavedFormData,
+      savedFormDataKeys: initialSavedFormData ? Object.keys(initialSavedFormData) : [],
+      initialCompanyData: !!initialCompanyData
+    });
+
+    if (initialSavedFormData) {
+      console.log('[KYB Form Debug] Setting initial form data from saved data');
+      setFormData(initialSavedFormData);
+      const progress = calculateProgress();
+      setLastSavedProgress(progress);
+    } else if (initialCompanyData) {
+      console.log('[KYB Form Debug] Setting initial form data from company data');
+      setFormData(extractFormData(initialCompanyData));
+      const progress = calculateProgress();
+      setLastSavedProgress(progress);
+    }
+
+    setInitialLoadDone(true);
+  }, [taskId, initialSavedFormData, initialCompanyData]);
+
+  // Load form and perform company search in background
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchCompanyData = async () => {
+      if (!companyName || !initialLoadDone) {
+        console.log("[KYB Form Debug] Skipping company search:", {
+          hasCompanyName: !!companyName,
+          initialLoadDone
+        });
+        return;
+      }
+
+      console.log("[KYB Form Debug] Starting company search:", {
+        companyName,
+        currentFormData: Object.keys(formData),
+        hasInitialCompanyData: !!initialCompanyData
+      });
+
+      setIsSearching(true);
+      setSearchError(null);
+
+      try {
+        const response = await fetch("/api/company-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyName: companyName.trim() }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.statusText}`);
+        }
+
+        const responseData = await response.json();
+        console.log("[KYB Form Debug] Company search response:", {
+          success: responseData.success,
+          hasCompanyData: !!responseData.data?.company
+        });
+
+        if (isMounted) {
+          if (responseData.success && responseData.data.searchComplete) {
+            setCompanyData(responseData.data.company);
+            setSearchCompleted(true);
+          } else {
+            console.error("[KYB Form Debug] API reported failure:", responseData.error);
+            setSearchError(responseData.error || 'Failed to retrieve company data');
+          }
+        }
+      } catch (error) {
+        console.error("[KYB Form Debug] Company search error:", error);
+        if (isMounted) {
+          setSearchError(error instanceof Error ? error.message : 'Failed to search company');
+        }
+      } finally {
+        if (isMounted) {
+          setIsSearching(false);
+        }
+      }
+    };
+
+    fetchCompanyData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [companyName, initialLoadDone]);
+
   // Helper to filter out non-form fields from metadata
   const extractFormData = (metadata: Record<string, any>) => {
     const formData: Record<string, string> = {};
-
-    // Log the metadata we're processing
-    console.log('[KYB Form Debug] Processing metadata:', metadata);
+    console.log('[KYB Form Debug] Extracting form data from metadata:', {
+      metadataKeys: Object.keys(metadata),
+      formFieldNames: FORM_FIELD_NAMES
+    });
 
     FORM_FIELD_NAMES.forEach(fieldName => {
-      // Only set value if it exists and is not empty
       if (metadata[fieldName] !== undefined && metadata[fieldName] !== null) {
-        const value = metadata[fieldName];
-        formData[fieldName] = String(value).trim();
-        console.log(`[KYB Form Debug] Extracted field ${fieldName}:`, formData[fieldName]);
+        formData[fieldName] = String(metadata[fieldName]).trim();
       }
     });
 
@@ -420,10 +511,7 @@ export const OnboardingKYBFormPlayground = ({
             filledFields: Object.values(extractedData).filter(val => !isEmptyValue(val)).length
           });
 
-          setFormData(prev => {
-            const newData = { ...prev, ...extractedData };
-            return newData;
-          });
+          setFormData(prev => ({...prev, ...extractedData}));
 
           setLastSavedProgress(data.progress || 0);
 
@@ -549,33 +637,28 @@ export const OnboardingKYBFormPlayground = ({
     let isMounted = true;
 
     const fetchCompanyData = async () => {
-      if (!companyName) {
-        console.log("[KYB Form Debug] No company name provided, skipping search");
+      if (!companyName || !initialLoadDone) {
+        console.log("[KYB Form Debug] Skipping company search:", {
+          hasCompanyName: !!companyName,
+          initialLoadDone
+        });
         return;
       }
 
-      console.log("[KYB Form Debug] Starting search with params:", {
+      console.log("[KYB Form Debug] Starting company search:", {
         companyName,
-        initialData: initialCompanyData,
-        taskId
+        currentFormData: Object.keys(formData),
+        hasInitialCompanyData: !!initialCompanyData
       });
 
       setIsSearching(true);
       setSearchError(null);
-      setSearchCompleted(false);
 
       try {
-        console.log("[KYB Form Debug] Making API request to /api/company-search");
         const response = await fetch("/api/company-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ companyName: companyName.trim() }),
-        });
-
-        console.log("[KYB Form Debug] Received API response:", {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText
         });
 
         if (!response.ok) {
@@ -583,36 +666,27 @@ export const OnboardingKYBFormPlayground = ({
         }
 
         const responseData = await response.json();
-        console.log("[KYB Form Debug] Parsed response data:", responseData);
+        console.log("[KYB Form Debug] Company search response:", {
+          success: responseData.success,
+          hasCompanyData: !!responseData.data?.company
+        });
 
         if (isMounted) {
           if (responseData.success && responseData.data.searchComplete) {
-            console.log("[KYB Form Debug] Setting company data:", responseData.data.company);
             setCompanyData(responseData.data.company);
             setSearchCompleted(true);
-
-            // Invalidate caches after successful update
-            console.log("[KYB Form Debug] Invalidating related query caches");
-            queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
           } else {
             console.error("[KYB Form Debug] API reported failure:", responseData.error);
             setSearchError(responseData.error || 'Failed to retrieve company data');
           }
         }
       } catch (error) {
-        console.error("[KYB Form Debug] Error in search process:", {
-          error,
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
-        });
-
+        console.error("[KYB Form Debug] Company search error:", error);
         if (isMounted) {
           setSearchError(error instanceof Error ? error.message : 'Failed to search company');
         }
       } finally {
         if (isMounted) {
-          console.log("[KYB Form Debug] Search process completed");
           setIsSearching(false);
         }
       }
@@ -624,7 +698,7 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       isMounted = false;
     };
-  }, [companyName, queryClient, taskId]);
+  }, [companyName, initialLoadDone]);
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -740,22 +814,10 @@ export const OnboardingKYBFormPlayground = ({
       newValue: value
     });
 
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        [fieldName]: value
-      };
-
-      console.log('[KYB Form Debug] Form data updated:', {
-        fieldName,
-        value,
-        previousData: prev,
-        newData,
-        progress: calculateProgress()
-      });
-
-      return newData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
   };
 
   // Determine field variant based on validation and form state
