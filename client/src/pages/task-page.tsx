@@ -31,7 +31,9 @@ interface Task {
   priority: string;
   progress: number;
   metadata: {
-    company_name?: string;
+    companyId?: number;
+    companyName?: string;
+    company?: any;
     [key: string]: any;
   } | null;
 }
@@ -99,6 +101,13 @@ export default function TaskPage({ params }: TaskPageProps) {
     return null;
   }
 
+  // Get the company data from the task metadata
+  const companyData = task.metadata?.company || {
+    name: task.metadata?.companyName || companyName,
+    description: task.metadata?.description,
+    // Add any other company data from metadata
+  };
+
   return (
     <DashboardLayout activeTab="task-center">
       <div className="space-y-8">
@@ -117,14 +126,15 @@ export default function TaskPage({ params }: TaskPageProps) {
         </div>
 
         <PageHeader
-          title={`KYB Form: ${task.metadata?.company_name || companyName}`}
+          title={`KYB Form: ${task.metadata?.companyName || companyName}`}
           description="Complete the Know Your Business (KYB) verification form"
         />
 
         <div className="container max-w-7xl mx-auto">
           <OnboardingKYBFormPlayground 
             taskId={task.id}
-            companyName={task.metadata?.company_name || companyName}
+            companyName={companyName}
+            companyData={companyData}
             onSubmit={(formData) => {
               fetch('/api/kyb/save', {
                 method: 'POST',
