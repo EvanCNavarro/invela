@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { TaskStatus } from "@db/schema";
+import { db } from "@db";
+import { eq } from "drizzle-orm";
+import { tasks } from "@db/schema";
 
 // Define task type specific status transitions
 const TASK_TYPE_TRANSITIONS = {
@@ -36,6 +39,7 @@ const PROGRESS_THRESHOLDS = {
 export interface TaskRequest extends Request {
   taskId?: number;
   task?: {
+    id: number;
     status: TaskStatus;
     task_type: string;
     metadata: Record<string, any> | null;
@@ -51,6 +55,7 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   console.log('[TaskValidation] Validating status transition:', {
     taskId: req.taskId,
     currentTask: currentTask ? {
+      id: currentTask.id,
       type: currentTask.task_type,
       status: currentTask.status,
       progress: currentTask.progress
@@ -60,8 +65,8 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
   });
 
   if (!currentTask) {
-    console.log('[TaskValidation] No current task found, skipping validation');
-    return next();
+    console.error('[TaskValidation] No current task found in request');
+    return res.status(400).json({ message: "Task not found" });
   }
 
   const taskType = currentTask.task_type;
@@ -69,25 +74,24 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
 
   // Validate task type has defined transitions
   if (!TASK_TYPE_TRANSITIONS[taskType]) {
-    console.log('[TaskValidation] Invalid task type:', taskType);
+    console.error('[TaskValidation] Invalid task type:', taskType);
     return res.status(400).json({
       message: `Invalid task type: ${taskType}`,
       allowedTypes: Object.keys(TASK_TYPE_TRANSITIONS)
     });
   }
 
-  // Validate the status exists for this task type
-  const validStatuses = Object.keys(TASK_TYPE_TRANSITIONS[taskType]);
-  if (!validStatuses.includes(newStatus)) {
-    console.log('[TaskValidation] Invalid status for task type:', {
-      taskType,
-      newStatus,
-      validStatuses
-    });
-    return res.status(400).json({
-      message: `Invalid status for task type ${taskType}`,
-      allowedStatuses: validStatuses
-    });
+  // Special case: Allow resetting KYB tasks from any state back to NOT_STARTED
+  if (taskType === 'company_kyb' && newStatus === TaskStatus.NOT_STARTED) {
+    console.log('[TaskValidation] Allowing reset to NOT_STARTED for KYB task');
+    const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
+    if (progress < threshold.min || progress > threshold.max) {
+      return res.status(400).json({
+        message: `Invalid progress value for status ${newStatus}`,
+        required: threshold
+      });
+    }
+    return next();
   }
 
   // If no current status (new task) or same status, check progress thresholds
@@ -115,19 +119,6 @@ export function validateTaskStatusTransition(req: TaskRequest, res: Response, ne
     newStatus,
     allowedTransitions
   });
-
-  // Special case: Allow resetting from completed to not_started for KYB tasks
-  if (taskType === 'company_kyb' && currentStatus === TaskStatus.COMPLETED && newStatus === TaskStatus.NOT_STARTED) {
-    console.log('[TaskValidation] Allowing reset from completed to not_started for KYB task');
-    const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
-    if (progress < threshold.min || progress > threshold.max) {
-      return res.status(400).json({
-        message: `Invalid progress value for status ${newStatus}`,
-        required: threshold
-      });
-    }
-    return next();
-  }
 
   if (!allowedTransitions.includes(newStatus)) {
     return res.status(400).json({
@@ -168,6 +159,31 @@ export async function loadTaskMiddleware(req: TaskRequest, res: Response, next: 
     return res.status(400).json({ message: "Invalid task ID" });
   }
 
-  req.taskId = taskId;
-  next();
+  try {
+    console.log('[TaskValidation] Loading task:', taskId);
+
+    const [task] = await db
+      .select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+
+    if (!task) {
+      console.error('[TaskValidation] Task not found:', taskId);
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    console.log('[TaskValidation] Loaded task:', {
+      id: task.id,
+      type: task.task_type,
+      status: task.status,
+      progress: task.progress
+    });
+
+    req.taskId = taskId;
+    req.task = task;
+    next();
+  } catch (error) {
+    console.error('[TaskValidation] Error loading task:', error);
+    res.status(500).json({ message: "Error loading task" });
+  }
 }
