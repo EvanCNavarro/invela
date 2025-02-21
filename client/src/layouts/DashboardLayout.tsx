@@ -4,7 +4,7 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
@@ -26,8 +26,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
   const [location, navigate] = useLocation();
   const { user } = useAuth();
-  const [, taskCenterParams] = useRoute('/task-center');
-  const isTaskCenter = taskCenterParams !== null;
+  const [, taskCenterParams] = useRoute('/task-center*');
+  const isTaskCenterRoute = location.startsWith('/task-center');
   const queryClient = useQueryClient();
 
   // Fetch tasks for notification count
@@ -38,8 +38,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Fetch current company data
   const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    staleTime: 0,
-    gcTime: 0,
   });
 
   // Filter tasks for notification count
@@ -70,14 +68,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       if (lockedRoutes.includes(location)) {
         navigate('/task-center');
       }
-      if (location === '/') {
-        navigate('/task-center');
-      }
     }
   }, [isCompanyLocked, location, navigate]);
 
-  // Only allow task center for locked companies
-  if (isCompanyLocked && !isTaskCenter) {
+  // Only allow task center and its sub-routes for locked companies
+  if (isCompanyLocked && !isTaskCenterRoute) {
+    console.log('[DashboardLayout] Showing locked section:', {
+      location,
+      isTaskCenterRoute,
+      isCompanyLocked
+    });
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4 px-4">
