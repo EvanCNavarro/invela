@@ -18,6 +18,7 @@ import InsightsPage from "@/pages/insights-page";
 import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
+import TaskPage from "@/pages/task-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -87,6 +88,16 @@ function Router() {
             </OnboardingWrapper>
           </ProtectedLayout>
         )} 
+      />
+      <Route 
+        path="/task-center/task/:taskSlug"
+        component={({ params }) => (
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <TaskPage params={params} />
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        )}
       />
       <ProtectedRoute 
         path="/file-vault" 
