@@ -762,72 +762,75 @@ export const OnboardingKYBFormPlayground = ({
   return (
     <div className="space-y-6">
       <Card className="p-6">
-{/* Header Section */}
-<div className="mb-8">
-  <div className="flex items-center mb-6">
-    <div className="flex-1">
-      <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-        isSubmitted
-          ? 'bg-green-100 text-green-600'
-          : 'bg-yellow-100 text-yellow-800'
-      }`}>
-        {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
-      </div>
-      <div className="flex items-center gap-2">
-        <h2 className="text-xl font-semibold">KYB Survey</h2>
-      </div>
-      <p className="text-sm text-muted-foreground mt-1">
-        Questionnaire | Task
-      </p>
-    </div>
-    {!isSubmitted && (
-      <div className="text-sm text-muted-foreground">
-        {progress}% Complete
-      </div>
-    )}
-  </div>
-
-  {/* Progress bar */}
-  {!isSubmitted && (
-    <div className="h-1 bg-gray-200 rounded-full overflow-hidden mb-8">
-      <div
-        className="h-full bg-blue-500 transition-all duration-300"
-        style={{ width: `${progress}%` }}
-      />
-    </div>
-  )}
-
-  {/* Step Wizard */}
-  {!isSubmitted && (
-    <div className="flex items-center justify-between px-4">
-      {FORM_STEPS.map((step, index) => (
-        <div key={step.id} className="flex flex-col items-center relative">
-          <div
-            className={`flex items-center justify-center w-8 h-8 rounded-full border-2 
-              ${index === currentStep
-                ? 'border-blue-500 bg-blue-500 text-white'
-                : index < currentStep
-                ? 'border-blue-500 text-blue-500 bg-white'
-                : 'border-gray-300 text-gray-500 bg-white'
-              }`}
-          >
-            <span className="text-sm font-medium">{index + 1}</span>
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center mb-6">
+            <div className="flex-1">
+              <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                isSubmitted
+                  ? 'bg-green-100 text-green-600'
+                  : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+              </div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold">KYB Survey</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Questionnaire | Task
+              </p>
+            </div>
+            {!isSubmitted && (
+              <div className="flex items-center gap-1 text-sm">
+                <span className="font-medium">{progress}</span>
+                <span className="text-[#6B7280]">% Complete</span>
+              </div>
+            )}
           </div>
-          {index < FORM_STEPS.length - 1 && (
-            <div
-              className={`absolute top-4 left-[calc(100%+8px)] h-[2px] 
-                ${index < currentStep ? 'bg-blue-500' : 'bg-gray-300'}`}
-              style={{ width: 'calc(100% - 48px)' }}
-            />
+
+          {/* Progress bar */}
+          {!isSubmitted && (
+            <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-12">
+              <div
+                className="h-full bg-[#4F46E5] transition-all duration-300 ease-in-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           )}
-          <span className="text-xs text-muted-foreground mt-2 text-center w-24">
-            {step.title}
-          </span>
+
+          {/* Step Wizard */}
+          {!isSubmitted && (
+            <div className="flex items-center justify-between px-2 mb-2">
+              {FORM_STEPS.map((step, index) => (
+                <div key={step.id} className="flex flex-col items-center relative">
+                  <div
+                    className={`flex items-center justify-center h-7 min-w-[28px] px-2.5 rounded-full border transition-all duration-200
+                      ${index === currentStep
+                        ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
+                        : index < currentStep
+                        ? 'border-[#4F46E5] text-[#4F46E5] bg-white'
+                        : 'border-[#D1D5DB] text-[#6B7280] bg-white'
+                      }`}
+                  >
+                    <span className="text-sm font-medium leading-none">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  {index < FORM_STEPS.length - 1 && (
+                    <div
+                      className={`absolute top-3.5 left-[calc(100%_+_4px)] h-[1.5px] transition-all duration-200
+                        ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
+                      style={{ width: 'calc(100% - 40px)' }}
+                    />
+                  )}
+                  <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
+                    {step.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      ))}
-    </div>
-  )}
-</div>
 
         <hr className="border-t border-gray-200 my-6" />
 
