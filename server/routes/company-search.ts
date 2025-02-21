@@ -41,16 +41,24 @@ router.get("/api/companies/search", async (req, res) => {
 // Full company search and enrichment
 router.post("/api/company-search", async (req, res) => {
   try {
+    console.log("[Company Search Debug] Received search request:", {
+      body: req.body,
+      headers: req.headers
+    });
+
     const { companyName } = companySearchSchema.parse(req.body);
-    console.log(`[Company Search] Starting search for: ${companyName}`);
+    console.log(`[Company Search Debug] Validated company name: ${companyName}`);
 
     // First try to find in database directly - case insensitive match
-    const [existingCompany] = await db.select()
-      .from(companies)
-      .where(db.sql`LOWER(name) = LOWER(${companyName})`);
+    console.log("[Company Search Debug] Executing database query");
+    const query = db.select().from(companies).where(db.sql`LOWER(name) = LOWER(${companyName})`);
+    console.log("[Company Search Debug] Query:", query.toSQL());
+
+    const [existingCompany] = await query;
+    console.log("[Company Search Debug] Database query result:", existingCompany);
 
     if (existingCompany) {
-      console.log(`[Company Search] Found existing company in database: ${existingCompany.name}`);
+      console.log(`[Company Search Debug] Found existing company:`, existingCompany);
 
       return res.json({
         success: true,
@@ -62,6 +70,7 @@ router.post("/api/company-search", async (req, res) => {
       });
     }
 
+    console.log(`[Company Search Debug] No company found with name: ${companyName}`);
     // If company not found, return an appropriate error
     return res.status(404).json({
       success: false,
@@ -70,7 +79,12 @@ router.post("/api/company-search", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("[Company Search] Error:", error);
+    console.error("[Company Search Debug] Error details:", {
+      error,
+      message: error.message,
+      stack: error.stack,
+      type: error.constructor.name
+    });
 
     if (error instanceof ZodError) {
       return res.status(400).json({
