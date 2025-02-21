@@ -7,10 +7,41 @@ import { eq, and, ilike } from 'drizzle-orm';
 
 const router = Router();
 
+// Debug utility for logging task data
+const logTaskDebug = (stage: string, task: any, extras: Record<string, any> = {}) => {
+  console.log(`[KYB API Debug] ${stage}:`, {
+    taskId: task?.id,
+    status: task?.status,
+    progress: task?.progress,
+    metadata: task?.metadata ? Object.keys(task.metadata) : null,
+    ...extras,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Debug utility for logging response data
+const logResponseDebug = (stage: string, responses: any[], extras: Record<string, any> = {}) => {
+  console.log(`[KYB API Debug] ${stage}:`, {
+    responseCount: responses.length,
+    fields: responses.map(r => ({
+      field: r.field_key,
+      status: r.status,
+      hasValue: !!r.response_value
+    })),
+    ...extras,
+    timestamp: new Date().toISOString()
+  });
+};
+
 // Get KYB task by company name
 router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
   try {
     const { companyName } = req.params;
+
+    console.log('[KYB API Debug] Task lookup request:', {
+      companyName,
+      timestamp: new Date().toISOString()
+    });
 
     // If no company name provided, return all KYB tasks
     if (!companyName) {
@@ -25,7 +56,11 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       .replace(/^kyb-/, '')  // Remove 'kyb-' prefix if present
       .replace(/-/g, ' ');   // Replace dashes with spaces
 
-    console.log('[KYB API] Searching for company:', formattedCompanyName);
+    console.log('[KYB API Debug] Searching for company:', {
+      original: companyName,
+      formatted: formattedCompanyName,
+      timestamp: new Date().toISOString()
+    });
 
     const [task] = await db.select()
       .from(tasks)
@@ -37,14 +72,23 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       );
 
     if (!task) {
-      console.log('[KYB API] Task not found for company:', formattedCompanyName);
+      console.log('[KYB API Debug] Task not found:', {
+        companyName: formattedCompanyName,
+        timestamp: new Date().toISOString()
+      });
       return res.status(404).json({ error: 'KYB task not found' });
     }
+
+    logTaskDebug('Found task', task);
 
     // Get all KYB responses for this task
     const responses = await db.select()
       .from(kybResponses)
       .where(eq(kybResponses.task_id, task.id));
+
+    logResponseDebug('Retrieved responses', responses, {
+      taskId: task.id
+    });
 
     // Transform responses into form data
     const formData: Record<string, any> = {};
@@ -61,18 +105,22 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       progress: task.progress || 0
     };
 
-    console.log('[KYB API] Found task with saved data:', {
+    console.log('[KYB API Debug] Transformed task data:', {
       id: transformedTask.id,
       status: transformedTask.status,
       progress: transformedTask.progress,
-      hasFormData: Object.keys(formData).length > 0,
-      metadata: transformedTask.metadata,
-      savedFormData: transformedTask.savedFormData
+      formDataFields: Object.keys(formData),
+      metadataFields: Object.keys(transformedTask.metadata || {}),
+      timestamp: new Date().toISOString()
     });
 
     res.json(transformedTask);
   } catch (error) {
-    console.error('[KYB API] Error fetching KYB task:', error);
+    console.error('[KYB API Debug] Error fetching KYB task:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     res.status(500).json({ error: 'Failed to fetch KYB task' });
   }
 });
@@ -82,7 +130,7 @@ router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData } = req.body;
 
-    console.log('[KYB API] Progress update initiated:', { 
+    console.log('[KYB API Debug] Progress update initiated:', { 
       taskId, 
       requestedProgress: progress,
       formDataKeys: Object.keys(formData || {}),
@@ -90,7 +138,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     });
 
     if (!taskId) {
-      console.warn('[KYB API] Missing task ID in request');
+      console.warn('[KYB API Debug] Missing task ID in request');
       return res.status(400).json({ 
         error: 'Task ID is required',
         code: 'MISSING_TASK_ID'
@@ -98,7 +146,7 @@ router.post('/api/kyb/progress', async (req, res) => {
     }
 
     if (!formData || typeof formData !== 'object') {
-      console.warn('[KYB API] Invalid form data format:', { formData });
+      console.warn('[KYB API Debug] Invalid form data format:', { formData });
       return res.status(400).json({
         error: 'Invalid form data format',
         code: 'INVALID_FORM_DATA'
@@ -110,8 +158,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       .from(tasks)
       .where(eq(tasks.id, taskId));
 
+    logTaskDebug('Existing task', existingTask);
+
     if (!existingTask) {
-      console.log('[KYB API] Task not found:', taskId);
+      console.log('[KYB API Debug] Task not found:', taskId);
       return res.status(404).json({
         error: 'Task not found',
         code: 'TASK_NOT_FOUND'
@@ -192,7 +242,7 @@ router.post('/api/kyb/progress', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
-    console.log('[KYB API] Task update completed:', {
+    console.log('[KYB API Debug] Task update completed:', {
       taskId,
       finalProgress: Math.min(progress, 100),
       finalStatus: newStatus,
@@ -203,6 +253,9 @@ router.post('/api/kyb/progress', async (req, res) => {
     const updatedResponses = await db.select()
       .from(kybResponses)
       .where(eq(kybResponses.task_id, taskId));
+
+    logResponseDebug('Updated responses', updatedResponses);
+
 
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {
@@ -220,7 +273,7 @@ router.post('/api/kyb/progress', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[KYB API] Error processing progress update:', {
+    console.error('[KYB API Debug] Error processing progress update:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
@@ -238,15 +291,17 @@ router.post('/api/kyb/progress', async (req, res) => {
 router.get('/api/kyb/progress/:taskId', async (req, res) => {
   try {
     const { taskId } = req.params;
-    console.log('[KYB API] Loading progress for task:', taskId);
+    console.log('[KYB API Debug] Loading progress for task:', taskId);
 
     // Get task data
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, parseInt(taskId)));
 
+    logTaskDebug('Retrieved task', task);
+
     if (!task) {
-      console.log('[KYB API] Task not found:', taskId);
+      console.log('[KYB API Debug] Task not found:', taskId);
       return res.status(404).json({ error: 'Task not found' });
     }
 
@@ -254,6 +309,8 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     const responses = await db.select()
       .from(kybResponses)
       .where(eq(kybResponses.task_id, parseInt(taskId)));
+
+    logResponseDebug('Retrieved responses', responses);
 
     // Transform responses into form data
     const formData: Record<string, any> = {};
@@ -263,7 +320,7 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       }
     }
 
-    console.log('[KYB API] Retrieved task data:', {
+    console.log('[KYB API Debug] Retrieved task data:', {
       id: task.id,
       responseCount: responses.length,
       progress: task.progress,
@@ -277,7 +334,11 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       progress: Math.min(task.progress || 0, 100)
     });
   } catch (error) {
-    console.error('[KYB API] Error loading progress:', error);
+    console.error('[KYB API Debug] Error loading progress:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     res.status(500).json({ error: 'Failed to load progress' });
   }
 });
@@ -286,6 +347,8 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 router.post('/api/kyb/save', async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
+
+    console.log('[KYB API Debug] Save initiated:', { fileName, taskId, formDataKeys: Object.keys(formData) });
 
     // Save form data to a file
     const filePath = join(process.cwd(), 'uploads', 'kyb', `${fileName}.json`);
@@ -354,11 +417,18 @@ router.post('/api/kyb/save', async (req, res) => {
           }
         })
         .where(eq(tasks.id, taskId));
+
+        logTaskDebug('Task updated after submission', {id: taskId, status: TaskStatus.SUBMITTED});
     }
 
+    console.log('[KYB API Debug] Save completed:', { filePath, timestamp: new Date().toISOString() });
     res.json({ success: true, filePath });
   } catch (error) {
-    console.error('[KYB API] Error saving KYB form:', error);
+    console.error('[KYB API Debug] Error saving KYB form:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
     res.status(500).json({ error: 'Failed to save KYB form data' });
   }
 });
