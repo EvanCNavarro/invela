@@ -66,6 +66,12 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       // Get company name from metadata or task title
       const companyName = task.metadata?.company_name || 
                          task.title.replace('Company KYB: ', '').toLowerCase().replace(/\s+/g, '-');
+      console.log('[TaskTable] Navigating to KYB task page:', {
+        taskType: task.task_type,
+        companyName,
+        url: `/task-center/task/kyb-${companyName}`,
+        taskMetadata: task.metadata
+      });
       // Navigate to KYB form page with company name in URL
       navigate(`/task-center/task/kyb-${companyName}`);
     } else {
