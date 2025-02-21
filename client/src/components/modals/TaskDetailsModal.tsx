@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { Wifi, WifiOff } from "lucide-react";
 
 interface TaskDetailsModalProps {
   task: any;
@@ -28,7 +29,7 @@ const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
 
 export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: TaskDetailsModalProps) {
   const [task, setTask] = useState(initialTask);
-  const { socket, connected } = useWebSocket();
+  const { socket, connected, error } = useWebSocket();
 
   useEffect(() => {
     setTask(initialTask);
@@ -37,10 +38,13 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
   useEffect(() => {
     if (!socket || !connected || !task) return;
 
+    console.log('[TaskDetailsModal] Setting up WebSocket listeners for task:', task.id);
+
     const handleMessage = (event: MessageEvent) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'task_update' && data.payload?.taskId === task.id) {
+          console.log('[TaskDetailsModal] Received task update:', data.payload);
           setTask(current => ({
             ...current,
             status: data.payload.status,
@@ -48,13 +52,14 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
           }));
         }
       } catch (error) {
-        console.error('Error handling WebSocket message:', error);
+        console.error('[TaskDetailsModal] Error handling WebSocket message:', error);
       }
     };
 
     socket.addEventListener('message', handleMessage);
 
     return () => {
+      console.log('[TaskDetailsModal] Cleaning up WebSocket listeners for task:', task.id);
       socket.removeEventListener('message', handleMessage);
     };
   }, [socket, connected, task]);
@@ -71,9 +76,16 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
     { 
       label: "Status", 
       value: (
-        <Badge variant="secondary">
-          {taskStatusMap[task.status as TaskStatus] || task.status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            {taskStatusMap[task.status as TaskStatus] || task.status}
+          </Badge>
+          {connected ? (
+            <Wifi className="h-4 w-4 text-green-500" />
+          ) : (
+            <WifiOff className="h-4 w-4 text-red-500" />
+          )}
+        </div>
       )
     },
     { 
@@ -101,6 +113,11 @@ export function TaskDetailsModal({ task: initialTask, open, onOpenChange }: Task
         </DialogHeader>
         <ScrollArea className="h-[400px] pr-4">
           <div className="space-y-4">
+            {error && (
+              <div className="text-sm text-red-500 mb-4">
+                WebSocket Error: {error.message}
+              </div>
+            )}
             {taskFields.map((field, index) => (
               <div key={index}>
                 <div className="grid grid-cols-3 gap-4">
