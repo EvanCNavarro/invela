@@ -43,10 +43,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // Filter tasks for notification count to match task-center-page.tsx logic
   const relevantTasks = tasks.filter(task => {
-    // Only count tasks for the current company
-    if (task.company_id !== currentCompany?.id) {
+    // Include tasks that are either:
+    // 1. System-level tasks (company_id = 0)
+    // 2. Or tasks that belong to the current company
+    const companyMatches = task.company_id === 0 || task.company_id === currentCompany?.id;
+
+    if (!companyMatches) {
       return false;
     }
+
     // Count tasks that are either assigned to the user or created by them
     return task.assigned_to === user?.id || task.created_by === user?.id;
   });
