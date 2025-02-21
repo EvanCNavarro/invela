@@ -131,8 +131,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     taskId: task.id,
     companyName,
     hasCompanyData: !!companyData,
-    hasSavedFormData: !!task.savedFormData,
-    savedFormDataKeys: Object.keys(task.savedFormData || {}),
+    hasSavedFormData: !!task.metadata,
+    metadataKeys: Object.keys(task.metadata || {}),
     currentProgress: task.progress,
     currentStatus: task.status
   });
@@ -154,11 +154,11 @@ export default function TaskPage({ params }: TaskPageProps) {
         </div>
 
         <div className="container max-w-7xl mx-auto">
-          <OnboardingKYBFormPlayground 
+          <OnboardingKYBFormPlayground
             taskId={task.id}
             companyName={companyName}
             companyData={companyData}
-            savedFormData={task.savedFormData}
+            savedFormData={task.metadata}
             onSubmit={(formData) => {
               console.log('[TaskPage] Submitting form data:', {
                 taskId: task.id,
@@ -174,26 +174,26 @@ export default function TaskPage({ params }: TaskPageProps) {
                   taskId: task.id
                 })
               })
-              .then(response => {
-                if (!response.ok) throw new Error('Failed to save KYB form');
-                return response.json();
-              })
-              .then(() => {
-                console.log('[TaskPage] Form submitted successfully');
-                toast({
-                  title: "KYB Form Submitted",
-                  description: "Your KYB form has been saved and the task has been updated.",
+                .then(response => {
+                  if (!response.ok) throw new Error('Failed to save KYB form');
+                  return response.json();
+                })
+                .then(() => {
+                  console.log('[TaskPage] Form submitted successfully');
+                  toast({
+                    title: "KYB Form Submitted",
+                    description: "Your KYB form has been saved and the task has been updated.",
+                  });
+                  navigate('/task-center');
+                })
+                .catch(error => {
+                  console.error('[TaskPage] Failed to save KYB form:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to save KYB form. Please try again.",
+                    variant: "destructive",
+                  });
                 });
-                navigate('/task-center');
-              })
-              .catch(error => {
-                console.error('[TaskPage] Failed to save KYB form:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to save KYB form. Please try again.",
-                  variant: "destructive",
-                });
-              });
             }}
           />
         </div>
