@@ -1,6 +1,7 @@
 import { renameLegacyLogos } from "./migrations/rename_logos";
 import { addCompanyNameUnique } from "../db/migrations/add_company_name_unique";
 import { addKybFormTables } from "../db/migrations/add_kyb_form_tables";
+import { addKybFieldGroups } from "../db/migrations/add_kyb_field_groups";
 
 async function main() {
   try {
@@ -12,6 +13,9 @@ async function main() {
 
     console.log('Starting KYB form tables migration...');
     await addKybFormTables();
+
+    console.log('Starting KYB field groups migration...');
+    await addKybFieldGroups();
 
     console.log('All migrations completed successfully');
   } catch (error) {

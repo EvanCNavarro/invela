@@ -791,7 +791,7 @@ export const OnboardingKYBFormPlayground = ({
           {!isSubmitted && (
             <div className="flex items-center justify-between mt-4">
               {FORM_STEPS.map((step, index) => (
-                <div key={step.id} className="flex items-center">
+                <div key={step.id} className="flex flex-col items-center">
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
                       index === currentStep
@@ -811,6 +811,9 @@ export const OnboardingKYBFormPlayground = ({
                       style={{ width: '100px' }}
                     />
                   )}
+                  <span className="text-xs text-muted-foreground mt-2 text-center max-w-[100px]">
+                    {step.title}
+                  </span>
                 </div>
               ))}
             </div>
