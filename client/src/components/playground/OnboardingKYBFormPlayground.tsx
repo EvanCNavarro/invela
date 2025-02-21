@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { ArrowLeft, HelpCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Input } from "@/components/ui/input";
 
 // Function to extract tooltip content from question text
 const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
@@ -214,44 +214,48 @@ const isEmptyValue = (value: unknown): boolean => {
 interface OnboardingKYBFormPlaygroundProps {
   taskId?: number;
   onSubmit?: (formData: Record<string, any>) => void;
-  companyName?: string;
+  companyName: string;
 }
 
 export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
-  companyName: initialCompanyName = ""
+  companyName
 }: OnboardingKYBFormPlaygroundProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyName, setCompanyName] = useState(initialCompanyName);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleCompanySearch = async () => {
-    if (!companyName.trim()) return;
+  // Automatically fetch company data when component mounts
+  useEffect(() => {
+    const fetchCompanyData = async () => {
+      if (!companyName) return;
 
-    setIsSearching(true);
-    try {
-      const response = await fetch("/api/company-search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName: companyName.trim() }),
-      });
+      setIsSearching(true);
+      try {
+        const response = await fetch("/api/company-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ companyName: companyName.trim() }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Search failed: ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Search failed: ${response.statusText}`);
+        }
+
+        const { data } = await response.json();
+        setCompanyData(data.company);
+      } catch (error) {
+        console.error("Error searching company:", error);
+      } finally {
+        setIsSearching(false);
       }
+    };
 
-      const { data } = await response.json();
-      setCompanyData(data.company);
-    } catch (error) {
-      console.error("Error searching company:", error);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+    fetchCompanyData();
+  }, [companyName]);
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -328,18 +332,6 @@ export const OnboardingKYBFormPlayground = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4 mb-4">
-        <Input
-          placeholder="Enter company name..."
-          value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
-          onBlur={handleCompanySearch}
-        />
-        <Button onClick={handleCompanySearch} disabled={isSearching}>
-          {isSearching ? "Searching..." : "Search"}
-        </Button>
-      </div>
-
       <Card className="p-6">
         {/* Header Section */}
         <div className="mb-8">
