@@ -43,6 +43,13 @@ export default function TaskPage({ params }: TaskPageProps) {
   // Only fetch if it's a KYB task
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: ['/api/tasks/kyb', companyName],
+    queryFn: async () => {
+      const response = await fetch(`/api/tasks/kyb/${companyName}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch KYB task');
+      }
+      return response.json();
+    },
     enabled: taskType === 'kyb'
   });
 
