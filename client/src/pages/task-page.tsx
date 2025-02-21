@@ -108,22 +108,20 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   return (
     <DashboardLayout>
-      <PageTemplate
-        showBreadcrumbs
-        className="space-y-6"
-        headerActions={
+      <PageTemplate className="space-y-6">
+        <div className="space-y-4">
+          <BreadcrumbNav forceFallback={true} />
           <Button
             variant="outline"
             size="sm"
-            className="text-sm font-medium bg-white border-muted-foreground/20 ml-0"
+            className="text-sm font-medium bg-white border-muted-foreground/20"
             onClick={handleBackClick}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Task Center
           </Button>
-        }
-      >
-        <BreadcrumbNav forceFallback={true} />
+        </div>
+
         <div className="container max-w-7xl mx-auto">
           <OnboardingKYBFormPlayground 
             taskId={task.id}
