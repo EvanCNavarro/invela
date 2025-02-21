@@ -75,6 +75,14 @@ router.post('/api/kyb/progress', async (req, res) => {
       lastUpdated: new Date().toISOString()
     };
 
+    // Log the data we're about to save
+    console.log('[KYB API] Saving progress:', {
+      taskId,
+      progress,
+      existingMetadata: existingTask.metadata,
+      updatedMetadata
+    });
+
     // Update task with progress and save form data
     await db.update(tasks)
       .set({
@@ -103,6 +111,13 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
+
+    // Log the task data we're returning
+    console.log('[KYB API] Retrieved task data:', {
+      id: task.id,
+      metadata: task.metadata,
+      progress: task.progress
+    });
 
     // Return saved form data and progress
     res.json({
