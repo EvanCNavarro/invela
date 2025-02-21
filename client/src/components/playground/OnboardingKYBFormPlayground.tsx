@@ -333,7 +333,13 @@ export const OnboardingKYBFormPlayground = ({
             progress: lastSavedProgress
           });
 
-          setFormData(extractedData);
+          setFormData(prev => {
+            // Preserve non-empty values
+            const newData = { ...prev, ...extractedData };
+            console.log('[KYB Form Debug] Setting form data:', newData);
+            return newData;
+          });
+
           setLastSavedProgress(data.progress || 0);
 
           // Set the current step based on the last completed step
@@ -367,15 +373,6 @@ export const OnboardingKYBFormPlayground = ({
     };
 
     loadSavedProgress();
-
-    // Cleanup function to log when component unmounts
-    return () => {
-      console.log('[KYB Form Debug] Component unmounting, current state:', {
-        formData,
-        currentStep,
-        progress: lastSavedProgress
-      });
-    };
   }, [taskId]);
 
   // Save progress when form data changes
@@ -592,7 +589,7 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-  // Update form data handler
+  // Handle form field updates
   const handleFormDataUpdate = (fieldName: string, value: string) => {
     console.log('[KYB Form Debug] Updating form field:', {
       fieldName,
@@ -606,7 +603,6 @@ export const OnboardingKYBFormPlayground = ({
         [fieldName]: value
       };
 
-      // Log detailed form update
       console.log('[KYB Form Debug] Form data updated:', {
         fieldName,
         value,
