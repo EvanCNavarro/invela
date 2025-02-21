@@ -2,28 +2,62 @@ import { db } from "@db";
 import { tasks, users, TaskStatus } from "@db/schema";
 import { eq, and, sql, or } from "drizzle-orm";
 
-// Task status flow configuration
-const TASK_STATUS_FLOW = {
-  [TaskStatus.EMAIL_SENT]: {
-    next: TaskStatus.IN_PROGRESS,
-    triggers: ['user_registration'],
-    progress: 25,
-  },
-  [TaskStatus.IN_PROGRESS]: {
-    next: TaskStatus.COMPLETED,
-    triggers: ['onboarding_completed'],
-    progress: 50,
-  },
-  [TaskStatus.COMPLETED]: {
-    next: null,
-    triggers: [],
-    progress: 100,
-  },
-} as const;
+// Validate if a status transition is allowed based on task type
+function isValidStatusTransition(
+  taskType: string,
+  currentStatus: TaskStatus,
+  newStatus: TaskStatus,
+  progress: number
+): boolean {
+  const TASK_TYPE_TRANSITIONS = {
+    user_onboarding: {
+      [TaskStatus.EMAIL_SENT]: [TaskStatus.COMPLETED],
+      [TaskStatus.COMPLETED]: [], // Terminal state
+    },
+    company_kyb: {
+      [TaskStatus.NOT_STARTED]: [TaskStatus.IN_PROGRESS],
+      [TaskStatus.IN_PROGRESS]: [TaskStatus.READY_FOR_SUBMISSION],
+      [TaskStatus.READY_FOR_SUBMISSION]: [TaskStatus.SUBMITTED],
+      [TaskStatus.SUBMITTED]: [TaskStatus.APPROVED],
+      [TaskStatus.APPROVED]: [], // Terminal state
+    }
+  };
 
-// Validate if a status transition is allowed
-function isValidStatusTransition(currentStatus: TaskStatus, newStatus: TaskStatus): boolean {
-  return TASK_STATUS_FLOW[currentStatus]?.next === newStatus;
+  const PROGRESS_THRESHOLDS = {
+    company_kyb: {
+      [TaskStatus.NOT_STARTED]: { min: 0, max: 0 },
+      [TaskStatus.IN_PROGRESS]: { min: 1, max: 99 },
+      [TaskStatus.READY_FOR_SUBMISSION]: { min: 100, max: 100 },
+      [TaskStatus.SUBMITTED]: { min: 100, max: 100 },
+      [TaskStatus.APPROVED]: { min: 100, max: 100 },
+    },
+    user_onboarding: {
+      [TaskStatus.EMAIL_SENT]: { min: 25, max: 25 },
+      [TaskStatus.COMPLETED]: { min: 100, max: 100 },
+    }
+  };
+
+  // Check if task type has defined transitions
+  if (!TASK_TYPE_TRANSITIONS[taskType]) {
+    console.error(`[Task Service] Invalid task type: ${taskType}`);
+    return false;
+  }
+
+  // Check if transition is allowed
+  const allowedTransitions = TASK_TYPE_TRANSITIONS[taskType][currentStatus] || [];
+  if (!allowedTransitions.includes(newStatus)) {
+    console.error(`[Task Service] Invalid transition from ${currentStatus} to ${newStatus}`);
+    return false;
+  }
+
+  // Check if progress matches the new status
+  const threshold = PROGRESS_THRESHOLDS[taskType][newStatus];
+  if (progress < threshold.min || progress > threshold.max) {
+    console.error(`[Task Service] Invalid progress ${progress} for status ${newStatus}`);
+    return false;
+  }
+
+  return true;
 }
 
 export async function updateOnboardingTaskStatus(userId: number) {
@@ -49,11 +83,11 @@ export async function updateOnboardingTaskStatus(userId: number) {
       .from(tasks)
       .where(
         and(
-          eq(tasks.taskType, 'user_onboarding'),
-          sql`LOWER(${tasks.userEmail}) = LOWER(${user.email})`,
+          eq(tasks.task_type, 'user_onboarding'),
+          sql`LOWER(${tasks.user_email}) = LOWER(${user.email})`,
           or(
             eq(tasks.status, TaskStatus.EMAIL_SENT),
-            eq(tasks.status, TaskStatus.IN_PROGRESS)
+            eq(tasks.status, TaskStatus.COMPLETED)
           )
         )
       )
@@ -68,14 +102,11 @@ export async function updateOnboardingTaskStatus(userId: number) {
     console.log(`[Task Service] Found task ${taskToUpdate.id} with current status ${taskToUpdate.status}`);
 
     // Determine next status based on user's onboarding completion
-    const nextStatus = user.onboardingUserCompleted ? 
-      TaskStatus.COMPLETED : 
-      taskToUpdate.status === TaskStatus.EMAIL_SENT ? 
-        TaskStatus.IN_PROGRESS : 
-        taskToUpdate.status;
+    const nextStatus = user.onboarding_user_completed ? TaskStatus.COMPLETED : taskToUpdate.status;
+    const progress = nextStatus === TaskStatus.COMPLETED ? 100 : 25;
 
     // Validate status transition
-    if (!isValidStatusTransition(taskToUpdate.status as TaskStatus, nextStatus as TaskStatus)) {
+    if (!isValidStatusTransition(taskToUpdate.task_type, taskToUpdate.status, nextStatus, progress)) {
       console.error(`[Task Service] Invalid status transition from ${taskToUpdate.status} to ${nextStatus}`);
       return null;
     }
@@ -85,10 +116,10 @@ export async function updateOnboardingTaskStatus(userId: number) {
       .update(tasks)
       .set({
         status: nextStatus,
-        progress: TASK_STATUS_FLOW[nextStatus as TaskStatus].progress,
-        completionDate: nextStatus === TaskStatus.COMPLETED ? new Date() : null,
-        updatedAt: new Date(),
-        assignedTo: userId,
+        progress,
+        completion_date: nextStatus === TaskStatus.COMPLETED ? new Date() : null,
+        updated_at: new Date(),
+        assigned_to: userId,
         metadata: {
           ...(taskToUpdate.metadata || {}),
           onboardingCompleted: nextStatus === TaskStatus.COMPLETED,
@@ -120,8 +151,8 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
       .from(tasks)
       .where(
         and(
-          eq(tasks.taskType, 'user_onboarding'),
-          sql`LOWER(${tasks.userEmail}) = LOWER(${email})`,
+          eq(tasks.task_type, 'user_onboarding'),
+          sql`LOWER(${tasks.user_email}) = LOWER(${email})`,
           eq(tasks.status, TaskStatus.EMAIL_SENT)
         )
       )
@@ -135,9 +166,9 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
 
     console.log(`[Task Service] Found task ${taskToUpdate.id} with status ${taskToUpdate.status}`);
 
-    // Validate status transition
-    if (!isValidStatusTransition(taskToUpdate.status as TaskStatus, TaskStatus.IN_PROGRESS)) {
-      console.error(`[Task Service] Invalid status transition from ${taskToUpdate.status} to IN_PROGRESS`);
+    // Only allow transition from EMAIL_SENT to COMPLETED
+    if (!isValidStatusTransition(taskToUpdate.task_type, taskToUpdate.status, TaskStatus.COMPLETED, 100)) {
+      console.error(`[Task Service] Invalid status transition from ${taskToUpdate.status} to COMPLETED`);
       return null;
     }
 
@@ -145,10 +176,10 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
     const [updatedTask] = await db
       .update(tasks)
       .set({
-        status: TaskStatus.IN_PROGRESS,
-        progress: TASK_STATUS_FLOW[TaskStatus.IN_PROGRESS].progress,
-        assignedTo: userId,
-        updatedAt: new Date(),
+        status: TaskStatus.COMPLETED,
+        progress: 100,
+        assigned_to: userId,
+        updated_at: new Date(),
         metadata: {
           ...(taskToUpdate.metadata || {}),
           registrationCompleted: true,
@@ -156,13 +187,13 @@ export async function findAndUpdateOnboardingTask(email: string, userId: number)
           previousStatus: taskToUpdate.status,
           userId: userId,
           userEmail: email.toLowerCase(),
-          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), TaskStatus.IN_PROGRESS]
+          statusFlow: [...(taskToUpdate.metadata?.statusFlow || []), TaskStatus.COMPLETED]
         }
       })
       .where(eq(tasks.id, taskToUpdate.id))
       .returning();
 
-    console.log(`[Task Service] Successfully updated task ${updatedTask.id} to in_progress status`);
+    console.log(`[Task Service] Successfully updated task ${updatedTask.id} to completed status`);
     return updatedTask;
   } catch (error) {
     console.error('[Task Service] Error updating onboarding task:', error);
