@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
+import { wsService } from "@/lib/websocket";
 
 // Function to extract tooltip content from question text
 const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
@@ -230,11 +231,83 @@ export const OnboardingKYBFormPlayground = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyData, setCompanyData] = useState<any>(null); 
+  const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [searchCompleted, setSearchCompleted] = useState(false); 
+  const [searchCompleted, setSearchCompleted] = useState(false);
+  const [lastSavedProgress, setLastSavedProgress] = useState(0);
   const queryClient = useQueryClient();
+
+  // Calculate progress whenever form data changes
+  const calculateProgress = () => {
+    const filledFields = Object.values(formData).filter(value => !isEmptyValue(value)).length;
+    return Math.round((filledFields / TOTAL_FIELDS) * 100);
+  };
+
+  // Save progress to backend
+  const saveProgress = async (currentProgress: number) => {
+    if (!taskId || currentProgress === lastSavedProgress) return;
+
+    try {
+      const response = await fetch('/api/kyb/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          taskId,
+          progress: currentProgress,
+          formData
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save progress');
+
+      // Notify via WebSocket about progress update
+      await wsService.send('task_updated', {
+        taskId,
+        progress: currentProgress,
+        status: currentProgress === 100 ? 'completed' : 'in_progress'
+      });
+
+      setLastSavedProgress(currentProgress);
+
+      // Invalidate task queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+    } catch (error) {
+      console.error('Error saving progress:', error);
+    }
+  };
+
+  // Load saved form data on mount
+  useEffect(() => {
+    const loadSavedProgress = async () => {
+      if (!taskId) return;
+
+      try {
+        const response = await fetch(`/api/kyb/progress/${taskId}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        if (data.formData) {
+          setFormData(data.formData);
+          setLastSavedProgress(data.progress || 0);
+        }
+      } catch (error) {
+        console.error('Error loading saved progress:', error);
+      }
+    };
+
+    loadSavedProgress();
+  }, [taskId]);
+
+  // Save progress when form data changes
+  useEffect(() => {
+    const progress = calculateProgress();
+    const debounceTimer = setTimeout(() => {
+      saveProgress(progress);
+    }, 1000); // Debounce save calls
+
+    return () => clearTimeout(debounceTimer);
+  }, [formData]);
 
   // Load form and perform company search in background
   useEffect(() => {
@@ -342,9 +415,7 @@ export const OnboardingKYBFormPlayground = ({
   // Calculate progress based on filled fields
   const progress = isSubmitted
     ? 100
-    : Math.round(
-        (Object.values(formData).filter(value => !isEmptyValue(value)).length / TOTAL_FIELDS) * 100
-      );
+    : calculateProgress();
 
   // Check if current step is valid
   const isCurrentStepValid = (() => {
@@ -425,6 +496,14 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
+  // Update form data handler
+  const handleFormDataUpdate = (fieldName: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }));
+  };
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -454,17 +533,17 @@ export const OnboardingKYBFormPlayground = ({
               </div>
             )}
           </div>
-
-          {/* Progress bar - only show when not submitted */}
-          {!isSubmitted && (
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-blue-500 transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
         </div>
+
+        {/* Progress bar - only show when not submitted */}
+        {!isSubmitted && (
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500 transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
 
         <hr className="border-t border-gray-200 my-6" />
 
@@ -566,10 +645,7 @@ export const OnboardingKYBFormPlayground = ({
                       type="text"
                       variant={variant}
                       value={value || ''}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        [field.name]: e.target.value
-                      }))}
+                      onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
                       aiSuggestion={suggestion}
                       onSuggestionClick={() => {
                         if (suggestion) {
