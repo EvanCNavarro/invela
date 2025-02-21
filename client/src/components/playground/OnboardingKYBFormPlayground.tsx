@@ -247,11 +247,19 @@ export const OnboardingKYBFormPlayground = ({
   // Helper to filter out non-form fields from metadata
   const extractFormData = (metadata: Record<string, any>) => {
     const formData: Record<string, string> = {};
+
+    // Log the metadata we're processing
+    console.log('[KYB Form Debug] Processing metadata:', metadata);
+
     FORM_FIELD_NAMES.forEach(fieldName => {
-      if (metadata[fieldName]) {
-        formData[fieldName] = metadata[fieldName];
+      // Only set value if it exists and is not empty
+      if (metadata[fieldName] !== undefined && metadata[fieldName] !== null) {
+        const value = metadata[fieldName];
+        formData[fieldName] = String(value).trim();
+        console.log(`[KYB Form Debug] Extracted field ${fieldName}:`, formData[fieldName]);
       }
     });
+
     return formData;
   };
 
@@ -304,23 +312,33 @@ export const OnboardingKYBFormPlayground = ({
 
       try {
         const response = await fetch(`/api/kyb/progress/${taskId}`);
-        if (!response.ok) return;
+        if (!response.ok) {
+          throw new Error('Failed to load progress');
+        }
 
         const data = await response.json();
+        console.log('[KYB Form Debug] Loaded saved data:', data);
+
         if (data.formData) {
           // Only extract KYB form fields from metadata
-          setFormData(extractFormData(data.formData));
+          const extractedData = extractFormData(data.formData);
+          console.log('[KYB Form Debug] Extracted form data:', extractedData);
+
+          setFormData(extractedData);
           setLastSavedProgress(data.progress || 0);
 
           // Set the current step based on the last completed step
           const lastCompletedStep = FORM_STEPS.reduce((lastStep, step, index) => {
-            return step.validation(data.formData) ? index : lastStep;
+            const isStepValid = step.validation(extractedData);
+            console.log(`[KYB Form Debug] Validating step ${index}:`, { isValid: isStepValid, data: extractedData });
+            return isStepValid ? index : lastStep;
           }, 0);
+
           setCurrentStep(lastCompletedStep);
         }
         setInitialLoadDone(true);
       } catch (error) {
-        console.error('Error loading saved progress:', error);
+        console.error('[KYB Form Debug] Error loading saved progress:', error);
         setInitialLoadDone(true);
       }
     };
