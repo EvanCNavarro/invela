@@ -766,7 +766,7 @@ export const OnboardingKYBFormPlayground = ({
                     <FormField
                       type="text"
                       variant={variant}
-                      value={value || ''}
+                      value={formData[field.name] || ''}
                       onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
                       aiSuggestion={getSuggestionForField(field.name)}
                       onSuggestionClick={() => {
