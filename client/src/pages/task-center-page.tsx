@@ -68,6 +68,26 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
   }
 };
 
+const getTaskCountForTab = (tabId: string, tasks: Task[], user?: { id: number }, currentCompany?: { id: number }) => {
+  if (!user || !currentCompany) return 0;
+
+  return tasks.filter(task => {
+    // First check company match for all cases
+    if (task.company_id !== currentCompany.id) {
+      return false;
+    }
+
+    if (tabId === "my-tasks") {
+      return task.assigned_to === user.id ||
+             (task.task_scope === "company" && task.company_id === currentCompany.id);
+    } else if (tabId === "for-others") {
+      return task.created_by === user.id && task.assigned_to !== user.id;
+    }
+
+    return false;
+  }).length;
+};
+
 export default function TaskCenterPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
@@ -174,8 +194,8 @@ export default function TaskCenterPage() {
       email: user?.email,
       company_id: currentCompany?.id
     });
-    console.log('My Tasks count:', getTaskCountForTab('my-tasks'));
-    console.log('For Others count:', getTaskCountForTab('for-others'));
+    console.log('My Tasks count:', getTaskCountForTab('my-tasks', tasks, user, currentCompany));
+    console.log('For Others count:', getTaskCountForTab('for-others', tasks, user, currentCompany));
     console.groupEnd();
   }, [tasks, user, currentCompany]);
 
@@ -205,9 +225,10 @@ export default function TaskCenterPage() {
     }
 
     if (activeTab === "my-tasks") {
-      return task.assigned_to === user?.id;
+      return task.assigned_to === user?.id ||
+             (task.task_scope === "company" && task.company_id === currentCompany?.id);
     } else if (activeTab === "for-others") {
-      return task.created_by === user?.id;
+      return task.created_by === user?.id && task.assigned_to !== user?.id;
     }
 
     console.groupEnd();
@@ -260,30 +281,6 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
-  const getTaskCountForTab = (tabId: string) => {
-    // Logging to help debug the counts
-    console.group('[TaskCenter] Calculating task count for tab:', tabId);
-
-    const count = tasks.filter(task => {
-      // First check company match for all cases
-      if (task.company_id !== currentCompany?.id) {
-        console.log(`Task ${task.id} filtered out - wrong company`);
-        return false;
-      }
-
-      if (tabId === "my-tasks") {
-        return task.assigned_to === user?.id;
-      } else if (tabId === "for-others") {
-        return task.created_by === user?.id;
-      }
-
-      return false;
-    }).length;
-
-    console.log(`Final count for ${tabId}:`, count);
-    console.groupEnd();
-    return count;
-  };
 
   const renderTaskList = () => {
     if (isLoading) {
@@ -366,12 +363,12 @@ export default function TaskCenterPage() {
                   <User className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     My Tasks
-                    {getTaskCountForTab("my-tasks") > 0 && (
+                    {getTaskCountForTab("my-tasks", tasks, user, currentCompany) > 0 && (
                       <Badge
                         variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {getTaskCountForTab("my-tasks")}
+                        {getTaskCountForTab("my-tasks", tasks, user, currentCompany)}
                       </Badge>
                     )}
                   </span>
@@ -386,12 +383,12 @@ export default function TaskCenterPage() {
                   <Users2 className="h-4 w-4" />
                   <span className="flex items-center gap-2">
                     For Others
-                    {getTaskCountForTab("for-others") > 0 && (
+                    {getTaskCountForTab("for-others", tasks, user, currentCompany) > 0 && (
                       <Badge
                         variant="secondary"
                         className="ml-1 rounded-full h-5 min-w-[20px] px-1 flex items-center justify-center"
                       >
-                        {getTaskCountForTab("for-others")}
+                        {getTaskCountForTab("for-others", tasks, user, currentCompany)}
                       </Badge>
                     )}
                   </span>
