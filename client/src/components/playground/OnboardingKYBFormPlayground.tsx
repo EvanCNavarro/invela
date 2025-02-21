@@ -211,11 +211,21 @@ const isEmptyValue = (value: unknown): boolean => {
   return true;
 };
 
-export const OnboardingKYBFormPlayground = () => {
+interface OnboardingKYBFormPlaygroundProps {
+  taskId?: number;
+  onSubmit?: (formData: Record<string, any>) => void;
+  companyName?: string;
+}
+
+export const OnboardingKYBFormPlayground = ({
+  taskId,
+  onSubmit,
+  companyName: initialCompanyName = ""
+}: OnboardingKYBFormPlaygroundProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyName, setCompanyName] = useState("");
+  const [companyName, setCompanyName] = useState(initialCompanyName);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -254,6 +264,9 @@ export const OnboardingKYBFormPlayground = () => {
       setCurrentStep(current => current + 1);
     } else {
       console.log('Form submitted:', formData);
+      if (onSubmit) {
+        onSubmit(formData);
+      }
       setIsSubmitted(true);
     }
   };

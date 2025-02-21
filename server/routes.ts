@@ -13,6 +13,7 @@ import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import { TaskStatus, taskStatusToProgress } from './types';
+import kybRouter from './routes/kyb';
 
 // Generate invitation code helper function (keep it DRY)
 function generateInviteCode(): string {
@@ -37,6 +38,7 @@ declare global {
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
+  app.use(kybRouter);
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
@@ -907,7 +909,7 @@ export function registerRoutes(app: Express): Express {
               throw new Error("Failed to update task status");
             }
 
-            console.log('[FinTech Invite] Successfully completed invitation process');
+console.log('[FinTech Invite] Successfully completed invitation process');
             return { invitation, task: updatedTask, company: newCompany, user: newUser };
 
           } catch (emailError) {

@@ -3,19 +3,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
-import { TaskDetailsModal } from "@/components/modals/TaskDetailsModal";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { TaskStatus } from "@db/schema";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import cn from 'classnames';
+import { useLocation } from "wouter";
+import classNames from "classnames";
+import { TaskModal } from "./TaskModal";
 
 interface Task {
   id: number;
   title: string;
-  description: string;
-  taskType: 'user_onboarding' | 'file_request' | 'user_invitation' | 'company_kyb';
+  description: string | null;
+  taskType: 'user_onboarding' | 'file_request' | 'company_onboarding_KYB';
   taskScope: 'user' | 'company';
   status: TaskStatus;
   progress: number;
@@ -24,6 +25,8 @@ interface Task {
   userEmail?: string;
   companyId?: number;
   dueDate?: string;
+  filesRequested?: string[];
+  filesUploaded?: string[];
 }
 
 const taskStatusMap = {
@@ -41,6 +44,18 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  const handleTaskClick = (task: Task) => {
+    if (task.taskType === 'company_onboarding_KYB') {
+      // Navigate to KYB form page
+      navigate(`/kyb-form/${task.id}`);
+    } else {
+      // Show modal for other task types
+      setSelectedTask(task);
+      setDetailsModalOpen(true);
+    }
+  };
 
   // Add mutation for updating task status
   const updateTaskStatus = useMutation({
@@ -100,12 +115,26 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
           </TableHeader>
           <TableBody>
             {initialTasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
+              <TableRow 
+                key={task.id}
+                className={classNames(
+                  "cursor-pointer hover:bg-muted/50 transition-colors",
+                  task.taskType === 'company_onboarding_KYB' && "hover:bg-blue-50/50"
+                )}
+                onClick={() => handleTaskClick(task)}
+              >
+                <TableCell className="font-medium">
+                  <div className="flex items-center space-x-2">
+                    <span>{task.title}</span>
+                    {task.taskType === 'company_onboarding_KYB' && (
+                      <Badge variant="outline" className="ml-2">KYB</Badge>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Badge
                     variant={task.status === TaskStatus.COMPLETED ? "default" : "secondary"}
-                    className={cn(
+                    className={classNames(
                       "cursor-pointer hover:bg-secondary/80",
                       task.status === TaskStatus.COMPLETED && "bg-green-100"
                     )}
@@ -127,7 +156,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
                 <TableCell>
                   {task.dueDate ? format(new Date(task.dueDate), 'MMM d, yyyy') : '-'}
                 </TableCell>
-                <TableCell className="text-right pr-4">
+                <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
@@ -158,7 +187,7 @@ export function TaskTable({ tasks: initialTasks }: { tasks: Task[] }) {
         </Table>
       </div>
 
-      <TaskDetailsModal
+      <TaskModal
         task={selectedTask}
         open={detailsModalOpen}
         onOpenChange={setDetailsModalOpen}
