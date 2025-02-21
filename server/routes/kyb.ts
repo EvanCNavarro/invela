@@ -41,8 +41,21 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       return res.status(404).json({ error: 'KYB task not found' });
     }
 
-    console.log('[KYB API] Found task:', task);
-    res.json(task);
+    // Transform the task data to include saved form data from metadata
+    const transformedTask = {
+      ...task,
+      savedFormData: task.metadata || {},
+      progress: task.progress || 0
+    };
+
+    console.log('[KYB API] Found task with saved data:', {
+      id: transformedTask.id,
+      status: transformedTask.status,
+      progress: transformedTask.progress,
+      hasFormData: Object.keys(transformedTask.savedFormData).length > 0
+    });
+
+    res.json(transformedTask);
   } catch (error) {
     console.error('[KYB API] Error fetching KYB task:', error);
     res.status(500).json({ error: 'Failed to fetch KYB task' });
@@ -86,10 +99,10 @@ router.post('/api/kyb/progress', async (req, res) => {
       newStatus = TaskStatus.READY_FOR_SUBMISSION;
     }
 
-    // Merge existing metadata with new form data
+    // Merge existing metadata with new form data, preserving existing data
     const updatedMetadata = {
-      ...(existingTask.metadata || {}),
-      ...formData,
+      ...(existingTask.metadata || {}),  // Keep existing metadata
+      ...formData,                       // Merge new form data
       lastUpdated: new Date().toISOString(),
       statusFlow: [...(existingTask.metadata?.statusFlow || []), newStatus]
     };
@@ -109,11 +122,19 @@ router.post('/api/kyb/progress', async (req, res) => {
       .set({
         progress: Math.min(progress, 100), // Ensure progress doesn't exceed 100%
         status: newStatus,
-        metadata: updatedMetadata
+        metadata: updatedMetadata,
+        updated_at: new Date()
       })
       .where(eq(tasks.id, taskId));
 
-    res.json({ success: true });
+    res.json({ 
+      success: true,
+      savedData: {
+        progress,
+        status: newStatus,
+        formData: updatedMetadata
+      }
+    });
   } catch (error) {
     console.error('[KYB API] Error saving progress:', error);
     res.status(500).json({ error: 'Failed to save progress' });
