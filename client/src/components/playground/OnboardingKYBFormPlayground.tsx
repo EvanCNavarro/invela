@@ -228,22 +228,23 @@ export const OnboardingKYBFormPlayground = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
-  const [companyData, setCompanyData] = useState<any>(initialCompanyData || null);
+  const [companyData, setCompanyData] = useState<any>(null); 
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchCompleted, setSearchCompleted] = useState(false); 
   const queryClient = useQueryClient();
 
-  // Load form immediately and perform company search in background
+  // Load form and perform company search in background
   useEffect(() => {
     let isMounted = true;
 
     const fetchCompanyData = async () => {
       if (!companyName) {
-        console.log("[Company Search Debug] No company name provided, skipping search");
+        console.log("[KYB Form Debug] No company name provided, skipping search");
         return;
       }
 
-      console.log("[Company Search Debug] Starting search with params:", {
+      console.log("[KYB Form Debug] Starting search with params:", {
         companyName,
         initialData: initialCompanyData,
         taskId
@@ -251,16 +252,17 @@ export const OnboardingKYBFormPlayground = ({
 
       setIsSearching(true);
       setSearchError(null);
+      setSearchCompleted(false); 
 
       try {
-        console.log("[Company Search Debug] Making API request to /api/company-search");
+        console.log("[KYB Form Debug] Making API request to /api/company-search");
         const response = await fetch("/api/company-search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ companyName: companyName.trim() }),
         });
 
-        console.log("[Company Search Debug] Received API response:", {
+        console.log("[KYB Form Debug] Received API response:", {
           status: response.status,
           ok: response.ok,
           statusText: response.statusText
@@ -271,24 +273,25 @@ export const OnboardingKYBFormPlayground = ({
         }
 
         const responseData = await response.json();
-        console.log("[Company Search Debug] Parsed response data:", responseData);
+        console.log("[KYB Form Debug] Parsed response data:", responseData);
 
         if (isMounted) {
-          if (responseData.success) {
-            console.log("[Company Search Debug] Setting company data:", responseData.data.company);
+          if (responseData.success && responseData.data.searchComplete) {
+            console.log("[KYB Form Debug] Setting company data:", responseData.data.company);
             setCompanyData(responseData.data.company);
+            setSearchCompleted(true);
 
             // Invalidate caches after successful update
-            console.log("[Company Search Debug] Invalidating related query caches");
+            console.log("[KYB Form Debug] Invalidating related query caches");
             queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
             queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
           } else {
-            console.error("[Company Search Debug] API reported failure:", responseData.error);
+            console.error("[KYB Form Debug] API reported failure:", responseData.error);
             setSearchError(responseData.error || 'Failed to retrieve company data');
           }
         }
       } catch (error) {
-        console.error("[Company Search Debug] Error in search process:", {
+        console.error("[KYB Form Debug] Error in search process:", {
           error,
           message: error instanceof Error ? error.message : 'Unknown error',
           stack: error instanceof Error ? error.stack : undefined
@@ -299,7 +302,7 @@ export const OnboardingKYBFormPlayground = ({
         }
       } finally {
         if (isMounted) {
-          console.log("[Company Search Debug] Search process completed");
+          console.log("[KYB Form Debug] Search process completed");
           setIsSearching(false);
         }
       }
@@ -311,7 +314,7 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       isMounted = false;
     };
-  }, [companyName, queryClient]);
+  }, [companyName, queryClient, taskId]);
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -353,8 +356,16 @@ export const OnboardingKYBFormPlayground = ({
   })();
 
   const getSuggestionForField = (fieldName: string) => {
+    // Only return suggestions if search is completed
+    if (!searchCompleted || !companyData) return undefined;
+
     const field = currentStepData.fields.find(f => f.name === fieldName);
-    if (field?.suggestion && companyData?.[field.suggestion]) {
+    if (field?.suggestion && companyData[field.suggestion]) {
+      console.log("[KYB Form Debug] Found suggestion for field:", {
+        fieldName,
+        suggestion: field.suggestion,
+        value: companyData[field.suggestion]
+      });
       return companyData[field.suggestion];
     }
     return undefined;

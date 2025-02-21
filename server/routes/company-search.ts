@@ -34,7 +34,9 @@ const convertToSnakeCase = (data: Record<string, any>): Record<string, any> => {
 
 // Utility function to format response data for frontend
 const formatResponseData = (data: any) => {
-  return {
+  console.log("[Company Search Debug] Formatting response data for frontend:", data);
+
+  const formatted = {
     ...data,
     // Convert PostgreSQL arrays back to JS arrays
     products_services: Array.isArray(data.products_services) 
@@ -47,6 +49,9 @@ const formatResponseData = (data: any) => {
       ? data.certifications_compliance
       : data.certifications_compliance?.replace(/[{}]/g, '').split(',').map((s: string) => s.trim().replace(/^"|"$/g, ''))
   };
+
+  console.log("[Company Search Debug] Formatted data:", formatted);
+  return formatted;
 };
 
 // Full company search and enrichment
@@ -101,7 +106,8 @@ router.post("/api/company-search", async (req, res) => {
             data: {
               company: formatResponseData(updatedCompany),
               isNewData: true,
-              source: 'registry_enriched'
+              source: 'registry_enriched',
+              searchComplete: true // Add flag to indicate search completion
             }
           });
         } catch (enrichError) {
@@ -112,7 +118,8 @@ router.post("/api/company-search", async (req, res) => {
             data: {
               company: formatResponseData(existingCompany),
               isNewData: false,
-              source: 'registry'
+              source: 'registry',
+              searchComplete: true
             }
           });
         }
@@ -123,7 +130,8 @@ router.post("/api/company-search", async (req, res) => {
         data: {
           company: formatResponseData(existingCompany),
           isNewData: false,
-          source: 'registry'
+          source: 'registry',
+          searchComplete: true
         }
       });
     }
@@ -161,7 +169,8 @@ router.post("/api/company-search", async (req, res) => {
       data: {
         company: formatResponseData(newCompany),
         isNewData: true,
-        source: 'new'
+        source: 'new',
+        searchComplete: true
       }
     });
 
