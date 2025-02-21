@@ -8,34 +8,7 @@ import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/
 
 const router = Router();
 
-const updateTaskStatusSchema = z.object({
-  status: z.enum([
-    TaskStatus.NOT_STARTED,
-    TaskStatus.IN_PROGRESS,
-    TaskStatus.READY_FOR_SUBMISSION,
-    TaskStatus.SUBMITTED,
-    TaskStatus.APPROVED,
-    TaskStatus.EMAIL_SENT,
-    TaskStatus.COMPLETED
-  ]),
-  progress: z.number().min(0).max(100)
-});
-
-// Helper function to get task counts
-async function getTaskCount() {
-  const allTasks = await db.select().from(tasks);
-  return {
-    total: allTasks.length,
-    emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
-    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
-    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
-    readyForSubmission: allTasks.filter(t => t.status === TaskStatus.READY_FOR_SUBMISSION).length,
-    submitted: allTasks.filter(t => t.status === TaskStatus.SUBMITTED).length,
-    approved: allTasks.filter(t => t.status === TaskStatus.APPROVED).length
-  };
-}
-
-// Create new task
+// Create new task - add progress to response
 router.post("/api/tasks", async (req, res) => {
   try {
     const [newTask] = await db
@@ -43,25 +16,38 @@ router.post("/api/tasks", async (req, res) => {
       .values({
         ...req.body,
         status: TaskStatus.EMAIL_SENT,
-        progress: 50,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        progress: 0,
+        created_at: new Date(),
+        updated_at: new Date(),
         metadata: {
           ...req.body.metadata,
-          statusFlow: [TaskStatus.EMAIL_SENT]
+          statusFlow: [TaskStatus.EMAIL_SENT],
+          progressHistory: [{
+            value: 0,
+            timestamp: new Date().toISOString()
+          }]
         }
       })
       .returning();
 
-    // Get updated counts and broadcast task creation
+    // Get updated counts and broadcast task creation with progress
     const taskCount = await getTaskCount();
     broadcastMessage('task_created', {
-      task: newTask,
+      task: {
+        ...newTask,
+        progress: newTask.progress || 0
+      },
       count: taskCount,
       timestamp: new Date().toISOString()
     });
 
-    res.status(201).json({ task: newTask, count: taskCount });
+    res.status(201).json({ 
+      task: {
+        ...newTask,
+        progress: newTask.progress || 0
+      }, 
+      count: taskCount 
+    });
   } catch (error) {
     console.error("[Task Routes] Error creating task:", error);
     res.status(500).json({ message: "Failed to create task" });
@@ -120,13 +106,11 @@ router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTran
         metadata: {
           ...req.task?.metadata,
           statusFlow: [...(req.task?.metadata?.statusFlow || []), status],
-          statusUpdates: [
-            ...(req.task?.metadata?.statusUpdates || []),
+          progressHistory: [
+            ...(req.task?.metadata?.progressHistory || []),
             {
-              from: req.task?.status,
-              to: status,
-              timestamp: new Date().toISOString(),
-              progress
+              value: progress,
+              timestamp: new Date().toISOString()
             }
           ]
         }
@@ -141,18 +125,24 @@ router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTran
       metadata: updatedTask.metadata
     });
 
-    // Get updated counts and broadcast task update
+    // Get updated counts and broadcast task update with progress
     const taskCount = await getTaskCount();
     broadcastMessage('task_updated', {
       taskId: updatedTask.id,
       status: updatedTask.status,
-      progress: updatedTask.progress,
+      progress: updatedTask.progress || 0,
       metadata: updatedTask.metadata,
       count: taskCount,
       timestamp: new Date().toISOString()
     });
 
-    res.json({ task: updatedTask, count: taskCount });
+    res.json({ 
+      task: {
+        ...updatedTask,
+        progress: updatedTask.progress || 0
+      }, 
+      count: taskCount 
+    });
   } catch (error) {
     console.error("[Task Routes] Error updating task status:", error);
     if (error instanceof z.ZodError) {
@@ -164,5 +154,32 @@ router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTran
     res.status(500).json({ message: "Failed to update task status" });
   }
 });
+
+const updateTaskStatusSchema = z.object({
+  status: z.enum([
+    TaskStatus.NOT_STARTED,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.READY_FOR_SUBMISSION,
+    TaskStatus.SUBMITTED,
+    TaskStatus.APPROVED,
+    TaskStatus.EMAIL_SENT,
+    TaskStatus.COMPLETED
+  ]),
+  progress: z.number().min(0).max(100)
+});
+
+// Helper function to get task counts
+async function getTaskCount() {
+  const allTasks = await db.select().from(tasks);
+  return {
+    total: allTasks.length,
+    emailSent: allTasks.filter(t => t.status === TaskStatus.EMAIL_SENT).length,
+    completed: allTasks.filter(t => t.status === TaskStatus.COMPLETED).length,
+    inProgress: allTasks.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    readyForSubmission: allTasks.filter(t => t.status === TaskStatus.READY_FOR_SUBMISSION).length,
+    submitted: allTasks.filter(t => t.status === TaskStatus.SUBMITTED).length,
+    approved: allTasks.filter(t => t.status === TaskStatus.APPROVED).length
+  };
+}
 
 export default router;
