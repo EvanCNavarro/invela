@@ -264,6 +264,33 @@ const extractFormData = (metadata: Record<string, any>) => {
   return formData;
 };
 
+// Current step validation enhancement
+const validateCurrentStep = (formData: Record<string, unknown>, step: typeof FORM_STEPS[number]) => {
+  const result = step.validation(formData);
+  console.log('Current step validation:', {
+    step: step.id,
+    formData,
+    isValid: result
+  });
+  return result;
+};
+
+// Enhanced suggestion processing
+const processSuggestion = (fieldName: string, suggestion: any, companyData: any) => {
+  console.log('[KYB Form Debug] Processing suggestion for field:', {
+    fieldName,
+    suggestionKey: suggestion,
+    rawValue: companyData?.[suggestion],
+    companyDataKeys: companyData ? Object.keys(companyData) : []
+  });
+
+  if (!companyData?.[suggestion]) {
+    console.log('[KYB Form Debug] No suggestion mapping for field:', fieldName);
+    return undefined;
+  }
+
+  return String(companyData[suggestion]);
+};
 
 // Calculate progress by only counting KYB form fields
 const FORM_FIELD_NAMES = FORM_STEPS.reduce((acc, step) => {
@@ -306,6 +333,7 @@ export const OnboardingKYBFormPlayground = ({
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const lastUpdateRef = useRef(0);
+  const suggestionProcessingRef = useRef(false);
 
   // Single source of truth for initial data load
   useEffect(() => {
@@ -569,56 +597,51 @@ export const OnboardingKYBFormPlayground = ({
   const isLastStep = currentStep === FORM_STEPS.length - 1;
 
   // Check if current step is valid
-  const isCurrentStepValid = (() => {
-    const result = currentStepData.validation(formData);
-    console.log('Current step validation:', {
-      step: currentStepData.id,
-      formData,
-      isValid: result
-    });
-    return result;
-  })();
+  const isCurrentStepValid = validateCurrentStep(formData, currentStepData);
 
+
+  // Enhanced logging for suggestion handling
   const getSuggestionForField = (fieldName: string) => {
-    // Only return suggestions if search is completed
+    if (suggestionProcessingRef.current) {
+      console.log('[KYB Form Debug] Skipping suggestion processing - already in progress');
+      return undefined;
+    }
+
     if (!searchCompleted || !companyData) {
-      console.log("[KYB Form Debug] No suggestions available:", {
+      console.log('[KYB Form Debug] No suggestions available:', {
         searchCompleted,
         hasCompanyData: !!companyData,
-        fieldName
+        fieldName,
+        timestamp: new Date().toISOString()
       });
       return undefined;
     }
 
-    const field = currentStepData.fields.find(f => f.name === fieldName);
+    suggestionProcessingRef.current = true;
+    try {
+      const field = FORM_STEPS
+        .flatMap(step => step.fields)
+        .find(f => f.name === fieldName);
 
-    if (!field?.suggestion) {
-      console.log("[KYB Form Debug] No suggestion mapping for field:", fieldName);
-      return undefined;
+      if (!field?.suggestion) {
+        console.log('[KYB Form Debug] No suggestion mapping found:', {
+          fieldName,
+          timestamp: new Date().toISOString()
+        });
+        return undefined;
+      }
+
+      const suggestion = processSuggestion(fieldName, field.suggestion, companyData);
+      console.log('[KYB Form Debug] Processed suggestion:', {
+        fieldName,
+        suggestion,
+        timestamp: new Date().toISOString()
+      });
+
+      return suggestion;
+    } finally {
+      suggestionProcessingRef.current = false;
     }
-
-    const suggestionValue = companyData[field.suggestion];
-
-    console.log("[KYB Form Debug] Processing suggestion for field:", {
-      fieldName,
-      suggestionKey: field.suggestion,
-      rawValue: suggestionValue,
-      companyDataKeys: Object.keys(companyData)
-    });
-
-    if (suggestionValue === undefined || suggestionValue === null) {
-      console.log("[KYB Form Debug] No suggestion value found for field:", fieldName);
-      return undefined;
-    }
-
-    // Handle different data types appropriately
-    if (Array.isArray(suggestionValue)) {
-      return suggestionValue.join(', ');
-    } else if (typeof suggestionValue === 'object') {
-      return JSON.stringify(suggestionValue);
-    }
-
-    return String(suggestionValue);
   };
 
   const handleSuggestionClick = (fieldName: string, suggestion: any) => {
