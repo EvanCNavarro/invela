@@ -21,12 +21,32 @@ const convertToSnakeCase = (data: Record<string, any>): Record<string, any> => {
     // Handle special case for numEmployees -> num_employees
     if (key === 'numEmployees') {
       converted.num_employees = value ? parseInt(String(value).replace(/[^\d]/g, ''), 10) || null : null;
+    } else if (Array.isArray(value)) {
+      // Convert arrays to PostgreSQL array format
+      converted[snakeKey] = `{${value.map(v => `"${v}"`).join(',')}}`;
     } else {
       converted[snakeKey] = value;
     }
   });
 
   return converted;
+};
+
+// Utility function to format response data for frontend
+const formatResponseData = (data: any) => {
+  return {
+    ...data,
+    // Convert PostgreSQL arrays back to JS arrays
+    products_services: Array.isArray(data.products_services) 
+      ? data.products_services 
+      : data.products_services?.replace(/[{}]/g, '').split(',').map((s: string) => s.trim().replace(/^"|"$/g, '')),
+    key_clients_partners: Array.isArray(data.key_clients_partners)
+      ? data.key_clients_partners
+      : data.key_clients_partners?.replace(/[{}]/g, '').split(',').map((s: string) => s.trim().replace(/^"|"$/g, '')),
+    certifications_compliance: Array.isArray(data.certifications_compliance)
+      ? data.certifications_compliance
+      : data.certifications_compliance?.replace(/[{}]/g, '').split(',').map((s: string) => s.trim().replace(/^"|"$/g, ''))
+  };
 };
 
 // Full company search and enrichment
@@ -79,7 +99,7 @@ router.post("/api/company-search", async (req, res) => {
           return res.json({
             success: true,
             data: {
-              company: updatedCompany,
+              company: formatResponseData(updatedCompany),
               isNewData: true,
               source: 'registry_enriched'
             }
@@ -90,7 +110,7 @@ router.post("/api/company-search", async (req, res) => {
           return res.json({
             success: true,
             data: {
-              company: existingCompany,
+              company: formatResponseData(existingCompany),
               isNewData: false,
               source: 'registry'
             }
@@ -101,7 +121,7 @@ router.post("/api/company-search", async (req, res) => {
       return res.json({
         success: true,
         data: {
-          company: existingCompany,
+          company: formatResponseData(existingCompany),
           isNewData: false,
           source: 'registry'
         }
@@ -139,7 +159,7 @@ router.post("/api/company-search", async (req, res) => {
     res.json({
       success: true,
       data: {
-        company: newCompany,
+        company: formatResponseData(newCompany),
         isNewData: true,
         source: 'new'
       }
