@@ -215,12 +215,14 @@ interface OnboardingKYBFormPlaygroundProps {
   taskId?: number;
   onSubmit?: (formData: Record<string, any>) => void;
   companyName: string;
+  companyData?: any;
 }
 
 export const OnboardingKYBFormPlayground = ({
   taskId,
   onSubmit,
-  companyName
+  companyName,
+  companyData: initialCompanyData
 }: OnboardingKYBFormPlaygroundProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -228,8 +230,13 @@ export const OnboardingKYBFormPlayground = ({
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Automatically fetch company data when component mounts
+  // Use provided company data or fetch if not provided
   useEffect(() => {
+    if (initialCompanyData) {
+      setCompanyData(initialCompanyData);
+      return;
+    }
+
     const fetchCompanyData = async () => {
       if (!companyName) return;
 
@@ -255,7 +262,7 @@ export const OnboardingKYBFormPlayground = ({
     };
 
     fetchCompanyData();
-  }, [companyName]);
+  }, [companyName, initialCompanyData]);
 
   const handleBack = () => {
     if (currentStep > 0) {
