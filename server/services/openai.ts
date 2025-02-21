@@ -24,6 +24,22 @@ interface CleanedCompanyData {
   fundingStage?: string;
   exitStrategyHistory?: string;
   certificationsCompliance?: string[];
+  search_type?: string;
+}
+
+// Helper function to extract data from OpenAI response
+function extractDataFromResponse(result: Record<string, any>): Record<string, any> {
+  const extracted: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(result)) {
+    if (value && typeof value === 'object' && 'data' in value) {
+      extracted[key] = value.data;
+    } else {
+      extracted[key] = value;
+    }
+  }
+
+  return extracted;
 }
 
 // Update helper function to handle URL formatting
@@ -74,13 +90,13 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       case 'keyClientsPartners':
       case 'investors':
       case 'certificationsCompliance':
-        cleanedData[key] = cleanArrayOrString(value).join(', ');
+        cleanedData[key] = cleanArrayOrString(value);
         break;
 
       case 'numEmployees':
         if (typeof value === 'string') {
           const match = value.match(/\d+/);
-          cleanedData[key] = match ? parseInt(match[0], 10) : null;
+          cleanedData[key] = match ? parseInt(match[0], 10) : undefined;
         } else if (typeof value === 'number') {
           cleanedData[key] = value;
         }
@@ -89,7 +105,7 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
       case 'incorporationYear':
         if (typeof value === 'string' || typeof value === 'number') {
           const year = parseInt(String(value), 10);
-          cleanedData[key] = !isNaN(year) ? year : null;
+          cleanedData[key] = !isNaN(year) ? year : undefined;
         }
         break;
 
@@ -118,29 +134,22 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         break;
 
       case 'exitStrategyHistory':
-        // Clean and format exit strategy history
         if (typeof value === 'string') {
-          cleanedData[key] = value
-            .replace(/^.*?"data":"(.+?)".*$/, '$1')
-            .replace(/\\"/g, '"')
-            .replace(/[{}]/g, '')
-            .trim();
+          cleanedData[key] = value.trim();
         } else {
           cleanedData[key] = value;
         }
         break;
 
       case 'productsServices':
-        // Convert to comma-separated string, ensuring proper formatting
         if (Array.isArray(value)) {
           cleanedData[key] = value.join(', ');
         } else if (typeof value === 'string') {
-          cleanedData[key] = cleanArrayOrString(value).join(', ');
+          cleanedData[key] = value.trim();
         }
         break;
 
       case 'revenue':
-        // Extract just the revenue value
         if (typeof value === 'string') {
           const match = value.match(/\$[\d.]+ [a-z]+ annually/i);
           cleanedData[key] = match ? match[0] : value;
@@ -150,7 +159,6 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         break;
 
       case 'fundingStage':
-        // Extract just the stage value
         if (typeof value === 'string') {
           const match = value.match(/Series [A-Z]/i);
           cleanedData[key] = match ? match[0] : value;
@@ -160,7 +168,6 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
         break;
 
       default:
-        // For all other fields, store the data value directly
         cleanedData[key as keyof CleanedCompanyData] = value;
     }
   });
@@ -168,25 +175,10 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
   return cleanedData;
 }
 
-// Helper function to extract data from OpenAI response
-function extractDataFromResponse(result: Record<string, any>): Record<string, any> {
-  const extracted: Record<string, any> = {};
-
-  for (const [key, value] of Object.entries(result)) {
-    if (value && typeof value === 'object' && 'data' in value) {
-      extracted[key] = value.data;
-    } else {
-      extracted[key] = value;
-    }
-  }
-
-  return extracted;
-}
-
 async function logSearchAnalytics(analytics: SearchAnalytics) {
   try {
     await db.insert(openaiSearchAnalytics).values({
-      search_type: analytics.searchType || 'missing_data', // Ensure default value
+      search_type: analytics.searchType || 'missing_data',
       company_id: analytics.companyId,
       search_prompt: analytics.searchPrompt,
       search_results: analytics.searchResults,

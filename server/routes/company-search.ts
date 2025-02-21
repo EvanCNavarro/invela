@@ -40,15 +40,10 @@ router.post("/api/company-search", async (req, res) => {
     const { companyName } = companySearchSchema.parse(req.body);
     console.log(`[Company Search Debug] Validated company name: ${companyName}`);
 
-    // First try to find in database directly - case insensitive match using ilike
+    // First try to find in database directly
     console.log("[Company Search Debug] Executing database query");
-    const query = db.select()
-      .from(companies)
-      .where(ilike(companies.name, companyName));
+    const [existingCompany] = await db.select().from(companies).where(ilike(companies.name, companyName));
 
-    console.log("[Company Search Debug] Query:", query.toSQL?.());
-
-    const [existingCompany] = await query;
     console.log("[Company Search Debug] Database query result:", existingCompany);
 
     if (existingCompany) {
