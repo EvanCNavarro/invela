@@ -301,16 +301,6 @@ export default function TaskCenterPage() {
       );
     }
 
-    if (error) {
-      return (
-        <TableRow>
-          <TableCell colSpan={4} className="text-center py-8 text-destructive">
-            Failed to load tasks. Please try again later.
-          </TableCell>
-        </TableRow>
-      );
-    }
-
     if (currentTasks.length === 0) {
       return (
         <TableRow>
