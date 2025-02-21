@@ -72,7 +72,10 @@ export default function TaskPage({ params }: TaskPageProps) {
       });
       return data;
     },
-    enabled: taskType === 'kyb'
+    enabled: taskType === 'kyb',
+    // Force a fresh fetch when re-entering the form
+    staleTime: 0,
+    cacheTime: 0
   });
 
   useEffect(() => {
