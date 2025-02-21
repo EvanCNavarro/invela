@@ -50,6 +50,58 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
   }
 });
 
+// Save progress for KYB form
+router.post('/api/kyb/progress', async (req, res) => {
+  try {
+    const { taskId, progress, formData } = req.body;
+
+    if (!taskId) {
+      return res.status(400).json({ error: 'Task ID is required' });
+    }
+
+    // Update task with progress and save form data
+    await db.update(tasks)
+      .set({
+        progress,
+        status: progress === 100 ? TaskStatus.COMPLETED : TaskStatus.IN_PROGRESS,
+        metadata: {
+          ...formData,
+          lastUpdated: new Date().toISOString()
+        }
+      })
+      .where(eq(tasks.id, taskId));
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[KYB API] Error saving progress:', error);
+    res.status(500).json({ error: 'Failed to save progress' });
+  }
+});
+
+// Get saved progress for KYB form
+router.get('/api/kyb/progress/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Return saved form data and progress
+    res.json({
+      formData: task.metadata || {},
+      progress: task.progress
+    });
+  } catch (error) {
+    console.error('[KYB API] Error loading progress:', error);
+    res.status(500).json({ error: 'Failed to load progress' });
+  }
+});
+
 // Save KYB form data
 router.post('/api/kyb/save', async (req, res) => {
   try {
