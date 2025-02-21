@@ -297,38 +297,50 @@ export default function TaskCenterPage() {
   };
 
   const getTaskCountForTab = (tabId: string) => {
-    return tasks.filter(task => {
+    // Logging to help debug the counts
+    console.group('[TaskCenter] Calculating task count for tab:', tabId);
+
+    const count = tasks.filter(task => {
       // First check company match for all cases
       if (task.company_id !== currentCompany?.id) {
+        console.log(`Task ${task.id} filtered out - wrong company`);
         return false;
       }
 
       if (tabId === "my-tasks") {
-        // Show all company-wide tasks from user's company
+        // Company-wide tasks are always shown in My Tasks
         if (task.task_scope === 'company') {
+          console.log(`Task ${task.id} included in My Tasks - company scope`);
           return true;
         }
 
-        // For user-specific tasks
+        // For user-specific tasks, check if assigned or matches email
         if (task.task_scope === 'user') {
           const isAssignedToUser = task.assigned_to === user?.id;
           const matchesUserEmail = task.user_email?.toLowerCase() === user?.email?.toLowerCase();
+          console.log(`Task ${task.id} ${isAssignedToUser || matchesUserEmail ? 'included in' : 'filtered from'} My Tasks - ${isAssignedToUser ? 'assigned' : ''} ${matchesUserEmail ? 'email matches' : ''}`);
           return isAssignedToUser || matchesUserEmail;
         }
       } else if (tabId === "for-others") {
-        // Only show user-specific tasks where:
-        // 1. Current user is the creator
-        // 2. Task is not assigned to current user
-        // 3. Task is user-scoped
+        // Only include tasks that are:
+        // 1. Created by the current user
+        // 2. Not assigned to the current user
+        // 3. User-scoped tasks
         const isCreatedByUser = task.created_by === user?.id;
         const isNotAssignedToUser = task.assigned_to !== user?.id;
         const isUserTask = task.task_scope === 'user';
 
-        return isCreatedByUser && isNotAssignedToUser && isUserTask;
+        const shouldInclude = isCreatedByUser && isNotAssignedToUser && isUserTask;
+        console.log(`Task ${task.id} ${shouldInclude ? 'included in' : 'filtered from'} For Others - created by user: ${isCreatedByUser}, not assigned: ${isNotAssignedToUser}, user task: ${isUserTask}`);
+        return shouldInclude;
       }
 
       return false;
     }).length;
+
+    console.log(`Final count for ${tabId}:`, count);
+    console.groupEnd();
+    return count;
   };
 
   const renderTaskList = () => {
