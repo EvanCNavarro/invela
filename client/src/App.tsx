@@ -89,13 +89,11 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
-      <Route 
+      <ProtectedRoute 
         path="/task-center/task/:taskSlug"
         component={({ params }) => (
           <ProtectedLayout>
-            <OnboardingWrapper>
-              <TaskPage params={params} />
-            </OnboardingWrapper>
+            <TaskPage params={params} />
           </ProtectedLayout>
         )}
       />
