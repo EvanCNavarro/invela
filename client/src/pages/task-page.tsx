@@ -1,19 +1,13 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { PageHeader } from "@/components/ui/page-header";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { 
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { PageTemplate } from "@/components/ui/page-template";
 
 interface TaskPageProps {
   params: {
@@ -70,6 +64,10 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   }, [error, navigate, toast]);
 
+  const handleBackClick = () => {
+    window.history.back();
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout activeTab="task-center">
@@ -110,64 +108,60 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   return (
     <DashboardLayout activeTab="task-center">
-      <div className="space-y-8">
-        <div className="container max-w-7xl mx-auto">
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/task-center">Task Center</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>{task.title}</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-
-        <PageHeader
-          title={`KYB Form: ${task.metadata?.companyName || companyName}`}
-          description="Complete the Know Your Business (KYB) verification form"
-        />
-
-        <div className="container max-w-7xl mx-auto">
-          <OnboardingKYBFormPlayground 
-            taskId={task.id}
-            companyName={companyName}
-            companyData={companyData}
-            onSubmit={(formData) => {
-              fetch('/api/kyb/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                  formData,
-                  taskId: task.id
+      <PageTemplate
+        showBreadcrumbs
+        headerActions={
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-sm font-medium bg-white border-muted-foreground/20"
+            onClick={handleBackClick}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Task Center
+          </Button>
+        }
+      >
+        <div className="space-y-6">
+          <div className="container max-w-7xl mx-auto">
+            <OnboardingKYBFormPlayground 
+              taskId={task.id}
+              companyName={companyName}
+              companyData={companyData}
+              onSubmit={(formData) => {
+                fetch('/api/kyb/save', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                    formData,
+                    taskId: task.id
+                  })
                 })
-              })
-              .then(response => {
-                if (!response.ok) throw new Error('Failed to save KYB form');
-                return response.json();
-              })
-              .then(() => {
-                toast({
-                  title: "KYB Form Submitted",
-                  description: "Your KYB form has been saved and the task has been updated.",
+                .then(response => {
+                  if (!response.ok) throw new Error('Failed to save KYB form');
+                  return response.json();
+                })
+                .then(() => {
+                  toast({
+                    title: "KYB Form Submitted",
+                    description: "Your KYB form has been saved and the task has been updated.",
+                  });
+                  navigate('/task-center');
+                })
+                .catch(error => {
+                  console.error('Failed to save KYB form:', error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to save KYB form. Please try again.",
+                    variant: "destructive",
+                  });
                 });
-                navigate('/task-center');
-              })
-              .catch(error => {
-                console.error('Failed to save KYB form:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to save KYB form. Please try again.",
-                  variant: "destructive",
-                });
-              });
-            }}
-          />
+              }}
+            />
+          </div>
         </div>
-      </div>
+      </PageTemplate>
     </DashboardLayout>
   );
 }
