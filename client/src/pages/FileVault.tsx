@@ -13,48 +13,18 @@ import {
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-  Loader2,
-  RefreshCcwIcon,
-  FileTextIcon,
-  Trash2Icon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  ArrowUpDownIcon,
-  MoreVerticalIcon
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { useColumnVisibility } from "@/hooks/use-column-visibility";
-import { useSidebarContext } from "@/hooks/use-sidebar";
 import { useUser } from "@/hooks/use-user";
-import type { Column } from "@/components/ui/table";
-import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import type { FileStatus, FileItem } from "@/types/files";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SearchBar } from "@/components/ui/search-bar";
-import { Table } from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+import { FileTable, type SortField, type SortOrder } from "@/components/files/FileTable";
 import crypto from 'crypto';
-import {ChangeEvent} from 'react';
 
 const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG";
 
@@ -72,9 +42,9 @@ const FileVault: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
 
-  const { data: files = [], isLoading } = useQuery<TableRowData[]>({
+  const { data: files = [], isLoading } = useQuery<FileItem[]>({
     queryKey: ['/api/files', { company_id: user?.company_id }],
     enabled: !!user?.company_id,
     queryFn: async () => {
@@ -104,7 +74,14 @@ const FileVault: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
-      return data;
+      return data.map((file: any) => ({
+        id: file.id.toString(),
+        name: file.name,
+        size: file.size || 0,
+        status: file.status || 'uploaded',
+        createdAt: file.created_at || file.createdAt || new Date().toISOString(),
+        type: file.type || 'application/octet-stream'
+      }));
     }
   });
 
@@ -148,33 +125,33 @@ const FileVault: React.FC = () => {
       result = result.filter(file => file.status === statusFilter);
     }
 
-    console.log('[FileVault Debug] After filtering:', {
-      resultCount: result.length,
-      result
-    });
-    return result;
-  }, [allFiles, searchQuery, statusFilter]);
-
-  const sortedFiles = useMemo(() => {
-    return [...filteredFiles].sort((a, b) => {
+    result = result.sort((a, b) => {
       const modifier = sortConfig.order === 'asc' ? 1 : -1;
       switch (sortConfig.field) {
         case 'name':
           return modifier * a.name.localeCompare(b.name);
         case 'size':
-          return modifier * (a.size - b.size);
+          return modifier * ((a.size || 0) - (b.size || 0));
         case 'createdAt':
           return modifier * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        case 'status':
+          return modifier * a.status.localeCompare(b.status);
         default:
           return 0;
       }
     });
-  }, [filteredFiles, sortConfig]);
+
+    console.log('[FileVault Debug] After filtering:', {
+      resultCount: result.length,
+      result
+    });
+    return result;
+  }, [allFiles, searchQuery, statusFilter, sortConfig]);
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return sortedFiles.slice(startIndex, startIndex + itemsPerPage);
-  }, [sortedFiles, currentPage]);
+    return filteredFiles.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredFiles, currentPage]);
 
   const formatFileSize = (size: number): string => {
     if (size < 1024) return `${size} B`;
@@ -182,96 +159,6 @@ const FileVault: React.FC = () => {
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString();
-  };
-
-  const columns: Column<TableRowData>[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={selectedFiles.size === paginatedFiles.length}
-          onCheckedChange={() => {
-            setSelectedFiles(prev => {
-              if (prev.size === paginatedFiles.length) {
-                return new Set();
-              }
-              return new Set(paginatedFiles.map(file => file.id));
-            });
-          }}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedFiles.has(row.id)}
-          onCheckedChange={() => {
-            setSelectedFiles(prev => {
-              const newSet = new Set(prev);
-              if (newSet.has(row.id)) {
-                newSet.delete(row.id);
-              } else {
-                newSet.add(row.id);
-              }
-              return newSet;
-            });
-          }}
-        />
-      )
-    },
-    {
-      id: 'name',
-      header: 'Name',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <FileIcon className="h-4 w-4" />
-          <span>{row.name}</span>
-        </div>
-      )
-    },
-    {
-      id: 'size',
-      header: 'Size',
-      cell: ({ row }) => formatFileSize(row.size)
-    },
-    {
-      id: 'createdAt',
-      header: 'Created',
-      cell: ({ row }) => formatDate(row.createdAt)
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <span className={cn(
-          row.status === 'uploaded' && 'text-green-500',
-          row.status === 'uploading' && 'text-blue-500',
-          row.status === 'error' && 'text-red-500'
-        )}>
-          {row.status}
-        </span>
-      )
-    },
-    {
-      id: 'actions',
-      header: '',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreVerticalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Download</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    }
-  ];
-
-  const totalPages = Math.ceil(sortedFiles.length / itemsPerPage);
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       const res = await fetch('/api/files', {
@@ -282,8 +169,7 @@ const FileVault: React.FC = () => {
         const errorData = await res.json();
         throw new Error(errorData.message || 'Upload failed');
       }
-      const data = await res.json();
-      return data;
+      return await res.json();
     }
   });
 
@@ -298,88 +184,34 @@ const FileVault: React.FC = () => {
     }
   });
 
-  const toggleFileSelection = (fileId: string) => {
-    setSelectedFiles(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(fileId)) {
-        newSet.delete(fileId);
-      } else {
-        newSet.add(fileId);
-      }
-      return newSet;
-    });
-  };
+  const downloadMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      window.open(`/api/files/${fileId}/download`, '_blank');
+    }
+  });
 
   const onDrop = async (acceptedFiles: File[]) => {
-    const duplicates = acceptedFiles.filter(file =>
-      files.some(existingFile => existingFile.name === file.name)
-    );
-
-    if (duplicates.length > 0) {
-      //Conflict Handling (Retained from original code)
-    }
-
-    await uploadFiles(acceptedFiles);
-  };
-
-  const uploadFiles = async (filesToUpload: File[], override: boolean = false) => {
-    for (const file of filesToUpload) {
+    for (const file of acceptedFiles) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const existingFile = files.find(f => f.name === file.name);
-      if (existingFile) {
-        formData.append('override', 'true');
-      }
-
       const tempId = crypto.randomUUID();
-      const uploadingFile: UploadingFile = {
+      const uploadingFile: FileItem = {
         id: tempId,
         name: file.name,
         size: file.size,
         type: file.type,
         status: 'uploading',
-        createdAt: existingFile?.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        uploadTime: new Date().toISOString(),
-        progress: 0,
-        version: existingFile?.version || 1.0
+        createdAt: new Date().toISOString()
       };
 
-      if (existingFile) {
-        queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
-          return oldFiles.filter(f => f.name !== file.name);
-        });
-      }
-
-      setUploadingFiles(prev => [...prev.filter(f => f.name !== file.name), uploadingFile]);
+      setUploadingFiles(prev => [...prev, uploadingFile]);
 
       try {
-        toast({
-          title: "Uploading File",
-          description: (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span>Uploading {file.name}...</span>
-            </div>
-          ),
-          duration: 2000,
-        });
-
         const uploadedFile = await uploadMutation.mutateAsync(formData);
 
         setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
-
-        queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
-          const filteredFiles = oldFiles.filter(f => f.name !== file.name);
-          const newFile = {
-            ...uploadedFile,
-            uploadTime: new Date(uploadedFile.uploadTimeMs!).toISOString(),
-            version: existingFile ? existingFile.version + 1.0 : 1.0,
-            status: 'uploaded' as FileStatus,
-          };
-          return [...filteredFiles, newFile];
-        });
+        queryClient.invalidateQueries(['/api/files']);
 
         toast({
           title: "Success",
@@ -390,15 +222,9 @@ const FileVault: React.FC = () => {
         console.error('Upload error:', error);
         setUploadingFiles(prev =>
           prev.map(f =>
-            f.id === tempId ? { ...f, status: 'canceled' } : f
+            f.id === tempId ? { ...f, status: 'error' } : f
           )
         );
-
-        if (existingFile) {
-          queryClient.setQueryData(['/api/files'], (oldFiles: TableRowData[] = []) => {
-            return [...oldFiles.filter(f => f.name !== file.name), existingFile];
-          });
-        }
 
         toast({
           title: "Upload Error",
@@ -410,32 +236,18 @@ const FileVault: React.FC = () => {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handleSort = (field: SortField) => {
+    setSortConfig(current => ({
+      field,
+      order: current.field === field && current.order === 'asc' ? 'desc' : 'asc'
+    }));
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleSelectAll = (items: FileItem[]) => {
+    setSelectedFiles(current =>
+      current.size === items.length ? new Set() : new Set(items.map(item => item.id))
+    );
   };
-
-  const handleBulkAction = async (action: 'delete' | 'restore') => {
-    //Bulk actions (Retained from original code)
-  };
-
-  const handleDelete = (fileId: string) => {
-    deleteMutation.mutate(fileId);
-  };
-
-  const handleSearch = (value: string | ChangeEvent<HTMLInputElement>) => {
-    const searchValue = typeof value === 'string' ? value : value.target.value;
-    setSearchQuery(searchValue);
-  };
-
-  const { isCollapsed } = useSidebarContext();
-  const sidebarWidth = isCollapsed ? 64 : 256;
-  const visibleColumns = useColumnVisibility(sidebarWidth);
-  const [conflictFiles, setConflictFiles] = useState<{ file: File; existingFile: FileItem }[]>([]);
-  const [showConflictModal, setShowConflictModal] = useState(false);
 
   return (
     <DashboardLayout>
@@ -452,7 +264,7 @@ const FileVault: React.FC = () => {
             />
             <div className="flex items-center gap-2">
               <Button
-                onClick={handleUploadClick}
+                onClick={() => fileInputRef.current?.click()}
                 className="gap-2"
               >
                 <UploadIcon className="h-4 w-4" />
@@ -462,8 +274,11 @@ const FileVault: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            <DragDropProvider>
-              <FileUploadZone acceptedFormats={ACCEPTED_FORMATS} />
+            <DragDropProvider onFilesAccepted={onDrop}>
+              <FileUploadZone
+                acceptedFormats={ACCEPTED_FORMATS}
+                onFilesAccepted={onDrop}
+              />
             </DragDropProvider>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -496,31 +311,34 @@ const FileVault: React.FC = () => {
 
             <div className="border rounded-lg">
               <div className="overflow-x-auto">
-                {console.log('[FileVault Debug] Rendering table with:', {
-                  paginatedFiles,
-                  columns,
-                  isLoading
-                })}
-                <Table
+                <FileTable
                   data={paginatedFiles}
-                  columns={columns}
+                  sortConfig={sortConfig}
+                  onSort={handleSort}
+                  selectedItems={selectedFiles}
+                  onSelectItem={(id) => {
+                    setSelectedFiles(current => {
+                      const newSet = new Set(current);
+                      if (newSet.has(id)) {
+                        newSet.delete(id);
+                      } else {
+                        newSet.add(id);
+                      }
+                      return newSet;
+                    });
+                  }}
+                  onSelectAll={handleSelectAll}
+                  formatFileSize={formatFileSize}
+                  onDelete={(id) => deleteMutation.mutate(id)}
+                  onDownload={(id) => downloadMutation.mutate(id)}
+                  isLoading={isLoading}
                 />
               </div>
-
-              {isLoading ? (
-                <div className="flex justify-center p-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : paginatedFiles.length === 0 ? (
-                <div className="text-center p-4 text-muted-foreground">
-                  No files found
-                </div>
-              ) : null}
             </div>
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
-                Showing {Math.min(currentPage * itemsPerPage, sortedFiles.length)} of {sortedFiles.length} files
+                Showing {Math.min(currentPage * itemsPerPage, filteredFiles.length)} of {filteredFiles.length} files
               </div>
 
               <div className="flex items-center gap-2">
@@ -542,22 +360,22 @@ const FileVault: React.FC = () => {
                 </Button>
 
                 <span className="text-sm">
-                  Page {currentPage} of {totalPages}
+                  Page {currentPage} of {Math.ceil(filteredFiles.length / itemsPerPage)}
                 </span>
 
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredFiles.length / itemsPerPage), p + 1))}
+                  disabled={currentPage === Math.ceil(filteredFiles.length / itemsPerPage)}
                 >
                   <ChevronRightIcon className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(Math.ceil(filteredFiles.length / itemsPerPage))}
+                  disabled={currentPage === Math.ceil(filteredFiles.length / itemsPerPage)}
                 >
                   <ChevronsRightIcon className="h-4 w-4" />
                 </Button>
@@ -577,29 +395,6 @@ const FileVault: React.FC = () => {
           }
         }}
       />
-
-      {showConflictModal && (
-        <Dialog open>
-          <DialogHeader>
-            <DialogTitle>File Upload Conflict</DialogTitle>
-            <DialogDescription>
-              Some files already exist. Do you want to override them?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogContent className="grid gap-4 grid-cols-2">
-            {conflictFiles.map((conflict, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <FileTextIcon className="h-4 w-4" />
-                <span>{conflict.file.name}</span>
-              </div>
-            ))}
-          </DialogContent>
-          <div className="flex justify-end gap-2">
-            <Button onClick={() => { setShowConflictModal(false); setConflictFiles([]) }} variant="outline">Cancel</Button>
-            <Button onClick={() => { setShowConflictModal(false); uploadFiles(conflictFiles.map(c => c.file), true); setConflictFiles([]) }}>Override All</Button>
-          </div>
-        </Dialog>
-      )}
     </DashboardLayout>
   );
 };

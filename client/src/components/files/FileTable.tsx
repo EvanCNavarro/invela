@@ -11,13 +11,18 @@ import {
   ArrowUpDownIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  FileIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { FileNameCell } from "./FileNameCell";
 import { FileStatus } from "@/types/files";
-import { FileActions } from "./FileActions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export type SortField = 'name' | 'size' | 'createdAt' | 'status';
 export type SortOrder = 'asc' | 'desc';
@@ -42,12 +47,8 @@ interface FileTableProps<T extends TableItem> {
   onSelectItem: (id: string) => void;
   onSelectAll: (items: T[]) => void;
   formatFileSize: (size: number) => string;
-  getStatusStyles: (status: FileStatus) => string;
-  onDelete: (id: string) => void;
-  onRestore?: (id: string) => void;
+  onDelete?: (id: string) => void;
   onDownload?: (id: string) => void;
-  onViewDetails?: (item: T) => void;
-  visibleColumns?: Set<string>;
   isLoading?: boolean;
 }
 
@@ -59,30 +60,18 @@ export function FileTable<T extends TableItem>({
   onSelectItem,
   onSelectAll,
   formatFileSize,
-  getStatusStyles,
   onDelete,
-  onRestore,
   onDownload,
-  onViewDetails,
-  visibleColumns = new Set(['fileName', 'size', 'status', 'createdAt', 'actions']),
   isLoading = false,
 }: FileTableProps<T>) {
-
   useEffect(() => {
     console.log('[FileTable Debug] Component mounted/updated:', {
       dataLength: data.length,
       firstItem: data[0],
-      visibleColumns: Array.from(visibleColumns),
+      selectedItemsCount: selectedItems.size,
       isLoading
     });
-  }, [data, visibleColumns, isLoading]);
-
-  console.log('[FileTable Debug] Render cycle:', {
-    dataShape: data.length > 0 ? Object.keys(data[0]) : 'No data',
-    expectedColumns: ['id', 'name', 'size', 'status', 'createdAt'],
-    actualColumns: Array.from(visibleColumns),
-    mountState: 'rendering'
-  });
+  }, [data, selectedItems.size, isLoading]);
 
   const getSortIcon = (field: SortField) => {
     if (sortConfig.field !== field) return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
@@ -95,65 +84,61 @@ export function FileTable<T extends TableItem>({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableCell className="w-[40px]">
+          <TableHead className="w-[40px]">
             <Checkbox
               checked={selectedItems.size === data.length && data.length > 0}
               onCheckedChange={() => onSelectAll(data)}
               aria-label="Select all files"
             />
-          </TableCell>
-          {visibleColumns.has('fileName') && (
-            <TableCell>
-              <Button
-                variant="ghost"
-                onClick={() => onSort('name')}
-                className="flex items-center gap-2"
-              >
-                File Name {getSortIcon('name')}
-              </Button>
-            </TableCell>
-          )}
-          {visibleColumns.has('size') && (
-            <TableCell>
-              <Button
-                variant="ghost"
-                onClick={() => onSort('size')}
-                className="flex items-center gap-2 ml-auto"
-              >
-                Size {getSortIcon('size')}
-              </Button>
-            </TableCell>
-          )}
-          {visibleColumns.has('status') && (
-            <TableCell>
-              <Button
-                variant="ghost"
-                onClick={() => onSort('status')}
-                className="flex items-center gap-2 ml-auto"
-              >
-                Status {getSortIcon('status')}
-              </Button>
-            </TableCell>
-          )}
-          {visibleColumns.has('createdAt') && (
-            <TableCell>
-              <Button
-                variant="ghost"
-                onClick={() => onSort('createdAt')}
-                className="flex items-center gap-2 ml-auto"
-              >
-                Created At {getSortIcon('createdAt')}
-              </Button>
-            </TableCell>
-          )}
-          {visibleColumns.has('actions') && (
-            <TableCell className="text-center">Actions</TableCell>
-          )}
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              onClick={() => onSort('name')}
+              className="flex items-center gap-2"
+            >
+              File Name {getSortIcon('name')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              onClick={() => onSort('size')}
+              className="flex items-center gap-2"
+            >
+              Size {getSortIcon('size')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              onClick={() => onSort('status')}
+              className="flex items-center gap-2"
+            >
+              Status {getSortIcon('status')}
+            </Button>
+          </TableHead>
+          <TableHead>
+            <Button
+              variant="ghost"
+              onClick={() => onSort('createdAt')}
+              className="flex items-center gap-2"
+            >
+              Created At {getSortIcon('createdAt')}
+            </Button>
+          </TableHead>
+          <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {isLoading ? (
-          <TableSkeleton columns={visibleColumns.size + 1} />
+          <TableSkeleton columns={6} />
+        ) : data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={6} className="text-center text-muted-foreground">
+              No files found
+            </TableCell>
+          </TableRow>
         ) : (
           data.map((item) => {
             console.log('[FileTable Debug] Rendering row:', item);
@@ -166,41 +151,51 @@ export function FileTable<T extends TableItem>({
                     aria-label={`Select ${item.name}`}
                   />
                 </TableCell>
-                {visibleColumns.has('fileName') && (
-                  <TableCell>
-                    <FileNameCell file={item} />
-                  </TableCell>
-                )}
-                {visibleColumns.has('size') && (
-                  <TableCell className="text-right">
-                    {formatFileSize(item.size)}
-                  </TableCell>
-                )}
-                {visibleColumns.has('status') && (
-                  <TableCell className="text-right">
-                    <span className={cn(getStatusStyles(item.status))}>
-                      {item.status}
-                    </span>
-                  </TableCell>
-                )}
-                {visibleColumns.has('createdAt') && (
-                  <TableCell className="text-right">
-                    {new Date(item.createdAt).toLocaleString()}
-                  </TableCell>
-                )}
-                {visibleColumns.has('actions') && (
-                  <TableCell>
-                    <FileActions
-                      file={item}
-                      onDelete={onDelete}
-                      onRestore={onRestore}
-                      onDownload={onDownload}
-                      onViewDetails={onViewDetails}
-                    />
-                  </TableCell>
-                )}
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <FileIcon className="h-4 w-4" />
+                    <span>{item.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell>{formatFileSize(item.size)}</TableCell>
+                <TableCell>
+                  <span className={cn(
+                    "px-2 py-1 rounded-full text-xs font-medium",
+                    item.status === 'uploaded' && "bg-green-100 text-green-800",
+                    item.status === 'uploading' && "bg-blue-100 text-blue-800",
+                    item.status === 'error' && "bg-red-100 text-red-800"
+                  )}>
+                    {item.status}
+                  </span>
+                </TableCell>
+                <TableCell>{new Date(item.createdAt).toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <ArrowUpDownIcon className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {onDownload && (
+                        <DropdownMenuItem onClick={() => onDownload(item.id)}>
+                          Download
+                        </DropdownMenuItem>
+                      )}
+                      {onDelete && (
+                        <DropdownMenuItem
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
-            )
+            );
           })
         )}
       </TableBody>
