@@ -575,41 +575,54 @@ const FileVault: React.FC = () => {
     {
       id: 'name',
       header: 'Name',
-      cell: ({ row }) => <FileNameCell file={row} />,
+      cell: ({ row }) => {
+        console.log('[FileVault] Rendering name cell:', row);
+        return <FileNameCell file={row} />;
+      },
       sortable: true,
       width: 300,
     },
     {
       id: 'size',
       header: 'Size',
-      cell: ({ row }) => formatFileSize(row.size),
+      cell: ({ row }) => {
+        console.log('[FileVault] Rendering size cell:', row.size);
+        return formatFileSize(row.size);
+      },
       sortable: true,
       width: 100,
     },
     {
       id: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => formatDate(row.createdAt),
+      cell: ({ row }) => {
+        console.log('[FileVault] Rendering date cell:', row.createdAt);
+        return formatDate(row.createdAt);
+      },
       sortable: true,
       width: 120,
     },
     {
       id: 'status',
       header: 'Status',
-      cell: ({ row }) => (
-        <span className={getStatusStyles(row.status)}>
-          {row.status}
-        </span>
-      ),
+      cell: ({ row }) => {
+        console.log('[FileVault] Rendering status cell:', row.status);
+        return (
+          <span className={getStatusStyles(row.status)}>
+            {row.status}
+          </span>
+        );
+      },
       sortable: true,
       width: 100,
     },
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => (
-        <FileActions file={row} onDelete={handleDelete} />
-      ),
+      cell: ({ row }) => {
+        console.log('[FileVault] Rendering actions cell:', row.id);
+        return <FileActions file={row} onDelete={handleDelete} />;
+      },
       width: 50,
     }
   ];
@@ -689,6 +702,11 @@ const FileVault: React.FC = () => {
 
             <div className="w-full border rounded-lg">
               <div className="overflow-x-auto">
+                {console.log('[FileVault] Rendering table with data:', {
+                  paginatedFiles,
+                  columns,
+                  sortConfig
+                })}
                 <Table
                   data={paginatedFiles}
                   columns={columns}
