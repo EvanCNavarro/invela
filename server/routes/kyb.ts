@@ -701,19 +701,24 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         // Add headers
         csvRows.push(['Group', 'Question', 'Answer', 'Type', 'Answered At']);
 
-        // Add data rows
-        for (const field of fields) {
-          const fieldKey = field.field_key;
-          const response = jsonData.responses?.Uncategorized?.[fieldKey];
+        // Add data rows for each response
+        if (jsonData.responses && typeof jsonData.responses === 'object') {
+          // Get all responses regardless of group
+          const allResponses = Object.values(jsonData.responses)
+            .reduce((acc: any, group: any) => ({ ...acc, ...group }), {});
 
-          if (response) {
-            csvRows.push([
-              field.group,
-              field.question,
-              response.answer || '',
-              field.field_type,
-              response.answeredAt
-            ]);
+          // Add a row for each field, maintaining order from the database
+          for (const field of fields) {
+            const response = allResponses[field.field_key];
+            if (response) {
+              csvRows.push([
+                field.group || 'Uncategorized',
+                field.question || field.display_name,
+                response.answer || '',
+                response.type || field.field_type,
+                response.answeredAt || new Date().toISOString()
+              ]);
+            }
           }
         }
 
