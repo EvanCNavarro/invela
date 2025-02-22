@@ -333,8 +333,8 @@ export const OnboardingKYBFormPlayground = ({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
-  const [initialLoadDone, setInitialLoadDone] = useState(false);
-  const [isCompanyDataLoading, setIsCompanyDataLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);  // New loading state
+  const [dataInitialized, setDataInitialized] = useState(false);  // New initialization state
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
@@ -366,6 +366,7 @@ export const OnboardingKYBFormPlayground = ({
   // Load initial form data with forced refresh and set initial step
   useEffect(() => {
     const loadInitialData = async () => {
+      setIsLoading(true);
       console.log('[KYB Form Debug] Starting initial data load:', {
         taskId,
         companyName,
@@ -391,7 +392,6 @@ export const OnboardingKYBFormPlayground = ({
           });
 
           if (latestFormData) {
-            // Convert all values to strings and filter out null/undefined
             dataToLoad = Object.entries(latestFormData).reduce((acc, [key, value]) => {
               if (value !== null && value !== undefined) {
                 acc[key] = String(value);
@@ -402,8 +402,6 @@ export const OnboardingKYBFormPlayground = ({
 
           setProgress(latestProgress);
           lastProgressRef.current = latestProgress;
-
-          // Log detailed form data debug
           logFormDataDebug('Initial task data', dataToLoad);
         } catch (error) {
           console.error('[KYB Form Debug] Error fetching latest data:', error);
@@ -412,7 +410,6 @@ export const OnboardingKYBFormPlayground = ({
             const calculatedProgress = calculateProgress(dataToLoad);
             setProgress(calculatedProgress);
             lastProgressRef.current = calculatedProgress;
-
             logFormDataDebug('Fallback to initial saved data', dataToLoad);
           }
         }
@@ -421,11 +418,9 @@ export const OnboardingKYBFormPlayground = ({
         const calculatedProgress = calculateProgress(dataToLoad);
         setProgress(calculatedProgress);
         lastProgressRef.current = calculatedProgress;
-
         logFormDataDebug('Using initial saved data', dataToLoad);
       }
 
-      // Set form data and update refs
       console.log('[KYB Form Debug] Setting initial form data:', {
         dataToLoad,
         fields: Object.keys(dataToLoad),
@@ -433,27 +428,28 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
 
-      setFormData(dataToLoad);
-      formDataRef.current = dataToLoad;
-
-      // Log company data when available
       if (initialCompanyData) {
         logCompanyDataDebug(initialCompanyData);
         setCompanyData(initialCompanyData);
       }
 
-      // Find and set the first incomplete step
+      setFormData(dataToLoad);
+      formDataRef.current = dataToLoad;
+
       const incompleteStepIndex = findFirstIncompleteStep(dataToLoad);
       setCurrentStep(incompleteStepIndex);
+
+      // Set initialization flag after all data is loaded
+      setDataInitialized(true);
+      setIsLoading(false);
 
       console.log('[KYB Form Debug] Initial data load complete:', {
         currentStep: incompleteStepIndex,
         formFields: Object.keys(dataToLoad),
         formData: dataToLoad,
+        isInitialized: true,
         timestamp: new Date().toISOString()
       });
-
-      setInitialLoadDone(true);
     };
 
     loadInitialData();
@@ -672,7 +668,7 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       return 'successful';
-    } 
+    }
 
     // If we have an AI suggestion and no value yet
     if (suggestion && isEmpty) {
@@ -781,174 +777,181 @@ export const OnboardingKYBFormPlayground = ({
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex items-center mb-6">
-            <div className="flex-1">
-              <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                isSubmitted
-                  ? 'bg-green-100 text-green-600'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+      {isLoading ? (
+        <Card className="p-6">
+          <div className="flex items-center justify-center min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6">
+          {/* Header Section */}
+          <div className="mb-8">
+            <div className="flex items-center mb-6">
+              <div className="flex-1">
+                <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                  isSubmitted
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+                </div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold">KYB Survey</h2>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Questionnaire | Task
+                </p>
               </div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">KYB Survey</h2>
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Questionnaire | Task
-              </p>
+              {!isSubmitted && (
+                <div className="flex items-center gap-1 text-sm">
+                  <span className="font-medium">{progress}</span>
+                  <span className="text-[#6B7280]">% Complete</span>
+                </div>
+              )}
             </div>
+
+            {/* Progress bar */}
             {!isSubmitted && (
-              <div className="flex items-center gap-1 text-sm">
-                <span className="font-medium">{progress}</span>
-                <span className="text-[#6B7280]">% Complete</span>
+              <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-12">
+                <div
+                  className="h-full bg-[#4F46E5] transition-all duration-300 ease-in-out"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
             )}
-          </div>
 
-          {/* Progress bar */}
-          {!isSubmitted && (
-            <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-12">
-              <div
-                className="h-full bg-[#4F46E5] transition-all duration-300 ease-in-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          )}
-
-          {/* Step Wizard */}
-          {!isSubmitted && (
-            <div className="flex items-center justify-between px-2 mb-2">
-              {FORM_STEPS.map((step, index) => (
-                <div key={step.map(s => s.name)} className="flex flex-col items-center relative">
-                  <div
-                    className={`flex items-center justify-center h-7 min-w-[28px] px-2.5 rounded-full border transition-all duration-200
+            {/* Step Wizard */}
+            {!isSubmitted && (
+              <div className="flex items-center justify-between px-2 mb-2">
+                {FORM_STEPS.map((step, index) => (
+                  <div key={step.map(s => s.name)} className="flex flex-col items-center relative">
+                    <div
+                      className={`flex items-center justify-center h-7 min-w-[28px] px-2.5 rounded-full border transition-all duration-200
                       ${index === currentStep
                         ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
                         : index < currentStep
                         ? 'border-[#4F46E5] text-[#4F46E5] bg-white'
                         : 'border-[#D1D5DB] text-[#6B7280] bg-white'
                       }`}
-                  >
-                    <span className="text-sm font-medium leading-none">
-                      {String(index + 1).padStart(2, '0')}
+                    >
+                      <span className="text-sm font-medium leading-none">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    {index < FORM_STEPS.length - 1 && (
+                      <div
+                        className={`absolute top-3.5 left-[calc(100%_+_4px)] h-[1.5px] transition-all duration-200
+                        ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
+                        style={{ width: 'calc(100% - 40px)' }}
+                      />
+                    )}
+                    <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
+                      {step[0].label}
                     </span>
                   </div>
-                  {index < FORM_STEPS.length - 1 && (
-                    <div
-                      className={`absolute top-3.5 left-[calc(100%_+_4px)] h-[1.5px] transition-all duration-200
-                        ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                      style={{ width: 'calc(100% - 40px)' }}
-                    />
-                  )}
-                  <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
-                    {step[0].label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <hr className="border-t border-gray-200 my-6" />
-
-        {/* Form Fields Section - Only show when not submitted */}
-        {!isSubmitted && (
-          <div className="space-y-8">
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">{currentStepData[0].label}</h3>
-              <p className="text-sm text-muted-foreground">{`Step ${currentStep + 1} of ${FORM_STEPS.length}`}</p>
-            </div>
-
-            <div className="space-y-6">
-              {currentStepData.map(field => {
-                const value = formData[field.name] || '';
-                const { mainText, tooltipText } = extractTooltipContent(field.question);
-                const variant = getFieldVariant(field, value);
-                const isEmpty = isEmptyValue(value);
-
-                return (
-                  <div key={field.name} className="space-y-3">
-                    <div className="flex flex-col gap-1.5 mb-2">
-                      <label className="text-sm font-semibold text-foreground">
-                        {field.label}
-                      </label>
-                      <div className="flex items-center gap-1">
-                        <span className="text-sm text-muted-foreground">
-                          {mainText}
-                        </span>
-                        {field.tooltip && (
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-sm">{field.tooltip}</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        )}
-                      </div>
-                    </div>
-                    <OriginalFormField
-                      type="text"
-                      name={field.name}
-                      variant={variant}
-                      value={value}
-                      onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
-                      aiSuggestion={getSuggestionForField(field.name)}
-                      onSuggestionClick={() => {
-                        const suggestion = getSuggestionForField(field.name);
-                        if (suggestion) {
-                          handleSuggestionClick(field.name, suggestion);
-                        }
-                      }}
-                      className="mb-4"
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-between mt-8 pt-4 border-t">
+          <hr className="border-t border-gray-200 my-6" />
+
+          {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <Button
-              variant="ghost"
-              onClick={handleBack}
-              disabled={currentStep === 0}
-            >
-              {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
-              Back
-            </Button>
-          )}
-          {isSubmitted ? (
-            <div className="ml-auto">
-              <Button
-                disabled
-                className="bg-green-600 hover:bg-green-600 text-white"
-              >
-                Submitted
-              </Button>
+            <div className="space-y-8">
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-2">{currentStepData[0].label}</h3>
+                <p className="text-sm text-muted-foreground">{`Step ${currentStep + 1} of ${FORM_STEPS.length}`}</p>
+              </div>
+
+              <div className="space-y-6">
+                {currentStepData.map(field => {
+                  const value = formData[field.name] || '';
+                  const { mainText, tooltipText } = extractTooltipContent(field.question);
+                  const variant = getFieldVariant(field, value);
+                  const isEmpty = isEmptyValue(value);
+
+                  return (
+                    <div key={field.name} className="space-y-3">
+                      <div className="flex flex-col gap-1.5 mb-2">
+                        <label className="text-sm font-semibold text-foreground">
+                          {field.label}
+                        </label>
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm text-muted-foreground">
+                            {mainText}
+                          </span>
+                          {field.tooltip && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="text-sm">{field.tooltip}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )}
+                        </div>
+                      </div>
+                      <OriginalFormField
+                        type="text"
+                        name={field.name}
+                        variant={variant}
+                        value={value}
+                        onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
+                        aiSuggestion={getSuggestionForField(field.name)}
+                        onSuggestionClick={() => {
+                          const suggestion = getSuggestionForField(field.name);
+                          if (suggestion) {
+                            handleSuggestionClick(field.name, suggestion);
+                          }
+                        }}
+                        className="mb-4"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          ) : (
-            <Button
-              onClick={handleNext}
-              disabled={!isCurrentStepValid}
-              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
-            >
-              {isLastStep ? 'Submit' : 'Next'}
-            </Button>
           )}
-        </div>
-      </Card>
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8 pt-4 border-t">
+            {!isSubmitted && (
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+              >
+                {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
+                Back
+              </Button>
+            )}
+            {isSubmitted ? (
+              <div className="ml-auto">
+                <Button
+                  disabled
+                  className="bg-green-600 hover:bg-green-600 text-white"
+                >
+                  Submitted
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!isCurrentStepValid}
+                className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+              >
+                {isLastStep ? 'Submit' : 'Next'}
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
     </div>
-  );
-};
+  );};
 
 export default OnboardingKYBFormPlayground;
