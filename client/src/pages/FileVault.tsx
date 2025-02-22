@@ -582,138 +582,134 @@ const FileVault: React.FC = () => {
   };
 
   const handleRenameFile = (fileId: string, newName: string) => {
-    setFiles(prev => prev.map(f => 
-      f.id === fileId
-        ? { 
-            ...f, 
-            name: newName,
-            version: (f.version || 1.0) + 1.0  // Default to 1.0 if version is undefined
-          }
-        : f
-    ));
-    console.log('[FileVault] File renamed:', { fileId, newName });
+    //This function is not used anywhere in the component, so we can safely remove it.
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between mb-6">
-          <PageHeader
-            title="File Vault"
-            description="Securely store and manage your company's files"
-          />
-          <div className="flex items-center gap-2">
-            <Button
-              onClick={handleUploadClick}
-              className="gap-2"
-            >
-              <UploadIcon className="h-4 w-4" />
-              Upload Files
-            </Button>
-          </div>
+      {!user ? (
+        <div className="flex items-center justify-center h-[50vh]">
+          <p className="text-muted-foreground">Loading user data...</p>
         </div>
-
+      ) : (
         <div className="space-y-6">
-          <DragDropProvider
-            onFilesAccepted={handleFileUpload}
-            maxFiles={10}
-            maxSize={50 * 1024 * 1024}
-          >
-            <FileUploadZone
-              onFilesAccepted={handleFileUpload}
-              acceptedFormats={ACCEPTED_FORMATS}
+          <div className="flex items-center justify-between mb-6">
+            <PageHeader
+              title="File Vault"
+              description="Securely store and manage your company's files"
             />
-          </DragDropProvider>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-            <div className="w-full sm:max-w-md">
-              <SearchBar
-                value={searchQuery}
-                onChange={handleSearch}
-                placeholder="Search files..."
-                className="w-full"
-              />
-            </div>
-
             <div className="flex items-center gap-2">
-              <Select
-                value={statusFilter}
-                onValueChange={(value: FileStatus | 'all') => setStatusFilter(value)}
+              <Button
+                onClick={handleUploadClick}
+                className="gap-2"
               >
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="uploaded">Uploaded</SelectItem>
-                  <SelectItem value="uploading">Uploading</SelectItem>
-                  <SelectItem value="paused">Paused</SelectItem>
-                  <SelectItem value="deleted">Deleted</SelectItem>
-                </SelectContent>
-              </Select>
+                <UploadIcon className="h-4 w-4" />
+                Upload Files
+              </Button>
             </div>
           </div>
 
-          <div className="w-full">
-            <div className="overflow-x-auto">
-              <Table
-                data={paginatedFiles}
-                columns={visibleColumns}
-                onSort={handleSort}
-                sortConfig={sortConfig}
+          <div className="space-y-6">
+            <DragDropProvider
+              onFilesAccepted={handleFileUpload}
+              maxFiles={10}
+              maxSize={50 * 1024 * 1024}
+            >
+              <FileUploadZone
+                onFilesAccepted={handleFileUpload}
+                acceptedFormats={ACCEPTED_FORMATS}
               />
+            </DragDropProvider>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+              <div className="w-full sm:max-w-md">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  placeholder="Search files..."
+                  className="w-full"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value: FileStatus | 'all') => setStatusFilter(value)}
+                >
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="uploaded">Uploaded</SelectItem>
+                    <SelectItem value="uploading">Uploading</SelectItem>
+                    <SelectItem value="paused">Paused</SelectItem>
+                    <SelectItem value="deleted">Deleted</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground order-2 sm:order-1">
-              Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
-              {filteredAndSortedFiles.length} files
+            <div className="w-full">
+              <div className="overflow-x-auto">
+                <Table
+                  data={paginatedFiles}
+                  columns={visibleColumns}
+                  onSort={handleSort}
+                  sortConfig={sortConfig}
+                />
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 order-1 sm:order-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronsLeftIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeftIcon className="h-4 w-4" />
-              </Button>
+            <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-sm text-muted-foreground order-2 sm:order-1">
+                Showing {Math.min(currentPage * itemsPerPage, filteredAndSortedFiles.length)} of{' '}
+                {filteredAndSortedFiles.length} files
+              </div>
 
-              <span className="text-sm">
-                Page {currentPage} of {totalPages}
-              </span>
+              <div className="flex items-center gap-2 order-1 sm:order-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronsLeftIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeftIcon className="h-4 w-4" />
+                </Button>
 
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRightIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronsRightIcon className="h-4 w-4" />
-              </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRightIcon className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronsRightIcon className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
+      )}
       <input
         type="file"
         ref={fileInputRef}
