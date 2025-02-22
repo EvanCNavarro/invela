@@ -462,23 +462,6 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
 
-      // Focus on first empty field if any
-      const firstEmptyField = findFirstEmptyField(FORM_STEPS[incompleteStepIndex], dataToLoad);
-      if (firstEmptyField) {
-        console.log('[KYB Form Debug] Found first empty field:', {
-          field: firstEmptyField,
-          step: incompleteStepIndex,
-          timestamp: new Date().toISOString()
-        });
-
-        setTimeout(() => {
-          const fieldElement = document.querySelector(`[name="${firstEmptyField}"]`) as HTMLInputElement;
-          if (fieldElement) {
-            fieldElement.focus();
-          }
-        }, 100);
-      }
-
       setInitialLoadDone(true);
     };
 
@@ -593,12 +576,7 @@ export const OnboardingKYBFormPlayground = ({
           timestamp: new Date().toISOString()
         });
 
-        setTimeout(() => {
-          const fieldElement = document.querySelector(`[name="${nextEmptyField}"]`) as HTMLInputElement;
-          if (fieldElement) {
-            fieldElement.focus();
-          }
-        }, 100);
+
       }
 
       await wsService.send('task_updated', {
@@ -982,7 +960,7 @@ export const OnboardingKYBFormPlayground = ({
             <Button
               onClick={handleNext}
               disabled={!isCurrentStepValid}
-              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+              className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
             >
               {isLastStep ? 'Submit' : 'Next'}
             </Button>
