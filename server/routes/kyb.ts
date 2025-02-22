@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { db } from '@db';
 import { tasks, TaskStatus, kybFields, kybResponses } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
@@ -29,6 +30,14 @@ const logResponseDebug = (stage: string, responses: any[], extras: Record<string
       hasValue: !!r.response_value
     })),
     ...extras,
+    timestamp: new Date().toISOString()
+  });
+};
+
+// Debug utility for logging file operations
+const logFileDebug = (stage: string, data: Record<string, any>) => {
+  console.log(`[KYB File Debug] ${stage}:`, {
+    ...data,
     timestamp: new Date().toISOString()
   });
 };
@@ -389,7 +398,16 @@ router.post('/api/kyb/save', async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
 
-    console.log('[KYB API Debug] Save initiated:', { fileName, taskId, formDataKeys: Object.keys(formData) });
+    logFileDebug('Save request received', { 
+      fileName, 
+      taskId, 
+      formDataKeys: Object.keys(formData),
+      formDataValues: Object.entries(formData).map(([k, v]) => ({
+        key: k,
+        hasValue: !!v,
+        valueType: typeof v
+      }))
+    });
 
     // Get task details
     const [task] = await db.select()
@@ -397,13 +415,27 @@ router.post('/api/kyb/save', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     if (!task) {
-      throw new Error('Task not found');
+      const error = 'Task not found';
+      logFileDebug('Task lookup failed', { taskId, error });
+      throw new Error(error);
     }
+
+    logFileDebug('Task found', { 
+      taskId: task.id,
+      title: task.title,
+      currentStatus: task.status
+    });
 
     // Get all KYB fields with their groups
     const fields = await db.select()
       .from(kybFields)
       .orderBy(kybFields.order);
+
+    logFileDebug('Fields retrieved', {
+      fieldCount: fields.length,
+      fieldGroups: [...new Set(fields.map(f => f.group))],
+      fieldTypes: [...new Set(fields.map(f => f.field_type))]
+    });
 
     // Create comprehensive submission data
     const submissionData = {
@@ -432,6 +464,11 @@ router.post('/api/kyb/save', async (req, res) => {
       responses: {}
     };
 
+    logFileDebug('Submission data prepared', {
+      metadataKeys: Object.keys(submissionData.metadata),
+      formStructureFields: submissionData.formStructure.fields.length
+    });
+
     // Group responses by field group
     const groupedResponses: Record<string, Record<string, any>> = {};
     for (const field of fields) {
@@ -448,9 +485,29 @@ router.post('/api/kyb/save', async (req, res) => {
     }
     submissionData.responses = groupedResponses;
 
+    logFileDebug('Responses grouped', {
+      groupCount: Object.keys(groupedResponses).length,
+      groups: Object.keys(groupedResponses),
+      responseCount: Object.values(groupedResponses).reduce((acc, group) => acc + Object.keys(group).length, 0)
+    });
+
+    // Ensure upload directory exists
+    const uploadDir = join(process.cwd(), 'uploads', 'kyb');
+    if (!existsSync(uploadDir)) {
+      logFileDebug('Creating upload directory', { path: uploadDir });
+      await mkdir(uploadDir, { recursive: true });
+    }
+
     // Save comprehensive data to file
-    const filePath = join(process.cwd(), 'uploads', 'kyb', `${fileName}.json`);
+    const filePath = join(uploadDir, `${fileName}.json`);
+    logFileDebug('Writing file', { 
+      filePath,
+      fileSize: JSON.stringify(submissionData).length,
+      uploadDir: existsSync(uploadDir)
+    });
+
     await writeFile(filePath, JSON.stringify(submissionData, null, 2), 'utf-8');
+    logFileDebug('File written successfully', { filePath });
 
     // Update task status and save final responses
     const timestamp = new Date();
@@ -459,7 +516,10 @@ router.post('/api/kyb/save', async (req, res) => {
     // Save responses to database
     for (const [fieldKey, value] of Object.entries(formData)) {
       const fieldId = fieldMap.get(fieldKey);
-      if (!fieldId) continue;
+      if (!fieldId) {
+        logFileDebug('Field not found', { fieldKey });
+        continue;
+      }
 
       const responseValue = value === '' ? null : String(value);
       const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
@@ -475,6 +535,13 @@ router.post('/api/kyb/save', async (req, res) => {
         );
 
       if (existingResponse) {
+        logFileDebug('Updating existing response', {
+          fieldKey,
+          responseId: existingResponse.id,
+          oldValue: existingResponse.response_value,
+          newValue: responseValue
+        });
+
         await db.update(kybResponses)
           .set({
             response_value: responseValue,
@@ -484,6 +551,12 @@ router.post('/api/kyb/save', async (req, res) => {
           })
           .where(eq(kybResponses.id, existingResponse.id));
       } else {
+        logFileDebug('Creating new response', {
+          fieldKey,
+          status,
+          value: responseValue
+        });
+
         await db.insert(kybResponses)
           .values({
             task_id: taskId,
@@ -498,6 +571,12 @@ router.post('/api/kyb/save', async (req, res) => {
     }
 
     // Update task status
+    logFileDebug('Updating task status', {
+      taskId,
+      newStatus: TaskStatus.SUBMITTED,
+      progress: 100
+    });
+
     await db.update(tasks)
       .set({
         status: TaskStatus.SUBMITTED,
@@ -514,7 +593,7 @@ router.post('/api/kyb/save', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
-    console.log('[KYB API Debug] Save completed:', {
+    logFileDebug('Save completed', {
       filePath,
       taskId,
       status: TaskStatus.SUBMITTED,
@@ -527,12 +606,19 @@ router.post('/api/kyb/save', async (req, res) => {
       metadata: submissionData.metadata
     });
   } catch (error) {
-    console.error('[KYB API Debug] Error saving KYB form:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    const errorDetails = {
+      message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
+    };
+
+    logFileDebug('Error saving KYB form', errorDetails);
+    console.error('[KYB API Debug] Error saving KYB form:', errorDetails);
+
+    res.status(500).json({ 
+      error: 'Failed to save KYB form data',
+      details: errorDetails
     });
-    res.status(500).json({ error: 'Failed to save KYB form data' });
   }
 });
 
