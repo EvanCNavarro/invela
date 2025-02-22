@@ -335,7 +335,6 @@ export const FileVault: React.FC = () => {
             <DragDropProvider onFilesAccepted={handleFileUpload}>
               <FileUploadZone
                 acceptedFormats={ACCEPTED_FORMATS}
-                onFilesAccepted={handleFileUpload}
                 disabled={isUploading}
               />
             </DragDropProvider>
