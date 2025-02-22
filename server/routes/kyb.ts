@@ -654,6 +654,13 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
+    // Get all field questions
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(kybFields.order);
+
+    const fieldQuestions = new Map(fields.map(f => [f.field_key, f.question]));
+
     // Parse the stored JSON data
     const jsonData = JSON.parse(file.path);
 
@@ -681,7 +688,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
           Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
             csvRows.push([
               groupName,
-              data.question,
+              fieldQuestions.get(fieldKey) || data.question, // Use the question from the database if available
               data.answer || '',
               data.type,
               data.answeredAt
@@ -709,7 +716,8 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         Object.entries(jsonData.responses).forEach(([groupName, fields]: [string, any]) => {
           textParts.push(`\n${groupName}:\n` + '-'.repeat(groupName.length + 1) + '\n');
           Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
-            textParts.push(`${data.question}: ${data.answer || 'Not provided'}`);
+            const question = fieldQuestions.get(fieldKey) || data.question;
+            textParts.push(`${question}\nAnswer: ${data.answer || 'Not provided'}\n`);
           });
         });
 
