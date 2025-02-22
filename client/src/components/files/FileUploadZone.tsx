@@ -92,8 +92,17 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
     onDrop: (acceptedFiles, rejectedFiles) => {
       if (rejectedFiles.length > 0) {
         const errors = rejectedFiles.map(file => {
-          const error = file.errors[0];
-          return `${file.file.name}: ${error.message}`;
+          const errorMessages = file.errors.map(error => {
+            switch (error.code) {
+              case 'file-too-large':
+                return `${file.file.name} is too large. Max size is ${formatFileSize(maxSize)}`;
+              case 'file-invalid-type':
+                return `${file.file.name} has an invalid file type`;
+              default:
+                return `${file.file.name}: ${error.message}`;
+            }
+          });
+          return errorMessages.join(', ');
         });
 
         toast({
@@ -106,17 +115,6 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
       }
 
       if (acceptedFiles.length > 0) {
-        toast({
-          title: "Processing files",
-          description: (
-            <div className="flex items-center gap-2">
-              <LoadingSpinner size="sm" />
-              <span>Processing {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''}...</span>
-            </div>
-          ),
-          duration: 2000,
-        });
-
         onFilesAccepted(acceptedFiles);
       }
     },
@@ -226,3 +224,11 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
 });
 
 FileUploadZone.displayName = 'FileUploadZone';
+
+const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
