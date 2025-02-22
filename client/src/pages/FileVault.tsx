@@ -37,7 +37,7 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; 
+  const itemsPerPage = 5; // Changed back to 5 files per page
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -432,7 +432,7 @@ export const FileVault: React.FC = () => {
                 )}
               </div>
 
-              {totalPages > 1 && (
+              {totalPages >= 1 && ( // Changed condition to show pagination when there are any pages
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
