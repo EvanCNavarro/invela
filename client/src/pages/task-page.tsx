@@ -15,6 +15,7 @@ import {
 import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
+import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 
 interface TaskPageProps {
   params: {
@@ -34,8 +35,11 @@ interface Task {
   metadata: {
     companyId?: number;
     companyName?: string;
-    company?: any;
-    kybFormFile?: number; // File ID for downloads
+    company?: {
+      name: string;
+      description?: string;
+    };
+    kybFormFile?: number;
     [key: string]: any;
   } | null;
   savedFormData?: Record<string, any>;
@@ -46,6 +50,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
@@ -59,7 +64,6 @@ export default function TaskPage({ params }: TaskPageProps) {
         throw new Error('Failed to fetch KYB task');
       }
       const data = await response.json();
-      // If task was already submitted, set the file ID for download
       if (data.metadata?.kybFormFile) {
         setFileId(data.metadata.kybFormFile);
         setIsSubmitted(true);
@@ -142,10 +146,7 @@ export default function TaskPage({ params }: TaskPageProps) {
     return null;
   }
 
-  const companyData = task.metadata?.company || {
-    name: task.metadata?.companyName || companyName,
-    description: task.metadata?.description,
-  };
+  const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
   return (
     <DashboardLayout>
@@ -194,8 +195,11 @@ export default function TaskPage({ params }: TaskPageProps) {
           <OnboardingKYBFormPlayground
             taskId={task.id}
             companyName={companyName}
-            companyData={companyData}
-            savedFormData={task.metadata}
+            companyData={{
+              name: displayName,
+              description: task.metadata?.company?.description
+            }}
+            savedFormData={task.savedFormData}
             onSubmit={(formData) => {
               fetch('/api/kyb/save', {
                 method: 'POST',
@@ -213,10 +217,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 .then((result) => {
                   setFileId(result.fileId);
                   setIsSubmitted(true);
-                  toast({
-                    title: "KYB Form Submitted",
-                    description: "Your KYB form has been saved and the task has been updated.",
-                  });
+                  setShowSuccessModal(true);
                 })
                 .catch(error => {
                   console.error('[TaskPage] Form submission failed:', error);
@@ -229,6 +230,12 @@ export default function TaskPage({ params }: TaskPageProps) {
             }}
           />
         </div>
+
+        <KYBSuccessModal
+          open={showSuccessModal}
+          onOpenChange={setShowSuccessModal}
+          companyName={displayName}
+        />
       </PageTemplate>
     </DashboardLayout>
   );
