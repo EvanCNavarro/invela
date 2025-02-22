@@ -27,7 +27,7 @@ import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useColumnVisibility } from "@/hooks/use-column-visibility";
 import { useSidebarContext } from "@/hooks/use-sidebar";
-import { useUser } from "@/hooks/use-user"; // Add this import
+import { useUser } from "@/hooks/use-user";
 import type { Column } from "@/components/ui/table";
 import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
 import {
@@ -63,7 +63,7 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF,
 const FileVault: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useUser(); // Get the authenticated user
+  const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
@@ -83,19 +83,34 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
-  // Update the useQuery implementation to include company_id from user context
+  // Log user state on mount and changes
+  React.useEffect(() => {
+    console.log('[FileVault] Current user context:', {
+      userId: user?.id,
+      companyId: user?.company_id,
+      isUserDefined: !!user
+    });
+  }, [user]);
+
+  // Update the useQuery implementation with better logging
   const { data: files = [], isLoading, error } = useQuery<TableRowData[]>({
     queryKey: ['/api/files', { company_id: user?.company_id }],
-    enabled: !!user?.company_id, // Only run query when we have company_id
+    enabled: !!user?.company_id,
     select: (data) => {
-      console.log('[FileVault] Raw API response:', data);
+      console.log('[FileVault] Processing API response:', {
+        dataLength: data?.length || 0,
+        firstItem: data?.[0],
+        lastItem: data?.[data.length - 1]
+      });
+
       return data.map(file => {
-        console.log('[FileVault] Processing file:', {
+        console.log('[FileVault] Processing file record:', {
           id: file.id,
           name: file.name,
           size: file.size,
-          path: file.path
+          path: file.path?.substring(0, 50) + '...' 
         });
+
         return {
           ...file,
           status: file.status || 'uploaded',
@@ -106,17 +121,24 @@ const FileVault: React.FC = () => {
     }
   });
 
-  // Log any query errors
+  // Log any query errors with more detail
   React.useEffect(() => {
     if (error) {
       console.error('[FileVault] Query error:', error);
+      console.error('[FileVault] Query state:', {
+        isLoading,
+        hasUser: !!user,
+        userCompanyId: user?.company_id,
+        filesLength: files?.length || 0
+      });
+
       toast({
         title: "Error loading files",
-        description: "There was a problem loading your files. Please try again.",
+        description: error instanceof Error ? error.message : "There was a problem loading your files. Please try again.",
         variant: "destructive",
       });
     }
-  }, [error, toast]);
+  }, [error, toast, user, files, isLoading]);
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
