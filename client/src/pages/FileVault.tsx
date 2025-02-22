@@ -89,7 +89,7 @@ const FileVault: React.FC = () => {
         status: file.status || 'uploaded',
         // Ensure proper size display for JSON files
         size: typeof file.size === 'number' ? file.size : 
-              (file.path ? Buffer.from(JSON.stringify(file.path)).length : 0)
+              (file.path ? Buffer.from(file.path).length : 0)
       }));
     }
   });

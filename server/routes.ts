@@ -14,6 +14,7 @@ import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
+import filesRouter from './routes/files';
 
 // Generate invitation code helper function (keep it DRY)
 function generateInviteCode(): string {
@@ -39,6 +40,8 @@ declare global {
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
+  app.use(filesRouter); // Mount the files router
+
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
@@ -174,19 +177,6 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Files endpoints
-  app.get("/api/files", requireAuth, async (req, res) => {
-    try {
-      const userFiles = await db.select()
-        .from(files)
-        .where(eq(files.userId, req.user!.id));
-      res.json(userFiles);
-    } catch (error) {
-      console.error("Error fetching files:", error);
-      res.status(500).json({ message: "Error fetching files" });
-    }
-  });
-
   // Relationships endpoints
   app.get("/api/relationships", requireAuth, async (req, res) => {
     try {
@@ -298,7 +288,7 @@ export function registerRoutes(app: Express): Express {
   });
 
   // File upload endpoint
-  app.post("/api/files/upload", requireAuth, async (req, res) => {
+  app.post("/api/files/upload", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -372,7 +362,6 @@ export function registerRoutes(app: Express): Express {
       }
     }
   });
-
 
 
   app.delete("/api/files/:id", requireAuth, async (req, res) => {
@@ -909,7 +898,7 @@ export function registerRoutes(app: Express): Express {
               throw new Error("Failed to update task status");
             }
 
-console.log('[FinTech Invite] Successfully completed invitation process');
+            console.log('[FinTech Invite] Successfully completed invitation process');
             return { invitation, task: updatedTask, company: newCompany, user: newUser };
 
           } catch (emailError) {
@@ -1137,6 +1126,7 @@ console.log('[FinTech Invite] Successfully completed invitation process');
       });
     }
   });
+
   // Add endpoint for companies to add other companies to their network
   app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
     try {
