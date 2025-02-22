@@ -340,6 +340,7 @@ export const OnboardingKYBFormPlayground = ({
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
+  const [isCompanyDataLoading, setIsCompanyDataLoading] = useState(false); // Added state for company data loading
 
   // Function to find the first incomplete step
   const findFirstIncompleteStep = (formData: Record<string, string>): number => {
@@ -719,8 +720,8 @@ export const OnboardingKYBFormPlayground = ({
     let isMounted = true;
 
     const fetchCompanyData = async () => {
-      if (!companyName || !initialLoadDone) {
-        setIsCompanyDataLoading(false);
+      if (!companyName || !dataInitialized) {  // Changed from initialLoadDone to dataInitialized
+        setIsLoading(false);
         return;
       }
 
@@ -763,7 +764,7 @@ export const OnboardingKYBFormPlayground = ({
       } finally {
         if (isMounted) {
           setIsSearching(false);
-          setIsCompanyDataLoading(false);
+          setIsLoading(false);
         }
       }
     };
@@ -773,7 +774,7 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       isMounted = false;
     };
-  }, [companyName, initialLoadDone]);
+  }, [companyName, dataInitialized]);  // Updated dependency array to use dataInitialized
 
   return (
     <div className="space-y-6">
