@@ -39,6 +39,7 @@ const FileVault: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: files = [], isLoading } = useQuery<FileItem[]>({
     queryKey: ['/api/files', { company_id: user?.company_id }],
@@ -162,6 +163,7 @@ const FileVault: React.FC = () => {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
+            'Content-Type': 'multipart/form-data' // Added Content-Type header
           },
           body: formData
         });
@@ -195,11 +197,81 @@ const FileVault: React.FC = () => {
         });
         throw error;
       }
-    },
-    onError: (error) => {
-      console.error('[FileVault Debug] Mutation error handler:', error);
     }
   });
+
+  const generateUniqueId = () => {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const tempId = generateUniqueId();
+    const uploadingFile: FileItem = {
+      id: tempId,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'uploading',
+      createdAt: new Date().toISOString()
+    };
+
+    setUploadingFiles(prev => [...prev, uploadingFile]);
+
+    try {
+      await uploadMutation.mutateAsync(formData);
+      setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+
+      toast({
+        title: "Success",
+        description: `${file.name} uploaded successfully`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error('[FileVault Debug] Upload error:', {
+        error,
+        fileName: file.name,
+        tempId
+      });
+
+      setUploadingFiles(prev =>
+        prev.map(f =>
+          f.id === tempId
+            ? { ...f, status: 'error' as FileStatus }
+            : f
+        )
+      );
+
+      toast({
+        title: "Upload Error",
+        description: error instanceof Error ? error.message : "Failed to upload file",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
+  const onDrop = async (acceptedFiles: File[]) => {
+    if (isUploading) return;
+
+    console.log('[FileVault Debug] Starting file upload:', {
+      fileCount: acceptedFiles.length,
+      files: acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+    });
+
+    setIsUploading(true);
+    try {
+      // Upload files sequentially to prevent race conditions
+      for (const file of acceptedFiles) {
+        await uploadFile(file);
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: string) => {
@@ -217,68 +289,6 @@ const FileVault: React.FC = () => {
       window.open(`/api/files/${fileId}/download`, '_blank');
     }
   });
-
-  const generateUniqueId = () => {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  };
-
-  const onDrop = async (acceptedFiles: File[]) => {
-    console.log('[FileVault Debug] Starting file upload:', {
-      fileCount: acceptedFiles.length,
-      files: acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
-    });
-
-    for (const file of acceptedFiles) {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const tempId = generateUniqueId();
-      const uploadingFile: FileItem = {
-        id: tempId,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'uploading',
-        createdAt: new Date().toISOString()
-      };
-
-      setUploadingFiles(prev => [...prev, uploadingFile]);
-
-      try {
-        await uploadMutation.mutateAsync(formData);
-
-        setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
-        queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-
-        toast({
-          title: "Success",
-          description: `${file.name} uploaded successfully`,
-          duration: 3000,
-        });
-      } catch (error) {
-        console.error('[FileVault Debug] Upload error:', {
-          error,
-          fileName: file.name,
-          tempId
-        });
-
-        setUploadingFiles(prev =>
-          prev.map(f =>
-            f.id === tempId
-              ? { ...f, status: 'error' as FileStatus }
-              : f
-          )
-        );
-
-        toast({
-          title: "Upload Error",
-          description: error instanceof Error ? error.message : "Failed to upload file",
-          variant: "destructive",
-          duration: 5000,
-        });
-      }
-    }
-  };
 
   const handleSort = (field: SortField) => {
     setSortConfig(current => ({
@@ -310,6 +320,7 @@ const FileVault: React.FC = () => {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 className="gap-2"
+                disabled={isUploading}
               >
                 <UploadIcon className="h-4 w-4" />
                 Upload Files
@@ -322,6 +333,7 @@ const FileVault: React.FC = () => {
               <FileUploadZone
                 acceptedFormats={ACCEPTED_FORMATS}
                 onFilesAccepted={onDrop}
+                disabled={isUploading}
               />
             </DragDropProvider>
 
@@ -356,7 +368,7 @@ const FileVault: React.FC = () => {
             <div className="border rounded-lg">
               <div className="overflow-x-auto">
                 <FileTable
-                  data={paginatedFiles}
+                  data={allFiles}
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   selectedItems={selectedFiles}
