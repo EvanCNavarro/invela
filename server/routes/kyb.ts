@@ -165,11 +165,13 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     // Update KYB responses for each field
     const timestamp = new Date();
+    const processedFields = new Set();
+
     for (const [fieldKey, value] of Object.entries(formData)) {
       const fieldId = fieldMap.get(fieldKey);
       if (!fieldId) continue;
 
-      const fieldUpdate = fieldUpdates?.[fieldKey];
+      processedFields.add(fieldKey);
       const responseValue = value === '' ? null : String(value);
       const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
 
@@ -224,6 +226,37 @@ router.post('/api/kyb/progress', async (req, res) => {
       }
     }
 
+    // Handle fields that were in the database but not in the current formData
+    // These should be marked as EMPTY
+    const existingResponses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key,
+      field_id: kybFields.id,
+      response_id: kybResponses.id
+    })
+    .from(kybResponses)
+    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+    .where(eq(kybResponses.task_id, taskId));
+
+    for (const response of existingResponses) {
+      if (!processedFields.has(response.field_key)) {
+        await db.update(kybResponses)
+          .set({
+            response_value: null,
+            status: 'EMPTY',
+            version: 1,
+            updated_at: timestamp
+          })
+          .where(eq(kybResponses.id, response.response_id));
+
+        console.log('[KYB API Debug] Cleared missing field:', {
+          fieldKey: response.field_key,
+          oldValue: response.response_value,
+          timestamp: timestamp.toISOString()
+        });
+      }
+    }
+
     // Determine appropriate status based on progress
     let newStatus = existingTask.status;
     if (progress === 0) {
@@ -250,9 +283,14 @@ router.post('/api/kyb/progress', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     // Get updated responses
-    const updatedResponses = await db.select()
-      .from(kybResponses)
-      .where(eq(kybResponses.task_id, taskId));
+    const updatedResponses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key,
+      status: kybResponses.status
+    })
+    .from(kybResponses)
+    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+    .where(eq(kybResponses.task_id, taskId));
 
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {
