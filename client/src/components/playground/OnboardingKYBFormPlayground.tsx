@@ -882,30 +882,35 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Step Wizard */}
             {!isSubmitted && (
-              <div className="flex items-center justify-between px-2 mb-2">
+              <div className="flex items-center justify-between px-4 mb-12 overflow-x-auto min-w-full sm:px-8">
                 {FORM_STEPS.map((step, index) => (
-                  <div key={step.map(s => s.name)} className="flex flex-col items-center relative">
+                  <div key={step[0].name} className="flex flex-col items-center relative min-w-[120px]">
+                    {/* Step indicator circle */}
                     <div
-                      className={`flex items-center justify-center h-7 min-w-[28px] px-2.5 rounded-full border transition-all duration-200
-                      ${index === currentStep
+                      className={`flex items-center justify-center h-7 w-7 rounded-full border-2 transition-all duration-200
+                        ${index === currentStep
                         ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
                         : index < currentStep
                         ? 'border-[#4F46E5] text-[#4F46E5] bg-white'
                         : 'border-[#D1D5DB] text-[#6B7280] bg-white'
-                      }`}
+                        }`}
                     >
-                      <span className="text-sm font-medium leading-none">
+                      <span className="text-xs font-medium leading-none">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                     </div>
+
+                    {/* Connecting line */}
                     {index < FORM_STEPS.length - 1 && (
                       <div
-                        className={`absolute top-3.5 left-[calc(100%_+_4px)] h-[1.5px] transition-all duration-200
-                        ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                        style={{ width: 'calc(100% - 40px)' }}
+                        className={`absolute top-3.5 left-[calc(50%+16px)] h-[2px] transition-all duration-200
+                          ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
+                        style={{ width: 'calc(100% - 24px)' }}
                       />
                     )}
-                    <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
+
+                    {/* Step label */}
+                    <span className="text-[11px] text-[#6B7280] mt-3 text-center max-w-[90px] truncate font-medium">
                       {step[0].label}
                     </span>
                   </div>
