@@ -37,7 +37,7 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10; 
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -145,10 +145,41 @@ export const FileVault: React.FC = () => {
     return result;
   }, [allFiles, searchQuery, statusFilter, sortConfig]);
 
+  // Add effect to reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sortConfig]);
+
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredFiles.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredFiles, currentPage]);
+    const endIndex = startIndex + itemsPerPage;
+    const result = filteredFiles.slice(startIndex, endIndex);
+
+    console.log('[FileVault Debug] Pagination calculated:', {
+      page: currentPage,
+      startIndex,
+      endIndex,
+      totalItems: filteredFiles.length,
+      pageItems: result.length
+    });
+
+    return result;
+  }, [filteredFiles, currentPage, itemsPerPage]);
+
+  // Add effect to clear selection when page changes
+  useEffect(() => {
+    setSelectedFiles(new Set());
+  }, [currentPage]);
+
+
+  const totalPages = Math.ceil(filteredFiles.length / itemsPerPage);
+
+  // Reset to first page if current page is beyond total pages
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   const formatFileSize = (size: number): string => {
     if (size < 1024) return `${size} B`;
@@ -263,13 +294,11 @@ export const FileVault: React.FC = () => {
 
     setIsUploading(true);
     try {
-      // Upload files sequentially to prevent race conditions
       for (const file of files) {
         await uploadFile(file);
       }
     } finally {
       setIsUploading(false);
-      // Clear the file input after upload
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -370,7 +399,7 @@ export const FileVault: React.FC = () => {
             <div className="border rounded-lg">
               <div className="overflow-x-auto">
                 <FileTable
-                  data={allFiles}
+                  data={paginatedFiles}
                   sortConfig={sortConfig}
                   onSort={handleSort}
                   selectedItems={selectedFiles}
@@ -396,48 +425,54 @@ export const FileVault: React.FC = () => {
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
-                Showing {Math.min(currentPage * itemsPerPage, filteredFiles.length)} of {filteredFiles.length} files
+                {filteredFiles.length > 0 ? (
+                  `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filteredFiles.length)} of ${filteredFiles.length} files`
+                ) : (
+                  'No files to display'
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(1)}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronsLeftIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeftIcon className="h-4 w-4" />
-                </Button>
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronsLeftIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeftIcon className="h-4 w-4" />
+                  </Button>
 
-                <span className="text-sm">
-                  Page {currentPage} of {Math.ceil(filteredFiles.length / itemsPerPage)}
-                </span>
+                  <span className="text-sm">
+                    Page {currentPage} of {totalPages}
+                  </span>
 
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredFiles.length / itemsPerPage), p + 1))}
-                  disabled={currentPage === Math.ceil(filteredFiles.length / itemsPerPage)}
-                >
-                  <ChevronRightIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentPage(Math.ceil(filteredFiles.length / itemsPerPage))}
-                  disabled={currentPage === Math.ceil(filteredFiles.length / itemsPerPage)}
-                >
-                  <ChevronsRightIcon className="h-4 w-4" />
-                </Button>
-              </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRightIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronsRightIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
