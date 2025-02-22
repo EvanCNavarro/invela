@@ -302,10 +302,15 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // Get all KYB responses for this task
-    const responses = await db.select()
-      .from(kybResponses)
-      .where(eq(kybResponses.task_id, parseInt(taskId)));
+    // Get all KYB responses for this task with their field information
+    const responses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key,
+      status: kybResponses.status
+    })
+    .from(kybResponses)
+    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+    .where(eq(kybResponses.task_id, parseInt(taskId)));
 
     logResponseDebug('Retrieved responses', responses);
 
@@ -322,7 +327,8 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       responseCount: responses.length,
       progress: task.progress,
       status: task.status,
-      formDataKeys: Object.keys(formData)
+      formDataKeys: Object.keys(formData),
+      formData
     });
 
     // Return saved form data and progress
