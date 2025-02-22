@@ -2,7 +2,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { Trophy } from "lucide-react";
-import confetti from 'canvas-confetti';
 
 interface KYBSuccessModalProps {
   open: boolean;
@@ -12,14 +11,6 @@ interface KYBSuccessModalProps {
 
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
   const [, navigate] = useLocation();
-
-  const handleConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -54,7 +45,6 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           </Button>
           <Button
             onClick={() => {
-              handleConfetti();
               navigate('/file-vault');
               onOpenChange(false);
             }}
