@@ -44,8 +44,6 @@ export function DragDropProvider({
     maxSize,
     disabled,
     onDrop: onFilesAccepted,
-    noClick: true,
-    noKeyboard: true,
   });
 
   const dragDropClasses = cn(
