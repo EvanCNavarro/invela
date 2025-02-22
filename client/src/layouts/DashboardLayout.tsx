@@ -65,26 +65,32 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // Check if current route is accessible
   const isRouteAccessible = () => {
-    if (!currentCompany?.available_tabs) return false;
+    const availableTabs = currentCompany?.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
-    return currentCompany.available_tabs.includes(currentTab);
+
+    console.log('Route accessibility check:', {
+      currentTab,
+      availableTabs,
+      isAccessible: availableTabs.includes(currentTab)
+    });
+
+    return currentTab === 'task-center' || availableTabs.includes(currentTab);
   };
 
   // Handle navigation for inaccessible routes
   useEffect(() => {
     const currentTab = getCurrentTab();
     if (currentTab !== 'task-center' && !isRouteAccessible()) {
+      console.log('Redirecting to task center - tab not accessible:', {
+        currentTab,
+        availableTabs: currentCompany?.available_tabs
+      });
       navigate('/task-center');
     }
   }, [location, currentCompany?.available_tabs, navigate]);
 
   // Show locked section if current route is not accessible
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
-    console.log('[DashboardLayout] Showing locked section:', {
-      location,
-      currentTab: getCurrentTab(),
-      availableTabs: currentCompany?.available_tabs
-    });
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center space-y-4 px-4">

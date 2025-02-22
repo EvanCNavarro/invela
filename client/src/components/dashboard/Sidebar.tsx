@@ -158,7 +158,7 @@ export function Sidebar({
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
 
-  const isInvelaUser = isPlayground ? showInvelaTabs : (company && typeof company === 'object' && 'category' in company && company.category === 'Invela');
+  const isInvelaUser = isPlayground ? showInvelaTabs : (company?.category === 'Invela');
 
   if (isInvelaUser && (isPlayground || showPlayground)) {
     adminMenuItems.push({
