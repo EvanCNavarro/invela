@@ -287,31 +287,6 @@ interface OnboardingKYBFormPlaygroundProps {
   savedFormData?: Record<string, any>;
 }
 
-// Add update queue manager
-const createUpdateQueue = () => {
-  const queue: Array<() => Promise<void>> = [];
-  let isProcessing = false;
-
-  const processQueue = async () => {
-    if (isProcessing || queue.length === 0) return;
-    isProcessing = true;
-    try {
-      const nextUpdate = queue.shift();
-      if (nextUpdate) await nextUpdate();
-    } finally {
-      isProcessing = false;
-      if (queue.length > 0) processQueue();
-    }
-  };
-
-  return {
-    enqueue: (update: () => Promise<void>) => {
-      queue.push(update);
-      processQueue();
-    }
-  };
-};
-
 // Enhanced debug logging for form data
 const logFormDataDebug = (stage: string, data: any) => {
   console.log(`[KYB Form Data Debug] ${stage}:`, {
@@ -360,7 +335,6 @@ export const OnboardingKYBFormPlayground = ({
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
   const [isCompanyDataLoading, setIsCompanyDataLoading] = useState(true);
-  const updateQueueRef = useRef(createUpdateQueue());
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
@@ -412,10 +386,11 @@ export const OnboardingKYBFormPlayground = ({
             taskId,
             progress: latestProgress,
             formDataFields: Object.keys(latestFormData || {}),
+            formData: latestFormData,
             timestamp: new Date().toISOString()
           });
 
-          dataToLoad = latestFormData;
+          dataToLoad = latestFormData || {};
           setProgress(latestProgress);
           lastProgressRef.current = latestProgress;
 
@@ -429,7 +404,6 @@ export const OnboardingKYBFormPlayground = ({
             setProgress(calculatedProgress);
             lastProgressRef.current = calculatedProgress;
 
-            // Log fallback data debug
             logFormDataDebug('Fallback to initial saved data', dataToLoad);
           }
         }
@@ -439,7 +413,6 @@ export const OnboardingKYBFormPlayground = ({
         setProgress(calculatedProgress);
         lastProgressRef.current = calculatedProgress;
 
-        // Log initial saved data debug
         logFormDataDebug('Using initial saved data', dataToLoad);
       }
 
@@ -450,6 +423,7 @@ export const OnboardingKYBFormPlayground = ({
       // Log company data when available
       if (initialCompanyData) {
         logCompanyDataDebug(initialCompanyData);
+        setCompanyData(initialCompanyData);
       }
 
       // Find and set the first incomplete step
@@ -459,6 +433,7 @@ export const OnboardingKYBFormPlayground = ({
       console.log('[KYB Form Debug] Initial data load complete:', {
         currentStep: incompleteStepIndex,
         formFields: Object.keys(dataToLoad),
+        formData: dataToLoad,
         timestamp: new Date().toISOString()
       });
 
@@ -528,7 +503,7 @@ export const OnboardingKYBFormPlayground = ({
           fieldUpdates: {
             [fieldName]: {
               value: value.trim(),
-              status: isEmptyValue(value.trim()) ? 'empty' : 'complete',
+              status: isEmptyValue(value.trim()) ? 'EMPTY' : 'COMPLETE',
               updatedAt: new Date().toISOString()
             }
           }
@@ -544,40 +519,6 @@ export const OnboardingKYBFormPlayground = ({
         progressMatch: result.savedData.progress === newProgress,
         timestamp: new Date().toISOString()
       });
-
-      // Find and focus next empty field
-      const currentStepFields = FORM_STEPS[currentStep];
-      const currentFieldIndex = currentStepFields.findIndex(f => f.name === fieldName);
-      let nextEmptyField: string | null = null;
-
-      // First look for empty fields in current step
-      for (let i = currentFieldIndex + 1; i < currentStepFields.length; i++) {
-        if (isEmptyValue(updatedFormData[currentStepFields[i].name])) {
-          nextEmptyField = currentStepFields[i].name;
-          break;
-        }
-      }
-
-      // If no empty fields in current step, check if we should move to next step
-      if (!nextEmptyField && !validateCurrentStep(updatedFormData, currentStepFields)) {
-        const nextStep = currentStep + 1;
-        if (nextStep < FORM_STEPS.length) {
-          setCurrentStep(nextStep);
-          nextEmptyField = findFirstEmptyField(FORM_STEPS[nextStep], updatedFormData);
-        }
-      } else if (!nextEmptyField){
-        nextEmptyField = findFirstEmptyField(currentStepFields, updatedFormData);
-      }
-
-      if (nextEmptyField) {
-        console.log('[Form Debug] Moving focus to next empty field:', {
-          currentField: fieldName,
-          nextField: nextEmptyField,
-          timestamp: new Date().toISOString()
-        });
-
-
-      }
 
       await wsService.send('task_updated', {
         taskId,
@@ -864,7 +805,7 @@ export const OnboardingKYBFormPlayground = ({
                     />
                   )}
                   <span className="text-xs text-[#6B7280] mt-2.5 text-center w-28 whitespace-nowrap font-medium">
-                    {step[0].title}
+                    {step[0].label}
                   </span>
                 </div>
               ))}
@@ -876,13 +817,13 @@ export const OnboardingKYBFormPlayground = ({
 
         {/* Form Fields Section - Only show when not submitted */}
         {!isSubmitted && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-2">{currentStepData[0].title}</h3>
-              <p className="text-sm text-muted-foreground">{currentStepData[0].description}</p>
+              <h3 className="text-lg font-semibold mb-2">{currentStepData[0].label}</h3>
+              <p className="text-sm text-muted-foreground">{`Step ${currentStep + 1} of ${FORM_STEPS.length}`}</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {currentStepData.map(field => {
                 const value = formData[field.name] || '';
                 const { mainText, tooltipText } = extractTooltipContent(field.question);
@@ -890,13 +831,13 @@ export const OnboardingKYBFormPlayground = ({
                 const isEmpty = isEmptyValue(value);
 
                 return (
-                  <div key={field.name} className={`space-y-2 ${isEmpty ? 'animate-pulse-subtle' : ''}`}>
+                  <div key={field.name} className="space-y-3">
                     <div className="flex flex-col gap-1.5 mb-2">
-                      <label className="text-xs font-medium text-muted-foreground">
+                      <label className="text-sm font-semibold text-foreground">
                         {field.label}
                       </label>
                       <div className="flex items-center gap-1">
-                        <span className="text-sm font-semibold text-foreground">
+                        <span className="text-sm text-muted-foreground">
                           {mainText}
                         </span>
                         {field.tooltip && (
@@ -926,7 +867,7 @@ export const OnboardingKYBFormPlayground = ({
                           handleSuggestionClick(field.name, suggestion);
                         }
                       }}
-                      className={`${isEmpty ? 'border-[#4F46E5] ring-1 ring-[#4F46E5]/10' : ''} mb-6`}
+                      className="mb-4"
                     />
                   </div>
                 );
