@@ -157,15 +157,34 @@ const FileVault: React.FC = () => {
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
-      const res = await fetch('/api/files', {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || 'Upload failed');
+      try {
+        const res = await fetch('/api/files', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) {
+          // Try to get error message from response
+          try {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Upload failed');
+          } catch (parseError) {
+            // If we can't parse the error response, use the status text
+            throw new Error(`Upload failed: ${res.statusText}`);
+          }
+        }
+
+        // Try to parse the successful response
+        try {
+          return await res.json();
+        } catch (parseError) {
+          console.error('[FileVault Debug] Response parsing error:', parseError);
+          throw new Error('Failed to parse server response');
+        }
+      } catch (error) {
+        console.error('[FileVault Debug] Upload mutation error:', error);
+        throw error;
       }
-      return await res.json();
     }
   });
 
@@ -208,7 +227,13 @@ const FileVault: React.FC = () => {
       setUploadingFiles(prev => [...prev, uploadingFile]);
 
       try {
-        const uploadedFile = await uploadMutation.mutateAsync(formData);
+        console.log('[FileVault Debug] Starting upload:', {
+          fileName: file.name,
+          fileSize: file.size,
+          tempId
+        });
+
+        await uploadMutation.mutateAsync(formData);
 
         setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
         queryClient.invalidateQueries(['/api/files']);
@@ -219,10 +244,17 @@ const FileVault: React.FC = () => {
           duration: 3000,
         });
       } catch (error) {
-        console.error('Upload error:', error);
+        console.error('[FileVault Debug] Upload error:', {
+          error,
+          fileName: file.name,
+          tempId
+        });
+
         setUploadingFiles(prev =>
           prev.map(f =>
-            f.id === tempId ? { ...f, status: 'error' } : f
+            f.id === tempId 
+              ? { ...f, status: 'error' as FileStatus } 
+              : f
           )
         );
 
