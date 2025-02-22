@@ -130,8 +130,8 @@ router.post('/api/kyb/progress', async (req, res) => {
   try {
     const { taskId, progress, formData, fieldUpdates } = req.body;
 
-    console.log('[KYB API Debug] Progress update initiated:', { 
-      taskId, 
+    console.log('[KYB API Debug] Progress update initiated:', {
+      taskId,
       requestedProgress: progress,
       formDataKeys: Object.keys(formData || {}),
       fieldUpdates: fieldUpdates ? Object.keys(fieldUpdates) : [],
@@ -140,7 +140,7 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     if (!taskId) {
       console.warn('[KYB API Debug] Missing task ID in request');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Task ID is required',
         code: 'MISSING_TASK_ID'
       });
@@ -234,9 +234,9 @@ router.post('/api/kyb/progress', async (req, res) => {
       field_id: kybFields.id,
       response_id: kybResponses.id
     })
-    .from(kybResponses)
-    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-    .where(eq(kybResponses.task_id, taskId));
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, taskId));
 
     for (const response of existingResponses) {
       if (!processedFields.has(response.field_key)) {
@@ -288,9 +288,9 @@ router.post('/api/kyb/progress', async (req, res) => {
       field_key: kybFields.field_key,
       status: kybResponses.status
     })
-    .from(kybResponses)
-    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-    .where(eq(kybResponses.task_id, taskId));
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, taskId));
 
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {
@@ -299,7 +299,7 @@ router.post('/api/kyb/progress', async (req, res) => {
       }
     }
 
-    res.json({ 
+    res.json({
       success: true,
       savedData: {
         progress: Math.min(progress, 100),
@@ -346,9 +346,9 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
       field_key: kybFields.field_key,
       status: kybResponses.status
     })
-    .from(kybResponses)
-    .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-    .where(eq(kybResponses.task_id, parseInt(taskId)));
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
 
     logResponseDebug('Retrieved responses', responses);
 
@@ -391,79 +391,141 @@ router.post('/api/kyb/save', async (req, res) => {
 
     console.log('[KYB API Debug] Save initiated:', { fileName, taskId, formDataKeys: Object.keys(formData) });
 
-    // Save form data to a file
-    const filePath = join(process.cwd(), 'uploads', 'kyb', `${fileName}.json`);
-    await writeFile(filePath, JSON.stringify(formData, null, 2), 'utf-8');
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
 
-    // Update task status and save final responses
-    if (taskId) {
-      const timestamp = new Date();
-
-      // Get all KYB fields
-      const fields = await db.select().from(kybFields);
-      const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
-
-      // Save final responses
-      for (const [fieldKey, value] of Object.entries(formData)) {
-        const fieldId = fieldMap.get(fieldKey);
-        if (!fieldId) continue;
-
-        const responseValue = value === '' ? null : String(value);
-        const status = responseValue === null ? 'empty' : 'complete';
-
-        // Update or create response
-        const [existingResponse] = await db.select()
-          .from(kybResponses)
-          .where(
-            and(
-              eq(kybResponses.task_id, taskId),
-              eq(kybResponses.field_id, fieldId)
-            )
-          );
-
-        if (existingResponse) {
-          await db.update(kybResponses)
-            .set({
-              response_value: responseValue,
-              status,
-              version: existingResponse.version + 1,
-              updated_at: timestamp
-            })
-            .where(eq(kybResponses.id, existingResponse.id));
-        } else {
-          await db.insert(kybResponses)
-            .values({
-              task_id: taskId,
-              field_id: fieldId,
-              field_key: fieldKey,
-              response_value: responseValue,
-              status,
-              version: 1,
-              created_at: timestamp,
-              updated_at: timestamp
-            });
-        }
-      }
-
-      // Update task status
-      await db.update(tasks)
-        .set({
-          status: TaskStatus.SUBMITTED,
-          progress: 100,
-          updated_at: timestamp,
-          metadata: {
-            ...formData,
-            kybFormFile: `${fileName}.json`,
-            submissionDate: timestamp.toISOString()
-          }
-        })
-        .where(eq(tasks.id, taskId));
-
-        logTaskDebug('Task updated after submission', {id: taskId, status: TaskStatus.SUBMITTED});
+    if (!task) {
+      throw new Error('Task not found');
     }
 
-    console.log('[KYB API Debug] Save completed:', { filePath, timestamp: new Date().toISOString() });
-    res.json({ success: true, filePath });
+    // Get all KYB fields with their groups
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(kybFields.order);
+
+    // Create comprehensive submission data
+    const submissionData = {
+      metadata: {
+        taskId,
+        taskTitle: task.title,
+        submissionDate: new Date().toISOString(),
+        formVersion: '1.0',
+        status: TaskStatus.SUBMITTED
+      },
+      taskData: {
+        ...task,
+        progress: 100,
+        status: TaskStatus.SUBMITTED
+      },
+      formStructure: {
+        fields: fields.map(field => ({
+          key: field.field_key,
+          name: field.display_name,
+          type: field.field_type,
+          group: field.group,
+          required: field.required,
+          order: field.order
+        }))
+      },
+      responses: {}
+    };
+
+    // Group responses by field group
+    const groupedResponses: Record<string, Record<string, any>> = {};
+    for (const field of fields) {
+      const group = field.group || 'Uncategorized';
+      if (!groupedResponses[group]) {
+        groupedResponses[group] = {};
+      }
+      groupedResponses[group][field.field_key] = {
+        question: field.display_name,
+        answer: formData[field.field_key] || null,
+        type: field.field_type,
+        answeredAt: new Date().toISOString()
+      };
+    }
+    submissionData.responses = groupedResponses;
+
+    // Save comprehensive data to file
+    const filePath = join(process.cwd(), 'uploads', 'kyb', `${fileName}.json`);
+    await writeFile(filePath, JSON.stringify(submissionData, null, 2), 'utf-8');
+
+    // Update task status and save final responses
+    const timestamp = new Date();
+    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+
+    // Save responses to database
+    for (const [fieldKey, value] of Object.entries(formData)) {
+      const fieldId = fieldMap.get(fieldKey);
+      if (!fieldId) continue;
+
+      const responseValue = value === '' ? null : String(value);
+      const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
+
+      // Check if response exists
+      const [existingResponse] = await db.select()
+        .from(kybResponses)
+        .where(
+          and(
+            eq(kybResponses.task_id, taskId),
+            eq(kybResponses.field_id, fieldId)
+          )
+        );
+
+      if (existingResponse) {
+        await db.update(kybResponses)
+          .set({
+            response_value: responseValue,
+            status,
+            version: existingResponse.version + 1,
+            updated_at: timestamp
+          })
+          .where(eq(kybResponses.id, existingResponse.id));
+      } else {
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: fieldId,
+            response_value: responseValue,
+            status,
+            version: 1,
+            created_at: timestamp,
+            updated_at: timestamp
+          });
+      }
+    }
+
+    // Update task status
+    await db.update(tasks)
+      .set({
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        updated_at: timestamp,
+        metadata: {
+          ...task.metadata,
+          kybFormFile: `${fileName}.json`,
+          submissionDate: timestamp.toISOString(),
+          formVersion: '1.0',
+          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+            .filter((v, i, a) => a.indexOf(v) === i)
+        }
+      })
+      .where(eq(tasks.id, taskId));
+
+    console.log('[KYB API Debug] Save completed:', {
+      filePath,
+      taskId,
+      status: TaskStatus.SUBMITTED,
+      timestamp: timestamp.toISOString()
+    });
+
+    res.json({
+      success: true,
+      filePath,
+      metadata: submissionData.metadata
+    });
   } catch (error) {
     console.error('[KYB API Debug] Error saving KYB form:', {
       error: error instanceof Error ? error.message : 'Unknown error',
