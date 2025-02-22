@@ -595,8 +595,8 @@ const FileVault: React.FC = () => {
       ),
       cell: ({ row }) => (
         <Checkbox
-          checked={selectedFiles.has(row.id)}
-          onCheckedChange={() => toggleFileSelection(row.id)}
+          checked={selectedFiles.has(row.original.id)}
+          onCheckedChange={() => toggleFileSelection(row.original.id)}
           aria-label="Select row"
         />
       ),
@@ -608,7 +608,7 @@ const FileVault: React.FC = () => {
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <FileIcon className="h-4 w-4" />
-          <span>{row.name}</span>
+          <span>{row.original.name}</span>
         </div>
       ),
     },
@@ -616,21 +616,21 @@ const FileVault: React.FC = () => {
       id: 'size',
       header: 'Size',
       accessorKey: 'size',
-      cell: ({ row }) => formatFileSize(row.size),
+      cell: ({ row }) => formatFileSize(row.original.size),
     },
     {
       id: 'createdAt',
       header: 'Created',
       accessorKey: 'createdAt',
-      cell: ({ row }) => formatDate(row.createdAt),
+      cell: ({ row }) => formatDate(row.original.createdAt),
     },
     {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
       cell: ({ row }) => (
-        <span className={getStatusStyles(row.status as FileStatus)}>
-          {row.status}
+        <span className={getStatusStyles(row.original.status as FileStatus)}>
+          {row.original.status}
         </span>
       ),
     },
@@ -638,7 +638,7 @@ const FileVault: React.FC = () => {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <FileActions file={row as TableRowData} onDelete={handleDelete} />
+        <FileActions file={row.original} onDelete={handleDelete} />
       ),
     },
   ];
