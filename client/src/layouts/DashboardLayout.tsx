@@ -10,7 +10,7 @@ import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 interface Company {
-  onboarding_company_completed: boolean;
+  available_tabs: string[];
   id: number;
 }
 
@@ -27,7 +27,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
-  const isTaskCenterRoute = location.startsWith('/task-center');
   const queryClient = useQueryClient();
 
   // Fetch tasks for notification count
@@ -58,25 +57,33 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   });
 
-  // Company hasn't completed onboarding
-  const isCompanyLocked = currentCompany?.onboarding_company_completed === false;
+  // Get the current route's tab name
+  const getCurrentTab = () => {
+    const path = location.split('/')[1] || 'dashboard';
+    return path === '' ? 'dashboard' : path;
+  };
 
-  // Handle navigation for locked companies
+  // Check if current route is accessible
+  const isRouteAccessible = () => {
+    if (!currentCompany?.available_tabs) return false;
+    const currentTab = getCurrentTab();
+    return currentCompany.available_tabs.includes(currentTab);
+  };
+
+  // Handle navigation for inaccessible routes
   useEffect(() => {
-    if (isCompanyLocked) {
-      const lockedRoutes = ['/', '/network', '/file-vault', '/insights'];
-      if (lockedRoutes.includes(location)) {
-        navigate('/task-center');
-      }
+    const currentTab = getCurrentTab();
+    if (currentTab !== 'task-center' && !isRouteAccessible()) {
+      navigate('/task-center');
     }
-  }, [isCompanyLocked, location, navigate]);
+  }, [location, currentCompany?.available_tabs, navigate]);
 
-  // Only allow task center and its sub-routes for locked companies
-  if (isCompanyLocked && !isTaskCenterRoute) {
+  // Show locked section if current route is not accessible
+  if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     console.log('[DashboardLayout] Showing locked section:', {
       location,
-      isTaskCenterRoute,
-      isCompanyLocked
+      currentTab: getCurrentTab(),
+      availableTabs: currentCompany?.available_tabs
     });
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -84,7 +91,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Lock className="w-12 h-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-semibold">Section Locked</h1>
           <p className="text-muted-foreground max-w-md">
-            Complete your company onboarding tasks in the Task Center to unlock all features.
+            Complete tasks in the Task Center to unlock more features.
           </p>
         </div>
       </div>
@@ -103,7 +110,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           notificationCount={relevantTasks.length}
           showInvelaTabs={false}
           isPlayground={false}
-          variant={isCompanyLocked ? 'company-locked' : 'default'}
+          variant="default"
         />
       </aside>
 
