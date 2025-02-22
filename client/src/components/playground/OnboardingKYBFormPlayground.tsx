@@ -390,12 +390,21 @@ export const OnboardingKYBFormPlayground = ({
             timestamp: new Date().toISOString()
           });
 
-          dataToLoad = latestFormData || {};
+          if (latestFormData) {
+            // Convert all values to strings and filter out null/undefined
+            dataToLoad = Object.entries(latestFormData).reduce((acc, [key, value]) => {
+              if (value !== null && value !== undefined) {
+                acc[key] = String(value);
+              }
+              return acc;
+            }, {} as Record<string, string>);
+          }
+
           setProgress(latestProgress);
           lastProgressRef.current = latestProgress;
 
           // Log detailed form data debug
-          logFormDataDebug('Initial task data', latestFormData);
+          logFormDataDebug('Initial task data', dataToLoad);
         } catch (error) {
           console.error('[KYB Form Debug] Error fetching latest data:', error);
           if (initialSavedFormData) {
@@ -416,7 +425,14 @@ export const OnboardingKYBFormPlayground = ({
         logFormDataDebug('Using initial saved data', dataToLoad);
       }
 
-      // Set form data
+      // Set form data and update refs
+      console.log('[KYB Form Debug] Setting initial form data:', {
+        dataToLoad,
+        fields: Object.keys(dataToLoad),
+        values: Object.values(dataToLoad),
+        timestamp: new Date().toISOString()
+      });
+
       setFormData(dataToLoad);
       formDataRef.current = dataToLoad;
 
@@ -642,17 +658,40 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-  // Determine field variant based on validation and form state
+  // Update getFieldVariant function to properly handle pre-populated fields
   const getFieldVariant = (field: FormField, value: string | undefined) => {
     const isEmpty = isEmptyValue(value);
-    const isTouched = value !== undefined;
     const suggestion = getSuggestionForField(field.name);
 
-    if (isTouched && !isEmpty) {
+    // If we have a value that's not empty, show as successful
+    if (!isEmpty && value !== undefined) {
+      console.log('[Form Debug] Field variant:', {
+        fieldName: field.name,
+        value,
+        variant: 'successful',
+        timestamp: new Date().toISOString()
+      });
       return 'successful';
-    } else if (suggestion && !isTouched) {
+    } 
+
+    // If we have an AI suggestion and no value yet
+    if (suggestion && isEmpty) {
+      console.log('[Form Debug] Field variant:', {
+        fieldName: field.name,
+        hasSuggestion: true,
+        variant: 'ai-suggestion',
+        timestamp: new Date().toISOString()
+      });
       return 'ai-suggestion';
     }
+
+    // Default state for empty fields
+    console.log('[Form Debug] Field variant:', {
+      fieldName: field.name,
+      isEmpty,
+      variant: 'default',
+      timestamp: new Date().toISOString()
+    });
     return 'default';
   };
 
