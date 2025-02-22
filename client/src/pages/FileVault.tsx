@@ -92,7 +92,7 @@ const FileVault: React.FC = () => {
     });
   }, [user]);
 
-  // Update the useQuery implementation with proper company_id handling
+  // Update the file data transformation and add more logging
   const { data: files = [], isLoading, error } = useQuery<TableRowData[]>({
     queryKey: ['/api/files', { company_id: user?.company_id }],
     enabled: !!user?.company_id,
@@ -113,20 +113,31 @@ const FileVault: React.FC = () => {
         throw new Error(errorData.error || 'Failed to fetch files');
       }
 
-      return response.json();
-    },
-    select: (data) => {
+      const data = await response.json();
       console.log('[FileVault] Processing API response:', {
         dataLength: data?.length || 0,
         firstItem: data?.[0],
         lastItem: data?.[data.length - 1]
       });
 
-      return data.map(file => ({
+      return data;
+    },
+    select: (data) => {
+      const transformed = data.map(file => ({
         ...file,
         status: file.status || 'uploaded',
-        size: typeof file.size === 'number' ? file.size : 0
+        size: typeof file.size === 'number' ? file.size : 0,
+        createdAt: file.createdAt || new Date().toISOString()
       }));
+
+      console.log('[FileVault] Transformed data:', {
+        originalLength: data.length,
+        transformedLength: transformed.length,
+        firstTransformed: transformed[0],
+        lastTransformed: transformed[transformed.length - 1]
+      });
+
+      return transformed;
     }
   });
 
@@ -314,10 +325,15 @@ const FileVault: React.FC = () => {
   };
 
   const allFiles = useMemo(() => {
-    return [
-      ...uploadingFiles,
-      ...(files as TableRowData[])
-    ];
+    const combined = [...uploadingFiles, ...(files as TableRowData[])];
+    console.log('[FileVault] Combined files:', {
+      uploadingCount: uploadingFiles.length,
+      filesCount: files.length,
+      totalCount: combined.length,
+      firstFile: combined[0],
+      lastFile: combined[combined.length - 1]
+    });
+    return combined;
   }, [files, uploadingFiles]);
 
   const filteredAndSortedFiles = useMemo(() => {
@@ -325,7 +341,8 @@ const FileVault: React.FC = () => {
       totalFiles: allFiles.length,
       searchQuery,
       statusFilter,
-      sortConfig
+      sortConfig,
+      firstInputFile: allFiles[0]
     });
 
     let result = [...allFiles];
@@ -391,7 +408,18 @@ const FileVault: React.FC = () => {
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedFiles.slice(startIndex, startIndex + itemsPerPage);
+    const paginated = filteredAndSortedFiles.slice(startIndex, startIndex + itemsPerPage);
+
+    console.log('[FileVault] Paginated files:', {
+      page: currentPage,
+      itemsPerPage,
+      totalFiles: filteredAndSortedFiles.length,
+      paginatedCount: paginated.length,
+      firstPaginated: paginated[0],
+      lastPaginated: paginated[paginated.length - 1]
+    });
+
+    return paginated;
   }, [filteredAndSortedFiles, currentPage]);
 
   const totalPages = Math.ceil(filteredAndSortedFiles.length / itemsPerPage);
@@ -516,12 +544,15 @@ const FileVault: React.FC = () => {
   };
 
 
-  const FileNameCell: React.FC<{ file: TableRowData }> = ({ file }) => (
-    <div className="flex items-center gap-2">
-      <FileIcon className="h-4 w-4" />
-      <span>{file.name}</span>
-    </div>
-  );
+  const FileNameCell: React.FC<{ file: TableRowData }> = ({ file }) => {
+    console.log('[FileVault] Rendering FileNameCell:', file);
+    return (
+      <div className="flex items-center gap-2">
+        <FileIcon className="h-4 w-4" />
+        <span>{file.name}</span>
+      </div>
+    );
+  };
 
   const FileActions: React.FC<{ file: TableRowData; onDelete: (fileId: string) => void }> = ({ file, onDelete }) => {
     const handleAction = (action: string) => {
