@@ -160,31 +160,44 @@ const FileVault: React.FC = () => {
       try {
         const res = await fetch('/api/files', {
           method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
           body: formData
         });
 
+        const contentType = res.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          console.error('[FileVault Debug] Invalid content type:', {
+            received: contentType,
+            expected: 'application/json'
+          });
+          throw new Error('Invalid server response type. Please try again.');
+        }
+
         if (!res.ok) {
-          // Try to get error message from response
           try {
             const errorData = await res.json();
             throw new Error(errorData.message || 'Upload failed');
           } catch (parseError) {
-            // If we can't parse the error response, use the status text
+            console.error('[FileVault Debug] Error response parsing failed:', parseError);
             throw new Error(`Upload failed: ${res.statusText}`);
           }
         }
 
-        // Try to parse the successful response
-        try {
-          return await res.json();
-        } catch (parseError) {
-          console.error('[FileVault Debug] Response parsing error:', parseError);
-          throw new Error('Failed to parse server response');
-        }
+        const data = await res.json();
+        return data;
       } catch (error) {
-        console.error('[FileVault Debug] Upload mutation error:', error);
+        console.error('[FileVault Debug] Upload mutation error:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
         throw error;
       }
+    },
+    onError: (error) => {
+      console.error('[FileVault Debug] Mutation error handler:', error);
     }
   });
 
@@ -210,6 +223,11 @@ const FileVault: React.FC = () => {
   };
 
   const onDrop = async (acceptedFiles: File[]) => {
+    console.log('[FileVault Debug] Starting file upload:', {
+      fileCount: acceptedFiles.length,
+      files: acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+    });
+
     for (const file of acceptedFiles) {
       const formData = new FormData();
       formData.append('file', file);
@@ -227,16 +245,10 @@ const FileVault: React.FC = () => {
       setUploadingFiles(prev => [...prev, uploadingFile]);
 
       try {
-        console.log('[FileVault Debug] Starting upload:', {
-          fileName: file.name,
-          fileSize: file.size,
-          tempId
-        });
-
         await uploadMutation.mutateAsync(formData);
 
         setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
-        queryClient.invalidateQueries(['/api/files']);
+        queryClient.invalidateQueries({ queryKey: ['/api/files'] });
 
         toast({
           title: "Success",
@@ -252,8 +264,8 @@ const FileVault: React.FC = () => {
 
         setUploadingFiles(prev =>
           prev.map(f =>
-            f.id === tempId 
-              ? { ...f, status: 'error' as FileStatus } 
+            f.id === tempId
+              ? { ...f, status: 'error' as FileStatus }
               : f
           )
         );
@@ -262,7 +274,7 @@ const FileVault: React.FC = () => {
           title: "Upload Error",
           description: error instanceof Error ? error.message : "Failed to upload file",
           variant: "destructive",
-          duration: 3000,
+          duration: 5000,
         });
       }
     }
