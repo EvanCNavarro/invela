@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
@@ -6,7 +6,13 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 
@@ -29,6 +35,7 @@ interface Task {
     companyId?: number;
     companyName?: string;
     company?: any;
+    kybFormFile?: number; // File ID for downloads
     [key: string]: any;
   } | null;
   savedFormData?: Record<string, any>;
@@ -37,45 +44,30 @@ interface Task {
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [fileId, setFileId] = useState<number | null>(null);
 
   // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
-  console.log('[TaskPage] Initializing with params:', {
-    taskType,
-    companyName,
-    taskSlug: params.taskSlug
-  });
-
-  // Only fetch if it's a KYB task
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: ['/api/tasks/kyb', companyName],
     queryFn: async () => {
-      console.log('[TaskPage] Fetching KYB task for company:', companyName);
       const response = await fetch(`/api/tasks/kyb/${companyName}`);
       if (!response.ok) {
         throw new Error('Failed to fetch KYB task');
       }
       const data = await response.json();
-      console.log('[TaskPage] Task data loaded:', {
-        taskId: data.id,
-        status: data.status,
-        currentProgress: data.progress,
-        hasMetadata: !!data.metadata,
-        hasSavedFormData: !!data.savedFormData,
-        metadataKeys: Object.keys(data.metadata || {}),
-        savedFormDataKeys: Object.keys(data.savedFormData || {}),
-        formFieldsPopulated: Object.entries(data.savedFormData || {})
-          .filter(([key, value]) => !!value)
-          .map(([key]) => key)
-      });
+      // If task was already submitted, set the file ID for download
+      if (data.metadata?.kybFormFile) {
+        setFileId(data.metadata.kybFormFile);
+        setIsSubmitted(true);
+      }
       return data;
     },
     enabled: taskType === 'kyb',
-    // Force a fresh fetch when re-entering the form
-    staleTime: 0,
-    cacheTime: 0
+    staleTime: 0
   });
 
   useEffect(() => {
@@ -91,7 +83,33 @@ export default function TaskPage({ params }: TaskPageProps) {
   }, [error, navigate, toast]);
 
   const handleBackClick = () => {
-    window.history.back();
+    navigate('/task-center');
+  };
+
+  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) return;
+
+    try {
+      const response = await fetch(`/api/kyb/download/${fileId}?format=${format}`);
+      if (!response.ok) throw new Error('Failed to download file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kyb_form.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -105,7 +123,6 @@ export default function TaskPage({ params }: TaskPageProps) {
   }
 
   if (!task) {
-    console.log('[TaskPage] No task found for:', companyName);
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -120,43 +137,57 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  // Currently only supporting KYB tasks
   if (taskType !== 'kyb') {
-    console.log('[TaskPage] Unsupported task type:', taskType);
     navigate('/task-center');
     return null;
   }
 
-  // Get the company data from the task metadata
   const companyData = task.metadata?.company || {
     name: task.metadata?.companyName || companyName,
     description: task.metadata?.description,
   };
-
-  console.log('[TaskPage] Rendering KYB form with data:', {
-    taskId: task.id,
-    companyName,
-    hasCompanyData: !!companyData,
-    hasSavedFormData: !!task.metadata,
-    metadataKeys: Object.keys(task.metadata || {}),
-    currentProgress: task.progress,
-    currentStatus: task.status
-  });
 
   return (
     <DashboardLayout>
       <PageTemplate className="space-y-6">
         <div className="space-y-4">
           <BreadcrumbNav forceFallback={true} />
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-sm font-medium bg-white border-muted-foreground/20"
-            onClick={handleBackClick}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Task Center
-          </Button>
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-sm font-medium bg-white border-muted-foreground/20"
+              onClick={handleBackClick}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Task Center
+            </Button>
+
+            {(isSubmitted || task.metadata?.kybFormFile) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleDownload('json')}>
+                    <FileJson className="mr-2 h-4 w-4" />
+                    Download as JSON
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                    <FileSpreadsheet className="mr-2 h-4 w-4" />
+                    Download as CSV
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    Download as Text
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         <div className="container max-w-7xl mx-auto">
@@ -166,15 +197,6 @@ export default function TaskPage({ params }: TaskPageProps) {
             companyData={companyData}
             savedFormData={task.metadata}
             onSubmit={(formData) => {
-              console.log('[TaskPage] Form submission initiated:', {
-                taskId: task.id,
-                currentProgress: task.progress,
-                formDataKeys: Object.keys(formData),
-                populatedFields: Object.entries(formData)
-                  .filter(([_, value]) => !!value)
-                  .map(([key]) => key)
-              });
-
               fetch('/api/kyb/save', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -189,17 +211,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                   return response.json();
                 })
                 .then((result) => {
-                  console.log('[TaskPage] Form submission successful:', {
-                    taskId: task.id,
-                    savedProgress: result.progress,
-                    newStatus: result.status,
-                    timestamp: new Date().toISOString()
-                  });
+                  setFileId(result.fileId);
+                  setIsSubmitted(true);
                   toast({
                     title: "KYB Form Submitted",
                     description: "Your KYB form has been saved and the task has been updated.",
                   });
-                  navigate('/task-center');
                 })
                 .catch(error => {
                   console.error('[TaskPage] Form submission failed:', error);
