@@ -92,10 +92,29 @@ const FileVault: React.FC = () => {
     });
   }, [user]);
 
-  // Update the useQuery implementation with better logging
+  // Update the useQuery implementation with proper company_id handling
   const { data: files = [], isLoading, error } = useQuery<TableRowData[]>({
     queryKey: ['/api/files', { company_id: user?.company_id }],
     enabled: !!user?.company_id,
+    queryFn: async ({ queryKey }) => {
+      console.log('[FileVault] Executing query with params:', {
+        user: user,
+        companyId: user?.company_id,
+        queryKey
+      });
+
+      const url = new URL('/api/files', window.location.origin);
+      url.searchParams.append('company_id', user!.company_id.toString());
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('[FileVault] API error:', errorData);
+        throw new Error(errorData.error || 'Failed to fetch files');
+      }
+
+      return response.json();
+    },
     select: (data) => {
       console.log('[FileVault] Processing API response:', {
         dataLength: data?.length || 0,
@@ -103,21 +122,11 @@ const FileVault: React.FC = () => {
         lastItem: data?.[data.length - 1]
       });
 
-      return data.map(file => {
-        console.log('[FileVault] Processing file record:', {
-          id: file.id,
-          name: file.name,
-          size: file.size,
-          path: file.path?.substring(0, 50) + '...' 
-        });
-
-        return {
-          ...file,
-          status: file.status || 'uploaded',
-          size: typeof file.size === 'number' ? file.size : 
-                (file.path ? Buffer.from(file.path).length : 0)
-        };
-      });
+      return data.map(file => ({
+        ...file,
+        status: file.status || 'uploaded',
+        size: typeof file.size === 'number' ? file.size : 0
+      }));
     }
   });
 
