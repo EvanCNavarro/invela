@@ -224,6 +224,31 @@ export function setupAuth(app: Express) {
     });
   });
 
+  app.get("/api/auth/user", (req, res) => {
+    console.log('[Auth] Processing /api/auth/user request');
+    console.log('[Auth] Request authentication state:', {
+      isAuthenticated: req.isAuthenticated(),
+      hasUser: !!req.user,
+      sessionID: req.sessionID
+    });
+
+    if (!req.isAuthenticated()) {
+      console.log('[Auth] Unauthenticated user session');
+      return res.status(401).json({ 
+        error: 'Unauthorized',
+        message: 'User not authenticated'
+      });
+    }
+
+    console.log('[Auth] Returning user session data:', {
+      id: req.user?.id,
+      email: req.user?.email,
+      company_id: req.user?.company_id
+    });
+
+    res.json(req.user);
+  });
+
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');

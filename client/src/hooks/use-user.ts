@@ -9,10 +9,18 @@ interface User {
 export function useUser() {
   const { data: user, isLoading, error } = useQuery<User>({
     queryKey: ['/api/auth/user'],
-    retry: false
+    // Don't retry on 401/403 errors
+    retry: false,
+    // Add debug logging
+    onSuccess: (data) => {
+      console.log('[useUser] Successfully fetched user data:', data);
+    },
+    onError: (err) => {
+      console.error('[useUser] Error fetching user data:', err);
+    }
   });
 
-  console.log('[useUser] Current user:', user);
+  console.log('[useUser] Current user state:', { user, isLoading, error });
 
   return {
     user,
