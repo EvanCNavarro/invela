@@ -27,6 +27,7 @@ import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useColumnVisibility } from "@/hooks/use-column-visibility";
 import { useSidebarContext } from "@/hooks/use-sidebar";
+import { useUser } from "@/hooks/use-user"; // Add this import
 import type { Column } from "@/components/ui/table";
 import type { FileStatus, FileItem, TableRowData, SortField, SortOrder, UploadingFile } from "@/types/files";
 import {
@@ -62,6 +63,7 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF,
 const FileVault: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useUser(); // Get the authenticated user
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
   const [sortConfig, setSortConfig] = useState<{ field: SortField; order: SortOrder }>({
@@ -81,10 +83,10 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
-  // Update the useQuery implementation to include company_id and add debugging
-  const { data: files = [], isLoading } = useQuery<TableRowData[]>({
-    queryKey: ['/api/files', { company_id: 1 }], // Replace 1 with actual company ID retrieval
-    enabled: true,
+  // Update the useQuery implementation to include company_id from user context
+  const { data: files = [], isLoading, error } = useQuery<TableRowData[]>({
+    queryKey: ['/api/files', { company_id: user?.company_id }],
+    enabled: !!user?.company_id, // Only run query when we have company_id
     select: (data) => {
       console.log('[FileVault] Raw API response:', data);
       return data.map(file => {
@@ -97,13 +99,24 @@ const FileVault: React.FC = () => {
         return {
           ...file,
           status: file.status || 'uploaded',
-          // Handle file size calculation
           size: typeof file.size === 'number' ? file.size : 
                 (file.path ? Buffer.from(file.path).length : 0)
         };
       });
     }
   });
+
+  // Log any query errors
+  React.useEffect(() => {
+    if (error) {
+      console.error('[FileVault] Query error:', error);
+      toast({
+        title: "Error loading files",
+        description: "There was a problem loading your files. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }, [error, toast]);
 
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -276,7 +289,6 @@ const FileVault: React.FC = () => {
     ];
   }, [files, uploadingFiles]);
 
-  // Add debug logging to the filteredAndSortedFiles useMemo
   const filteredAndSortedFiles = useMemo(() => {
     console.log('[FileVault] Starting file filtering with:', {
       totalFiles: allFiles.length,
@@ -421,7 +433,6 @@ const FileVault: React.FC = () => {
     deleteMutation.mutate(fileId);
   };
 
-  // Fix the handleSearch type mismatch
   const handleSearch = (value: string | ChangeEvent<HTMLInputElement>) => {
     const searchValue = typeof value === 'string' ? value : value.target.value;
     setSearchQuery(searchValue);
@@ -570,7 +581,6 @@ const FileVault: React.FC = () => {
     onDrop(files);
   };
 
-  // Add version safety check and logging
   const handleRenameFile = (fileId: string, newName: string) => {
     setFiles(prev => prev.map(f => 
       f.id === fileId
@@ -583,7 +593,6 @@ const FileVault: React.FC = () => {
     ));
     console.log('[FileVault] File renamed:', { fileId, newName });
   };
-
 
   return (
     <DashboardLayout>
