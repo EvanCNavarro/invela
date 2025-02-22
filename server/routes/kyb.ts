@@ -398,9 +398,9 @@ router.post('/api/kyb/save', async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
 
-    logFileDebug('Save request received', { 
-      fileName, 
-      taskId, 
+    logFileDebug('Save request received', {
+      fileName,
+      taskId,
       formDataKeys: Object.keys(formData),
       formDataValues: Object.entries(formData).map(([k, v]) => ({
         key: k,
@@ -420,7 +420,7 @@ router.post('/api/kyb/save', async (req, res) => {
       throw new Error(error);
     }
 
-    logFileDebug('Task found', { 
+    logFileDebug('Task found', {
       taskId: task.id,
       title: task.title,
       currentStatus: task.status
@@ -478,7 +478,9 @@ router.post('/api/kyb/save', async (req, res) => {
       }
       groupedResponses[group][field.field_key] = {
         question: field.display_name,
-        answer: formData[field.field_key] || null,
+        answer: field.field_type === 'boolean'
+          ? formData[field.field_key] === 'true' || formData[field.field_key] === true
+          : formData[field.field_key] || null,
         type: field.field_type,
         answeredAt: new Date().toISOString()
       };
@@ -500,7 +502,7 @@ router.post('/api/kyb/save', async (req, res) => {
 
     // Save comprehensive data to file
     const filePath = join(uploadDir, `${fileName}.json`);
-    logFileDebug('Writing file', { 
+    logFileDebug('Writing file', {
       filePath,
       fileSize: JSON.stringify(submissionData).length,
       uploadDir: existsSync(uploadDir)
@@ -615,7 +617,7 @@ router.post('/api/kyb/save', async (req, res) => {
     logFileDebug('Error saving KYB form', errorDetails);
     console.error('[KYB API Debug] Error saving KYB form:', errorDetails);
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to save KYB form data',
       details: errorDetails
     });
