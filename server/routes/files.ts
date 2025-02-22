@@ -18,7 +18,8 @@ router.get('/api/files', async (req, res) => {
     console.log('[Files] Request parameters:', {
       companyId,
       userId,
-      query: req.query
+      query: req.query,
+      user: req.user
     });
 
     if (!companyId) {
@@ -26,9 +27,20 @@ router.get('/api/files', async (req, res) => {
       return res.status(400).json({ error: 'Company ID is required' });
     }
 
-    console.log('[Files] Executing database query for company:', companyId);
+    if (typeof companyId !== 'string' && typeof companyId !== 'number') {
+      console.log('[Files] Invalid company_id type:', typeof companyId);
+      return res.status(400).json({ error: 'Invalid company ID format' });
+    }
+
+    const parsedCompanyId = parseInt(companyId.toString(), 10);
+    if (isNaN(parsedCompanyId)) {
+      console.log('[Files] Failed to parse company_id:', companyId);
+      return res.status(400).json({ error: 'Invalid company ID format' });
+    }
+
+    console.log('[Files] Executing database query for company:', parsedCompanyId);
     const fileRecords = await db.query.files.findMany({
-      where: eq(files.company_id, parseInt(companyId.toString()))
+      where: eq(files.company_id, parsedCompanyId)
     });
 
     console.log('[Files] Raw file records from database:', fileRecords);
@@ -52,7 +64,7 @@ router.get('/api/files', async (req, res) => {
           fileName: file.name,
           calculatedSize: fileSize
         });
-      } else {
+      } else if (file.path) {
         // For physical files, verify they exist
         const filePath = path.join(uploadDir, file.path);
         const fileExists = fs.existsSync(filePath);
@@ -62,11 +74,28 @@ router.get('/api/files', async (req, res) => {
           path: filePath,
           exists: fileExists
         });
+        if (fileExists && !fileSize) {
+          try {
+            const stats = fs.statSync(filePath);
+            fileSize = stats.size;
+            console.log('[Files] Updated file size from disk:', {
+              fileId: file.id,
+              fileName: file.name,
+              size: fileSize
+            });
+          } catch (err) {
+            console.error('[Files] Error reading file stats:', {
+              fileId: file.id,
+              fileName: file.name,
+              error: err
+            });
+          }
+        }
       }
 
       return {
         ...file,
-        size: fileSize,
+        size: fileSize || 0,
         // Ensure consistent status
         status: file.status || 'uploaded'
       };
