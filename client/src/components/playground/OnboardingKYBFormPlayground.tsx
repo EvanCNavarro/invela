@@ -910,7 +910,7 @@ export const OnboardingKYBFormPlayground = ({
                     )}
 
                     {/* Step label */}
-                    <span className="text-[11px] text-[#6B7280] mt-3 text-center max-w-[90px] truncate font-medium">
+                    <span className="text-[11px] text-[#6B7280] mt-3 text-center w-[100px] min-h-[32px] line-clamp-2 font-medium">
                       {step[0].label}
                     </span>
                   </div>
