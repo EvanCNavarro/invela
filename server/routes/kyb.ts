@@ -1,9 +1,7 @@
 import { Router } from 'express';
-import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
 import { db } from '@db';
-import { tasks, TaskStatus, kybFields, kybResponses } from '@db/schema';
+import { tasks, TaskStatus, kybFields, kybResponses, files } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 
 const router = Router();
@@ -493,26 +491,36 @@ router.post('/api/kyb/save', async (req, res) => {
       responseCount: Object.values(groupedResponses).reduce((acc, group) => acc + Object.keys(group).length, 0)
     });
 
-    // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), 'uploads', 'kyb');
-    if (!existsSync(uploadDir)) {
-      logFileDebug('Creating upload directory', { path: uploadDir });
-      await mkdir(uploadDir, { recursive: true });
-    }
+    // Convert submission data to JSON string
+    const jsonData = JSON.stringify(submissionData, null, 2);
+    const fileSize = Buffer.from(jsonData).length;
 
-    // Save comprehensive data to file
-    const filePath = join(uploadDir, `${fileName}.json`);
-    logFileDebug('Writing file', {
-      filePath,
-      fileSize: JSON.stringify(submissionData).length,
-      uploadDir: existsSync(uploadDir)
+    // Create file record in database
+    const timestamp = new Date();
+    const [fileRecord] = await db.insert(files)
+      .values({
+        name: `${fileName}.json`,
+        size: fileSize,
+        type: 'application/json',
+        path: jsonData, // Store JSON content directly in path field
+        status: 'uploaded',
+        user_id: task.created_by || 1, // Default to user ID 1 if no creator
+        company_id: task.company_id,
+        upload_time: timestamp,
+        created_at: timestamp,
+        updated_at: timestamp,
+        version: 1.0
+      })
+      .returning();
+
+    logFileDebug('File record created', {
+      fileId: fileRecord.id,
+      fileName: fileRecord.name,
+      size: fileRecord.size,
+      timestamp: timestamp.toISOString()
     });
 
-    await writeFile(filePath, JSON.stringify(submissionData, null, 2), 'utf-8');
-    logFileDebug('File written successfully', { filePath });
-
-    // Update task status and save final responses
-    const timestamp = new Date();
+    // Save responses to database
     const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
 
     // Save responses to database
@@ -586,7 +594,7 @@ router.post('/api/kyb/save', async (req, res) => {
         updated_at: timestamp,
         metadata: {
           ...task.metadata,
-          kybFormFile: `${fileName}.json`,
+          kybFormFile: fileRecord.id, // Store file ID instead of filename
           submissionDate: timestamp.toISOString(),
           formVersion: '1.0',
           statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
@@ -596,7 +604,7 @@ router.post('/api/kyb/save', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     logFileDebug('Save completed', {
-      filePath,
+      fileId: fileRecord.id,
       taskId,
       status: TaskStatus.SUBMITTED,
       timestamp: timestamp.toISOString()
@@ -604,7 +612,7 @@ router.post('/api/kyb/save', async (req, res) => {
 
     res.json({
       success: true,
-      filePath,
+      fileId: fileRecord.id,
       metadata: submissionData.metadata
     });
   } catch (error) {
