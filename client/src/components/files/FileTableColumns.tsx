@@ -3,6 +3,7 @@ import { type FileItem } from "@/types/files";
 import { FileIcon } from "lucide-react";
 import { type FileStatus } from "@/types/files";
 import { type ColumnId } from "./useColumnVisibility";
+import { cn } from "@/utils/cn";
 
 // Utility function for status styling
 export const getStatusStyles = (status: FileStatus) => {
@@ -18,15 +19,16 @@ export const getStatusStyles = (status: FileStatus) => {
   return `${baseStyles} ${statusMap[status] || "text-muted-foreground"}`;
 };
 
-// Utility function for file size formatting
+// Update the file size formatting
 export const formatFileSize = (bytes: number) => {
-  if (bytes === 0) return '0 Bytes';
+  if (!bytes || bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
+// Update name cell to show JSON icon for JSON files
 export const getFileColumns = (visibleColumns: Set<ColumnId>): Column<FileItem>[] => {
   const allColumns: { [key in ColumnId]: Column<FileItem> } = {
     name: {
@@ -35,7 +37,10 @@ export const getFileColumns = (visibleColumns: Set<ColumnId>): Column<FileItem>[
       cell: (item) => (
         <div className="flex items-center gap-2 min-w-0">
           <div className="w-6 h-6 rounded flex items-center justify-center bg-[hsl(230,96%,96%)] flex-shrink-0">
-            <FileIcon className="w-3 h-3 text-primary" />
+            <FileIcon className={cn(
+              "w-3 h-3",
+              item.type === 'application/json' ? "text-blue-500" : "text-primary"
+            )} />
           </div>
           <span className="truncate block min-w-0 flex-1">{item.name}</span>
         </div>
@@ -78,7 +83,7 @@ export const getFileColumns = (visibleColumns: Set<ColumnId>): Column<FileItem>[
     actions: {
       id: 'actions',
       header: '',
-      cell: () => null, // This will be handled by the FileVault component
+      cell: () => null, 
       className: 'w-[48px]',
     },
   };

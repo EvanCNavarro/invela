@@ -80,10 +80,18 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
-  const { data: files = [] } = useQuery<TableRowData[]>({
+  const { data: files = [], isLoading } = useQuery<TableRowData[]>({
     queryKey: ['/api/files'],
     enabled: true,
-    staleTime: Infinity
+    select: (data) => {
+      return data.map(file => ({
+        ...file,
+        status: file.status || 'uploaded',
+        // Ensure proper size display for JSON files
+        size: typeof file.size === 'number' ? file.size : 
+              (file.path ? Buffer.from(JSON.stringify(file.path)).length : 0)
+      }));
+    }
   });
 
   const uploadMutation = useMutation({
