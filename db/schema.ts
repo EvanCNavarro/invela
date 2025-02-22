@@ -84,6 +84,7 @@ export const companies = pgTable("companies", {
   registry_date: timestamp("registry_date").notNull().defaultNow(),
   files_public: jsonb("files_public").$type<string[]>().default([]),
   files_private: jsonb("files_private").$type<string[]>().default([]),
+  available_tabs: text("available_tabs").array().notNull().default(['task-center']),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });

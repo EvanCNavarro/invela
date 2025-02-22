@@ -12,7 +12,13 @@ export async function addCompanyAvailableTabs() {
       -- Update existing companies based on category
       UPDATE companies 
       SET available_tabs = ARRAY['task-center', 'dashboard', 'network', 'file-vault', 'insights', 'builder', 'playground']
-      WHERE category IN ('Invela', 'Bank');
+      WHERE category = 'Invela';
+
+      UPDATE companies 
+      SET available_tabs = ARRAY['task-center', 'dashboard', 'network', 'file-vault', 'insights', 'builder']
+      WHERE category = 'Bank';
+
+      -- All other companies (FinTech) will keep the default ['task-center']
     `);
 
     console.log('Successfully added available_tabs column to companies table');
