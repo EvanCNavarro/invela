@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { join } from 'path';
 import { db } from '@db';
-import { tasks, TaskStatus, kybFields, kybResponses, files } from '@db/schema';
+import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 
 const router = Router();
@@ -423,6 +423,35 @@ router.post('/api/kyb/save', async (req, res) => {
       title: task.title,
       currentStatus: task.status
     });
+
+    // Get company record to update available tabs
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    // Add file-vault to available tabs if not already present
+    const currentTabs = company.available_tabs || ['task-center'];
+    if (!currentTabs.includes('file-vault')) {
+      const updatedTabs = [...currentTabs, 'file-vault'];
+
+      // Update company's available tabs
+      await db.update(companies)
+        .set({
+          available_tabs: updatedTabs,
+          updated_at: new Date()
+        })
+        .where(eq(companies.id, task.company_id));
+
+      logFileDebug('Updated company available tabs', {
+        companyId: task.company_id,
+        previousTabs: currentTabs,
+        newTabs: updatedTabs
+      });
+    }
 
     // Get all KYB fields with their groups
     const fields = await db.select()

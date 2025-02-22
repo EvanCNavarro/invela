@@ -54,12 +54,6 @@ export function Sidebar({
     enabled: !isPlayground,
   });
 
-  // Fetch company files to determine if File Vault should be unlocked
-  const { data: companyFiles = [] } = useQuery({
-    queryKey: ["/api/files"],
-    enabled: !isPlayground && variant === 'company-locked',
-  });
-
   // Update taskCount when tasks data changes
   useEffect(() => {
     if (!isPlayground && Array.isArray(tasks)) {
@@ -116,15 +110,15 @@ export function Sidebar({
     };
   }, [isPlayground]);
 
-  // Check if company has any files to determine if File Vault should be unlocked
-  const hasFiles = companyFiles.length > 0;
+  // Get available tabs from company data
+  const availableTabs = company?.available_tabs || ['task-center'];
 
   const menuItems = [
     {
       icon: HomeIcon,
       label: "Dashboard",
       href: "/",
-      locked: variant === 'company-locked' || isNewUser
+      locked: !availableTabs.includes('dashboard')
     },
     {
       icon: CheckCircleIcon,
@@ -137,26 +131,26 @@ export function Sidebar({
       icon: Network,
       label: "Network",
       href: "/network",
-      locked: variant === 'company-locked' || isNewUser,
+      locked: !availableTabs.includes('network'),
       pulsingDot: showPulsingDot
     },
     {
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: variant === 'company-locked' ? !hasFiles : false // Only locked if company is locked and has no files
+      locked: !availableTabs.includes('file-vault')
     },
     {
       icon: BarChartIcon,
       label: "Insights",
       href: "/insights",
-      locked: variant === 'company-locked' || isNewUser
+      locked: !availableTabs.includes('insights')
     },
     {
       icon: Hammer,
       label: "Builder",
       href: "/builder",
-      locked: variant === 'company-locked' || isNewUser
+      locked: !availableTabs.includes('builder')
     }
   ];
 
@@ -171,7 +165,7 @@ export function Sidebar({
       icon: MousePointer2Icon,
       label: "Playground",
       href: "/playground",
-      locked: variant === 'company-locked'
+      locked: !availableTabs.includes('playground')
     });
   }
 
