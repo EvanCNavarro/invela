@@ -558,8 +558,8 @@ const FileVault: React.FC = () => {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          checked={table.getIsAllSelected()}
-          onCheckedChange={(value) => toggleAllFiles(paginatedFiles)}
+          checked={selectedFiles.size === paginatedFiles.length}
+          onCheckedChange={() => toggleAllFiles(paginatedFiles)}
           aria-label="Select all"
         />
       ),
@@ -570,24 +570,28 @@ const FileVault: React.FC = () => {
           aria-label="Select row"
         />
       ),
+      width: 40,
     },
     {
       id: 'name',
       header: 'Name',
       cell: ({ row }) => <FileNameCell file={row} />,
-      sortable: true
+      sortable: true,
+      width: 300,
     },
     {
       id: 'size',
       header: 'Size',
       cell: ({ row }) => formatFileSize(row.size),
-      sortable: true
+      sortable: true,
+      width: 100,
     },
     {
       id: 'createdAt',
       header: 'Created',
       cell: ({ row }) => formatDate(row.createdAt),
-      sortable: true
+      sortable: true,
+      width: 120,
     },
     {
       id: 'status',
@@ -597,14 +601,16 @@ const FileVault: React.FC = () => {
           {row.status}
         </span>
       ),
-      sortable: true
+      sortable: true,
+      width: 100,
     },
     {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
         <FileActions file={row} onDelete={handleDelete} />
-      )
+      ),
+      width: 50,
     }
   ];
 
@@ -681,15 +687,25 @@ const FileVault: React.FC = () => {
               </div>
             </div>
 
-            <div className="w-full">
+            <div className="w-full border rounded-lg">
               <div className="overflow-x-auto">
                 <Table
                   data={paginatedFiles}
-                  columns={visibleColumns}
+                  columns={columns}
                   onSort={handleSort}
                   sortConfig={sortConfig}
                 />
               </div>
+
+              {isLoading ? (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : paginatedFiles.length === 0 ? (
+                <div className="text-center p-4 text-muted-foreground">
+                  No files found
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
