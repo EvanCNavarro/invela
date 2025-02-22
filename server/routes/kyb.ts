@@ -687,9 +687,11 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         Object.entries(groups).forEach(([_, fields]: [string, any]) => {
           Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
             const fieldInfo = fieldQuestions.get(fieldKey);
+            if (!fieldInfo) return;
+
             csvRows.push([
-              fieldInfo?.group || 'Uncategorized',
-              fieldInfo?.question || data.question,
+              fieldInfo.group, // Use the field's group from the database
+              fieldInfo.question, // Use the actual question from the database
               data.answer || '',
               data.type,
               data.answeredAt
