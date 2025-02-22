@@ -16,6 +16,7 @@ import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
+import confetti from 'canvas-confetti';
 
 interface TaskPageProps {
   params: {
@@ -215,6 +216,14 @@ export default function TaskPage({ params }: TaskPageProps) {
                   return response.json();
                 })
                 .then((result) => {
+                  // Trigger confetti on successful submission
+                  confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                  });
+
                   setFileId(result.fileId);
                   setIsSubmitted(true);
                   setShowSuccessModal(true);

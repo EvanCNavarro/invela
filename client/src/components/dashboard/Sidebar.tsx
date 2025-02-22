@@ -54,6 +54,12 @@ export function Sidebar({
     enabled: !isPlayground,
   });
 
+  // Fetch company files to determine if File Vault should be unlocked
+  const { data: companyFiles = [] } = useQuery({
+    queryKey: ["/api/files"],
+    enabled: !isPlayground && variant === 'company-locked',
+  });
+
   // Update taskCount when tasks data changes
   useEffect(() => {
     if (!isPlayground && Array.isArray(tasks)) {
@@ -110,6 +116,9 @@ export function Sidebar({
     };
   }, [isPlayground]);
 
+  // Check if company has any files to determine if File Vault should be unlocked
+  const hasFiles = companyFiles.length > 0;
+
   const menuItems = [
     {
       icon: HomeIcon,
@@ -135,7 +144,7 @@ export function Sidebar({
       icon: FileIcon,
       label: "File Vault",
       href: "/file-vault",
-      locked: variant === 'company-locked' || isNewUser
+      locked: variant === 'company-locked' ? !hasFiles : false // Only locked if company is locked and has no files
     },
     {
       icon: BarChartIcon,
