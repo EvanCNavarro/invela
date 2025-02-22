@@ -4,9 +4,101 @@ import { eq } from "drizzle-orm";
 import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
+import multer from 'multer';
 
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads');
+
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    cb(null, `${uniqueSuffix}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
+  }
+});
+
+// File upload endpoint
+router.post('/api/files', upload.single('file'), async (req, res) => {
+  try {
+    console.log('[Files] Processing file upload request');
+
+    if (!req.file) {
+      console.log('[Files] No file received in request');
+      return res.status(400).json({ 
+        error: 'No file uploaded',
+        detail: 'Request must include a file'
+      });
+    }
+
+    console.log('[Files] File details:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      filename: req.file.filename
+    });
+
+    if (!req.user?.id || !req.user?.company_id) {
+      console.log('[Files] Authentication required');
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        detail: 'User must be logged in to upload files'
+      });
+    }
+
+    // Create file record in database
+    const [fileRecord] = await db.insert(files)
+      .values({
+        name: req.file.originalname,
+        path: req.file.filename,
+        type: req.file.mimetype,
+        size: req.file.size,
+        user_id: req.user.id,
+        company_id: req.user.company_id,
+        status: 'uploaded',
+        download_count: 0,
+        version: 1
+      })
+      .returning();
+
+    console.log('[Files] Created file record:', {
+      id: fileRecord.id,
+      name: fileRecord.name,
+      size: fileRecord.size
+    });
+
+    res.status(201).json(fileRecord);
+  } catch (error) {
+    console.error('[Files] Error processing upload:', error);
+
+    // Clean up uploaded file if database operation fails
+    if (req.file) {
+      const filePath = path.join(uploadDir, req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    res.status(500).json({ 
+      error: 'Upload failed',
+      detail: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+  }
+});
 
 // Get all files for a company
 router.get('/api/files', async (req, res) => {
@@ -77,127 +169,61 @@ router.get('/api/files', async (req, res) => {
       lastRecord: fileRecords[fileRecords.length - 1]
     });
 
-    // Transform file records to handle both physical files and JSON content
-    const transformedFiles = fileRecords.map(file => {
-      console.log('[Files] Processing file record:', {
-        id: file.id,
-        name: file.name,
-        type: file.type,
-        path: file.path?.substring(0, 50) + '...' // Truncate long paths
-      });
-
-      let fileSize = file.size;
-
-      // For JSON content stored directly in path, calculate size from content
-      if (file.type === 'application/json' && file.path && file.path.startsWith('{')) {
-        fileSize = Buffer.from(file.path).length;
-        console.log('[Files] Calculated JSON content size:', {
-          fileId: file.id,
-          fileName: file.name,
-          calculatedSize: fileSize
-        });
-      }
-
-      return {
-        ...file,
-        size: fileSize || 0,
-        // Ensure consistent status
-        status: file.status || 'uploaded'
-      };
-    });
-
-    console.log('[Files] Transformed files:', transformedFiles.map(f => ({
-      id: f.id,
-      name: f.name,
-      size: f.size,
-      status: f.status
-    })));
-
-    res.json(transformedFiles);
+    res.json(fileRecords);
   } catch (error) {
-    console.error('[Files] Error in file fetch endpoint:', {
-      error,
-      stack: error instanceof Error ? error.stack : undefined,
-      message: error instanceof Error ? error.message : 'Unknown error'
+    console.error('[Files] Error in file fetch endpoint:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
-    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Download endpoint
-router.get("/files/:id/download", async (req, res) => {
+router.get("/api/files/:id/download", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
     console.log('[Files] Download request for file:', fileId);
 
-    const fileRecord = await db.query.files.findFirst({
-      where: eq(files.id, fileId)
-    });
-
-    console.log('[Files] Found file record:', fileRecord);
+    const [fileRecord] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
 
     if (!fileRecord) {
       console.log('[Files] File not found:', fileId);
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Handle JSON content stored directly in path
-    if (fileRecord.type === 'application/json' && fileRecord.path && fileRecord.path.startsWith('{')) {
-      console.log('[Files] Serving JSON content file:', {
-        fileId,
-        fileName: fileRecord.name,
-        contentLength: fileRecord.path.length
-      });
+    const filePath = path.join(uploadDir, fileRecord.path);
+    console.log('[Files] Physical file path:', filePath);
 
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
-      return res.send(fileRecord.path);
+    if (!fs.existsSync(filePath)) {
+      console.error('[Files] File missing from disk:', filePath);
+      return res.status(404).json({ error: "File not found on disk" });
     }
 
-    const filePath = path.join(uploadDir, fileRecord.path);
-    console.log('[Files] Physical file path:', {
-      fileId,
-      filePath,
-      exists: fs.existsSync(filePath)
-    });
-
-    // Update download count before sending file
-    await db
-      .update(files)
-      .set({
-        download_count: (fileRecord.download_count || 0) + 1,
-        last_accessed: new Date().toISOString()
-      })
+    // Update download count
+    await db.update(files)
+      .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    // Send physical file
-    res.download(
-      filePath,
-      fileRecord.name,
-      (err) => {
-        if (err) {
-          console.error("[Files] Error downloading file:", {
-            error: err,
-            stack: err.stack,
-            fileId,
-            filePath
-          });
+    res.download(filePath, fileRecord.name, (err) => {
+      if (err) {
+        console.error("[Files] Error downloading file:", {
+          error: err,
+          fileId,
+          filePath
+        });
+        if (!res.headersSent) {
           res.status(500).json({ error: "Error downloading file" });
-        } else {
-          console.log('[Files] File downloaded successfully:', {
-            fileId,
-            fileName: fileRecord.name
-          });
         }
       }
-    );
-  } catch (error) {
-    console.error("[Files] Error in download endpoint:", {
-      error,
-      stack: error.stack,
-      message: error.message
     });
-    res.status(500).json({ error: "Internal server error" });
+  } catch (error) {
+    console.error("[Files] Error in download endpoint:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 
