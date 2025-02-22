@@ -325,10 +325,10 @@ const FileVault: React.FC = () => {
   };
 
   const allFiles = useMemo(() => {
-    const combined = [...uploadingFiles, ...(files as TableRowData[])];
+    const combined = [...uploadingFiles, ...(files || [])];
     console.log('[FileVault] Combined files:', {
       uploadingCount: uploadingFiles.length,
-      filesCount: files.length,
+      filesCount: files?.length || 0,
       totalCount: combined.length,
       firstFile: combined[0],
       lastFile: combined[combined.length - 1]
@@ -341,8 +341,7 @@ const FileVault: React.FC = () => {
       totalFiles: allFiles.length,
       searchQuery,
       statusFilter,
-      sortConfig,
-      firstInputFile: allFiles[0]
+      sortConfig
     });
 
     let result = [...allFiles];
@@ -404,7 +403,7 @@ const FileVault: React.FC = () => {
     });
 
     return result;
-  }, [allFiles, statusFilter, sortConfig, searchQuery, searchResults]);
+  }, [allFiles, searchQuery, statusFilter, sortConfig]);
 
   const paginatedFiles = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -584,10 +583,10 @@ const FileVault: React.FC = () => {
     );
   };
 
-  const columns: FileTableColumn[] = [
+  const columns: Column<TableRowData>[] = [
     {
       id: 'select',
-      header: ({ table }) => (
+      header: () => (
         <Checkbox
           checked={selectedFiles.size === paginatedFiles.length}
           onCheckedChange={() => toggleAllFiles(paginatedFiles)}
@@ -601,61 +600,47 @@ const FileVault: React.FC = () => {
           aria-label="Select row"
         />
       ),
-      width: 40,
     },
     {
       id: 'name',
       header: 'Name',
-      cell: ({ row }) => {
-        console.log('[FileVault] Rendering name cell:', row);
-        return <FileNameCell file={row} />;
-      },
-      sortable: true,
-      width: 300,
+      accessorKey: 'name',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <FileIcon className="h-4 w-4" />
+          <span>{row.name}</span>
+        </div>
+      ),
     },
     {
       id: 'size',
       header: 'Size',
-      cell: ({ row }) => {
-        console.log('[FileVault] Rendering size cell:', row.size);
-        return formatFileSize(row.size);
-      },
-      sortable: true,
-      width: 100,
+      accessorKey: 'size',
+      cell: ({ row }) => formatFileSize(row.size),
     },
     {
       id: 'createdAt',
       header: 'Created',
-      cell: ({ row }) => {
-        console.log('[FileVault] Rendering date cell:', row.createdAt);
-        return formatDate(row.createdAt);
-      },
-      sortable: true,
-      width: 120,
+      accessorKey: 'createdAt',
+      cell: ({ row }) => formatDate(row.createdAt),
     },
     {
       id: 'status',
       header: 'Status',
-      cell: ({ row }) => {
-        console.log('[FileVault] Rendering status cell:', row.status);
-        return (
-          <span className={getStatusStyles(row.status)}>
-            {row.status}
-          </span>
-        );
-      },
-      sortable: true,
-      width: 100,
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <span className={getStatusStyles(row.status as FileStatus)}>
+          {row.status}
+        </span>
+      ),
     },
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => {
-        console.log('[FileVault] Rendering actions cell:', row.id);
-        return <FileActions file={row} onDelete={handleDelete} />;
-      },
-      width: 50,
-    }
+      cell: ({ row }) => (
+        <FileActions file={row as TableRowData} onDelete={handleDelete} />
+      ),
+    },
   ];
 
   const handleFileUpload = (files: File[]) => {
