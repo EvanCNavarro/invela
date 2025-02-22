@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
@@ -78,25 +78,47 @@ const FileVault: React.FC = () => {
     queryKey: ['/api/files', { company_id: user?.company_id }],
     enabled: !!user?.company_id,
     queryFn: async () => {
-      console.log('[FileVault Debug] User context:', {
+      console.log('[FileVault Debug] Starting API request:', {
         userId: user?.id,
-        companyId: user?.company_id
+        companyId: user?.company_id,
+        timestamp: new Date().toISOString()
       });
 
       const url = new URL('/api/files', window.location.origin);
       url.searchParams.append('company_id', user!.company_id.toString());
       const response = await fetch(url);
+
       if (!response.ok) {
+        console.error('[FileVault Debug] API request failed:', {
+          status: response.status,
+          statusText: response.statusText
+        });
         throw new Error('Failed to fetch files');
       }
+
       const data = await response.json();
-      console.log('[FileVault Debug] API Response:', {
+      console.log('[FileVault Debug] API Response received:', {
         fileCount: data.length,
-        files: data
+        firstFile: data[0],
+        dataShape: data.length > 0 ? Object.keys(data[0]) : 'No data',
+        timestamp: new Date().toISOString()
       });
+
       return data;
     }
   });
+
+  useEffect(() => {
+    console.log('[FileVault Debug] Component state updated:', {
+      hasFiles: files.length > 0,
+      isLoading,
+      userContext: {
+        isAuthenticated: !!user,
+        companyId: user?.company_id
+      },
+      timestamp: new Date().toISOString()
+    });
+  }, [files, isLoading, user]);
 
   const allFiles = useMemo(() => {
     const combined = [...uploadingFiles, ...files];

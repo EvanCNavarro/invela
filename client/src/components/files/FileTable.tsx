@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -67,12 +67,21 @@ export function FileTable<T extends TableItem>({
   visibleColumns = new Set(['fileName', 'size', 'status', 'createdAt', 'actions']),
   isLoading = false,
 }: FileTableProps<T>) {
-  console.log('[FileTable Debug] Received props:', {
-    dataLength: data.length,
-    firstItem: data[0],
-    selectedItemsCount: selectedItems.size,
-    visibleColumns,
-    isLoading
+
+  useEffect(() => {
+    console.log('[FileTable Debug] Component mounted/updated:', {
+      dataLength: data.length,
+      firstItem: data[0],
+      visibleColumns: Array.from(visibleColumns),
+      isLoading
+    });
+  }, [data, visibleColumns, isLoading]);
+
+  console.log('[FileTable Debug] Render cycle:', {
+    dataShape: data.length > 0 ? Object.keys(data[0]) : 'No data',
+    expectedColumns: ['id', 'name', 'size', 'status', 'createdAt'],
+    actualColumns: Array.from(visibleColumns),
+    mountState: 'rendering'
   });
 
   const getSortIcon = (field: SortField) => {
