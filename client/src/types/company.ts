@@ -69,6 +69,7 @@ export const companySchema = z.object({
     'REVOKED',
     'EXPIRED'
   ]).default('AWAITING_INVITATION'),
+  available_tabs: z.array(z.string()).default(['task-center']),
   documents: z.array(documentSchema).optional(),
   logoId: z.string().optional(),
 });
