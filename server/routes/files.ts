@@ -1,9 +1,51 @@
 import { db } from "@db";
 import { files } from "@db/schema";
 import { eq } from "drizzle-orm";
+import { Router } from 'express';
+import path from 'path';
+import fs from 'fs';
 
-// ... other imports and code ...
+const router = Router();
+const uploadDir = path.join(process.cwd(), 'uploads');
 
+// Get all files for a company
+router.get('/api/files', async (req, res) => {
+  try {
+    const companyId = req.query.company_id;
+
+    if (!companyId) {
+      return res.status(400).json({ error: 'Company ID is required' });
+    }
+
+    const fileRecords = await db.query.files.findMany({
+      where: eq(files.company_id, parseInt(companyId.toString()))
+    });
+
+    // Transform file records to handle both physical files and JSON content
+    const transformedFiles = fileRecords.map(file => {
+      let fileSize = file.size;
+
+      // For JSON content stored directly in path, calculate size from content
+      if (file.type === 'application/json' && file.path && file.path.startsWith('{')) {
+        fileSize = Buffer.from(file.path).length;
+      }
+
+      return {
+        ...file,
+        size: fileSize,
+        // Ensure consistent status
+        status: file.status || 'uploaded'
+      };
+    });
+
+    res.json(transformedFiles);
+  } catch (error) {
+    console.error('Error fetching files:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Download endpoint
 router.get("/files/:id/download", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
@@ -15,8 +57,12 @@ router.get("/files/:id/download", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    console.log("Debug - Found file in database:", fileRecord);
-    console.log("Debug - Looking for file at path:", path.join(uploadDir, fileRecord.path));
+    // Handle JSON content stored directly in path
+    if (fileRecord.type === 'application/json' && fileRecord.path && fileRecord.path.startsWith('{')) {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
+      return res.send(fileRecord.path);
+    }
 
     // Update download count before sending file
     await db
@@ -27,7 +73,7 @@ router.get("/files/:id/download", async (req, res) => {
       })
       .where(eq(files.id, fileId));
 
-    // Send file
+    // Send physical file
     res.download(
       path.join(uploadDir, fileRecord.path),
       fileRecord.name,
@@ -44,4 +90,4 @@ router.get("/files/:id/download", async (req, res) => {
   }
 });
 
-// ... rest of the file remains unchanged ...
+export default router;
