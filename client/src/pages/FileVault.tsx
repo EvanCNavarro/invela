@@ -253,22 +253,26 @@ export const FileVault: React.FC = () => {
     }
   };
 
-  const onDrop = async (acceptedFiles: File[]) => {
-    if (isUploading) return;
+  const handleFileUpload = async (files: File[]) => {
+    if (isUploading || !files.length) return;
 
     console.log('[FileVault Debug] Starting file upload:', {
-      fileCount: acceptedFiles.length,
-      files: acceptedFiles.map(f => ({ name: f.name, size: f.size, type: f.type }))
+      fileCount: files.length,
+      files: files.map(f => ({ name: f.name, size: f.size, type: f.type }))
     });
 
     setIsUploading(true);
     try {
       // Upload files sequentially to prevent race conditions
-      for (const file of acceptedFiles) {
+      for (const file of files) {
         await uploadFile(file);
       }
     } finally {
       setIsUploading(false);
+      // Clear the file input after upload
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -328,10 +332,10 @@ export const FileVault: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            <DragDropProvider onFilesAccepted={onDrop}>
+            <DragDropProvider onFilesAccepted={handleFileUpload}>
               <FileUploadZone
                 acceptedFormats={ACCEPTED_FORMATS}
-                onFilesAccepted={onDrop}
+                onFilesAccepted={handleFileUpload}
                 disabled={isUploading}
               />
             </DragDropProvider>
@@ -446,7 +450,7 @@ export const FileVault: React.FC = () => {
         multiple
         onChange={(e) => {
           if (e.target.files) {
-            onDrop(Array.from(e.target.files));
+            handleFileUpload(Array.from(e.target.files));
           }
         }}
       />
