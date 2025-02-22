@@ -53,6 +53,7 @@ import { SearchBar } from "@/components/ui/search-bar";
 import { Table } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import crypto from 'crypto';
+import {ChangeEvent} from 'react';
 
 interface FileTableColumn extends Column<TableRowData> {}
 
@@ -80,17 +81,27 @@ const FileVault: React.FC = () => {
   const [showConflictModal, setShowConflictModal] = useState(false);
   const [searchResults, setSearchResults] = useState<Array<any>>([]);
 
+  // Update the useQuery implementation to include company_id and add debugging
   const { data: files = [], isLoading } = useQuery<TableRowData[]>({
-    queryKey: ['/api/files'],
+    queryKey: ['/api/files', { company_id: 1 }], // Replace 1 with actual company ID retrieval
     enabled: true,
     select: (data) => {
-      return data.map(file => ({
-        ...file,
-        status: file.status || 'uploaded',
-        // Ensure proper size display for JSON files
-        size: typeof file.size === 'number' ? file.size : 
-              (file.path ? Buffer.from(file.path).length : 0)
-      }));
+      console.log('[FileVault] Raw API response:', data);
+      return data.map(file => {
+        console.log('[FileVault] Processing file:', {
+          id: file.id,
+          name: file.name,
+          size: file.size,
+          path: file.path
+        });
+        return {
+          ...file,
+          status: file.status || 'uploaded',
+          // Handle file size calculation
+          size: typeof file.size === 'number' ? file.size : 
+                (file.path ? Buffer.from(file.path).length : 0)
+        };
+      });
     }
   });
 
@@ -265,26 +276,53 @@ const FileVault: React.FC = () => {
     ];
   }, [files, uploadingFiles]);
 
+  // Add debug logging to the filteredAndSortedFiles useMemo
   const filteredAndSortedFiles = useMemo(() => {
+    console.log('[FileVault] Starting file filtering with:', {
+      totalFiles: allFiles.length,
+      searchQuery,
+      statusFilter,
+      sortConfig
+    });
+
     let result = [...allFiles];
 
     if (searchQuery && searchResults.length > 0) {
       const matchedIds = new Set(searchResults.map(result => result.item.id));
       result = result.filter(file => matchedIds.has(file.id));
+      console.log('[FileVault] After search filtering:', {
+        matchedIds: Array.from(matchedIds),
+        remainingFiles: result.length
+      });
     } else if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(file =>
         file.name.toLowerCase().includes(query) ||
         file.status.toLowerCase().includes(query)
       );
+      console.log('[FileVault] After text search:', {
+        query,
+        remainingFiles: result.length
+      });
     }
 
     if (statusFilter !== 'all') {
       result = result.filter(file => file.status === statusFilter);
+      console.log('[FileVault] After status filtering:', {
+        statusFilter,
+        remainingFiles: result.length
+      });
     }
 
     result.sort((a, b) => {
       const modifier = sortConfig.order === 'asc' ? 1 : -1;
+      console.log('[FileVault] Sorting files:', {
+        field: sortConfig.field,
+        order: sortConfig.order,
+        fileA: a.name,
+        fileB: b.name
+      });
+
       switch (sortConfig.field) {
         case 'name':
           return modifier * a.name.localeCompare(b.name);
@@ -297,6 +335,12 @@ const FileVault: React.FC = () => {
         default:
           return 0;
       }
+    });
+
+    console.log('[FileVault] Final filtered and sorted files:', {
+      totalFiles: result.length,
+      firstFile: result[0],
+      lastFile: result[result.length - 1]
     });
 
     return result;
@@ -377,8 +421,11 @@ const FileVault: React.FC = () => {
     deleteMutation.mutate(fileId);
   };
 
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
+  // Fix the handleSearch type mismatch
+  const handleSearch = (value: string | ChangeEvent<HTMLInputElement>) => {
+    const searchValue = typeof value === 'string' ? value : value.target.value;
+    setSearchQuery(searchValue);
+    console.log('[FileVault] Search updated:', { searchValue });
   };
 
   const highlightMatch = (text: string, matches: any[]) => {
@@ -522,6 +569,21 @@ const FileVault: React.FC = () => {
   const handleFileUpload = (files: File[]) => {
     onDrop(files);
   };
+
+  // Add version safety check and logging
+  const handleRenameFile = (fileId: string, newName: string) => {
+    setFiles(prev => prev.map(f => 
+      f.id === fileId
+        ? { 
+            ...f, 
+            name: newName,
+            version: (f.version || 1.0) + 1.0  // Default to 1.0 if version is undefined
+          }
+        : f
+    ));
+    console.log('[FileVault] File renamed:', { fileId, newName });
+  };
+
 
   return (
     <DashboardLayout>
