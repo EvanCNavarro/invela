@@ -78,21 +78,43 @@ const FileVault: React.FC = () => {
     queryKey: ['/api/files', { company_id: user?.company_id }],
     enabled: !!user?.company_id,
     queryFn: async () => {
+      console.log('[FileVault Debug] User context:', {
+        userId: user?.id,
+        companyId: user?.company_id
+      });
+
       const url = new URL('/api/files', window.location.origin);
       url.searchParams.append('company_id', user!.company_id.toString());
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch files');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('[FileVault Debug] API Response:', {
+        fileCount: data.length,
+        files: data
+      });
+      return data;
     }
   });
 
   const allFiles = useMemo(() => {
-    return [...uploadingFiles, ...files];
+    const combined = [...uploadingFiles, ...files];
+    console.log('[FileVault Debug] Combined files:', {
+      uploadingFiles,
+      fetchedFiles: files,
+      combinedFiles: combined
+    });
+    return combined;
   }, [files, uploadingFiles]);
 
   const filteredFiles = useMemo(() => {
+    console.log('[FileVault Debug] Starting file filtering:', {
+      allFiles,
+      searchQuery,
+      statusFilter
+    });
+
     let result = [...allFiles];
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -103,6 +125,11 @@ const FileVault: React.FC = () => {
     if (statusFilter !== 'all') {
       result = result.filter(file => file.status === statusFilter);
     }
+
+    console.log('[FileVault Debug] After filtering:', {
+      resultCount: result.length,
+      result
+    });
     return result;
   }, [allFiles, searchQuery, statusFilter]);
 
@@ -447,6 +474,11 @@ const FileVault: React.FC = () => {
 
             <div className="border rounded-lg">
               <div className="overflow-x-auto">
+                {console.log('[FileVault Debug] Rendering table with:', {
+                  paginatedFiles,
+                  columns,
+                  isLoading
+                })}
                 <Table
                   data={paginatedFiles}
                   columns={columns}
