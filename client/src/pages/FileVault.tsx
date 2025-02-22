@@ -24,7 +24,7 @@ import { FileTable, type SortField, type SortOrder } from "@/components/files/Fi
 
 const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG";
 
-const FileVault: React.FC = () => {
+export const FileVault: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
@@ -162,8 +162,7 @@ const FileVault: React.FC = () => {
         const res = await fetch('/api/files', {
           method: 'POST',
           headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'multipart/form-data' // Added Content-Type header
+            'Accept': 'application/json'
           },
           body: formData
         });
