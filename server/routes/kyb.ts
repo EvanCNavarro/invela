@@ -655,11 +655,30 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
     }
 
     // Get all field questions
-    const fields = await db.select()
+    const fields = await db.select({
+      field_key: kybFields.field_key,
+      display_name: kybFields.display_name,
+      question: kybFields.question,
+      group: kybFields.group,
+      field_type: kybFields.field_type
+    })
       .from(kybFields)
       .orderBy(kybFields.order);
 
-    const fieldQuestions = new Map(fields.map(f => [f.field_key, { question: f.question, group: f.group }]));
+    logFileDebug('Retrieved field information', {
+      fieldCount: fields.length,
+      sampleField: fields[0],
+      allKeys: fields.map(f => f.field_key)
+    });
+
+    const fieldQuestions = new Map(
+      fields.map(f => [f.field_key, {
+        name: f.display_name,
+        question: f.question,
+        group: f.group,
+        type: f.field_type
+      }])
+    );
 
     // Parse the stored JSON data
     const jsonData = JSON.parse(file.path);
@@ -678,26 +697,25 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       case 'csv':
         // Convert the responses object to CSV format
         const csvRows = [];
-        const groups = jsonData.responses;
 
         // Add headers
         csvRows.push(['Group', 'Question', 'Answer', 'Type', 'Answered At']);
 
         // Add data rows
-        Object.entries(groups).forEach(([_, fields]: [string, any]) => {
-          Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
-            const fieldInfo = fieldQuestions.get(fieldKey);
-            if (!fieldInfo) return;
+        for (const field of fields) {
+          const fieldKey = field.field_key;
+          const response = jsonData.responses?.Uncategorized?.[fieldKey];
 
+          if (response) {
             csvRows.push([
-              fieldInfo.group, // Use the field's group from the database
-              fieldInfo.question, // Use the actual question from the database
-              data.answer || '',
-              data.type,
-              data.answeredAt
+              field.group,
+              field.question,
+              response.answer || '',
+              field.field_type,
+              response.answeredAt
             ]);
-          });
-        });
+          }
+        }
 
         // Convert to CSV string
         downloadData = csvRows.map(row => row.map(cell =>
@@ -717,24 +735,23 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         textParts.push(`Status: ${jsonData.metadata.status}\n`);
 
         // Group fields by their category
-        const groupedFields = new Map<string, Array<{key: string, data: any}>>();
-        Object.entries(jsonData.responses).forEach(([_, fields]: [string, any]) => {
-          Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
-            const fieldInfo = fieldQuestions.get(fieldKey);
-            const group = fieldInfo?.group || 'Uncategorized';
-            if (!groupedFields.has(group)) {
-              groupedFields.set(group, []);
+        const groupedFields = new Map<string, Array<{field: any, response: any}>>();
+
+        for (const field of fields) {
+          const response = jsonData.responses?.Uncategorized?.[field.field_key];
+          if (response) {
+            if (!groupedFields.has(field.group)) {
+              groupedFields.set(field.group, []);
             }
-            groupedFields.get(group)?.push({ key: fieldKey, data });
-          });
-        });
+            groupedFields.get(field.group)?.push({ field, response });
+          }
+        }
 
         // Output by group
-        for (const [group, fields] of groupedFields) {
+        for (const [group, items] of groupedFields) {
           textParts.push(`\n${group}:\n` + '='.repeat(group.length) + '\n');
-          for (const { key, data } of fields) {
-            const fieldInfo = fieldQuestions.get(key);
-            textParts.push(`${fieldInfo?.question || data.question}\nAnswer: ${data.answer || 'Not provided'}\n`);
+          for (const { field, response } of items) {
+            textParts.push(`${field.question}\nAnswer: ${response.answer || 'Not provided'}\n`);
           }
         }
 
