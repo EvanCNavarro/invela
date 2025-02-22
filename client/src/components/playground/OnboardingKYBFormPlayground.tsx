@@ -333,14 +333,15 @@ export const OnboardingKYBFormPlayground = ({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);  // New loading state
-  const [dataInitialized, setDataInitialized] = useState(false);  // New initialization state
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataInitialized, setDataInitialized] = useState(false);
+  const [formReady, setFormReady] = useState(false);
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
-  const [isCompanyDataLoading, setIsCompanyDataLoading] = useState(false); // Added state for company data loading
+  const isCompanyDataLoading = useState(false);
 
   // Function to find the first incomplete step
   const findFirstIncompleteStep = (formData: Record<string, string>): number => {
@@ -364,97 +365,93 @@ export const OnboardingKYBFormPlayground = ({
     return null;
   };
 
-  // Load initial form data with forced refresh and set initial step
+  // Effect to initialize form data
   useEffect(() => {
-    const loadInitialData = async () => {
+    let mounted = true;
+
+    const initializeFormData = async () => {
       setIsLoading(true);
-      console.log('[KYB Form Debug] Starting initial data load:', {
-        taskId,
-        companyName,
-        hasSavedData: !!initialSavedFormData,
-        hasCompanyData: !!initialCompanyData,
-        timestamp: new Date().toISOString()
-      });
+      let initialData: Record<string, string> = {};
 
-      let dataToLoad: Record<string, string> = {};
-
-      if (taskId) {
-        try {
+      try {
+        if (taskId) {
           const response = await fetch(`/api/kyb/progress/${taskId}`);
-          if (!response.ok) throw new Error('Failed to fetch latest progress');
-          const { formData: latestFormData, progress: latestProgress } = await response.json();
+          if (!response.ok) throw new Error('Failed to fetch task data');
 
-          console.log('[KYB Form Debug] Task data retrieved:', {
+          const { formData: savedData, progress: savedProgress } = await response.json();
+          console.log('[KYB Form Debug] Loaded task data:', {
             taskId,
-            progress: latestProgress,
-            formDataFields: Object.keys(latestFormData || {}),
-            formData: latestFormData,
+            hasData: !!savedData,
+            fields: savedData ? Object.keys(savedData) : [],
             timestamp: new Date().toISOString()
           });
 
-          if (latestFormData) {
-            dataToLoad = Object.entries(latestFormData).reduce((acc, [key, value]) => {
+          if (savedData) {
+            initialData = Object.entries(savedData).reduce((acc, [key, value]) => {
               if (value !== null && value !== undefined) {
                 acc[key] = String(value);
               }
               return acc;
             }, {} as Record<string, string>);
-          }
 
-          setProgress(latestProgress);
-          lastProgressRef.current = latestProgress;
-          logFormDataDebug('Initial task data', dataToLoad);
-        } catch (error) {
-          console.error('[KYB Form Debug] Error fetching latest data:', error);
-          if (initialSavedFormData) {
-            dataToLoad = extractFormData(initialSavedFormData);
-            const calculatedProgress = calculateProgress(dataToLoad);
-            setProgress(calculatedProgress);
-            lastProgressRef.current = calculatedProgress;
-            logFormDataDebug('Fallback to initial saved data', dataToLoad);
+            setProgress(savedProgress);
+            lastProgressRef.current = savedProgress;
           }
+        } else if (initialSavedFormData) {
+          initialData = Object.entries(initialSavedFormData).reduce((acc, [key, value]) => {
+            if (value !== null && value !== undefined) {
+              acc[key] = String(value);
+            }
+            return acc;
+          }, {} as Record<string, string>);
+
+          const initialProgress = calculateProgress(initialData);
+          setProgress(initialProgress);
+          lastProgressRef.current = initialProgress;
         }
-      } else if (initialSavedFormData) {
-        dataToLoad = extractFormData(initialSavedFormData);
-        const calculatedProgress = calculateProgress(dataToLoad);
-        setProgress(calculatedProgress);
-        lastProgressRef.current = calculatedProgress;
-        logFormDataDebug('Using initial saved data', dataToLoad);
+
+        if (mounted) {
+          // First, update the refs
+          formDataRef.current = initialData;
+
+          // Then set the state
+          setFormData(initialData);
+
+          console.log('[KYB Form Debug] Form data initialized:', {
+            dataKeys: Object.keys(initialData),
+            values: Object.values(initialData),
+            timestamp: new Date().toISOString()
+          });
+
+          // Set initialization flags
+          setDataInitialized(true);
+          setFormReady(true);
+
+          // Finally set the current step
+          setCurrentStep(findFirstIncompleteStep(initialData));
+        }
+      } catch (error) {
+        console.error('Error initializing form:', error);
+        if (mounted) {
+          toast({
+            title: "Error",
+            description: "Failed to load form data",
+            variant: "destructive"
+          });
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-
-      console.log('[KYB Form Debug] Setting initial form data:', {
-        dataToLoad,
-        fields: Object.keys(dataToLoad),
-        values: Object.values(dataToLoad),
-        timestamp: new Date().toISOString()
-      });
-
-      if (initialCompanyData) {
-        logCompanyDataDebug(initialCompanyData);
-        setCompanyData(initialCompanyData);
-      }
-
-      setFormData(dataToLoad);
-      formDataRef.current = dataToLoad;
-
-      const incompleteStepIndex = findFirstIncompleteStep(dataToLoad);
-      setCurrentStep(incompleteStepIndex);
-
-      // Set initialization flag after all data is loaded
-      setDataInitialized(true);
-      setIsLoading(false);
-
-      console.log('[KYB Form Debug] Initial data load complete:', {
-        currentStep: incompleteStepIndex,
-        formFields: Object.keys(dataToLoad),
-        formData: dataToLoad,
-        isInitialized: true,
-        timestamp: new Date().toISOString()
-      });
     };
 
-    loadInitialData();
-  }, [taskId, initialSavedFormData, initialCompanyData]);
+    initializeFormData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [taskId, initialSavedFormData]);
 
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
@@ -720,7 +717,7 @@ export const OnboardingKYBFormPlayground = ({
     let isMounted = true;
 
     const fetchCompanyData = async () => {
-      if (!companyName || !dataInitialized) {  // Changed from initialLoadDone to dataInitialized
+      if (!companyName || !dataInitialized) {
         setIsLoading(false);
         return;
       }
@@ -774,7 +771,68 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       isMounted = false;
     };
-  }, [companyName, dataInitialized]);  // Updated dependency array to use dataInitialized
+  }, [companyName, dataInitialized]);
+
+  const renderField = (field: FormField) => {
+    if (!formReady) return null;
+
+    const fieldValue = formData[field.name];
+    const value = fieldValue !== null && fieldValue !== undefined ? String(fieldValue) : '';
+
+    console.log('[Form Debug] Rendering field:', {
+      fieldName: field.name,
+      rawValue: fieldValue,
+      processedValue: value,
+      formDataKeys: Object.keys(formData),
+      isReady: formReady,
+      timestamp: new Date().toISOString()
+    });
+
+    const { mainText, tooltipText } = extractTooltipContent(field.question);
+    const variant = getFieldVariant(field, value);
+
+    return (
+      <div key={field.name} className="space-y-3">
+        <div className="flex flex-col gap-1.5 mb-2">
+          <label className="text-sm font-semibold text-foreground">
+            {field.label}
+          </label>
+          <div className="flex items-center gap-1">
+            <span className="text-sm text-muted-foreground">
+              {mainText}
+            </span>
+            {field.tooltip && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">{field.tooltip}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+          </div>
+        </div>
+        <OriginalFormField
+          type="text"
+          name={field.name}
+          variant={variant}
+          value={value}
+          onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
+          aiSuggestion={getSuggestionForField(field.name)}
+          onSuggestionClick={() => {
+            const suggestion = getSuggestionForField(field.name);
+            if (suggestion) {
+              handleSuggestionClick(field.name, suggestion);
+            }
+          }}
+          className="mb-4"
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -867,54 +925,7 @@ export const OnboardingKYBFormPlayground = ({
               </div>
 
               <div className="space-y-6">
-                {currentStepData.map(field => {
-                  const value = formData[field.name] || '';
-                  const { mainText, tooltipText } = extractTooltipContent(field.question);
-                  const variant = getFieldVariant(field, value);
-                  const isEmpty = isEmptyValue(value);
-
-                  return (
-                    <div key={field.name} className="space-y-3">
-                      <div className="flex flex-col gap-1.5 mb-2">
-                        <label className="text-sm font-semibold text-foreground">
-                          {field.label}
-                        </label>
-                        <div className="flex items-center gap-1">
-                          <span className="text-sm text-muted-foreground">
-                            {mainText}
-                          </span>
-                          {field.tooltip && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p className="text-sm">{field.tooltip}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                      <OriginalFormField
-                        type="text"
-                        name={field.name}
-                        variant={variant}
-                        value={value}
-                        onChange={(e) => handleFormDataUpdate(field.name, e.target.value)}
-                        aiSuggestion={getSuggestionForField(field.name)}
-                        onSuggestionClick={() => {
-                          const suggestion = getSuggestionForField(field.name);
-                          if (suggestion) {
-                            handleSuggestionClick(field.name, suggestion);
-                          }
-                        }}
-                        className="mb-4"
-                      />
-                    </div>
-                  );
-                })}
+                {currentStepData.map(renderField)}
               </div>
             </div>
           )}
@@ -944,7 +955,7 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+                className={`${isLastStep ? 'relative after:absolute after:inset-0after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
               >
                 {isLastStep ? 'Submit' : 'Next'}
               </Button>
@@ -953,6 +964,7 @@ export const OnboardingKYBFormPlayground = ({
         </Card>
       )}
     </div>
-  );};
+  );
+};
 
 export default OnboardingKYBFormPlayground;
