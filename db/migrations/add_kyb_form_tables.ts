@@ -3,23 +3,23 @@ import { sql } from "drizzle-orm";
 import { tasks, kybFields, kybResponses, KYBFieldType } from "@db/schema";
 
 const DEFAULT_KYB_FIELDS = [
-  { key: 'legalEntityName', name: 'Legal Entity Name', question: 'What is the registered business name?', type: KYBFieldType.TEXT, group: 'Company Information' },
-  { key: 'registrationNumber', name: 'Registration Number', question: 'What is the corporation or business number?', type: KYBFieldType.TEXT, group: 'Company Information' },
-  { key: 'incorporationDate', name: 'Incorporation Date', question: 'When was the company incorporated?', type: KYBFieldType.DATE, group: 'Company Information' },
-  { key: 'registeredAddress', name: 'Registered Address', question: 'What is the registered business address?', type: KYBFieldType.TEXT, group: 'Company Information' },
-  { key: 'businessType', name: 'Business Type', question: 'What type of business entity is this?', type: KYBFieldType.TEXT, group: 'Company Information' },
-  { key: 'jurisdiction', name: 'Jurisdiction', question: 'In which jurisdiction is the company registered?', type: KYBFieldType.TEXT, group: 'Company Information' },
-  { key: 'directorsAndOfficers', name: 'Directors and Officers', question: 'Who are the current directors and officers?', type: KYBFieldType.TEXT, group: 'Leadership & Ownership' },
-  { key: 'ultimateBeneficialOwners', name: 'Ultimate Beneficial Owners', question: 'Who are the ultimate beneficial owners?', type: KYBFieldType.TEXT, group: 'Leadership & Ownership' },
-  { key: 'authorizedSigners', name: 'Authorized Signers', question: 'Who are the authorized signers for the company?', type: KYBFieldType.TEXT, group: 'Leadership & Ownership' },
-  { key: 'corporateRegistration', name: 'Corporate Registration', question: 'Can you provide corporate registration details?', type: KYBFieldType.TEXT, group: 'Compliance & Documentation' },
-  { key: 'goodStanding', name: 'Good Standing', question: 'Is the company in good standing with regulatory authorities?', type: KYBFieldType.BOOLEAN, group: 'Compliance & Documentation' },
-  { key: 'licenses', name: 'Licenses', question: 'What licenses and permits does the company hold?', type: KYBFieldType.TEXT, group: 'Compliance & Documentation' },
-  { key: 'taxId', name: 'Tax ID', question: 'What is the company\'s tax identification number?', type: KYBFieldType.TEXT, group: 'Financial Information' },
-  { key: 'financialStatements', name: 'Financial Statements', question: 'Can you provide recent financial statements?', type: KYBFieldType.TEXT, group: 'Financial Information' },
-  { key: 'operationalPolicies', name: 'Operational Policies', question: 'What are the key operational policies?', type: KYBFieldType.TEXT, group: 'Compliance & Documentation' },
-  { key: 'sanctionsCheck', name: 'Sanctions Check', question: 'Has sanctions screening been completed?', type: KYBFieldType.TEXT, group: 'Due Diligence' },
-  { key: 'dueDiligence', name: 'Due Diligence', question: 'What due diligence has been performed?', type: KYBFieldType.TEXT, group: 'Due Diligence' },
+  { key: 'legalEntityName', name: 'Legal Entity Name', question: 'What is the registered business name?', type: KYBFieldType.TEXT, group: 'Entity Identification' },
+  { key: 'registrationNumber', name: 'Registration Number', question: 'What is the corporation or business number?', type: KYBFieldType.TEXT, group: 'Entity Identification' },
+  { key: 'incorporationDate', name: 'Incorporation Date', question: 'When was the company incorporated?', type: KYBFieldType.DATE, group: 'Entity Identification' },
+  { key: 'registeredAddress', name: 'Registered Address', question: 'What is the registered business address?', type: KYBFieldType.TEXT, group: 'Entity Identification' },
+  { key: 'businessType', name: 'Business Type', question: 'What type of business entity is this?', type: KYBFieldType.TEXT, group: 'Entity Identification' },
+  { key: 'jurisdiction', name: 'Jurisdiction', question: 'In which jurisdiction is the company registered?', type: KYBFieldType.TEXT, group: 'Entity Identification' },
+  { key: 'directorsAndOfficers', name: 'Directors and Officers', question: 'Who are the current directors and officers?', type: KYBFieldType.TEXT, group: 'Ownership & Management' },
+  { key: 'ultimateBeneficialOwners', name: 'Ultimate Beneficial Owners', question: 'Who are the ultimate beneficial owners?', type: KYBFieldType.TEXT, group: 'Ownership & Management' },
+  { key: 'authorizedSigners', name: 'Authorized Signers', question: 'Who are the authorized signers for the company?', type: KYBFieldType.TEXT, group: 'Ownership & Management' },
+  { key: 'corporateRegistration', name: 'Corporate Registration', question: 'Can you provide corporate registration details?', type: KYBFieldType.TEXT, group: 'Official Documentation' },
+  { key: 'goodStanding', name: 'Good Standing', question: 'Is the company in good standing with regulatory authorities?', type: KYBFieldType.BOOLEAN, group: 'Official Documentation' },
+  { key: 'licenses', name: 'Licenses', question: 'What licenses and permits does the company hold?', type: KYBFieldType.TEXT, group: 'Official Documentation' },
+  { key: 'taxId', name: 'Tax ID', question: 'What is the company\'s tax identification number?', type: KYBFieldType.TEXT, group: 'Financial & Operational' },
+  { key: 'financialStatements', name: 'Financial Statements', question: 'Can you provide recent financial statements?', type: KYBFieldType.TEXT, group: 'Financial & Operational' },
+  { key: 'operationalPolicies', name: 'Operational Policies', question: 'What are the key operational policies?', type: KYBFieldType.TEXT, group: 'Financial & Operational' },
+  { key: 'sanctionsCheck', name: 'Sanctions Check', question: 'Has sanctions screening been completed?', type: KYBFieldType.TEXT, group: 'Compliance & Risk' },
+  { key: 'dueDiligence', name: 'Due Diligence', question: 'What due diligence has been performed?', type: KYBFieldType.TEXT, group: 'Compliance & Risk' },
 ];
 
 export async function addKybFormTables() {
@@ -32,7 +32,7 @@ export async function addKybFormTables() {
         display_name TEXT NOT NULL,
         field_type TEXT NOT NULL,
         question TEXT NOT NULL,
-        group TEXT NOT NULL,
+        "group" TEXT NOT NULL,
         required BOOLEAN NOT NULL DEFAULT true,
         "order" INTEGER NOT NULL,
         validation_rules JSONB,
@@ -66,7 +66,8 @@ export async function addKybFormTables() {
         VALUES (${field.key}, ${field.name}, ${field.type}, ${field.question}, ${field.group}, ${index + 1})
         ON CONFLICT (field_key) DO UPDATE
         SET question = ${field.question},
-            "group" = ${field.group};
+            "group" = ${field.group},
+            display_name = ${field.name};
       `);
     }
 

@@ -181,6 +181,8 @@ export const kybFields = pgTable("kyb_fields", {
   field_key: text("field_key").notNull(),
   display_name: text("display_name").notNull(),
   field_type: text("field_type").$type<keyof typeof KYBFieldType>().notNull(),
+  question: text("question").notNull(), 
+  group: text("group").notNull(), 
   required: boolean("required").notNull().default(true),
   order: integer("order").notNull(),
   validation_rules: jsonb("validation_rules"),
