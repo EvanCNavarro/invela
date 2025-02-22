@@ -23,7 +23,6 @@ export interface FileUploadZoneProps extends React.HTMLAttributes<HTMLDivElement
   showAcceptedFormats?: boolean;
 }
 
-// Helper function to convert format string to accept object
 const getAcceptFromFormats = (formats?: string) => {
   if (!formats) return undefined;
 
@@ -90,21 +89,36 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
     maxFiles,
     maxSize,
     disabled,
-    onDrop: (acceptedFiles) => {
-      // Show uploading toast
-      toast({
-        title: "Uploading Files",
-        description: (
-          <div className="flex items-center gap-2">
-            <LoadingSpinner size="sm" />
-            <span>Processing {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''}...</span>
-          </div>
-        ),
-        duration: 2000,
-      });
+    onDrop: (acceptedFiles, rejectedFiles) => {
+      if (rejectedFiles.length > 0) {
+        const errors = rejectedFiles.map(file => {
+          const error = file.errors[0];
+          return `${file.file.name}: ${error.message}`;
+        });
 
-      // Process files
-      onFilesAccepted(acceptedFiles);
+        toast({
+          title: "File upload error",
+          description: errors.join('\n'),
+          variant: "destructive",
+          duration: 5000,
+        });
+        return;
+      }
+
+      if (acceptedFiles.length > 0) {
+        toast({
+          title: "Processing files",
+          description: (
+            <div className="flex items-center gap-2">
+              <LoadingSpinner size="sm" />
+              <span>Processing {acceptedFiles.length} file{acceptedFiles.length !== 1 ? 's' : ''}...</span>
+            </div>
+          ),
+          duration: 2000,
+        });
+
+        onFilesAccepted(acceptedFiles);
+      }
     },
   });
 
@@ -132,7 +146,6 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
       .map(type => type.trim().toUpperCase())
       .join(', ');
 
-    // Split into groups of 6 for better readability with less wrapping
     const typeArray = types.split(', ');
     const groups = [];
     for (let i = 0; i < typeArray.length; i += 6) {

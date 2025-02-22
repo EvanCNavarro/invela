@@ -4,11 +4,9 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
-import { cn } from "@/lib/utils";
 import {
   FileIcon,
   UploadIcon,
-  Download,
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
@@ -21,10 +19,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SearchBar } from "@/components/ui/search-bar";
 import { FileTable, type SortField, type SortOrder } from "@/components/files/FileTable";
-import crypto from 'crypto';
 
 const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG";
 
@@ -190,12 +186,16 @@ const FileVault: React.FC = () => {
     }
   });
 
+  const generateUniqueId = () => {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const onDrop = async (acceptedFiles: File[]) => {
     for (const file of acceptedFiles) {
       const formData = new FormData();
       formData.append('file', file);
 
-      const tempId = crypto.randomUUID();
+      const tempId = generateUniqueId();
       const uploadingFile: FileItem = {
         id: tempId,
         name: file.name,
@@ -253,7 +253,7 @@ const FileVault: React.FC = () => {
     <DashboardLayout>
       {!user ? (
         <div className="flex items-center justify-center h-[50vh]">
-          <p className="text-muted-foreground">Loading user data...</p>
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <div className="space-y-6">
