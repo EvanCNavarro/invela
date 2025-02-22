@@ -59,13 +59,6 @@ const FORM_STEPS: FormField[][] = [
       suggestion: 'incorporation_year'
     },
     {
-      name: 'jurisdiction',
-      label: 'Jurisdiction of Incorporation',
-      question: 'In which jurisdiction is the business incorporated?',
-      tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
-      suggestion: 'hq_address'
-    },
-    {
       name: 'registeredAddress',
       label: 'Registered Business Address',
       question: 'What is the principal business address?',
@@ -78,6 +71,13 @@ const FORM_STEPS: FormField[][] = [
       question: 'What is the legal structure of the business?',
       tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
       suggestion: 'legal_structure'
+    },
+    {
+      name: 'jurisdiction',
+      label: 'Jurisdiction of Incorporation',
+      question: 'In which jurisdiction is the business incorporated?',
+      tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
+      suggestion: 'hq_address'
     }
   ],
   [

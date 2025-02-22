@@ -9,17 +9,17 @@ const DEFAULT_KYB_FIELDS = [
   { key: 'registeredAddress', name: 'Registered Address', type: KYBFieldType.TEXT },
   { key: 'businessType', name: 'Business Type', type: KYBFieldType.TEXT },
   { key: 'jurisdiction', name: 'Jurisdiction', type: KYBFieldType.TEXT },
-  { key: 'taxId', name: 'Tax ID', type: KYBFieldType.TEXT },
-  { key: 'corporateRegistration', name: 'Corporate Registration', type: KYBFieldType.TEXT },
   { key: 'directorsAndOfficers', name: 'Directors and Officers', type: KYBFieldType.TEXT },
   { key: 'ultimateBeneficialOwners', name: 'Ultimate Beneficial Owners', type: KYBFieldType.TEXT },
   { key: 'authorizedSigners', name: 'Authorized Signers', type: KYBFieldType.TEXT },
+  { key: 'corporateRegistration', name: 'Corporate Registration', type: KYBFieldType.TEXT },
   { key: 'goodStanding', name: 'Good Standing', type: KYBFieldType.BOOLEAN },
   { key: 'licenses', name: 'Licenses', type: KYBFieldType.TEXT },
-  { key: 'sanctionsCheck', name: 'Sanctions Check', type: KYBFieldType.TEXT },
-  { key: 'dueDiligence', name: 'Due Diligence', type: KYBFieldType.TEXT },
+  { key: 'taxId', name: 'Tax ID', type: KYBFieldType.TEXT },
   { key: 'financialStatements', name: 'Financial Statements', type: KYBFieldType.TEXT },
   { key: 'operationalPolicies', name: 'Operational Policies', type: KYBFieldType.TEXT },
+  { key: 'sanctionsCheck', name: 'Sanctions Check', type: KYBFieldType.TEXT },
+  { key: 'dueDiligence', name: 'Due Diligence', type: KYBFieldType.TEXT },
 ];
 
 export async function addKybFormTables() {
