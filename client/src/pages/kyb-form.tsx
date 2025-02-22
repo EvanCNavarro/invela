@@ -4,6 +4,14 @@ import { useLocation } from "wouter";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 
 interface KYBFormProps {
   params: {
@@ -22,6 +30,7 @@ interface Task {
   progress: number;
   metadata: {
     companyName?: string;
+    kybFormFile?: number; // File ID after submission
     [key: string]: any;
   } | null;
 }
@@ -31,6 +40,8 @@ export default function KYBForm({ params }: KYBFormProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const taskId = parseInt(params.taskId);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [fileId, setFileId] = useState<number | null>(null);
 
   // Fetch task details
   const { data: task, isLoading, error } = useQuery<Task>({
@@ -41,7 +52,6 @@ export default function KYBForm({ params }: KYBFormProps) {
   // Handle form submission and file saving
   const saveMutation = useMutation({
     mutationFn: async (formData: Record<string, any>) => {
-      // First, save the form data to a file
       const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
       const fileName = `kyb_${task?.title.toLowerCase().replace(/\s+/g, '-')}_${timestamp}`;
 
@@ -61,13 +71,14 @@ export default function KYBForm({ params }: KYBFormProps) {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      setFileId(data.fileId);
+      setIsSubmitted(true);
       toast({
         title: "KYB Form Submitted",
         description: "Your KYB form has been saved and the task has been updated.",
       });
-      navigate('/task-center');
     },
     onError: (error: Error) => {
       console.error('Failed to save KYB form:', error);
@@ -78,6 +89,32 @@ export default function KYBForm({ params }: KYBFormProps) {
       });
     },
   });
+
+  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) return;
+
+    try {
+      const response = await fetch(`/api/kyb/download/${fileId}?format=${format}`);
+      if (!response.ok) throw new Error('Failed to download file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kyb_form.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -102,6 +139,43 @@ export default function KYBForm({ params }: KYBFormProps) {
 
   return (
     <div className="container max-w-7xl mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate('/task-center')}
+          className="text-sm font-medium bg-white border-muted-foreground/20"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Task Center
+        </Button>
+
+        {isSubmitted && fileId && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDownload('json')}>
+                <FileJson className="mr-2 h-4 w-4" />
+                Download as JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Download as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                <FileText className="mr-2 h-4 w-4" />
+                Download as Text
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+
       <OnboardingKYBFormPlayground 
         taskId={taskId}
         onSubmit={(formData) => saveMutation.mutate(formData)}

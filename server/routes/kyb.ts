@@ -632,4 +632,112 @@ router.post('/api/kyb/save', async (req, res) => {
   }
 });
 
+// Add download endpoint after the existing routes
+router.get('/api/kyb/download/:fileId', async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const format = req.query.format as string || 'json';
+
+    logFileDebug('Download request received', {
+      fileId,
+      format,
+      timestamp: new Date().toISOString()
+    });
+
+    // Get file from database
+    const [file] = await db.select()
+      .from(files)
+      .where(eq(files.id, parseInt(fileId)));
+
+    if (!file) {
+      logFileDebug('File not found', { fileId });
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    // Parse the stored JSON data
+    const jsonData = JSON.parse(file.path);
+
+    let downloadData: string;
+    let contentType: string;
+    let fileExtension: string;
+
+    switch (format.toLowerCase()) {
+      case 'json':
+        downloadData = JSON.stringify(jsonData, null, 2);
+        contentType = 'application/json';
+        fileExtension = 'json';
+        break;
+
+      case 'csv':
+        // Convert the responses object to CSV format
+        const csvRows = [];
+        const groups = jsonData.responses;
+
+        // Add headers
+        csvRows.push(['Group', 'Question', 'Answer', 'Type', 'Answered At']);
+
+        // Add data rows
+        Object.entries(groups).forEach(([groupName, fields]: [string, any]) => {
+          Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
+            csvRows.push([
+              groupName,
+              data.question,
+              data.answer || '',
+              data.type,
+              data.answeredAt
+            ]);
+          });
+        });
+
+        // Convert to CSV string
+        downloadData = csvRows.map(row => row.map(cell =>
+          typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+        ).join(',')).join('\n');
+
+        contentType = 'text/csv';
+        fileExtension = 'csv';
+        break;
+
+      case 'txt':
+        // Convert to human-readable text format
+        const textParts = [];
+        textParts.push('KYB Form Submission\n' + '='.repeat(20) + '\n');
+        textParts.push(`Task: ${jsonData.metadata.taskTitle}`);
+        textParts.push(`Submission Date: ${jsonData.metadata.submissionDate}`);
+        textParts.push(`Status: ${jsonData.metadata.status}\n`);
+
+        Object.entries(jsonData.responses).forEach(([groupName, fields]: [string, any]) => {
+          textParts.push(`\n${groupName}:\n` + '-'.repeat(groupName.length + 1) + '\n');
+          Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
+            textParts.push(`${data.question}: ${data.answer || 'Not provided'}`);
+          });
+        });
+
+        downloadData = textParts.join('\n');
+        contentType = 'text/plain';
+        fileExtension = 'txt';
+        break;
+
+      default:
+        return res.status(400).json({ error: 'Invalid format specified' });
+    }
+
+    // Set response headers for file download
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Content-Disposition', `attachment; filename=kyb_form.${fileExtension}`);
+
+    logFileDebug('Sending download', {
+      fileId,
+      format,
+      contentType,
+      size: downloadData.length
+    });
+
+    res.send(downloadData);
+  } catch (error) {
+    console.error('[KYB API Debug] Error processing download:', error);
+    res.status(500).json({ error: 'Failed to process download' });
+  }
+});
+
 export default router;
