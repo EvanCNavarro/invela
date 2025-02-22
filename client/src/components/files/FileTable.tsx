@@ -67,6 +67,14 @@ export function FileTable<T extends TableItem>({
   visibleColumns = new Set(['fileName', 'size', 'status', 'createdAt', 'actions']),
   isLoading = false,
 }: FileTableProps<T>) {
+  console.log('[FileTable Debug] Received props:', {
+    dataLength: data.length,
+    firstItem: data[0],
+    selectedItemsCount: selectedItems.size,
+    visibleColumns,
+    isLoading
+  });
+
   const getSortIcon = (field: SortField) => {
     if (sortConfig.field !== field) return <ArrowUpDownIcon className="h-4 w-4 text-muted-foreground" />;
     return sortConfig.order === 'asc' ?
@@ -138,50 +146,53 @@ export function FileTable<T extends TableItem>({
         {isLoading ? (
           <TableSkeleton columns={visibleColumns.size + 1} />
         ) : (
-          data.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedItems.has(item.id)}
-                  onCheckedChange={() => onSelectItem(item.id)}
-                  aria-label={`Select ${item.name}`}
-                />
-              </TableCell>
-              {visibleColumns.has('fileName') && (
+          data.map((item) => {
+            console.log('[FileTable Debug] Rendering row:', item);
+            return (
+              <TableRow key={item.id}>
                 <TableCell>
-                  <FileNameCell file={item} />
-                </TableCell>
-              )}
-              {visibleColumns.has('size') && (
-                <TableCell className="text-right">
-                  {formatFileSize(item.size)}
-                </TableCell>
-              )}
-              {visibleColumns.has('status') && (
-                <TableCell className="text-right">
-                  <span className={cn(getStatusStyles(item.status))}>
-                    {item.status}
-                  </span>
-                </TableCell>
-              )}
-              {visibleColumns.has('createdAt') && (
-                <TableCell className="text-right">
-                  {new Date(item.createdAt).toLocaleString()}
-                </TableCell>
-              )}
-              {visibleColumns.has('actions') && (
-                <TableCell>
-                  <FileActions
-                    file={item}
-                    onDelete={onDelete}
-                    onRestore={onRestore}
-                    onDownload={onDownload}
-                    onViewDetails={onViewDetails}
+                  <Checkbox
+                    checked={selectedItems.has(item.id)}
+                    onCheckedChange={() => onSelectItem(item.id)}
+                    aria-label={`Select ${item.name}`}
                   />
                 </TableCell>
-              )}
-            </TableRow>
-          ))
+                {visibleColumns.has('fileName') && (
+                  <TableCell>
+                    <FileNameCell file={item} />
+                  </TableCell>
+                )}
+                {visibleColumns.has('size') && (
+                  <TableCell className="text-right">
+                    {formatFileSize(item.size)}
+                  </TableCell>
+                )}
+                {visibleColumns.has('status') && (
+                  <TableCell className="text-right">
+                    <span className={cn(getStatusStyles(item.status))}>
+                      {item.status}
+                    </span>
+                  </TableCell>
+                )}
+                {visibleColumns.has('createdAt') && (
+                  <TableCell className="text-right">
+                    {new Date(item.createdAt).toLocaleString()}
+                  </TableCell>
+                )}
+                {visibleColumns.has('actions') && (
+                  <TableCell>
+                    <FileActions
+                      file={item}
+                      onDelete={onDelete}
+                      onRestore={onRestore}
+                      onDownload={onDownload}
+                      onViewDetails={onViewDetails}
+                    />
+                  </TableCell>
+                )}
+              </TableRow>
+            )
+          })
         )}
       </TableBody>
     </Table>
