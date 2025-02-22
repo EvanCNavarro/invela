@@ -659,7 +659,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       .from(kybFields)
       .orderBy(kybFields.order);
 
-    const fieldQuestions = new Map(fields.map(f => [f.field_key, f.question]));
+    const fieldQuestions = new Map(fields.map(f => [f.field_key, { question: f.question, group: f.group }]));
 
     // Parse the stored JSON data
     const jsonData = JSON.parse(file.path);
@@ -684,11 +684,12 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         csvRows.push(['Group', 'Question', 'Answer', 'Type', 'Answered At']);
 
         // Add data rows
-        Object.entries(groups).forEach(([groupName, fields]: [string, any]) => {
+        Object.entries(groups).forEach(([_, fields]: [string, any]) => {
           Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
+            const fieldInfo = fieldQuestions.get(fieldKey);
             csvRows.push([
-              groupName,
-              fieldQuestions.get(fieldKey) || data.question, // Use the question from the database if available
+              fieldInfo?.group || 'Uncategorized',
+              fieldInfo?.question || data.question,
               data.answer || '',
               data.type,
               data.answeredAt
@@ -713,13 +714,27 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         textParts.push(`Submission Date: ${jsonData.metadata.submissionDate}`);
         textParts.push(`Status: ${jsonData.metadata.status}\n`);
 
-        Object.entries(jsonData.responses).forEach(([groupName, fields]: [string, any]) => {
-          textParts.push(`\n${groupName}:\n` + '-'.repeat(groupName.length + 1) + '\n');
+        // Group fields by their category
+        const groupedFields = new Map<string, Array<{key: string, data: any}>>();
+        Object.entries(jsonData.responses).forEach(([_, fields]: [string, any]) => {
           Object.entries(fields).forEach(([fieldKey, data]: [string, any]) => {
-            const question = fieldQuestions.get(fieldKey) || data.question;
-            textParts.push(`${question}\nAnswer: ${data.answer || 'Not provided'}\n`);
+            const fieldInfo = fieldQuestions.get(fieldKey);
+            const group = fieldInfo?.group || 'Uncategorized';
+            if (!groupedFields.has(group)) {
+              groupedFields.set(group, []);
+            }
+            groupedFields.get(group)?.push({ key: fieldKey, data });
           });
         });
+
+        // Output by group
+        for (const [group, fields] of groupedFields) {
+          textParts.push(`\n${group}:\n` + '='.repeat(group.length) + '\n');
+          for (const { key, data } of fields) {
+            const fieldInfo = fieldQuestions.get(key);
+            textParts.push(`${fieldInfo?.question || data.question}\nAnswer: ${data.answer || 'Not provided'}\n`);
+          }
+        }
 
         downloadData = textParts.join('\n');
         contentType = 'text/plain';
