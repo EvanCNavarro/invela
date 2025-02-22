@@ -96,33 +96,6 @@ router.get('/api/files', async (req, res) => {
           fileName: file.name,
           calculatedSize: fileSize
         });
-      } else if (file.path) {
-        // For physical files, verify they exist
-        const filePath = path.join(uploadDir, file.path);
-        const fileExists = fs.existsSync(filePath);
-        console.log('[Files] Physical file check:', {
-          fileId: file.id,
-          fileName: file.name,
-          path: filePath,
-          exists: fileExists
-        });
-        if (fileExists && !fileSize) {
-          try {
-            const stats = fs.statSync(filePath);
-            fileSize = stats.size;
-            console.log('[Files] Updated file size from disk:', {
-              fileId: file.id,
-              fileName: file.name,
-              size: fileSize
-            });
-          } catch (err) {
-            console.error('[Files] Error reading file stats:', {
-              fileId: file.id,
-              fileName: file.name,
-              error: err
-            });
-          }
-        }
       }
 
       return {
