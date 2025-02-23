@@ -259,13 +259,13 @@ export default function TaskCenterPage() {
               setCurrentPage(1);
             }}
           >
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <TabsList className="mb-0 bg-background">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
+              <TabsList className="mb-0 bg-background h-9">
                 <TabsTrigger
                   value="my-tasks"
                   className={cn(
-                    "flex items-center gap-2 data-[state=active]:text-primary",
-                    "data-[state=active]:bg-primary/10"
+                    "flex items-center gap-1.5 data-[state=active]:text-primary px-3",
+                    "data-[state=active]:bg-primary/10 h-9"
                   )}
                 >
                   <User className="h-4 w-4" />
@@ -284,8 +284,8 @@ export default function TaskCenterPage() {
                           value="for-others"
                           disabled={!isCompanyOnboarded}
                           className={cn(
-                            "flex items-center gap-2 data-[state=active]:text-primary",
-                            "data-[state=active]:bg-primary/10",
+                            "flex items-center gap-1.5 data-[state=active]:text-primary px-3",
+                            "data-[state=active]:bg-primary/10 h-9",
                             !isCompanyOnboarded && "opacity-50 cursor-not-allowed"
                           )}
                         >
@@ -308,7 +308,7 @@ export default function TaskCenterPage() {
                   </Tooltip>
                 </TooltipProvider>
               </TabsList>
-              <div className="w-full sm:w-[250px] truncate">
+              <div className="w-full sm:w-[250px]">
                 <SearchBar
                   contextualType="tasks"
                   data={tasks}
