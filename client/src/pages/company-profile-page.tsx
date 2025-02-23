@@ -17,7 +17,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table';
-import LoadingSpinner from "@/components/ui/LoadingSpinner"; // Assuming this component exists
+import LoadingSpinner from "@/components/ui/loading-spinner"; 
 
 interface CompanyProfileData {
   id: number;
@@ -54,9 +54,9 @@ export default function CompanyProfilePage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
-  const location = useLocation(); // Added to access location
+  const location = useLocation(); 
 
-  const user = null; // Placeholder, replace with actual user context
+  const user = null; 
 
   console.log("[CompanyProfile Debug] Component mount state:", {
     params,
@@ -69,7 +69,7 @@ export default function CompanyProfilePage() {
     isInitialMount: true
   });
 
-  // Return early if user context is not yet available
+  
   if (!user) {
     console.log("[CompanyProfile Debug] Waiting for user context");
     return (
