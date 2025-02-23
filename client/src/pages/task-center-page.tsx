@@ -318,8 +318,8 @@ export default function TaskCenterPage() {
                   }}
                   onSearch={(value) => setSearchQuery(value)}
                   isLoading={isLoading}
-                  placeholder="Search Tasks"
-                  className="w-full truncate"
+                  placeholder="Search for tasks"
+                  containerClassName="w-full"
                 />
               </div>
             </div>
