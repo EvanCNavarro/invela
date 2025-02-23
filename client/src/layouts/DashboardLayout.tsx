@@ -42,7 +42,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
 
     return (
-      task.assigned_to === user?.id || 
+      task.assigned_to === user?.id ||
       (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
       (task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id))
     );
@@ -83,14 +83,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[hsl(220,33%,97%)] relative">
-      <aside 
+      <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
           isExpanded ? "w-64" : "w-20"
         )}
       >
         <div className="h-full bg-background border-r flex flex-col">
-          <Sidebar 
+          <Sidebar
             isExpanded={isExpanded}
             onToggleExpanded={toggleExpanded}
             notificationCount={relevantTasks.length}
@@ -101,7 +101,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      <div 
+      <div
         className={cn(
           "min-h-screen flex flex-col transition-all duration-300 ease-in-out",
           isExpanded ? "ml-64" : "ml-20"
