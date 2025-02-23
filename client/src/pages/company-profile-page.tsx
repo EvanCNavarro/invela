@@ -43,19 +43,18 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  const { companyId } = useParams();
+  const { companyId, companySlug } = useParams();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
   console.log("[CompanyProfile] Route params:", {
-    params: useParams(),
-    extractedSlug: companySlug,
+    companyId,
+    companySlug,
     fullPath: window.location.pathname
   });
 
-  // Get the initial tab value from URL query parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
@@ -65,7 +64,6 @@ export default function CompanyProfilePage() {
     }
   }, []);
 
-  // Handle tab changes
   const handleTabChange = (value: string) => {
     console.log("[CompanyProfile] Tab changed:", { from: activeTab, to: value });
     setActiveTab(value);
@@ -78,11 +76,6 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  // Get URL params first
-  const params = useParams();
-  const companySlug = params.companySlug;
-
-  // Fetch company data using the by-slug endpoint
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies/by-slug", companySlug],
     queryFn: async () => {
@@ -98,7 +91,7 @@ export default function CompanyProfilePage() {
 
       const { id } = await lookupResponse.json();
       console.log("[CompanyProfile] Found company ID:", id);
-      
+
       const dataResponse = await fetch(`/api/companies/${id}`);
       if (!dataResponse.ok) {
         const errorData = await dataResponse.json();
@@ -116,7 +109,6 @@ export default function CompanyProfilePage() {
     }
   });
 
-  // Fetch company users if we have a company
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: async () => {
@@ -132,7 +124,6 @@ export default function CompanyProfilePage() {
     enabled: !!company?.id
   });
 
-  // Filter users based on search
   const filteredUsers = companyUsers.filter((user) => {
     if (!userSearchQuery) return true;
     const searchLower = userSearchQuery.toLowerCase();
@@ -142,13 +133,11 @@ export default function CompanyProfilePage() {
     );
   });
 
-  // Filter files based on search
   const filteredFiles = (company?.documents || []).filter((doc) => {
     if (!fileSearchQuery) return true;
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   });
 
-  // Loading state
   if (companyLoading) {
     console.log("[CompanyProfile] Loading state");
     return (
@@ -168,7 +157,6 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // Error state
   if (companyError) {
     console.log("[CompanyProfile] Error state:", companyError);
     return (
@@ -190,7 +178,6 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // Company not found state
   if (!company) {
     console.log("[CompanyProfile] Not found state");
     return (
@@ -212,7 +199,6 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // No relationship state - copied from original
   if (!company.has_relationship) {
     console.log("[CompanyProfile] Access restricted - no relationship");
     return (
@@ -290,7 +276,6 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
         </div>
-        {/* ...rest of overview tab content from original */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>

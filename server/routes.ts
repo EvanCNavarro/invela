@@ -182,82 +182,33 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add new endpoint for searching by slug
-  app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
+  // Get company by ID
+  app.get("/api/companies/:id", requireAuth, async (req, res) => {
     try {
-      const slug = req.params.slug;
-      const slugWithSpaces = slug.replace(/-/g, ' ');
-      const alphanumericSlug = slug.replace(/[^a-zA-Z0-9]/g, '');
+      const companyId = parseInt(req.params.id);
 
-      console.log('[Companies] Detailed slug processing:', {
-        originalSlug: slug,
-        slugWithSpaces,
-        alphanumericSlug,
-        userId: req.user!.id,
-        company_id: req.user!.company_id
-      });
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
 
-      // Get company that matches the name pattern AND:
-      // 1. Is the user's own company, OR
-      // 2. Has a relationship with the user's company
-      const formattedSearchName = slug.replace(/-/g, ' ');
-      
-      const nameMatchQuery = sql`(
-        LOWER(${companies.name}) = LOWER(${formattedSearchName}) 
-        OR LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
-      )`;
-
-      console.log('[Companies] Name matching conditions:', {
-        exactMatch: formattedSearchName,
-        alphanumericMatch: alphanumericSlug,
-        searchSlug: slug
-      });
-
-      const [company] = await db.select({
-        id: companies.id,
-        name: sql<string>`COALESCE(${companies.name}, '')`,
-        category: sql<string>`COALESCE(${companies.category}, '')`,
-        description: sql<string>`COALESCE(${companies.description}, '')`,
-        logo_id: companies.logo_id,
-        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
-        risk_score: companies.risk_score,
-        onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
-        website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
-        legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
-        hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
-        employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
-        products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
-        incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
-        investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
-        funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
-        key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
-        leadership_team: sql<string>`COALESCE(${companies.leadership_team, ''})`,
-        has_relationship: sql<boolean>`
-          CASE 
-            WHEN ${companies.id} = ${req.user!.company_id} THEN true
-            WHEN EXISTS (
-              SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
-            ) THEN true
-            ELSE false
-          END
-        `
-      })
-      .from(companies)
-      .where(
-        and(
-          nameMatchQuery,
-          or(
-            eq(companies.id, req.user!.company_id),
-            sql`EXISTS (
-              SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
-            )`
+      const [company] = await db.select()
+        .from(companies)
+        .where(
+          and(
+            eq(companies.id, companyId),
+            or(
+              eq(companies.id, req.user!.company_id),
+              sql`EXISTS (
+                SELECT 1 FROM ${relationships} r 
+                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+                OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+              )`
+            )
           )
-        )
-      );
+        );
 
       // Log all companies to see what we're matching against
       const allCompanies = await db.select({
