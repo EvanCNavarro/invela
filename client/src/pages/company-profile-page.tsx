@@ -43,7 +43,7 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  const { companySlug } = useParams();
+  const { companyId } = useParams();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -80,12 +80,12 @@ export default function CompanyProfilePage() {
 
   // Fetch company data using the new by-slug endpoint
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies/by-slug", companySlug],
+    queryKey: ["/api/companies", companyId],
     queryFn: async () => {
-      if (!companySlug) throw new Error("No company slug provided");
+      if (!companyId) throw new Error("No company ID provided");
 
-      console.log("[CompanyProfile] Fetching company by slug:", companySlug);
-      const response = await fetch(`/api/companies/by-slug/${companySlug}`);
+      console.log("[CompanyProfile] Fetching company by ID:", companyId);
+      const response = await fetch(`/api/companies/${companyId}`);
 
       if (!response.ok) {
         const errorData = await response.json();
