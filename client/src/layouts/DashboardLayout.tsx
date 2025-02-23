@@ -29,17 +29,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [, taskCenterParams] = useRoute('/task-center*');
   const queryClient = useQueryClient();
 
-  // Fetch tasks for notification count
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
-  // Fetch current company data
   const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
   });
 
-  // Filter tasks for notification count
   const relevantTasks = tasks.filter(task => {
     if (task.company_id !== currentCompany?.id) {
       return false;
@@ -111,9 +108,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         />
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen relative">
+      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
         <div className={cn(
-          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80 border-b",
+          "fixed top-0 z-30 backdrop-blur-sm bg-background/80 border-b w-full",
           "transition-all duration-300 ease-in-out",
           isExpanded ? "left-64" : "left-20"
         )}>
@@ -122,8 +119,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 pt-16">
           <div className={cn(
-            "px-8 py-4 max-w-full overflow-x-hidden",
-            "transition-all duration-300 ease-in-out"
+            "px-8 py-4",
+            "transition-all duration-300 ease-in-out",
+            "container mx-auto"
           )}>
             {children}
           </div>

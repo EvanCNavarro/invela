@@ -324,7 +324,7 @@ export default function TaskCenterPage() {
               </div>
             </div>
 
-            <Card>
+            <Card className="w-full">
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
                   <Button
@@ -379,7 +379,7 @@ export default function TaskCenterPage() {
                   </div>
                 </div>
 
-                <div className="min-h-[400px]">
+                <div className="min-h-[400px] overflow-x-auto">
                   <TabsContent value="my-tasks" className="m-0">
                     <TaskTable tasks={currentTasks} companyOnboardingCompleted={isCompanyOnboarded}/>
                   </TabsContent>
