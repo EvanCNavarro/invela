@@ -41,11 +41,11 @@ interface CompanyProfileData {
   legalStructure: string;
   hqAddress: string;
   numEmployees: string;
-  productsServices: string;
+  productsServices: string[];
   incorporationYear: string | number;
   investors: string;
   fundingStage: string | null;
-  keyClientsPartners: string;
+  keyClientsPartners: string[];
   foundersAndLeadership: string;
   documents?: Document[];
   certificationsCompliance?: string;
@@ -90,7 +90,7 @@ export default function CompanyProfilePage() {
   };
 
   // Fetch all companies with improved error handling and type checking
-  const { data: companies = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
+  const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
     queryFn: async () => {
       console.log("[CompanyProfile] Fetching all companies");
@@ -188,6 +188,27 @@ export default function CompanyProfilePage() {
               <div className="h-32 bg-muted rounded"></div>
               <div className="h-32 bg-muted rounded"></div>
             </div>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Add error state
+  if (companiesError) {
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <AlertTriangle className="h-12 w-12 text-destructive" />
+            <h2 className="text-2xl font-semibold">Error Loading Companies</h2>
+            <p className="text-muted-foreground max-w-md text-center">
+              There was an error loading the company data. Please try again later.
+            </p>
+            <Button variant="outline" onClick={handleBackClick}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Button>
           </div>
         </PageTemplate>
       </DashboardLayout>
@@ -371,7 +392,7 @@ export default function CompanyProfilePage() {
                 <div className="text-sm font-medium text-muted-foreground mb-1">Products & Services</div>
                 <div className="flex items-center gap-2">
                   <Target className="h-4 w-4 text-muted-foreground" />
-                  <span>{company.productsServices || 'N/A'}</span>
+                  <span>{company.productsServices?.join(', ') || 'N/A'}</span>
                 </div>
               </div>
               <div>
@@ -404,7 +425,7 @@ export default function CompanyProfilePage() {
                 <div className="text-sm font-medium text-muted-foreground mb-1">Key Clients & Partners</div>
                 <div className="flex items-start gap-2">
                   <Award className="h-4 w-4 text-muted-foreground mt-1" />
-                  <span>{company.keyClientsPartners || 'No client/partner information available'}</span>
+                  <span>{company.keyClientsPartners?.join(', ') || 'No client/partner information available'}</span>
                 </div>
               </div>
             </CardContent>
