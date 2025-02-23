@@ -55,7 +55,8 @@ export async function createCompany(
       .returning();
 
     // Create automatic relationship with Invela (company_id: 1)
-    const [relationship] = await tx.insert(relationships)
+    console.log('[Company Service] Creating relationship with Invela');
+    const [invelaRelationship] = await tx.insert(relationships)
       .values({
         company_id: 1, // Invela's company ID
         related_company_id: newCompany.id,
@@ -70,10 +71,36 @@ export async function createCompany(
       })
       .returning();
 
-    console.log('[Company Service] Created relationship with Invela:', {
-      relationshipId: relationship.id,
-      companyId: newCompany.id
-    });
+    // If company was created by another company, create relationship with creating company
+    if (data.metadata?.created_by_company_id) {
+      console.log('[Company Service] Creating relationship with creator company:', data.metadata.created_by_company_id);
+      const [creatorRelationship] = await tx.insert(relationships)
+        .values({
+          company_id: data.metadata.created_by_company_id,
+          related_company_id: newCompany.id,
+          relationship_type: 'network_member',
+          status: 'active',
+          metadata: {
+            auto_created: true,
+            creation_date: new Date().toISOString(),
+            created_via: 'company_creation',
+            created_by_company: true,
+            company_name: newCompany.name
+          }
+        })
+        .returning();
+
+      console.log('[Company Service] Created relationships:', {
+        invelaRelationshipId: invelaRelationship.id,
+        creatorRelationshipId: creatorRelationship.id,
+        newCompanyId: newCompany.id
+      });
+    } else {
+      console.log('[Company Service] Created relationship with Invela:', {
+        relationshipId: invelaRelationship.id,
+        newCompanyId: newCompany.id
+      });
+    }
 
     // Broadcast task update
     if (kybTask) {
