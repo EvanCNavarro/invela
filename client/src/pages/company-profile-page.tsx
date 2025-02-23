@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -198,6 +198,48 @@ export default function CompanyProfilePage() {
     </div>
   );
 
+  const renderUsersTab = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Company Users
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">User information will be available soon.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderFilesTab = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FileText className="h-5 w-5" />
+          Company Files
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">File management will be available soon.</p>
+      </CardContent>
+    </Card>
+  );
+
+  const renderRiskTab = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Risk Assessment
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground">Risk assessment information will be available soon.</p>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <DashboardLayout>
       <PageTemplate
@@ -227,9 +269,21 @@ export default function CompanyProfilePage() {
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="users">Users</TabsTrigger>
+              <TabsTrigger value="files">Files</TabsTrigger>
+              <TabsTrigger value="risk">Risk</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
               {renderOverviewTab()}
+            </TabsContent>
+            <TabsContent value="users">
+              {renderUsersTab()}
+            </TabsContent>
+            <TabsContent value="files">
+              {renderFilesTab()}
+            </TabsContent>
+            <TabsContent value="risk">
+              {renderRiskTab()}
             </TabsContent>
           </Tabs>
         </div>
