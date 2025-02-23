@@ -204,8 +204,7 @@ export function registerRoutes(app: Express): Express {
       
       const nameMatchQuery = sql`
         LOWER(${companies.name}) = LOWER(${formattedSearchName})
-        OR
-        LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
+        OR LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
       `;
 
       console.log('[Companies] Name matching conditions:', {
