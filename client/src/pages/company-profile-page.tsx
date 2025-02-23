@@ -84,7 +84,6 @@ export default function CompanyProfilePage() {
     queryKey: ["/api/relationships"],
   });
 
-  const params = useParams();
   const companyId = !isNaN(Number(params.companySlug)) ? Number(params.companySlug) : undefined;
 
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
