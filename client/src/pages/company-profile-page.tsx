@@ -54,10 +54,19 @@ export default function CompanyProfilePage() {
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
-  console.log("[CompanyProfile] Route params:", {
+  console.log("[CompanyProfile Debug] Route params:", {
     params,
-    paramCompanyId,
-    fullPath: window.location.pathname
+    paramCompanyId, 
+    fullPath: window.location.pathname,
+    timestamp: new Date().toISOString(),
+    routeType: paramCompanyId ? 'ID-based' : 'Slug-based'
+  });
+
+  console.log("[CompanyProfile Debug] Component mount state:", {
+    isInitialMount: true,
+    currentUser: user,
+    hasAuthContext: !!user,
+    timestamp: new Date().toISOString()
   });
 
   useEffect(() => {
@@ -90,7 +99,16 @@ export default function CompanyProfilePage() {
     queryFn: async () => {
       if (!paramCompanyId) throw new Error("No company ID found");
 
-      console.log("[CompanyProfile] Looking up company by ID:", paramCompanyId);
+      console.log("[CompanyProfile Debug] Company lookup attempt:", {
+    lookupMethod: 'id',
+    searchValue: paramCompanyId,
+    timestamp: new Date().toISOString(),
+    availableCompanies: networkRelationships?.length || 0,
+    relationships: networkRelationships?.map(r => ({
+      id: r.relatedCompany.id,
+      name: r.relatedCompany.name
+    }))
+  });
       const response = await fetch(`/api/companies/${paramCompanyId}`);
       if (!response.ok) {
         const errorData = await response.json();
@@ -157,7 +175,18 @@ export default function CompanyProfilePage() {
   }
 
   if (companyError) {
-    console.log("[CompanyProfile] Error state:", companyError);
+    console.log("[CompanyProfile Debug] Error state:", {
+    error: companyError,
+    errorType: companyError?.constructor?.name,
+    errorMessage: companyError?.message,
+    stack: companyError?.stack,
+    timestamp: new Date().toISOString(),
+    context: {
+      attemptedId: paramCompanyId,
+      networkDataLoaded: !!networkRelationships,
+      userAuthenticated: !!user
+    }
+  });
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -178,7 +207,18 @@ export default function CompanyProfilePage() {
   }
 
   if (!company) {
-    console.log("[CompanyProfile] Not found state");
+    console.log("[CompanyProfile Debug] Company not found:", {
+      searchParams: {
+        id: paramCompanyId,
+        slug: params.companySlug
+      },
+      networkState: {
+        isLoading: isLoading,
+        hasError: !!companyError,
+        relationshipsCount: networkRelationships?.length || 0
+      },
+      timestamp: new Date().toISOString()
+    });
     return (
       <DashboardLayout>
         <PageTemplate>
