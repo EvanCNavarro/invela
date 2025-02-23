@@ -18,15 +18,6 @@ import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table';
 
-// Helper function to generate consistent slugs
-const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-// Helper function to find company by slug
-const findCompanyBySlug = (companies: CompanyProfileData[], slug: string) => {
-  if (!Array.isArray(companies)) return null;
-  return companies.find(c => generateSlug(c.name || '') === slug);
-};
-
 interface CompanyProfileData {
   id: number;
   name: string;
@@ -52,19 +43,17 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  // Get the company slug from the URL parameters using the new route parameter name
   const { companySlug } = useParams();
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [fileSearchQuery, setFileSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
 
   console.log("[CompanyProfile] Route params:", {
     params: useParams(),
     extractedSlug: companySlug,
     fullPath: window.location.pathname
   });
-
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [fileSearchQuery, setFileSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
 
   // Get the initial tab value from URL query parameters
   useEffect(() => {
@@ -89,57 +78,30 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  // Fetch all companies with improved error handling and type checking
-  const { data: companies = [], isLoading: companiesLoading, error: companiesError } = useQuery<CompanyProfileData[]>({
-    queryKey: ["/api/companies"],
+  // Fetch company data using the new by-slug endpoint
+  const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
+    queryKey: ["/api/companies/by-slug", companySlug],
     queryFn: async () => {
-      console.log("[CompanyProfile] Fetching all companies");
-      try {
-        const response = await fetch("/api/companies");
-        if (!response.ok) {
-          console.error("[CompanyProfile] API error:", {
-            status: response.status,
-            statusText: response.statusText
-          });
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+      if (!companySlug) throw new Error("No company slug provided");
 
-        // Log the actual response data for debugging
-        console.log("[CompanyProfile] Raw API response:", {
-          data,
-          type: typeof data,
-          isArray: Array.isArray(data)
-        });
+      console.log("[CompanyProfile] Fetching company by slug:", companySlug);
+      const response = await fetch(`/api/companies/by-slug/${companySlug}`);
 
-        // Ensure we have a valid array response
-        if (!Array.isArray(data)) {
-          console.error("[CompanyProfile] Invalid data format:", data);
-          return [];
-        }
-
-        return data;
-      } catch (error) {
-        console.error("[CompanyProfile] Error fetching companies:", error);
-        throw error; // Let React Query handle the error
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
+
+      return response.json();
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000)
-  });
-
-  // Find company using the helper function
-  const company = companySlug ? findCompanyBySlug(companies, companySlug) : null;
-
-  console.log("[CompanyProfile] Company lookup:", {
-    searchSlug: companySlug,
-    foundCompany: company?.id ? { id: company.id, name: company.name } : null,
-    matchFound: !!company,
-    availableCompanies: companies.map(c => ({
-      id: c.id,
-      name: c.name,
-      slug: generateSlug(c.name || '')
-    }))
+    enabled: !!companySlug,
+    retry: (failureCount, error) => {
+      // Don't retry on 404s
+      if (error instanceof Error && error.message.includes("Company not found")) {
+        return false;
+      }
+      return failureCount < 3;
+    }
   });
 
   // Fetch company users if we have a company
@@ -175,8 +137,8 @@ export default function CompanyProfilePage() {
   });
 
   // Loading state
-  if (companiesLoading) {
-    console.log("[CompanyProfile] Loading state:", { companiesLoading });
+  if (companyLoading) {
+    console.log("[CompanyProfile] Loading state");
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -194,16 +156,17 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // Add error state
-  if (companiesError) {
+  // Error state
+  if (companyError) {
+    console.log("[CompanyProfile] Error state:", companyError);
     return (
       <DashboardLayout>
         <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <AlertTriangle className="h-12 w-12 text-destructive" />
-            <h2 className="text-2xl font-semibold">Error Loading Companies</h2>
+            <h2 className="text-2xl font-semibold">Error Loading Company</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              There was an error loading the company data. Please try again later.
+              {companyError instanceof Error ? companyError.message : "Error loading company data"}
             </p>
             <Button variant="outline" onClick={handleBackClick}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -217,11 +180,7 @@ export default function CompanyProfilePage() {
 
   // Company not found state
   if (!company) {
-    console.log("[CompanyProfile] Not found state:", {
-      companyId: undefined,
-      company: undefined,
-      attemptedSlug: companySlug
-    });
+    console.log("[CompanyProfile] Not found state");
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -229,7 +188,7 @@ export default function CompanyProfilePage() {
             <Ban className="h-12 w-12 text-destructive" />
             <h2 className="text-2xl font-semibold">Company Not Found</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              Company not found.
+              The requested company could not be found.
             </p>
             <Button variant="outline" onClick={handleBackClick}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -241,7 +200,7 @@ export default function CompanyProfilePage() {
     );
   }
 
-  // No relationship state
+  // No relationship state - copied from original
   if (!company.has_relationship) {
     console.log("[CompanyProfile] Access restricted - no relationship");
     return (
@@ -319,7 +278,7 @@ export default function CompanyProfilePage() {
             </CardContent>
           </Card>
         </div>
-
+        {/* ...rest of overview tab content from original */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>

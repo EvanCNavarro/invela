@@ -182,6 +182,109 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Add new endpoint for searching by slug
+  app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      // Transform slug to potential company name variations
+      // e.g., "a16z" could be "a16z", "A16Z", etc.
+      const searchName = slug.replace(/-/g, ' ');
+
+      console.log('[Companies] Searching for company by slug:', {
+        slug,
+        searchName,
+        userId: req.user!.id,
+        company_id: req.user!.company_id
+      });
+
+      // Get company that matches the name pattern AND:
+      // 1. Is the user's own company, OR
+      // 2. Has a relationship with the user's company
+      const [company] = await db.select({
+        id: companies.id,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
+        logo_id: companies.logo_id,
+        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
+        risk_score: companies.risk_score,
+        onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
+        website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
+        legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
+        hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
+        employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
+        products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
+        incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
+        investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
+        funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
+        key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
+        leadership_team: sql<string>`COALESCE(${companies.leadership_team, ''})`,
+        has_relationship: sql<boolean>`
+          CASE 
+            WHEN ${companies.id} = ${req.user!.company_id} THEN true
+            WHEN EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            ) THEN true
+            ELSE false
+          END
+        `
+      })
+      .from(companies)
+      .where(
+        and(
+          sql`LOWER(REPLACE(${companies.name}, ' ', '-')) = LOWER(${slug})`,
+          or(
+            eq(companies.id, req.user!.company_id),
+            sql`EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            )`
+          )
+        )
+      );
+
+      if (!company) {
+        console.log('[Companies] Company not found for slug:', slug);
+        return res.status(404).json({
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      console.log('[Companies] Found company by slug:', {
+        slug,
+        companyId: company.id,
+        companyName: company.name
+      });
+
+      // Transform response to match frontend expectations
+      const transformedCompany = {
+        ...company,
+        websiteUrl: company.website_url,
+        legalStructure: company.legal_structure,
+        hqAddress: company.hq_address,
+        numEmployees: company.employee_count,
+        productsServices: company.products_services,
+        incorporationYear: company.incorporation_year,
+        investors: company.investors_info,
+        fundingStage: company.funding_stage,
+        keyClientsPartners: company.key_partners,
+        foundersAndLeadership: company.leadership_team
+      };
+
+      res.json(transformedCompany);
+    } catch (error) {
+      console.error("[Companies] Error fetching company by slug:", error);
+      res.status(500).json({ 
+        message: "Error fetching company details",
+        code: "INTERNAL_ERROR" 
+      });
+    }
+  });
+
   //New Endpoint
   app.get("/api/companies/:id", requireAuth, async (req, res) => {
     try {
@@ -387,24 +490,24 @@ export function registerRoutes(app: Express): Express {
           riskScore: companies.risk_score
         }
       })
-        .from(relationships)
-        .innerJoin(
-          companies,
-          eq(
-            companies.id,
-            sql`CASE 
-            WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
-            ELSE ${relationships.company_id}
-          END`
-          )
+      .from(relationships)
+      .innerJoin(
+        companies,
+        eq(
+          companies.id,
+          sql`CASE 
+          WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
+          ELSE ${relationships.company_id}
+        END`
         )
-        .where(
-          or(
-            eq(relationships.company_id, req.user!.company_id),
-            eq(relationships.related_company_id, req.user!.company_id)
-          )
+      )
+      .where(
+        or(
+          eq(relationships.company_id, req.user!.company_id),
+          eq(relationships.related_company_id, req.user!.company_id)
         )
-        .orderBy(companies.name);
+      )
+      .orderBy(companies.name);
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
@@ -732,7 +835,7 @@ export function registerRoutes(app: Express): Express {
       res.json(logo);
     } catch (error) {
       console.error("Error uploading company logo:", error);
-      res.status(500).json({ message: "Error uploading company logo" });
+            res.status(500).json({ message: "Error uploading company logo" });
     }
   });
 
@@ -1665,7 +1768,7 @@ export function registerRoutes(app: Express): Express {
       return null;
     } catch (error) {
       console.error('[updateOnboardingTaskStatus] Error updating task status:', error);
-      return null;
+            return null;
     }
   }
 
