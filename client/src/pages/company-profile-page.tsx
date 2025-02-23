@@ -56,7 +56,7 @@ export default function CompanyProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const location = useLocation(); 
 
-  const user = null; 
+  const { user } = useAuth();
 
   console.log("[CompanyProfile Debug] Component mount state:", {
     params,
@@ -68,20 +68,6 @@ export default function CompanyProfilePage() {
     hasUserContext: !!user,
     isInitialMount: true
   });
-
-  
-  if (!user) {
-    console.log("[CompanyProfile Debug] Waiting for user context");
-    return (
-      <DashboardLayout>
-        <PageTemplate>
-          <div className="flex items-center justify-center h-[60vh]">
-            <LoadingSpinner size="lg" />
-          </div>
-        </PageTemplate>
-      </DashboardLayout>
-    );
-  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
