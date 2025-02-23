@@ -79,24 +79,34 @@ export default function CompanyProfilePage() {
   };
 
   // Fetch company data using the new by-slug endpoint
+  const { companySlug } = useParams();
+  
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", companyId],
+    queryKey: ["/api/companies/by-slug", companySlug],
     queryFn: async () => {
-      if (!companyId) throw new Error("No company ID provided");
+      if (!companySlug) throw new Error("No company slug provided");
 
-      console.log("[CompanyProfile] Fetching company by ID:", companyId);
-      const response = await fetch(`/api/companies/${companyId}`);
+      console.log("[CompanyProfile] Looking up company by slug:", companySlug);
+      const lookupResponse = await fetch(`/api/companies/by-slug/${companySlug}`);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      if (!lookupResponse.ok) {
+        const errorData = await lookupResponse.json();
+        throw new Error(errorData.message || `HTTP error! status: ${lookupResponse.status}`);
       }
 
-      return response.json();
+      const { id } = await lookupResponse.json();
+      console.log("[CompanyProfile] Found company ID:", id);
+      
+      const dataResponse = await fetch(`/api/companies/${id}`);
+      if (!dataResponse.ok) {
+        const errorData = await dataResponse.json();
+        throw new Error(errorData.message || `HTTP error! status: ${dataResponse.status}`);
+      }
+
+      return dataResponse.json();
     },
     enabled: !!companySlug,
     retry: (failureCount, error) => {
-      // Don't retry on 404s
       if (error instanceof Error && error.message.includes("Company not found")) {
         return false;
       }
