@@ -45,7 +45,18 @@ export function registerRoutes(app: Express): Express {
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
-      console.log('[Companies] Fetching all companies with logos');
+      if (!req.user) {
+        console.log('[Companies] No authenticated user found');
+        return res.status(401).json({ 
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Companies] Fetching companies for user:', {
+        userId: req.user.id,
+        companyId: req.user.company_id
+      });
 
       // Get all companies that either:
       // 1. The user's own company
@@ -59,7 +70,6 @@ export function registerRoutes(app: Express): Express {
         accreditation_status: companies.accreditation_status,
         risk_score: companies.risk_score,
         onboarding_company_completed: companies.onboarding_company_completed,
-        // Include additional company details
         website_url: companies.website_url,
         legal_structure: companies.legal_structure,
         hq_address: companies.hq_address,
@@ -70,26 +80,25 @@ export function registerRoutes(app: Express): Express {
         funding_stage: companies.funding_stage,
         key_partners: companies.key_partners,
         leadership_team: companies.leadership_team,
-        // Include relationship info
         has_relationship: sql<boolean>`EXISTS (
           SELECT 1 FROM ${relationships} r 
-          WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-          OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+          WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+          OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
         )`
       })
-        .from(companies)
-        .where(
-          or(
-            eq(companies.id, req.user!.company_id),
-            sql`EXISTS (
-              SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
-            )`
-          )
-        );
+      .from(companies)
+      .where(
+        or(
+          eq(companies.id, req.user.company_id),
+          sql`EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+          )`
+        )
+      );
 
-      console.log('[Companies] Found companies:', {
+      console.log('[Companies] Query successful, found companies:', {
         count: networkCompanies.length,
         companies: networkCompanies.map(c => ({
           id: c.id,
@@ -102,7 +111,6 @@ export function registerRoutes(app: Express): Express {
       // Transform the data to match frontend expectations
       const transformedCompanies = networkCompanies.map(company => ({
         ...company,
-        // Map database fields to frontend expected names
         websiteUrl: company.website_url || 'N/A',
         legalStructure: company.legal_structure || 'N/A',
         hqAddress: company.hq_address || 'N/A',
@@ -117,8 +125,24 @@ export function registerRoutes(app: Express): Express {
 
       res.json(transformedCompanies);
     } catch (error) {
-      console.error("[Companies] Error fetching companies:", error);
-      res.status(500).json({ message: "Error fetching companies" });
+      console.error("[Companies] Error details:", {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      // Check if it's a database error
+      if (error instanceof Error && error.message.includes('relation')) {
+        return res.status(500).json({ 
+          message: "Database configuration error",
+          code: "DB_ERROR"
+        });
+      }
+
+      res.status(500).json({ 
+        message: "Error fetching companies",
+        code: "INTERNAL_ERROR"
+      });
     }
   });
 
@@ -846,8 +870,9 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Fix fintech invite logging
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Starting invitation process');
+    console.log('[FinTech Invite] Startinginvitation process');
     console.log('[FinTech Invite] Request body:', req.body);
 
     try {
