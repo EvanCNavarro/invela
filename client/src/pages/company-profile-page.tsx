@@ -4,10 +4,13 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Building2, Globe, Users } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Building2, Globe, Users, Calendar, Briefcase, Target, Award } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useState } from "react";
 
 interface CompanyProfileData {
   id: number;
@@ -16,11 +19,19 @@ interface CompanyProfileData {
   websiteUrl: string | null;
   numEmployees: string | null;
   incorporationYear: number | null;
+  category: string;
+  productsServices: string[];
+  keyClientsPartners: string[];
+  investors: string;
+  fundingStage: string | null;
+  legalStructure: string;
+  hqAddress: string;
 }
 
 export default function CompanyProfilePage() {
   const params = useParams();
   const companyId = params.companySlug;
+  const [activeTab, setActiveTab] = useState("overview");
 
   const handleBackClick = () => {
     window.history.back();
@@ -73,6 +84,120 @@ export default function CompanyProfilePage() {
     ? new Date().getFullYear() - company.incorporationYear
     : null;
 
+  const renderOverviewTab = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Company Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Category</div>
+              <span>{company.category || 'Not available'}</span>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Website</div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                {company.websiteUrl ? (
+                  <a
+                    href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {company.websiteUrl}
+                  </a>
+                ) : (
+                  <span>Not available</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Headquarters</div>
+              <span>{company.hqAddress || 'Not available'}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5" />
+              Business Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Employees</div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>{company.numEmployees || 'Not available'}</span>
+              </div>
+            </div>
+            {companyAge !== null && (
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">Company Age</div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>{companyAge} years</span>
+                </div>
+              </div>
+            )}
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Legal Structure</div>
+              <span>{company.legalStructure || 'Not available'}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Market Position
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Products & Services</div>
+              <span>{company.productsServices?.join(', ') || 'Not available'}</span>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Key Clients & Partners</div>
+              <span>{company.keyClientsPartners?.join(', ') || 'Not available'}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Award className="h-5 w-5" />
+            Investment Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <div className="text-sm font-medium text-muted-foreground">Investors</div>
+            <span>{company.investors || 'No investor information available'}</span>
+          </div>
+          {company.fundingStage && (
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Funding Stage</div>
+              <Badge variant="outline">{company.fundingStage}</Badge>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
   return (
     <DashboardLayout>
       <PageTemplate
@@ -99,51 +224,14 @@ export default function CompanyProfilePage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  Company Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Website</div>
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    {company.websiteUrl ? (
-                      <a
-                        href={company.websiteUrl.startsWith('http') ? company.websiteUrl : `https://${company.websiteUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {company.websiteUrl}
-                      </a>
-                    ) : (
-                      <span>Not available</span>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground">Employees</div>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    <span>{company.numEmployees || 'Not available'}</span>
-                  </div>
-                </div>
-
-                {companyAge !== null && (
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">Company Age</div>
-                    <span>{companyAge} years</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+            </TabsList>
+            <TabsContent value="overview">
+              {renderOverviewTab()}
+            </TabsContent>
+          </Tabs>
         </div>
       </PageTemplate>
     </DashboardLayout>
