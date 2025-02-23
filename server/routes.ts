@@ -182,18 +182,10 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add new endpoint for searching by ID
-  app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
+  // Endpoint for getting company by ID
+  app.get("/api/companies/by-slug/:id", requireAuth, async (req, res) => {
     try {
-      const slug = req.params.slug;
-      const companyId = parseInt(slug);
-
-      console.log('[Companies] Looking up company by ID:', {
-        slug,
-        parsedId: companyId,
-        userId: req.user!.id,
-        userCompanyId: req.user!.company_id
-      });
+      const companyId = parseInt(req.params.id);
 
       if (isNaN(companyId)) {
         return res.status(400).json({
