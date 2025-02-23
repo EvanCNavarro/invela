@@ -78,9 +78,11 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  // Fetch company data using the new by-slug endpoint
-  const { companySlug } = useParams();
-  
+  // Get URL params first
+  const params = useParams();
+  const companySlug = params.companySlug;
+
+  // Fetch company data using the by-slug endpoint
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
     queryKey: ["/api/companies/by-slug", companySlug],
     queryFn: async () => {
