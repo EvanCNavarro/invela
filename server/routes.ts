@@ -77,17 +77,17 @@ export function registerRoutes(app: Express): Express {
           OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
         )`
       })
-      .from(companies)
-      .where(
-        or(
-          eq(companies.id, req.user!.company_id),
-          sql`EXISTS (
-            SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
-          )`
-        )
-      );
+        .from(companies)
+        .where(
+          or(
+            eq(companies.id, req.user!.company_id),
+            sql`EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            )`
+          )
+        );
 
       console.log('[Companies] Found companies:', {
         count: networkCompanies.length,
@@ -270,24 +270,24 @@ export function registerRoutes(app: Express): Express {
           riskScore: companies.risk_score
         }
       })
-      .from(relationships)
-      .innerJoin(
-        companies,
-        eq(
-          companies.id,
-          sql`CASE 
+        .from(relationships)
+        .innerJoin(
+          companies,
+          eq(
+            companies.id,
+            sql`CASE 
             WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
             ELSE ${relationships.company_id}
           END`
+          )
         )
-      )
-      .where(
-        or(
-          eq(relationships.company_id, req.user!.company_id),
-          eq(relationships.related_company_id, req.user!.company_id)
+        .where(
+          or(
+            eq(relationships.company_id, req.user!.company_id),
+            eq(relationships.related_company_id, req.user!.company_id)
+          )
         )
-      )
-      .orderBy(companies.name);
+        .orderBy(companies.name);
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
