@@ -75,13 +75,25 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", companyId],
-    queryFn: async () => {
-      if (!companyId) throw new Error("No company ID provided");
+  const { data: relationships = [] } = useQuery<NetworkRelationship[]>({
+    queryKey: ["/api/relationships"],
+  });
 
-      console.log("[CompanyProfile] Looking up company by ID:", companyId);
-      const response = await fetch(`/api/companies/${companyId}`);
+  const currentPath = window.location.pathname;
+  const pathSegments = currentPath.split('/');
+  const urlSlug = pathSegments[pathSegments.length - 1];
+
+  const matchingCompany = relationships.find(r => 
+    generateSlug(r.relatedCompany.name) === urlSlug
+  )?.relatedCompany;
+
+  const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
+    queryKey: ["/api/companies", matchingCompany?.id],
+    queryFn: async () => {
+      if (!matchingCompany?.id) throw new Error("No company ID found");
+
+      console.log("[CompanyProfile] Looking up company by ID:", matchingCompany.id);
+      const response = await fetch(`/api/companies/${matchingCompany.id}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -89,7 +101,7 @@ export default function CompanyProfilePage() {
 
       return response.json();
     },
-    enabled: !!companyId,
+    enabled: !!matchingCompany?.id,
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("Company not found")) {
         return false;
