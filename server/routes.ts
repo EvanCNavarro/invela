@@ -202,10 +202,10 @@ export function registerRoutes(app: Express): Express {
       // 2. Has a relationship with the user's company
       const formattedSearchName = slug.replace(/-/g, ' ');
       
-      const nameMatchQuery = sql`
-        (LOWER(${companies.name}) = LOWER(${formattedSearchName}) 
-        OR LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug}))
-      `;
+      const nameMatchQuery = sql`(
+        LOWER(${companies.name}) = LOWER(${formattedSearchName}) 
+        OR LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
+      )`;
 
       console.log('[Companies] Name matching conditions:', {
         exactMatch: formattedSearchName,
