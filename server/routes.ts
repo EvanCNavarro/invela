@@ -186,13 +186,9 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
     try {
       const slug = req.params.slug;
-      // Transform slug to potential company name variations
-      // e.g., "a16z" could be "a16z", "A16Z", etc.
-      const searchName = slug.replace(/-/g, ' ');
 
       console.log('[Companies] Searching for company by slug:', {
         slug,
-        searchName,
         userId: req.user!.id,
         company_id: req.user!.company_id
       });
@@ -234,7 +230,12 @@ export function registerRoutes(app: Express): Express {
       .from(companies)
       .where(
         and(
-          sql`LOWER(REPLACE(${companies.name}, ' ', '-')) = LOWER(${slug})`,
+          // More flexible name matching using SIMILAR TO for alphanumeric patterns
+          sql`
+            LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')})||'%'
+            OR 
+            LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(REGEXP_REPLACE(${slug}, '[^a-zA-Z0-9]', '', 'g'))
+          `,
           or(
             eq(companies.id, req.user!.company_id),
             sql`EXISTS (
@@ -833,7 +834,7 @@ export function registerRoutes(app: Express): Express {
       }
 
       res.json(logo);
-    } catch (error) {
+    } catch(error) {
       console.error("Error uploading company logo:", error);
             res.status(500).json({ message: "Error uploading company logo" });
     }
@@ -1767,8 +1768,8 @@ export function registerRoutes(app: Express): Express {
       }
       return null;
     } catch (error) {
-      console.error('[updateOnboardingTaskStatus] Error updating task status:', error);
-            return null;
+      consoleerror('[updateOnboardingTaskStatus] Error updating task status:', error);
+      return null;
     }
   }
 
