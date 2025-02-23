@@ -87,13 +87,16 @@ export default function CompanyProfilePage() {
   // First fetch all companies to get the company ID from slug
   const { data: companies = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
-    queryFn: () => {
+    queryFn: async () => {
       console.log("[CompanyProfile] Fetching all companies");
-      return fetch("/api/companies").then(res => res.json());
+      const response = await fetch("/api/companies");
+      const data = await response.json();
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     }
   });
 
-  // Find company ID from slug
+  // Find company from slug
   const company = companies.find(c => generateSlug(c.name || '') === slug);
 
   console.log("[CompanyProfile] Company lookup:", {
@@ -110,10 +113,15 @@ export default function CompanyProfilePage() {
   // Fetch company users if we have a company
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
-    queryFn: () => {
+    queryFn: async () => {
       if (!company?.id) throw new Error("No company ID");
       console.log("[CompanyProfile] Fetching users for company:", company.id);
-      return fetch(`/api/users/by-company/${company.id}`).then(res => res.json());
+      const response = await fetch(`/api/users/by-company/${company.id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: !!company?.id
   });
@@ -157,12 +165,9 @@ export default function CompanyProfilePage() {
   // Company not found state
   if (!company) {
     console.log("[CompanyProfile] Not found state:", {
-      attemptedSlug: slug,
-      availableCompanies: companies.map(c => ({
-        id: c.id,
-        name: c.name,
-        slug: generateSlug(c.name || '')
-      }))
+      companyId: undefined,
+      company: undefined,
+      attemptedSlug: slug
     });
     return (
       <DashboardLayout>
