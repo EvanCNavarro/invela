@@ -21,6 +21,12 @@ import { DataTable } from '@/components/ui/data-table';
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+// Helper function to find company by slug
+const findCompanyBySlug = (companies: CompanyProfileData[], slug: string) => {
+  if (!Array.isArray(companies)) return null;
+  return companies.find(c => generateSlug(c.name || '') === slug);
+};
+
 interface CompanyProfileData {
   id: number;
   name: string;
@@ -46,13 +52,12 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  // Get the company slug from the URL parameters
-  const params = useParams();
-  const slug = params?.["*"];
+  // Get the company slug from the URL parameters using the new route parameter name
+  const { companySlug } = useParams();
 
   console.log("[CompanyProfile] Route params:", {
-    params,
-    extractedSlug: slug,
+    params: useParams(),
+    extractedSlug: companySlug,
     fullPath: window.location.pathname
   });
 
@@ -84,23 +89,38 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  // First fetch all companies to get the company ID from slug
+  // Fetch all companies with improved error handling and type checking
   const { data: companies = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
     queryFn: async () => {
       console.log("[CompanyProfile] Fetching all companies");
-      const response = await fetch("/api/companies");
-      const data = await response.json();
-      // Ensure we always return an array
-      return Array.isArray(data) ? data : [];
-    }
+      try {
+        const response = await fetch("/api/companies");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("[CompanyProfile] Companies fetched:", {
+          responseOk: response.ok,
+          dataType: typeof data,
+          isArray: Array.isArray(data),
+          length: Array.isArray(data) ? data.length : 0
+        });
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error("[CompanyProfile] Error fetching companies:", error);
+        return [];
+      }
+    },
+    retry: 3, // Add retry logic
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000)
   });
 
-  // Find company from slug
-  const company = companies.find(c => generateSlug(c.name || '') === slug);
+  // Find company using the helper function
+  const company = companySlug ? findCompanyBySlug(companies, companySlug) : null;
 
   console.log("[CompanyProfile] Company lookup:", {
-    searchSlug: slug,
+    searchSlug: companySlug,
     foundCompany: company?.id ? { id: company.id, name: company.name } : null,
     matchFound: !!company,
     availableCompanies: companies.map(c => ({
@@ -167,7 +187,7 @@ export default function CompanyProfilePage() {
     console.log("[CompanyProfile] Not found state:", {
       companyId: undefined,
       company: undefined,
-      attemptedSlug: slug
+      attemptedSlug: companySlug
     });
     return (
       <DashboardLayout>

@@ -75,7 +75,7 @@ function Router() {
         component={({ params }) => (
           <ProtectedLayout>
             <OnboardingWrapper>
-              <CompanyProfilePage companySlug={params.companySlug} />
+              <CompanyProfilePage />
             </OnboardingWrapper>
           </ProtectedLayout>
         )}
