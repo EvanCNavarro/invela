@@ -201,7 +201,7 @@ export function registerRoutes(app: Express): Express {
       // 1. Is the user's own company, OR
       // 2. Has a relationship with the user's company
       const nameMatchQuery = sql`
-        LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')})||'%'
+        LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')}||'%')
         OR 
         LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
       `;
