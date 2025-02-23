@@ -55,7 +55,7 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[Companies] Fetching companies for user:', {
         userId: req.user.id,
-        companyId: req.user.company_id
+        company_id: req.user.company_id
       });
 
       // Get all companies that either:
@@ -115,11 +115,11 @@ export function registerRoutes(app: Express): Express {
         legalStructure: company.legal_structure || 'N/A',
         hqAddress: company.hq_address || 'N/A',
         numEmployees: company.employee_count || 'N/A',
-        productsServices: company.products_services || 'N/A',
+        productsServices: company.products_services || [],
         incorporationYear: company.incorporation_year || 'N/A',
         investors: company.investors_info || 'No investor information available',
         fundingStage: company.funding_stage || null,
-        keyClientsPartners: company.key_partners || 'No client/partner information available',
+        keyClientsPartners: company.key_partners || [],
         foundersAndLeadership: company.leadership_team || 'No leadership information available'
       }));
 
