@@ -1,5 +1,5 @@
 import { db } from "@db";
-import { companies, tasks } from "@db/schema";
+import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
 import { broadcastTaskUpdate } from "./websocket";
 import { eq } from "drizzle-orm";
@@ -53,6 +53,27 @@ export async function createCompany(
         }
       })
       .returning();
+
+    // Create automatic relationship with Invela (company_id: 1)
+    const [relationship] = await tx.insert(relationships)
+      .values({
+        company_id: 1, // Invela's company ID
+        related_company_id: newCompany.id,
+        relationship_type: 'network_member',
+        status: 'active',
+        metadata: {
+          auto_created: true,
+          creation_date: new Date().toISOString(),
+          created_via: 'automatic_network_member',
+          company_name: newCompany.name
+        }
+      })
+      .returning();
+
+    console.log('[Company Service] Created relationship with Invela:', {
+      relationshipId: relationship.id,
+      companyId: newCompany.id
+    });
 
     // Broadcast task update
     if (kybTask) {
