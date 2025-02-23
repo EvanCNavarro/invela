@@ -42,6 +42,10 @@ interface CompanyProfileData {
   certificationsCompliance?: string;
 }
 
+const generateSlug = (name: string) => {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+};
+
 export default function CompanyProfilePage() {
   const { companyId } = useParams();
   const [showInviteModal, setShowInviteModal] = useState(false);
