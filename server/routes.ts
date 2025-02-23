@@ -194,6 +194,7 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
+      // Get company details along with relationship check
       const [company] = await db.select()
         .from(companies)
         .where(
@@ -210,134 +211,31 @@ export function registerRoutes(app: Express): Express {
           )
         );
 
-      // Log all companies to see what we're matching against
-      const allCompanies = await db.select({
-        id: companies.id,
-        name: companies.name,
-      })
-      .from(companies)
-      .orderBy(companies.name);
-
-      console.log('[Companies] Available companies for matching:', {
-        companies: allCompanies.map(c => ({
-          id: c.id,
-          name: c.name,
-          alphanumericName: c.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-        }))
-      });
-
       if (!company) {
-        console.log('[Companies] Company not found for slug:', {
-          slug,
-          availableCompanies: allCompanies.length,
-          searchConditions: {
-            similarToPattern: `${slug.replace(/-/g, '[- ]')}%`,
-            alphanumericMatch: alphanumericSlug
-          }
-        });
-        return res.status(404).json({
-          message: "Company not found",
-          code: "COMPANY_NOT_FOUND"
-        });
-      }
-
-      console.log('[Companies] Found company by slug:', {
-        slug,
-        companyId: company.id,
-        companyName: company.name,
-        matchDetails: {
-          originalName: company.name,
-          processedName: company.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
-          matchedSlug: alphanumericSlug
-        }
-      });
-
-      // Transform response to match frontend expectations
-      const transformedCompany = {
-        ...company,
-        websiteUrl: company.website_url,
-        legalStructure: company.legal_structure,
-        hqAddress: company.hq_address,
-        numEmployees: company.employee_count,
-        productsServices: company.products_services,
-        incorporationYear: company.incorporation_year,
-        investors: company.investors_info,
-        fundingStage: company.funding_stage,
-        keyClientsPartners: company.key_partners,
-        foundersAndLeadership: company.leadership_team
-      };
-
-      res.json(transformedCompany);
-    } catch (error) {
-      console.error("[Companies] Error fetching company by slug:", {
-        error,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        errorStack: error instanceof Error ? error.stack : undefined
-      });
-      res.status(500).json({ 
-        message: "Error fetching company details",
-        code: "INTERNAL_ERROR" 
-      });
-    }
-  });
-
-  //New Endpoint
-  app.get("/api/companies/:id", requireAuth, async (req, res) => {
-    try {
-      console.log('[Company Details] Fetching company:', req.params.id);
-
-      // Get company details along with relationship check
-      const [company] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, parseInt(req.params.id)));
-
-      if (!company) {
-        console.log('[Company Details] Company not found:', req.params.id);
         return res.status(404).json({ 
           message: "Company not found",
           code: "COMPANY_NOT_FOUND"
         });
       }
 
-      if (!company.has_relationship) {
-        console.log('[Company Details] Access denied for company:', {
-          companyId: company.id,
-          userId: req.user!.id,
-          userCompanyId: req.user!.company_id
-        });
-        return res.status(403).json({ 
-          message: "You don't have permission to view this company's information. This company is not in your network.",
-          code: "ACCESS_DENIED"
-        });
-      }
-
       // Transform response to match frontend expectations
       const transformedCompany = {
         ...company,
-        websiteUrl: company.website_url || 'N/A',
-        legalStructure: company.legal_structure || 'N/A',
-        hqAddress: company.hq_address || 'N/A',
-        numEmployees: company.employee_count || 'N/A',
-        productsServices: company.products_services || 'N/A',
-        incorporationYear: company.incorporation_year || 'N/A',
-        investors: company.investors_info || 'No investor information available',
-        fundingStage: company.funding_stage || null,
-        keyClientsPartners: company.key_partners || 'No client/partner information available',
-        foundersAndLeadership: company.leadership_team || 'No leadership information available'
+        websiteUrl: company.website_url,
+        numEmployees: company.employee_count,
+        incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null
       };
-
-      console.log('[Company Details] Successfully fetched company:', {
-        id: company.id,
-        name: company.name,
-        hasAccess: company.has_relationship
-      });
 
       res.json(transformedCompany);
     } catch (error) {
-      console.error("[Company Details] Error fetching company:", error);
-      res.status(500).json({ message: "Error fetching company details" });
+      console.error("[Companies] Error fetching company:", error);
+      res.status(500).json({ 
+        message: "Error fetching company details",
+        code: "INTERNAL_ERROR"
+      });
     }
   });
+
 
   // Tasks endpoints
   app.get("/api/tasks", requireAuth, async (req, res) => {
@@ -803,7 +701,7 @@ export function registerRoutes(app: Express): Express {
       res.json(logo);
     } catch(error) {
       console.error("Error uploading company logo:", error);
-            res.status(500).json({ message: "Error uploading company logo" });
+      res.status(500).json({ message: "Error uploading company logo" });
     }
   });
 
