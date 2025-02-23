@@ -47,7 +47,8 @@ const generateSlug = (name: string) => {
 };
 
 export default function CompanyProfilePage() {
-  const { companyId: paramCompanyId } = useParams();
+  const params = useParams();
+  const companyId = !isNaN(Number(params.companySlug)) ? Number(params.companySlug) : undefined;
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -93,8 +94,8 @@ export default function CompanyProfilePage() {
     queryFn: async () => {
       if (!companyId) throw new Error("No company ID found");
 
-      console.log("[CompanyProfile] Looking up company by ID:", idToUse);
-      const response = await fetch(`/api/companies/${idToUse}`);
+      console.log("[CompanyProfile] Looking up company by ID:", companyId);
+      const response = await fetch(`/api/companies/${companyId}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
