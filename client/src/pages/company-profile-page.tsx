@@ -18,6 +18,7 @@ import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table';
 import { LoadingSpinner } from "@/components/ui/loading-spinner"; 
+import { useAuth } from "@/hooks/use-auth"; // Added import
 
 interface CompanyProfileData {
   id: number;
