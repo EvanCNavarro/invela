@@ -63,40 +63,47 @@ export function registerRoutes(app: Express): Express {
       // 2. Companies that have a relationship with the user's company
       const networkCompanies = await db.select({
         id: companies.id,
-        name: companies.name,
-        category: companies.category,
-        description: companies.description,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
         logo_id: companies.logo_id,
-        accreditation_status: companies.accreditation_status,
+        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
         risk_score: companies.risk_score,
-        onboarding_company_completed: companies.onboarding_company_completed,
-        website_url: companies.website_url,
-        legal_structure: companies.legal_structure,
-        hq_address: companies.hq_address,
-        employee_count: companies.employee_count,
-        products_services: companies.products_services,
-        incorporation_year: companies.incorporation_year,
-        investors_info: companies.investors_info,
-        funding_stage: companies.funding_stage,
-        key_partners: companies.key_partners,
-        leadership_team: companies.leadership_team,
-        has_relationship: sql<boolean>`EXISTS (
-          SELECT 1 FROM ${relationships} r 
-          WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
-          OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
-        )`
+        onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
+        website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
+        legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
+        hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
+        employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
+        products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
+        incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
+        investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
+        funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
+        key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
+        leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
+        has_relationship: sql<boolean>`
+          CASE 
+            WHEN ${companies.id} = ${req.user!.company_id} THEN true
+            WHEN EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            ) THEN true
+            ELSE false
+          END
+        `
       })
       .from(companies)
       .where(
         or(
-          eq(companies.id, req.user.company_id),
+          eq(companies.id, req.user!.company_id),
           sql`EXISTS (
             SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
-            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
           )`
         )
-      );
+      )
+      .orderBy(companies.name);
 
       console.log('[Companies] Query successful, found companies:', {
         count: networkCompanies.length,
@@ -846,8 +853,7 @@ export function registerRoutes(app: Express): Express {
 
       // Check for existing company with same name
       const [existingCompany] = await db.select()
-        .from(companies)
-        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
+        .from(companies)        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
 
       if (existingCompany) {
         return res.status(409).json({
