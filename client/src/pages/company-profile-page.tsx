@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Globe, Users, Calendar, Briefcase, Target, Award } from "lucide-react";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -80,7 +80,7 @@ export default function CompanyProfilePage() {
     );
   }
 
-  const companyAge = company.incorporationYear 
+  const companyAge = company.incorporationYear
     ? new Date().getFullYear() - company.incorporationYear
     : null;
 
