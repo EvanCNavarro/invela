@@ -200,15 +200,18 @@ export function registerRoutes(app: Express): Express {
       // Get company that matches the name pattern AND:
       // 1. Is the user's own company, OR
       // 2. Has a relationship with the user's company
+      const formattedSearchName = slug.replace(/-/g, ' ');
+      
       const nameMatchQuery = sql`
-        LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')}) || '%'
-        OR 
+        LOWER(${companies.name}) = LOWER(${formattedSearchName})
+        OR
         LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
       `;
 
       console.log('[Companies] Name matching conditions:', {
-        similarToPattern: `${slug.replace(/-/g, '[- ]')}%`,
-        alphanumericMatch: alphanumericSlug
+        exactMatch: formattedSearchName,
+        alphanumericMatch: alphanumericSlug,
+        searchSlug: slug
       });
 
       const [company] = await db.select({
