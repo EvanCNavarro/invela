@@ -46,7 +46,8 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  const [params] = useParams();
+  // Fix: useParams returns an object, not an array
+  const params = useParams();
   const companySlug = params?.["*"]?.split("/").pop();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
