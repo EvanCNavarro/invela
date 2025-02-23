@@ -196,12 +196,59 @@ export function registerRoutes(app: Express): Express {
   // Relationships endpoints
   app.get("/api/relationships", requireAuth, async (req, res) => {
     try {
-      const companyRelationships = await db.select()
-        .from(relationships)
-        .where(eq(relationships.companyId, req.user!.companyId));
-      res.json(companyRelationships);
+      console.log('[Relationships] Fetching network for company:', req.user!.company_id);
+
+      // Get all relationships where the current company is either the creator or related company
+      const networkRelationships = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
+        relationshipType: relationships.relationship_type,
+        status: relationships.status,
+        metadata: relationships.metadata,
+        createdAt: relationships.created_at,
+        // Join with companies to get related company details
+        relatedCompany: {
+          id: companies.id,
+          name: companies.name,
+          category: companies.category,
+          logoId: companies.logo_id,
+          accreditationStatus: companies.accreditation_status,
+          riskScore: companies.risk_score
+        }
+      })
+      .from(relationships)
+      .innerJoin(
+        companies,
+        eq(
+          companies.id,
+          sql`CASE 
+            WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
+            ELSE ${relationships.company_id}
+          END`
+        )
+      )
+      .where(
+        or(
+          eq(relationships.company_id, req.user!.company_id),
+          eq(relationships.related_company_id, req.user!.company_id)
+        )
+      )
+      .orderBy(companies.name);
+
+      console.log('[Relationships] Found network members:', {
+        count: networkRelationships.length,
+        relationships: networkRelationships.map(r => ({
+          id: r.id,
+          companyName: r.relatedCompany.name,
+          status: r.status,
+          type: r.relationshipType
+        }))
+      });
+
+      res.json(networkRelationships);
     } catch (error) {
-      console.error("Error fetching relationships:", error);
+      console.error("[Relationships] Error fetching relationships:", error);
       res.status(500).json({ message: "Error fetching relationships" });
     }
   });

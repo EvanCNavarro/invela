@@ -25,6 +25,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { AccreditationStatus } from "@/types/company";
 
+interface NetworkRelationship {
+  id: number;
+  companyId: number;
+  relatedCompanyId: number;
+  relationshipType: string;
+  status: string;
+  metadata: Record<string, any> | null;
+  createdAt: string;
+  relatedCompany: {
+    id: number;
+    name: string;
+    category: string;
+    logoId: number | null;
+    accreditationStatus: AccreditationStatus;
+    riskScore: number | null;
+  };
+}
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
@@ -48,74 +65,67 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
-const CompanyRow = memo(({ company, isHovered, onRowClick, onHoverChange, searchTerm }: {
-  company: Company;
+const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, searchTerm }: {
+  relationship: NetworkRelationship;
   isHovered: boolean;
   onRowClick: () => void;
   onHoverChange: (isHovered: boolean) => void;
   searchTerm: string;
-}) => (
-  <TableRow
-    className="group cursor-pointer hover:bg-muted/50 bg-white"
-    onClick={onRowClick}
-    onMouseEnter={() => onHoverChange(true)}
-    onMouseLeave={() => onHoverChange(false)}
-  >
-    <TableCell>
-      <div className="flex items-center gap-3">
-        <CompanyLogo
-          companyId={company.id}
-          companyName={company.name}
-          size="sm"
-        />
-        <span className={cn(
-          "font-normal text-foreground",
-          isHovered && "underline"
-        )}>
-          <HighlightText text={company.name} searchTerm={searchTerm} />
-        </span>
-      </div>
-    </TableCell>
-    <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
-    <TableCell className="text-center">
-      <Badge
-        variant="outline"
-        className={cn(
-          "capitalize",
-          company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-          company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-          company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-          company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-          company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-          company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-          company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-          company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
-        )}
-      >
-        {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
-      </Badge>
-    </TableCell>
-    <TableCell className="text-center">
-      <div className="invisible group-hover:visible flex items-center justify-center text-primary">
-        <span className="font-medium mr-2">View</span>
-        <ArrowRight className="h-4 w-4" />
-      </div>
-    </TableCell>
-  </TableRow>
-));
+}) => {
+  const company = relationship.relatedCompany;
+
+  return (
+    <TableRow
+      className="group cursor-pointer hover:bg-muted/50 bg-white"
+      onClick={onRowClick}
+      onMouseEnter={() => onHoverChange(true)}
+      onMouseLeave={() => onHoverChange(false)}
+    >
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <CompanyLogo
+            companyId={company.id}
+            companyName={company.name}
+            size="sm"
+          />
+          <span className={cn(
+            "font-normal text-foreground",
+            isHovered && "underline"
+          )}>
+            <HighlightText text={company.name} searchTerm={searchTerm} />
+          </span>
+        </div>
+      </TableCell>
+      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+      <TableCell className="text-center">
+        <Badge
+          variant="outline"
+          className={cn(
+            "capitalize",
+            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
+            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
+            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
+            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+          )}
+        >
+          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-center">
+        <div className="invisible group-hover:visible flex items-center justify-center text-primary">
+          <span className="font-medium mr-2">View</span>
+          <ArrowRight className="h-4 w-4" />
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 CompanyRow.displayName = 'CompanyRow';
-
-interface Company {
-  id: number;
-  name: string;
-  riskScore?: number;
-  accreditationStatus: AccreditationStatus;
-  logo?: {
-    id: string;
-    filePath: string;
-  } | null;
-}
 
 export default function NetworkPage() {
   const [, setLocation] = useLocation();
@@ -162,40 +172,35 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
-  const { data: companiesData = [], isLoading } = useQuery<Company[]>({
-    queryKey: ["/api/companies"],
+  const { data: networkRelationships = [], isLoading } = useQuery<NetworkRelationship[]>({
+    queryKey: ["/api/relationships"],
     enabled: !!user
   });
 
-  const companies = useMemo(() =>
-    companiesData.map((item: any) => item.companies || item),
-    [companiesData]
-  );
-
   // Initialize Fuse instance for fuzzy search
-  const fuse = useMemo(() => new Fuse(companies, {
-    keys: ['name'],
+  const fuse = useMemo(() => new Fuse(networkRelationships, {
+    keys: ['relatedCompany.name'],
     threshold: 0.3,
     includeMatches: true,
-  }), [companies]);
+  }), [networkRelationships]);
 
-  const sortCompanies = (a: Company, b: Company) => {
+  const sortCompanies = (a: NetworkRelationship, b: NetworkRelationship) => {
     if (sortField === "name") {
       return sortDirection === "asc"
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
+        ? a.relatedCompany.name.localeCompare(b.relatedCompany.name)
+        : b.relatedCompany.name.localeCompare(a.relatedCompany.name);
     }
     if (sortField === "riskScore") {
-      const scoreA = a.riskScore || 0;
-      const scoreB = b.riskScore || 0;
+      const scoreA = a.relatedCompany.riskScore || 0;
+      const scoreB = b.relatedCompany.riskScore || 0;
       return sortDirection === "asc" ? scoreA - scoreB : scoreB - scoreA;
     }
     return 0;
   };
 
   // Use fuzzy search for filtering company names only
-  const filteredCompanies = useMemo(() => {
-    let results = companies;
+  const filteredRelationships = useMemo(() => {
+    let results = networkRelationships;
 
     if (searchQuery) {
       const fuseResults = fuse.search(searchQuery);
@@ -203,11 +208,11 @@ export default function NetworkPage() {
     }
 
     return results
-      .filter((company: Company) =>
-        statusFilter === "ALL" || company.accreditationStatus === statusFilter
+      .filter((relationship) =>
+        statusFilter === "ALL" || relationship.relatedCompany.accreditationStatus === statusFilter
       )
       .sort(sortCompanies);
-  }, [companies, searchQuery, statusFilter, sortField, sortDirection, fuse]);
+  }, [networkRelationships, searchQuery, statusFilter, sortField, sortDirection, fuse]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -225,16 +230,16 @@ export default function NetworkPage() {
       <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
-  const totalPages = Math.ceil(filteredCompanies.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredRelationships.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedRelationships = filteredRelationships.slice(startIndex, startIndex + itemsPerPage);
 
   useQueries({
-    queries: paginatedCompanies.map(company => ({
-      queryKey: [`company-logo-${company.id}`],
+    queries: paginatedRelationships.map(relationship => ({
+      queryKey: [`company-logo-${relationship.relatedCompany.id}`],
       queryFn: async () => {
         try {
-          const response = await fetch(`/api/companies/${company.id}/logo`);
+          const response = await fetch(`/api/companies/${relationship.relatedCompany.id}/logo`);
           if (!response.ok) return null;
           const blob = await response.blob();
           return URL.createObjectURL(blob);
@@ -245,7 +250,7 @@ export default function NetworkPage() {
       staleTime: Infinity,
       cacheTime: Infinity,
       retry: false,
-      enabled: !!company.id,
+      enabled: !!relationship.relatedCompany.id,
     }))
   });
 
@@ -372,20 +377,20 @@ export default function NetworkPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredCompanies.length === 0 ? (
+                ) : filteredRelationships.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4">
-                      No companies found
+                      No companies found in your network
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedCompanies.map((company: Company) => (
+                  paginatedRelationships.map((relationship) => (
                     <CompanyRow
-                      key={company.id}
-                      company={company}
-                      isHovered={hoveredRow === company.id}
-                      onRowClick={() => setLocation(`/network/company/${generateSlug(company.name)}`)}
-                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? company.id : null)}
+                      key={relationship.id}
+                      relationship={relationship}
+                      isHovered={hoveredRow === relationship.relatedCompany.id}
+                      onRowClick={() => setLocation(`/network/company/${generateSlug(relationship.relatedCompany.name)}`)}
+                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
                       searchTerm={searchQuery}
                     />
                   ))
@@ -397,16 +402,16 @@ export default function NetworkPage() {
               <div className="text-sm text-muted-foreground">
                 {isLoading ? (
                   "Loading results..."
-                ) : filteredCompanies.length > 0 ? (
+                ) : filteredRelationships.length > 0 ? (
                   <>
-                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredCompanies.length)} of {filteredCompanies.length} results
+                    Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredRelationships.length)} of {filteredRelationships.length} results
                   </>
                 ) : (
                   "No results found"
                 )}
               </div>
 
-              {!isLoading && filteredCompanies.length > itemsPerPage && (
+              {!isLoading && filteredRelationships.length > itemsPerPage && (
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"
