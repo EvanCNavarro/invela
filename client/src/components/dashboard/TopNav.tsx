@@ -50,7 +50,7 @@ export function TopNav() {
   return (
     <div className="w-full">
       <div className="h-14 px-6 flex items-center gap-4">
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 max-w-[340px]">
           <SearchBar
             isGlobalSearch
             onSearch={handleSearch}
