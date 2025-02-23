@@ -50,6 +50,12 @@ export default function CompanyProfilePage() {
   const params = useParams();
   const companySlug = params?.["*"]?.split("/").pop();
 
+  console.log("[CompanyProfile] Route params:", {
+    params,
+    extractedSlug: companySlug,
+    fullPath: window.location.pathname
+  });
+
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -59,18 +65,11 @@ export default function CompanyProfilePage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab');
+    console.log("[CompanyProfile] Tab params:", { tabParam, activeTab });
     if (tabParam && ['overview', 'users', 'files', 'risk'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, []);
-
-  // Update URL when tab changes
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('tab', value);
-    window.history.replaceState({}, '', newUrl.toString());
-  };
 
   const handleBackClick = () => {
     window.history.back();
@@ -79,6 +78,15 @@ export default function CompanyProfilePage() {
   // First fetch all companies to find the ID from slug
   const { data: companiesData = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
+    onSuccess: (data) => {
+      console.log("[CompanyProfile] All companies fetched:", {
+        count: data.length,
+        companies: data.map(c => ({ id: c.id, name: c.name, slug: generateSlug(c.name || '') }))
+      });
+    },
+    onError: (error) => {
+      console.error("[CompanyProfile] Error fetching companies:", error);
+    }
   });
 
   // Find company ID from slug
@@ -86,27 +94,56 @@ export default function CompanyProfilePage() {
     c => c.name && generateSlug(c.name) === companySlug
   )?.id;
 
+  console.log("[CompanyProfile] Company ID lookup:", {
+    searchSlug: companySlug,
+    foundId: companyId,
+    matchFound: !!companyId
+  });
+
   // Then fetch detailed company data using the ID
   const { data: company, isLoading: companyLoading } = useQuery<CompanyProfileData>({
     queryKey: [`/api/companies/${companyId}`],
     queryFn: () => {
-      if (!companyId) throw new Error("No company ID");
+      if (!companyId) {
+        console.log("[CompanyProfile] Skipping company fetch - no ID available");
+        throw new Error("No company ID");
+      }
+      console.log("[CompanyProfile] Fetching company details:", { companyId });
       return fetch(`/api/companies/${companyId}`).then(res => {
         if (!res.ok) {
+          console.error("[CompanyProfile] API error:", {
+            status: res.status,
+            statusText: res.statusText
+          });
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
       });
     },
-    enabled: !!companyId
+    enabled: !!companyId,
+    onSuccess: (data) => {
+      console.log("[CompanyProfile] Company details fetched:", {
+        id: data.id,
+        name: data.name,
+        hasRelationship: data.has_relationship
+      });
+    },
+    onError: (error) => {
+      console.error("[CompanyProfile] Error fetching company details:", error);
+    }
   });
 
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: () => {
       if (!company?.id && company?.id !== 0) throw new Error("No company ID");
+      console.log("[CompanyProfile] Fetching users for company:", company?.id);
       return fetch(`/api/users/by-company/${company?.id}`).then(res => {
         if (!res.ok) {
+          console.error("[CompanyProfile] API error fetching users:", {
+            status: res.status,
+            statusText: res.statusText
+          });
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
@@ -114,11 +151,13 @@ export default function CompanyProfilePage() {
     },
     enabled: company?.id !== undefined,
     onSuccess: (data) => {
-      console.log("Debug - Successfully fetched users:", data);
-      console.log("Debug - Number of users fetched:", data.length);
+      console.log("[CompanyProfile] Successfully fetched users:", {
+        count: data.length,
+        users: data.map(u => ({ id: u.id, fullName: u.fullName, email: u.email }))
+      });
     },
     onError: (error) => {
-      console.error("Debug - Error fetching users:", error);
+      console.error("[CompanyProfile] Error fetching users:", error);
     }
   });
 
@@ -137,6 +176,10 @@ export default function CompanyProfilePage() {
   });
 
   if (companiesLoading || companyLoading) {
+    console.log("[CompanyProfile] Loading state:", {
+      companiesLoading,
+      companyLoading
+    });
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -155,6 +198,11 @@ export default function CompanyProfilePage() {
   }
 
   if (!companyId || !company) {
+    console.log("[CompanyProfile] Not found state:", {
+      companyId,
+      company,
+      attemptedSlug: companySlug
+    });
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -175,6 +223,7 @@ export default function CompanyProfilePage() {
   }
 
   if (!company.has_relationship) {
+    console.log("[CompanyProfile] Access restricted - no relationship");
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -195,6 +244,7 @@ export default function CompanyProfilePage() {
   }
 
   const renderOverviewTab = () => {
+    console.log("[CompanyProfile] Rendering Overview Tab");
     return (
       <div className="space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -451,6 +501,7 @@ export default function CompanyProfilePage() {
   };
 
   const renderFilesTab = () => {
+    console.log("[CompanyProfile] Rendering Files Tab");
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -494,6 +545,7 @@ export default function CompanyProfilePage() {
   };
 
   const renderRiskTab = () => {
+    console.log("[CompanyProfile] Rendering Risk Tab");
     return (
       <div className="space-y-6">
         <Card>
