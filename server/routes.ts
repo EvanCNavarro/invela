@@ -287,37 +287,9 @@ export function registerRoutes(app: Express): Express {
       console.log('[Company Details] Fetching company:', req.params.id);
 
       // Get company details along with relationship check
-      const [company] = await db.select({
-        id: companies.id,
-        name: companies.name,
-        category: companies.category,
-        description: companies.description,
-        logo_id: companies.logo_id,
-        accreditation_status: companies.accreditation_status,
-        risk_score: companies.risk_score,
-        onboarding_company_completed: companies.onboarding_company_completed,
-        website_url: companies.website_url,
-        legal_structure: companies.legal_structure,
-        hq_address: companies.hq_address,
-        employee_count: companies.employee_count,
-        products_services: companies.products_services,
-        incorporation_year: companies.incorporation_year,
-        investors_info: companies.investors_info,
-        funding_stage: companies.funding_stage,
-        key_partners: companies.key_partners,
-        leadership_team: companies.leadership_team,
-        // Check if requesting user has access
-        has_relationship: sql<boolean>`
-          ${companies.id} = ${req.user!.company_id}
-          OR EXISTS (
-            SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
-          )
-        `
-      })
-      .from(companies)
-      .where(eq(companies.id, parseInt(req.params.id)));
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, parseInt(req.params.id)));
 
       if (!company) {
         console.log('[Company Details] Company not found:', req.params.id);
