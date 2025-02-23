@@ -43,7 +43,7 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  const { companyId, companySlug } = useParams();
+  const { companyId } = useParams();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -51,7 +51,6 @@ export default function CompanyProfilePage() {
 
   console.log("[CompanyProfile] Route params:", {
     companyId,
-    companySlug,
     fullPath: window.location.pathname
   });
 
@@ -76,31 +75,33 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
+  const { data: relationships = [] } = useQuery<NetworkRelationship[]>({
+    queryKey: ["/api/relationships"],
+  });
+
+  const currentPath = window.location.pathname;
+  const pathSegments = currentPath.split('/');
+  const urlSlug = pathSegments[pathSegments.length - 1];
+
+  const matchingCompany = relationships.find(r => 
+    generateSlug(r.relatedCompany.name) === urlSlug
+  )?.relatedCompany;
+
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies/by-slug", companySlug],
+    queryKey: ["/api/companies", matchingCompany?.id],
     queryFn: async () => {
-      if (!companySlug) throw new Error("No company slug provided");
+      if (!matchingCompany?.id) throw new Error("No company ID found");
 
-      console.log("[CompanyProfile] Looking up company by slug:", companySlug);
-      const lookupResponse = await fetch(`/api/companies/by-slug/${companySlug}`);
-
-      if (!lookupResponse.ok) {
-        const errorData = await lookupResponse.json();
-        throw new Error(errorData.message || `HTTP error! status: ${lookupResponse.status}`);
+      console.log("[CompanyProfile] Looking up company by ID:", matchingCompany.id);
+      const response = await fetch(`/api/companies/${matchingCompany.id}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      const { id } = await lookupResponse.json();
-      console.log("[CompanyProfile] Found company ID:", id);
-
-      const dataResponse = await fetch(`/api/companies/${id}`);
-      if (!dataResponse.ok) {
-        const errorData = await dataResponse.json();
-        throw new Error(errorData.message || `HTTP error! status: ${dataResponse.status}`);
-      }
-
-      return dataResponse.json();
+      return response.json();
     },
-    enabled: !!companySlug,
+    enabled: !!matchingCompany?.id,
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("Company not found")) {
         return false;

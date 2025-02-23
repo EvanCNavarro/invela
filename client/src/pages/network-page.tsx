@@ -389,7 +389,10 @@ export default function NetworkPage() {
                       key={relationship.id}
                       relationship={relationship}
                       isHovered={hoveredRow === relationship.relatedCompany.id}
-                      onRowClick={() => setLocation(`/network/company/${relationship.relatedCompany.id}`)}
+                      onRowClick={() => {
+                        const slug = generateSlug(relationship.relatedCompany.name);
+                        setLocation(`/network/company/${slug}`);
+                      }}
                       onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
                       searchTerm={searchQuery}
                     />
