@@ -21,10 +21,6 @@ import { DataTable } from '@/components/ui/data-table';
 // Helper function to generate consistent slugs
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
-interface CompanyProfilePageProps {
-  companyId?: number; // Changed to accept company ID
-}
-
 interface CompanyProfileData {
   id: number;
   name: string;
@@ -45,11 +41,14 @@ interface CompanyProfileData {
   fundingStage: string | null;
   keyClientsPartners: string;
   foundersAndLeadership: string;
-  documents?: Document[]; // Added documents property.  Assumption based on later usage.
-  certificationsCompliance?: string; // Added based on usage in renderRiskTab
+  documents?: Document[];
+  certificationsCompliance?: string;
 }
 
-export default function CompanyProfilePage({ companyId }: CompanyProfilePageProps) {
+export default function CompanyProfilePage() {
+  const [params] = useParams();
+  const companySlug = params?.["*"]?.split("/").pop();
+
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -76,6 +75,17 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
     window.history.back();
   };
 
+  // First fetch all companies to find the ID from slug
+  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
+    queryKey: ["/api/companies"],
+  });
+
+  // Find company ID from slug
+  const companyId = companiesData.find(
+    c => c.name && generateSlug(c.name) === companySlug
+  )?.id;
+
+  // Then fetch detailed company data using the ID
   const { data: company, isLoading: companyLoading } = useQuery<CompanyProfileData>({
     queryKey: [`/api/companies/${companyId}`],
     queryFn: () => {
@@ -125,7 +135,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   });
 
-  if (companyLoading) {
+  if (companiesLoading || companyLoading) {
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -143,7 +153,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
     );
   }
 
-  if (!company) {
+  if (!companyId || !company) {
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -163,10 +173,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
     );
   }
 
-
   if (!company.has_relationship) {
-    const attemptedCompanyName = companyId ? "Company ID: " + companyId : "Unknown Company"; // more informative message
-
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -174,7 +181,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
             <AlertTriangle className="h-12 w-12 text-warning" />
             <h2 className="text-2xl font-semibold">Access Restricted</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              You don't have permission to view {attemptedCompanyName}.
+              You don't have permission to view this company's information.
             </p>
             <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -185,7 +192,6 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
       </DashboardLayout>
     );
   }
-
 
   const renderOverviewTab = () => {
     return (
@@ -242,6 +248,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
             </CardContent>
           </Card>
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -333,6 +340,7 @@ export default function CompanyProfilePage({ companyId }: CompanyProfilePageProp
             </CardContent>
           </Card>
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
