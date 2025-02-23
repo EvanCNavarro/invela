@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { ArrowLeft, Building2, Shield, Calendar, AlertTriangle, Ban, Globe, Users, Building, BookOpen, Briefcase, Target, Award, UserPlus, FileUp } from "lucide-react";
-import type { Company, User, Document } from "@/types/company";
+import type { Company, User, Document, AccreditationStatus } from "@/types/company";
 import { cn } from "@/lib/utils";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
@@ -52,7 +52,17 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     window.history.back();
   };
 
-  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<Company[]>({
+  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<{
+    id: number;
+    name: string;
+    category: string;
+    description: string | null;
+    logo_id: number | null;
+    accreditation_status: AccreditationStatus;
+    risk_score: number | null;
+    onboarding_company_completed: boolean;
+    has_relationship: boolean;
+  }[]>({
     queryKey: ["/api/companies"],
   });
 
@@ -125,7 +135,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <Ban className="h-12 w-12 text-destructive" />
             <h2 className="text-2xl font-semibold">Access Restricted</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              You don't have permission to view this page.
+              You don't have permission to view company information.
             </p>
             <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -137,7 +147,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     );
   }
 
-  if (!company) {
+  if (!company || !company.has_relationship) {
     const attemptedCompanyName = companySlug
       ?.split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -150,7 +160,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
             <AlertTriangle className="h-12 w-12 text-warning" />
             <h2 className="text-2xl font-semibold">Company Not Found</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              There was no '{attemptedCompanyName}' company found in your network.
+              '{attemptedCompanyName}' is not part of your network or doesn't exist.
             </p>
             <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -161,6 +171,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
       </DashboardLayout>
     );
   }
+
 
   const renderOverviewTab = () => {
     return (
@@ -190,17 +201,17 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
                 variant="outline"
                 className={cn(
                   "capitalize",
-                  company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-                  company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-                  company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-                  company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-                  company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-                  company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-                  company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-                  company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+                  company.accreditation_status === 'PENDING' && "bg-yellow-100 text-yellow-800",
+                  company.accreditation_status === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
+                  company.accreditation_status === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditation_status === 'APPROVED' && "bg-green-100 text-green-800",
+                  company.accreditation_status === 'SUSPENDED' && "bg-gray-100 text-gray-800",
+                  company.accreditation_status === 'REVOKED' && "bg-red-100 text-red-800",
+                  company.accreditation_status === 'EXPIRED' && "bg-red-100 text-red-800",
+                  company.accreditation_status === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
                 )}
               >
-                {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+                {company.accreditation_status?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
               </Badge>
             </CardContent>
           </Card>
@@ -213,7 +224,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <RiskMeter score={company.riskScore || 0} />
+              <RiskMeter score={company.risk_score || 0} />
             </CardContent>
           </Card>
         </div>
@@ -480,7 +491,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
               <div>
                 <h3 className="text-lg font-semibold mb-2">Overall Risk Score</h3>
                 <div className="w-full max-w-md">
-                  <RiskMeter score={company.riskScore || 0} />
+                  <RiskMeter score={company.risk_score || 0} />
                 </div>
               </div>
 
@@ -497,10 +508,10 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
                       variant="outline"
                       className={cn(
                         "capitalize mt-1",
-                        company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800"
+                        company.accreditation_status === 'APPROVED' && "bg-green-100 text-green-800"
                       )}
                     >
-                      {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+                      {company.accreditation_status?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
                     </Badge>
                   </div>
                   <div>

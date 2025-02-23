@@ -47,22 +47,48 @@ export function registerRoutes(app: Express): Express {
     try {
       console.log('[Companies] Fetching all companies with logos');
 
-      const allCompanies = await db.query.companies.findMany({
-        with: {
-          logos: true
-        }
-      });
+      // Get all companies that either:
+      // 1. The user's own company
+      // 2. Companies that have a relationship with the user's company
+      const networkCompanies = await db.select({
+        id: companies.id,
+        name: companies.name,
+        category: companies.category,
+        description: companies.description,
+        logo_id: companies.logo_id,
+        accreditation_status: companies.accreditation_status,
+        risk_score: companies.risk_score,
+        onboarding_company_completed: companies.onboarding_company_completed,
+        // Include relationship info
+        has_relationship: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${relationships} r 
+          WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+          OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+        )`
+      })
+      .from(companies)
+      .where(
+        or(
+          eq(companies.id, req.user!.company_id),
+          sql`EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+          )`
+        )
+      );
 
       console.log('[Companies] Found companies:', {
-        count: allCompanies.length,
-        companies: allCompanies.map(c => ({
+        count: networkCompanies.length,
+        companies: networkCompanies.map(c => ({
           id: c.id,
           name: c.name,
-          hasLogo: !!c.logo_id
+          hasLogo: !!c.logo_id,
+          hasRelationship: c.has_relationship
         }))
       });
 
-      res.json(allCompanies);
+      res.json(networkCompanies);
     } catch (error) {
       console.error("[Companies] Error fetching companies:", error);
       res.status(500).json({ message: "Error fetching companies" });
