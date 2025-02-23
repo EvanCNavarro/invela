@@ -25,6 +25,28 @@ interface CompanyProfilePageProps {
   companySlug?: string;
 }
 
+interface CompanyProfileData {
+  id: number;
+  name: string;
+  category: string;
+  description: string | null;
+  logo_id: number | null;
+  accreditation_status: AccreditationStatus;
+  risk_score: number | null;
+  onboarding_company_completed: boolean;
+  has_relationship: boolean;
+  websiteUrl: string;
+  legalStructure: string;
+  hqAddress: string;
+  numEmployees: string;
+  productsServices: string;
+  incorporationYear: string | number;
+  investors: string;
+  fundingStage: string | null;
+  keyClientsPartners: string;
+  foundersAndLeadership: string;
+}
+
 export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
@@ -52,17 +74,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     window.history.back();
   };
 
-  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<{
-    id: number;
-    name: string;
-    category: string;
-    description: string | null;
-    logo_id: number | null;
-    accreditation_status: AccreditationStatus;
-    risk_score: number | null;
-    onboarding_company_completed: boolean;
-    has_relationship: boolean;
-  }[]>({
+  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
   });
 

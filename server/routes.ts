@@ -59,6 +59,17 @@ export function registerRoutes(app: Express): Express {
         accreditation_status: companies.accreditation_status,
         risk_score: companies.risk_score,
         onboarding_company_completed: companies.onboarding_company_completed,
+        // Include additional company details
+        website_url: companies.website_url,
+        legal_structure: companies.legal_structure,
+        hq_address: companies.hq_address,
+        employee_count: companies.employee_count,
+        products_services: companies.products_services,
+        incorporation_year: companies.incorporation_year,
+        investors_info: companies.investors_info,
+        funding_stage: companies.funding_stage,
+        key_partners: companies.key_partners,
+        leadership_team: companies.leadership_team,
         // Include relationship info
         has_relationship: sql<boolean>`EXISTS (
           SELECT 1 FROM ${relationships} r 
@@ -88,7 +99,23 @@ export function registerRoutes(app: Express): Express {
         }))
       });
 
-      res.json(networkCompanies);
+      // Transform the data to match frontend expectations
+      const transformedCompanies = networkCompanies.map(company => ({
+        ...company,
+        // Map database fields to frontend expected names
+        websiteUrl: company.website_url || 'N/A',
+        legalStructure: company.legal_structure || 'N/A',
+        hqAddress: company.hq_address || 'N/A',
+        numEmployees: company.employee_count || 'N/A',
+        productsServices: company.products_services || 'N/A',
+        incorporationYear: company.incorporation_year || 'N/A',
+        investors: company.investors_info || 'No investor information available',
+        fundingStage: company.funding_stage || null,
+        keyClientsPartners: company.key_partners || 'No client/partner information available',
+        foundersAndLeadership: company.leadership_team || 'No leadership information available'
+      }));
+
+      res.json(transformedCompanies);
     } catch (error) {
       console.error("[Companies] Error fetching companies:", error);
       res.status(500).json({ message: "Error fetching companies" });
@@ -451,6 +478,7 @@ export function registerRoutes(app: Express): Express {
       }
     }
   });
+
 
 
   app.delete("/api/files/:id", requireAuth, async (req, res) => {
