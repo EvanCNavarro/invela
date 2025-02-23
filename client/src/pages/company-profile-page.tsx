@@ -17,6 +17,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table';
+import LoadingSpinner from "@/components/ui/loading-spinner"; 
 
 interface CompanyProfileData {
   id: number;
@@ -53,21 +54,34 @@ export default function CompanyProfilePage() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
+  const location = useLocation(); 
 
-  console.log("[CompanyProfile Debug] Route params:", {
-    params,
-    paramCompanyId, 
-    fullPath: window.location.pathname,
-    timestamp: new Date().toISOString(),
-    routeType: paramCompanyId ? 'ID-based' : 'Slug-based'
-  });
+  const user = null; 
 
   console.log("[CompanyProfile Debug] Component mount state:", {
-    isInitialMount: true,
-    currentUser: user,
-    hasAuthContext: !!user,
-    timestamp: new Date().toISOString()
+    params,
+    paramCompanyId,
+    fullPath: `/network/company/${paramCompanyId}`,
+    timestamp: new Date().toISOString(),
+    routeType: "ID-based",
+    userContext: user ? { id: user.id, companyId: user.company_id } : null,
+    hasUserContext: !!user,
+    isInitialMount: true
   });
+
+  
+  if (!user) {
+    console.log("[CompanyProfile Debug] Waiting for user context");
+    return (
+      <DashboardLayout>
+        <PageTemplate>
+          <div className="flex items-center justify-center h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -103,8 +117,8 @@ export default function CompanyProfilePage() {
     lookupMethod: 'id',
     searchValue: paramCompanyId,
     timestamp: new Date().toISOString(),
-    availableCompanies: networkRelationships?.length || 0,
-    relationships: networkRelationships?.map(r => ({
+    availableCompanies: relationships?.length || 0,
+    relationships: relationships?.map(r => ({
       id: r.relatedCompany.id,
       name: r.relatedCompany.name
     }))
@@ -183,7 +197,7 @@ export default function CompanyProfilePage() {
     timestamp: new Date().toISOString(),
     context: {
       attemptedId: paramCompanyId,
-      networkDataLoaded: !!networkRelationships,
+      networkDataLoaded: !!relationships,
       userAuthenticated: !!user
     }
   });
@@ -213,9 +227,9 @@ export default function CompanyProfilePage() {
         slug: params.companySlug
       },
       networkState: {
-        isLoading: isLoading,
+        isLoading: companyLoading,
         hasError: !!companyError,
-        relationshipsCount: networkRelationships?.length || 0
+        relationshipsCount: relationships?.length || 0
       },
       timestamp: new Date().toISOString()
     });
