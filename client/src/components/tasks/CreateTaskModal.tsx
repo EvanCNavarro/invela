@@ -96,7 +96,11 @@ const defaultValues: TaskFormData = {
   companyId: undefined,
 } as const;
 
-export function CreateTaskModal() {
+interface CreateTaskModalProps {
+  disabled?: boolean;
+}
+
+export function CreateTaskModal({ disabled = false }: CreateTaskModalProps) {
   const [open, setOpen] = useState(false);
   const [openCombobox, setOpenCombobox] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -216,7 +220,9 @@ export function CreateTaskModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button disabled={disabled} className={cn(
+          disabled && "opacity-50 cursor-not-allowed"
+        )}>
           <PlusIcon className="h-4 w-4 mr-2" />
           Create Task
         </Button>
@@ -467,7 +473,7 @@ export function CreateTaskModal() {
               <Button
                 type="submit"
                 className="flex-1"
-                disabled={createTaskMutation.isPending}
+                disabled={createTaskMutation.isPending || disabled}
               >
                 {taskType === TaskType.FILE_REQUEST ? (
                   <div className="flex items-center">
