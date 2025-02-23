@@ -97,22 +97,34 @@ export default function CompanyProfilePage() {
       try {
         const response = await fetch("/api/companies");
         if (!response.ok) {
+          console.error("[CompanyProfile] API error:", {
+            status: response.status,
+            statusText: response.statusText
+          });
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log("[CompanyProfile] Companies fetched:", {
-          responseOk: response.ok,
-          dataType: typeof data,
-          isArray: Array.isArray(data),
-          length: Array.isArray(data) ? data.length : 0
+
+        // Log the actual response data for debugging
+        console.log("[CompanyProfile] Raw API response:", {
+          data,
+          type: typeof data,
+          isArray: Array.isArray(data)
         });
-        return Array.isArray(data) ? data : [];
+
+        // Ensure we have a valid array response
+        if (!Array.isArray(data)) {
+          console.error("[CompanyProfile] Invalid data format:", data);
+          return [];
+        }
+
+        return data;
       } catch (error) {
         console.error("[CompanyProfile] Error fetching companies:", error);
-        return [];
+        throw error; // Let React Query handle the error
       }
     },
-    retry: 3, // Add retry logic
+    retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000)
   });
 
