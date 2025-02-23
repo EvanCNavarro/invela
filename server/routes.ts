@@ -45,10 +45,26 @@ export function registerRoutes(app: Express): Express {
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
     try {
-      const allCompanies = await db.select().from(companies);
+      console.log('[Companies] Fetching all companies with logos');
+
+      const allCompanies = await db.query.companies.findMany({
+        with: {
+          logos: true
+        }
+      });
+
+      console.log('[Companies] Found companies:', {
+        count: allCompanies.length,
+        companies: allCompanies.map(c => ({
+          id: c.id,
+          name: c.name,
+          hasLogo: !!c.logo_id
+        }))
+      });
+
       res.json(allCompanies);
     } catch (error) {
-      console.error("Error fetching companies:", error);
+      console.error("[Companies] Error fetching companies:", error);
       res.status(500).json({ message: "Error fetching companies" });
     }
   });
