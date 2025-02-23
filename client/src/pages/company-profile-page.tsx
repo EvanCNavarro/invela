@@ -22,7 +22,7 @@ import { DataTable } from '@/components/ui/data-table';
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
 interface CompanyProfilePageProps {
-  companySlug?: string;
+  companyId?: number; // Changed to accept company ID
 }
 
 interface CompanyProfileData {
@@ -45,9 +45,11 @@ interface CompanyProfileData {
   fundingStage: string | null;
   keyClientsPartners: string;
   foundersAndLeadership: string;
+  documents?: Document[]; // Added documents property.  Assumption based on later usage.
+  certificationsCompliance?: string; // Added based on usage in renderRiskTab
 }
 
-export default function CompanyProfilePage({ companySlug }: CompanyProfilePageProps) {
+export default function CompanyProfilePage({ companyId }: CompanyProfilePageProps) {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
@@ -74,22 +76,25 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     window.history.back();
   };
 
-  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
-    queryKey: ["/api/companies"],
-  });
-
-  const company = companiesData.find(item => {
-    if (!companySlug || !item.name) return false;
-    return generateSlug(item.name) === companySlug.toLowerCase();
+  const { data: company, isLoading: companyLoading } = useQuery<CompanyProfileData>({
+    queryKey: [`/api/companies/${companyId}`],
+    queryFn: () => {
+      if (!companyId) throw new Error("No company ID");
+      return fetch(`/api/companies/${companyId}`).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      });
+    },
+    enabled: !!companyId
   });
 
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: () => {
       if (!company?.id && company?.id !== 0) throw new Error("No company ID");
-      console.log("Debug - Fetching users for company ID:", company.id);
-      console.log("Debug - Company data:", company);
-      return fetch(`/api/users/by-company/${company.id}`).then(res => {
+      return fetch(`/api/users/by-company/${company?.id}`).then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
@@ -107,7 +112,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   });
 
   const filteredUsers = companyUsers.filter((user) => {
-    console.log("Debug - Filtering user:", user);
     if (!userSearchQuery) return true;
     const searchLower = userSearchQuery.toLowerCase();
     return (
@@ -121,7 +125,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   });
 
-  if (companiesLoading) {
+  if (companyLoading) {
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -139,15 +143,15 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     );
   }
 
-  if (!companiesData || companiesData.length === 0) {
+  if (!company) {
     return (
       <DashboardLayout>
         <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Ban className="h-12 w-12 text-destructive" />
-            <h2 className="text-2xl font-semibold">Access Restricted</h2>
+            <h2 className="text-2xl font-semibold">Company Not Found</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              You don't have permission to view company information.
+              Company not found.
             </p>
             <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -159,20 +163,18 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
     );
   }
 
-  if (!company || !company.has_relationship) {
-    const attemptedCompanyName = companySlug
-      ?.split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+
+  if (!company.has_relationship) {
+    const attemptedCompanyName = companyId ? "Company ID: " + companyId : "Unknown Company"; // more informative message
 
     return (
       <DashboardLayout>
         <PageTemplate>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <AlertTriangle className="h-12 w-12 text-warning" />
-            <h2 className="text-2xl font-semibold">Company Not Found</h2>
+            <h2 className="text-2xl font-semibold">Access Restricted</h2>
             <p className="text-muted-foreground max-w-md text-center">
-              '{attemptedCompanyName}' is not part of your network or doesn't exist.
+              You don't have permission to view {attemptedCompanyName}.
             </p>
             <Button variant="outline" onClick={() => window.history.back()}>
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -373,7 +375,6 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
   };
 
   const renderUsersTab = () => {
-    console.log("Debug - Rendering users tab with data:", filteredUsers);
     const columns = [
       {
         key: "fullName",
@@ -393,12 +394,7 @@ export default function CompanyProfilePage({ companySlug }: CompanyProfilePagePr
       },
     ];
 
-    const tableData = filteredUsers.map(user => {
-      console.log("Debug - Transforming user data:", user);
-      return {
-        ...user
-      };
-    });
+    const tableData = filteredUsers.map(user => ({ ...user }));
 
     return (
       <div className="space-y-6">

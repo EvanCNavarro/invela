@@ -151,6 +151,92 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  //New Endpoint
+  app.get("/api/companies/:id", requireAuth, async (req, res) => {
+    try {
+      console.log('[Company Details] Fetching company:', req.params.id);
+
+      // Get company details along with relationship check
+      const [company] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        category: companies.category,
+        description: companies.description,
+        logo_id: companies.logo_id,
+        accreditation_status: companies.accreditation_status,
+        risk_score: companies.risk_score,
+        onboarding_company_completed: companies.onboarding_company_completed,
+        website_url: companies.website_url,
+        legal_structure: companies.legal_structure,
+        hq_address: companies.hq_address,
+        employee_count: companies.employee_count,
+        products_services: companies.products_services,
+        incorporation_year: companies.incorporation_year,
+        investors_info: companies.investors_info,
+        funding_stage: companies.funding_stage,
+        key_partners: companies.key_partners,
+        leadership_team: companies.leadership_team,
+        // Check if requesting user has access
+        has_relationship: sql<boolean>`
+          ${companies.id} = ${req.user!.company_id}
+          OR EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+          )
+        `
+      })
+      .from(companies)
+      .where(eq(companies.id, parseInt(req.params.id)));
+
+      if (!company) {
+        console.log('[Company Details] Company not found:', req.params.id);
+        return res.status(404).json({ 
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      if (!company.has_relationship) {
+        console.log('[Company Details] Access denied for company:', {
+          companyId: company.id,
+          userId: req.user!.id,
+          userCompanyId: req.user!.company_id
+        });
+        return res.status(403).json({ 
+          message: "You don't have permission to view this company's information. This company is not in your network.",
+          code: "ACCESS_DENIED"
+        });
+      }
+
+      // Transform response to match frontend expectations
+      const transformedCompany = {
+        ...company,
+        websiteUrl: company.website_url || 'N/A',
+        legalStructure: company.legal_structure || 'N/A',
+        hqAddress: company.hq_address || 'N/A',
+        numEmployees: company.employee_count || 'N/A',
+        productsServices: company.products_services || 'N/A',
+        incorporationYear: company.incorporation_year || 'N/A',
+        investors: company.investors_info || 'No investor information available',
+        fundingStage: company.funding_stage || null,
+        keyClientsPartners: company.key_partners || 'No client/partner information available',
+        foundersAndLeadership: company.leadership_team || 'No leadership information available'
+      };
+
+      console.log('[Company Details] Successfully fetched company:', {
+        id: company.id,
+        name: company.name,
+        hasAccess: company.has_relationship
+      });
+
+      res.json(transformedCompany);
+    } catch (error) {
+      console.error("[Company Details] Error fetching company:", error);
+      res.status(500).json({ message: "Error fetching company details" });
+    }
+  });
+
   // Tasks endpoints
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
