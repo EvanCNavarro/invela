@@ -86,17 +86,12 @@ export default function CompanyProfilePage() {
   const currentPath = window.location.pathname;
   const pathSegments = currentPath.split('/');
   const urlSlug = pathSegments[pathSegments.length - 1];
-  const companyId = !isNaN(Number(urlSlug)) ? Number(urlSlug) : undefined; //Added line to handle numerical ID
-
-  const matchingCompany = relationships.find(r => 
-    companyId ? r.relatedCompany.id === companyId : generateSlug(r.relatedCompany.name) === urlSlug
-  )?.relatedCompany;
+  const companyId = !isNaN(Number(urlSlug)) ? Number(urlSlug) : undefined;
 
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", matchingCompany?.id || paramCompanyId], //Modified query key
+    queryKey: ["/api/companies", companyId],
     queryFn: async () => {
-      const idToUse = matchingCompany?.id || paramCompanyId;
-      if (!idToUse) throw new Error("No company ID found");
+      if (!companyId) throw new Error("No company ID found");
 
       console.log("[CompanyProfile] Looking up company by ID:", idToUse);
       const response = await fetch(`/api/companies/${idToUse}`);
