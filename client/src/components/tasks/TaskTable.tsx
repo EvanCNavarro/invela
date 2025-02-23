@@ -62,7 +62,8 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
 
   const handleTaskClick = (task: Task) => {
     console.log('Task clicked:', task);
-    if (task.task_type === 'company_kyb') {
+    // Only navigate to KYB form if task is not in submitted status
+    if (task.task_type === 'company_kyb' && task.status !== 'submitted') {
       // Get company name from metadata or task title
       const companyName = task.metadata?.company_name || 
                          task.title.replace('Company KYB: ', '').toLowerCase().replace(/\s+/g, '-');
@@ -75,7 +76,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       // Navigate to KYB form page with company name in URL
       navigate(`/task-center/task/kyb-${companyName}`);
     } else {
-      // Show modal for other task types
+      // Show modal for other task types or submitted KYB tasks
       setSelectedTask(task);
       setDetailsModalOpen(true);
     }
@@ -108,7 +109,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                 key={task.id}
                 className={classNames(
                   "cursor-pointer hover:bg-muted/50 transition-colors",
-                  task.task_type === 'company_kyb' && "hover:bg-blue-50/50"
+                  task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50"
                 )}
                 onClick={() => handleTaskClick(task)}
               >
