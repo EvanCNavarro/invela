@@ -17,7 +17,7 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { useState, useEffect } from "react";
 import { DataTable } from '@/components/ui/data-table';
-import LoadingSpinner from "@/components/ui/loading-spinner"; 
+import { LoadingSpinner } from "@/components/ui/loading-spinner"; 
 
 interface CompanyProfileData {
   id: number;
