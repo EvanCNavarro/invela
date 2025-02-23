@@ -46,9 +46,9 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  // Fix: useParams returns an object, not an array
+  // Fix: Extract company slug from params correctly
   const params = useParams();
-  const companySlug = params?.["*"]?.split("/").pop();
+  const companySlug = params?.["*"];
 
   console.log("[CompanyProfile] Route params:", {
     params,
@@ -70,6 +70,15 @@ export default function CompanyProfilePage() {
       setActiveTab(tabParam);
     }
   }, []);
+
+  // Add back tab change handler
+  const handleTabChange = (value: string) => {
+    console.log("[CompanyProfile] Tab changed:", { from: activeTab, to: value });
+    setActiveTab(value);
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('tab', value);
+    window.history.replaceState({}, '', newUrl.toString());
+  };
 
   const handleBackClick = () => {
     window.history.back();
