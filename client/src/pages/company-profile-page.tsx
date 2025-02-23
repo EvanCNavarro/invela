@@ -48,13 +48,14 @@ const generateSlug = (name: string) => {
 
 export default function CompanyProfilePage() {
   const params = useParams();
-  const companyId = !isNaN(Number(params.companySlug)) ? Number(params.companySlug) : undefined;
+  const paramCompanyId = params.companySlug;
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
   console.log("[CompanyProfile] Route params:", {
+    params,
     paramCompanyId,
     fullPath: window.location.pathname
   });
@@ -85,12 +86,12 @@ export default function CompanyProfilePage() {
   });
 
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", companyId],
+    queryKey: ["/api/companies", paramCompanyId],
     queryFn: async () => {
-      if (!companyId) throw new Error("No company ID found");
+      if (!paramCompanyId) throw new Error("No company ID found");
 
-      console.log("[CompanyProfile] Looking up company by ID:", companyId);
-      const response = await fetch(`/api/companies/${companyId}`);
+      console.log("[CompanyProfile] Looking up company by ID:", paramCompanyId);
+      const response = await fetch(`/api/companies/${paramCompanyId}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -98,7 +99,7 @@ export default function CompanyProfilePage() {
 
       return response.json();
     },
-    enabled: !!matchingCompany?.id || !!paramCompanyId, //Modified enabled condition
+    enabled: !!paramCompanyId,
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("Company not found")) {
         return false;
