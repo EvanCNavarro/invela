@@ -224,7 +224,7 @@ export default function TaskCenterPage() {
     );
   }
 
-  const lockedFeatureTooltip = "Complete onboarding to unlock features!";
+  const lockedFeatureTooltip = "Complete onboarding to unlock features";
 
   return (
     <DashboardLayout>
@@ -308,7 +308,7 @@ export default function TaskCenterPage() {
                   </Tooltip>
                 </TooltipProvider>
               </TabsList>
-              <div className="w-full sm:w-[250px]">
+              <div className="w-full sm:w-[250px] truncate">
                 <SearchBar
                   contextualType="tasks"
                   data={tasks}
@@ -319,7 +319,7 @@ export default function TaskCenterPage() {
                   onSearch={(value) => setSearchQuery(value)}
                   isLoading={isLoading}
                   placeholder="Search Tasks"
-                  className="w-full"
+                  className="w-full truncate"
                 />
               </div>
             </div>
