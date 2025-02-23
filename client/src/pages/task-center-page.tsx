@@ -260,7 +260,7 @@ export default function TaskCenterPage() {
             }}
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-6">
-              <TabsList className="mb-0 bg-background h-9">
+              <TabsList className="w-fit bg-background h-9">
                 <TabsTrigger
                   value="my-tasks"
                   className={cn(
