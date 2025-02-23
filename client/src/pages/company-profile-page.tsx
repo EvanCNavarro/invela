@@ -49,8 +49,12 @@ export default function CompanyProfilePage() {
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Get URL params first
+  const params = useParams();
+  const companySlug = params.companySlug;
+
   console.log("[CompanyProfile] Route params:", {
-    params: useParams(),
+    params,
     extractedSlug: companySlug,
     fullPath: window.location.pathname
   });
