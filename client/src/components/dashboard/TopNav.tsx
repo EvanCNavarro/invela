@@ -36,7 +36,6 @@ export function TopNav() {
 
   const handleSearch = (value: string) => {
     console.log('Search query:', value);
-    // Implement global search functionality here
   };
 
   const handlePlaygroundToggle = (e: React.MouseEvent) => {
@@ -50,8 +49,8 @@ export function TopNav() {
 
   return (
     <div className="w-full">
-      <div className="h-14 px-6 flex items-center">
-        <div className="relative w-full max-w-md">
+      <div className="h-14 px-6 flex items-center gap-4">
+        <div className="flex-1 min-w-0">
           <SearchBar
             isGlobalSearch
             onSearch={handleSearch}
@@ -59,22 +58,22 @@ export function TopNav() {
           />
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="hidden sm:flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
               <HelpCircleIcon className="h-4 w-4" />
             </Button>
 
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
               <BellIcon className="h-4 w-4" />
             </Button>
           </div>
 
           <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 cursor-pointer bg-white">
+              <Avatar className="h-8 w-8 cursor-pointer bg-white shrink-0">
                 <AvatarFallback className="text-sm">
-                  {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
+                  {user?.full_name?.[0]?.toUpperCase() ?? 'U'}
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
@@ -88,7 +87,7 @@ export function TopNav() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-2 py-1.5">
-                <p className="text-sm font-medium truncate">{user?.fullName}</p>
+                <p className="text-sm font-medium truncate">{user?.full_name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
@@ -106,7 +105,7 @@ export function TopNav() {
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              {user?.companyId === 0 && (
+              {user?.company_id === 0 && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem

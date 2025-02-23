@@ -4,7 +4,7 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
@@ -27,7 +27,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
-  const queryClient = useQueryClient();
 
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
@@ -58,22 +57,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     const availableTabs = currentCompany?.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
 
-    console.log('Route accessibility check:', {
-      currentTab,
-      availableTabs,
-      isAccessible: availableTabs.includes(currentTab)
-    });
-
     return currentTab === 'task-center' || availableTabs.includes(currentTab);
   };
 
   useEffect(() => {
     const currentTab = getCurrentTab();
     if (currentTab !== 'task-center' && !isRouteAccessible()) {
-      console.log('Redirecting to task center - tab not accessible:', {
-        currentTab,
-        availableTabs: currentCompany?.available_tabs
-      });
       navigate('/task-center');
     }
   }, [location, currentCompany?.available_tabs, navigate]);
@@ -93,31 +82,36 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[hsl(220,33%,97%)] overflow-hidden">
-      <aside className={cn(
-        "shrink-0 sticky top-0 z-40 h-screen transition-all duration-300 ease-in-out",
-        isExpanded ? "w-64" : "w-20"
-      )}>
-        <Sidebar 
-          isExpanded={isExpanded}
-          onToggleExpanded={toggleExpanded}
-          notificationCount={relevantTasks.length}
-          showInvelaTabs={false}
-          isPlayground={false}
-          variant="default"
-        />
+    <div className="min-h-screen bg-[hsl(220,33%,97%)] relative">
+      <aside 
+        className={cn(
+          "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
+          isExpanded ? "w-64" : "w-20"
+        )}
+      >
+        <div className="h-full bg-background border-r flex flex-col">
+          <Sidebar 
+            isExpanded={isExpanded}
+            onToggleExpanded={toggleExpanded}
+            notificationCount={relevantTasks.length}
+            showInvelaTabs={false}
+            isPlayground={false}
+            variant="default"
+          />
+        </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-h-screen relative overflow-hidden">
-        <div className={cn(
-          "fixed top-0 z-30 backdrop-blur-sm bg-background/80 border-b w-full",
-          "transition-all duration-300 ease-in-out",
-          isExpanded ? "left-64" : "left-20"
-        )}>
+      <div 
+        className={cn(
+          "min-h-screen flex flex-col transition-all duration-300 ease-in-out",
+          isExpanded ? "ml-64" : "ml-20"
+        )}
+      >
+        <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-sm border-b">
           <TopNav />
-        </div>
+        </header>
 
-        <main className="flex-1 pt-16">
+        <main className="flex-1 relative overflow-auto"> {/* Added overflow-auto */}
           <div className={cn(
             "px-8 py-4",
             "transition-all duration-300 ease-in-out",
