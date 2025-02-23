@@ -47,14 +47,14 @@ const generateSlug = (name: string) => {
 };
 
 export default function CompanyProfilePage() {
-  const { companyId } = useParams();
+  const { companyId: paramCompanyId } = useParams();
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
   console.log("[CompanyProfile] Route params:", {
-    companyId,
+    paramCompanyId,
     fullPath: window.location.pathname
   });
 
@@ -86,18 +86,20 @@ export default function CompanyProfilePage() {
   const currentPath = window.location.pathname;
   const pathSegments = currentPath.split('/');
   const urlSlug = pathSegments[pathSegments.length - 1];
+  const companyId = !isNaN(Number(urlSlug)) ? Number(urlSlug) : undefined; //Added line to handle numerical ID
 
   const matchingCompany = relationships.find(r => 
-    generateSlug(r.relatedCompany.name) === urlSlug
+    companyId ? r.relatedCompany.id === companyId : generateSlug(r.relatedCompany.name) === urlSlug
   )?.relatedCompany;
 
   const { data: company, isLoading: companyLoading, error: companyError } = useQuery<CompanyProfileData>({
-    queryKey: ["/api/companies", matchingCompany?.id],
+    queryKey: ["/api/companies", matchingCompany?.id || paramCompanyId], //Modified query key
     queryFn: async () => {
-      if (!matchingCompany?.id) throw new Error("No company ID found");
+      const idToUse = matchingCompany?.id || paramCompanyId;
+      if (!idToUse) throw new Error("No company ID found");
 
-      console.log("[CompanyProfile] Looking up company by ID:", matchingCompany.id);
-      const response = await fetch(`/api/companies/${matchingCompany.id}`);
+      console.log("[CompanyProfile] Looking up company by ID:", idToUse);
+      const response = await fetch(`/api/companies/${idToUse}`);
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -105,7 +107,7 @@ export default function CompanyProfilePage() {
 
       return response.json();
     },
-    enabled: !!matchingCompany?.id,
+    enabled: !!matchingCompany?.id || !!paramCompanyId, //Modified enabled condition
     retry: (failureCount, error) => {
       if (error instanceof Error && error.message.includes("Company not found")) {
         return false;
