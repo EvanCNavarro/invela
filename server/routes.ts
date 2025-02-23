@@ -186,9 +186,13 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
     try {
       const slug = req.params.slug;
+      const slugWithSpaces = slug.replace(/-/g, ' ');
+      const alphanumericSlug = slug.replace(/[^a-zA-Z0-9]/g, '');
 
-      console.log('[Companies] Searching for company by slug:', {
-        slug,
+      console.log('[Companies] Detailed slug processing:', {
+        originalSlug: slug,
+        slugWithSpaces,
+        alphanumericSlug,
         userId: req.user!.id,
         company_id: req.user!.company_id
       });
@@ -196,6 +200,17 @@ export function registerRoutes(app: Express): Express {
       // Get company that matches the name pattern AND:
       // 1. Is the user's own company, OR
       // 2. Has a relationship with the user's company
+      const nameMatchQuery = sql`
+        LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')})||'%'
+        OR 
+        LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
+      `;
+
+      console.log('[Companies] Name matching conditions:', {
+        similarToPattern: `${slug.replace(/-/g, '[- ]')}%`,
+        alphanumericMatch: alphanumericSlug
+      });
+
       const [company] = await db.select({
         id: companies.id,
         name: sql<string>`COALESCE(${companies.name}, '')`,
@@ -230,12 +245,7 @@ export function registerRoutes(app: Express): Express {
       .from(companies)
       .where(
         and(
-          // More flexible name matching using SIMILAR TO for alphanumeric patterns
-          sql`
-            LOWER(${companies.name}) SIMILAR TO LOWER(${slug.replace(/-/g, '[- ]')})||'%'
-            OR 
-            LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(REGEXP_REPLACE(${slug}, '[^a-zA-Z0-9]', '', 'g'))
-          `,
+          nameMatchQuery,
           or(
             eq(companies.id, req.user!.company_id),
             sql`EXISTS (
@@ -247,8 +257,31 @@ export function registerRoutes(app: Express): Express {
         )
       );
 
+      // Log all companies to see what we're matching against
+      const allCompanies = await db.select({
+        id: companies.id,
+        name: companies.name,
+      })
+      .from(companies)
+      .orderBy(companies.name);
+
+      console.log('[Companies] Available companies for matching:', {
+        companies: allCompanies.map(c => ({
+          id: c.id,
+          name: c.name,
+          alphanumericName: c.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
+        }))
+      });
+
       if (!company) {
-        console.log('[Companies] Company not found for slug:', slug);
+        console.log('[Companies] Company not found for slug:', {
+          slug,
+          availableCompanies: allCompanies.length,
+          searchConditions: {
+            similarToPattern: `${slug.replace(/-/g, '[- ]')}%`,
+            alphanumericMatch: alphanumericSlug
+          }
+        });
         return res.status(404).json({
           message: "Company not found",
           code: "COMPANY_NOT_FOUND"
@@ -258,7 +291,12 @@ export function registerRoutes(app: Express): Express {
       console.log('[Companies] Found company by slug:', {
         slug,
         companyId: company.id,
-        companyName: company.name
+        companyName: company.name,
+        matchDetails: {
+          originalName: company.name,
+          processedName: company.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(),
+          matchedSlug: alphanumericSlug
+        }
       });
 
       // Transform response to match frontend expectations
@@ -278,7 +316,11 @@ export function registerRoutes(app: Express): Express {
 
       res.json(transformedCompany);
     } catch (error) {
-      console.error("[Companies] Error fetching company by slug:", error);
+      console.error("[Companies] Error fetching company by slug:", {
+        error,
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
       res.status(500).json({ 
         message: "Error fetching company details",
         code: "INTERNAL_ERROR" 
@@ -1768,7 +1810,7 @@ export function registerRoutes(app: Express): Express {
       }
       return null;
     } catch (error) {
-      consoleerror('[updateOnboardingTaskStatus] Error updating task status:', error);
+      console.error('[updateOnboardingTaskStatus] Error updating task status:', error);
       return null;
     }
   }
