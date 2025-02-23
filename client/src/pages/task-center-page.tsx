@@ -134,6 +134,22 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
+  // Calculate task counts for tabs
+  const myTasksCount = !isLoading && currentCompany?.id
+    ? tasks.filter(task => 
+        task.company_id === currentCompany.id && 
+        (task.assigned_to === user?.id || 
+         (task.task_scope === "company" && task.company_id === currentCompany.id))
+      ).length
+    : 0;
+
+  const forOthersCount = !isLoading && user?.id
+    ? tasks.filter(task => 
+        task.created_by === user.id && 
+        (!task.assigned_to || task.assigned_to !== user.id)
+      ).length
+    : 0;
+
   // Only filter tasks when both data sources are available
   const filteredTasks = (!isLoading && currentCompany?.id)
     ? tasks.filter((task) => {
@@ -238,6 +254,11 @@ export default function TaskCenterPage() {
                 >
                   <User className="h-4 w-4" />
                   <span>My Tasks</span>
+                  {myTasksCount > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {myTasksCount}
+                    </Badge>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger
                   value="for-others"
@@ -248,6 +269,11 @@ export default function TaskCenterPage() {
                 >
                   <Users2 className="h-4 w-4" />
                   <span>For Others</span>
+                  {forOthersCount > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {forOthersCount}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               </TabsList>
               <div className="relative w-full sm:w-auto">
