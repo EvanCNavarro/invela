@@ -41,15 +41,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // Filter tasks for notification count
   const relevantTasks = tasks.filter(task => {
-    // Only include tasks for the current company
     if (task.company_id !== currentCompany?.id) {
       return false;
     }
 
-    // Include tasks that are either:
-    // 1. Assigned to the current user
-    // 2. Company-wide tasks for the user's company
-    // 3. Created by the user but either unassigned or assigned to others
     return (
       task.assigned_to === user?.id || 
       (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
@@ -57,13 +52,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   });
 
-  // Get the current route's tab name
   const getCurrentTab = () => {
     const path = location.split('/')[1] || 'dashboard';
     return path === '' ? 'dashboard' : path;
   };
 
-  // Check if current route is accessible
   const isRouteAccessible = () => {
     const availableTabs = currentCompany?.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
@@ -77,7 +70,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     return currentTab === 'task-center' || availableTabs.includes(currentTab);
   };
 
-  // Handle navigation for inaccessible routes
   useEffect(() => {
     const currentTab = getCurrentTab();
     if (currentTab !== 'task-center' && !isRouteAccessible()) {
@@ -89,7 +81,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [location, currentCompany?.available_tabs, navigate]);
 
-  // Show locked section if current route is not accessible
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -105,7 +96,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[hsl(220,33%,97%)]">
+    <div className="flex min-h-screen bg-[hsl(220,33%,97%)] overflow-hidden">
       <aside className={cn(
         "shrink-0 sticky top-0 z-40 h-screen transition-all duration-300 ease-in-out",
         isExpanded ? "w-64" : "w-20"
@@ -122,7 +113,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-h-screen relative">
         <div className={cn(
-          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80",
+          "fixed top-0 right-0 z-30 backdrop-blur-sm bg-background/80 border-b",
           "transition-all duration-300 ease-in-out",
           isExpanded ? "left-64" : "left-20"
         )}>
@@ -130,7 +121,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <main className="flex-1 pt-16">
-          <div className="px-8 py-4 w-full overflow-x-hidden">
+          <div className={cn(
+            "px-8 py-4 max-w-full overflow-x-hidden",
+            "transition-all duration-300 ease-in-out"
+          )}>
             {children}
           </div>
         </main>
