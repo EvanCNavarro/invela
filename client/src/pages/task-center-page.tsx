@@ -224,7 +224,7 @@ export default function TaskCenterPage() {
     );
   }
 
-  const lockedFeatureTooltip = "Complete your company onboarding to unlock this feature! Discover the full potential of our platform by finishing the onboarding process.";
+  const lockedFeatureTooltip = "Complete onboarding to unlock features!";
 
   return (
     <DashboardLayout>
@@ -235,7 +235,7 @@ export default function TaskCenterPage() {
               title="Task Center"
               description="Manage and track your company's tasks and submissions."
             />
-            <TooltipProvider>
+            <TooltipProvider delayDuration={100}>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div>
@@ -243,7 +243,7 @@ export default function TaskCenterPage() {
                   </div>
                 </TooltipTrigger>
                 {!isCompanyOnboarded && (
-                  <TooltipContent>
+                  <TooltipContent side="left">
                     <p>{lockedFeatureTooltip}</p>
                   </TooltipContent>
                 )}
@@ -276,7 +276,7 @@ export default function TaskCenterPage() {
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TooltipProvider>
+                <TooltipProvider delayDuration={100}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
@@ -301,14 +301,14 @@ export default function TaskCenterPage() {
                       </div>
                     </TooltipTrigger>
                     {!isCompanyOnboarded && (
-                      <TooltipContent>
+                      <TooltipContent side="bottom">
                         <p>{lockedFeatureTooltip}</p>
                       </TooltipContent>
                     )}
                   </Tooltip>
                 </TooltipProvider>
               </TabsList>
-              <div className="relative w-full sm:w-auto">
+              <div className="w-full sm:w-[300px]">
                 <SearchBar
                   contextualType="tasks"
                   data={tasks}
@@ -319,7 +319,7 @@ export default function TaskCenterPage() {
                   onSearch={(value) => setSearchQuery(value)}
                   isLoading={isLoading}
                   placeholder="Search Tasks"
-                  className="w-full sm:w-[300px]"
+                  className="w-full"
                 />
               </div>
             </div>
@@ -337,44 +337,46 @@ export default function TaskCenterPage() {
                     <FilterX className="h-4 w-4" />
                   </Button>
 
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue>{statusFilter}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All Statuses">All Statuses</SelectItem>
-                      <SelectItem value={TaskStatus.NOT_STARTED}>Not Started</SelectItem>
-                      <SelectItem value={TaskStatus.IN_PROGRESS}>In Progress</SelectItem>
-                      <SelectItem value={TaskStatus.READY_FOR_SUBMISSION}>Ready for Submission</SelectItem>
-                      <SelectItem value={TaskStatus.SUBMITTED}>Submitted</SelectItem>
-                      <SelectItem value={TaskStatus.APPROVED}>Approved</SelectItem>
-                      <SelectItem value={TaskStatus.EMAIL_SENT}>Email Sent</SelectItem>
-                      <SelectItem value={TaskStatus.COMPLETED}>Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-4 flex-1">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue>{statusFilter}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All Statuses">All Statuses</SelectItem>
+                        <SelectItem value={TaskStatus.NOT_STARTED}>Not Started</SelectItem>
+                        <SelectItem value={TaskStatus.IN_PROGRESS}>In Progress</SelectItem>
+                        <SelectItem value={TaskStatus.READY_FOR_SUBMISSION}>Ready for Submission</SelectItem>
+                        <SelectItem value={TaskStatus.SUBMITTED}>Submitted</SelectItem>
+                        <SelectItem value={TaskStatus.APPROVED}>Approved</SelectItem>
+                        <SelectItem value={TaskStatus.EMAIL_SENT}>Email Sent</SelectItem>
+                        <SelectItem value={TaskStatus.COMPLETED}>Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Select value={typeFilter} onValueChange={setTypeFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue>{typeFilter}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All Task Types">All Task Types</SelectItem>
-                      <SelectItem value="user_onboarding">User Onboarding</SelectItem>
-                      <SelectItem value="file_request">File Request</SelectItem>
-                      <SelectItem value="company_kyb">Company KYB</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select value={typeFilter} onValueChange={setTypeFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue>{typeFilter}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All Task Types">All Task Types</SelectItem>
+                        <SelectItem value="user_onboarding">User Onboarding</SelectItem>
+                        <SelectItem value="file_request">File Request</SelectItem>
+                        <SelectItem value="company_kyb">Company KYB</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Select value={scopeFilter} onValueChange={setScopeFilter}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue>{scopeFilter}</SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All Assignee Types">All Assignee Types</SelectItem>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="company">Company</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Select value={scopeFilter} onValueChange={setScopeFilter}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue>{scopeFilter}</SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="All Assignee Types">All Assignee Types</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="company">Company</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="min-h-[400px]">
@@ -388,7 +390,7 @@ export default function TaskCenterPage() {
                 </div>
 
                 {!isLoading && totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t gap-4">
                     <div className="text-sm text-muted-foreground">
                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredTasks.length)} of {sortedAndFilteredTasks.length} tasks
                     </div>
