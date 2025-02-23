@@ -46,13 +46,13 @@ interface CompanyProfileData {
 }
 
 export default function CompanyProfilePage() {
-  // Fix: Extract company slug from params correctly
+  // Get the company slug from the URL parameters
   const params = useParams();
-  const companySlug = params?.["*"];
+  const slug = params?.["*"];
 
   console.log("[CompanyProfile] Route params:", {
     params,
-    extractedSlug: companySlug,
+    extractedSlug: slug,
     fullPath: window.location.pathname
   });
 
@@ -71,7 +71,7 @@ export default function CompanyProfilePage() {
     }
   }, []);
 
-  // Add back tab change handler
+  // Handle tab changes
   const handleTabChange = (value: string) => {
     console.log("[CompanyProfile] Tab changed:", { from: activeTab, to: value });
     setActiveTab(value);
@@ -84,92 +84,41 @@ export default function CompanyProfilePage() {
     window.history.back();
   };
 
-  // First fetch all companies to find the ID from slug
-  const { data: companiesData = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
+  // First fetch all companies to get the company ID from slug
+  const { data: companies = [], isLoading: companiesLoading } = useQuery<CompanyProfileData[]>({
     queryKey: ["/api/companies"],
-    onSuccess: (data) => {
-      console.log("[CompanyProfile] All companies fetched:", {
-        count: data.length,
-        companies: data.map(c => ({ id: c.id, name: c.name, slug: generateSlug(c.name || '') }))
-      });
-    },
-    onError: (error) => {
-      console.error("[CompanyProfile] Error fetching companies:", error);
+    queryFn: () => {
+      console.log("[CompanyProfile] Fetching all companies");
+      return fetch("/api/companies").then(res => res.json());
     }
   });
 
   // Find company ID from slug
-  const companyId = companiesData.find(
-    c => c.name && generateSlug(c.name) === companySlug
-  )?.id;
+  const company = companies.find(c => generateSlug(c.name || '') === slug);
 
-  console.log("[CompanyProfile] Company ID lookup:", {
-    searchSlug: companySlug,
-    foundId: companyId,
-    matchFound: !!companyId
+  console.log("[CompanyProfile] Company lookup:", {
+    searchSlug: slug,
+    foundCompany: company?.id ? { id: company.id, name: company.name } : null,
+    matchFound: !!company,
+    availableCompanies: companies.map(c => ({
+      id: c.id,
+      name: c.name,
+      slug: generateSlug(c.name || '')
+    }))
   });
 
-  // Then fetch detailed company data using the ID
-  const { data: company, isLoading: companyLoading } = useQuery<CompanyProfileData>({
-    queryKey: [`/api/companies/${companyId}`],
-    queryFn: () => {
-      if (!companyId) {
-        console.log("[CompanyProfile] Skipping company fetch - no ID available");
-        throw new Error("No company ID");
-      }
-      console.log("[CompanyProfile] Fetching company details:", { companyId });
-      return fetch(`/api/companies/${companyId}`).then(res => {
-        if (!res.ok) {
-          console.error("[CompanyProfile] API error:", {
-            status: res.status,
-            statusText: res.statusText
-          });
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      });
-    },
-    enabled: !!companyId,
-    onSuccess: (data) => {
-      console.log("[CompanyProfile] Company details fetched:", {
-        id: data.id,
-        name: data.name,
-        hasRelationship: data.has_relationship
-      });
-    },
-    onError: (error) => {
-      console.error("[CompanyProfile] Error fetching company details:", error);
-    }
-  });
-
+  // Fetch company users if we have a company
   const { data: companyUsers = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users/by-company", company?.id],
     queryFn: () => {
-      if (!company?.id && company?.id !== 0) throw new Error("No company ID");
-      console.log("[CompanyProfile] Fetching users for company:", company?.id);
-      return fetch(`/api/users/by-company/${company?.id}`).then(res => {
-        if (!res.ok) {
-          console.error("[CompanyProfile] API error fetching users:", {
-            status: res.status,
-            statusText: res.statusText
-          });
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      });
+      if (!company?.id) throw new Error("No company ID");
+      console.log("[CompanyProfile] Fetching users for company:", company.id);
+      return fetch(`/api/users/by-company/${company.id}`).then(res => res.json());
     },
-    enabled: company?.id !== undefined,
-    onSuccess: (data) => {
-      console.log("[CompanyProfile] Successfully fetched users:", {
-        count: data.length,
-        users: data.map(u => ({ id: u.id, fullName: u.fullName, email: u.email }))
-      });
-    },
-    onError: (error) => {
-      console.error("[CompanyProfile] Error fetching users:", error);
-    }
+    enabled: !!company?.id
   });
 
+  // Filter users based on search
   const filteredUsers = companyUsers.filter((user) => {
     if (!userSearchQuery) return true;
     const searchLower = userSearchQuery.toLowerCase();
@@ -179,16 +128,15 @@ export default function CompanyProfilePage() {
     );
   });
 
+  // Filter files based on search
   const filteredFiles = (company?.documents || []).filter((doc) => {
     if (!fileSearchQuery) return true;
     return doc.name.toLowerCase().includes(fileSearchQuery.toLowerCase());
   });
 
-  if (companiesLoading || companyLoading) {
-    console.log("[CompanyProfile] Loading state:", {
-      companiesLoading,
-      companyLoading
-    });
+  // Loading state
+  if (companiesLoading) {
+    console.log("[CompanyProfile] Loading state:", { companiesLoading });
     return (
       <DashboardLayout>
         <PageTemplate>
@@ -206,11 +154,15 @@ export default function CompanyProfilePage() {
     );
   }
 
-  if (!companyId || !company) {
+  // Company not found state
+  if (!company) {
     console.log("[CompanyProfile] Not found state:", {
-      companyId,
-      company,
-      attemptedSlug: companySlug
+      attemptedSlug: slug,
+      availableCompanies: companies.map(c => ({
+        id: c.id,
+        name: c.name,
+        slug: generateSlug(c.name || '')
+      }))
     });
     return (
       <DashboardLayout>
@@ -221,7 +173,7 @@ export default function CompanyProfilePage() {
             <p className="text-muted-foreground max-w-md text-center">
               Company not found.
             </p>
-            <Button variant="outline" onClick={() => window.history.back()}>
+            <Button variant="outline" onClick={handleBackClick}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>
@@ -231,6 +183,7 @@ export default function CompanyProfilePage() {
     );
   }
 
+  // No relationship state
   if (!company.has_relationship) {
     console.log("[CompanyProfile] Access restricted - no relationship");
     return (
@@ -242,7 +195,7 @@ export default function CompanyProfilePage() {
             <p className="text-muted-foreground max-w-md text-center">
               You don't have permission to view this company's information.
             </p>
-            <Button variant="outline" onClick={() => window.history.back()}>
+            <Button variant="outline" onClick={handleBackClick}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>
