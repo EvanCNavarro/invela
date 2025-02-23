@@ -182,36 +182,25 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add new endpoint for searching by slug
+  // Add new endpoint for searching by ID
   app.get("/api/companies/by-slug/:slug", requireAuth, async (req, res) => {
     try {
       const slug = req.params.slug;
-      const slugWithSpaces = slug.replace(/-/g, ' ');
-      const alphanumericSlug = slug.replace(/[^a-zA-Z0-9]/g, '');
+      const companyId = parseInt(slug);
 
-      console.log('[Companies] Detailed slug processing:', {
-        originalSlug: slug,
-        slugWithSpaces,
-        alphanumericSlug,
+      console.log('[Companies] Looking up company by ID:', {
+        slug,
+        parsedId: companyId,
         userId: req.user!.id,
-        company_id: req.user!.company_id
+        userCompanyId: req.user!.company_id
       });
 
-      // Get company that matches the name pattern AND:
-      // 1. Is the user's own company, OR
-      // 2. Has a relationship with the user's company
-      const formattedSearchName = slug.replace(/-/g, ' ');
-      
-      const nameMatchQuery = sql`(
-        LOWER(${companies.name}) = LOWER(${formattedSearchName}) 
-        OR LOWER(REGEXP_REPLACE(${companies.name}, '[^a-zA-Z0-9]', '', 'g')) = LOWER(${alphanumericSlug})
-      )`;
-
-      console.log('[Companies] Name matching conditions:', {
-        exactMatch: formattedSearchName,
-        alphanumericMatch: alphanumericSlug,
-        searchSlug: slug
-      });
+      if (isNaN(companyId)) {
+        return res.status(400).json({
+          message: "Invalid company ID",
+          code: "INVALID_ID"
+        });
+      }
 
       const [company] = await db.select({
         id: companies.id,
@@ -247,7 +236,7 @@ export function registerRoutes(app: Express): Express {
       .from(companies)
       .where(
         and(
-          nameMatchQuery,
+          eq(companies.id, companyId),
           or(
             eq(companies.id, req.user!.company_id),
             sql`EXISTS (
