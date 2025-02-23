@@ -223,6 +223,13 @@ export default function NetworkPage() {
     }
   };
 
+  const findCompanyBySlug = (slug: string) => {
+    return networkRelationships.find(r => 
+      generateSlug(r.relatedCompany.name) === slug ||
+      r.relatedCompany.id === parseInt(slug)
+    )?.relatedCompany;
+  };
+
   const getSortIcon = (field: string) => {
     if (sortField !== field) return <ArrowUpDown className="h-4 w-4 text-muted-foreground" />;
     return sortDirection === 'asc' ?
@@ -390,8 +397,7 @@ export default function NetworkPage() {
                       relationship={relationship}
                       isHovered={hoveredRow === relationship.relatedCompany.id}
                       onRowClick={() => {
-                        const slug = generateSlug(relationship.relatedCompany.name);
-                        setLocation(`/network/company/${slug}`);
+                        setLocation(`/network/company/${relationship.relatedCompany.id}`);
                       }}
                       onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
                       searchTerm={searchQuery}
