@@ -8,7 +8,7 @@ import { SearchBar } from "@/components/playground/SearchBar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { User, Users2 } from "lucide-react";
+import { User, Users2, Lock } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,6 +24,12 @@ import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Company {
   id: number;
@@ -62,23 +68,21 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch tasks with proper typing
   const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     staleTime: 1000,
     refetchInterval: 5000,
   });
 
-  // Fetch company data with proper typing
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     staleTime: 5 * 60 * 1000,
   });
 
-  // Combined loading state
+  const isCompanyOnboarded = currentCompany?.onboarding_company_completed ?? false;
+
   const isLoading = isTasksLoading || isCompanyLoading;
 
-  // WebSocket subscription for real-time updates
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
 
@@ -98,7 +102,7 @@ export default function TaskCenterPage() {
                 ? { 
                     ...task, 
                     status: data.status, 
-                    progress: data.progress || 0 // Ensure progress is always a number
+                    progress: data.progress || 0 
                   }
                 : task
             );
@@ -134,7 +138,6 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  // Calculate task counts for tabs
   const myTasksCount = !isLoading && currentCompany?.id
     ? tasks.filter(task => 
         task.company_id === currentCompany.id && 
@@ -150,7 +153,6 @@ export default function TaskCenterPage() {
       ).length
     : 0;
 
-  // Only filter tasks when both data sources are available
   const filteredTasks = (!isLoading && currentCompany?.id)
     ? tasks.filter((task) => {
         console.log('[TaskCenter] Filtering task:', {
@@ -163,7 +165,6 @@ export default function TaskCenterPage() {
           progress: task.progress
         });
 
-        // Only check company match for "my-tasks" tab
         if (activeTab === "my-tasks") {
           return task.company_id === currentCompany.id && 
                  (task.assigned_to === user?.id || 
@@ -223,6 +224,8 @@ export default function TaskCenterPage() {
     );
   }
 
+  const lockedFeatureTooltip = "Complete your company onboarding to unlock this feature! Discover the full potential of our platform by finishing the onboarding process.";
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -232,7 +235,20 @@ export default function TaskCenterPage() {
               title="Task Center"
               description="Manage and track your company's tasks and submissions."
             />
-            <CreateTaskModal />
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <CreateTaskModal disabled={!isCompanyOnboarded} />
+                  </div>
+                </TooltipTrigger>
+                {!isCompanyOnboarded && (
+                  <TooltipContent>
+                    <p>{lockedFeatureTooltip}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           <Tabs
@@ -260,21 +276,37 @@ export default function TaskCenterPage() {
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="for-others"
-                  className={cn(
-                    "flex items-center gap-2 data-[state=active]:text-primary",
-                    "data-[state=active]:bg-primary/10"
-                  )}
-                >
-                  <Users2 className="h-4 w-4" />
-                  <span>For Others</span>
-                  {forOthersCount > 0 && (
-                    <Badge variant="secondary" className="ml-1">
-                      {forOthersCount}
-                    </Badge>
-                  )}
-                </TabsTrigger>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <TabsTrigger
+                          value="for-others"
+                          disabled={!isCompanyOnboarded}
+                          className={cn(
+                            "flex items-center gap-2 data-[state=active]:text-primary",
+                            "data-[state=active]:bg-primary/10",
+                            !isCompanyOnboarded && "opacity-50 cursor-not-allowed"
+                          )}
+                        >
+                          <Users2 className="h-4 w-4" />
+                          <span>For Others</span>
+                          {!isCompanyOnboarded && <Lock className="h-3 w-3 ml-1" />}
+                          {forOthersCount > 0 && (
+                            <Badge variant="secondary" className="ml-1">
+                              {forOthersCount}
+                            </Badge>
+                          )}
+                        </TabsTrigger>
+                      </div>
+                    </TooltipTrigger>
+                    {!isCompanyOnboarded && (
+                      <TooltipContent>
+                        <p>{lockedFeatureTooltip}</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </TabsList>
               <div className="relative w-full sm:w-auto">
                 <SearchBar
@@ -347,11 +379,11 @@ export default function TaskCenterPage() {
 
                 <div className="min-h-[400px]">
                   <TabsContent value="my-tasks" className="m-0">
-                    <TaskTable tasks={currentTasks} />
+                    <TaskTable tasks={currentTasks} companyOnboardingCompleted={isCompanyOnboarded}/>
                   </TabsContent>
 
                   <TabsContent value="for-others" className="m-0">
-                    <TaskTable tasks={currentTasks} />
+                    <TaskTable tasks={currentTasks} companyOnboardingCompleted={isCompanyOnboarded}/>
                   </TabsContent>
                 </div>
 
