@@ -121,7 +121,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className={cn(
             "px-8 py-4",
             "transition-all duration-300 ease-in-out",
-            "container mx-auto"
+            "container mx-auto max-w-7xl"
           )}>
             {children}
           </div>

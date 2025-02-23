@@ -308,7 +308,7 @@ export default function TaskCenterPage() {
                   </Tooltip>
                 </TooltipProvider>
               </TabsList>
-              <div className="flex-1 max-w-md w-full sm:w-auto">
+              <div className="w-full sm:w-[250px]">
                 <SearchBar
                   contextualType="tasks"
                   data={tasks}
