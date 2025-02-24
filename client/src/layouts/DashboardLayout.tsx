@@ -62,7 +62,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const isRouteAccessible = () => {
     if (isLoadingCompany || !currentCompany) return true; // Wait for company data
-    const availableTabs = currentCompany.available_tabs;
+    const availableTabs = currentCompany.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
 
     console.log('[DashboardLayout] Checking route access:', {
@@ -70,11 +70,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       availableTabs,
       isLoadingCompany
     });
-
-    // Dashboard should always be accessible if it's in available_tabs
-    if (currentTab === 'dashboard' && availableTabs.includes('dashboard')) {
-      return true;
-    }
 
     return currentTab === 'task-center' || availableTabs.includes(currentTab);
   };
@@ -87,8 +82,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
 
     const currentTab = getCurrentTab();
-    // Only redirect if the current route is not accessible AND it's not the dashboard
-    if (currentTab !== 'dashboard' && currentTab !== 'task-center' && !isRouteAccessible()) {
+    if (currentTab !== 'task-center' && !isRouteAccessible()) {
       console.log('[DashboardLayout] Route not accessible, redirecting to task-center');
       navigate('/task-center');
     }
