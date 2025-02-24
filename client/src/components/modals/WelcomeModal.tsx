@@ -46,7 +46,7 @@ export function WelcomeModal() {
   useEffect(() => {
     if (!user) return;
     setShowModal(!user.onboarding_user_completed);
-  }, []); // Empty dependency array ensures this only runs once on mount
+  }, [user]); // Added user dependency to properly track changes
 
   const { data: onboardingTask } = useQuery({
     queryKey: ["/api/tasks", { type: "user_invitation", email: user?.email }],
@@ -91,9 +91,7 @@ export function WelcomeModal() {
             }
           }));
         } catch (error) {
-          if (process.env.NODE_ENV === 'development') {
-            console.error('[WelcomeModal] WebSocket send error:', error);
-          }
+          console.error('[WelcomeModal] WebSocket send error:', error);
         }
       }
 
