@@ -20,6 +20,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
+// Add proper typing for our invitation response
+interface InvitationResponse {
+  valid: boolean;
+  invitation: {
+    email: string;
+    invitee_name: string;
+    company_name: string;
+  };
+}
+
 // Form validation schemas
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -61,8 +71,8 @@ export default function AuthPage() {
     workEmail
   });
 
-  // Validate invitation code when present
-  const { data: invitationData, isLoading: isValidatingCode } = useQuery({
+  // Validate invitation code when present with proper typing
+  const { data: invitationData, isLoading: isValidatingCode } = useQuery<InvitationResponse>({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
       console.log('[Registration Debug] Starting invitation validation for code:', invitationCode);
@@ -97,7 +107,7 @@ export default function AuthPage() {
       fullName: "",
       firstName: "",
       lastName: "",
-      company: "", // Added default value for company
+      company: "",
       invitationCode: invitationCode || "",
     },
   });
@@ -108,39 +118,41 @@ export default function AuthPage() {
   useEffect(() => {
     console.log('[Registration Debug] useEffect triggered with invitationData:', invitationData);
 
-    if (invitationData?.valid && invitationData?.invitation) {
-      const { email, invitee_name, company_name } = invitationData.invitation;
-
-      // Split full name into first and last name
-      const nameParts = invitee_name ? invitee_name.split(' ') : ['', ''];
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      console.log('[Registration Debug] Split name parts:', {
-        fullName: invitee_name,
-        firstName,
-        lastName,
-        company: company_name
-      });
-
-      // Set form values using proper field mapping
-      registrationForm.reset({
-        email: email || '',
-        firstName,
-        lastName,
-        fullName: invitee_name || '',
-        company: company_name || '', // Map company_name to company field
-        invitationCode: invitationCode || '',
-        password: ''
-      });
-
-      console.log('[Registration Debug] Form values after update:', registrationForm.getValues());
-
-      // Force form validation after setting values
-      registrationForm.trigger().then(() => {
-        console.log('[Registration Debug] Form validation state:', registrationForm.formState);
-      });
+    if (!invitationData?.valid || !invitationData?.invitation) {
+      console.log('[Registration Debug] No valid invitation data');
+      return;
     }
+
+    const { email, invitee_name, company_name } = invitationData.invitation;
+
+    // Split full name into first and last name components
+    const nameParts = invitee_name.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ');
+
+    console.log('[Registration Debug] Processing invitation data:', {
+      email,
+      invitee_name,
+      company_name,
+      firstName,
+      lastName
+    });
+
+    // Update form with all fields at once to prevent multiple re-renders
+    registrationForm.reset({
+      email,
+      firstName,
+      lastName,
+      fullName: invitee_name,
+      company: company_name,
+      invitationCode,
+      password: '',
+    });
+
+    // Verify form update
+    const formValues = registrationForm.getValues();
+    console.log('[Registration Debug] Updated form values:', formValues);
+
   }, [invitationData, registrationForm, invitationCode]);
 
 
@@ -154,7 +166,7 @@ export default function AuthPage() {
   const isInvitePath = location === '/invite';
 
   const showRegistrationForm = isRegistrationPath && invitationCode && (
-    isValidatingCode || (invitationData?.valid && invitationData?.email === workEmail)
+    isValidatingCode || (invitationData?.valid && invitationData?.invitation.email === workEmail)
   );
 
   if (user && !showRegistrationForm && !isInvitePath) {
@@ -250,7 +262,7 @@ export default function AuthPage() {
               </p>
             </div>
 
-            {invitationData?.companyDomainMismatch && (
+            {invitationData?.invitation.company_name !== invitationData?.invitation.email.split('@')[1] && (
               <div className="mb-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
