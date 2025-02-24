@@ -568,7 +568,6 @@ export function registerRoutes(app: Express): Express {
   });
 
 
-
   app.delete("/api/files/:id", requireAuth, async (req, res) => {
     try {
       const [file] = await db.select()
@@ -732,10 +731,12 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Get logo record
+      // Get logo record and log it for debugging
       const [logo] = await db.select()
         .from(companyLogos)
         .where(eq(companyLogos.id, company.logo_id));
+
+      console.log(`[Company Logo] Found logo record:`, logo);
 
       if (!logo) {
         console.log(`[Company Logo] Logo record not found for company ${company.name} (${company.id}), logo_id: ${company.logo_id}`);
@@ -745,8 +746,16 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
+      if (!logo.file_path) {
+        console.log(`[Company Logo] Logo file path is missing for company ${company.name}`);
+        return res.status(404).json({
+          message: "Logo file path is missing",
+          code: "LOGO_PATH_MISSING"
+        });
+      }
+
       // Resolve correct file path
-      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.filePath);
+      const filePath = path.resolve('/home/runner/workspace/uploads/logos', logo.file_path);
       console.log(`[Company Logo] Attempting to serve logo from: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
