@@ -842,7 +842,7 @@ export function registerRoutes(app: Express): Express {
 
   // Fix fintech invite logging
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Startinginvitation process');
+    console.log('[FinTech Invite] Starting invitation process');
     console.log('[FinTech Invite] Request body:', req.body);
 
     try {
@@ -860,7 +860,7 @@ export function registerRoutes(app: Express): Express {
           ? `${invalidFields[0]} is required`
           : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
 
-        console.log('[FinTech Invite] Validation failed:', {
+        console.log('[FinTechInvite] Validation failed:', {
           receivedData:req.body,
           invalidFields,
           errorMessage
@@ -1024,7 +1024,7 @@ export function registerRoutes(app: Express): Express {
               status: TaskStatus.PENDING,
               priority: 'medium',
               progress: taskStatusToProgress[TaskStatus.PENDING],
-              created_by: req.user!.id,
+              created_by: req.user!.id, // Ensure created_by is set
               user_email: email.toLowerCase(),
               company_id: newCompany.id,
               due_date: expirationDate,
@@ -1238,6 +1238,7 @@ export function registerRoutes(app: Express): Express {
               priority: 'high',
               company_id: inviteData.company_id,
               user_email: inviteData.email,
+              created_by: req.user!.id, // Ensure created_by is set
               metadata: {
                 invitation_id: invitation.id,
                 invited_by: req.user!.id,

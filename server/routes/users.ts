@@ -42,6 +42,15 @@ router.post("/api/users/invite", async (req, res) => {
       console.log('[Invite] Starting invitation process');
       console.log('[Invite] Request body:', req.body);
 
+      // Type check for authenticated user
+      if (!req.user || !req.user.id) {
+        console.error('[Invite] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
       // Validate input data
       const validationResult = inviteUserSchema.safeParse(req.body);
       if (!validationResult.success) {
@@ -105,7 +114,7 @@ router.post("/api/users/invite", async (req, res) => {
           })
           .returning();
 
-        // Create task - now properly setting created_by to the current user's ID
+        // Create task with proper created_by field
         const [taskResult] = await tx.insert(tasks)
           .values({
             title: `New User Invitation: ${data.email}`,
@@ -115,7 +124,7 @@ router.post("/api/users/invite", async (req, res) => {
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
             progress: 25,
-            created_by: req.user?.id, // Ensure we're setting the created_by field
+            created_by: req.user.id, // Now explicitly using req.user.id after validation
             assigned_to: userResult.id,
             company_id: data.company_id,
             user_email: data.email.toLowerCase(),
