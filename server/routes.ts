@@ -405,10 +405,10 @@ export function registerRoutes(app: Express): Express {
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
-          eq(invitations.code, invitationCode),
+          eq(invitations.code, invitationCode.toUpperCase()),
           eq(invitations.status, 'pending'),
           sql`LOWER(${invitations.email}) = LOWER(${email})`,
-          gt(invitations.expiresAt, new Date())
+          gt(invitations.expires_at, new Date())
         ));
 
       if (!invitation) {
@@ -431,11 +431,11 @@ export function registerRoutes(app: Express): Express {
       // Update the existing user with new information
       const [updatedUser] = await db.update(users)
         .set({
-          firstName,
-          lastName,
-          fullName,
+          first_name: firstName,
+          last_name: lastName,
+          full_name: fullName,
           password: await bcrypt.hash(password, 10),
-          onboardingUserCompleted: true,
+          onboarding_user_completed: true,
         })
         .where(eq(users.id, existingUser.id))
         .returning();
@@ -446,7 +446,7 @@ export function registerRoutes(app: Express): Express {
       const [task] = await db.select()
         .from(tasks)
         .where(and(
-          eq(tasks.userEmail, email.toLowerCase()),
+          eq(tasks.user_email, email.toLowerCase()),
           eq(tasks.status, TaskStatus.EMAIL_SENT)
         ));
 
@@ -455,7 +455,7 @@ export function registerRoutes(app: Express): Express {
           .set({
             status: TaskStatus.COMPLETED,
             progress: taskStatusToProgress[TaskStatus.COMPLETED],
-            assignedTo: updatedUser.id,
+            assigned_to: updatedUser.id,
             metadata: {
               ...task.metadata,
               registeredAt: new Date().toISOString(),
@@ -472,7 +472,7 @@ export function registerRoutes(app: Express): Express {
       await db.update(invitations)
         .set({
           status: 'used',
-          usedAt: new Date(),
+          used_at: new Date(),
         })
         .where(eq(invitations.id, invitation.id));
 
@@ -505,7 +505,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.name, req.file.originalname),
-          eq(files.userId, req.user!.id)
+          eq(files.user_id, req.user!.id)
         ));
 
       if (existingFile.length > 0) {
@@ -541,9 +541,9 @@ export function registerRoutes(app: Express): Express {
         type: req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
-        userId: req.user!.id,
-        companyId: req.user!.companyId,
-        downloadCount: 0,
+        user_id: req.user!.id,
+        company_id: req.user!.company_id,
+        download_count: 0,
         version: 1.0,
       };
 
@@ -574,7 +574,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.userId, req.user!.id)
+          eq(files.user_id, req.user!.id)
         ));
 
       if (!file) {
@@ -607,7 +607,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.userId, req.user!.id)
+          eq(files.user_id, req.user!.id)
         ));
 
       if (!file) {
@@ -657,13 +657,13 @@ export function registerRoutes(app: Express): Express {
       }
 
       // If company already has a logo, delete the old file
-      if (company.logoId) {
+      if (company.logo_id) {
         const [oldLogo] = await db.select()
           .from(companyLogos)
-          .where(eq(companyLogos.id, company.logoId));
+          .where(eq(companyLogos.id, company.logo_id));
 
         if (oldLogo) {
-          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.filePath);
+          const oldFilePath = path.resolve('/home/runner/workspace/uploads/logos', oldLogo.file_path);
           console.log('Debug - Attempting to delete old logo:', oldFilePath);
           if (fs.existsSync(oldFilePath)) {
             fs.unlinkSync(oldFilePath);
@@ -677,10 +677,10 @@ export function registerRoutes(app: Express): Express {
       // Create logo record
       const [logo] = await db.insert(companyLogos)
         .values({
-          companyId,
-          fileName: req.file.originalname,
-          filePath: req.file.filename,
-          fileType: req.file.mimetype,
+          company_id: companyId,
+          file_name: req.file.originalname,
+          file_path: req.file.filename,
+          file_type: req.file.mimetype,
         })
         .returning();
 
@@ -688,7 +688,7 @@ export function registerRoutes(app: Express): Express {
 
       // Update company with logo reference
       await db.update(companies)
-        .set({ logoId: logo.id })
+        .set({ logo_id: logo.id })
         .where(eq(companies.id, companyId));
 
       // Verify file exists in the correct location
@@ -878,10 +878,10 @@ export function registerRoutes(app: Express): Express {
           console.log('[FinTech Invite] Fetching sender company details');
           const [userCompany] = await tx.select()
             .from(companies)
-            .where(eq(companies.id, req.user!.companyId));
+            .where(eq(companies.id, req.user!.company_id));
 
           if (!userCompany) {
-            console.error('[FinTech Invite] Sender company not found:', req.user!.companyId);
+            console.error('[FinTech Invite] Sender company not found:', req.user!.company_id);
             throw new Error("Your company information not found");
           }
           console.log('[FinTech Invite] Found sender company:', userCompany.name);
@@ -912,13 +912,13 @@ export function registerRoutes(app: Express): Express {
             description: `FinTech partner company ${company_name}`,
             category: 'FinTech',
             status: 'active',
-            accreditationStatus: 'PENDING',
-            onboardingCompanyCompleted: false,
+            accreditation_status: 'PENDING',
+            onboarding_company_completed: false,
             metadata: {
-              invitedBy: req.user!.id,
-              invitedAt: new Date().toISOString(),
-              invitedFrom: userCompany.name,
-              createdVia: 'fintech_invite'
+              invited_by: req.user!.id,
+              invited_at: new Date().toISOString(),
+              invited_from: userCompany.name,
+              created_via: 'fintech_invite'
             }
           };
 
@@ -941,7 +941,7 @@ export function registerRoutes(app: Express): Express {
             name: newCompany.name,
             status: newCompany.status,
             category: newCompany.category,
-            createdAt: newCompany.createdAt,
+            created_at: newCompany.created_at,
             metadata: newCompany.metadata
           });
 
@@ -954,14 +954,14 @@ export function registerRoutes(app: Express): Express {
             .values({
               email: email.toLowerCase(),
               password: hashedPassword,
-              companyId: newCompany.id,
-              fullName: full_name,
-              onboardingUserCompleted: false,
+              company_id: newCompany.id,
+              full_name: full_name,
+              onboarding_user_completed: false,
               metadata: {
-                invitedBy: req.user!.id,
-                invitedAt: new Date().toISOString(),
-                invitedFrom: userCompany.name,
-                createdVia: 'fintech_invite'
+                invited_by: req.user!.id,
+                invited_at: new Date().toISOString(),
+                invited_from: userCompany.name,
+                created_via: 'fintech_invite'
               }
             })
             .returning();
@@ -988,16 +988,16 @@ export function registerRoutes(app: Express): Express {
               email: email.toLowerCase(),
               code,
               status: 'pending',
-              companyId: newCompany.id,
-              inviteeName: full_name,
-              inviteeCompany: company_name,
-              expiresAt: expirationDate,
+              company_id: newCompany.id,
+              invitee_name: full_name,
+              invitee_company: company_name,
+              expires_at: expirationDate,
               metadata: {
-                userId: newUser.id,
-                senderName: sender_name,
-                senderCompanyId: userCompany.id,
-                senderCompanyName: userCompany.name,
-                createdAt: new Date().toISOString()
+                user_id: newUser.id,
+                sender_name: sender_name,
+                sender_company_id: userCompany.id,
+                sender_company_name: userCompany.name,
+                created_at: new Date().toISOString()
               }
             })
             .returning();
@@ -1019,24 +1019,24 @@ export function registerRoutes(app: Express): Express {
             .values({
               title: `New User Invitation: ${email}`,
               description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
-              taskType: 'user_onboarding',
-              taskScope: 'user',
+              task_type: 'user_onboarding',
+              task_scope: 'user',
               status: TaskStatus.PENDING,
               priority: 'medium',
               progress: taskStatusToProgress[TaskStatus.PENDING],
-              createdBy: req.user!.id,
-              userEmail: email.toLowerCase(),
-              companyId: newCompany.id,
-              dueDate: expirationDate,
+              created_by: req.user!.id,
+              user_email: email.toLowerCase(),
+              company_id: newCompany.id,
+              due_date: expirationDate,
               metadata: {
-                userId: newUser.id,
-                inviteeName: full_name,
-                inviteeCompany: company_name,
-                senderName: sender_name,
-                companyCreatedAt: newCompany.createdAt,
-                invitationId: invitation.id,
-                invitationCode: code,
-                statusFlow: [TaskStatus.PENDING]
+                user_id: newUser.id,
+                invitee_name: full_name,
+                invitee_company: company_name,
+                sender_name: sender_name,
+                company_created_at: newCompany.created_at,
+                invitation_id: invitation.id,
+                invitation_code: code,
+                status_flow: [TaskStatus.PENDING]
               }
             })
             .returning();
@@ -1083,8 +1083,8 @@ export function registerRoutes(app: Express): Express {
                 progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
                 metadata: {
                   ...task.metadata,
-                  emailSentAt: new Date().toISOString(),
-                  statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.EMAIL_SENT]
+                  email_sent_at: new Date().toISOString(),
+                  status_flow: [...(task.metadata?.status_flow || []), TaskStatus.EMAIL_SENT]
                 }
               })
               .where(eq(tasks.id, task.id))
@@ -1142,8 +1142,8 @@ export function registerRoutes(app: Express): Express {
       const [existingRelationship] = await db.select()
         .from(relationships)
         .where(and(
-          eq(relationships.companyId, req.user!.companyId),
-          eq(relationships.relatedCompanyId, targetCompanyId)
+          eq(relationships.company_id, req.user!.company_id),
+          eq(relationships.related_company_id, targetCompanyId)
         ));
 
       if (existingRelationship) {
@@ -1153,13 +1153,13 @@ export function registerRoutes(app: Express): Express {
       // Create the relationship
       const [relationship] = await db.insert(relationships)
         .values({
-          companyId: req.user!.companyId,
-          relatedCompanyId: targetCompanyId,
-          relationshipType: 'network_member',
+          company_id: req.user!.company_id,
+          related_company_id: targetCompanyId,
+          relationship_type: 'network_member',
           status: 'active',
           metadata: {
-            addedAt: new Date().toISOString(),
-            addedBy: req.user!.id
+            added_at: new Date().toISOString(),
+            added_by: req.user!.id
           }
         })
         .returning();
@@ -1180,11 +1180,11 @@ export function registerRoutes(app: Express): Express {
       // Validate and normalize invite data
       const inviteData = {
         email: req.body.email.toLowerCase(),
-        fullName: req.body.full_name,
-        companyId: req.body.company_id,
-        companyName: req.body.company_name,
-        senderName: req.body.sender_name,
-        senderCompany: req.body.sender_company
+        full_name: req.body.full_name,
+        company_id: req.body.company_id,
+        company_name: req.body.company_name,
+        sender_name: req.body.sender_name,
+        sender_company: req.body.sender_company
       };
 
       console.log('[Invite] Validated invite data:', inviteData);
@@ -1198,8 +1198,8 @@ export function registerRoutes(app: Express): Express {
           const [user] = await tx.insert(users)
             .values({
               email: inviteData.email,
-              full_name: inviteData.fullName,
-              company_id: inviteData.companyId, // Explicitly set company_id from invite data
+              full_name: inviteData.full_name,
+              company_id: inviteData.company_id, // Explicitly set company_id from invite data
               password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'),10),
               onboarding_user_completed: false
             })
@@ -1219,9 +1219,9 @@ export function registerRoutes(app: Express): Express {
               email: inviteData.email,
               status: 'pending',
               code: inviteCode,
-              company_id: inviteData.companyId,
-              invitee_name: inviteData.fullName,
-              invitee_company: inviteData.companyName,
+              company_id: inviteData.company_id,
+              invitee_name: inviteData.full_name,
+              invitee_company: inviteData.company_name,
               expires_at: expiryDate
             })
             .returning();
@@ -1230,19 +1230,19 @@ export function registerRoutes(app: Express): Express {
           const [task] = await tx.insert(tasks)
             .values({
               title: `New User Invitation: ${inviteData.email}`,
-              description: `Invitation sent to ${inviteData.fullName} (${inviteData.email}) to join ${inviteData.companyName}`,
+              description: `Invitation sent to ${inviteData.full_name} (${inviteData.email}) to join ${inviteData.company_name}`,
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
               progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
               priority: 'high',
-              company_id: inviteData.companyId,
+              company_id: inviteData.company_id,
               user_email: inviteData.email,
               metadata: {
-                invitationId: invitation.id,
-                invitedBy: req.user!.id,
-                invitedAt: new Date().toISOString(),
-                statusFlow: [TaskStatus.EMAIL_SENT]
+                invitation_id: invitation.id,
+                invited_by: req.user!.id,
+                invited_at: new Date().toISOString(),
+                status_flow: [TaskStatus.EMAIL_SENT]
               }
             })
             .returning();
@@ -1259,10 +1259,10 @@ export function registerRoutes(app: Express): Express {
             template: 'user_invite',
             templateData: {
               recipientEmail: inviteData.email,
-              recipientName: inviteData.fullName,
-              senderName: inviteData.senderName,
-              senderCompany: inviteData.senderCompany,
-              targetCompany: inviteData.companyName,
+              recipientName: inviteData.full_name,
+              senderName: inviteData.sender_name,
+              senderCompany: inviteData.sender_company,
+              targetCompany: inviteData.company_name,
               code: inviteCode,
               inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
             }
@@ -1299,7 +1299,7 @@ export function registerRoutes(app: Express): Express {
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
-          eq(invitations.code, req.params.code),
+          eq(invitations.code, req.params.code.toUpperCase()),
           eq(invitations.status, 'pending'),
           sql`${invitations.expires_at} > NOW()`
         ));
@@ -1403,9 +1403,9 @@ export function registerRoutes(app: Express): Express {
 
   async function updateOnboardingTaskStatus(userId: number): Promise<{ id: number; status: TaskStatus; } | null> {
     try {
-      const [task] = await db.select().from(tasks).where(eq(tasks.userEmail, (await db.select().from(users).where(eq(users.id, userId))).find()?.email));
+      const [task] = await db.select().from(tasks).where(eq(tasks.user_email, (await db.select().from(users).where(eq(users.id, userId))).find()?.email));
 
-      if (task && task.taskType === 'user_onboarding') {
+      if (task && task.task_type === 'user_onboarding') {
         const [updatedTask] = await db.update(tasks)
           .set({ status: TaskStatus.COMPLETED, progress: 100 })
           .where(eq(tasks.id, task.id))
