@@ -15,32 +15,13 @@ import { createCompany } from "./services/company";
 import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
 import filesRouter from './routes/files';
-
-// Generate invitation code helper function (keep it DRY)
-function generateInviteCode(): string {
-  return crypto.randomBytes(3).toString('hex').toUpperCase();
-}
-
-// Progress mapping for task statuses
-//const taskStatusToProgress: Record<TaskStatus, number> = {
-//  [TaskStatus.PENDING]: 0,
-//  [TaskStatus.EMAIL_SENT]: 25,
-//  [TaskStatus.COMPLETED]: 100,
-//  [TaskStatus.FAILED]: 100,
-//};
-
-declare global {
-  namespace Express {
-    interface Request {
-      file?: Express.Multer.File
-    }
-  }
-}
+import accessRouter from './routes/access';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
-  app.use(filesRouter); // Mount the files router
+  app.use(filesRouter);
+  app.use(accessRouter); // Register the new access router
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {

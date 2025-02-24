@@ -39,10 +39,27 @@ const useLoginMutation = () => {
       console.log('[Auth] Login request successful');
       return await res.json();
     },
-    onSuccess: (user: User) => {
+    onSuccess: async (user: User) => {
       console.log('[Auth] Login mutation succeeded, user:', user.id);
       queryClient.setQueryData(["/api/user"], user);
-      setLocation("/");
+
+      // Check if dashboard is locked
+      try {
+        const dashboardAccessRes = await apiRequest("GET", "/api/access/dashboard");
+        const dashboardAccess = await dashboardAccessRes.json();
+
+        if (!dashboardAccessRes.ok || !dashboardAccess.hasAccess) {
+          console.log('[Auth] Dashboard locked, redirecting to task center');
+          setLocation("/task-center");
+        } else {
+          console.log('[Auth] Dashboard accessible, redirecting to home');
+          setLocation("/");
+        }
+      } catch (error) {
+        console.error('[Auth] Error checking dashboard access:', error);
+        // Default to task center if access check fails
+        setLocation("/task-center");
+      }
     },
     onError: (error: Error) => {
       console.error('[Auth] Login mutation error:', error);
