@@ -1201,6 +1201,7 @@ export function registerRoutes(app: Express): Express {
               email: inviteData.email,
               full_name: inviteData.fullName,
               company_id: inviteData.companyId, // Explicitly set company_id from invite data
+              password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'),10),
               onboarding_user_completed: false
             })
             .returning();
