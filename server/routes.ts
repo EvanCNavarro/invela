@@ -47,7 +47,7 @@ export function registerRoutes(app: Express): Express {
     try {
       if (!req.user) {
         console.log('[Companies] No authenticated user found');
-        return res.status(401).json({ 
+        return res.status(401).json({
           message: "Authentication required",
           code: "AUTH_REQUIRED"
         });
@@ -92,18 +92,18 @@ export function registerRoutes(app: Express): Express {
           END
         `
       })
-      .from(companies)
-      .where(
-        or(
-          eq(companies.id, req.user!.company_id),
-          sql`EXISTS (
+        .from(companies)
+        .where(
+          or(
+            eq(companies.id, req.user!.company_id),
+            sql`EXISTS (
             SELECT 1 FROM ${relationships} r 
             WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
             OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
           )`
+          )
         )
-      )
-      .orderBy(companies.name);
+        .orderBy(companies.name);
 
       console.log('[Companies] Query successful, found companies:', {
         count: networkCompanies.length,
@@ -141,13 +141,13 @@ export function registerRoutes(app: Express): Express {
 
       // Check if it's a database error
       if (error instanceof Error && error.message.includes('relation')) {
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Database configuration error",
           code: "DB_ERROR"
         });
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching companies",
         code: "INTERNAL_ERROR"
       });
@@ -213,7 +213,7 @@ export function registerRoutes(app: Express): Express {
         );
 
       if (!company) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           message: "Company not found",
           code: "COMPANY_NOT_FOUND"
         });
@@ -231,7 +231,7 @@ export function registerRoutes(app: Express): Express {
       res.json(transformedCompany);
     } catch (error) {
       console.error("[Companies] Error fetching company:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching company details",
         code: "INTERNAL_ERROR"
       });
@@ -358,24 +358,24 @@ export function registerRoutes(app: Express): Express {
           riskScore: companies.risk_score
         }
       })
-      .from(relationships)
-      .innerJoin(
-        companies,
-        eq(
-          companies.id,
-          sql`CASE 
+        .from(relationships)
+        .innerJoin(
+          companies,
+          eq(
+            companies.id,
+            sql`CASE 
           WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
           ELSE ${relationships.company_id}
         END`
+          )
         )
-      )
-      .where(
-        or(
-          eq(relationships.company_id, req.user!.company_id),
-          eq(relationships.related_company_id, req.user!.company_id)
+        .where(
+          or(
+            eq(relationships.company_id, req.user!.company_id),
+            eq(relationships.related_company_id, req.user!.company_id)
+          )
         )
-      )
-      .orderBy(companies.name);
+        .orderBy(companies.name);
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
@@ -700,7 +700,7 @@ export function registerRoutes(app: Express): Express {
       }
 
       res.json(logo);
-    } catch(error) {
+    } catch (error) {
       console.error("Error uploading company logo:", error);
       res.status(500).json({ message: "Error uploading company logo" });
     }
@@ -816,7 +816,8 @@ export function registerRoutes(app: Express): Express {
 
       // Check for existing company with same name
       const [existingCompany] = await db.select()
-        .from(companies)        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
+        .from(companies)
+        .where(sql`LOWER(${companies.name}) = LOWER(${company_name})`);
 
       if (existingCompany) {
         return res.status(409).json({
@@ -1173,10 +1174,10 @@ export function registerRoutes(app: Express): Express {
 
   // Update the user invite endpoint after the existing registration endpoint
   app.post("/api/users/invite", requireAuth, async (req, res) => {
-    console.log('[Invite] Starting invitation process');
-    console.log('[Invite] Request body:', req.body);
-
     try {
+      console.log('[Invite] Starting invitation process');
+      console.log('[Invite] Request body:', req.body);
+
       // Validate and normalize invite data
       const inviteData = {
         email: req.body.email.toLowerCase(),
