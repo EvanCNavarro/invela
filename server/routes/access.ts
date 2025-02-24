@@ -2,8 +2,7 @@ import { Router } from "express";
 
 const router = Router();
 
-// For now, we'll hard-code the access control
-// Later this can be extended with real logic based on user roles, etc.
+// For now, we'll default to allowing dashboard access for authenticated users
 router.get("/api/access/dashboard", (req, res) => {
   // Ensure user is authenticated
   if (!req.isAuthenticated()) {
@@ -13,7 +12,7 @@ router.get("/api/access/dashboard", (req, res) => {
     });
   }
 
-  // For testing: Allow access to the dashboard
+  // For testing: Allow access to the dashboard for authenticated users
   res.json({ 
     hasAccess: true,
     message: "User has dashboard access"
