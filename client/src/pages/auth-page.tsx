@@ -32,6 +32,7 @@ const registrationSchema = z.object({
   fullName: z.string().min(1, "Full name is required."),
   firstName: z.string().min(1, "First name is required."),
   lastName: z.string().min(1, "Last name is required."),
+  company: z.string().min(1, "Company name is required."), // Added company field validation
   invitationCode: z.string().min(1, "Invitation code is required."),
 });
 
@@ -96,6 +97,7 @@ export default function AuthPage() {
       fullName: "",
       firstName: "",
       lastName: "",
+      company: "", // Added default value for company
       invitationCode: invitationCode || "",
     },
   });
@@ -118,7 +120,8 @@ export default function AuthPage() {
       console.log('[Registration Debug] Split name parts:', {
         fullName: invitee_name,
         firstName,
-        lastName
+        lastName,
+        company: company_name
       });
 
       // Set all form values at once using the proper field names
@@ -126,6 +129,7 @@ export default function AuthPage() {
       registrationForm.setValue('firstName', firstName);
       registrationForm.setValue('lastName', lastName);
       registrationForm.setValue('fullName', invitee_name);
+      registrationForm.setValue('company', company_name); // Add company name
       registrationForm.setValue('invitationCode', invitationCode);
       registrationForm.setValue('password', ''); // Initialize empty password field
 
@@ -190,6 +194,7 @@ export default function AuthPage() {
       fullName: values.fullName,
       firstName: values.firstName,
       lastName: values.lastName,
+      company: values.company, // Added company field to the submission
       invitationCode: values.invitationCode,
     });
   };
@@ -351,6 +356,24 @@ export default function AuthPage() {
 
                 <FormField
                   control={registrationForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="text"
+                          className={field.value && !registrationForm.formState.errors.company ? "border-green-500" : ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={registrationForm.control}
                   name="password"
                   render={({ field }) => (
                     <FormItem>
@@ -408,6 +431,9 @@ export default function AuthPage() {
   }
 
   if (isInvitePath) {
+    const inviteForm = useForm<z.infer<typeof inviteFormSchema>>({
+      resolver: zodResolver(inviteFormSchema),
+    });
     return (
       <div className="min-h-screen flex">
         <div className="flex-1 flex items-center justify-center">
@@ -486,6 +512,9 @@ export default function AuthPage() {
 
 
 
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+  });
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center">
