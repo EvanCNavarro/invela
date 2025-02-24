@@ -224,7 +224,7 @@ export default function TaskCenterPage() {
     );
   }
 
-  const lockedFeatureTooltip = "Complete onboarding to unlock features";
+  const lockedFeatureTooltip = "Complete company onboarding to unlock this feature";
 
   return (
     <DashboardLayout>
