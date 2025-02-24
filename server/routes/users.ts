@@ -86,9 +86,9 @@ router.post("/api/users/invite", async (req, res) => {
           .values({
             email: data.email.toLowerCase(),
             password: await hashPassword(generateTempPassword()),
-            fullName: data.full_name,
-            companyId: data.company_id,
-            onboardingUserCompleted: false,
+            full_name: data.full_name,
+            company_id: data.company_id,
+            onboarding_user_completed: false,
           })
           .returning();
 
@@ -98,35 +98,35 @@ router.post("/api/users/invite", async (req, res) => {
             email: data.email.toLowerCase(),
             code: invitationCode,
             status: 'pending',
-            companyId: data.company_id,
-            inviteeName: data.full_name,
-            inviteeCompany: company.name,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            company_id: data.company_id,
+            invitee_name: data.full_name,
+            invitee_company: company.name,
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           })
           .returning();
 
-        // Create task
+        // Create task - now properly setting created_by to the current user's ID
         const [taskResult] = await tx.insert(tasks)
           .values({
             title: `New User Invitation: ${data.email}`,
             description: `Invitation sent to ${data.full_name} to join ${company.name}`,
-            taskType: 'user_onboarding',
-            taskScope: 'user',
+            task_type: 'user_onboarding',
+            task_scope: 'user',
             status: TaskStatus.EMAIL_SENT,
             priority: 'medium',
             progress: 25,
-            createdBy: req.user?.id,
-            assignedTo: userResult.id,
-            companyId: data.company_id,
-            userEmail: data.email.toLowerCase(),
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            created_by: req.user?.id, // Ensure we're setting the created_by field
+            assigned_to: userResult.id,
+            company_id: data.company_id,
+            user_email: data.email.toLowerCase(),
+            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             metadata: {
-              userId: userResult.id,
-              senderName: data.sender_name,
-              statusFlow: [TaskStatus.EMAIL_SENT],
-              emailSentAt: new Date().toISOString(),
-              invitationId: invitationResult.id,
-              invitationCode: invitationCode
+              user_id: userResult.id,
+              sender_name: data.sender_name,
+              status_flow: [TaskStatus.EMAIL_SENT],
+              email_sent_at: new Date().toISOString(),
+              invitation_id: invitationResult.id,
+              invitation_code: invitationCode
             }
           })
           .returning();
@@ -165,8 +165,8 @@ router.post("/api/users/invite", async (req, res) => {
           id: invitation.id,
           email: invitation.email,
           code: invitation.code,
-          expiresAt: invitation.expiresAt,
-          userId: newUser.id
+          expires_at: invitation.expires_at,
+          user_id: newUser.id
         }
       });
 
