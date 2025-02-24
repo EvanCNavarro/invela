@@ -861,7 +861,7 @@ export function registerRoutes(app: Express): Express {
           : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
 
         console.log('[FinTech Invite] Validation failed:', {
-          receivedData: req.body,
+          receivedData:req.body,
           invalidFields,
           errorMessage
         });
@@ -1262,6 +1262,7 @@ export function registerRoutes(app: Express): Express {
               recipientName: inviteData.fullName,
               senderName: inviteData.senderName,
               senderCompany: inviteData.senderCompany,
+              targetCompany: inviteData.companyName,
               code: inviteCode,
               inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
             }
