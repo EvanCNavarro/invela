@@ -100,9 +100,9 @@ export default function AuthPage() {
 
   // Update form fields when invitation data is loaded
   useEffect(() => {
-    if (invitationData?.valid && invitationData?.invitation) {
-      console.log('Setting form values from invitation:', invitationData.invitation);
-      const { email, invitee_name, company_name } = invitationData.invitation;
+    if (invitationData?.data?.valid && invitationData?.data?.invitation) {
+      console.log('Setting form values from invitation:', invitationData.data.invitation);
+      const { email, invitee_name, company_name } = invitationData.data.invitation;
 
       // Split full name into first and last name
       const nameParts = invitee_name ? invitee_name.split(' ') : ['', ''];
@@ -470,6 +470,7 @@ export default function AuthPage() {
       </div>
     );
   }
+
 
 
   return (
