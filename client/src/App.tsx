@@ -37,8 +37,10 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   const [location] = useLocation();
   console.log('[Router] Current location:', location);
+
   return (
     <Switch>
+      {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
       <Route path="/auth">
@@ -48,6 +50,8 @@ function Router() {
           return <Redirect to={`/register${code ? `?code=${code}` : ''}`} />;
         }}
       </Route>
+
+      {/* Protected routes - Dashboard first */}
       <Route path="/">
         <ProtectedRoute 
           path="/" 
@@ -60,6 +64,8 @@ function Router() {
           )} 
         />
       </Route>
+
+      {/* Other protected routes */}
       <ProtectedRoute 
         path="/network" 
         component={() => (
@@ -70,16 +76,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
-      <Route 
-        path="/network/company/:companySlug"
-        component={({ params }) => (
-          <ProtectedLayout>
-            <OnboardingWrapper>
-              <CompanyProfilePage />
-            </OnboardingWrapper>
-          </ProtectedLayout>
-        )}
-      />
+
       <ProtectedRoute 
         path="/task-center" 
         component={() => (
@@ -90,17 +87,24 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
+      <Route path="/network/company/:companySlug" component={({ params }) => (
+        <ProtectedLayout>
+          <OnboardingWrapper>
+            <CompanyProfilePage />
+          </OnboardingWrapper>
+        </ProtectedLayout>
+      )} />
+
       <ProtectedRoute 
         path="/task-center/task/:taskSlug"
-        component={({ params }) => {
-          console.log('[Router] Rendering task page with params:', params);
-          return (
-            <ProtectedLayout>
-              <TaskPage params={params} />
-            </ProtectedLayout>
-          );
-        }}
+        component={({ params }) => (
+          <ProtectedLayout>
+            <TaskPage params={params} />
+          </ProtectedLayout>
+        )}
       />
+
       <ProtectedRoute 
         path="/file-vault" 
         component={() => (
@@ -111,6 +115,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/insights" 
         component={() => (
@@ -121,6 +126,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/builder" 
         component={() => (
@@ -131,6 +137,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/builder/onboarding" 
         component={() => (
@@ -141,6 +148,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/builder/risk-rules" 
         component={() => (
@@ -151,6 +159,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/builder/reporting" 
         component={() => (
@@ -161,6 +170,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/builder/groups" 
         component={() => (
@@ -171,6 +181,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <ProtectedRoute 
         path="/playground" 
         component={() => (
@@ -186,6 +197,7 @@ function Router() {
           </ProtectedLayout>
         )} 
       />
+
       <Route component={NotFound} />
     </Switch>
   );
