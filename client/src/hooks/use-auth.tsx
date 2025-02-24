@@ -7,6 +7,7 @@ import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { RegisterData, LoginData, User } from "@/types/auth";
+import type { Company } from "@/types/company";
 
 type AuthContextType = {
   user: User | null;
@@ -43,9 +44,29 @@ const useLoginMutation = () => {
       console.log('[Auth] Login mutation succeeded, user:', user.id);
       queryClient.setQueryData(["/api/user"], user);
 
-      // Always redirect to dashboard first
-      console.log('[Auth] Redirecting to dashboard');
-      setLocation("/");
+      // Fetch current company to check available tabs
+      try {
+        const companyRes = await apiRequest("GET", "/api/companies/current");
+        const company: Company = await companyRes.json();
+
+        console.log('[Auth] Company data fetched:', {
+          companyId: company.id,
+          availableTabs: company.available_tabs
+        });
+
+        // Check if dashboard is available, redirect accordingly
+        if (company.available_tabs?.includes('dashboard')) {
+          console.log('[Auth] Dashboard available, redirecting to /');
+          setLocation("/");
+        } else {
+          console.log('[Auth] Dashboard not available, redirecting to task-center');
+          setLocation("/task-center");
+        }
+      } catch (error) {
+        console.error('[Auth] Error fetching company data:', error);
+        // Default to task center if company fetch fails
+        setLocation("/task-center");
+      }
     },
     onError: (error: Error) => {
       console.error('[Auth] Login mutation error:', error);
