@@ -19,7 +19,16 @@ import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
-// Initial schema just for invitation code
+// Updated interface to match API response
+interface InvitationResponse {
+  valid: boolean;
+  invitation: {
+    email: string;
+    invitee_name: string;
+    company_name: string;
+  };
+}
+
 const invitationCodeSchema = z.object({
   invitationCode: z
     .string()
@@ -27,7 +36,6 @@ const invitationCodeSchema = z.object({
     .regex(/^[0-9A-F]+$/, "Code must be a valid hexadecimal value")
 });
 
-// Full registration schema including validated invitation data
 const registrationSchema = z.object({
   invitationCode: z
     .string()
@@ -47,11 +55,9 @@ export default function RegisterPage() {
   const [validatedInvitation, setValidatedInvitation] = useState<{
     email: string;
     company: string;
-    companyId: number;
     fullName: string;
   } | null>(null);
 
-  // Form for invitation code validation
   const invitationForm = useForm<z.infer<typeof invitationCodeSchema>>({
     resolver: zodResolver(invitationCodeSchema),
     defaultValues: {
@@ -59,7 +65,6 @@ export default function RegisterPage() {
     },
   });
 
-  // Form for full registration
   const registrationForm = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
@@ -72,8 +77,7 @@ export default function RegisterPage() {
     },
   });
 
-  // Update the validateInvitation query with better error handling and debugging
-  const { data: invitationData, refetch: validateInvitation } = useQuery({
+  const { data: invitationData, refetch: validateInvitation } = useQuery<InvitationResponse>({
     queryKey: ["validateInvitation", invitationForm.watch("invitationCode")],
     queryFn: async () => {
       const code = invitationForm.watch("invitationCode")?.toUpperCase();
@@ -103,7 +107,6 @@ export default function RegisterPage() {
     retry: false,
   });
 
-  // Add URL parameter handling with improved error handling
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
@@ -117,7 +120,6 @@ export default function RegisterPage() {
     }
   }, []);
 
-  // Handle invitation code validation
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
     console.log("[Registration] Starting code validation for:", values.invitationCode);
     try {
@@ -128,39 +130,38 @@ export default function RegisterPage() {
         const { invitation } = result.data;
         console.log("[Registration] Extracted invitation data:", invitation);
 
+        // Split the invitee_name into first and last name
+        const nameParts = invitation.invitee_name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
         setValidatedInvitation({
           email: invitation.email,
-          company: invitation.company || "",
-          companyId: invitation.companyId,
-          fullName: invitation.fullName || `${invitation.firstName} ${invitation.lastName}`.trim(),
+          company: invitation.company_name,
+          fullName: invitation.invitee_name,
         });
 
-        // Pre-fill registration form with corrected data access
-        console.log("[Registration] Pre-filling registration form");
-        registrationForm.setValue("invitationCode", values.invitationCode);
-        registrationForm.setValue("email", invitation.email);
-        registrationForm.setValue("company", invitation.company || "");
+        // Pre-fill registration form
+        console.log("[Registration] Pre-filling registration form with:", {
+          email: invitation.email,
+          company: invitation.company_name,
+          firstName,
+          lastName,
+          fullName: invitation.invitee_name
+        });
 
-        // Handle name fields
-        if (invitation.firstName && invitation.lastName) {
-          console.log("[Registration] Setting split name parts:", { 
-            firstName: invitation.firstName, 
-            lastName: invitation.lastName 
-          });
-          registrationForm.setValue("firstName", invitation.firstName);
-          registrationForm.setValue("lastName", invitation.lastName);
-        } else if (invitation.fullName) {
-          const nameParts = invitation.fullName.split(" ");
-          console.log("[Registration] Splitting full name:", nameParts);
-          registrationForm.setValue("firstName", nameParts[0] || "");
-          registrationForm.setValue("lastName", nameParts.slice(1).join(" ") || "");
-        }
+        registrationForm.reset({
+          invitationCode: values.invitationCode,
+          email: invitation.email,
+          company: invitation.company_name,
+          firstName,
+          lastName,
+          password: '',
+        });
 
         // Debug form values after setting
         console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
 
-        // Validate form after setting values
-        registrationForm.trigger();
       } else {
         console.log("[Registration] Invalid invitation code response");
         invitationForm.setError("invitationCode", {
@@ -177,13 +178,8 @@ export default function RegisterPage() {
     }
   };
 
-  // Handle full registration
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
     console.log("[Registration] Starting registration with values:", values);
-    if (validatedInvitation?.companyId === undefined || validatedInvitation?.companyId === null) {
-      console.error("[Registration] Missing companyId in validated invitation");
-      return;
-    }
 
     const fullName = `${values.firstName} ${values.lastName}`.trim();
     console.log("[Registration] Submitting registration with fullName:", fullName);
@@ -191,7 +187,6 @@ export default function RegisterPage() {
     registerMutation.mutate({
       ...values,
       fullName,
-      companyId: validatedInvitation.companyId,
     }, {
       onSuccess: () => {
         console.log("[Registration] Registration successful");
@@ -211,7 +206,6 @@ export default function RegisterPage() {
     });
   };
 
-  // Redirect if already logged in
   if (user) {
     console.log("[Registration] User already logged in, redirecting");
     return <Redirect to="/" />;
@@ -231,7 +225,6 @@ export default function RegisterPage() {
           </div>
 
           {!validatedInvitation ? (
-            // Show invitation code form first
             <Form {...invitationForm}>
               <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-4">
                 <FormField
@@ -274,7 +267,6 @@ export default function RegisterPage() {
               </form>
             </Form>
           ) : (
-            // Show full registration form after code validation
             <Form {...registrationForm}>
               <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                 <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
