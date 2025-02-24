@@ -1185,285 +1185,107 @@ export function registerRoutes(app: Express): Express {
         companyId: req.body.company_id,
         companyName: req.body.company_name,
         senderName: req.body.sender_name,
-        senderCompany: req.body.sender_company || (req.user?.companyId === 0 ? 'Invela' : undefined)
+        senderCompany: req.body.sender_company
       };
 
       console.log('[Invite] Validated invite data:', inviteData);
 
-      if (!inviteData.senderCompany) {
-        console.error('[Invite] Missing sender company:', inviteData);
-        throw new Error("Sender company is required");
-      }
-
-      // Create the transaction for atomic operations
+      // Start a database transaction
+      console.log('[Invite] Starting database transaction');
       const result = await db.transaction(async (tx) => {
-        console.log('[Invite] Starting database transaction');
-        console.log('[Invite] Creating user account');
+        try {
+          console.log('[Invite] Creating user account');
+          // Create new user account with explicit company_id
+          const [user] = await tx.insert(users)
+            .values({
+              email: inviteData.email,
+              full_name: inviteData.fullName,
+              company_id: inviteData.companyId, // Explicitly set company_id from invite data
+              onboarding_user_completed: false
+            })
+            .returning();
 
-        // Generate a temporary password
-        const tempPassword = crypto.randomBytes(32).toString('hex');
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+          if (!user) {
+            throw new Error('Failed to create user account');
+          }
 
-        // Create user account with temporary password
-        const [newUser] = await tx.insert(users)
-          .values({
-            email: inviteData.email,
-            password: hashedPassword,
-            companyId: inviteData.companyId,
-            fullName: inviteData.fullName,
-            onboardingUserCompleted: false
-          })
-          .returning();
+          // Create invitation record
+          const inviteCode = generateInviteCode();
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 7);
 
-        console.log('[Invite] Created user account:', { id: newUser.id, email: newUser.email });
+          const [invitation] = await tx.insert(invitations)
+            .values({
+              email: inviteData.email,
+              status: 'pending',
+              code: inviteCode,
+              company_id: inviteData.companyId,
+              invitee_name: inviteData.fullName,
+              invitee_company: inviteData.companyName,
+              expires_at: expiryDate
+            })
+            .returning();
 
-        // Generate invitation code
-        const code = generateInviteCode();
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 7);
+          // Create task for tracking the invitation
+          const [task] = await tx.insert(tasks)
+            .values({
+              title: `New User Invitation: ${inviteData.email}`,
+              description: `Invitation sent to ${inviteData.fullName} (${inviteData.email}) to join ${inviteData.companyName}`,
+              task_type: 'user_onboarding',
+              task_scope: 'user',
+              status: TaskStatus.EMAIL_SENT,
+              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
+              priority: 'high',
+              company_id: inviteData.companyId,
+              user_email: inviteData.email,
+              metadata: {
+                invitationId: invitation.id,
+                invitedBy: req.user!.id,
+                invitedAt: new Date().toISOString(),
+                statusFlow: [TaskStatus.EMAIL_SENT]
+              }
+            })
+            .returning();
 
-        console.log('[Invite] Creating invitation record with code:', code);
+          // Update invitation with task reference
+          await tx.update(invitations)
+            .set({ task_id: task.id })
+            .where(eq(invitations.id, invitation.id));
 
-        // Create invitation record
-        const [invitation] = await tx.insert(invitations)
-          .values({
-            email: inviteData.email,
-            code,
-            status: 'pending',
-            companyId: inviteData.companyId,
-            inviteeName: inviteData.fullName,
-            inviteeCompany: inviteData.companyName,
-            expiresAt: expiryDate,
-            metadata: {
-              userId: newUser.id,
+          // Send invitation email
+          await emailService.sendEmail({
+            to: inviteData.email,
+            from: 'noreply@example.com',
+            template: 'user_invite',
+            templateData: {
+              recipientEmail: inviteData.email,
+              recipientName: inviteData.fullName,
               senderName: inviteData.senderName,
               senderCompany: inviteData.senderCompany,
-              createdAt: new Date().toISOString()
+              code: inviteCode,
+              inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
             }
-          })
-          .returning();
+          });
 
-        console.log('[Invite] Created invitation:', invitation);
-
-        // Create associated task
-        console.log('[Invite] Creating associated task');
-        const [task] = await tx.insert(tasks)
-          .values({
-            title: `New User Invitation: ${inviteData.email}`,
-            description: `Invitation sent to ${inviteData.fullName} to join ${inviteData.companyName}`,
-            taskType: 'user_onboarding',
-            taskScope: 'user',
-            status: TaskStatus.EMAIL_SENT,
-            priority: 'medium',
-            progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
-            createdBy: req.user!.id,
-            userEmail: inviteData.email,
-            companyId: inviteData.companyId,
-            dueDate: expiryDate,
-            metadata: {
-              userId: newUser.id,
-              senderName: inviteData.senderName,
-              statusFlow: [TaskStatus.EMAIL_SENT],
-              emailSentAt: new Date().toISOString(),
-              invitationId: invitation.id,
-              invitationCode: code
-            }
-          })
-          .returning();
-
-        console.log('[Invite] Created task:', task);
-
-        // Send invitation email
-        console.log('[Invite] Sending invitation email');
-        console.log('[Invite] Email template data:', {
-          recipientName: inviteData.fullName,
-          recipientEmail: inviteData.email,
-          senderName: inviteData.senderName,
-          senderCompany: inviteData.senderCompany,
-          targetCompany: inviteData.companyName,
-          inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
-          code: invitation.code
-        });
-
-        const emailResult = await emailService.sendTemplateEmail({
-          to: inviteData.email,
-          from: process.env.GMAIL_USER!,
-          template: 'user_invite',
-          templateData: {
-            recipientName: inviteData.fullName,
-            recipientEmail: inviteData.email,
-            senderName: inviteData.senderName,
-            senderCompany: inviteData.senderCompany,
-            targetCompany: inviteData.companyName,
-            inviteUrl: `${process.env.APP_URL}/register?code=${invitation.code}`,
-            code: invitation.code
-          }
-        });
-
-        if (!emailResult.success) {
-          console.error('[Invite] Failed to send email:', emailResult.error);
-          throw new Error(emailResult.error || 'Failed to send invitation email');
+          return { invitation, task, user };
+        } catch (error) {
+          console.error('[Invite] Error processing invitation:', error);
+          throw error;
         }
-
-        console.log('[Invite] Successfully sent invitation email');
-        console.log('[Invite] Successfully completed invitation process');
-
-        return { invitation, task, user: newUser };
       });
 
-      res.json({
-        message: "Invitation sent successfully",
+      res.status(201).json({
+        message: 'Invitation sent successfully',
         invitation: result.invitation,
-        user: result.user
+        task: result.task
       });
 
-    } catch (error: any) {
-      console.error("[Invite] Error processing invitation:", error);
+    } catch (error) {
+      console.error('[Invite] Error processing invitation:', error);
       res.status(500).json({
-        message: error.message || "Failed to send invitation. Please try again."
+        message: 'Error processing invitation request',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
-    }
-  });
-
-  // Add endpoint for companies to add other companies to their network
-  app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
-    try {
-      const targetCompanyId = parseInt(req.params.id);
-
-      // Verify the target company exists
-      const [targetCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, targetCompanyId));
-
-      if (!targetCompany) {
-        return res.status(404).json({ message: "Target company not found" });
-      }
-
-      // Check if relationship already exists
-      const [existingRelationship] = await db.select()
-        .from(relationships)
-        .where(and(
-          eq(relationships.companyId, req.user!.companyId),
-          eq(relationships.relatedCompanyId, targetCompanyId)
-        ));
-
-      if (existingRelationship) {
-        return res.status(400).json({ message: "Company is already in your network" });
-      }
-
-      // Create the relationship
-      const [relationship] = await db.insert(relationships)
-        .values({
-          companyId: req.user!.companyId,
-          relatedCompanyId: targetCompanyId,
-          relationshipType: 'network_member',
-          status: 'active',
-          metadata: {
-            addedAt: new Date().toISOString(),
-            addedBy: req.user!.id
-          }
-        })
-        .returning();
-
-      res.status(201).json(relationship);
-    } catch (error) {
-      console.error("Error adding company to network:", error);
-      res.status(500).json({ message: "Error adding company to network" });
-    }
-  });
-
-  // Update the user invitation endpoint to include sender details
-  app.post("/api/invitations", requireAuth, async (req, res) => {
-    try {
-      const { email, name: recipientName } = req.body;
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-
-      // Format the recipient's name
-      const formattedName = recipientName
-        ?.split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ') || email.split('@')[0];
-
-      // Get sender's full name and company
-      const [sender] = await db.select()
-        .from(users)
-        .leftJoin(companies, eq(users.companyId, companies.id))
-        .where(eq(users.id, req.user!.id));
-
-      if (!sender || !sender.companies) {
-        return res.status(400).json({ message: "Sender company information not found" });
-      }
-
-      const senderName = sender.users.fullName;
-      const senderCompany = sender.companies.name;
-
-      // Generate invitation code
-      const code = generateInviteCode();
-
-      console.log('Debug - Creating invitation with details:', {
-        senderName,
-        senderCompany,
-        recipientName: formattedName,
-        email
-      });
-
-      // Create invitation record
-      const [invitation] = await db.insert(invitations)
-        .values({
-          email,
-          code,
-          status: 'pending',
-          companyId: req.user!.companyId,
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-          createdBy: req.user!.id
-        })
-        .returning();
-
-      const inviteUrl = `${req.protocol}://${req.get('host')}`;
-
-      console.log('Debug - Preparing to send invitation email');
-      // Send invitation email with formatted name and company details
-      const emailParams = {
-        to: email,
-        from: process.env.GMAIL_USER!,
-        template: 'user_invite',
-        templateData: {
-          recipientEmail: email,
-          recipientName: formattedName,
-          senderName,
-          senderCompany,
-          code,
-          inviteUrl,
-        }
-      };
-
-      console.log('Debug - Sending invitation email with params:', {
-        to: email,
-        template: 'user_invite',
-        senderName,
-        senderCompany,
-        code
-      });
-
-      const emailResult = await emailService.sendTemplateEmail(emailParams);
-      console.log('Debug - Email service response:', emailResult);
-
-      if (!emailResult.success) {
-        throw new Error(`Failed to send email: ${emailResult.error}`);
-      }
-
-      // Update task status
-      await db.update(tasks)
-        .set({ status: 'email_sent' })
-        .where(eq(tasks.id, invitation.taskId));
-
-      res.json({ success: true, message: 'Invitation sent successfully' });
-    } catch (error) {
-      console.error("Error sending invitation:", error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      res.status(500).json({ message: `Error sending invitation: ${errorMessage}` });
     }
   });
 
