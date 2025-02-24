@@ -109,7 +109,6 @@ export default function AuthPage() {
     console.log('[Registration Debug] useEffect triggered with invitationData:', invitationData);
 
     if (invitationData?.valid && invitationData?.invitation) {
-      console.log('[Registration Debug] Setting form values from invitation:', invitationData.invitation);
       const { email, invitee_name, company_name } = invitationData.invitation;
 
       // Split full name into first and last name
@@ -127,10 +126,10 @@ export default function AuthPage() {
       // Set form values using proper field mapping
       registrationForm.reset({
         email: email || '',
-        firstName: firstName,
-        lastName: lastName,
+        firstName,
+        lastName,
         fullName: invitee_name || '',
-        company: company_name || '',
+        company: company_name || '', // Map company_name to company field
         invitationCode: invitationCode || '',
         password: ''
       });
