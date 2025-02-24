@@ -124,14 +124,16 @@ export default function AuthPage() {
         company: company_name
       });
 
-      // Set all form values at once using the proper field names
-      registrationForm.setValue('email', email);
-      registrationForm.setValue('firstName', firstName);
-      registrationForm.setValue('lastName', lastName);
-      registrationForm.setValue('fullName', invitee_name);
-      registrationForm.setValue('company', company_name); // Add company name
-      registrationForm.setValue('invitationCode', invitationCode);
-      registrationForm.setValue('password', ''); // Initialize empty password field
+      // Set form values using proper field mapping
+      registrationForm.reset({
+        email: email || '',
+        firstName: firstName,
+        lastName: lastName,
+        fullName: invitee_name || '',
+        company: company_name || '',
+        invitationCode: invitationCode || '',
+        password: ''
+      });
 
       console.log('[Registration Debug] Form values after update:', registrationForm.getValues());
 
@@ -509,7 +511,6 @@ export default function AuthPage() {
       </div>
     );
   }
-
 
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
