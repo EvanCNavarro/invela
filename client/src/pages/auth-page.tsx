@@ -59,18 +59,20 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  // Extract and clean up URL parameters with debug logging
+  // URL parameter extraction with better logging
   const searchParams = new URLSearchParams(window.location.search);
-  const rawCode = searchParams.get('code');
+  const rawCode = searchParams.get('code') || searchParams.get('invitationCode'); // Try both param names
   const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
-  console.log('[Step 1: Initial Load] Processing URL parameters:', {
+  console.log('[URL Debug] Params:', { 
+    fullUrl: window.location.href,
+    search: window.location.search,
     rawCode,
     invitationCode,
-    workEmail,
-    currentLocation: location
+    workEmail 
   });
+
 
   // Validate invitation code when present with proper typing
   const { data: invitationData, isLoading: isValidatingCode } = useQuery<InvitationResponse>({
