@@ -102,23 +102,24 @@ export default function AuthPage() {
   useEffect(() => {
     if (invitationData?.valid && invitationData?.invitation) {
       console.log('Setting form values from invitation:', invitationData.invitation);
-      const { email, firstName, lastName, fullName, company } = invitationData.invitation;
+      const { email, invitee_name, company_name } = invitationData.invitation;
+
+      // Split full name into first and last name
+      const nameParts = invitee_name ? invitee_name.split(' ') : ['', ''];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       registrationForm.setValue('email', email || '');
-      registrationForm.setValue('firstName', firstName || '');
-      registrationForm.setValue('lastName', lastName || '');
-      registrationForm.setValue('fullName', fullName || '');
+      registrationForm.setValue('firstName', firstName);
+      registrationForm.setValue('lastName', lastName);
+      registrationForm.setValue('fullName', invitee_name || '');
+      registrationForm.setValue('invitationCode', invitationCode || '');
 
       // Force form validation after setting values
       registrationForm.trigger();
     }
   }, [invitationData, registrationForm]);
 
-  useEffect(() => {
-    if (invitationData?.email) {
-      registrationForm.setValue('email', invitationData.email);
-    }
-  }, [invitationData]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsPageLoading(false), 300);
