@@ -869,7 +869,7 @@ export function registerRoutes(app: Express): Express {
         return res.status(400).json({          message: errorMessage,
           invalidFields
         });
-      }
+            }
 
       // Database transaction for atomicity
       const result = await db.transaction(async (tx) => {
@@ -1294,77 +1294,40 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/invitations/:code/validate", async (req, res) => {
     try {
       console.log('[Invite Debug] Starting validation for code:', req.params.code);
-      const code = req.params.code.toUpperCase();
 
-      // Find the invitation
+      // Get the invitation with case-insensitive code match and valid expiration
       const [invitation] = await db.select()
         .from(invitations)
         .where(and(
-          eq(invitations.code, code),
+          eq(invitations.code, req.params.code),
           eq(invitations.status, 'pending'),
-          gt(invitations.expiresAt, new Date())
+          sql`${invitations.expires_at} > NOW()`
         ));
 
-      console.log('[Invite Debug] Initial invitation query result:', invitation);
-
       if (!invitation) {
-        return res.status(404).json({
+        console.log('[Invite Debug] No valid invitation found for code:', req.params.code);
+        return res.json({
           valid: false,
           message: "Invalid or expired invitation code"
         });
       }
 
-      // Find the associated user
-      const [user] = await db.select()
-        .from(users)
-        .where(eq(users.email, invitation.email.toLowerCase()));
-
-      console.log('[Invite Debug] Found user for email:', {
+      console.log('[Invite Debug] Found valid invitation:', {
+        id: invitation.id,
         email: invitation.email,
-        userFound: !!user,
-        userData: user ? {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          fullName: user.fullName
-        } : null
+        status: invitation.status,
+        expires_at: invitation.expires_at
       });
 
-      // Get associated task and company info if needed
-      const [task] = invitation.taskId ? await db.select().from(tasks).where(eq(tasks.id, invitation.taskId)) : [null];
-      const [company] = invitation.companyId ? await db.select().from(companies).where(eq(companies.id, invitation.companyId)) : [null];
-
-      console.log('[Invite Debug] Task and company info:', {
-        taskFound: !!task,
-        companyFound: !!company,
-        taskData: task ? {
-          id: task.id,
-          status: task.status
-        } : null,
-        companyData: company ? {
-          id: company.id,
-          name: company.name
-        } : null
-      });
-
-      // Construct the response with proper field mapping
-      const response = {
+      res.json({
         valid: true,
         invitation: {
-          code: invitation.code,
           email: invitation.email,
-          company: invitation.inviteeCompany || company?.name || null,
-          companyId: invitation.companyId,
-          firstName: invitation.inviteeName?.split(' ')[0] || null,
-          lastName: invitation.inviteeName?.split(' ').slice(1).join(' ') || null,
-          fullName: invitation.inviteeName || null
+          invitee_name: invitation.invitee_name,
+          company_name: invitation.invitee_company
         }
-      };
+      });
 
-      console.log('[Invite Debug] Final response:', response);
-
-      res.json(response);
     } catch (error) {
       console.error('[Invite Debug] Validation error:', error);
       res.status(500).json({
