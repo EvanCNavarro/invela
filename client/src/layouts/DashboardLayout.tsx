@@ -10,8 +10,9 @@ import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
 
 interface Company {
-  available_tabs: string[];
   id: number;
+  available_tabs: string[];
+  category?: string;
 }
 
 interface Task {
@@ -20,6 +21,8 @@ interface Task {
   assigned_to?: number;
   created_by: number;
   task_scope: 'user' | 'company';
+  status: string;
+  task_type: string;
 }
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -28,12 +31,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
 
+  // Add refetchInterval to automatically check for updates
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+    refetchInterval: 5000, // Refetch every 5 seconds
   });
 
+  // Add refetchInterval to automatically check for company updates
   const { data: currentCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
+    refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
   });
 
   const relevantTasks = tasks.filter(task => {
@@ -97,6 +104,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             showInvelaTabs={false}
             isPlayground={false}
             variant="default"
+            availableTabs={currentCompany?.available_tabs || ['task-center']}
+            category={currentCompany?.category}
           />
         </div>
       </aside>
@@ -111,7 +120,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <TopNav />
         </header>
 
-        <main className="flex-1 relative overflow-auto"> {/* Added overflow-auto */}
+        <main className="flex-1 relative overflow-auto">
           <div className={cn(
             "px-8 py-4",
             "transition-all duration-300 ease-in-out",
