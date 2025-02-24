@@ -97,7 +97,7 @@ router.post("/api/users/invite", async (req, res) => {
             password: await hashPassword(generateTempPassword()),
             full_name: data.full_name,
             company_id: data.company_id,
-            onboarding_user_completed: false,
+            onboarding_user_completed: false, // Ensure this is false for new users
           })
           .returning();
 

@@ -435,7 +435,7 @@ export function registerRoutes(app: Express): Express {
           last_name: lastName,
           full_name: fullName,
           password: await bcrypt.hash(password, 10),
-          onboarding_user_completed: true,
+          onboarding_user_completed: false, // Changed to false so new user modal appears
         })
         .where(eq(users.id, existingUser.id))
         .returning();
@@ -857,7 +857,7 @@ export function registerRoutes(app: Express): Express {
 
       if (invalidFields.length > 0) {
         const errorMessage = invalidFields.length === 1
-          ? `${invalidFields[0]} is required`
+          ? `${invalidFields[0]}`
           : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
 
         console.log('[FinTechInvite] Validation failed:', {
@@ -956,7 +956,7 @@ export function registerRoutes(app: Express): Express {
               password: hashedPassword,
               company_id: newCompany.id,
               full_name: full_name,
-              onboarding_user_completed: false,
+              onboarding_user_completed: false, // Ensure this is false for new users
               metadata: {
                 invited_by: req.user!.id,
                 invited_at: new Date().toISOString(),
