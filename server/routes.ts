@@ -866,8 +866,7 @@ export function registerRoutes(app: Express): Express {
           errorMessage
         });
 
-        return res.status(400).json({
-          message: errorMessage,
+        return res.status(400).json({          message: errorMessage,
           invalidFields
         });
       }
@@ -1254,7 +1253,7 @@ export function registerRoutes(app: Express): Express {
             .where(eq(invitations.id, invitation.id));
 
           // Send invitation email
-          await emailService.sendEmail({
+          await emailService.sendTemplateEmail({
             to: inviteData.email,
             from: 'noreply@example.com',
             template: 'user_invite',
