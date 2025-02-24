@@ -65,37 +65,32 @@ export default function AuthPage() {
   const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
-  console.log('[Registration Debug] URL parameters:', {
+  console.log('[Step 1: Initial Load] Processing URL parameters:', {
     rawCode,
     invitationCode,
-    workEmail
+    workEmail,
+    currentLocation: location
   });
 
   // Validate invitation code when present with proper typing
   const { data: invitationData, isLoading: isValidatingCode } = useQuery<InvitationResponse>({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
-      console.log('[Registration Debug] Starting invitation validation for code:', invitationCode);
+      console.log('[Step 2: Code Validation] Starting invitation validation for code:', invitationCode);
       if (!invitationCode) {
-        console.log('[Registration Debug] No invitation code provided');
+        console.log('[Step 2: Code Validation] No invitation code provided');
         return null;
       }
       const response = await fetch(`/api/invitations/${invitationCode}/validate`);
       if (!response.ok) {
-        console.log('[Registration Debug] Invalid invitation response:', response.status);
+        console.log('[Step 2: Code Validation] Invalid invitation response:', response.status);
         throw new Error('Invalid invitation code');
       }
       const data = await response.json();
-      console.log('[Registration Debug] Validation response:', data);
+      console.log('[Step 2: Code Validation] Validation response:', data);
       return data;
     },
     enabled: !!invitationCode,
-  });
-
-  console.log('[Registration Debug] Current invitationData state:', {
-    isValidatingCode,
-    hasData: !!invitationData,
-    data: invitationData
   });
 
   // Form setup with debug logging
@@ -112,25 +107,25 @@ export default function AuthPage() {
     },
   });
 
-  console.log('[Registration Debug] Initial form values:', registrationForm.getValues());
+  console.log('[Step 3: Form Setup] Initial form values:', registrationForm.getValues());
 
   // Update form fields when invitation data is loaded
   useEffect(() => {
-    console.log('[Registration Debug] useEffect triggered with invitationData:', invitationData);
+    console.log('[Step 3: Form Pre-fill] useEffect triggered with invitationData:', invitationData);
 
     if (!invitationData?.valid || !invitationData?.invitation) {
-      console.log('[Registration Debug] No valid invitation data');
+      console.log('[Step 3: Form Pre-fill] No valid invitation data');
       return;
     }
 
     const { email, invitee_name, company_name } = invitationData.invitation;
 
-    // Split full name into first and last name components
+    // Split name parts
     const nameParts = invitee_name.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ');
 
-    console.log('[Registration Debug] Processing invitation data:', {
+    console.log('[Step 3: Form Pre-fill] Processing invitation data:', {
       email,
       invitee_name,
       company_name,
@@ -151,7 +146,7 @@ export default function AuthPage() {
 
     // Verify form update
     const formValues = registrationForm.getValues();
-    console.log('[Registration Debug] Updated form values:', formValues);
+    console.log('[Step 3: Form Pre-fill] Updated form values:', formValues);
 
   }, [invitationData, registrationForm, invitationCode]);
 
@@ -201,6 +196,7 @@ export default function AuthPage() {
   };
 
   const onRegisterSubmit = async (values: z.infer<typeof registrationSchema>) => {
+    console.log('[Step 4: Form Submission] Submitting registration with values:', values);
     registerMutation.mutate({
       email: values.email,
       password: values.password,
@@ -211,6 +207,18 @@ export default function AuthPage() {
       invitationCode: values.invitationCode,
     });
   };
+
+  useEffect(() => {
+    if (registerMutation.isSuccess) {
+      console.log('[Step 5: Registration Complete] Registration successful, user authenticated');
+    }
+  }, [registerMutation.isSuccess]);
+
+  useEffect(() => {
+    if (user) {
+      console.log('[Step 6: Post-Registration] User authenticated, redirecting to dashboard');
+    }
+  }, [user]);
 
   const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
     try {
