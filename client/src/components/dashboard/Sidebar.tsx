@@ -28,6 +28,8 @@ interface SidebarProps {
   showInvelaTabs?: boolean;
   isPlayground?: boolean;
   variant?: 'default' | 'company-locked';
+  availableTabs: string[];
+  category?: string;
 }
 
 export function Sidebar({
@@ -38,7 +40,9 @@ export function Sidebar({
   showPulsingDot = false,
   showInvelaTabs = false,
   isPlayground = false,
-  variant = 'default'
+  variant = 'default',
+  availableTabs = ['task-center'],
+  category
 }: SidebarProps) {
   const [location] = useLocation();
   const [taskCount, setTaskCount] = useState(0);
@@ -46,11 +50,6 @@ export function Sidebar({
   // Only fetch real data if not in playground mode
   const { data: tasks = [] } = useQuery({
     queryKey: ["/api/tasks"],
-    enabled: !isPlayground,
-  });
-
-  const { data: company } = useQuery({
-    queryKey: ["/api/companies/current"],
     enabled: !isPlayground,
   });
 
@@ -110,9 +109,6 @@ export function Sidebar({
     };
   }, [isPlayground]);
 
-  // Get available tabs from company data
-  const availableTabs = company?.available_tabs || ['task-center'];
-
   const menuItems = [
     {
       icon: HomeIcon,
@@ -158,7 +154,7 @@ export function Sidebar({
   const { isVisible: showPlayground } = usePlaygroundVisibility();
   const adminMenuItems = [];
 
-  const isInvelaUser = isPlayground ? showInvelaTabs : (company?.category === 'Invela');
+  const isInvelaUser = isPlayground ? showInvelaTabs : (category === 'Invela');
 
   if (isInvelaUser && (isPlayground || showPlayground)) {
     adminMenuItems.push({
