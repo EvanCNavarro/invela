@@ -13,6 +13,8 @@ import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { RiskMeter } from "@/components/dashboard/RiskMeter";
+import { InviteButton } from "@/components/ui/invite-button";
+import { InviteModal } from "@/components/playground/InviteModal";
 import { useState } from "react";
 
 interface CompanyProfileData {
@@ -55,6 +57,7 @@ export default function CompanyProfilePage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [fileSearchQuery, setFileSearchQuery] = useState("");
+  const [openUserModal, setOpenUserModal] = useState(false);
 
   const handleBackClick = () => {
     window.history.back();
@@ -236,10 +239,11 @@ export default function CompanyProfilePage() {
             className="pl-9"
           />
         </div>
-        <Button className="flex items-center gap-2">
-          <UserPlus className="h-4 w-4" />
-          Invite New User
-        </Button>
+        <InviteButton
+          variant="user"
+          pulse={false}
+          onClick={() => setOpenUserModal(true)}
+        />
       </div>
 
       <Card>
@@ -269,6 +273,14 @@ export default function CompanyProfilePage() {
           </Table>
         </CardContent>
       </Card>
+
+      <InviteModal
+        variant="user"
+        open={openUserModal}
+        onOpenChange={setOpenUserModal}
+        companyId={parseInt(companyId)}
+        companyName={company?.name || ""}
+      />
     </div>
   );
 
