@@ -184,26 +184,40 @@ export default function RegisterPage() {
     const fullName = `${values.firstName} ${values.lastName}`.trim();
     console.log("[Registration] Submitting registration with fullName:", fullName);
 
-    registerMutation.mutate({
-      ...values,
-      fullName,
-    }, {
-      onSuccess: () => {
-        console.log("[Registration] Registration successful");
-        toast({
-          title: "Registration successful",
-          description: "Welcome to Invela! You can now log in.",
-        });
-      },
-      onError: (error) => {
-        console.error("[Registration] Registration error:", error);
-        toast({
-          title: "Registration failed",
-          description: "There was an error creating your account. Please try again.",
-          variant: "destructive",
-        });
-      },
-    });
+    try {
+      registerMutation.mutate({
+        email: values.email,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        fullName,
+        company: values.company,
+        invitationCode: values.invitationCode,
+      }, {
+        onSuccess: () => {
+          console.log("[Registration] Registration successful");
+          toast({
+            title: "Registration successful",
+            description: "Welcome to Invela! You can now log in.",
+          });
+        },
+        onError: (error: Error) => {
+          console.error("[Registration] Registration error:", error);
+          toast({
+            title: "Registration failed",
+            description: "There was an error creating your account. Please try again.",
+            variant: "destructive",
+          });
+        },
+      });
+    } catch (error) {
+      console.error("[Registration] Unexpected error during submission:", error);
+      toast({
+        title: "Registration failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (user) {
