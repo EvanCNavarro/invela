@@ -127,7 +127,8 @@ export function registerRoutes(app: Express): Express {
         investors: company.investors_info || 'No investor information available',
         fundingStage: company.funding_stage || null,
         keyClientsPartners: company.key_partners || [],
-        foundersAndLeadership: company.leadership_team || 'No leadership information available'
+        foundersAndLeadership: company.leadership_team || 'No leadership information available',
+        riskScore: company.risk_score // Added riskScore
       }));
 
       res.json(transformedCompanies);
@@ -223,7 +224,8 @@ export function registerRoutes(app: Express): Express {
         ...company,
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
-        incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null
+        incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
+        riskScore: company.risk_score // Added riskScore
       };
 
       res.json(transformedCompany);
