@@ -121,15 +121,13 @@ export default function AuthPage() {
         lastName
       });
 
-      // Set all form values at once
-      registrationForm.reset({
-        email: email || '',
-        firstName,
-        lastName,
-        fullName: invitee_name || '',
-        invitationCode: invitationCode || '',
-        password: ''  // Initialize empty password field
-      });
+      // Set all form values at once using the proper field names
+      registrationForm.setValue('email', email);
+      registrationForm.setValue('firstName', firstName);
+      registrationForm.setValue('lastName', lastName);
+      registrationForm.setValue('fullName', invitee_name);
+      registrationForm.setValue('invitationCode', invitationCode);
+      registrationForm.setValue('password', ''); // Initialize empty password field
 
       console.log('[Registration Debug] Form values after update:', registrationForm.getValues());
 
