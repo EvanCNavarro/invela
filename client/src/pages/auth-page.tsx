@@ -109,16 +109,21 @@ export default function AuthPage() {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      registrationForm.setValue('email', email || '');
-      registrationForm.setValue('firstName', firstName);
-      registrationForm.setValue('lastName', lastName);
-      registrationForm.setValue('fullName', invitee_name || '');
-      registrationForm.setValue('invitationCode', invitationCode || '');
+      // Set all form values at once
+      registrationForm.reset({
+        email: email || '',
+        firstName: firstName,
+        lastName: lastName,
+        fullName: invitee_name || '',
+        invitationCode: invitationCode || '',
+      });
+
+      console.log('Registration form values after update:', registrationForm.getValues());
 
       // Force form validation after setting values
       registrationForm.trigger();
     }
-  }, [invitationData, registrationForm]);
+  }, [invitationData, registrationForm, invitationCode]);
 
 
   useEffect(() => {
