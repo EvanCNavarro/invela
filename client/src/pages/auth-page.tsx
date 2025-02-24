@@ -48,35 +48,46 @@ export default function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
-  // Extract and clean up URL parameters
+  // Extract and clean up URL parameters with debug logging
   const searchParams = new URLSearchParams(window.location.search);
   const rawCode = searchParams.get('code');
   const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
+  console.log('[Registration Debug] URL parameters:', {
+    rawCode,
+    invitationCode,
+    workEmail
+  });
+
   // Validate invitation code when present
   const { data: invitationData, isLoading: isValidatingCode } = useQuery({
     queryKey: ['/api/invitations', invitationCode],
     queryFn: async () => {
-      if (!invitationCode) return null;
+      console.log('[Registration Debug] Starting invitation validation for code:', invitationCode);
+      if (!invitationCode) {
+        console.log('[Registration Debug] No invitation code provided');
+        return null;
+      }
       const response = await fetch(`/api/invitations/${invitationCode}/validate`);
-      if (!response.ok) throw new Error('Invalid invitation code');
+      if (!response.ok) {
+        console.log('[Registration Debug] Invalid invitation response:', response.status);
+        throw new Error('Invalid invitation code');
+      }
       const data = await response.json();
-      console.log('Invitation validation response:', data);
+      console.log('[Registration Debug] Validation response:', data);
       return data;
     },
     enabled: !!invitationCode,
   });
 
-  // Form setup with default values from invitation
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+  console.log('[Registration Debug] Current invitationData state:', {
+    isValidatingCode,
+    hasData: !!invitationData,
+    data: invitationData
   });
 
+  // Form setup with debug logging
   const registrationForm = useForm<z.infer<typeof registrationSchema>>({
     resolver: zodResolver(registrationSchema),
     defaultValues: {
@@ -89,19 +100,17 @@ export default function AuthPage() {
     },
   });
 
-  const inviteForm = useForm<z.infer<typeof inviteFormSchema>>({
-    resolver: zodResolver(inviteFormSchema),
-    defaultValues: {
-      email: "",
-      fullName: "",
-      company: "",
-    },
-  });
+  console.log('[Registration Debug] Initial form values:', registrationForm.getValues());
 
   // Update form fields when invitation data is loaded
   useEffect(() => {
+    console.log('[Registration Debug] useEffect triggered with invitationData:', {
+      invitationData,
+      isValidatingCode
+    });
+
     if (invitationData?.data?.valid && invitationData?.data?.invitation) {
-      console.log('Setting form values from invitation:', invitationData.data.invitation);
+      console.log('[Registration Debug] Setting form values from invitation:', invitationData.data.invitation);
       const { email, invitee_name, company_name } = invitationData.data.invitation;
 
       // Split full name into first and last name
@@ -109,19 +118,27 @@ export default function AuthPage() {
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
 
+      console.log('[Registration Debug] Split name parts:', {
+        fullName: invitee_name,
+        firstName,
+        lastName
+      });
+
       // Set all form values at once
       registrationForm.reset({
         email: email || '',
-        firstName: firstName,
-        lastName: lastName,
+        firstName,
+        lastName,
         fullName: invitee_name || '',
         invitationCode: invitationCode || '',
       });
 
-      console.log('Registration form values after update:', registrationForm.getValues());
+      console.log('[Registration Debug] Form values after update:', registrationForm.getValues());
 
       // Force form validation after setting values
-      registrationForm.trigger();
+      registrationForm.trigger().then(() => {
+        console.log('[Registration Debug] Form validation state:', registrationForm.formState);
+      });
     }
   }, [invitationData, registrationForm, invitationCode]);
 
