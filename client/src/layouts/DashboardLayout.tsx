@@ -38,7 +38,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   });
 
   // Add refetchInterval to automatically check for company updates
-  const { data: currentCompany } = useQuery<Company>({
+  const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
   });
@@ -61,18 +61,32 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   };
 
   const isRouteAccessible = () => {
-    const availableTabs = currentCompany?.available_tabs || ['task-center'];
+    if (isLoadingCompany || !currentCompany) return true; // Wait for company data
+    const availableTabs = currentCompany.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
+
+    console.log('[DashboardLayout] Checking route access:', {
+      currentTab,
+      availableTabs,
+      isLoadingCompany
+    });
 
     return currentTab === 'task-center' || availableTabs.includes(currentTab);
   };
 
   useEffect(() => {
+    // Skip navigation if company data is not yet loaded
+    if (isLoadingCompany || !currentCompany) {
+      console.log('[DashboardLayout] Waiting for company data...');
+      return;
+    }
+
     const currentTab = getCurrentTab();
     if (currentTab !== 'task-center' && !isRouteAccessible()) {
+      console.log('[DashboardLayout] Route not accessible, redirecting to task-center');
       navigate('/task-center');
     }
-  }, [location, currentCompany?.available_tabs, navigate]);
+  }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
