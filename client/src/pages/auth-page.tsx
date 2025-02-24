@@ -65,12 +65,12 @@ export default function AuthPage() {
   const invitationCode = rawCode?.split('/')[0] || '';
   const workEmail = searchParams.get('work_email');
 
-  console.log('[URL Debug] Params:', { 
+  console.log('[URL Debug] Params:', {
     fullUrl: window.location.href,
     search: window.location.search,
     rawCode,
     invitationCode,
-    workEmail 
+    workEmail
   });
 
 
@@ -122,26 +122,27 @@ export default function AuthPage() {
 
     const { email, invitee_name, company_name } = invitationData.invitation;
 
-    // Split name parts
-    const nameParts = invitee_name.split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ');
+    // Split name parts and handle edge cases
+    const nameParts = invitee_name?.split(' ') || ['', ''];
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
 
     console.log('[Step 3: Form Pre-fill] Processing invitation data:', {
       email,
       invitee_name,
       company_name,
       firstName,
-      lastName
+      lastName,
+      fullNameFromParts: `${firstName} ${lastName}`.trim()
     });
 
-    // Update form with all fields at once to prevent multiple re-renders
+    // Update form with all fields at once
     registrationForm.reset({
-      email,
+      email: email || '',
       firstName,
       lastName,
-      fullName: invitee_name,
-      company: company_name,
+      fullName: invitee_name || '',
+      company: company_name || '', // Ensure company name is properly set
       invitationCode,
       password: '',
     });
