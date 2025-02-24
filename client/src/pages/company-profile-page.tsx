@@ -6,10 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { ArrowLeft, Building2, Globe, Users, Calendar, Briefcase, Target, Award, FileText, Shield, Search, UserPlus, Download } from "lucide-react";
 import { CompanyLogo } from "@/components/ui/company-logo";
 import { PageHeader } from "@/components/ui/page-header";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { RiskMeter } from "@/components/dashboard/RiskMeter";
 import { useState } from "react";
 
 interface CompanyProfileData {
@@ -26,12 +29,32 @@ interface CompanyProfileData {
   fundingStage: string | null;
   legalStructure: string;
   hqAddress: string;
+  riskScore: number;
+}
+
+interface CompanyUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+}
+
+interface CompanyFile {
+  id: number;
+  name: string;
+  type: string;
+  size: string;
+  uploadedAt: string;
+  uploadedBy: string;
 }
 
 export default function CompanyProfilePage() {
   const params = useParams();
   const companyId = params.companySlug;
   const [activeTab, setActiveTab] = useState("overview");
+  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [fileSearchQuery, setFileSearchQuery] = useState("");
 
   const handleBackClick = () => {
     window.history.back();
@@ -47,6 +70,16 @@ export default function CompanyProfilePage() {
       }
       return response.json();
     }
+  });
+
+  const { data: users = [] } = useQuery<CompanyUser[]>({
+    queryKey: ["/api/companies", companyId, "users"],
+    enabled: activeTab === "users"
+  });
+
+  const { data: files = [] } = useQuery<CompanyFile[]>({
+    queryKey: ["/api/companies", companyId, "files"],
+    enabled: activeTab === "files"
   });
 
   if (isLoading) {
@@ -87,6 +120,18 @@ export default function CompanyProfilePage() {
   const renderOverviewTab = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Risk Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RiskMeter score={company.riskScore} />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -154,25 +199,6 @@ export default function CompanyProfilePage() {
             </div>
           </CardContent>
         </Card>
-
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Market Position
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Products & Services</div>
-              <span>{company.productsServices?.join(', ') || 'Not available'}</span>
-            </div>
-            <div>
-              <div className="text-sm font-medium text-muted-foreground">Key Clients & Partners</div>
-              <span>{company.keyClientsPartners?.join(', ') || 'Not available'}</span>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       <Card>
@@ -199,45 +225,141 @@ export default function CompanyProfilePage() {
   );
 
   const renderUsersTab = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Company Users
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">User information will be available soon.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search users..."
+            value={userSearchQuery}
+            onChange={(e) => setUserSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button className="flex items-center gap-2">
+          <UserPlus className="h-4 w-4" />
+          Invite New User
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Company Users</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Joined</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.name}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.role}</TableCell>
+                  <TableCell>{new Date(user.joinedAt).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 
   const renderFilesTab = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          Company Files
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">File management will be available soon.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search files..."
+            value={fileSearchQuery}
+            onChange={(e) => setFileSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Company Files</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead>Uploaded By</TableHead>
+                <TableHead>Upload Date</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {files.map((file) => (
+                <TableRow key={file.id}>
+                  <TableCell>{file.name}</TableCell>
+                  <TableCell>{file.type}</TableCell>
+                  <TableCell>{file.size}</TableCell>
+                  <TableCell>{file.uploadedBy}</TableCell>
+                  <TableCell>{new Date(file.uploadedAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 
   const renderRiskTab = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="h-5 w-5" />
-          Risk Assessment
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground">Risk assessment information will be available soon.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              Risk Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RiskMeter score={company.riskScore} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Risk Factors</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Company Age</div>
+              <p>{companyAge ? `${companyAge} years` : 'N/A'}</p>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Market Presence</div>
+              <p>{company.category || 'N/A'}</p>
+            </div>
+            <div>
+              <div className="text-sm font-medium text-muted-foreground">Employee Count</div>
+              <p>{company.numEmployees || 'N/A'}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 
   return (
