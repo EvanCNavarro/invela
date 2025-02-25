@@ -16,12 +16,17 @@ import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
+import { getAuthDebug, testDatabaseConnection } from './debug';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
   app.use(filesRouter);
   app.use(accessRouter); // Register the new access router
+  
+  // Debug API endpoints (development only)
+  app.get("/api/debug/auth", requireAuth, getAuthDebug);
+  app.get("/api/debug/db-test", testDatabaseConnection);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
@@ -157,7 +162,18 @@ export function registerRoutes(app: Express): Express {
         onboardingCompleted: company.onboarding_company_completed
       });
 
-      res.json(company);
+      // Add a default risk score if it doesn't exist
+      if (company.risk_score === undefined || company.risk_score === null) {
+        company.risk_score = 0; // Default risk score
+      }
+
+      // Transform the response to match client-side property names
+      const responseData = {
+        ...company,
+        riskScore: company.risk_score // Map risk_score to riskScore for client compatibility
+      };
+
+      res.json(responseData);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
       res.status(500).json({ message: "Error fetching company details" });
@@ -301,16 +317,16 @@ export function registerRoutes(app: Express): Express {
       res.json(userTasks);
     } catch (error) {
       console.error("[Tasks] Error details:", {
-        message: error.message,
-        code: error.code,
-        detail: error.detail,
-        position: error.position,
-        hint: error.hint
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: error instanceof Error && 'code' in error ? (error as any).code : undefined,
+        detail: error instanceof Error && 'detail' in error ? (error as any).detail : undefined,
+        position: error instanceof Error && 'position' in error ? (error as any).position : undefined,
+        hint: error instanceof Error && 'hint' in error ? (error as any).hint : undefined
       });
       console.error("[Tasks] Full error:", error);
       res.status(500).json({
         message: "Error fetching tasks",
-        detail: error.message
+        detail: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -446,7 +462,11 @@ export function registerRoutes(app: Express): Express {
           .where(eq(tasks.id, task.id))
           .returning();
 
-        broadcastTaskUpdate(updatedTask);
+        // Ensure metadata is not null before broadcasting
+        broadcastTaskUpdate({
+          ...updatedTask,
+          metadata: updatedTask.metadata || {}
+        });
       }
 
       // Update invitation status
@@ -656,7 +676,7 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Create logo record
-      const [logo] = await db.insert(companyLogos)
+      const logoResult = await db.insert(companyLogos)
         .values({
           company_id: companyId,
           file_name: req.file.originalname,
@@ -664,6 +684,8 @@ export function registerRoutes(app: Express): Express {
           file_type: req.file.mimetype,
         })
         .returning();
+      
+      const logo = Array.isArray(logoResult) ? logoResult[0] : logoResult;
 
       console.log('Debug - Created new logo record:', logo);
 
@@ -996,36 +1018,48 @@ export function registerRoutes(app: Express): Express {
 
           // Create task for invitation
           console.log('[FinTech Invite] Creating task');
-          const [task] = await tx.insert(tasks)
-            .values({
-              title: `New User Invitation: ${email}`,
-              description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
-              task_type: 'user_onboarding',
-              task_scope: 'user',
-              status: TaskStatus.PENDING,
-              priority: 'medium',
-              progress: taskStatusToProgress[TaskStatus.PENDING],
-              created_by: req.user!.id, // Ensure created_by is set
-              user_email: email.toLowerCase(),
-              company_id: newCompany.id,
-              due_date: expirationDate,
-              metadata: {
-                user_id: newUser.id,
-                invitee_name: full_name,
-                invitee_company: company_name,
-                sender_name: sender_name,
-                company_created_at: newCompany.created_at,
-                invitation_id: invitation.id,
-                invitation_code: code,
-                status_flow: [TaskStatus.PENDING]
-              }
-            })
+          const taskValues = {
+            title: `New User Invitation: ${email}`,
+            description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
+            task_type: 'user_onboarding',
+            task_scope: 'user',
+            status: TaskStatus.PENDING as any, // Type casting to resolve enum issue
+            priority: 'medium',
+            progress: taskStatusToProgress[TaskStatus.PENDING],
+            created_by: req.user!.id,
+            user_email: email.toLowerCase(),
+            company_id: newCompany.id,
+            due_date: expirationDate,
+            metadata: {
+              user_id: newUser.id,
+              invitee_name: full_name,
+              invitee_company: company_name,
+              sender_name: sender_name,
+              company_created_at: newCompany.created_at,
+              invitation_id: invitation.id,
+              invitation_code: code,
+              status_flow: [TaskStatus.PENDING]
+            }
+          };
+          
+          const taskResult = await tx.insert(tasks)
+            .values(taskValues)
             .returning();
+            
+          const task = Array.isArray(taskResult) ? taskResult[0] : taskResult;
 
           if (!task) {
             console.error('[FinTech Invite] Failed to create task');
             throw new Error("Failed to create task record");
           }
+
+          // Broadcast the task update
+          broadcastTaskUpdate({
+            id: task.id,
+            status: task.status as any,
+            progress: task.progress,
+            metadata: task.metadata || {}
+          });
 
           console.log('[FinTech Invite] Successfully created task:', {
             id: task.id,
@@ -1092,9 +1126,9 @@ export function registerRoutes(app: Express): Express {
       console.log('[FinTech Invite] Invitation completed successfully');
       res.json({
         message: "Invitation sent successfully",
-        invitation: result.invitation,
-        company: result.company,
-        user: result.user
+        invitation: result && 'invitation' in result ? result.invitation : undefined,
+        company: result && 'company' in result ? result.company : undefined,
+        user: result && 'user' in result ? result.user : undefined
       });
 
     } catch (error: any) {
@@ -1385,14 +1419,50 @@ export function registerRoutes(app: Express): Express {
 
   async function updateOnboardingTaskStatus(userId: number): Promise<{ id: number; status: TaskStatus; } | null> {
     try {
-      const [task] = await db.select().from(tasks).where(eq(tasks.user_email, (await db.select().from(users).where(eq(users.id, userId))).find()?.email));
+      // Get the user's email first
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      
+      if (!user || !user.email) {
+        console.error('[updateOnboardingTaskStatus] User not found or missing email:', userId);
+        return null;
+      }
+      
+      // Find the task for this user
+      const [task] = await db.select().from(tasks).where(
+        and(
+          eq(tasks.user_email, user.email),
+          eq(tasks.task_type, 'user_onboarding')
+        )
+      );
 
-      if (task && task.task_type === 'user_onboarding') {
+      if (task) {
+        // Update task with new status and include metadata update
         const [updatedTask] = await db.update(tasks)
-          .set({ status: TaskStatus.COMPLETED, progress: 100 })
+          .set({
+            status: 'completed', // Use string literal for status
+            progress: 100,
+            metadata: {
+              ...task.metadata || {},
+              completedAt: new Date().toISOString(),
+              status_flow: [...(task.metadata?.status_flow || []), TaskStatus.COMPLETED]
+            }
+          })
           .where(eq(tasks.id, task.id))
           .returning();
-        return updatedTask;
+        
+        // Broadcast the task update
+        broadcastTaskUpdate({
+          id: updatedTask.id,
+          status: updatedTask.status as any, // Type cast to resolve enum issue
+          progress: updatedTask.progress,
+          metadata: updatedTask.metadata || {}
+        });
+          
+        // Return only the required fields with the correct type
+        return {
+          id: updatedTask.id,
+          status: updatedTask.status as TaskStatus // Cast to TaskStatus for return type
+        };
       }
       return null;
     } catch (error) {

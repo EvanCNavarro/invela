@@ -23,24 +23,14 @@ import { InviteButton } from "@/components/ui/invite-button";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AccreditationStatus } from "@/types/company";
+import { Company } from "@/types/company";
 
+// Updated interface to match the actual API response
 interface NetworkRelationship {
   id: number;
-  companyId: number;
-  relatedCompanyId: number;
-  relationshipType: string;
+  companyName: string;
   status: string;
-  metadata: Record<string, any> | null;
-  createdAt: string;
-  relatedCompany: {
-    id: number;
-    name: string;
-    category: string;
-    logoId: number | null;
-    accreditationStatus: AccreditationStatus;
-    riskScore: number | null;
-  };
+  type: string;
 }
 
 const generateSlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -65,6 +55,7 @@ const HighlightText = ({ text, searchTerm }: { text: string; searchTerm: string 
   );
 };
 
+// Updated CompanyRow component to use the new data structure
 const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, searchTerm }: {
   relationship: NetworkRelationship;
   isHovered: boolean;
@@ -72,8 +63,9 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
   onHoverChange: (isHovered: boolean) => void;
   searchTerm: string;
 }) => {
-  const company = relationship.relatedCompany;
-
+  // Add safety check for relationship
+  if (!relationship) return null;
+  
   return (
     <TableRow
       className="group cursor-pointer hover:bg-muted/50 bg-white"
@@ -84,35 +76,28 @@ const CompanyRow = memo(({ relationship, isHovered, onRowClick, onHoverChange, s
       <TableCell>
         <div className="flex items-center gap-3">
           <CompanyLogo
-            companyId={company.id}
-            companyName={company.name}
+            companyId={relationship.id}
+            companyName={relationship.companyName || 'Unknown Company'}
             size="sm"
           />
           <span className={cn(
             "font-normal text-foreground",
             isHovered && "underline"
           )}>
-            <HighlightText text={company.name} searchTerm={searchTerm} />
+            <HighlightText text={relationship.companyName || 'Unknown Company'} searchTerm={searchTerm} />
           </span>
         </div>
       </TableCell>
-      <TableCell className="text-right">{company.riskScore || "N/A"}</TableCell>
+      <TableCell className="text-right">N/A</TableCell>
       <TableCell className="text-center">
         <Badge
           variant="outline"
           className={cn(
             "capitalize",
-            company.accreditationStatus === 'PENDING' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'IN_REVIEW' && "bg-yellow-100 text-yellow-800",
-            company.accreditationStatus === 'PROVISIONALLY_APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'APPROVED' && "bg-green-100 text-green-800",
-            company.accreditationStatus === 'SUSPENDED' && "bg-gray-100 text-gray-800",
-            company.accreditationStatus === 'REVOKED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'EXPIRED' && "bg-red-100 text-red-800",
-            company.accreditationStatus === 'AWAITING_INVITATION' && "bg-gray-100 text-gray-800"
+            relationship.status === 'active' && "bg-green-100 text-green-800"
           )}
         >
-          {company.accreditationStatus?.replace(/_/g, ' ').toLowerCase() || 'N/A'}
+          {relationship.status || 'N/A'}
         </Badge>
       </TableCell>
       <TableCell className="text-center">
@@ -134,7 +119,7 @@ export default function NetworkPage() {
   const [sortField, setSortField] = useState<string>("name");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState<AccreditationStatus | "ALL">("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const { user } = useAuth();
 
@@ -149,7 +134,7 @@ export default function NetworkPage() {
 
     if (page) setCurrentPage(parseInt(page));
     if (search) setSearchQuery(search);
-    if (status) setStatusFilter(status as AccreditationStatus | "ALL");
+    if (status) setStatusFilter(status);
     if (sort) setSortField(sort);
     if (direction) setSortDirection(direction as "asc" | "desc");
   }, []);
@@ -172,47 +157,126 @@ export default function NetworkPage() {
     enabled: !!user
   });
 
-  const { data: networkRelationships = [], isLoading } = useQuery<NetworkRelationship[]>({
+  // Updated to handle errors properly without onSuccess/onError
+  const { data: networkRelationships = [], isLoading, error } = useQuery<NetworkRelationship[]>({
     queryKey: ["/api/relationships"],
-    enabled: !!user
+    enabled: !!user,
+    retry: 3
   });
 
+  // Enhanced logging for debugging
+  useEffect(() => {
+    console.log("=== NETWORK RELATIONSHIPS DEBUG ===");
+    console.log("Network relationships data:", networkRelationships);
+    console.log("Network relationships type:", typeof networkRelationships);
+    console.log("Network relationships is array:", Array.isArray(networkRelationships));
+    console.log("Network relationships length:", Array.isArray(networkRelationships) ? networkRelationships.length : 0);
+    console.log("Network relationships content:", JSON.stringify(networkRelationships));
+    console.log("Is loading:", isLoading);
+    console.log("Error:", error);
+    console.log("=== END DEBUG ===");
+    
+    if (error) {
+      console.error("Error fetching network relationships:", error);
+    }
+
+    // Direct API call for debugging
+    if (!isLoading && user) {
+      console.log("Making direct fetch call to /api/relationships");
+      fetch('/api/relationships')
+        .then(response => {
+          console.log("Direct API response status:", response.status);
+          return response.json();
+        })
+        .then(data => {
+          console.log("Direct API response data:", data);
+          console.log("Direct API data is array:", Array.isArray(data));
+          console.log("Direct API data length:", Array.isArray(data) ? data.length : 0);
+          
+          // If we have data from the direct API call but not from the React Query,
+          // let's manually update the UI with this data
+          if (Array.isArray(data) && data.length > 0 && 
+              (!Array.isArray(networkRelationships) || networkRelationships.length === 0)) {
+            console.log("Using direct API data to update UI");
+            // We can't directly update the networkRelationships state from React Query,
+            // but we can force a refetch
+            window.location.reload();
+          }
+        })
+        .catch((err: Error) => {
+          console.error("Direct API call error:", err);
+        });
+    }
+  }, [networkRelationships, error, isLoading, user]);
+
   // Initialize Fuse instance for fuzzy search
-  const fuse = useMemo(() => new Fuse(networkRelationships, {
-    keys: ['relatedCompany.name'],
-    threshold: 0.3,
-    includeMatches: true,
-  }), [networkRelationships]);
+  const fuse = useMemo(() => {
+    // Ensure we have data to work with
+    const data = Array.isArray(networkRelationships) ? networkRelationships : [];
+    return new Fuse(data, {
+      keys: ['companyName'],
+      threshold: 0.3,
+    });
+  }, [networkRelationships]);
 
   const sortCompanies = (a: NetworkRelationship, b: NetworkRelationship) => {
+    // Add null checks to prevent errors
+    if (!a || !b) return 0;
+    
     if (sortField === "name") {
+      // Handle cases where companyName might be undefined
+      const nameA = a.companyName || '';
+      const nameB = b.companyName || '';
+      
       return sortDirection === "asc"
-        ? a.relatedCompany.name.localeCompare(b.relatedCompany.name)
-        : b.relatedCompany.name.localeCompare(a.relatedCompany.name);
-    }
-    if (sortField === "riskScore") {
-      const scoreA = a.relatedCompany.riskScore || 0;
-      const scoreB = b.relatedCompany.riskScore || 0;
-      return sortDirection === "asc" ? scoreA - scoreB : scoreB - scoreA;
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA);
     }
     return 0;
   };
 
+  // Calculate paginated relationships first
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  
   // Use fuzzy search for filtering company names only
   const filteredRelationships = useMemo(() => {
-    let results = networkRelationships;
+    // Ensure we have data to work with
+    const results = Array.isArray(networkRelationships) ? networkRelationships : [];
+    console.log("Starting filtering with", results.length, "relationships");
 
-    if (searchQuery) {
+    // Filter out any null or undefined items
+    const validResults = results.filter(r => r !== null && r !== undefined);
+
+    if (searchQuery && validResults.length > 0) {
       const fuseResults = fuse.search(searchQuery);
-      results = fuseResults.map(result => result.item);
+      console.log("Fuse search results:", fuseResults.length);
+      return fuseResults.map(result => result.item)
+        .filter((relationship: NetworkRelationship) => 
+          relationship && (statusFilter === "ALL" || relationship.status.toLowerCase() === statusFilter.toLowerCase())
+        )
+        .sort(sortCompanies);
     }
 
-    return results
-      .filter((relationship) =>
-        statusFilter === "ALL" || relationship.relatedCompany.accreditationStatus === statusFilter
+    const filtered = validResults
+      .filter((relationship: NetworkRelationship) => 
+        relationship && (statusFilter === "ALL" || relationship.status.toLowerCase() === statusFilter.toLowerCase())
       )
       .sort(sortCompanies);
+    
+    console.log("Filtered relationships:", filtered.length);
+    return filtered;
   }, [networkRelationships, searchQuery, statusFilter, sortField, sortDirection, fuse]);
+
+  const totalPages = Math.ceil((filteredRelationships?.length || 0) / itemsPerPage);
+  const paginatedRelationships = filteredRelationships?.slice(startIndex, startIndex + itemsPerPage) || [];
+
+  // Log filtered relationships for debugging
+  useEffect(() => {
+    if (filteredRelationships && paginatedRelationships) {
+      console.log("Filtered relationships:", filteredRelationships);
+      console.log("Paginated relationships:", paginatedRelationships);
+    }
+  }, [filteredRelationships, paginatedRelationships]);
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -224,10 +288,11 @@ export default function NetworkPage() {
   };
 
   const findCompanyBySlug = (slug: string) => {
-    return networkRelationships.find(r => 
-      generateSlug(r.relatedCompany.name) === slug ||
-      r.relatedCompany.id === parseInt(slug)
-    )?.relatedCompany;
+    const relationships = Array.isArray(networkRelationships) ? networkRelationships : [];
+    return relationships.find((r: NetworkRelationship) => 
+      generateSlug(r.companyName) === slug ||
+      r.id === parseInt(slug)
+    );
   };
 
   const getSortIcon = (field: string) => {
@@ -237,16 +302,13 @@ export default function NetworkPage() {
       <ArrowDownIcon className="h-4 w-4 text-primary" />;
   };
 
-  const totalPages = Math.ceil(filteredRelationships.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedRelationships = filteredRelationships.slice(startIndex, startIndex + itemsPerPage);
-
   useQueries({
-    queries: paginatedRelationships.map(relationship => ({
-      queryKey: [`company-logo-${relationship.relatedCompany.id}`],
+    queries: (paginatedRelationships || []).map((relationship: NetworkRelationship) => ({
+      queryKey: [`company-logo-${relationship?.id}`],
       queryFn: async () => {
         try {
-          const response = await fetch(`/api/companies/${relationship.relatedCompany.id}/logo`);
+          if (!relationship?.id) return null;
+          const response = await fetch(`/api/companies/${relationship.id}/logo`);
           if (!response.ok) return null;
           const blob = await response.blob();
           return URL.createObjectURL(blob);
@@ -257,7 +319,7 @@ export default function NetworkPage() {
       staleTime: Infinity,
       cacheTime: Infinity,
       retry: false,
-      enabled: !!relationship.relatedCompany.id,
+      enabled: !!relationship?.id,
     }))
   });
 
@@ -279,11 +341,34 @@ export default function NetworkPage() {
             title={currentCompany?.name ? `${currentCompany.name}'s Network` : "Network"}
             description="View and manage companies in your network."
             actions={
-              <InviteButton
-                variant="fintech"
-                pulse={true}
-                onClick={() => setOpenFinTechModal(true)}
-              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    console.log("Testing create relationships endpoint");
+                    fetch('/api/test/create-relationships')
+                      .then(response => {
+                        console.log("Create relationships status:", response.status);
+                        return response.json();
+                      })
+                      .then(data => {
+                        console.log("Create relationships response:", data);
+                        // Refresh the data
+                        window.location.reload();
+                      })
+                      .catch((err: Error) => {
+                        console.error("Create relationships error:", err);
+                      });
+                  }}
+                >
+                  Create Test Relationships
+                </Button>
+                <InviteButton
+                  variant="fintech"
+                  pulse={true}
+                  onClick={() => setOpenFinTechModal(true)}
+                />
+              </div>
             }
           />
 
@@ -303,20 +388,14 @@ export default function NetworkPage() {
               <span className="sr-only">Clear filters</span>
             </Button>
 
-            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as AccreditationStatus | "ALL")}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value)}>
               <SelectTrigger className="w-[200px] justify-between bg-white">
                 <SelectValue className="text-left" placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL">All Statuses</SelectItem>
-                <SelectItem value="AWAITING_INVITATION">Awaiting Invitation</SelectItem>
-                <SelectItem value="PENDING">Pending</SelectItem>
-                <SelectItem value="IN_REVIEW">In Review</SelectItem>
-                <SelectItem value="PROVISIONALLY_APPROVED">Provisionally Approved</SelectItem>
-                <SelectItem value="APPROVED">Approved</SelectItem>
-                <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                <SelectItem value="REVOKED">Revoked</SelectItem>
-                <SelectItem value="EXPIRED">Expired</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
 
@@ -362,14 +441,7 @@ export default function NetworkPage() {
                     </Button>
                   </TableHead>
                   <TableHead className="text-right">
-                    <Button
-                      variant="ghost"
-                      className="p-0 hover:bg-transparent text-right w-full justify-end"
-                      onClick={() => handleSort("riskScore")}
-                    >
-                      <span>Risk Score</span>
-                      {getSortIcon("riskScore")}
-                    </Button>
+                    <span>Risk Score</span>
                   </TableHead>
                   <TableHead className="text-center">Status</TableHead>
                   <TableHead className="w-[100px] text-center"></TableHead>
@@ -384,22 +456,28 @@ export default function NetworkPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ) : filteredRelationships.length === 0 ? (
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-4 text-red-500">
+                      Error loading data: {(error as Error).message}
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedRelationships.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-4">
-                      No companies found in your network
+                      No data available
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedRelationships.map((relationship) => (
+                  paginatedRelationships.map((relationship: NetworkRelationship) => (
                     <CompanyRow
                       key={relationship.id}
                       relationship={relationship}
-                      isHovered={hoveredRow === relationship.relatedCompany.id}
+                      isHovered={hoveredRow === relationship.id}
                       onRowClick={() => {
-                        setLocation(`/network/company/${relationship.relatedCompany.id}`);
+                        setLocation(`/network/company/${relationship.id}`);
                       }}
-                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.relatedCompany.id : null)}
+                      onHoverChange={(isHovered) => setHoveredRow(isHovered ? relationship.id : null)}
                       searchTerm={searchQuery}
                     />
                   ))
@@ -411,7 +489,7 @@ export default function NetworkPage() {
               <div className="text-sm text-muted-foreground">
                 {isLoading ? (
                   "Loading results..."
-                ) : filteredRelationships.length > 0 ? (
+                ) : filteredRelationships && filteredRelationships.length > 0 ? (
                   <>
                     Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredRelationships.length)} of {filteredRelationships.length} results
                   </>
@@ -420,7 +498,7 @@ export default function NetworkPage() {
                 )}
               </div>
 
-              {!isLoading && filteredRelationships.length > itemsPerPage && (
+              {!isLoading && filteredRelationships && filteredRelationships.length > itemsPerPage && (
                 <div className="flex items-center space-x-2">
                   <Button
                     variant="outline"

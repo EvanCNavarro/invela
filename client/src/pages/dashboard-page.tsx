@@ -247,7 +247,12 @@ export default function DashboardPage() {
                       )}
                       <span className="text-sm font-medium">{companyData.name}</span>
                     </div>
-                    <RiskMeter score={companyData.riskScore || 0} />
+                    <RiskMeter score={companyData.riskScore ?? 0} />
+                    {companyData.riskScore === undefined && (
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        No risk score available for this company yet.
+                      </p>
+                    )}
                   </div>
                 )}
               </Widget>
