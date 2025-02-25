@@ -3,13 +3,120 @@ import { db } from "@db";
 import { tasks, TaskStatus } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastMessage } from "../websocket";
 import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
+import { broadcastTaskUpdate } from "../services/websocket";
+import { AppError, NotFoundError } from "@shared/utils/errors";
+import { broadcastMessage } from "../websocket";
 
 const router = Router();
 
-// Create new task - add progress to response
-router.post("/api/tasks", async (req, res) => {
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Task:
+ *       type: object
+ *       required:
+ *         - title
+ *         - task_type
+ *         - task_scope
+ *         - company_id
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated ID of the task
+ *         title:
+ *           type: string
+ *           description: The title of the task
+ *         description:
+ *           type: string
+ *           description: Detailed description of the task
+ *         task_type:
+ *           type: string
+ *           description: Type of the task
+ *         task_scope:
+ *           type: string
+ *           description: Scope of the task
+ *         status:
+ *           type: string
+ *           enum: [email_sent, completed, not_started, in_progress, ready_for_submission, submitted, approved]
+ *           description: Current status of the task
+ *         priority:
+ *           type: string
+ *           description: Priority level of the task
+ *         progress:
+ *           type: number
+ *           description: Completion progress percentage (0-100)
+ *         company_id:
+ *           type: integer
+ *           description: ID of the company this task belongs to
+ *         metadata:
+ *           type: object
+ *           description: Additional task-specific metadata
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *           description: Creation timestamp
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *           description: Last update timestamp
+ *     
+ *     TaskCreateInput:
+ *       type: object
+ *       required:
+ *         - title
+ *         - task_type
+ *         - task_scope
+ *         - company_id
+ *       properties:
+ *         title:
+ *           type: string
+ *         description:
+ *           type: string
+ *         task_type:
+ *           type: string
+ *         task_scope:
+ *           type: string
+ *         priority:
+ *           type: string
+ *         company_id:
+ *           type: integer
+ *         metadata:
+ *           type: object
+ */
+
+/**
+ * @swagger
+ * /tasks:
+ *   post:
+ *     summary: Create a new task
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Task'
+ *     responses:
+ *       201:
+ *         description: Task created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 task:
+ *                   $ref: '#/components/schemas/Task'
+ *                 count:
+ *                   type: object
+ *                   description: Updated task counts by status
+ *       500:
+ *         description: Server error
+ */
+router.post("/api/tasks", async (req, res, next) => {
   try {
     const [newTask] = await db
       .insert(tasks)
@@ -32,13 +139,16 @@ router.post("/api/tasks", async (req, res) => {
 
     // Get updated counts and broadcast task creation with progress
     const taskCount = await getTaskCount();
-    broadcastMessage('task_created', {
-      task: {
-        ...newTask,
-        progress: newTask.progress || 0
-      },
-      count: taskCount,
-      timestamp: new Date().toISOString()
+    
+    // Broadcast task update using WebSockets
+    broadcastTaskUpdate({
+      id: newTask.id,
+      status: newTask.status,
+      progress: newTask.progress || 0,
+      metadata: {
+        action: 'created',
+        timestamp: new Date().toISOString()
+      }
     });
 
     res.status(201).json({ 
@@ -50,12 +160,44 @@ router.post("/api/tasks", async (req, res) => {
     });
   } catch (error) {
     console.error("[Task Routes] Error creating task:", error);
-    res.status(500).json({ message: "Failed to create task" });
+    next(new AppError("Failed to create task", 500, "TASK_CREATION_ERROR"));
   }
 });
 
-// Delete task
-router.delete("/api/tasks/:id", async (req, res) => {
+/**
+ * @swagger
+ * /tasks/{id}:
+ *   delete:
+ *     summary: Delete a task by ID
+ *     tags: [Tasks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: The task ID
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 count:
+ *                   type: object
+ *                   description: Updated task counts by status
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+router.delete("/api/tasks/:id", async (req, res, next) => {
   try {
     const taskId = parseInt(req.params.id);
 

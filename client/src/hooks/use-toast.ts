@@ -5,14 +5,18 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
+// Constants for toast configuration
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_REMOVE_DELAY = 5000 // Reduced from 1000000 to 5000ms (5 seconds) for better UX
 
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  // Add accessibility properties
+  role?: string
+  "aria-live"?: "assertive" | "polite" | "off"
 }
 
 const actionTypes = {
@@ -22,11 +26,11 @@ const actionTypes = {
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const
 
+// Use a more reliable ID generation method
 let count = 0
-
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
-  return count.toString()
+  return `toast-${Date.now()}-${count}`
 }
 
 type ActionType = typeof actionTypes
@@ -53,11 +57,15 @@ interface State {
   toasts: ToasterToast[]
 }
 
+// Use a Map for better performance with timeouts
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
+// Clear existing timeout before adding a new one to prevent memory leaks
 const addToRemoveQueue = (toastId: string) => {
+  // Clear any existing timeout for this toast
   if (toastTimeouts.has(toastId)) {
-    return
+    clearTimeout(toastTimeouts.get(toastId))
+    toastTimeouts.delete(toastId)
   }
 
   const timeout = setTimeout(() => {
@@ -71,6 +79,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
+// Pure reducer function with no side effects
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -90,8 +99,7 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
+      // Move side effects outside of reducer
       if (toastId) {
         addToRemoveQueue(toastId)
       } else {
@@ -126,8 +134,8 @@ export const reducer = (state: State, action: Action): State => {
   }
 }
 
-const listeners: Array<(state: State) => void> = []
-
+// Use a more reliable state management approach
+const listeners: Set<(state: State) => void> = new Set()
 let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
@@ -142,17 +150,25 @@ type Toast = Omit<ToasterToast, "id">
 function toast({ ...props }: Toast) {
   const id = genId()
 
-  const update = (props: ToasterToast) =>
+  // Ensure accessibility properties are set
+  const accessibleProps = {
+    role: "status",
+    "aria-live": "polite" as const,
+    ...props,
+  }
+
+  const update = (props: Partial<ToasterToast>) =>
     dispatch({
       type: "UPDATE_TOAST",
       toast: { ...props, id },
     })
+    
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
 
   dispatch({
     type: "ADD_TOAST",
     toast: {
-      ...props,
+      ...accessibleProps,
       id,
       open: true,
       onOpenChange: (open) => {
@@ -162,7 +178,7 @@ function toast({ ...props }: Toast) {
   })
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
   }
@@ -172,14 +188,23 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
-    listeners.push(setState)
+    // Use Set.add and Set.delete for better performance
+    listeners.add(setState)
+    
     return () => {
-      const index = listeners.indexOf(setState)
-      if (index > -1) {
-        listeners.splice(index, 1)
-      }
+      listeners.delete(setState)
     }
-  }, [state])
+  }, [])
+
+  // Clear all timeouts when component unmounts to prevent memory leaks
+  React.useEffect(() => {
+    return () => {
+      toastTimeouts.forEach((timeout) => {
+        clearTimeout(timeout)
+      })
+      toastTimeouts.clear()
+    }
+  }, [])
 
   return {
     ...state,

@@ -6,9 +6,17 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
+  ToastViewportProps
 } from "@/components/ui/toast"
 
-export function Toaster() {
+export interface ToasterProps {
+  /**
+   * Position of the toast viewport
+   */
+  position?: ToastViewportProps['position'];
+}
+
+export function Toaster({ position = 'bottom-right' }: ToasterProps) {
   const { toasts } = useToast()
 
   return (
@@ -27,7 +35,7 @@ export function Toaster() {
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport position={position} />
     </ToastProvider>
   )
 }

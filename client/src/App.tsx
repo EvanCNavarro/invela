@@ -4,9 +4,9 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
-import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -25,11 +25,53 @@ import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilder
 import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
+import DebugPage from "@/pages/debug-page";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
-      {children}
+      <ErrorBoundary>
+        {children}
+      </ErrorBoundary>
+    </div>
+  );
+}
+
+// Simple Debug Home component that will always render, even if not logged in
+function DebugHome() {
+  return (
+    <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
+      <h1 style={{ color: "#333", marginBottom: "20px" }}>App Diagnostic Page</h1>
+      <p style={{ marginBottom: "10px" }}>If you can see this message, your React app is loading correctly.</p>
+      <div style={{ marginTop: "20px" }}>
+        <a 
+          href="/login" 
+          style={{ 
+            display: "inline-block", 
+            padding: "10px 15px", 
+            background: "#4a65ff", 
+            color: "white", 
+            textDecoration: "none", 
+            borderRadius: "4px",
+            marginRight: "10px" 
+          }}
+        >
+          Go to Login
+        </a>
+        <a 
+          href="/debug" 
+          style={{ 
+            display: "inline-block", 
+            padding: "10px 15px", 
+            background: "#ff4a65", 
+            color: "white", 
+            textDecoration: "none", 
+            borderRadius: "4px" 
+          }}
+        >
+          Go to Debug Page
+        </a>
+      </div>
     </div>
   );
 }
@@ -51,10 +93,13 @@ function Router() {
         }}
       </Route>
 
-      {/* Protected routes - Dashboard first */}
-      <Route path="/">
+      {/* Public route for root path - will always show */}
+      <Route path="/" component={DebugHome} />
+
+      {/* Protected routes - Dashboard route (this now won't match since the public route above will match first) */}
+      <Route path="/dashboard">
         <ProtectedRoute 
-          path="/" 
+          path="/dashboard" 
           component={() => (
             <ProtectedLayout>
               <OnboardingWrapper>
@@ -96,14 +141,18 @@ function Router() {
         </ProtectedLayout>
       )} />
 
-      <ProtectedRoute 
-        path="/task-center/task/:taskSlug"
-        component={({ params }) => (
-          <ProtectedLayout>
-            <TaskPage params={params} />
-          </ProtectedLayout>
+      <Route path="/task-center/task/:taskSlug">
+        {(params) => (
+          <ProtectedRoute 
+            path="/task-center/task/:taskSlug"
+            component={() => (
+              <ProtectedLayout>
+                <TaskPage params={{ taskSlug: params.taskSlug }} />
+              </ProtectedLayout>
+            )}
+          />
         )}
-      />
+      </Route>
 
       <ProtectedRoute 
         path="/file-vault" 
@@ -198,6 +247,18 @@ function Router() {
         )} 
       />
 
+      {/* Debug route - for development purposes */}
+      <ProtectedRoute 
+        path="/debug" 
+        component={() => (
+          <ProtectedLayout>
+            <div className="min-h-screen">
+              <DebugPage />
+            </div>
+          </ProtectedLayout>
+        )} 
+      />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -205,13 +266,13 @@ function Router() {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ToastProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <Router />
-          <Toaster />
-        </ToastProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+          <Toaster position="bottom-right" />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
