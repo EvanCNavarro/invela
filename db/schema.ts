@@ -19,6 +19,7 @@ export const TaskStatus = {
   COMPLETED: 'completed',
   NOT_STARTED: 'not_started',
   IN_PROGRESS: 'in_progress',
+  READY_FOR_REVIEW: 'ready_for_review',
   READY_FOR_SUBMISSION: 'ready_for_submission',
   SUBMITTED: 'submitted',
   APPROVED: 'approved',
@@ -325,7 +326,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "compliance_and_risk"]),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "company_card", "compliance_and_risk"]),
   task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -340,6 +341,7 @@ export const insertTaskSchema = z.object({
     TaskStatus.COMPLETED,
     TaskStatus.NOT_STARTED,
     TaskStatus.IN_PROGRESS,
+    TaskStatus.READY_FOR_REVIEW,
     TaskStatus.READY_FOR_SUBMISSION,
     TaskStatus.SUBMITTED,
     TaskStatus.APPROVED,
@@ -384,15 +386,20 @@ export const insertTaskSchema = z.object({
         path: ["company_id"],
       });
     }
-  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "compliance_and_risk") {
+  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
     if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: data.task_type === "company_onboarding_KYB" 
           ? "Company is required for KYB tasks"
+          : data.task_type === "company_card"
+          ? "Company is required for CARD tasks"
           : "Company is required for CARD tasks",
         path: ["company_id"],
       });
+    }
+    if (data.task_type === "company_card") {
+      data.priority = "high";
     }
     data.task_scope = "company";
   }
