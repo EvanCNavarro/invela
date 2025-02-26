@@ -1,135 +1,92 @@
-# Full-Stack TypeScript Application
+# Invela Project
 
-This is a modern full-stack TypeScript application with robust API testing and documentation.
+A full-stack TypeScript application with a focus on robust architecture and maintainable code.
 
-## Features
+## Project Overview
 
-- 🔄 **API Versioning**: Built-in support for multiple API versions with clear documentation
-- 📚 **OpenAPI Documentation**: Comprehensive API documentation using Swagger/OpenAPI
-- 🧪 **API Testing**: Automated tests to validate API endpoints against documentation
-- 🔒 **Authentication**: Secure authentication system with refresh tokens
-- 🌐 **WebSockets**: Real-time communication with typed messages
-- 🧩 **Type Safety**: Shared types between frontend and backend for consistency
-- ⚡ **Modern Stack**: Uses React, Express, TypeScript, and modern tools
+This project implements a full-stack application with:
+- TypeScript for type safety
+- Express.js for the backend API
+- React for the frontend
+- PostgreSQL database with Drizzle ORM
 
-## Project Structure
+## TypeScript Compilation Strategy
 
-```
-.
-├── client/                 # Frontend React application
-├── server/                 # Backend Express server
-├── shared/                 # Shared types and utilities
-├── db/                     # Database schema and migrations
-├── scripts/                # Utility scripts
-└── docs/                   # Documentation
-```
+This project uses a carefully designed TypeScript compilation strategy to resolve module system conflicts between ES Modules and CommonJS. Key components include:
 
-## API Versioning
+1. **TypeScript Configuration**: Configured for proper CommonJS module output
+   - Appropriate path mappings for `@db/*` and `@shared/*`
+   - Configured proper `outDir` and `rootDir` settings
 
-The application uses a standardized API versioning system to ensure backward compatibility. See [API Versioning Strategy](server/docs/API_VERSIONING.md) for details.
+2. **Server Package Structure**: Server-specific `package.json` with `"type": "commonjs"`
+   - Overrides the root `"type": "module"` setting
+   - Specifies appropriate Node.js version requirements
 
-API consumers can specify the API version in several ways:
+3. **Build Process**: Comprehensive build and watch scripts
+   - Development scripts with proper TypeScript compilation
+   - Production build process 
 
-1. **URL Path**: `/api/v1/users`
-2. **Accept Header**: `Accept: application/vnd.company.v1+json`
-3. **Custom Header**: `X-API-Version: v1`
-4. **Query Parameter**: `?api-version=v1`
+4. **Database Integration**: Updated database adapter to use compiled JavaScript files
+   - Robust error handling with detailed error messages
+   - Clear TypeScript interfaces for database access
 
 ## Getting Started
 
 ### Prerequisites
-
-- Node.js 18 or higher
+- Node.js 18 or later
 - PostgreSQL database
 
 ### Installation
 
 1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/your-repo.git
-   cd your-repo
-   ```
+```bash
+git clone https://github.com/EvanCNavarro/invela.git
+cd invela
+```
 
 2. Install dependencies
-   ```
-   npm install
-   ```
-
-3. Setup environment variables
-   ```
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. Start the development server
-   ```
-   npm run dev
-   ```
-
-5. Access the application
-   ```
-   # Main application (frontend and API)
-   http://localhost:5001
-   
-   # API documentation
-   http://localhost:5001/api-docs
-   ```
-
-### Development Modes
-
-The application can be run in several modes:
-
-- **Integrated mode** (default): `npm run dev`
-  - Starts the Express server on port 5001, which serves both the frontend application and API
-  - This is the recommended way to run the application during development
-  - Access the application at http://localhost:5001
-
-- **Separate servers**: `npm run dev:separate`
-  - Starts Vite development server on port 3000 and Express backend on port 5001
-  - Only use this if you need to work on the frontend in isolation
-  - For full functionality, always use port 5001 to access your application
-
-### Build for Production
-
+```bash
+npm install
 ```
+
+3. Set up environment variables
+```bash
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+4. Run database migrations
+```bash
+npm run migrate
+```
+
+### Development
+
+Start the development server:
+```bash
+npm run dev
+```
+
+### Production Build
+
+Build for production:
+```bash
 npm run build
 ```
 
-## Testing
-
-### Running Tests
-
-```
-# Run all tests
-npm test
-
-# Run server tests only
-npm run test:server
-
-# Run client tests only
-npm run test:client
+Start the production server:
+```bash
+npm start
 ```
 
-## API Documentation
+## Project Structure
 
-The API documentation is available at `/api-docs` when the server is running.
-
-To generate a static version of the API documentation:
-
-```
-npm run update-docs
-```
-
-## Generating API Client
-
-You can automatically generate a TypeScript client for the API:
-
-```
-npm run generate:api-client
-```
-
-This creates a strongly-typed client in `client/src/api/` that can be used to interact with the backend.
+- `/server` - Backend Express.js application
+- `/db` - Database models and migrations
+- `/shared` - Shared types and utilities
+- `/client` - Frontend React application
+- `/dist` - Compiled JavaScript output
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT](LICENSE)

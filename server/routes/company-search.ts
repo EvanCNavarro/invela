@@ -5,8 +5,7 @@ import { findMissingCompanyData } from "../services/openai";
 import { ZodError } from "zod";
 import { createCompany } from "../services/company";
 import { ilike } from "drizzle-orm";
-import { companies } from "@db/schema";
-import { db } from "@db";
+import { getSchemas, getDb, executeWithNeonRetry } from "../utils/db-adapter";
 
 const router = Router();
 
@@ -64,6 +63,10 @@ router.post("/api/company-search", async (req, res) => {
 
     const { companyName } = companySearchSchema.parse(req.body);
     console.log(`[Company Search Debug] Validated company name: ${companyName}`);
+
+    // Get database and schema references
+    const { companies } = getSchemas();
+    const db = getDb();
 
     // First try to find in database directly
     console.log("[Company Search Debug] Executing database query");

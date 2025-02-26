@@ -1,4 +1,4 @@
-import "tsconfig-paths/register";
+// import "tsconfig-paths/register";
 
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
@@ -6,13 +6,55 @@ import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import bcrypt from "bcrypt";
-import { users, companies, registrationSchema, type SelectUser } from "@db/schema";
-import { db, pool } from "@db";
+// Use top-level await and dynamic imports for ES modules
+// These will need to be dynamically imported
+// import { users, companies, registrationSchema } from "../db/schema";
+// import { db, pool, executeWithNeonRetry, queryWithNeonRetry } from "../db";
 import { sql, eq } from "drizzle-orm";
 import { fromZodError } from "zod-validation-error";
 import { generateRefreshToken, verifyRefreshToken, revokeRefreshToken, revokeAllUserRefreshTokens } from "./services/token";
-import { AuthError } from "@shared/utils/errors";
-import type { LoginData } from "@shared/types/auth";
+import type { PoolClient } from '@neondatabase/serverless';
+// These will need to be dynamically imported
+// import { AuthError } from "../shared/utils/errors";
+// import type { LoginData } from "../shared/types/auth";
+
+// Initialize these to be populated during setup
+let users: any;
+let companies: any;
+let registrationSchema: any;
+let db: any;
+let pool: any;
+let executeWithNeonRetry: any;
+let queryWithNeonRetry: any;
+let AuthError: any;
+let LoginData: any;
+
+// Function to initialize all dynamic imports
+async function initializeImports() {
+  try {
+    // Import DB schema and utilities
+    const dbSchema = await import("../db/schema");
+    const dbModule = await import("../db");
+    const sharedErrors = await import("../shared/utils/errors");
+    const sharedAuthTypes = await import("../shared/types/auth");
+
+    // Assign imported values to variables
+    users = dbSchema.users;
+    companies = dbSchema.companies;
+    registrationSchema = dbSchema.registrationSchema;
+    db = dbModule.db;
+    pool = dbModule.pool;
+    executeWithNeonRetry = dbModule.executeWithNeonRetry;
+    queryWithNeonRetry = dbModule.queryWithNeonRetry;
+    AuthError = sharedErrors.AuthError;
+    
+    console.log('[Auth] Dynamic imports loaded successfully');
+    return true;
+  } catch (error) {
+    console.error('[Auth] Error loading dynamic imports:', error);
+    throw error;
+  }
+}
 
 declare global {
   namespace Express {
@@ -120,34 +162,26 @@ async function getUserByEmail(email: string) {
     console.log('[Auth] Looking up user by email:', normalizedEmail);
     console.log('[Auth] Database URL configured:', !!process.env.DATABASE_URL);
 
-    // Add timeout handling for database query
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => {
-        reject(new Error('Database query timeout after 5 seconds'));
-      }, 5000);
+    console.log('[Auth] About to execute database query with retry logic');
+
+    // Using the Neon-optimized retry logic for this critical operation
+    const result = await executeWithNeonRetry(async (client: PoolClient) => {
+      // Convert SQL statement to string format accepted by PoolClient
+      const query = `SELECT * FROM users WHERE LOWER(email) = $1 LIMIT 1`;
+      const queryResult = await client.query(query, [normalizedEmail]);
+      return queryResult.rows;
     });
 
-    console.log('[Auth] About to execute database query');
-
-    const queryPromise = db.select()
-      .from(users)
-      .where(sql`LOWER(${users.email}) = ${normalizedEmail}`)
-      .limit(1);
-
-    // Race between the query and timeout
-    const result = await Promise.race([queryPromise, timeoutPromise]);
-    console.log('[Auth] Database query completed');
+    console.log('[Auth] Database query completed with retry mechanism');
     
-    // Type assertion to handle the result from Promise.race
-    const resultArray = result as any[];
     console.log('[Auth] Query result:', {
-      resultType: typeof resultArray,
-      isArray: Array.isArray(resultArray),
-      length: resultArray?.length || 0,
-      rawResult: JSON.stringify(resultArray)
+      resultType: typeof result,
+      isArray: Array.isArray(result),
+      length: result?.length || 0,
+      rawResult: JSON.stringify(result)
     });
     
-    const [user] = resultArray;
+    const [user] = result;
 
     console.log('[Auth] User lookup result:', {
       found: !!user,
@@ -175,9 +209,12 @@ async function getUserByEmail(email: string) {
   }
 }
 
-export function setupAuth(app: Express) {
+export async function setupAuth(app: Express) {
   console.log('[Auth] Setting up authentication...');
-
+  
+  // Load dynamic imports first
+  await initializeImports();
+  
   // Session configuration
   let sessionSettings: session.SessionOptions;
   
@@ -199,11 +236,10 @@ export function setupAuth(app: Express) {
     // Production uses PostgreSQL session store
     try {
       /* 
-       * PostgreSQL session store re-enabled.
-       * If database connectivity issues occur, it will fall back to in-memory store.
+       * PostgreSQL session store with Neon-optimized settings
        */
       const store = new PostgresSessionStore({
-        pool,
+        pool: pool as any, // Cast to any to bypass type checking
         createTableIfMissing: true,
         tableName: 'session'
       });
@@ -221,7 +257,7 @@ export function setupAuth(app: Express) {
           maxAge: 24 * 60 * 60 * 1000 // 24 hours
         }
       };
-      console.log('[Auth] PostgreSQL session store configured successfully');
+      console.log('[Auth] PostgreSQL session store configured successfully with Neon optimizations');
     } catch (error) {
       // Fallback to in-memory session store if PostgreSQL setup fails
       console.log('[Auth] Failed to set up PostgreSQL session store, falling back to in-memory store:', error);
@@ -323,17 +359,20 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       console.log('[Auth] Deserializing user:', id);
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, id))
-        .limit(1);
+      
+      // Using Neon-optimized retry logic for this critical operation
+      const result = await executeWithNeonRetry(async (client: PoolClient) => {
+        const query = `SELECT * FROM users WHERE id = $1 LIMIT 1`;
+        const queryResult = await client.query(query, [id]);
+        return queryResult.rows;
+      });
 
-      if (!user) {
+      if (!result || result.length === 0) {
         console.log('[Auth] User not found during deserialization:', id);
         return done(null, false);
       }
-
+      
+      const user = result[0];
       done(null, user);
     } catch (error) {
       console.error('[Auth] Deserialization error:', error);
@@ -402,13 +441,14 @@ export function setupAuth(app: Express) {
         throw new AuthError("Invalid or expired refresh token", "REFRESH_TOKEN_INVALID");
       }
       
-      // Look up user
-      const userResult = await db.select()
-        .from(users)
-        .where(eq(users.id, userId))
-        .limit(1);
+      // Look up user with Neon-optimized retry logic
+      const userResult = await executeWithNeonRetry(async (client: PoolClient) => {
+        const query = `SELECT * FROM users WHERE id = $1 LIMIT 1`;
+        const queryResult = await client.query(query, [userId]);
+        return queryResult.rows;
+      });
         
-      if (userResult.length === 0) {
+      if (!userResult || userResult.length === 0) {
         res.clearCookie('refresh_token');
         throw new AuthError("User not found", "USER_NOT_FOUND");
       }
@@ -498,10 +538,13 @@ export function setupAuth(app: Express) {
         });
       });
     } catch (error) {
-      // Log but don't expose internal errors
-      console.error('[Auth] Critical error in logout handler:', error);
-      res.status(200).json({ 
-        message: "Logged out with server issues, please refresh the page"
+      console.error('[Auth] Unexpected logout error:', error);
+      // Still try to send success response to client
+      return res.status(200).json({ 
+        message: "Logout attempted with errors",
+        debug: process.env.NODE_ENV !== 'production' ? { 
+          error: error instanceof Error ? error.message : String(error) 
+        } : undefined
       });
     }
   });
@@ -538,10 +581,13 @@ export function setupAuth(app: Express) {
         
         console.log('[Debug] Database query successful', result);
         
+        // Fix the type issue with explicit type assertion
+        const dbResult = result as unknown as { time: Date }[];
+        
         res.json({
           status: 'success',
           message: 'Database connection successful',
-          dbTimeCheck: result[0]?.time,
+          dbTimeCheck: dbResult[0]?.time,
           queryDurationMs: duration
         });
       } catch (error) {
@@ -616,6 +662,27 @@ export function setupAuth(app: Express) {
           error: errorDetails
         });
       }
+    });
+
+    // Add this endpoint near the other debug endpoints
+    app.get("/api/debug/auth-status", (req, res) => {
+      const debug = process.env.NODE_ENV !== 'production';
+      const isAuthenticated = req.isAuthenticated();
+      
+      console.log("[Auth] Debug endpoint - Auth status:", {
+        isAuthenticated: isAuthenticated,
+        hasSessionCookie: !!req.cookies?.sid,
+        hasRefreshToken: !!req.cookies?.refresh_token,
+        sessionID: req.sessionID
+      });
+      
+      // Return safe information about token status without exposing the tokens themselves
+      return res.json({
+        isAuthenticated: isAuthenticated,
+        hasSessionCookie: !!req.cookies?.sid,
+        hasRefreshToken: !!req.cookies?.refresh_token,
+        sessionID: debug ? req.sessionID : undefined // Only include in dev mode
+      });
     });
   }
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { db, pool } from '@db';
+import { getDb } from './utils/db-adapter';
 import { sql } from 'drizzle-orm';
 
 /**
@@ -69,6 +69,10 @@ export async function testDatabaseConnection(req: Request, res: Response) {
   console.log('[Debug] Testing database connectivity');
   
   try {
+    // Get database module that contains pool
+    const dbModule = getDb();
+    const pool = dbModule.pool;
+    
     // First test simple connection
     const client = await pool.connect();
     console.log('[Debug] Successfully connected to database');
@@ -81,6 +85,7 @@ export async function testDatabaseConnection(req: Request, res: Response) {
     client.release();
     
     // Try a Drizzle ORM query as well
+    const db = getDb();
     const drizzleResult = await db.execute(sql`SELECT NOW() as time`);
     console.log('[Debug] Drizzle query result:', drizzleResult);
     

@@ -5,39 +5,86 @@
  */
 
 /**
- * Registration data structure.
- * Contains all fields required to register a new user.
+ * Login data interface
  */
-export type RegisterData = {
+export interface LoginData {
   email: string;
   password: string;
-  fullName: string;
-  firstName: string;
-  lastName: string;
-  invitationCode: string;
-};
+}
 
 /**
- * Login data structure.
- * Contains credentials required for user authentication.
+ * Registration data interface
  */
-export type LoginData = {
+export interface RegistrationData {
   email: string;
   password: string;
-};
+  full_name: string;
+  company_id?: number;
+  company_name?: string;
+  invitation_code?: string;
+}
 
 /**
- * User data structure.
- * Represents an authenticated user's profile information.
+ * Reset password request interface
  */
-export type User = {
+export interface PasswordResetRequest {
+  email: string;
+}
+
+/**
+ * Reset password confirmation interface
+ */
+export interface PasswordResetConfirmation {
+  token: string;
+  password: string;
+}
+
+/**
+ * User interface for authenticated users
+ */
+export interface User {
   id: number;
   email: string;
-  full_name: string | null;
-  first_name: string | null;
-  last_name: string | null;
+  full_name: string;
+  first_name?: string;
+  last_name?: string;
   company_id: number;
   onboarding_user_completed: boolean;
   created_at: string;
   updated_at: string;
-}; 
+}
+
+/**
+ * Authentication response with tokens
+ */
+export interface AuthResponse {
+  user: User;
+  token?: string;
+}
+
+/**
+ * Refresh token response
+ */
+export interface RefreshTokenResponse {
+  user: User;
+}
+
+/**
+ * Invitation data interface
+ */
+export interface InvitationData {
+  email: string;
+  invitee_name: string;
+  invitee_company: string;
+  company_id: number;
+  task_id?: number;
+}
+
+/**
+ * Authorization roles
+ */
+export enum Role {
+  ADMIN = 'admin',
+  USER = 'user',
+  GUEST = 'guest'
+} 

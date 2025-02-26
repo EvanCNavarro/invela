@@ -42,12 +42,8 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     if (!form.formState.isValid) {
-      console.log('[Login] Form validation failed:', form.formState.errors);
       return;
     }
-
-    console.log('[Login] Submitting form with email:', values.email);
-    console.log('[Login] Password length:', values.password.length);
     loginMutation.mutate(values);
   };
 
@@ -80,10 +76,6 @@ export default function LoginPage() {
                         autoFocus
                         placeholder="Enter your email"
                         className={field.value && !form.formState.errors.email ? "border-green-500" : ""}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          console.log('[Login] Email field changed:', e.target.value);
-                        }}
                       />
                     </FormControl>
                     {field.value && form.formState.errors.email && (
@@ -113,10 +105,6 @@ export default function LoginPage() {
                           autoComplete="current-password"
                           placeholder="Enter your password"
                           className={field.value && !form.formState.errors.password ? "border-green-500" : ""}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            console.log('[Login] Password field changed, length:', e.target.value.length);
-                          }}
                         />
                       </FormControl>
                       <Button
@@ -150,14 +138,6 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full font-bold hover:opacity-90"
                 disabled={!form.formState.isValid || loginMutation.isPending}
-                onClick={() => {
-                  console.log('[Login] Submit button clicked');
-                  console.log('[Login] Form state:', {
-                    isValid: form.formState.isValid,
-                    errors: form.formState.errors,
-                    isDirty: form.formState.isDirty
-                  });
-                }}
               >
                 {loginMutation.isPending ? (
                   <span className="flex items-center gap-2">

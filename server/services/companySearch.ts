@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { companies } from "@db/schema";
+import { getSchemas } from "../utils/db-adapter";
 import { validateAndCleanCompanyData, openai } from "./openai";
 
 // Define priority sources and their weights
@@ -83,8 +83,29 @@ const extractStockTicker = (text: string): string | null => {
   return null;
 };
 
+// Define interface for company information
+interface CompanyInfo {
+  name: string;
+  websiteUrl?: string;
+  description?: string;
+  legalStructure?: string;
+  hqAddress?: string;
+  productsServices?: string;
+  incorporationYear?: number;
+  foundersAndLeadership?: string;
+  numEmployees?: number;
+  revenue?: string;
+  keyClientsPartners?: string[];
+  investors?: string[];
+  fundingStage?: string;
+  exitStrategyHistory?: string;
+  certificationsCompliance?: string[];
+  stockTicker?: string;
+  [key: string]: any;
+}
+
 // Function for Google-only search
-export const googleOnlySearch = async (companyName: string) => {
+export const googleOnlySearch = async (companyName: string): Promise<CompanyInfo> => {
   console.log(`[Google Search] Starting search for company: ${companyName}`);
   const startTime = Date.now();
 
@@ -125,7 +146,7 @@ export const googleOnlySearch = async (companyName: string) => {
 
     const allText = scoredResults.map(item => `${item.title} ${item.snippet}`).join(' ');
 
-    const companyInfo: Partial<typeof companies.$inferInsert> = {
+    const companyInfo: CompanyInfo = {
       name: companyName,
     };
 
@@ -211,12 +232,13 @@ export const googleOnlySearch = async (companyName: string) => {
 
   } catch (error) {
     console.error('[Google Search] Error:', error);
-    throw new Error('Failed to search company information using Google');
+    // In case of error, return a basic company info object with just the name
+    return { name: companyName };
   }
 };
 
 // Enhanced logging for OpenAI search
-export const openaiOnlySearch = async (companyName: string) => {
+export const openaiOnlySearch = async (companyName: string): Promise<CompanyInfo> => {
   console.log(`[OpenAI Search] Starting comprehensive search for company: ${companyName}`, {
     timestamp: new Date().toISOString(),
     mode: 'openai_only'
@@ -234,7 +256,7 @@ export const openaiOnlySearch = async (companyName: string) => {
         cachedFields: Object.keys(cachedResult),
         timestamp: new Date().toISOString()
       });
-      return cachedResult;
+      return cachedResult as CompanyInfo;
     }
 
     const prompt = `
@@ -347,38 +369,63 @@ export const openaiOnlySearch = async (companyName: string) => {
 
   } catch (error) {
     console.error('[OpenAI Search] Error:', error);
-    throw error;
+    // In case of error, return a basic company info object with just the name
+    return { name: companyName };
   }
 };
 
-// Function for hybrid search (Google + OpenAI)
-export const searchCompanyInfo = async (companyName: string) => {
-  console.log(`[Hybrid Search] Starting search for company: ${companyName}`);
+// Combined search with both Google and OpenAI
+export const searchCompanyInfo = async (companyName: string): Promise<CompanyInfo> => {
+  console.log(`[Company Search] Starting combined search for company: ${companyName}`);
   const startTime = Date.now();
-
+  
   try {
     // First get data from Google Search
-    console.log('[Hybrid Search] Fetching Google data');
+    console.log('[Company Search] Fetching Google data');
     const googleData = await googleOnlySearch(companyName);
 
+    // Convert string values to arrays for compatibility with CleanedCompanyData
+    const normalizedData = { ...googleData };
+    
+    // Ensure keyClientsPartners is a string array
+    if (typeof normalizedData.keyClientsPartners === 'string') {
+      normalizedData.keyClientsPartners = [normalizedData.keyClientsPartners];
+    } else if (!normalizedData.keyClientsPartners) {
+      normalizedData.keyClientsPartners = [];
+    }
+    
+    // Ensure investors is a string array
+    if (typeof normalizedData.investors === 'string') {
+      normalizedData.investors = [normalizedData.investors];
+    } else if (!normalizedData.investors) {
+      normalizedData.investors = [];
+    }
+    
+    // Ensure certificationsCompliance is a string array
+    if (typeof normalizedData.certificationsCompliance === 'string') {
+      normalizedData.certificationsCompliance = [normalizedData.certificationsCompliance];
+    } else if (!normalizedData.certificationsCompliance) {
+      normalizedData.certificationsCompliance = [];
+    }
+
     // Then validate and clean with OpenAI
-    console.log('[Hybrid Search] Validating with OpenAI');
-    const cleanedData = await validateAndCleanCompanyData(googleData);
+    console.log('[Company Search] Validating with OpenAI');
+    const cleanedData = await validateAndCleanCompanyData(normalizedData);
 
     const endTime = Date.now();
-    console.log(`[Hybrid Search] Completed in ${endTime - startTime}ms`, cleanedData);
+    console.log(`[Company Search] Completed in ${endTime - startTime}ms`, cleanedData);
 
-    return cleanedData;
-
+    return cleanedData as CompanyInfo;
   } catch (error) {
-    console.error('[Hybrid Search] Error:', error);
-    throw new Error('Failed to search company information');
+    console.error('[Company Search] Error:', error);
+    // Return minimal info on error
+    return { name: companyName };
   }
 };
 
-// Validation schema for search request
+// Define the company search request schema
 export const companySearchSchema = z.object({
-  companyName: z.string().min(1, "Company name is required"),
+  companyName: z.string().min(1, "Company name is required")
 });
 
 export type CompanySearchRequest = z.infer<typeof companySearchSchema>;

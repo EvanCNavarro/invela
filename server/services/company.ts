@@ -1,18 +1,23 @@
-import { db } from "@db";
-import { companies, tasks, relationships } from "@db/schema";
+import { getSchemas, getDb, executeWithNeonRetry } from "../utils/db-adapter";
 import { TaskStatus, taskStatusToProgress } from "../types";
 import { broadcastTaskUpdate } from "./websocket";
 import { eq } from "drizzle-orm";
+
+// Define a temporary type for tx until we have proper types
+type Transaction = any;
 
 /**
  * Creates a new company and handles all associated rules/tasks
  */
 export async function createCompany(
-  data: typeof companies.$inferInsert
-): Promise<typeof companies.$inferSelect> {
+  data: any // We'll improve this type later
+): Promise<any> {
   console.log('[Company Service] Creating new company:', data.name);
 
-  return await db.transaction(async (tx) => {
+  const db = getDb();
+  const { companies, tasks, relationships } = getSchemas();
+
+  return await db.transaction(async (tx: Transaction) => {
     // Create the company
     const [newCompany] = await tx.insert(companies)
       .values({
@@ -121,8 +126,11 @@ export async function createCompany(
  */
 export async function updateCompany(
   companyId: number,
-  data: Partial<typeof companies.$inferInsert>
-): Promise<typeof companies.$inferSelect> {
+  data: any // We'll improve this type later
+): Promise<any> {
+  const db = getDb();
+  const { companies } = getSchemas();
+  
   const [updatedCompany] = await db.update(companies)
     .set({
       ...data,

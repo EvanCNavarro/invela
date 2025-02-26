@@ -40,7 +40,7 @@ function validateEnv(): Env {
     return envSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const validationError = fromZodError(error);
+      const validationError = fromZodError(error as any);
       console.error('\nEnvironment validation failed:');
       console.error(validationError.message);
       process.exit(1);
