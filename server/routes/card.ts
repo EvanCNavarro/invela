@@ -7,6 +7,28 @@ import { TaskStatus } from '@db/schema';
 
 const router = Router();
 
+// Get CARD fields
+router.get('/api/card/fields', requireAuth, async (req, res) => {
+  try {
+    console.log('[Card Routes] Fetching CARD fields');
+
+    const fields = await db.select()
+      .from(cardFields)
+      .orderBy(cardFields.order);
+
+    console.log('[Card Routes] Fields retrieved:', {
+      count: fields.length,
+      sections: [...new Set(fields.map(f => f.wizard_section))],
+      fieldTypes: [...new Set(fields.map(f => f.field_type))]
+    });
+
+    res.json(fields);
+  } catch (error) {
+    console.error('[Card Routes] Error fetching CARD fields:', error);
+    res.status(500).json({ message: "Failed to fetch CARD fields" });
+  }
+});
+
 // Get CARD task by company name
 router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
   try {

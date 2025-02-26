@@ -40,13 +40,25 @@ export function CardFormPlayground({
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
 
-  // Fetch card fields
+  // Fetch all CARD fields
   const { data: cardFields = [], isLoading } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields'],
     queryFn: async () => {
+      console.log('[CardFormPlayground] Fetching CARD fields');
       const response = await fetch('/api/card/fields');
-      if (!response.ok) throw new Error('Failed to fetch CARD fields');
-      return response.json();
+      if (!response.ok) {
+        console.error('[CardFormPlayground] Error fetching fields:', {
+          status: response.status,
+          statusText: response.statusText
+        });
+        throw new Error('Failed to fetch CARD fields');
+      }
+      const data = await response.json();
+      console.log('[CardFormPlayground] Fields fetched:', {
+        count: data.length,
+        sections: [...new Set(data.map((f: CardField) => f.wizard_section))]
+      });
+      return data;
     }
   });
 
@@ -62,18 +74,33 @@ export function CardFormPlayground({
   // Set initial section if not set
   useEffect(() => {
     if (!currentSection && Object.keys(sections).length > 0) {
-      setCurrentSection(Object.keys(sections)[0]);
+      const firstSection = Object.keys(sections)[0];
+      console.log('[CardFormPlayground] Setting initial section:', firstSection);
+      setCurrentSection(firstSection);
     }
   }, [sections]);
 
-  // Calculate progress
+  // Calculate and update progress
   useEffect(() => {
-    const answeredQuestions = Object.keys(formResponses).length;
-    const progress = Math.floor((answeredQuestions / 90) * 90); // 90 questions = 90% max
-    setProgress(progress);
-  }, [formResponses]);
+    const totalFields = cardFields.length;
+    const answeredFields = Object.values(formResponses).filter(Boolean).length;
+    const calculatedProgress = Math.floor((answeredFields / totalFields) * 100);
+
+    console.log('[CardFormPlayground] Updating progress:', {
+      totalFields,
+      answeredFields,
+      progress: calculatedProgress
+    });
+
+    setProgress(calculatedProgress);
+  }, [formResponses, cardFields]);
 
   const handleResponseChange = (fieldKey: string, value: string) => {
+    console.log('[CardFormPlayground] Field updated:', {
+      fieldKey,
+      hasValue: !!value
+    });
+
     setFormResponses(prev => ({
       ...prev,
       [fieldKey]: value
@@ -81,6 +108,21 @@ export function CardFormPlayground({
   };
 
   const handleSubmit = () => {
+    console.log('[CardFormPlayground] Submitting form:', {
+      taskId,
+      responseCount: Object.keys(formResponses).length,
+      progress
+    });
+
+    if (progress < 90) {
+      toast({
+        title: "Cannot Submit Yet",
+        description: "Please complete at least 90% of the form before submitting.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     onSubmit(formResponses);
   };
 
@@ -96,7 +138,9 @@ export function CardFormPlayground({
     <div className="space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">CARD Assessment for {companyData?.name || companyName}</h1>
+        <h1 className="text-2xl font-semibold">
+          CARD Assessment for {companyData?.name || companyName}
+        </h1>
         {companyData?.description && (
           <p className="text-muted-foreground">{companyData.description}</p>
         )}
@@ -136,6 +180,11 @@ export function CardFormPlayground({
                 {field.example_response && (
                   <p className="text-sm text-muted-foreground italic">
                     Example: {field.example_response}
+                  </p>
+                )}
+                {field.ai_search_instructions && (
+                  <p className="text-sm text-blue-600">
+                    AI Hint: {field.ai_search_instructions}
                   </p>
                 )}
               </div>
