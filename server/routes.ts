@@ -14,12 +14,14 @@ import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
+import cardRouter from './routes/card';  // Add import for card router
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
+  app.use(cardRouter);  // Register card router
   app.use(filesRouter);
   app.use(accessRouter); // Register the new access router
 
@@ -853,8 +855,7 @@ export function registerRoutes(app: Express): Express {
             }
 
       // Database transaction for atomicity
-      const result = await db.transaction(async (tx) => {
-        try {
+      const result = await db.transaction(async (tx) => {        try {
           // Step 1: Get user's company details first
           console.log('[FinTech Invite] Fetching sender company details');
           const [userCompany] = await tx.select()
