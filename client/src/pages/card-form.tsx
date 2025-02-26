@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,32 @@ export default function CardForm({ params }: CardFormProps) {
     },
   });
 
+  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) return;
+
+    try {
+      const response = await fetch(`/api/card/download/${fileId}?format=${format}`);
+      if (!response.ok) throw new Error('Failed to download file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `card_form.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the file. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -132,15 +159,15 @@ export default function CardForm({ params }: CardFormProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => window.alert('Download as JSON - To be implemented')}>
+              <DropdownMenuItem onClick={() => handleDownload('json')}>
                 <FileJson className="mr-2 h-4 w-4" />
                 Download as JSON
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.alert('Download as CSV - To be implemented')}>
+              <DropdownMenuItem onClick={() => handleDownload('csv')}>
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Download as CSV
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.alert('Download as Text - To be implemented')}>
+              <DropdownMenuItem onClick={() => handleDownload('txt')}>
                 <FileText className="mr-2 h-4 w-4" />
                 Download as Text
               </DropdownMenuItem>
@@ -149,12 +176,15 @@ export default function CardForm({ params }: CardFormProps) {
         )}
       </div>
 
-      <div className="text-center py-8">
-        <h1 className="text-2xl font-semibold mb-4">CARD Form - {task.metadata?.companyName || 'Company'}</h1>
-        <p className="text-muted-foreground">
-          Form component to be implemented with the 90 CARD questions.
-        </p>
-      </div>
+      <CardFormPlayground 
+        taskId={taskId}
+        companyName={task.metadata?.companyName || task.title.replace('Company CARD: ', '')}
+        companyData={{
+          name: task.metadata?.companyName || task.title.replace('Company CARD: ', ''),
+          description: task.description
+        }}
+        onSubmit={(formData) => saveMutation.mutate(formData)}
+      />
     </div>
   );
 }
