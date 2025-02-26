@@ -79,7 +79,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
       const formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
 
-      console.log(`[TaskTable] Preparing navigation:`, {
+      console.log('[TaskTable] Preparing navigation:', {
         taskType: task.task_type,
         originalTitle: task.title,
         extractedCompanyName: companyName,
