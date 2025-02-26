@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js';
-import { getSchemas, getDb } from "../utils/db-adapter";
+import { db } from "@db";
+import { companies } from "@db/schema";
 import { eq } from "drizzle-orm";
 
 // Options for fuzzy matching
@@ -12,7 +13,7 @@ const fuseOptions = {
 /**
  * Find missing or empty fields in a company record
  */
-export function findMissingFields(company: any): string[] {
+export function findMissingFields(company: typeof companies.$inferSelect): string[] {
   console.log("[Company Matching] 🔍 Analyzing company fields for:", company.name);
   const missingFields: string[] = [];
 
@@ -50,16 +51,13 @@ export function findMissingFields(company: any): string[] {
  */
 export async function findCompanyInRegistry(searchName: string): Promise<{
   found: boolean;
-  company?: any;
+  company?: typeof companies.$inferSelect;
   score?: number;
 }> {
   console.log("[Company Matching] 🔎 Searching registry for:", searchName);
 
-  // Get schemas for each function call (after DB initialization)
-  const { companies } = getSchemas();
-
   // Get all companies from the database
-  const allCompanies = await getDb().select().from(companies);
+  const allCompanies = await db.select().from(companies);
   console.log("[Company Matching] 📚 Found", allCompanies.length, "companies in registry");
 
   // Initialize Fuse with our companies
@@ -68,17 +66,14 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
   // Search for matches
   const results = fuse.search(searchName);
   console.log("[Company Matching] 🎯 Search results:", results.length > 0 ? 
-    `Found match with score ${results[0]?.score}` : "No matches found");
+    `Found match with score ${results[0].score}` : "No matches found");
 
   // If we found a good match (score < 0.3 indicates good match)
-  if (results.length > 0 && results[0]?.score !== undefined && results[0].score < 0.3) {
-    // Type assertion for safer access
-    const matchedItem = results[0].item as Record<string, any>;
-    const matchName = matchedItem?.name || 'Unknown Company';
-    console.log("[Company Matching] ✅ Found existing company:", matchName);
+  if (results.length > 0 && results[0].score < 0.3) {
+    console.log("[Company Matching] ✅ Found existing company:", results[0].item.name);
     return {
       found: true,
-      company: matchedItem,
+      company: results[0].item,
       score: results[0].score
     };
   }
@@ -92,16 +87,13 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
  */
 export async function updateCompanyData(
   companyId: number,
-  newData: Partial<any>
-): Promise<any> {
+  newData: Partial<typeof companies.$inferInsert>
+): Promise<typeof companies.$inferSelect> {
   console.log("[Company Matching] 🔄 Updating company data for ID:", companyId);
   console.log("[Company Matching] 📝 New data to be applied:", newData);
 
-  // Get schemas when the function is called
-  const { companies } = getSchemas();
-
   // Update company record
-  await getDb().update(companies)
+  await db.update(companies)
     .set({
       ...newData,
       updatedAt: new Date() // Use Date object directly
@@ -109,7 +101,7 @@ export async function updateCompanyData(
     .where(eq(companies.id, companyId));
 
   // Return updated company
-  const updatedCompany = await getDb().query.companies.findFirst({
+  const updatedCompany = await db.query.companies.findFirst({
     where: eq(companies.id, companyId)
   });
 
@@ -126,16 +118,13 @@ export async function updateCompanyData(
  * Create new company in registry
  */
 export async function createCompanyInRegistry(
-  data: any
-): Promise<any> {
+  data: typeof companies.$inferInsert
+): Promise<typeof companies.$inferSelect> {
   console.log("[Company Matching] 🆕 Creating new company:", data.name);
 
-  // Get schemas when the function is called
-  const { companies } = getSchemas();
-  
   const now = new Date(); // Create a single Date object for all timestamps
 
-  const [newCompany] = await getDb().insert(companies)
+  const [newCompany] = await db.insert(companies)
     .values({
       ...data,
       registryDate: now,

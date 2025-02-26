@@ -4,10 +4,9 @@ import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
+import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
-import ErrorBoundary from "@/components/ErrorBoundary";
-import ConsoleCommands from "@/components/debug/ConsoleCommands";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -26,15 +25,11 @@ import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilder
 import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilderPage";
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
-import DebugPage from "@/pages/debug-page";
-import AuthTestPage from "@/pages/auth-test-page";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
-      <ErrorBoundary>
-        {children}
-      </ErrorBoundary>
+      {children}
     </div>
   );
 }
@@ -56,7 +51,7 @@ function Router() {
         }}
       </Route>
 
-      {/* Dashboard route - Main route for authenticated users */}
+      {/* Protected routes - Dashboard first */}
       <Route path="/">
         <ProtectedRoute 
           path="/" 
@@ -101,18 +96,14 @@ function Router() {
         </ProtectedLayout>
       )} />
 
-      <Route path="/task-center/task/:taskSlug">
-        {(params) => (
-          <ProtectedRoute 
-            path="/task-center/task/:taskSlug"
-            component={() => (
-              <ProtectedLayout>
-                <TaskPage params={{ taskSlug: params.taskSlug }} />
-              </ProtectedLayout>
-            )}
-          />
+      <ProtectedRoute 
+        path="/task-center/task/:taskSlug"
+        component={({ params }) => (
+          <ProtectedLayout>
+            <TaskPage params={params} />
+          </ProtectedLayout>
         )}
-      </Route>
+      />
 
       <ProtectedRoute 
         path="/file-vault" 
@@ -207,27 +198,6 @@ function Router() {
         )} 
       />
 
-      {/* Debug route - for development purposes */}
-      <ProtectedRoute 
-        path="/debug" 
-        component={() => (
-          <ProtectedLayout>
-            <DebugPage />
-          </ProtectedLayout>
-        )} 
-      />
-
-      {/* Auth testing route */}
-      <ProtectedRoute 
-        path="/auth-test" 
-        component={() => (
-          <ProtectedLayout>
-            <AuthTestPage />
-          </ProtectedLayout>
-        )} 
-      />
-
-      {/* Fallback 404 route */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -237,9 +207,10 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Router />
-        <Toaster />
-        {process.env.NODE_ENV === 'development' && <ConsoleCommands />}
+        <ToastProvider>
+          <Router />
+          <Toaster />
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

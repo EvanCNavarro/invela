@@ -1,31 +1,16 @@
-/**
- * @file websocket.ts
- * @description WebSocket server implementation for real-time communication.
- * Handles client connections, message parsing, and broadcasting updates.
- */
-
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
-import type { 
-  WebSocketMessage, 
-  TaskUpdateMessage,
-  ConnectionEstablishedMessage,
-  FileUpdateMessage,
-  PingMessage,
-  PongMessage,
-  ErrorMessage
-} from '../types/websocket';
-import type { TaskStatus } from '../types/tasks';
+import type { TaskStatus } from '@db/schema';
 
-// Global WebSocket server instance
 let wss: WebSocketServer;
 
-/**
- * Sets up the WebSocket server and attaches it to the HTTP server.
- * Configures event handlers for connection management and message processing.
- * 
- * @param server - The HTTP server to attach the WebSocket server to
- */
+interface TaskUpdate {
+  id: number;
+  status: TaskStatus;
+  progress: number;
+  metadata?: Record<string, any>;
+}
+
 export function setupWebSocket(server: Server) {
   // Create WebSocket server with proper configuration
   wss = new WebSocketServer({ 
@@ -53,177 +38,87 @@ export function setupWebSocket(server: Server) {
 
   console.log('[WebSocket] Server initialized on path: /ws');
 
-  // Handle new client connections
   wss.on('connection', (ws) => {
-    console.log('[WebSocket] New client connected');
+    console.log('New WebSocket client connected');
 
     // Send initial connection acknowledgment
-    const connectionMessage: ConnectionEstablishedMessage = {
+    ws.send(JSON.stringify({
       type: 'connection_established',
-      timestamp: new Date().toISOString(),
       data: { timestamp: new Date().toISOString() }
-    };
-    ws.send(JSON.stringify(connectionMessage));
-    console.log('[WebSocket] Sent connection acknowledgment');
+    }));
 
-    // Set up ping/pong with longer intervals for connection health checks
+    // Set up ping/pong with longer intervals
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         try {
           ws.ping();
-          const pingMessage: PingMessage = { 
-            type: 'ping',
-            timestamp: new Date().toISOString()
-          };
-          ws.send(JSON.stringify(pingMessage));
-          console.log('[WebSocket] Sent ping to client');
+          ws.send(JSON.stringify({ type: 'ping' }));
         } catch (error) {
           console.error('[WebSocket] Error sending ping:', error);
         }
       }
     }, 45000); // Match client's interval
 
-    // Handle ping messages from client
     ws.on('ping', () => {
       try {
         ws.pong();
-        console.log('[WebSocket] Received ping, sent pong');
       } catch (error) {
         console.error('[WebSocket] Error sending pong:', error);
       }
     });
 
-    // Handle pong messages from client
     ws.on('pong', () => {
       // Reset any ping timeouts here if needed
       console.log('[WebSocket] Received pong from client');
     });
 
-    // Handle incoming messages from client
     ws.on('message', (message) => {
       try {
-        const data = JSON.parse(message.toString()) as WebSocketMessage;
-        console.log('[WebSocket] Received message:', { type: data.type });
+        const data = JSON.parse(message.toString());
 
         // Handle ping messages immediately
         if (data.type === 'ping') {
-          const pongMessage: PongMessage = { 
-            type: 'pong',
-            timestamp: new Date().toISOString()
-          };
-          ws.send(JSON.stringify(pongMessage));
-          console.log('[WebSocket] Received ping, sent pong response');
+          ws.send(JSON.stringify({ type: 'pong' }));
           return;
         }
 
-        // Log other message types
-        console.log('[WebSocket] Processing message:', { 
-          type: data.type, 
-          timestamp: data.timestamp 
-        });
+        console.log('Received WebSocket message:', data);
       } catch (error) {
-        console.error('[WebSocket] Error processing message:', error);
-        const errorMessage: ErrorMessage = {
-          type: 'error',
-          timestamp: new Date().toISOString(),
-          error: {
-            code: 'PARSE_ERROR',
-            message: 'Failed to parse message'
-          }
-        };
-        ws.send(JSON.stringify(errorMessage));
-        console.log('[WebSocket] Sent error response for parse failure');
+        console.error('Error processing WebSocket message:', error);
       }
     });
 
-    // Handle WebSocket errors
     ws.on('error', (error) => {
-      console.error('[WebSocket] Client connection error:', error);
+      console.error('WebSocket error:', error);
     });
 
-    // Handle connection close
     ws.on('close', (code, reason) => {
       clearInterval(pingInterval);
-      console.log(`[WebSocket] Client disconnected with code ${code}${reason ? ` and reason: ${reason}` : ''}`);
+      console.log(`WebSocket client disconnected with code ${code}${reason ? ` and reason: ${reason}` : ''}`);
     });
   });
 
-  // Handle server-level errors
   wss.on('error', (error) => {
     console.error('[WebSocket] Server error:', error);
   });
 }
 
-/**
- * Broadcasts a task update to all connected clients.
- * Used when a task is created, updated, or deleted.
- * 
- * @param taskUpdate - The task data to broadcast
- */
-export function broadcastTaskUpdate(taskUpdate: TaskUpdateMessage['data']): void {
+export function broadcastTaskUpdate(task: TaskUpdate) {
   if (!wss) {
-    console.warn('[WebSocket] Cannot broadcast task update: WebSocket server not initialized');
+    console.warn('WebSocket server not initialized');
     return;
   }
 
-  const message: TaskUpdateMessage = {
-    type: 'task_update',
-    timestamp: new Date().toISOString(),
-    data: taskUpdate
-  };
-
-  let clientCount = 0;
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       try {
-        client.send(JSON.stringify(message));
-        clientCount++;
+        client.send(JSON.stringify({
+          type: 'task_update',
+          payload: task
+        }));
       } catch (error) {
-        console.error('[WebSocket] Error broadcasting task update:', error);
+        console.error('Error broadcasting task update:', error);
       }
     }
-  });
-  
-  console.log(`[WebSocket] Broadcast task update to ${clientCount} clients:`, { 
-    taskId: taskUpdate.id,
-    status: taskUpdate.status,
-    progress: taskUpdate.progress
-  });
-}
-
-/**
- * Broadcasts a file update to all connected clients.
- * Used when a file is uploaded, updated, or deleted.
- * 
- * @param fileUpdate - The file data to broadcast
- */
-export function broadcastFileUpdate(fileUpdate: FileUpdateMessage['data']): void {
-  if (!wss) {
-    console.warn('[WebSocket] Cannot broadcast file update: WebSocket server not initialized');
-    return;
-  }
-
-  const message: FileUpdateMessage = {
-    type: 'file_update',
-    timestamp: new Date().toISOString(),
-    data: fileUpdate
-  };
-
-  let clientCount = 0;
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      try {
-        client.send(JSON.stringify(message));
-        clientCount++;
-      } catch (error) {
-        console.error('[WebSocket] Error broadcasting file update:', error);
-      }
-    }
-  });
-  
-  console.log(`[WebSocket] Broadcast file update to ${clientCount} clients:`, { 
-    fileId: fileUpdate.id,
-    fileName: fileUpdate.file_name,
-    status: fileUpdate.status
   });
 }

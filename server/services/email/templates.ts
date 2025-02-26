@@ -133,10 +133,10 @@ export function getEmailTemplate(templateName: TemplateNames, data: InvitationTe
   }
 
   try {
-    // Set the invite type based on the template name, ensuring proper type casting
+    // Set the invite type based on the template name
     const templateData = {
       ...data,
-      inviteType: (templateName === 'fintech_invite' ? 'fintech' : 'user') as 'fintech' | 'user'
+      inviteType: templateName === 'fintech_invite' ? 'fintech' : 'user'
     };
 
     const emailTemplate = template(templateData);

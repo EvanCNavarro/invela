@@ -1,8 +1,10 @@
-import { Express, Request, Response } from 'express';
-import { eq, and, gt, sql, or, isNull, desc } from 'drizzle-orm';
+import { Express } from 'express';
+import { eq, and, gt, sql, or, isNull } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
+import { db } from '@db';
+import { users, companies, files, companyLogos, relationships, tasks, invitations } from '@db/schema';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
@@ -14,175 +16,16 @@ import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
-import { getAuthDebug, testDatabaseConnection } from './debug';
-import { getSchemas, executeWithNeonRetry, queryWithNeonRetry, getDb, ensureValue, initializeDb } from './utils/db-adapter';
-import { SQL } from "drizzle-orm";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { PgTransaction } from "drizzle-orm/pg-core";
-import * as schema from "../db/schema";
 
-// Add missing schemas and DB instance for backward compatibility during transition
-let db: any;
-let companies: any;
-let users: any;
-let tasks: any;
-let invitations: any;
-let relationships: any;
-let files: any;
-let companyLogos: any;
-
-// Initialize the database and set up backward compatibility variables
-async function initializeDbForRoutes() {
-  try {
-    const { schemas } = await initializeDb();
-    db = getDb();
-    companies = schemas.companies;
-    users = schemas.users;
-    tasks = schemas.tasks;
-    invitations = schemas.invitations;
-    relationships = schemas.relationships;
-    files = schemas.files;
-    companyLogos = schemas.companyLogos;
-    console.log('[Routes] Database schemas initialized for backward compatibility');
-  } catch (error) {
-    console.error('[Routes] Failed to initialize database for routes:', error);
-    throw error;
-  }
-}
-
-// Call initialization at the start
-initializeDbForRoutes().catch(err => {
-  console.error('Failed to initialize database for routes:', err);
-});
-
-// Define types for database entities to help with type checking
-interface DbUser {
-  id: number;
-  email: string;
-  company_id: number;
-  role: string;
-  name: string;
-  created_at: Date;
-  updated_at: Date;
-  active: boolean;
-}
-
-interface DbCompany {
-  id: number;
-  name: string;
-  category: string;
-  description: string;
-  logo_id: number | null;
-  accreditation_status: string;
-  risk_score: number | null;
-  onboarding_company_completed: boolean;
-  website_url: string | null;
-  legal_structure: string | null;
-  hq_address: string | null;
-  employee_count: string | null;
-  products_services: string[] | null;
-  incorporation_year: string | null;
-  investors_info: string | null;
-  funding_stage: string | null;
-  key_partners: string[] | null;
-  leadership_team: string | null;
-}
-
-interface DbTask {
-  id: number;
-  title: string;
-  description: string;
-  status: string;
-  assigned_to: number | null;
-  company_id: number | null;
-  created_at: Date;
-  updated_at: Date;
-  due_date: Date | null;
-  task_scope: string;
-}
-
-interface DbRelationship {
-  id: number;
-  company_id: number;
-  related_company_id: number;
-  status: string;
-  created_at: Date;
-  type: string;
-  relatedCompany?: DbCompany;
-}
-
-interface DbFile {
-  id: number;
-  filename: string;
-  original_name: string;
-  size: number;
-  mime_type: string;
-  created_at: Date;
-  updated_at: Date;
-  company_id: number;
-  user_id: number;
-  task_id: number | null;
-  is_public: boolean;
-}
-
-interface DbInvitation {
-  id: number;
-  email: string;
-  code: string;
-  company_id: number;
-  role: string;
-  created_at: Date;
-  expires_at: Date;
-  used: boolean;
-}
-
-// Add a type for transaction functions
-type Transaction = PgTransaction<Record<string, unknown>>;
-
-// Add interface for invitation result
-interface InvitationResult {
-  invitation?: any;
-  task?: any;
-  company?: any;
-  user?: any;
-  message?: string;
-}
-
-/**
- * Register all API routes for the application
- * 
- * This function sets up all endpoints and their handlers, ensuring proper authentication
- * and parameter validation for each route.
- * 
- * @param app Express application instance
- * @returns The configured Express application
- */
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
   app.use(filesRouter);
   app.use(accessRouter); // Register the new access router
-  
-  // Debug API endpoints (development only)
-  app.get("/api/debug/auth", requireAuth, getAuthDebug);
-  app.get("/api/debug/db-test", testDatabaseConnection);
 
-  /**
-   * GET /api/companies
-   * 
-   * Retrieves all companies accessible to the authenticated user. This includes:
-   * 1. The user's own company
-   * 2. Any companies that have a relationship with the user's company
-   * 
-   * This route demonstrates the use of the database adapter pattern:
-   * - Gets schemas from the adapter (type-safe)
-   * - Uses executeWithNeonRetry for database operations
-   * - Applies ensureValue to handle null/undefined safely
-   * - Transforms database results to match frontend expectations
-   */
-  app.get("/api/companies", requireAuth, async (req: Request, res: Response) => {
+  // Companies endpoints
+  app.get("/api/companies", requireAuth, async (req, res) => {
     try {
-      // Authentication validation
       if (!req.user) {
         console.log('[Companies] No authenticated user found');
         return res.status(401).json({
@@ -196,64 +39,56 @@ export function registerRoutes(app: Express): Express {
         company_id: req.user.company_id
       });
 
-      // Get database schemas using the adapter
-      // This provides type-safe access to table definitions
-      const { companies, relationships } = getSchemas();
-
-      // Use executeWithNeonRetry for database operations
-      // This handles transient connection issues with Neon serverless
-      const networkCompanies = await executeWithNeonRetry(async (db: any) => {
-        return db.select({
-          id: companies.id,
-          name: sql<string>`COALESCE(${companies.name}, '')`, // Handle NULL values in the database
-          category: sql<string>`COALESCE(${companies.category}, '')`,
-          description: sql<string>`COALESCE(${companies.description}, '')`,
-          logo_id: companies.logo_id,
-          accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
-          risk_score: companies.risk_score,
-          onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
-          website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
-          legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
-          hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
-          employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
-          products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
-          incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
-          investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
-          funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
-          key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
-          leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
-          // Calculate if this company has a relationship with the user's company
-          has_relationship: sql<boolean>`
-            CASE 
-              WHEN ${companies.id} = ${ensureValue(req.user?.company_id, 0)} THEN true
-              WHEN EXISTS (
-                SELECT 1 FROM ${relationships} r 
-                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${ensureValue(req.user?.company_id, 0)})
-                OR (r.company_id = ${ensureValue(req.user?.company_id, 0)} AND r.related_company_id = ${companies.id})
-              ) THEN true
-              ELSE false
-            END
-          `
-        })
-          .from(companies)
-          .where(
-            or(
-              // Include the user's own company
-              eq(companies.id, ensureValue(req.user?.company_id, 0)),
-              // Include companies with relationships
-              sql`EXISTS (
-                SELECT 1 FROM ${relationships} r 
-                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${ensureValue(req.user?.company_id, 0)})
-                OR (r.company_id = ${ensureValue(req.user?.company_id, 0)} AND r.related_company_id = ${companies.id})
-              )`
-            )
+      // Get all companies that either:
+      // 1. The user's own company
+      // 2. Companies that have a relationship with the user's company
+      const networkCompanies = await db.select({
+        id: companies.id,
+        name: sql<string>`COALESCE(${companies.name}, '')`,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        description: sql<string>`COALESCE(${companies.description}, '')`,
+        logo_id: companies.logo_id,
+        accreditation_status: sql<string>`COALESCE(${companies.accreditation_status}, '')`,
+        risk_score: companies.risk_score,
+        onboarding_company_completed: sql<boolean>`COALESCE(${companies.onboarding_company_completed}, false)`,
+        website_url: sql<string>`COALESCE(${companies.website_url}, '')`,
+        legal_structure: sql<string>`COALESCE(${companies.legal_structure}, '')`,
+        hq_address: sql<string>`COALESCE(${companies.hq_address}, '')`,
+        employee_count: sql<string>`COALESCE(${companies.employee_count}, '')`,
+        products_services: sql<string[]>`COALESCE(${companies.products_services}, '{}')::text[]`,
+        incorporation_year: sql<string>`COALESCE(${companies.incorporation_year}, '')`,
+        investors_info: sql<string>`COALESCE(${companies.investors_info}, '')`,
+        funding_stage: sql<string>`COALESCE(${companies.funding_stage}, '')`,
+        key_partners: sql<string[]>`COALESCE(${companies.key_partners}, '{}')::text[]`,
+        leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
+        has_relationship: sql<boolean>`
+          CASE 
+            WHEN ${companies.id} = ${req.user!.company_id} THEN true
+            WHEN EXISTS (
+              SELECT 1 FROM ${relationships} r 
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            ) THEN true
+            ELSE false
+          END
+        `
+      })
+        .from(companies)
+        .where(
+          or(
+            eq(companies.id, req.user!.company_id),
+            sql`EXISTS (
+            SELECT 1 FROM ${relationships} r 
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+          )`
           )
-          .orderBy(companies.name);
-      });
+        )
+        .orderBy(companies.name);
 
       console.log('[Companies] Query successful, found companies:', {
         count: networkCompanies.length,
-        companies: networkCompanies.map((c: any) => ({
+        companies: networkCompanies.map(c => ({
           id: c.id,
           name: c.name,
           hasLogo: !!c.logo_id,
@@ -262,8 +97,7 @@ export function registerRoutes(app: Express): Express {
       });
 
       // Transform the data to match frontend expectations
-      // This ensures consistent API responses even if database schema changes
-      const transformedCompanies = networkCompanies.map((company: any) => ({
+      const transformedCompanies = networkCompanies.map(company => ({
         ...company,
         websiteUrl: company.website_url || 'N/A',
         legalStructure: company.legal_structure || 'N/A',
@@ -280,7 +114,6 @@ export function registerRoutes(app: Express): Express {
 
       res.json(transformedCompanies);
     } catch (error) {
-      // Comprehensive error logging helps with debugging
       console.error("[Companies] Error details:", {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
@@ -295,7 +128,6 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Generic error response
       res.status(500).json({
         message: "Error fetching companies",
         code: "INTERNAL_ERROR"
@@ -303,23 +135,16 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  app.get("/api/companies/current", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       console.log('[Current Company] Fetching company for user:', {
         userId: req.user!.id,
         companyId: req.user!.company_id
       });
 
-      // Use the database adapter pattern
-      const { companies } = getSchemas();
-      
-      const companyResult = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(companies)
-          .where(eq(companies.id, ensureValue(req.user?.company_id, 0)));
-      });
-
-      const company = companyResult[0];
+      const [company] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, req.user!.company_id));
 
       if (!company) {
         console.error('[Current Company] Company not found:', req.user!.company_id);
@@ -332,18 +157,7 @@ export function registerRoutes(app: Express): Express {
         onboardingCompleted: company.onboarding_company_completed
       });
 
-      // Add a default risk score if it doesn't exist
-      if (company.risk_score === undefined || company.risk_score === null) {
-        company.risk_score = 0; // Default risk score
-      }
-
-      // Transform the response to match client-side property names
-      const responseData = {
-        ...company,
-        riskScore: company.risk_score // Map risk_score to riskScore for client compatibility
-      };
-
-      res.json(responseData);
+      res.json(company);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
       res.status(500).json({ message: "Error fetching company details" });
@@ -351,7 +165,7 @@ export function registerRoutes(app: Express): Express {
   });
 
   // Get company by ID
-  app.get("/api/companies/:id", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/companies/:id", requireAuth, async (req, res) => {
     try {
       const companyId = parseInt(req.params.id);
 
@@ -362,29 +176,22 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Get database schemas using the adapter
-      const { companies, relationships } = getSchemas();
-
       // Get company details along with relationship check
-      const companyResult = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(companies)
-          .where(
-            and(
-              eq(companies.id, companyId),
-              or(
-                eq(companies.id, ensureValue(req.user?.company_id, 0)),
-                sql`EXISTS (
-                  SELECT 1 FROM ${relationships} r 
-                  WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${ensureValue(req.user?.company_id, 0)})
-                  OR (r.company_id = ${ensureValue(req.user?.company_id, 0)} AND r.related_company_id = ${companies.id})
-                )`
-              )
+      const [company] = await db.select()
+        .from(companies)
+        .where(
+          and(
+            eq(companies.id, companyId),
+            or(
+              eq(companies.id, req.user!.company_id),
+              sql`EXISTS (
+                SELECT 1 FROM ${relationships} r 
+                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
+                OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+              )`
             )
-          );
-      });
-
-      const company = companyResult[0];
+          )
+        );
 
       if (!company) {
         return res.status(404).json({
@@ -414,7 +221,7 @@ export function registerRoutes(app: Express): Express {
 
 
   // Tasks endpoints
-  app.get("/api/tasks", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] ====== Starting task fetch =====');
       console.log('[Tasks] User details:', {
@@ -423,26 +230,23 @@ export function registerRoutes(app: Express): Express {
         email: req.user!.email
       });
 
-      // Get database schemas
-      const { tasks } = getSchemas();
-
       // First, let's check if there are any company-wide KYB tasks
-      const kybTasks = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(tasks)
-          .where(and(
-            eq(tasks.company_id, ensureValue(req.user?.company_id, 0)),
-            eq(tasks.task_type, 'company_kyb'),
-            eq(tasks.task_scope, 'company')
-          ));
-      });
+      const kybTasks = await db.select()
+        .from(tasks)
+        .where(and(
+          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.task_type, 'company_kyb'),
+          eq(tasks.task_scope, 'company')
+        ));
 
       console.log('[Tasks] KYB tasks found:', {
         count: kybTasks.length,
-        tasks: kybTasks.map((t: DbTask) => ({
+        tasks: kybTasks.map(t => ({
           id: t.id,
           company_id: t.company_id,
           task_scope: t.task_scope,
+          task_type: t.task_type,
+          assigned_to: t.assigned_to,
           status: t.status
         }))
       });
@@ -454,10 +258,10 @@ export function registerRoutes(app: Express): Express {
       // 4. KYB tasks for the user's company
       // 5. User onboarding tasks for the user's email
       const query = or(
-        eq(tasks.assigned_to, ensureValue(req.user?.id, 0)),
-        eq(tasks.created_by, ensureValue(req.user?.id, 0)),
+        eq(tasks.assigned_to, req.user!.id),
+        eq(tasks.created_by, req.user!.id),
         and(
-          eq(tasks.company_id, ensureValue(req.user?.company_id, 0)),
+          eq(tasks.company_id, req.user!.company_id),
           isNull(tasks.assigned_to),
           eq(tasks.task_scope, 'company')
         ),
@@ -469,156 +273,102 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[Tasks] Query conditions:', {
         conditions: {
-          condition1: `tasks.assigned_to = ${ensureValue(req.user?.id, 0)}`,
-          condition2: `tasks.created_by = ${ensureValue(req.user?.id, 0)}`,
-          condition3: `tasks.company_id = ${ensureValue(req.user?.company_id, 0)} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
+          condition1: `tasks.assigned_to = ${req.user!.id}`,
+          condition2: `tasks.created_by = ${req.user!.id}`,
+          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
           condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user!.email}')`
         }
       });
 
-      const userTasks = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(tasks)
-          .where(query)
-          .orderBy(sql`created_at DESC`);
-      });
+      const userTasks = await db.select()
+        .from(tasks)
+        .where(query)
+        .orderBy(sql`created_at DESC`);
 
       console.log('[Tasks] Tasks found:', {
         count: userTasks.length,
-        tasks: userTasks.map((task: DbTask) => ({
+        tasks: userTasks.map(task => ({
           id: task.id,
           title: task.title,
           assigned_to: task.assigned_to,
           company_id: task.company_id,
           task_scope: task.task_scope,
+          task_type: task.task_type,
           status: task.status
         }))
       });
 
-      // Transformed tasks with additional fields
-      const transformedTasks = userTasks.map((task: DbTask) => {
-        const progress = task.status ? taskStatusToProgress[task.status as TaskStatus] : 0;
-        return {
-          ...task,
-          // Add computed fields
-          progress,
-          isComplete: task.status === 'completed',
-          dueDate: task.due_date ? new Date(task.due_date).toISOString() : null
-        };
-      });
-
-      res.json(transformedTasks);
+      res.json(userTasks);
     } catch (error) {
-      console.error("[Tasks] Error fetching tasks:", error);
-      res.status(500).json({ message: "Error fetching tasks" });
-    }
-  });
-
-  // Get a single task
-  app.get("/api/tasks/:id", requireAuth, async (req: Request, res: Response) => {
-    try {
-      const taskId = parseInt(req.params.id);
-      if (isNaN(taskId)) {
-        return res.status(400).json({ message: "Invalid task ID" });
-      }
-
-      // Get schemas
-      const { tasks } = getSchemas();
-
-      // Fetch the task
-      const taskResult = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(tasks)
-          .where(
-            and(
-              eq(tasks.id, taskId),
-              or(
-                eq(tasks.assigned_to, ensureValue(req.user?.id, 0)),
-                and(
-                  eq(tasks.company_id, ensureValue(req.user?.company_id, 0)),
-                  isNull(tasks.assigned_to)
-                ),
-                eq(tasks.created_by, ensureValue(req.user?.id, 0))
-              )
-            )
-          );
+      console.error("[Tasks] Error details:", {
+        message: error.message,
+        code: error.code,
+        detail: error.detail,
+        position: error.position,
+        hint: error.hint
       });
-
-      const task = taskResult[0];
-      if (!task) {
-        return res.status(404).json({ message: "Task not found" });
-      }
-
-      // Transform task data
-      const transformedTask = {
-        ...task,
-        progress: task.status ? taskStatusToProgress[task.status as TaskStatus] : 0,
-        isComplete: task.status === 'completed',
-        dueDate: task.due_date ? new Date(task.due_date).toISOString() : null
-      };
-
-      res.json(transformedTask);
-    } catch (error) {
-      console.error("[Tasks] Error fetching task:", error);
-      res.status(500).json({ message: "Error fetching task" });
+      console.error("[Tasks] Full error:", error);
+      res.status(500).json({
+        message: "Error fetching tasks",
+        detail: error.message
+      });
     }
   });
 
   // Relationships endpoints
-  app.get("/api/relationships", requireAuth, async (req: Request, res: Response) => {
+  app.get("/api/relationships", requireAuth, async (req, res) => {
     try {
-      console.log('[Relationships] Fetching relationships for company:', req.user!.company_id);
-      
-      // Get schemas
-      const { relationships, companies } = getSchemas();
+      console.log('[Relationships] Fetching network for company:', req.user!.company_id);
 
-      // Fetch relationships and related company info
-      const networkRelationships = await executeWithNeonRetry(async (db: any) => {
-        return db.select({
-          id: relationships.id,
-          company_id: relationships.company_id,
-          related_company_id: relationships.related_company_id,
-          status: relationships.status,
-          type: relationships.type,
-          created_at: relationships.created_at,
-          // Add relatedCompany object with company details
-          relatedCompany: {
-            id: companies.id,
-            name: companies.name,
-            category: companies.category,
-            logo_id: companies.logo_id
-          }
-        })
+      // Get all relationships where the current company is either the creator or related company
+      const networkRelationships = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
+        relationshipType: relationships.relationship_type,
+        status: relationships.status,
+        metadata: relationships.metadata,
+        createdAt: relationships.created_at,
+        // Join with companies to get related company details
+        relatedCompany: {
+          id: companies.id,
+          name: companies.name,
+          category: companies.category,
+          logoId: companies.logo_id,
+          accreditationStatus: companies.accreditation_status,
+          riskScore: companies.risk_score
+        }
+      })
         .from(relationships)
-        .leftJoin(companies, eq(relationships.related_company_id, companies.id))
+        .innerJoin(
+          companies,
+          eq(
+            companies.id,
+            sql`CASE 
+          WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
+          ELSE ${relationships.company_id}
+        END`
+          )
+        )
         .where(
-          eq(relationships.company_id, ensureValue(req.user?.company_id, 0))
-        );
-      });
+          or(
+            eq(relationships.company_id, req.user!.company_id),
+            eq(relationships.related_company_id, req.user!.company_id)
+          )
+        )
+        .orderBy(companies.name);
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
-        relationships: networkRelationships.map((r: DbRelationship) => ({
+        relationships: networkRelationships.map(r => ({
           id: r.id,
-          companyName: r.relatedCompany?.name,
+          companyName: r.relatedCompany.name,
           status: r.status,
-          type: r.type
+          type: r.relationshipType
         }))
       });
 
-      // Transform relationships for frontend
-      const transformedRelationships = networkRelationships.map((rel: DbRelationship) => ({
-        id: rel.id,
-        companyId: rel.related_company_id,
-        companyName: rel.relatedCompany?.name || 'Unknown Company',
-        category: rel.relatedCompany?.category || 'Other',
-        status: rel.status,
-        type: rel.type,
-        establishedDate: rel.created_at ? new Date(rel.created_at).toISOString() : null,
-        hasLogo: !!rel.relatedCompany?.logo_id
-      }));
-
-      res.json(transformedRelationships);
+      res.json(networkRelationships);
     } catch (error) {
       console.error("[Relationships] Error fetching relationships:", error);
       res.status(500).json({ message: "Error fetching relationships" });
@@ -696,11 +446,7 @@ export function registerRoutes(app: Express): Express {
           .where(eq(tasks.id, task.id))
           .returning();
 
-        // Ensure metadata is not null before broadcasting
-        broadcastTaskUpdate({
-          ...updatedTask,
-          metadata: updatedTask.metadata || {}
-        });
+        broadcastTaskUpdate(updatedTask);
       }
 
       // Update invitation status
@@ -910,7 +656,7 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Create logo record
-      const logoResult = await db.insert(companyLogos)
+      const [logo] = await db.insert(companyLogos)
         .values({
           company_id: companyId,
           file_name: req.file.originalname,
@@ -918,8 +664,6 @@ export function registerRoutes(app: Express): Express {
           file_type: req.file.mimetype,
         })
         .returning();
-      
-      const logo = Array.isArray(logoResult) ? logoResult[0] : logoResult;
 
       console.log('Debug - Created new logo record:', logo);
 
@@ -1103,14 +847,13 @@ export function registerRoutes(app: Express): Express {
           errorMessage
         });
 
-        return res.status(400).json({          
-          message: errorMessage,
+        return res.status(400).json({          message: errorMessage,
           invalidFields
         });
-      }
+            }
 
       // Database transaction for atomicity
-      const result = await db.transaction(async (tx: Transaction): Promise<InvitationResult | undefined> => {
+      const result = await db.transaction(async (tx) => {
         try {
           // Step 1: Get user's company details first
           console.log('[FinTech Invite] Fetching sender company details');
@@ -1132,15 +875,14 @@ export function registerRoutes(app: Express): Express {
 
           if (existingCompany) {
             console.error('[FinTech Invite] Company already exists:', existingCompany.name);
-            const response: InvitationResult = {
+            return res.status(409).json({
               message: "A company with this name already exists",
-              company: {
+              existingCompany: {
                 id: existingCompany.id,
                 name: existingCompany.name,
                 category: existingCompany.category
               }
-            };
-            return response;
+            });
           }
 
           // Step 3: Create new company record with proper status
@@ -1254,48 +996,36 @@ export function registerRoutes(app: Express): Express {
 
           // Create task for invitation
           console.log('[FinTech Invite] Creating task');
-          const taskValues = {
-            title: `New User Invitation: ${email}`,
-            description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
-            task_type: 'user_onboarding',
-            task_scope: 'user',
-            status: TaskStatus.PENDING as any, // Type casting to resolve enum issue
-            priority: 'medium',
-            progress: taskStatusToProgress[TaskStatus.PENDING],
-            created_by: req.user!.id,
-            user_email: email.toLowerCase(),
-            company_id: newCompany.id,
-            due_date: expirationDate,
-            metadata: {
-              user_id: newUser.id,
-              invitee_name: full_name,
-              invitee_company: company_name,
-              sender_name: sender_name,
-              company_created_at: newCompany.created_at,
-              invitation_id: invitation.id,
-              invitation_code: code,
-              status_flow: [TaskStatus.PENDING]
-            }
-          };
-          
-          const taskResult = await tx.insert(tasks)
-            .values(taskValues)
+          const [task] = await tx.insert(tasks)
+            .values({
+              title: `New User Invitation: ${email}`,
+              description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
+              task_type: 'user_onboarding',
+              task_scope: 'user',
+              status: TaskStatus.PENDING,
+              priority: 'medium',
+              progress: taskStatusToProgress[TaskStatus.PENDING],
+              created_by: req.user!.id, // Ensure created_by is set
+              user_email: email.toLowerCase(),
+              company_id: newCompany.id,
+              due_date: expirationDate,
+              metadata: {
+                user_id: newUser.id,
+                invitee_name: full_name,
+                invitee_company: company_name,
+                sender_name: sender_name,
+                company_created_at: newCompany.created_at,
+                invitation_id: invitation.id,
+                invitation_code: code,
+                status_flow: [TaskStatus.PENDING]
+              }
+            })
             .returning();
-            
-          const task = Array.isArray(taskResult) ? taskResult[0] : taskResult;
 
           if (!task) {
             console.error('[FinTech Invite] Failed to create task');
             throw new Error("Failed to create task record");
           }
-
-          // Broadcast the task update
-          broadcastTaskUpdate({
-            id: task.id,
-            status: task.status as any,
-            progress: task.progress,
-            metadata: task.metadata || {}
-          });
 
           console.log('[FinTech Invite] Successfully created task:', {
             id: task.id,
@@ -1318,8 +1048,7 @@ export function registerRoutes(app: Express): Express {
                 senderCompany: userCompany.name,
                 targetCompany: company_name,
                 inviteUrl,
-                code,
-                inviteType: 'fintech'
+                code
               }
             });
 
@@ -1363,9 +1092,9 @@ export function registerRoutes(app: Express): Express {
       console.log('[FinTech Invite] Invitation completed successfully');
       res.json({
         message: "Invitation sent successfully",
-        invitation: result && 'invitation' in result ? result.invitation : undefined,
-        company: result && 'company' in result ? result.company : undefined,
-        user: result && 'user' in result ? result.user : undefined
+        invitation: result.invitation,
+        company: result.company,
+        user: result.user
       });
 
     } catch (error: any) {
@@ -1443,7 +1172,7 @@ export function registerRoutes(app: Express): Express {
 
       // Start a database transaction
       console.log('[Invite] Starting database transaction');
-      const result = await db.transaction(async (tx: Transaction): Promise<InvitationResult> => {
+      const result = await db.transaction(async (tx) => {
         try {
           console.log('[Invite] Creating user account');
           // Create new user account with explicit company_id
@@ -1517,8 +1246,7 @@ export function registerRoutes(app: Express): Express {
               senderCompany: inviteData.sender_company,
               targetCompany: inviteData.company_name,
               code: inviteCode,
-              inviteUrl: `${process.env.APP_URL}/auth?code=`,
-              inviteType: 'user'
+              inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
             }
           });
 
@@ -1657,50 +1385,14 @@ export function registerRoutes(app: Express): Express {
 
   async function updateOnboardingTaskStatus(userId: number): Promise<{ id: number; status: TaskStatus; } | null> {
     try {
-      // Get the user's email first
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      
-      if (!user || !user.email) {
-        console.error('[updateOnboardingTaskStatus] User not found or missing email:', userId);
-        return null;
-      }
-      
-      // Find the task for this user
-      const [task] = await db.select().from(tasks).where(
-        and(
-          eq(tasks.user_email, user.email),
-          eq(tasks.task_type, 'user_onboarding')
-        )
-      );
+      const [task] = await db.select().from(tasks).where(eq(tasks.user_email, (await db.select().from(users).where(eq(users.id, userId))).find()?.email));
 
-      if (task) {
-        // Update task with new status and include metadata update
+      if (task && task.task_type === 'user_onboarding') {
         const [updatedTask] = await db.update(tasks)
-          .set({
-            status: 'completed', // Use string literal for status
-            progress: 100,
-            metadata: {
-              ...task.metadata || {},
-              completedAt: new Date().toISOString(),
-              status_flow: [...(task.metadata?.status_flow || []), TaskStatus.COMPLETED]
-            }
-          })
+          .set({ status: TaskStatus.COMPLETED, progress: 100 })
           .where(eq(tasks.id, task.id))
           .returning();
-        
-        // Broadcast the task update
-        broadcastTaskUpdate({
-          id: updatedTask.id,
-          status: updatedTask.status as any, // Type cast to resolve enum issue
-          progress: updatedTask.progress,
-          metadata: updatedTask.metadata || {}
-        });
-          
-        // Return only the required fields with the correct type
-        return {
-          id: updatedTask.id,
-          status: updatedTask.status as TaskStatus // Cast to TaskStatus for return type
-        };
+        return updatedTask;
       }
       return null;
     } catch (error) {
@@ -1708,76 +1400,6 @@ export function registerRoutes(app: Express): Express {
       return null;
     }
   }
-
-  // Get all invitations for the company
-  app.get("/api/invitations", requireAuth, async (req: Request, res: Response) => {
-    try {
-      console.log('[Invitations] Fetching invitations for company:', req.user!.company_id);
-      
-      // Get schemas
-      const { invitations } = getSchemas();
-
-      // Use adapter pattern to fetch invitations
-      const invitationsList = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(invitations)
-          .where(eq(invitations.company_id, ensureValue(req.user?.company_id, 0)))
-            .orderBy(sql`created_at DESC`);
-      });
-
-      console.log('[Invitations] Found invitations:', {
-        count: invitationsList.length
-      });
-
-      // Get the user list for linking
-      const { users } = getSchemas();
-      
-      const usersList = await executeWithNeonRetry(async (db: any) => {
-        return db.select()
-          .from(users)
-          .where(eq(users.company_id, ensureValue(req.user?.company_id, 0)));
-      });
-
-      // Create a map for easier lookup
-      const usersMap = new Map();
-      usersList.forEach((user: { id: number; name: string; email: string; role: string; active: boolean }) => {
-        if (user && user.email) {
-          usersMap.set(user.email.toLowerCase(), {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            active: user.active
-          });
-        }
-      });
-
-      // Transform invitations for response
-      const transformedInvitations = invitationsList.map((invitation: DbInvitation) => {
-        const userRecord = usersMap.get(invitation.email.toLowerCase());
-        
-        // Safely create user object with proper defaults
-        const userObject = userRecord ? {
-          id: userRecord.id || 0,
-          name: userRecord.name || '',
-          email: userRecord.email || '',
-          role: userRecord.role || '',
-          active: userRecord.active !== undefined ? userRecord.active : false
-        } : null;
-
-        return {
-          ...invitation,
-          isRegistered: !!userRecord,
-          user: userObject
-        };
-      });
-
-      res.json(transformedInvitations);
-    } catch (error) {
-      console.error("[Invitations] Error fetching invitations:", error);
-      res.status(500).json({ message: "Error fetching invitations" });
-    }
-  });
 
   console.log('[Routes] Routes setup completed');
   return app;
