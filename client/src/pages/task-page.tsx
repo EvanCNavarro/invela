@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
@@ -59,30 +59,75 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
+  console.log('[TaskPage] Initializing with params:', {
+    taskSlug: params.taskSlug,
+    taskType,
+    companyName,
+  });
+
   // Determine API endpoint based on task type
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
+
+  console.log('[TaskPage] Using API endpoint:', {
+    apiEndpoint,
+    fullUrl: `${apiEndpoint}/${companyName}`,
+  });
 
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, companyName],
     queryFn: async () => {
-      const response = await fetch(`${apiEndpoint}/${companyName}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${taskType.toUpperCase()} task`);
+      console.log('[TaskPage] Fetching task data:', {
+        endpoint: `${apiEndpoint}/${companyName}`,
+        taskType,
+        companyName,
+      });
+
+      try {
+        const response = await fetch(`${apiEndpoint}/${companyName}`);
+        console.log('[TaskPage] API response:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[TaskPage] API error response:', {
+            status: response.status,
+            text: errorText,
+          });
+          throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('[TaskPage] Task data received:', {
+          taskId: data.id,
+          title: data.title,
+          status: data.status,
+          metadata: data.metadata,
+        });
+
+        if (data.metadata?.[`${taskType}FormFile`]) {
+          setFileId(data.metadata[`${taskType}FormFile`]);
+          setIsSubmitted(true);
+        }
+        return data;
+      } catch (error) {
+        console.error('[TaskPage] Error in task fetch:', error);
+        throw error;
       }
-      const data = await response.json();
-      if (data.metadata?.[`${taskType}FormFile`]) {
-        setFileId(data.metadata[`${taskType}FormFile`]);
-        setIsSubmitted(true);
-      }
-      return data;
     },
     enabled: taskType === 'kyb' || taskType === 'card',
-    staleTime: 0
+    staleTime: 0,
   });
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Error loading task:', error);
+      console.error('[TaskPage] Error in useEffect:', {
+        error,
+        taskType,
+        companyName,
+      });
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
