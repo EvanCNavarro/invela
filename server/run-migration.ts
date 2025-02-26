@@ -2,8 +2,6 @@ import { renameLegacyLogos } from "./migrations/rename_logos";
 import { addCompanyNameUnique } from "../db/migrations/add_company_name_unique";
 import { addKybFormTables } from "../db/migrations/add_kyb_form_tables";
 import { addKybFieldGroups } from "../db/migrations/add_kyb_field_groups";
-import { addMetadataColumn } from "./migrations/add_metadata_column";
-import { addRefreshTokensTable } from "./migrations/add_refresh_tokens_table";
 
 async function main() {
   try {
@@ -18,12 +16,6 @@ async function main() {
 
     console.log('Starting KYB field groups migration...');
     await addKybFieldGroups();
-
-    console.log('Starting metadata column migration...');
-    await addMetadataColumn();
-
-    console.log('Starting refresh tokens table migration...');
-    await addRefreshTokensTable();
 
     console.log('All migrations completed successfully');
   } catch (error) {

@@ -34,8 +34,7 @@ const templateDataSchema = z.object({
   senderCompany: z.string(),
   targetCompany: z.string(),
   inviteUrl: z.string().url(),
-  code: z.string().optional(),
-  inviteType: z.enum(['user', 'fintech']).optional()
+  code: z.string().optional()
 });
 
 type TemplateData = z.infer<typeof templateDataSchema>;
@@ -78,7 +77,7 @@ export class EmailService {
     console.log('[EmailService] Email service initialized successfully');
   }
 
-  private transformTemplateData(data: TemplateData & { inviteType?: 'user' | 'fintech' }) {
+  private transformTemplateData(data: TemplateData) {
     console.log('[EmailService] Starting template data transformation');
     console.log('[EmailService] Input template data:', JSON.stringify(data, null, 2));
 
@@ -106,8 +105,7 @@ export class EmailService {
       senderCompany: data.senderCompany,
       targetCompany: data.targetCompany,
       inviteUrl,
-      code: data.code,
-      inviteType: data.inviteType || 'user' // Default to 'user' if not provided
+      code: data.code
     };
 
     console.log('[EmailService] Transformed template data:', JSON.stringify(transformedData, null, 2));
@@ -178,16 +176,9 @@ export class EmailService {
         };
       }
 
-      // Add inviteType based on template name if not already provided
-      const templateDataWithType = {
-        ...params.templateData,
-        inviteType: params.templateData.inviteType || 
-                    (params.template === 'fintech_invite' ? 'fintech' : 'user')
-      };
-
       // Transform and validate template data
       console.log('[EmailService] Transforming template data');
-      const transformedData = this.transformTemplateData(templateDataWithType);
+      const transformedData = this.transformTemplateData(params.templateData);
 
       // Get email template
       console.log('[EmailService] Getting email template:', params.template);
@@ -216,9 +207,9 @@ export class EmailService {
     } catch (error) {
       console.error('[EmailService] Failed to send email:', error);
       console.error('[EmailService] Error details:', {
-        name: error instanceof Error ? error.name : 'Unknown error',
-        message: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : 'No stack trace available'
+        name: error.name,
+        message: error.message,
+        stack: error.stack
       });
       return {
         success: false,

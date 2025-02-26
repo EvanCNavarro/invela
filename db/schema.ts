@@ -98,7 +98,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
   onboarding_user_completed: boolean("onboarding_user_completed").notNull().default(false),
-  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -141,7 +140,6 @@ export const invitations = pgTable("invitations", {
   invitee_company: text("invitee_company").notNull(),
   expires_at: timestamp("expires_at").notNull(),
   used_at: timestamp("used_at"),
-  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -203,14 +201,6 @@ export const kybResponses = pgTable("kyb_responses", {
   version: integer("version").notNull().default(1),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
-});
-
-export const refreshTokens = pgTable("refresh_tokens", {
-  id: serial("id").primaryKey(),
-  user_id: integer("user_id").notNull().references(() => users.id),
-  token: text("token").notNull(),
-  expires_at: timestamp("expires_at").notNull(),
-  created_at: timestamp("created_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
