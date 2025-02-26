@@ -5,9 +5,8 @@
  */
 
 import crypto from 'crypto';
-import { db } from '@db';
-import { refreshTokens } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { getDb, getSchemas, executeWithNeonRetry } from '../utils/db-adapter';
 
 // Token expiration time (30 days)
 const REFRESH_TOKEN_EXPIRY = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -23,6 +22,10 @@ export async function generateRefreshToken(userId: number): Promise<string> {
   // Generate a secure random token
   const token = crypto.randomBytes(40).toString('hex');
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY);
+  
+  // Get database and schema objects from the adapter
+  const db = getDb();
+  const { refreshTokens } = getSchemas();
   
   // Store the token in the database
   await db.insert(refreshTokens).values({
@@ -46,30 +49,35 @@ export async function generateRefreshToken(userId: number): Promise<string> {
 export async function verifyRefreshToken(token: string): Promise<number | null> {
   console.log('[Auth] Verifying refresh token');
   
-  // Find the token in the database
-  const result = await db.select()
-    .from(refreshTokens)
-    .where(eq(refreshTokens.token, token))
-    .limit(1);
+  // Using executeWithNeonRetry for resilient database operations
+  return await executeWithNeonRetry(async (db) => {
+    const { refreshTokens } = getSchemas();
     
-  if (result.length === 0) {
-    console.log('[Auth] Refresh token not found');
-    return null;
-  }
-  
-  const refreshToken = result[0];
-  
-  // Check if the token has expired
-  if (new Date(refreshToken.expires_at) < new Date()) {
-    console.log('[Auth] Refresh token expired, deleting');
-    // Token expired, delete it
-    await db.delete(refreshTokens)
-      .where(eq(refreshTokens.id, refreshToken.id));
-    return null;
-  }
-  
-  console.log(`[Auth] Refresh token valid for user ${refreshToken.user_id}`);
-  return refreshToken.user_id;
+    // Find the token in the database
+    const result = await db.select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.token, token))
+      .limit(1);
+      
+    if (result.length === 0) {
+      console.log('[Auth] Refresh token not found');
+      return null;
+    }
+    
+    const refreshToken = result[0];
+    
+    // Check if the token has expired
+    if (new Date(refreshToken.expires_at) < new Date()) {
+      console.log('[Auth] Refresh token expired, deleting');
+      // Token expired, delete it
+      await db.delete(refreshTokens)
+        .where(eq(refreshTokens.id, refreshToken.id));
+      return null;
+    }
+    
+    console.log(`[Auth] Refresh token valid for user ${refreshToken.user_id}`);
+    return refreshToken.user_id;
+  });
 }
 
 /**
@@ -80,8 +88,14 @@ export async function verifyRefreshToken(token: string): Promise<number | null> 
  */
 export async function revokeRefreshToken(token: string): Promise<void> {
   console.log('[Auth] Revoking refresh token');
-  await db.delete(refreshTokens)
-    .where(eq(refreshTokens.token, token));
+  
+  // Using executeWithNeonRetry for resilient database operations
+  await executeWithNeonRetry(async (db) => {
+    const { refreshTokens } = getSchemas();
+    
+    await db.delete(refreshTokens)
+      .where(eq(refreshTokens.token, token));
+  });
 }
 
 /**
@@ -92,6 +106,12 @@ export async function revokeRefreshToken(token: string): Promise<void> {
  */
 export async function revokeAllUserRefreshTokens(userId: number): Promise<void> {
   console.log(`[Auth] Revoking all refresh tokens for user ${userId}`);
-  await db.delete(refreshTokens)
-    .where(eq(refreshTokens.user_id, userId));
+  
+  // Using executeWithNeonRetry for resilient database operations
+  await executeWithNeonRetry(async (db) => {
+    const { refreshTokens } = getSchemas();
+    
+    await db.delete(refreshTokens)
+      .where(eq(refreshTokens.user_id, userId));
+  });
 } 

@@ -1,10 +1,22 @@
 import OpenAI from "openai";
-import { companies } from "@db/schema";
-import { db } from "@db";
-import { openaiSearchAnalytics } from "@db/schema";
+import { getSchemas, getDb } from "../utils/db-adapter";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Define lazy-loaded schema variables to avoid initialization at import time
+let companiesSchema: any;
+let openaiSearchAnalyticsSchema: any;
+
+// Helper function to ensure schemas are loaded when needed
+function ensureSchemas() {
+  if (!companiesSchema || !openaiSearchAnalyticsSchema) {
+    const schemas = getSchemas();
+    companiesSchema = schemas.companies;
+    openaiSearchAnalyticsSchema = schemas.openaiSearchAnalytics;
+  }
+  return { companies: companiesSchema, openaiSearchAnalytics: openaiSearchAnalyticsSchema };
+}
 
 interface CleanedCompanyData {
   name: string;
@@ -151,8 +163,10 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
       default:
         if (typeof value === 'string') {
+          // @ts-ignore - type safety handled at runtime
           cleanedData[key as keyof CleanedCompanyData] = value.trim();
         } else {
+          // @ts-ignore - type safety handled at runtime
           cleanedData[key as keyof CleanedCompanyData] = value;
         }
     }
@@ -163,7 +177,8 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
 async function logSearchAnalytics(analytics: SearchAnalytics) {
   try {
-    await db.insert(openaiSearchAnalytics).values({
+    const { openaiSearchAnalytics } = ensureSchemas();
+    await getDb().insert(openaiSearchAnalytics).values({
       search_type: analytics.searchType || 'missing_data',
       company_id: analytics.companyId,
       search_prompt: analytics.searchPrompt,
@@ -283,7 +298,8 @@ export async function findMissingCompanyData(
     console.log("[OpenAI Search] ⏱️ Search completed in", duration, "ms");
 
     // Parse and clean the OpenAI response
-    const rawResult = JSON.parse(response.choices[0].message.content);
+    const content = response.choices[0].message.content;
+    const rawResult = content ? JSON.parse(content) : {};
     console.log("[OpenAI Search] 📥 Received raw data:", rawResult);
 
     // Clean and format the data for storage
@@ -348,7 +364,7 @@ export async function findMissingCompanyData(
   }
 }
 
-export async function validateAndCleanCompanyData(rawData: Partial<typeof companies.$inferInsert>): Promise<CleanedCompanyData> {
+export async function validateAndCleanCompanyData(rawData: Partial<CleanedCompanyData>): Promise<CleanedCompanyData> {
   const startTime = Date.now();
   const prompt = `
     As a financial data expert, analyze and clean the following company information. 
@@ -421,7 +437,8 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         throw new Error("Empty response from OpenAI");
       }
 
-      const rawResult = JSON.parse(response.choices[0].message.content);
+      const content = response.choices[0].message.content;
+      const rawResult = content ? JSON.parse(content) : {};
       const cleanedData = cleanOpenAIResponse(rawResult);
 
       await logSearchAnalytics({

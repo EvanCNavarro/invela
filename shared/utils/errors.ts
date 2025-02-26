@@ -5,63 +5,101 @@
  */
 
 /**
- * Base application error class that all specific error types extend from.
- * Provides a consistent structure for error handling across the application.
+ * Base application error class
  */
 export class AppError extends Error {
-  constructor(
-    public message: string,
-    public status: number = 500,
-    public code: string = 'UNKNOWN_ERROR',
-    public details?: any
-  ) {
+  code: string;
+  statusCode: number;
+
+  constructor(message: string, code: string, statusCode: number = 500) {
     super(message);
     this.name = 'AppError';
+    this.code = code;
+    this.statusCode = statusCode;
   }
 }
 
 /**
- * Authentication-specific error class.
- * Used for authentication failures like invalid credentials, expired tokens, etc.
+ * Authentication related errors
  */
 export class AuthError extends AppError {
-  constructor(
-    message: string = 'Authentication failed',
-    code: string = 'AUTH_ERROR'
-  ) {
-    super(message, 401, code);
+  constructor(message: string, code: string, statusCode: number = 401) {
+    super(message, code, statusCode);
     this.name = 'AuthError';
   }
 }
 
 /**
- * Validation-specific error class.
- * Used for input validation failures, typically from Zod schema validation.
+ * Database related errors
+ */
+export class DbError extends AppError {
+  constructor(message: string, code: string, statusCode: number = 500) {
+    super(message, code, statusCode);
+    this.name = 'DbError';
+  }
+}
+
+/**
+ * Validation errors
  */
 export class ValidationError extends AppError {
-  constructor(
-    message: string = 'Validation failed',
-    details?: any
-  ) {
-    super(message, 400, 'VALIDATION_ERROR', details);
+  constructor(message: string, code: string, statusCode: number = 400) {
+    super(message, code, statusCode);
     this.name = 'ValidationError';
   }
 }
 
 /**
- * Not found error class.
- * Used when a requested resource cannot be found in the database.
+ * Not found errors
  */
 export class NotFoundError extends AppError {
-  constructor(
-    entity: string = 'Resource',
-    id?: string | number
-  ) {
-    const message = id 
-      ? `${entity} with ID ${id} not found` 
-      : `${entity} not found`;
-    
-    super(message, 404, 'NOT_FOUND');
+  constructor(message: string, code: string, statusCode: number = 404) {
+    super(message, code, statusCode);
     this.name = 'NotFoundError';
   }
+}
+
+/**
+ * Unauthorized access errors
+ */
+export class UnauthorizedError extends AppError {
+  constructor(message: string, code: string, statusCode: number = 403) {
+    super(message, code, statusCode);
+    this.name = 'UnauthorizedError';
+  }
+}
+
+/**
+ * Rate limit errors
+ */
+export class RateLimitError extends AppError {
+  constructor(message: string, code: string, statusCode: number = 429) {
+    super(message, code, statusCode);
+    this.name = 'RateLimitError';
+  }
+}
+
+/**
+ * Connection errors for network/service failures
+ */
+export class ConnectionError extends AppError {
+  constructor(message: string, code: string, statusCode: number = 503) {
+    super(message, code, statusCode);
+    this.name = 'ConnectionError';
+  }
+}
+
+/**
+ * Create an application error from any caught error
+ */
+export function createErrorFromCaught(error: unknown): AppError {
+  if (error instanceof AppError) {
+    return error;
+  }
+  
+  if (error instanceof Error) {
+    return new AppError(error.message, 'UNKNOWN_ERROR');
+  }
+  
+  return new AppError(String(error), 'UNKNOWN_ERROR');
 } 

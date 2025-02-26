@@ -1,129 +1,152 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import ws from 'ws';
-import dotenv from 'dotenv';
-import dns from 'dns';
+import { Client } from 'pg';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from parent directory
+const envPath = path.resolve(__dirname, '../.env');
+console.log(`Loading environment from: ${envPath}`);
+dotenv.config({ path: envPath });
 
-// Configure Neon to use WebSocket
-neonConfig.webSocketConstructor = ws;
+// Database connection parameters - with explicit credentials
+// This approach is more reliable for Neon
+const dbConfig = {
+  host: process.env.PGHOST || 'ep-wild-water-a4ulbqlb.us-east-1.aws.neon.tech',
+  port: parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || 'neondb',
+  user: process.env.PGUSER || 'neondb_owner',
+  password: process.env.PGPASSWORD || 'npg_m6KOAgxELBh7',
+  ssl: {
+    rejectUnauthorized: false
+  },
+  connectionTimeoutMillis: 60000 // 60 seconds - Neon can take time to wake up
+};
 
-// First, let's check if we can resolve the database hostname
-async function checkDnsResolution() {
-  try {
-    const dbUrl = process.env.DATABASE_URL || '';
-    if (!dbUrl) return false;
-    
-    // Extract hostname from database URL
-    const hostnameMatch = dbUrl.match(/@([^:/@]+)/);
-    if (!hostnameMatch) return false;
-    
-    const hostname = hostnameMatch[1];
-    console.log(`Testing DNS resolution for: ${hostname}`);
-    
-    return new Promise((resolve) => {
-      dns.lookup(hostname, (err, address) => {
-        if (err) {
-          console.error('DNS resolution failed:', err.message);
-          resolve(false);
-        } else {
-          console.log(`DNS resolved to: ${address}`);
-          resolve(true);
-        }
-      });
-    });
-  } catch (error) {
-    console.error('Error checking DNS:', error);
-    return false;
-  }
+console.log('Neon Database Test - Specialized for serverless PostgreSQL');
+console.log('---------------------------------------------------');
+console.log(`Host: ${dbConfig.host}`);
+console.log(`Database: ${dbConfig.database}`);
+console.log(`User: ${dbConfig.user}`);
+console.log(`SSL: Enabled with rejectUnauthorized: false`);
+console.log('---------------------------------------------------');
+
+// Function to wait with exponential backoff
+async function wait(attempt: number) {
+  // Start with 5 seconds, then 10, 20, 40, etc.
+  const delayMs = 5000 * Math.pow(2, attempt);
+  const delaySeconds = delayMs / 1000;
+  
+  console.log(`Waiting ${delaySeconds} seconds before attempt ${attempt + 1}...`);
+  
+  return new Promise(resolve => setTimeout(resolve, delayMs));
 }
 
-// Log the database URL (with credentials masked)
-const dbUrl = process.env.DATABASE_URL || '';
-console.log('Database URL configured:', dbUrl ? 'Yes (length: ' + dbUrl.length + ')' : 'No');
-if (dbUrl) {
-  // Mask credentials in URL for logging
-  try {
-    const maskedUrl = dbUrl.replace(/(postgres[^:]+:\/\/[^:]+:)[^@]+(@.+)/, '$1*****$2');
-    console.log('Database URL pattern:', maskedUrl);
-  } catch (e) {
-    console.log('Unable to mask database URL');
-  }
-}
-
-// Create a pool specifically for Neon
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // Neon requires WebSockets which is handled by neonConfig above
-  // Short timeouts for testing
-  connectionTimeoutMillis: 10000, // 10 second timeout
-  idleTimeoutMillis: 15000, // 15 second idle timeout
-  max: 1 // Just use a single connection for testing
-});
-
-async function testConnection() {
-  console.log('Starting Neon database connection test...');
+// Single attempt to connect and execute a simple query
+async function connectAndTest(): Promise<boolean> {
+  // Avoid connection pools with Neon - use single clients
+  const client = new Client(dbConfig);
   
-  // First check DNS resolution
-  const dnsResolved = await checkDnsResolution();
-  if (!dnsResolved) {
-    console.warn('DNS resolution issues detected - this may cause connection problems');
-  }
-  
-  console.log('Attempting to connect to database...');
-  let client;
   try {
-    client = await pool.connect();
-    console.log('Successfully connected to Neon database!');
+    console.log('\nOpening connection to Neon database...');
+    console.log('This may take up to 60 seconds if the database is in sleep mode...');
     
-    // Test a simple query
-    console.log('Testing simple query...');
-    const result = await client.query('SELECT NOW() as current_time');
-    console.log('Query result:', result.rows[0]);
+    // Connect to the database
+    await client.connect();
+    console.log('✅ Connection established successfully!');
     
-    // Test database version
-    console.log('Checking PostgreSQL version...');
-    const versionResult = await client.query('SELECT version()');
-    console.log('Database version:', versionResult.rows[0].version);
+    // Try a simple query
+    console.log('Running test query...');
+    const result = await client.query('SELECT NOW() as server_time, version() as version');
+    
+    console.log('✅ Query successful!');
+    console.log(`Server time: ${result.rows[0].server_time}`);
+    console.log(`PostgreSQL version: ${result.rows[0].version.split(',')[0]}`);
+    
+    // Always close connection with Neon
+    await client.end();
+    console.log('Connection closed cleanly');
     
     return true;
-  } catch (error) {
-    console.error('Database connection failed:', error);
+  } catch (error: any) {
+    console.error('❌ Connection failed:');
+    console.error(`Error message: ${error.message}`);
     
-    // More detailed error diagnosis
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    
-    if (errorMessage.includes('timeout')) {
-      console.log('\nTIMEOUT DIAGNOSIS:');
-      console.log('- Check if your Neon database is active (not in sleep mode)');
-      console.log('- Verify the Replit environment can connect to external services');
-      console.log('- Check if your database URL is correct');
-      console.log('- Verify no IP restrictions are in place on your Neon project');
+    if (error.code) {
+      console.error(`Error code: ${error.code}`);
     }
     
-    if (errorMessage.includes('certificate')) {
-      console.log('\nSSL DIAGNOSIS:');
-      console.log('- SSL issues detected. Verify your connection string includes proper SSL parameters');
-      console.log('- For Neon, try adding ?sslmode=require to your connection string');
+    // Always try to close the connection even after error
+    try {
+      await client.end();
+    } catch (closeError) {
+      // Ignore close errors
     }
     
     return false;
-  } finally {
-    if (client) {
-      client.release();
+  }
+}
+
+// Try connecting with increasing backoff
+async function testNeonConnection(maxAttempts = 5): Promise<boolean> {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    console.log(`\n🔄 Attempt ${attempt + 1} of ${maxAttempts}`);
+    
+    // Wait with increasing backoff before attempts after the first one
+    if (attempt > 0) {
+      await wait(attempt - 1);
     }
-    await pool.end().catch(err => console.error('Error ending pool:', err));
+    
+    const success = await connectAndTest();
+    if (success) {
+      console.log(`\n✅ Connection successful on attempt ${attempt + 1}!`);
+      return true;
+    }
+    
+    console.log(`❌ Attempt ${attempt + 1} failed.`);
+    
+    // Special handling for first attempt
+    if (attempt === 0) {
+      console.log('\n🔍 First attempt failed. This is normal for serverless databases.');
+      console.log('The database may need time to wake up. Waiting before retry...');
+    }
+  }
+  
+  console.error('\n⛔ All connection attempts failed.');
+  console.error('Common issues with Neon serverless PostgreSQL:');
+  console.error(' 1. Database is in sleep mode and needs more time to wake up');
+  console.error(' 2. Concurrent connection limits have been reached');
+  console.error(' 3. Database credentials are incorrect');
+  console.error(' 4. Database region may have availability issues');
+  
+  console.error('\nTroubleshooting steps:');
+  console.error(' 1. Check your Neon dashboard to verify the database is active');
+  console.error(' 2. Verify your database credentials are correct');
+  console.error(' 3. Try the Neon web SQL editor to see if it works there');
+  console.error(' 4. Ensure your project has not exceeded connection limits');
+  console.error(' 5. Check if you have IP restrictions enabled in your Neon project');
+  
+  return false;
+}
+
+// Main test function
+async function runTest() {
+  console.log('Starting specialized Neon database connection test...');
+  
+  try {
+    const result = await testNeonConnection();
+    
+    if (result) {
+      console.log('\n✅ TEST PASSED: Successfully connected to Neon database!');
+      process.exit(0);
+    } else {
+      console.log('\n❌ TEST FAILED: Could not connect to Neon database.');
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('Fatal error in test:', error);
+    process.exit(1);
   }
 }
 
 // Run the test
-testConnection()
-  .then(success => {
-    console.log('Test completed:', success ? 'SUCCESS' : 'FAILED');
-    process.exit(success ? 0 : 1);
-  })
-  .catch(err => {
-    console.error('Unexpected error:', err);
-    process.exit(1);
-  }); 
+runTest(); 

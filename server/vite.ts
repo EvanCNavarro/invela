@@ -1,15 +1,23 @@
 import express, { type Express } from "express";
 import fs from "fs";
-import path, { dirname } from "path";
-import { fileURLToPath } from "url";
-import { createServer as createViteServer, createLogger } from "vite";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import path from "path";
 import { type Server } from "http";
-import viteConfig from "../vite.config";
+import * as vite from "vite";
 import { nanoid } from "nanoid";
 
-const viteLogger = createLogger();
+// Create a logger using the Vite logger if available
+let viteLogger: any;
+try {
+  // @ts-ignore - We're handling potential import issues
+  viteLogger = vite.createLogger ? vite.createLogger() : console;
+} catch (e) {
+  viteLogger = {
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    clearScreen: () => {}
+  };
+}
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -23,14 +31,29 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const vite = await createViteServer({
-    ...viteConfig,
+  // Dynamically import the vite config
+  let config = {};
+  try {
+    // Dynamic import of vite.config.ts
+    const viteConfigModule = await import('../vite.config.js');
+    config = viteConfigModule.default || {};
+    log("Successfully loaded Vite config");
+  } catch (error) {
+    console.error("Error loading Vite config:", error);
+    // Continue with empty config if import fails
+  }
+
+  // @ts-ignore - Handle potential compatibility issues with createServer
+  const viteServer = await vite.createServer({
+    ...config,
     configFile: false,
     customLogger: {
       ...viteLogger,
-      error: (msg, options) => {
+      error: (msg: string, options?: any) => {
         // Don't exit process on error - just log it
-        viteLogger.error(msg, options);
+        if (viteLogger.error) {
+          viteLogger.error(msg, options);
+        }
         console.error("[Vite] Error:", msg);
       },
     },
@@ -41,10 +64,10 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
-  app.use(vite.middlewares);
+  app.use(viteServer.middlewares);
   
   // Serve static assets from public directory if they exist
-  const publicDir = path.resolve(__dirname, "..", "client", "public");
+  const publicDir = path.resolve("../client/public");
   if (fs.existsSync(publicDir)) {
     app.use(express.static(publicDir));
     log("Serving static assets from: " + publicDir);
@@ -63,10 +86,7 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const clientTemplate = path.resolve(
-        __dirname,
-        "..",
-        "client",
-        "index.html",
+        "../client/index.html",
       );
 
       if (!fs.existsSync(clientTemplate)) {
@@ -79,14 +99,14 @@ export async function setupVite(app: Express, server: Server) {
       template = template.replace(`src="/src/main.tsx"`, `src="/src/main.tsx?v=${nanoid()}"`)
       
       // Transform the template with Vite
-      const page = await vite.transformIndexHtml(url, template);
+      const page = await viteServer.transformIndexHtml(url, template);
       
       // Log successful rendering
       log(`Successfully served client route: ${url}`);
       
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
-      vite.ssrFixStacktrace(e as Error);
+      viteServer.ssrFixStacktrace(e as Error);
       console.error(`Error serving client route ${req.originalUrl}:`, e);
       next(e);
     }
@@ -94,7 +114,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "public");
+  const distPath = path.resolve("public");
 
   if (!fs.existsSync(distPath)) {
     throw new Error(

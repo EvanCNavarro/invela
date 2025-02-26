@@ -7,6 +7,7 @@ import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import ConsoleCommands from "@/components/debug/ConsoleCommands";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -26,6 +27,7 @@ import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilder
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 import DebugPage from "@/pages/debug-page";
+import AuthTestPage from "@/pages/auth-test-page";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -33,45 +35,6 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
       <ErrorBoundary>
         {children}
       </ErrorBoundary>
-    </div>
-  );
-}
-
-// Simple Debug Home component that will always render, even if not logged in
-function DebugHome() {
-  return (
-    <div style={{ padding: "20px", fontFamily: "system-ui, sans-serif" }}>
-      <h1 style={{ color: "#333", marginBottom: "20px" }}>App Diagnostic Page</h1>
-      <p style={{ marginBottom: "10px" }}>If you can see this message, your React app is loading correctly.</p>
-      <div style={{ marginTop: "20px" }}>
-        <a 
-          href="/login" 
-          style={{ 
-            display: "inline-block", 
-            padding: "10px 15px", 
-            background: "#4a65ff", 
-            color: "white", 
-            textDecoration: "none", 
-            borderRadius: "4px",
-            marginRight: "10px" 
-          }}
-        >
-          Go to Login
-        </a>
-        <a 
-          href="/debug" 
-          style={{ 
-            display: "inline-block", 
-            padding: "10px 15px", 
-            background: "#ff4a65", 
-            color: "white", 
-            textDecoration: "none", 
-            borderRadius: "4px" 
-          }}
-        >
-          Go to Debug Page
-        </a>
-      </div>
     </div>
   );
 }
@@ -93,13 +56,10 @@ function Router() {
         }}
       </Route>
 
-      {/* Public route for root path - will always show */}
-      <Route path="/" component={DebugHome} />
-
-      {/* Protected routes - Dashboard route (this now won't match since the public route above will match first) */}
-      <Route path="/dashboard">
+      {/* Dashboard route - Main route for authenticated users */}
+      <Route path="/">
         <ProtectedRoute 
-          path="/dashboard" 
+          path="/" 
           component={() => (
             <ProtectedLayout>
               <OnboardingWrapper>
@@ -252,13 +212,22 @@ function Router() {
         path="/debug" 
         component={() => (
           <ProtectedLayout>
-            <div className="min-h-screen">
-              <DebugPage />
-            </div>
+            <DebugPage />
           </ProtectedLayout>
         )} 
       />
 
+      {/* Auth testing route */}
+      <ProtectedRoute 
+        path="/auth-test" 
+        component={() => (
+          <ProtectedLayout>
+            <AuthTestPage />
+          </ProtectedLayout>
+        )} 
+      />
+
+      {/* Fallback 404 route */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -266,13 +235,12 @@ function Router() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router />
-          <Toaster position="bottom-right" />
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router />
+        <Toaster />
+        {process.env.NODE_ENV === 'development' && <ConsoleCommands />}
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }

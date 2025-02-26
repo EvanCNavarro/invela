@@ -8,7 +8,9 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "allowImportingTsExtensions": false,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "noImplicitAny": false,
+    "strict": false
   },
   "include": ["./**/*", "../shared/**/*", "../db/**/*"],
   "exclude": ["node_modules", "**/*.test.ts"]

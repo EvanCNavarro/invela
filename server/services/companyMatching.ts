@@ -1,6 +1,5 @@
 import Fuse from 'fuse.js';
-import { db } from "@db";
-import { companies } from "@db/schema";
+import { getSchemas, getDb } from "../utils/db-adapter";
 import { eq } from "drizzle-orm";
 
 // Options for fuzzy matching
@@ -13,7 +12,7 @@ const fuseOptions = {
 /**
  * Find missing or empty fields in a company record
  */
-export function findMissingFields(company: typeof companies.$inferSelect): string[] {
+export function findMissingFields(company: any): string[] {
   console.log("[Company Matching] 🔍 Analyzing company fields for:", company.name);
   const missingFields: string[] = [];
 
@@ -51,13 +50,16 @@ export function findMissingFields(company: typeof companies.$inferSelect): strin
  */
 export async function findCompanyInRegistry(searchName: string): Promise<{
   found: boolean;
-  company?: typeof companies.$inferSelect;
+  company?: any;
   score?: number;
 }> {
   console.log("[Company Matching] 🔎 Searching registry for:", searchName);
 
+  // Get schemas for each function call (after DB initialization)
+  const { companies } = getSchemas();
+
   // Get all companies from the database
-  const allCompanies = await db.select().from(companies);
+  const allCompanies = await getDb().select().from(companies);
   console.log("[Company Matching] 📚 Found", allCompanies.length, "companies in registry");
 
   // Initialize Fuse with our companies
@@ -66,14 +68,17 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
   // Search for matches
   const results = fuse.search(searchName);
   console.log("[Company Matching] 🎯 Search results:", results.length > 0 ? 
-    `Found match with score ${results[0].score}` : "No matches found");
+    `Found match with score ${results[0]?.score}` : "No matches found");
 
   // If we found a good match (score < 0.3 indicates good match)
-  if (results.length > 0 && results[0].score < 0.3) {
-    console.log("[Company Matching] ✅ Found existing company:", results[0].item.name);
+  if (results.length > 0 && results[0]?.score !== undefined && results[0].score < 0.3) {
+    // Type assertion for safer access
+    const matchedItem = results[0].item as Record<string, any>;
+    const matchName = matchedItem?.name || 'Unknown Company';
+    console.log("[Company Matching] ✅ Found existing company:", matchName);
     return {
       found: true,
-      company: results[0].item,
+      company: matchedItem,
       score: results[0].score
     };
   }
@@ -87,13 +92,16 @@ export async function findCompanyInRegistry(searchName: string): Promise<{
  */
 export async function updateCompanyData(
   companyId: number,
-  newData: Partial<typeof companies.$inferInsert>
-): Promise<typeof companies.$inferSelect> {
+  newData: Partial<any>
+): Promise<any> {
   console.log("[Company Matching] 🔄 Updating company data for ID:", companyId);
   console.log("[Company Matching] 📝 New data to be applied:", newData);
 
+  // Get schemas when the function is called
+  const { companies } = getSchemas();
+
   // Update company record
-  await db.update(companies)
+  await getDb().update(companies)
     .set({
       ...newData,
       updatedAt: new Date() // Use Date object directly
@@ -101,7 +109,7 @@ export async function updateCompanyData(
     .where(eq(companies.id, companyId));
 
   // Return updated company
-  const updatedCompany = await db.query.companies.findFirst({
+  const updatedCompany = await getDb().query.companies.findFirst({
     where: eq(companies.id, companyId)
   });
 
@@ -118,13 +126,16 @@ export async function updateCompanyData(
  * Create new company in registry
  */
 export async function createCompanyInRegistry(
-  data: typeof companies.$inferInsert
-): Promise<typeof companies.$inferSelect> {
+  data: any
+): Promise<any> {
   console.log("[Company Matching] 🆕 Creating new company:", data.name);
 
+  // Get schemas when the function is called
+  const { companies } = getSchemas();
+  
   const now = new Date(); // Create a single Date object for all timestamps
 
-  const [newCompany] = await db.insert(companies)
+  const [newCompany] = await getDb().insert(companies)
     .values({
       ...data,
       registryDate: now,

@@ -1,13 +1,47 @@
 import { Router } from 'express';
 import { join } from 'path';
-import { db } from '@db';
-import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
+import { getDb, getSchemas } from '../utils/db-adapter';
 import { eq, and, ilike } from 'drizzle-orm';
+
+// Interface for task objects
+interface Task {
+  id: number;
+  status: string;
+  progress: number;
+  metadata?: Record<string, any>;
+  [key: string]: any;
+}
+
+// Interface for field objects
+interface KybField {
+  id: number;
+  field_key: string;
+  field_type: string;
+  group: string;
+  [key: string]: any;
+}
+
+// Interface for response objects
+interface KybResponse {
+  id: number;
+  task_id: number;
+  field_id: number;
+  response_value: string | null;
+  status: string;
+  [key: string]: any;
+}
+
+// Add a type for the response data
+interface KybJsonResponse {
+  responses?: Record<string, Record<string, string | null>>;
+  metadata?: Record<string, any>;
+  [key: string]: any;
+}
 
 const router = Router();
 
 // Debug utility for logging task data
-const logTaskDebug = (stage: string, task: any, extras: Record<string, any> = {}) => {
+const logTaskDebug = (stage: string, task: Task, extras: Record<string, any> = {}) => {
   console.log(`[KYB API Debug] ${stage}:`, {
     taskId: task?.id,
     status: task?.status,
@@ -40,6 +74,12 @@ const logFileDebug = (stage: string, data: Record<string, any>) => {
   });
 };
 
+// Helper to get the TaskStatus enum from schema
+function getTaskStatus() {
+  const { TaskStatus } = getSchemas();
+  return TaskStatus;
+}
+
 // Get KYB task by company name
 router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
   try {
@@ -52,9 +92,9 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
 
     // If no company name provided, return all KYB tasks
     if (!companyName) {
-      const kybTasks = await db.select()
-        .from(tasks)
-        .where(eq(tasks.task_type, 'company_kyb'));
+      const kybTasks = await getDb().select()
+        .from(getSchemas().tasks)
+        .where(eq(getSchemas().tasks.task_type, 'company_kyb'));
       return res.json(kybTasks[0] || null);
     }
 
@@ -69,12 +109,12 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const [task] = await db.select()
-      .from(tasks)
+    const [task] = await getDb().select()
+      .from(getSchemas().tasks)
       .where(
         and(
-          eq(tasks.task_type, 'company_kyb'),
-          ilike(tasks.title, `%${formattedCompanyName}%`)
+          eq(getSchemas().tasks.task_type, 'company_kyb'),
+          ilike(getSchemas().tasks.title, `%${formattedCompanyName}%`)
         )
       );
 
@@ -89,9 +129,9 @@ router.get('/api/tasks/kyb/:companyName?', async (req, res) => {
     logTaskDebug('Found task', task);
 
     // Get all KYB responses for this task
-    const responses = await db.select()
-      .from(kybResponses)
-      .where(eq(kybResponses.task_id, task.id));
+    const responses = await getDb().select()
+      .from(getSchemas().kybResponses)
+      .where(eq(getSchemas().kybResponses.task_id, task.id));
 
     logResponseDebug('Retrieved responses', responses, {
       taskId: task.id
@@ -154,9 +194,9 @@ router.post('/api/kyb/progress', async (req, res) => {
     }
 
     // Get existing task data
-    const [existingTask] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
+    const [existingTask] = await getDb().select()
+      .from(getSchemas().tasks)
+      .where(eq(getSchemas().tasks.id, taskId));
 
     if (!existingTask) {
       console.log('[KYB API Debug] Task not found:', taskId);
@@ -167,8 +207,8 @@ router.post('/api/kyb/progress', async (req, res) => {
     }
 
     // Get all KYB fields
-    const fields = await db.select().from(kybFields);
-    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+    const fields = await getDb().select().from(getSchemas().kybFields);
+    const fieldMap = new Map(fields.map((f: KybField) => [f.field_key, f.id]));
 
     // Update KYB responses for each field
     const timestamp = new Date();
@@ -183,25 +223,25 @@ router.post('/api/kyb/progress', async (req, res) => {
       const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
 
       // Check if response exists
-      const [existingResponse] = await db.select()
-        .from(kybResponses)
+      const [existingResponse] = await getDb().select()
+        .from(getSchemas().kybResponses)
         .where(
           and(
-            eq(kybResponses.task_id, taskId),
-            eq(kybResponses.field_id, fieldId)
+            eq(getSchemas().kybResponses.task_id, taskId),
+            eq(getSchemas().kybResponses.field_id, fieldId)
           )
         );
 
       if (existingResponse) {
         // Update existing response
-        await db.update(kybResponses)
+        await getDb().update(getSchemas().kybResponses)
           .set({
             response_value: responseValue,
             status,
             version: existingResponse.version + 1,
             updated_at: timestamp
           })
-          .where(eq(kybResponses.id, existingResponse.id));
+          .where(eq(getSchemas().kybResponses.id, existingResponse.id));
 
         console.log('[KYB API Debug] Updated field response:', {
           fieldKey,
@@ -213,7 +253,7 @@ router.post('/api/kyb/progress', async (req, res) => {
         });
       } else {
         // Create new response
-        await db.insert(kybResponses)
+        await getDb().insert(getSchemas().kybResponses)
           .values({
             task_id: taskId,
             field_id: fieldId,
@@ -235,26 +275,26 @@ router.post('/api/kyb/progress', async (req, res) => {
 
     // Handle fields that were in the database but not in the current formData
     // These should be marked as EMPTY
-    const existingResponses = await db.select({
-      response_value: kybResponses.response_value,
-      field_key: kybFields.field_key,
-      field_id: kybFields.id,
-      response_id: kybResponses.id
+    const existingResponses = await getDb().select({
+      response_value: getSchemas().kybResponses.response_value,
+      field_key: getSchemas().kybFields.field_key,
+      field_id: getSchemas().kybFields.id,
+      response_id: getSchemas().kybResponses.id
     })
-      .from(kybResponses)
-      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, taskId));
+      .from(getSchemas().kybResponses)
+      .innerJoin(getSchemas().kybFields, eq(getSchemas().kybResponses.field_id, getSchemas().kybFields.id))
+      .where(eq(getSchemas().kybResponses.task_id, taskId));
 
     for (const response of existingResponses) {
       if (!processedFields.has(response.field_key)) {
-        await db.update(kybResponses)
+        await getDb().update(getSchemas().kybResponses)
           .set({
             response_value: null,
             status: 'EMPTY',
             version: 1,
             updated_at: timestamp
           })
-          .where(eq(kybResponses.id, response.response_id));
+          .where(eq(getSchemas().kybResponses.id, response.response_id));
 
         console.log('[KYB API Debug] Cleared missing field:', {
           fieldKey: response.field_key,
@@ -267,15 +307,15 @@ router.post('/api/kyb/progress', async (req, res) => {
     // Determine appropriate status based on progress
     let newStatus = existingTask.status;
     if (progress === 0) {
-      newStatus = TaskStatus.NOT_STARTED;
+      newStatus = getTaskStatus().NOT_STARTED;
     } else if (progress < 100) {
-      newStatus = TaskStatus.IN_PROGRESS;
+      newStatus = getTaskStatus().IN_PROGRESS;
     } else if (progress === 100) {
-      newStatus = TaskStatus.READY_FOR_SUBMISSION;
+      newStatus = getTaskStatus().READY_FOR_SUBMISSION;
     }
 
     // Update task progress and metadata
-    await db.update(tasks)
+    await getDb().update(getSchemas().tasks)
       .set({
         progress: Math.min(progress, 100),
         status: newStatus,
@@ -287,17 +327,17 @@ router.post('/api/kyb/progress', async (req, res) => {
         },
         updated_at: timestamp
       })
-      .where(eq(tasks.id, taskId));
+      .where(eq(getSchemas().tasks.id, taskId));
 
     // Get updated responses
-    const updatedResponses = await db.select({
-      response_value: kybResponses.response_value,
-      field_key: kybFields.field_key,
-      status: kybResponses.status
+    const updatedResponses = await getDb().select({
+      response_value: getSchemas().kybResponses.response_value,
+      field_key: getSchemas().kybFields.field_key,
+      status: getSchemas().kybResponses.status
     })
-      .from(kybResponses)
-      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, taskId));
+      .from(getSchemas().kybResponses)
+      .innerJoin(getSchemas().kybFields, eq(getSchemas().kybResponses.field_id, getSchemas().kybFields.id))
+      .where(eq(getSchemas().kybResponses.task_id, taskId));
 
     const updatedFormData: Record<string, any> = {};
     for (const response of updatedResponses) {
@@ -336,9 +376,9 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     console.log('[KYB API Debug] Loading progress for task:', taskId);
 
     // Get task data
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, parseInt(taskId)));
+    const [task] = await getDb().select()
+      .from(getSchemas().tasks)
+      .where(eq(getSchemas().tasks.id, parseInt(taskId)));
 
     logTaskDebug('Retrieved task', task);
 
@@ -348,14 +388,14 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
     }
 
     // Get all KYB responses for this task with their field information
-    const responses = await db.select({
-      response_value: kybResponses.response_value,
-      field_key: kybFields.field_key,
-      status: kybResponses.status
+    const responses = await getDb().select({
+      response_value: getSchemas().kybResponses.response_value,
+      field_key: getSchemas().kybFields.field_key,
+      status: getSchemas().kybResponses.status
     })
-      .from(kybResponses)
-      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
-      .where(eq(kybResponses.task_id, parseInt(taskId)));
+      .from(getSchemas().kybResponses)
+      .innerJoin(getSchemas().kybFields, eq(getSchemas().kybResponses.field_id, getSchemas().kybFields.id))
+      .where(eq(getSchemas().kybResponses.task_id, parseInt(taskId)));
 
     logResponseDebug('Retrieved responses', responses);
 
@@ -408,9 +448,9 @@ router.post('/api/kyb/save', async (req, res) => {
     });
 
     // Get task details
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
+    const [task] = await getDb().select()
+      .from(getSchemas().tasks)
+      .where(eq(getSchemas().tasks.id, taskId));
 
     if (!task) {
       const error = 'Task not found';
@@ -425,9 +465,9 @@ router.post('/api/kyb/save', async (req, res) => {
     });
 
     // Get company record to update available tabs
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
+    const [company] = await getDb().select()
+      .from(getSchemas().companies)
+      .where(eq(getSchemas().companies.id, task.company_id));
 
     if (!company) {
       throw new Error('Company not found');
@@ -439,12 +479,12 @@ router.post('/api/kyb/save', async (req, res) => {
       const updatedTabs = [...currentTabs, 'file-vault'];
 
       // Update company's available tabs
-      await db.update(companies)
+      await getDb().update(getSchemas().companies)
         .set({
           available_tabs: updatedTabs,
           updated_at: new Date()
         })
-        .where(eq(companies.id, task.company_id));
+        .where(eq(getSchemas().companies.id, task.company_id));
 
       logFileDebug('Updated company available tabs', {
         companyId: task.company_id,
@@ -454,14 +494,14 @@ router.post('/api/kyb/save', async (req, res) => {
     }
 
     // Get all KYB fields with their groups
-    const fields = await db.select()
-      .from(kybFields)
-      .orderBy(kybFields.order);
+    const fields = await getDb().select()
+      .from(getSchemas().kybFields)
+      .orderBy(getSchemas().kybFields.order);
 
     logFileDebug('Fields retrieved', {
       fieldCount: fields.length,
-      fieldGroups: [...new Set(fields.map(f => f.group))],
-      fieldTypes: [...new Set(fields.map(f => f.field_type))]
+      fieldGroups: [...new Set(fields.map((f: KybField) => f.group))],
+      fieldTypes: [...new Set(fields.map((f: KybField) => f.field_type))]
     });
 
     // Create comprehensive submission data
@@ -471,15 +511,15 @@ router.post('/api/kyb/save', async (req, res) => {
         taskTitle: task.title,
         submissionDate: new Date().toISOString(),
         formVersion: '1.0',
-        status: TaskStatus.SUBMITTED
+        status: getTaskStatus().SUBMITTED
       },
       taskData: {
         ...task,
         progress: 100,
-        status: TaskStatus.SUBMITTED
+        status: getTaskStatus().SUBMITTED
       },
       formStructure: {
-        fields: fields.map(field => ({
+        fields: fields.map((field: KybField) => ({
           key: field.field_key,
           name: field.display_name,
           type: field.field_type,
@@ -526,7 +566,7 @@ router.post('/api/kyb/save', async (req, res) => {
 
     // Create file record in database
     const timestamp = new Date();
-    const [fileRecord] = await db.insert(files)
+    const [fileRecord] = await getDb().insert(getSchemas().files)
       .values({
         name: `${fileName}.json`,
         size: fileSize,
@@ -550,7 +590,7 @@ router.post('/api/kyb/save', async (req, res) => {
     });
 
     // Save responses to database
-    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+    const fieldMap = new Map(fields.map((f: KybField) => [f.field_key, f.id]));
 
     // Save responses to database
     for (const [fieldKey, value] of Object.entries(formData)) {
@@ -564,12 +604,12 @@ router.post('/api/kyb/save', async (req, res) => {
       const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
 
       // Check if response exists
-      const [existingResponse] = await db.select()
-        .from(kybResponses)
+      const [existingResponse] = await getDb().select()
+        .from(getSchemas().kybResponses)
         .where(
           and(
-            eq(kybResponses.task_id, taskId),
-            eq(kybResponses.field_id, fieldId)
+            eq(getSchemas().kybResponses.task_id, taskId),
+            eq(getSchemas().kybResponses.field_id, fieldId)
           )
         );
 
@@ -581,14 +621,14 @@ router.post('/api/kyb/save', async (req, res) => {
           newValue: responseValue
         });
 
-        await db.update(kybResponses)
+        await getDb().update(getSchemas().kybResponses)
           .set({
             response_value: responseValue,
             status,
             version: existingResponse.version + 1,
             updated_at: timestamp
           })
-          .where(eq(kybResponses.id, existingResponse.id));
+          .where(eq(getSchemas().kybResponses.id, existingResponse.id));
       } else {
         logFileDebug('Creating new response', {
           fieldKey,
@@ -596,7 +636,7 @@ router.post('/api/kyb/save', async (req, res) => {
           value: responseValue
         });
 
-        await db.insert(kybResponses)
+        await getDb().insert(getSchemas().kybResponses)
           .values({
             task_id: taskId,
             field_id: fieldId,
@@ -612,13 +652,13 @@ router.post('/api/kyb/save', async (req, res) => {
     // Update task status
     logFileDebug('Updating task status', {
       taskId,
-      newStatus: TaskStatus.SUBMITTED,
+      newStatus: getTaskStatus().SUBMITTED,
       progress: 100
     });
 
-    await db.update(tasks)
+    await getDb().update(getSchemas().tasks)
       .set({
-        status: TaskStatus.SUBMITTED,
+        status: getTaskStatus().SUBMITTED,
         progress: 100,
         updated_at: timestamp,
         metadata: {
@@ -626,16 +666,16 @@ router.post('/api/kyb/save', async (req, res) => {
           kybFormFile: fileRecord.id, // Store file ID instead of filename
           submissionDate: timestamp.toISOString(),
           formVersion: '1.0',
-          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+          statusFlow: [...(task.metadata?.statusFlow || []), getTaskStatus().SUBMITTED]
             .filter((v, i, a) => a.indexOf(v) === i)
         }
       })
-      .where(eq(tasks.id, taskId));
+      .where(eq(getSchemas().tasks.id, taskId));
 
     logFileDebug('Save completed', {
       fileId: fileRecord.id,
       taskId,
-      status: TaskStatus.SUBMITTED,
+      status: getTaskStatus().SUBMITTED,
       timestamp: timestamp.toISOString()
     });
 
@@ -674,9 +714,9 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
     });
 
     // Get file from database
-    const [file] = await db.select()
-      .from(files)
-      .where(eq(files.id, parseInt(fileId)));
+    const [file] = await getDb().select()
+      .from(getSchemas().files)
+      .where(eq(getSchemas().files.id, parseInt(fileId)));
 
     if (!file) {
       logFileDebug('File not found', { fileId });
@@ -684,24 +724,24 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
     }
 
     // Get all field questions
-    const fields = await db.select({
-      field_key: kybFields.field_key,
-      display_name: kybFields.display_name,
-      question: kybFields.question,
-      group: kybFields.group,
-      field_type: kybFields.field_type
+    const fields = await getDb().select({
+      field_key: getSchemas().kybFields.field_key,
+      display_name: getSchemas().kybFields.display_name,
+      question: getSchemas().kybFields.question,
+      group: getSchemas().kybFields.group,
+      field_type: getSchemas().kybFields.field_type
     })
-      .from(kybFields)
-      .orderBy(kybFields.order);
+      .from(getSchemas().kybFields)
+      .orderBy(getSchemas().kybFields.order);
 
     logFileDebug('Retrieved field information', {
       fieldCount: fields.length,
       sampleField: fields[0],
-      allKeys: fields.map(f => f.field_key)
+      allKeys: fields.map((f: KybField) => f.field_key)
     });
 
     const fieldQuestions = new Map(
-      fields.map(f => [f.field_key, {
+      fields.map((f: KybField) => [f.field_key, {
         name: f.display_name,
         question: f.question,
         group: f.group,
@@ -710,7 +750,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
     );
 
     // Parse the stored JSON data
-    const jsonData = JSON.parse(file.path);
+    const jsonData = JSON.parse(file.path) as KybJsonResponse;
 
     let downloadData: string;
     let contentType: string;
@@ -733,8 +773,9 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         // Add data rows for each response
         if (jsonData.responses && typeof jsonData.responses === 'object') {
           // Get all responses regardless of group
-          const allResponses = Object.values(jsonData.responses)
-            .reduce((acc: any, group: any) => ({ ...acc, ...group }), {});
+          const allResponses: Record<string, string | null> = Object.values(jsonData.responses)
+            .reduce((acc: Record<string, string | null>, group: Record<string, string | null>) => 
+              ({ ...acc, ...group }), {});
 
           // Add a row for each field, maintaining order from the database
           for (const field of fields) {
@@ -743,9 +784,9 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
               csvRows.push([
                 field.group || 'Uncategorized',
                 field.question || field.display_name,
-                response.answer || '',
-                response.type || field.field_type,
-                response.answeredAt || new Date().toISOString()
+                response,
+                field.field_type || field.field_type,
+                response ? new Date(response).toISOString() : new Date().toISOString()
               ]);
             }
           }
@@ -764,9 +805,9 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         // Convert to human-readable text format
         const textParts = [];
         textParts.push('KYB Form Submission\n' + '='.repeat(20) + '\n');
-        textParts.push(`Task: ${jsonData.metadata.taskTitle}`);
-        textParts.push(`Submission Date: ${jsonData.metadata.submissionDate}`);
-        textParts.push(`Status: ${jsonData.metadata.status}\n`);
+        textParts.push(`Task: ${jsonData.metadata?.taskTitle || 'Unknown'}`);
+        textParts.push(`Submission Date: ${jsonData.metadata?.submissionDate || 'Unknown'}`);
+        textParts.push(`Status: ${jsonData.metadata?.status || 'Unknown'}\n`);
 
         // Group fields by their category
         const groupedFields = new Map<string, Array<{field: any, response: any}>>();
@@ -785,7 +826,7 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
         for (const [group, items] of groupedFields) {
           textParts.push(`\n${group}:\n` + '='.repeat(group.length) + '\n');
           for (const { field, response } of items) {
-            textParts.push(`${field.question}\nAnswer: ${response.answer || 'Not provided'}\n`);
+            textParts.push(`${field.question}\nAnswer: ${response || 'Not provided'}\n`);
           }
         }
 

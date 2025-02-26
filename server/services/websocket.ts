@@ -14,8 +14,8 @@ import type {
   PingMessage,
   PongMessage,
   ErrorMessage
-} from '@shared/types/websocket';
-import type { TaskStatus } from '@shared/types/tasks';
+} from '../types/websocket';
+import type { TaskStatus } from '../types/tasks';
 
 // Global WebSocket server instance
 let wss: WebSocketServer;
