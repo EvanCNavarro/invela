@@ -284,7 +284,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB"]),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "compliance_and_risk"]),
   task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -343,11 +343,13 @@ export const insertTaskSchema = z.object({
         path: ["company_id"],
       });
     }
-  } else if (data.task_type === "company_onboarding_KYB") {
+  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "compliance_and_risk") {
     if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Company is required for KYB tasks",
+        message: data.task_type === "company_onboarding_KYB" 
+          ? "Company is required for KYB tasks"
+          : "Company is required for CARD tasks",
         path: ["company_id"],
       });
     }
