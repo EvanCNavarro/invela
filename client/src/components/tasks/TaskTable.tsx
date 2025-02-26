@@ -61,7 +61,14 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [, navigate] = useLocation();
 
   const handleTaskClick = (task: Task) => {
-    console.log('Task clicked:', task);
+    console.log('[TaskTable] Task clicked:', {
+      id: task.id,
+      title: task.title,
+      type: task.task_type,
+      status: task.status,
+      metadata: task.metadata,
+    });
+
     // Navigate to form pages for KYB and CARD tasks if not in submitted status
     if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
       // Get company name from metadata or task title
@@ -72,16 +79,23 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
       const formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
 
-      console.log(`[TaskTable] Navigating to ${taskTypePrefix} task page:`, {
+      console.log(`[TaskTable] Preparing navigation:`, {
         taskType: task.task_type,
-        companyName,
-        url: formUrl,
-        taskMetadata: task.metadata
+        originalTitle: task.title,
+        extractedCompanyName: companyName,
+        taskTypePrefix,
+        constructedUrl: formUrl,
+        metadata: task.metadata,
       });
 
       // Navigate to form page
       navigate(formUrl);
     } else {
+      console.log('[TaskTable] Opening modal for task:', {
+        id: task.id,
+        type: task.task_type,
+        status: task.status,
+      });
       // Show modal for other task types or submitted KYB/CARD tasks
       setSelectedTask(task);
       setDetailsModalOpen(true);
