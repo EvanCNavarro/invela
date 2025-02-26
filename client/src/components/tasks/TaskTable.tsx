@@ -62,21 +62,27 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
 
   const handleTaskClick = (task: Task) => {
     console.log('Task clicked:', task);
-    // Only navigate to KYB form if task is not in submitted status
-    if (task.task_type === 'company_kyb' && task.status !== 'submitted') {
+    // Navigate to form pages for KYB and CARD tasks if not in submitted status
+    if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
       // Get company name from metadata or task title
       const companyName = task.metadata?.company_name || 
-                         task.title.replace('Company KYB: ', '').toLowerCase().replace(/\s+/g, '-');
-      console.log('[TaskTable] Navigating to KYB task page:', {
+                         task.title.replace(/Company (KYB|CARD): /, '').toLowerCase().replace(/\s+/g, '-');
+
+      // Build the URL based on task type
+      const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
+      const formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
+
+      console.log(`[TaskTable] Navigating to ${taskTypePrefix} task page:`, {
         taskType: task.task_type,
         companyName,
-        url: `/task-center/task/kyb-${companyName}`,
+        url: formUrl,
         taskMetadata: task.metadata
       });
-      // Navigate to KYB form page with company name in URL
-      navigate(`/task-center/task/kyb-${companyName}`);
+
+      // Navigate to form page
+      navigate(formUrl);
     } else {
-      // Show modal for other task types or submitted KYB tasks
+      // Show modal for other task types or submitted KYB/CARD tasks
       setSelectedTask(task);
       setDetailsModalOpen(true);
     }
