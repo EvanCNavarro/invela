@@ -4,6 +4,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./services/websocket";
+import cors from "cors";
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -21,6 +22,12 @@ export class APIError extends Error {
 const app = express();
 const server = createServer(app);
 
+// Configure CORS for Replit environment
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+
 // Configure body parsing middleware first
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -28,7 +35,7 @@ app.use(express.urlencoded({ extended: false }));
 // Set up authentication before routes
 setupAuth(app);
 
-// Request logging middleware
+// Request logging middleware with detailed error tracking
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -83,11 +90,12 @@ app.use((req, res, next) => {
 // Register API routes
 registerRoutes(app);
 
-// Setup WebSocket server
+// Setup WebSocket server with error handling
 setupWebSocket(server);
 
 // Set up development environment
-if (app.get("env") === "development") {
+if (process.env.NODE_ENV !== "production") {
+  log("Setting up Vite development server", "info");
   await setupVite(app, server);
 } else {
   // Serve static files only in production, after API routes
@@ -132,6 +140,6 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   log(`Server running on port ${PORT}`);
 });
