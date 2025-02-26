@@ -66,7 +66,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
     if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
       // Get company name from metadata or task title
       const companyName = task.metadata?.company_name || 
-                         task.title.replace(/Company (KYB|CARD): /, '').toLowerCase().replace(/\s+/g, '-');
+                         task.title.replace(/Company (KYB|CARD): /, '');
 
       // Build the URL based on task type
       const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
