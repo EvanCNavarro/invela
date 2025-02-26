@@ -13,19 +13,27 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
     console.log('[Card Routes] Fetching CARD fields');
 
     const fields = await db.select()
-      .from(cardFields)
-      .orderBy(cardFields.order);
+      .from(cardFields);
 
     console.log('[Card Routes] Fields retrieved:', {
       count: fields.length,
-      sections: [...new Set(fields.map(f => f.wizard_section))],
-      fieldTypes: [...new Set(fields.map(f => f.field_type))]
+      sections: fields.length > 0 ? [...new Set(fields.map(f => f.wizard_section))] : [],
+      fieldTypes: fields.length > 0 ? [...new Set(fields.map(f => f.field_key))] : [],
+      timestamp: new Date().toISOString()
     });
 
     res.json(fields);
   } catch (error) {
-    console.error('[Card Routes] Error fetching CARD fields:', error);
-    res.status(500).json({ message: "Failed to fetch CARD fields" });
+    console.error('[Card Routes] Error fetching CARD fields:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ 
+      message: "Failed to fetch CARD fields",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
   }
 });
 
