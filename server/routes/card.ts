@@ -142,6 +142,42 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
   }
 });
 
+// Get CARD responses for a task
+router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    console.log('[Card Routes] Fetching responses for task:', {
+      taskId,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    const responses = await db.select()
+      .from(cardResponses)
+      .where(eq(cardResponses.task_id, parseInt(taskId)));
+
+    console.log('[Card Routes] Responses retrieved:', {
+      count: responses.length,
+      responseStatuses: responses.map(r => r.status),
+      timestamp: new Date().toISOString()
+    });
+
+    res.json(responses);
+  } catch (error) {
+    console.error('[Card Routes] Error fetching responses:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ 
+      message: "Failed to fetch responses",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Get CARD task by company name
 router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
   try {

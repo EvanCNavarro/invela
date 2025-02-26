@@ -58,6 +58,90 @@ export function CardFormPlayground({
     timestamp: new Date().toISOString()
   });
 
+  // Fetch all CARD fields
+  const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery<CardField[]>({
+    queryKey: ['/api/card/fields'],
+    queryFn: async () => {
+      console.log('[CardFormPlayground] Fetching CARD fields - Start');
+
+      try {
+        const response = await fetch('/api/card/fields');
+
+        console.log('[CardFormPlayground] CARD fields API response:', {
+          status: response.status,
+          ok: response.ok,
+          statusText: response.statusText,
+          timestamp: new Date().toISOString()
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[CardFormPlayground] Error fetching fields:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText,
+            timestamp: new Date().toISOString()
+          });
+          throw new Error('Failed to fetch CARD fields');
+        }
+
+        const data = await response.json();
+        console.log('[CardFormPlayground] Fields fetched successfully:', {
+          count: data.length,
+          sections: [...new Set(data.map((f: CardField) => f.wizard_section))],
+          fieldsPreview: data.slice(0, 3).map((f: CardField) => ({
+            key: f.field_key,
+            section: f.wizard_section
+          })),
+          timestamp: new Date().toISOString()
+        });
+
+        return data;
+      } catch (error) {
+        console.error('[CardFormPlayground] Error in queryFn:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        throw error;
+      }
+    }
+  });
+
+  // Fetch existing responses for this task
+  const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery<CardResponse[]>({
+    queryKey: ['/api/card/responses', taskId],
+    queryFn: async () => {
+      console.log('[CardFormPlayground] Fetching existing responses for task:', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await fetch(`/api/card/responses/${taskId}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[CardFormPlayground] Error fetching responses:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Failed to fetch responses');
+      }
+
+      const data = await response.json();
+      console.log('[CardFormPlayground] Responses fetched:', {
+        count: data.length,
+        hasResponses: data.length > 0,
+        timestamp: new Date().toISOString()
+      });
+
+      return data;
+    },
+    enabled: !!taskId
+  });
+
   // Save field response mutation
   const saveResponse = useMutation({
     mutationFn: async ({ fieldId, response }: { fieldId: number, response: string }) => {
@@ -109,66 +193,32 @@ export function CardFormPlayground({
     }
   });
 
-  // Fetch all CARD fields
-  const { data: cardFields = [], isLoading, error } = useQuery<CardField[]>({
-    queryKey: ['/api/card/fields'],
-    queryFn: async () => {
-      console.log('[CardFormPlayground] Fetching CARD fields - Start');
-
-      try {
-        const response = await fetch('/api/card/fields');
-
-        console.log('[CardFormPlayground] CARD fields API response:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText,
-          timestamp: new Date().toISOString()
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[CardFormPlayground] Error fetching fields:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorText,
-            timestamp: new Date().toISOString()
-          });
-          throw new Error('Failed to fetch CARD fields');
-        }
-
-        const data = await response.json();
-        console.log('[CardFormPlayground] Fields fetched successfully:', {
-          count: data.length,
-          sections: [...new Set(data.map((f: CardField) => f.wizard_section))],
-          fieldsPreview: data.slice(0, 3).map((f: CardField) => ({
-            key: f.field_key,
-            section: f.wizard_section
-          })),
-          timestamp: new Date().toISOString()
-        });
-
-        return data;
-      } catch (error) {
-        console.error('[CardFormPlayground] Error in queryFn:', {
-          error,
-          message: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        });
-        throw error;
-      }
-    }
-  });
-
-  // Log error state changes
+  // Load existing responses into form
   useEffect(() => {
-    if (error) {
-      console.error('[CardFormPlayground] Query error state:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
+    if (existingResponses.length > 0 && cardFields.length > 0) {
+      console.log('[CardFormPlayground] Loading existing responses:', {
+        responseCount: existingResponses.length,
         timestamp: new Date().toISOString()
       });
+
+      const fieldMap = new Map(cardFields.map(f => [f.id, f.field_key]));
+      const responses: Record<string, string> = {};
+
+      existingResponses.forEach(response => {
+        const fieldKey = fieldMap.get(response.field_id);
+        if (fieldKey && response.response_value) {
+          responses[fieldKey] = response.response_value;
+        }
+      });
+
+      console.log('[CardFormPlayground] Responses loaded:', {
+        fieldCount: Object.keys(responses).length,
+        timestamp: new Date().toISOString()
+      });
+
+      setFormResponses(responses);
     }
-  }, [error]);
+  }, [existingResponses, cardFields]);
 
   // Group fields by section with logging
   const sections = cardFields.reduce((acc, field) => {
@@ -187,7 +237,10 @@ export function CardFormPlayground({
   useEffect(() => {
     if (!currentSection && Object.keys(sections).length > 0) {
       const firstSection = Object.keys(sections)[0];
-      console.log('[CardFormPlayground] Setting initial section:', firstSection);
+      console.log('[CardFormPlayground] Setting initial section:', {
+        section: firstSection,
+        timestamp: new Date().toISOString()
+      });
       setCurrentSection(firstSection);
     }
   }, [sections]);
@@ -201,7 +254,8 @@ export function CardFormPlayground({
     console.log('[CardFormPlayground] Updating progress:', {
       totalFields,
       answeredFields,
-      progress: calculatedProgress
+      progress: calculatedProgress,
+      timestamp: new Date().toISOString()
     });
 
     setProgress(calculatedProgress);
@@ -237,7 +291,8 @@ export function CardFormPlayground({
     console.log('[CardFormPlayground] Submitting form:', {
       taskId,
       responseCount: Object.keys(formResponses).length,
-      progress
+      progress,
+      timestamp: new Date().toISOString()
     });
 
     if (progress < 90) {
@@ -251,6 +306,8 @@ export function CardFormPlayground({
 
     onSubmit(formResponses);
   };
+
+  const isLoading = isLoadingFields || isLoadingResponses;
 
   if (isLoading) {
     return (
