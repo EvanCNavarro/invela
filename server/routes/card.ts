@@ -1,58 +1,58 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, TaskStatus, cardFields, cardResponses, files, companies } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { tasks, cardFields, cardResponses, files } from '@db/schema';
+import { eq, and, ilike } from 'drizzle-orm';
+import { requireAuth } from '../middleware/auth';
+import { TaskStatus } from '@db/schema';
 
 const router = Router();
 
-// Debug utility for logging task data
-const logTaskDebug = (stage: string, task: any, extras: Record<string, any> = {}) => {
-  console.log(`[CARD API Debug] ${stage}:`, {
-    taskId: task?.id,
-    status: task?.status,
-    progress: task?.progress,
-    metadata: task?.metadata ? Object.keys(task.metadata) : null,
-    ...extras,
-    timestamp: new Date().toISOString()
-  });
-};
+// Get CARD task by company name
+router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
+  try {
+    console.log('[Card Routes] Fetching CARD task:', {
+      companyName: req.params.companyName,
+      userId: req.user?.id,
+      companyId: req.user?.company_id
+    });
 
-// Debug utility for logging response data
-const logResponseDebug = (stage: string, responses: any[], extras: Record<string, any> = {}) => {
-  console.log(`[CARD API Debug] ${stage}:`, {
-    responseCount: responses.length,
-    fields: responses.map(r => ({
-      field: r.field_key,
-      status: r.status,
-      hasValue: !!r.response_value
-    })),
-    ...extras,
-    timestamp: new Date().toISOString()
-  });
-};
+    const task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'company_card'),
+        ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
+        eq(tasks.company_id, req.user!.company_id)
+      )
+    });
 
-// Debug utility for logging file operations
-const logFileDebug = (stage: string, data: Record<string, any>) => {
-  console.log(`[CARD File Debug] ${stage}:`, {
-    ...data,
-    timestamp: new Date().toISOString()
-  });
-};
+    console.log('[Card Routes] Task lookup result:', {
+      found: !!task,
+      taskId: task?.id,
+      taskType: task?.task_type,
+      taskStatus: task?.status
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        message: `Could not find CARD task for company: ${req.params.companyName}`
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('[Card Routes] Error fetching CARD task:', error);
+    res.status(500).json({ message: "Failed to fetch CARD task" });
+  }
+});
 
 // Save CARD form data
-router.post('/api/card/save', async (req, res) => {
+router.post('/api/card/save', requireAuth, async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
 
-    logFileDebug('Save request received', {
+    console.log('[Card Routes] Processing form save:', {
       fileName,
       taskId,
-      formDataKeys: Object.keys(formData),
-      formDataValues: Object.entries(formData).map(([k, v]) => ({
-        key: k,
-        hasValue: !!v,
-        valueType: typeof v
-      }))
+      formDataKeys: Object.keys(formData)
     });
 
     // Get task details
@@ -61,116 +61,24 @@ router.post('/api/card/save', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     if (!task) {
-      const error = 'Task not found';
-      logFileDebug('Task lookup failed', { taskId, error });
-      throw new Error(error);
+      console.error('[Card Routes] Task not found:', taskId);
+      return res.status(404).json({ message: "Task not found" });
     }
 
-    logFileDebug('Task found', {
-      taskId: task.id,
-      title: task.title,
-      currentStatus: task.status
-    });
-
-    // Get company record to update available tabs
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-
-    if (!company) {
-      throw new Error('Company not found');
-    }
-
-    // Add file-vault to available tabs if not already present
-    const currentTabs = company.available_tabs || ['task-center'];
-    if (!currentTabs.includes('file-vault')) {
-      const updatedTabs = [...currentTabs, 'file-vault'];
-
-      // Update company's available tabs
-      await db.update(companies)
-        .set({
-          available_tabs: updatedTabs,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, task.company_id));
-
-      logFileDebug('Updated company available tabs', {
-        companyId: task.company_id,
-        previousTabs: currentTabs,
-        newTabs: updatedTabs
-      });
-    }
-
-    // Get all CARD fields with their wizard sections
-    const fields = await db.select()
-      .from(cardFields);
-
-    logFileDebug('Fields retrieved', {
-      fieldCount: fields.length,
-      sections: [...new Set(fields.map(f => f.wizard_section))],
-      fieldTypes: [...new Set(fields.map(f => f.field_key))]
-    });
-
-    // Create comprehensive submission data
-    const submissionData = {
+    // Save form data as JSON file
+    const jsonData = JSON.stringify({
+      taskId,
+      formData,
       metadata: {
-        taskId,
-        taskTitle: task.title,
-        submissionDate: new Date().toISOString(),
-        formVersion: '1.0',
-        status: TaskStatus.SUBMITTED
-      },
-      taskData: {
-        ...task,
-        progress: 100,
-        status: TaskStatus.SUBMITTED
-      },
-      formStructure: {
-        fields: fields.map(field => ({
-          key: field.field_key,
-          label: field.question_label,
-          section: field.wizard_section,
-          question: field.question,
-          example: field.example_response,
-          aiInstructions: field.ai_search_instructions
-        }))
-      },
-      responses: {}
-    };
-
-    logFileDebug('Submission data prepared', {
-      metadataKeys: Object.keys(submissionData.metadata),
-      formStructureFields: submissionData.formStructure.fields.length
-    });
-
-    // Group responses by wizard section
-    const groupedResponses: Record<string, Record<string, any>> = {};
-    for (const field of fields) {
-      const section = field.wizard_section;
-      if (!groupedResponses[section]) {
-        groupedResponses[section] = {};
+        submittedAt: new Date().toISOString(),
+        taskType: 'company_card',
+        taskStatus: TaskStatus.SUBMITTED
       }
-      groupedResponses[section][field.field_key] = {
-        question: field.question,
-        answer: formData[field.field_key] || null,
-        example: field.example_response,
-        answeredAt: new Date().toISOString()
-      };
-    }
-    submissionData.responses = groupedResponses;
+    }, null, 2);
 
-    logFileDebug('Responses grouped', {
-      sectionCount: Object.keys(groupedResponses).length,
-      sections: Object.keys(groupedResponses),
-      responseCount: Object.values(groupedResponses).reduce((acc, group) => acc + Object.keys(group).length, 0)
-    });
-
-    // Convert submission data to JSON string
-    const jsonData = JSON.stringify(submissionData, null, 2);
     const fileSize = Buffer.from(jsonData).length;
 
-    // Create file record in database
-    const timestamp = new Date();
+    // Create file record
     const [fileRecord] = await db.insert(files)
       .values({
         name: `${fileName}.json`,
@@ -178,129 +86,41 @@ router.post('/api/card/save', async (req, res) => {
         type: 'application/json',
         path: jsonData,
         status: 'uploaded',
-        user_id: task.created_by || 1,
+        user_id: req.user!.id,
         company_id: task.company_id,
-        upload_time: timestamp,
-        created_at: timestamp,
-        updated_at: timestamp,
+        upload_time: new Date(),
         version: 1.0
       })
       .returning();
 
-    logFileDebug('File record created', {
-      fileId: fileRecord.id,
-      fileName: fileRecord.name,
-      size: fileRecord.size,
-      timestamp: timestamp.toISOString()
-    });
-
-    // Save responses to database
-    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
-
-    for (const [fieldKey, value] of Object.entries(formData)) {
-      const fieldId = fieldMap.get(fieldKey);
-      if (!fieldId) {
-        logFileDebug('Field not found', { fieldKey });
-        continue;
-      }
-
-      const responseValue = value === '' ? null : String(value);
-      const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
-
-      // Check if response exists
-      const [existingResponse] = await db.select()
-        .from(cardResponses)
-        .where(
-          and(
-            eq(cardResponses.task_id, taskId),
-            eq(cardResponses.field_id, fieldId)
-          )
-        );
-
-      if (existingResponse) {
-        logFileDebug('Updating existing response', {
-          fieldKey,
-          responseId: existingResponse.id,
-          oldValue: existingResponse.response_value,
-          newValue: responseValue
-        });
-
-        await db.update(cardResponses)
-          .set({
-            response_value: responseValue,
-            status,
-            version: existingResponse.version + 1,
-            updated_at: timestamp
-          })
-          .where(eq(cardResponses.id, existingResponse.id));
-      } else {
-        logFileDebug('Creating new response', {
-          fieldKey,
-          status,
-          value: responseValue
-        });
-
-        await db.insert(cardResponses)
-          .values({
-            task_id: taskId,
-            field_id: fieldId,
-            response_value: responseValue,
-            status,
-            version: 1,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
-      }
-    }
-
     // Update task status
-    logFileDebug('Updating task status', {
-      taskId,
-      newStatus: TaskStatus.SUBMITTED,
-      progress: 100
-    });
-
     await db.update(tasks)
       .set({
         status: TaskStatus.SUBMITTED,
         progress: 100,
-        updated_at: timestamp,
         metadata: {
           ...task.metadata,
           cardFormFile: fileRecord.id,
-          submissionDate: timestamp.toISOString(),
-          formVersion: '1.0',
-          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
-            .filter((v, i, a) => a.indexOf(v) === i)
+          submissionDate: new Date().toISOString()
         }
       })
       .where(eq(tasks.id, taskId));
 
-    logFileDebug('Save completed', {
-      fileId: fileRecord.id,
+    console.log('[Card Routes] Save completed:', {
       taskId,
-      status: TaskStatus.SUBMITTED,
-      timestamp: timestamp.toISOString()
+      fileId: fileRecord.id,
+      status: TaskStatus.SUBMITTED
     });
 
     res.json({
       success: true,
-      fileId: fileRecord.id,
-      metadata: submissionData.metadata
+      fileId: fileRecord.id
     });
   } catch (error) {
-    const errorDetails = {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    };
-
-    logFileDebug('Error saving CARD form', errorDetails);
-    console.error('[CARD API Debug] Error saving CARD form:', errorDetails);
-
+    console.error('[Card Routes] Error saving form:', error);
     res.status(500).json({
-      error: 'Failed to save CARD form data',
-      details: errorDetails
+      message: "Failed to save CARD form",
+      error: error instanceof Error ? error.message : "Unknown error"
     });
   }
 });
