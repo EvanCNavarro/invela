@@ -34,15 +34,63 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
   const { toast } = useToast();
   const companyName = params.slug.replace('card-', '');
 
+  console.log('[CardTaskPage] Initializing with params:', {
+    slug: params.slug,
+    extractedCompanyName: companyName,
+    timestamp: new Date().toISOString()
+  });
+
   // Fetch task details by company name
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: ['/api/tasks/card', companyName],
+    queryFn: async () => {
+      const endpoint = `/api/tasks/card/${companyName}`;
+      console.log('[CardTaskPage] Making API request:', {
+        endpoint,
+        companyName,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await fetch(endpoint);
+      console.log('[CardTaskPage] API response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[CardTaskPage] API error:', {
+          status: response.status,
+          errorText,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Failed to load CARD task');
+      }
+
+      const data = await response.json();
+      console.log('[CardTaskPage] Task data received:', {
+        taskId: data.id,
+        taskType: data.task_type,
+        status: data.status,
+        metadata: data.metadata,
+        timestamp: new Date().toISOString()
+      });
+
+      return data;
+    },
     enabled: !!companyName
   });
 
   useEffect(() => {
     if (error) {
-      console.error('[CardTaskPage] Error loading task:', error);
+      console.error('[CardTaskPage] Error loading task:', {
+        error,
+        companyName,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: "Error",
         description: "Failed to load CARD task. Please try again.",
@@ -50,7 +98,7 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
       });
       navigate('/task-center');
     }
-  }, [error, navigate, toast]);
+  }, [error, navigate, toast, companyName]);
 
   if (isLoading) {
     return (
