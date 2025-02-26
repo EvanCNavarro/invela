@@ -400,6 +400,12 @@ export const insertTaskSchema = z.object({
     }
     if (data.task_type === "company_card") {
       data.priority = "high";
+      // If no due date is provided, set it to 2 weeks from now
+      if (!data.due_date) {
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+        data.due_date = twoWeeksFromNow;
+      }
     }
     data.task_scope = "company";
   }
