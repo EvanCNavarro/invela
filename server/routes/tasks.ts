@@ -1,12 +1,70 @@
 import { Router } from "express";
 import { db } from "@db";
 import { tasks, TaskStatus } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../websocket";
 import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
 
 const router = Router();
+
+// Get task by company name for CARD tasks
+router.get("/api/tasks/card/:companyName", async (req, res) => {
+  try {
+    console.log('[Tasks Routes] Fetching CARD task:', {
+      companyName: req.params.companyName,
+    });
+
+    const task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'company_card'),
+        ilike(tasks.title, `Company CARD: ${req.params.companyName}`)
+      )
+    });
+
+    console.log('[Tasks Routes] CARD task found:', task);
+
+    if (!task) {
+      return res.status(404).json({ 
+        message: `Could not find CARD task for company: ${req.params.companyName}` 
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching CARD task:', error);
+    res.status(500).json({ message: "Failed to fetch CARD task" });
+  }
+});
+
+// Get task by company name for KYB tasks
+router.get("/api/tasks/kyb/:companyName", async (req, res) => {
+  try {
+    console.log('[Tasks Routes] Fetching KYB task:', {
+      companyName: req.params.companyName,
+    });
+
+    const task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'company_kyb'),
+        ilike(tasks.title, `Company KYB: ${req.params.companyName}`)
+      )
+    });
+
+    console.log('[Tasks Routes] KYB task found:', task);
+
+    if (!task) {
+      return res.status(404).json({ 
+        message: `Could not find KYB task for company: ${req.params.companyName}` 
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching KYB task:', error);
+    res.status(500).json({ message: "Failed to fetch KYB task" });
+  }
+});
 
 // Create new task - add progress to response
 router.post("/api/tasks", async (req, res) => {
