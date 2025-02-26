@@ -37,6 +37,111 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
   }
 });
 
+// Save individual CARD field response
+router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
+
+    console.log('[Card Routes] Saving field response:', {
+      taskId,
+      fieldId,
+      hasResponse: !!response,
+      timestamp: new Date().toISOString()
+    });
+
+    // Check if response already exists
+    const [existingResponse] = await db.select()
+      .from(cardResponses)
+      .where(
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.field_id, parseInt(fieldId))
+        )
+      );
+
+    const status = response ? 'COMPLETE' : 'EMPTY';
+    const timestamp = new Date();
+
+    if (existingResponse) {
+      console.log('[Card Routes] Updating existing response:', {
+        responseId: existingResponse.id,
+        oldStatus: existingResponse.status,
+        newStatus: status,
+        version: existingResponse.version + 1,
+        timestamp: timestamp.toISOString()
+      });
+
+      const [updatedResponse] = await db.update(cardResponses)
+        .set({
+          response_value: response,
+          status,
+          version: existingResponse.version + 1,
+          updated_at: timestamp
+        })
+        .where(eq(cardResponses.id, existingResponse.id))
+        .returning();
+
+      res.json(updatedResponse);
+    } else {
+      console.log('[Card Routes] Creating new response:', {
+        taskId,
+        fieldId,
+        status,
+        timestamp: timestamp.toISOString()
+      });
+
+      const [newResponse] = await db.insert(cardResponses)
+        .values({
+          task_id: parseInt(taskId),
+          field_id: parseInt(fieldId),
+          response_value: response,
+          status,
+          version: 1,
+          created_at: timestamp,
+          updated_at: timestamp
+        })
+        .returning();
+
+      res.json(newResponse);
+    }
+
+    // Update task progress
+    const [taskResponses] = await db.select({
+      total: db.fn.count<number>(),
+      completed: db.fn.count<number>().filter(eq(cardResponses.status, 'COMPLETE'))
+    })
+    .from(cardResponses)
+    .where(eq(cardResponses.task_id, parseInt(taskId)));
+
+    const progress = Math.floor((taskResponses.completed / taskResponses.total) * 100);
+
+    console.log('[Card Routes] Updating task progress:', {
+      taskId,
+      totalResponses: taskResponses.total,
+      completedResponses: taskResponses.completed,
+      calculatedProgress: progress,
+      timestamp: timestamp.toISOString()
+    });
+
+    await db.update(tasks)
+      .set({ progress })
+      .where(eq(tasks.id, parseInt(taskId)));
+
+  } catch (error) {
+    console.error('[Card Routes] Error saving response:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      message: "Failed to save response",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Get CARD task by company name
 router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
   try {
