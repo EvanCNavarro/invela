@@ -66,7 +66,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       title: task.title,
       type: task.task_type,
       status: task.status,
-      metadata: task.metadata,
+      metadata: task.metadata
     });
 
     // Navigate to form pages for KYB and CARD tasks if not in submitted status
