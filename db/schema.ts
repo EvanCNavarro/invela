@@ -203,6 +203,32 @@ export const kybResponses = pgTable("kyb_responses", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+export const cardFields = pgTable("card_fields", {
+  id: serial("id").primaryKey(),
+  field_key: text("field_key").notNull().unique(),
+  wizard_section: text("wizard_section").notNull(),
+  question_label: text("question_label").notNull(),
+  question: text("question").notNull(),
+  example_response: text("example_response"),
+  ai_search_instructions: text("ai_search_instructions"),
+  partial_risk_score_max: integer("partial_risk_score_max").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const cardResponses = pgTable("card_responses", {
+  id: serial("id").primaryKey(),
+  task_id: integer("task_id").references(() => tasks.id).notNull(),
+  field_id: integer("field_id").references(() => cardFields.id).notNull(),
+  response_value: text("response_value"),
+  ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
+  partial_risk_score: integer("partial_risk_score").notNull().default(0),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default("empty"),
+  version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -267,6 +293,21 @@ export const kybResponsesRelations = relations(kybResponses, ({ one }) => ({
     fields: [kybResponses.task_id],
     references: [tasks.id],
   }),
+}));
+
+export const cardFieldsRelations = relations(cardFields, ({ many }) => ({
+  responses: many(cardResponses)
+}));
+
+export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
+  field: one(cardFields, {
+    fields: [cardResponses.field_id],
+    references: [cardFields.id]
+  }),
+  task: one(tasks, {
+    fields: [cardResponses.task_id],
+    references: [tasks.id]
+  })
 }));
 
 export const registrationSchema = z.object({
@@ -385,3 +426,8 @@ export const insertKybFieldSchema = createInsertSchema(kybFields);
 export const selectKybFieldSchema = createSelectSchema(kybFields);
 export const insertKybResponseSchema = createInsertSchema(kybResponses);
 export const selectKybResponseSchema = createSelectSchema(kybResponses);
+
+export const insertCardFieldSchema = createInsertSchema(cardFields);
+export const selectCardFieldSchema = createSelectSchema(cardFields);
+export const insertCardResponseSchema = createInsertSchema(cardResponses);
+export const selectCardResponseSchema = createSelectSchema(cardResponses);
