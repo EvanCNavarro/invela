@@ -3,6 +3,7 @@ import { db } from '@db';
 import { tasks, cardFields, cardResponses } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
+import { analyzeCardResponse } from '../services/openai';
 
 const router = Router();
 
@@ -233,6 +234,77 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
     });
     res.status(500).json({ 
       message: "Failed to fetch CARD task",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// Analyze card response
+router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
+
+    console.log('[Card Routes] Analyzing response:', {
+      taskId,
+      fieldId,
+      responseLength: response?.length,
+      timestamp: new Date().toISOString()
+    });
+
+    // Get the field details to pass to analysis
+    const [field] = await db.select()
+      .from(cardFields)
+      .where(eq(cardFields.id, parseInt(fieldId)));
+
+    if (!field) {
+      return res.status(404).json({ message: "Field not found" });
+    }
+
+    // Analyze the response
+    const analysis = await analyzeCardResponse(
+      response,
+      field.question,
+      field.partial_risk_score_max,
+      field.example_response
+    );
+
+    // Update the response record with analysis results
+    const [updatedResponse] = await db.update(cardResponses)
+      .set({
+        ai_suspicion_level: analysis.suspicionLevel,
+        partial_risk_score: analysis.riskScore,
+        updated_at: new Date()
+      })
+      .where(
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.field_id, parseInt(fieldId))
+        )
+      )
+      .returning();
+
+    console.log('[Card Routes] Analysis complete:', {
+      taskId,
+      fieldId,
+      suspicionLevel: analysis.suspicionLevel,
+      riskScore: analysis.riskScore,
+      timestamp: new Date().toISOString()
+    });
+
+    res.json({
+      ...updatedResponse,
+      reasoning: analysis.reasoning
+    });
+  } catch (error) {
+    console.error('[Card Routes] Error analyzing response:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      message: "Failed to analyze response",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
