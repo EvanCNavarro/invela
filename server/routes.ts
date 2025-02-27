@@ -436,7 +436,7 @@ export function registerRoutes(app: Express): Express {
         const [updatedTask] = await db.update(tasks)
           .set({
             status: TaskStatus.COMPLETED,
-            progress: taskStatusToProgress[TaskStatus.COMPLETED],
+            progress: 100, // Set directly to 100 for completed status
             assigned_to: updatedUser.id,
             metadata: {
               ...task.metadata,
@@ -446,6 +446,12 @@ export function registerRoutes(app: Express): Express {
           })
           .where(eq(tasks.id, task.id))
           .returning();
+
+        console.log('[Account Setup] Updated task status:', {
+          taskId: updatedTask.id,
+          status: updatedTask.status,
+          progress: updatedTask.progress
+        });
 
         broadcastTaskUpdate(updatedTask);
       }
@@ -1228,7 +1234,7 @@ export function registerRoutes(app: Express): Express {
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
-              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
+              progress: 100, // Set directly to 100 for completed status
               priority: 'high',
               company_id: inviteData.company_id,
               user_email: inviteData.email,
