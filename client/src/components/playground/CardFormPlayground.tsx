@@ -271,16 +271,34 @@ export function CardFormPlayground({
 
   const validateResponse = (value: string, previousValue?: string): boolean => {
     // Skip if response is empty
-    if (!value) return false;
+    if (!value) {
+      console.log('[CardFormPlayground] Validation failed: empty value');
+      return false;
+    }
 
-    // Skip if response hasn't changed
-    if (previousValue && value === previousValue) return false;
+    // Skip if response hasn't changed from previous value
+    if (previousValue && value.trim() === previousValue.trim()) {
+      console.log('[CardFormPlayground] Validation failed: unchanged value');
+      return false;
+    }
 
     // Minimum length check
-    if (value.length < 10) return false;
+    if (value.trim().length < 10) {
+      console.log('[CardFormPlayground] Validation failed: too short');
+      return false;
+    }
 
     // Complete sentence check
-    if (!/[.!?](\s|$)/.test(value)) return false;
+    if (!/[.!?](\s|$)/.test(value)) {
+      console.log('[CardFormPlayground] Validation failed: incomplete sentence');
+      return false;
+    }
+
+    console.log('[CardFormPlayground] Validation passed:', {
+      valueLength: value.length,
+      hasChanged: value !== previousValue,
+      timestamp: new Date().toISOString()
+    });
 
     return true;
   };
