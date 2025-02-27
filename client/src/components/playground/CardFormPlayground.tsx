@@ -6,11 +6,11 @@ import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Tooltip, 
-  TooltipContent, 
+import {
+  Tooltip,
+  TooltipContent,
   TooltipTrigger,
-  TooltipProvider 
+  TooltipProvider
 } from "@/components/ui/tooltip";
 import { CheckCircle2, Info } from "lucide-react";
 
@@ -62,7 +62,7 @@ export function CardFormPlayground({
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
-  const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, { 
+  const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, {
     suspicionLevel: number;
     riskScore: number;
     reasoning: string;
@@ -269,17 +269,60 @@ export function CardFormPlayground({
   const handleBlur = async (field: CardField, value: string) => {
     if (!value || !validateResponse(value)) return;
 
-    console.log('[CardFormPlayground] Field blur - starting OpenAI analysis:', {
+    console.log('[CardFormPlayground] Field blur - starting analysis chain:', {
       fieldId: field.id,
-      hasValidResponse: true
+      fieldKey: field.field_key,
+      hasValue: !!value
     });
 
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      await analyzeResponse.mutateAsync({
+      console.log('[CardFormPlayground] Starting OpenAI analysis...');
+
+      // Trigger OpenAI analysis
+      const analysis = await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
+      });
+
+      console.log('[CardFormPlayground] OpenAI analysis complete:', {
+        fieldId: field.id,
+        suspicionLevel: analysis.ai_suspicion_level,
+        riskScore: analysis.partial_risk_score,
+        reasoning: analysis.reasoning
+      });
+
+      setFieldAnalysis(prev => ({
+        ...prev,
+        [field.id]: {
+          suspicionLevel: analysis.ai_suspicion_level,
+          riskScore: analysis.partial_risk_score,
+          reasoning: analysis.reasoning
+        }
+      }));
+
+      //Save to database -  This step is missing from the edited code and is crucial based on the intention.
+      try {
+        await saveResponse.mutateAsync({
+          fieldId: field.id,
+          response: value
+        });
+      } catch (error) {
+        console.error('[CardFormPlayground] Error saving response after analysis:', error);
+        toast({
+          title: "Error",
+          description: "Failed to save response after analysis. Please try again.",
+          variant: "destructive"
+        });
+      }
+
+    } catch (error) {
+      console.error('[CardFormPlayground] Analysis chain error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to analyze response. Please try again.",
+        variant: "destructive"
       });
     } finally {
       setLoadingFields(prev => ({ ...prev, [field.id]: false }));
@@ -332,9 +375,9 @@ export function CardFormPlayground({
           <span>Progress</span>
           <span>{progress}%</span>
         </div>
-        <Progress 
-          value={progress} 
-          className="h-2 bg-gray-200" 
+        <Progress
+          value={progress}
+          className="h-2 bg-gray-200"
         />
       </div>
 
@@ -355,13 +398,13 @@ export function CardFormPlayground({
         {currentSection && sections[currentSection] && (
           <div className="space-y-6">
             {sections[currentSection].map((field) => (
-              <Card 
-                key={field.id} 
+              <Card
+                key={field.id}
                 className={`p-6 space-y-4 relative border-2 ${
                   loadingFields[field.id]
                     ? 'border-gray-300'
-                    : formResponses[field.field_key] 
-                    ? 'border-green-500/50' 
+                    : formResponses[field.field_key]
+                    ? 'border-green-500/50'
                     : 'border-transparent'
                 }`}
               >
@@ -389,7 +432,7 @@ export function CardFormPlayground({
                             <Info className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent 
+                        <TooltipContent
                           className="p-4 max-w-[300px] text-sm rounded-md"
                         >
                           <p className="whitespace-normal">
