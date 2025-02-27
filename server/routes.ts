@@ -823,7 +823,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Fix fintech invite logging
+  // Update the fintech invite endpoint to properly set task status
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     console.log('[FinTech Invite] Starting invitation process');
     console.log('[FinTech Invite] Request body:', req.body);
@@ -844,18 +844,20 @@ export function registerRoutes(app: Express): Express {
           : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
 
         console.log('[FinTechInvite] Validation failed:', {
-          receivedData:req.body,
+          receivedData: req.body,
           invalidFields,
           errorMessage
         });
 
-        return res.status(400).json({          message: errorMessage,
+        return res.status(400).json({
+          message: errorMessage,
           invalidFields
         });
-            }
+      }
 
       // Database transaction for atomicity
-      const result = await db.transaction(async (tx) => {        try {
+      const result = await db.transaction(async (tx) => {
+        try {
           // Step 1: Get user's company details first
           console.log('[FinTech Invite] Fetching sender company details');
           const [userCompany] = await tx.select()
@@ -932,176 +934,171 @@ export function registerRoutes(app: Express): Express {
           const tempPassword = crypto.randomBytes(32).toString('hex');
           const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+          // Create new user with company association
           const [newUser] = await tx.insert(users)
             .values({
               email: email.toLowerCase(),
+              full_name: full_name,
               password: hashedPassword,
               company_id: newCompany.id,
-              full_name: full_name,
-              onboarding_user_completed: false, // Ensure this is false for new users
-              metadata: {
-                invited_by: req.user!.id,
-                invited_at: new Date().toISOString(),
-                invited_from: userCompany.name,
-                created_via: 'fintech_invite'
-              }
+              onboarding_user_completed: false
             })
             .returning();
 
-          if (!newUser) {
-            console.error('[FinTech Invite] Failed to create user account');
-            throw new Error("Failed to create user account");
-          }
-
-          console.log('[FinTech Invite] Successfully created user:', {
+          console.log('[FinTech Invite] Created new user:', {
             id: newUser.id,
-            email: newUser.email
+            email: newUser.email,
+            companyId: newUser.company_id
           });
 
-          // Generate invitation code
-          const code = generateInviteCode();
-          const expirationDate = new Date();
-          expirationDate.setDate(expirationDate.getDate() + 7);
-
-          // Create invitation record
-          console.log('[FinTech Invite] Creating invitation for:', email);
+          // Step 5: Create invitation record
+          const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
           const [invitation] = await tx.insert(invitations)
             .values({
               email: email.toLowerCase(),
-              code,
+              code: invitationCode,
               status: 'pending',
               company_id: newCompany.id,
               invitee_name: full_name,
               invitee_company: company_name,
-              expires_at: expirationDate,
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            })
+            .returning();
+
+          // Step 6: Create tasks for the new company
+          // KYB Task
+          const [kybTask] = await tx.insert(tasks)
+            .values({
+              title: `Company KYB: ${company_name}`,
+              description: `Complete Know Your Business (KYB) process for ${company_name}`,
+              task_type: 'company_kyb',
+              task_scope: 'company',
+              status: TaskStatus.NOT_STARTED,
+              priority: 'high',
+              progress: 0,
+              created_by: req.user!.id,
+              company_id: newCompany.id,
+              due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
               metadata: {
-                user_id: newUser.id,
-                sender_name: sender_name,
-                sender_company_id: userCompany.id,
-                sender_company_name: userCompany.name,
-                created_at: new Date().toISOString()
+                company_id: newCompany.id,
+                created_at: new Date().toISOString(),
+                status_flow: [TaskStatus.NOT_STARTED]
               }
             })
             .returning();
 
-          if (!invitation) {
-            console.error('[FinTech Invite] Failed to create invitation');
-            throw new Error("Failed to create invitation record");
-          }
+          // CARD Task
+          const [cardTask] = await tx.insert(tasks)
+            .values({
+              title: `Company CARD: ${company_name}`,
+              description: `Provide Compliance and Risk Data (CARD) for ${company_name}`,
+              task_type: 'company_card',
+              task_scope: 'company',
+              status: TaskStatus.NOT_STARTED,
+              priority: 'high',
+              progress: 0,
+              created_by: req.user!.id,
+              assigned_to: newUser.id,
+              company_id: newCompany.id,
+              due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+              metadata: {
+                company_id: newCompany.id,
+                created_at: new Date().toISOString(),
+                status_flow: [TaskStatus.NOT_STARTED]
+              }
+            })
+            .returning();
 
-          console.log('[FinTech Invite] Successfully created invitation:', {
-            id: invitation.id,
-            code: invitation.code,
-            status: invitation.status
-          });
-
-          // Create task for invitation
-          console.log('[FinTech Invite] Creating task');
-          const [task] = await tx.insert(tasks)
+          // Onboarding Task
+          const [onboardingTask] = await tx.insert(tasks)
             .values({
               title: `New User Invitation: ${email}`,
-              description: `Invitation sent to ${full_name} to join ${company_name} on the platform.`,
+              description: `Complete user onboarding for ${full_name}`,
               task_type: 'user_onboarding',
               task_scope: 'user',
-              status: TaskStatus.PENDING,
+              status: TaskStatus.EMAIL_SENT,
               priority: 'medium',
-              progress: taskStatusToProgress[TaskStatus.PENDING],
-              created_by: req.user!.id, // Ensure created_by is set
-              user_email: email.toLowerCase(),
+              progress: 25,
+              created_by: req.user!.id,
+              assigned_to: newUser.id,
               company_id: newCompany.id,
-              due_date: expirationDate,
+              user_email: email.toLowerCase(),
+              due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
               metadata: {
                 user_id: newUser.id,
-                invitee_name: full_name,
-                invitee_company: company_name,
                 sender_name: sender_name,
-                company_created_at: newCompany.created_at,
+                status_flow: [TaskStatus.EMAIL_SENT],
+                email_sent_at: new Date().toISOString(),
                 invitation_id: invitation.id,
-                invitation_code: code,
-                status_flow: [TaskStatus.PENDING]
+                invitation_code: invitationCode
               }
             })
             .returning();
 
-          if (!task) {
-            console.error('[FinTech Invite] Failed to create task');
-            throw new Error("Failed to create task record");
-          }
-
-          console.log('[FinTech Invite] Successfully created task:', {
-            id: task.id,
-            status: task.status
-          });
-
-          // Send invitation email
-          console.log('[FinTech Invite] Sending invitation email');
-          const inviteUrl = `${req.protocol}://${req.get('host')}/register?code=${code}&email=${encodeURIComponent(email)}`;
-
-          try {
-            const emailResult = await emailService.sendTemplateEmail({
-              to: email,
-              from: process.env.GMAIL_USER!,
-              template: 'fintech_invite',
-              templateData: {
-                recipientName: full_name,
-                recipientEmail: email.toLowerCase(),
-                senderName: sender_name,
-                senderCompany: userCompany.name,
-                targetCompany: company_name,
-                inviteUrl,
-                code
-              }
-            });
-
-            if (!emailResult.success) {
-              console.error('[FinTech Invite] Email sending failed:', emailResult.error);
-              throw new Error(`Failed to send invitation email: ${emailResult.error}`);
-            }
-
-            // Update task status after successful email
-            const [updatedTask] = await tx.update(tasks)
-              .set({
-                status: TaskStatus.EMAIL_SENT,
-                progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
-                metadata: {
-                  ...task.metadata,
-                  email_sent_at: new Date().toISOString(),
-                  status_flow: [...(task.metadata?.status_flow || []), TaskStatus.EMAIL_SENT]
-                }
-              })
-              .where(eq(tasks.id, task.id))
-              .returning();
-
-            if (!updatedTask) {
-              console.error('[FinTech Invite] Failed to update task status');
-              throw new Error("Failed to update task status");
-            }
-
-            console.log('[FinTech Invite] Successfully completed invitation process');
-            return { invitation, task: updatedTask, company: newCompany, user: newUser };
-
-          } catch (emailError) {
-            console.error("[FinTech Invite] Email sending failed:", emailError);
-            throw new Error("Failed to send invitation email. Please try again.");
-          }
+          return {
+            invitation,
+            task: onboardingTask,
+            company: newCompany,
+            user: newUser
+          };
         } catch (error) {
           console.error('[FinTech Invite] Transaction error:', error);
-          throw error; // Re-throw to trigger rollback
+          throw error;
         }
       });
 
-      console.log('[FinTech Invite] Invitation completed successfully');
-      res.json({
-        message: "Invitation sent successfully",
-        invitation: result.invitation,
-        company: result.company,
-        user: result.user
+      // Send invitation email
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers.host;
+      const inviteUrl = `${protocol}://${host}/register?code=${result.invitation.code}&email=${encodeURIComponent(email)}`;
+
+      const emailTemplateData = {
+        recipientName: full_name,
+        recipientEmail: email.toLowerCase(),
+        senderName: sender_name,
+        senderCompany: result.company.name,
+        targetCompany: company_name,
+        inviteUrl,
+        code: result.invitation.code
+      };
+
+      console.log('[FinTech Invite] Sending invitation email:', {
+        to: email.toLowerCase(),
+        templateData: emailTemplateData
       });
 
-    } catch (error: any) {
-      console.error("[FinTech Invite] Error processing invitation:", error);
-      res.status(500).json({
-        message: error.message || "Failed to send invitation. Please try again."
+      const emailResult = await emailService.sendTemplateEmail({
+        to: email.toLowerCase(),
+        from: process.env.GMAIL_USER!,
+        template: 'fintech_invite',
+        templateData: emailTemplateData
+      });
+
+      if (!emailResult.success) {
+        console.error('[FinTech Invite] Failed to send email:', emailResult.error);
+        throw new Error(emailResult.error || 'Failed to send invitation email');
+      }
+
+      console.log('[FinTech Invite] Invitation process completed successfully');
+
+      return res.status(201).json({
+        message: "Invitation sent successfully",
+        company: {
+          id: result.company.id,
+          name: result.company.name
+        }
+      });
+
+    } catch (error) {
+      console.error('[FinTech Invite] Error processing invitation:', error);
+
+      if (error instanceof Error && error.message === "Company with this name already exists") {
+        return res.status(409).json({ message: error.message });
+      }
+
+      return res.status(500).json({
+        message: "Failed to process invitation",
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
@@ -1182,7 +1179,7 @@ export function registerRoutes(app: Express): Express {
               email: inviteData.email,
               full_name: inviteData.full_name,
               company_id: inviteData.company_id, // Explicitly set company_id from invite data
-              password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'),10),
+              password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
               onboarding_user_completed: false
             })
             .returning();
