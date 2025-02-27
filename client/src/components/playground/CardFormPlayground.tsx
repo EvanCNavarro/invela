@@ -381,22 +381,61 @@ export function CardFormPlayground({
     }
   };
 
+  const submitAssessment = useMutation({
+    mutationFn: async () => {
+      console.log('[CardFormPlayground] Submitting assessment:', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await fetch(`/api/card/submit/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit assessment');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      console.log('[CardFormPlayground] Assessment submitted successfully:', {
+        data,
+        timestamp: new Date().toISOString()
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+    },
+    onError: (error) => {
+      console.error('[CardFormPlayground] Error submitting assessment:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        title: "Error",
+        description: "Failed to submit assessment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleSubmit = () => {
     console.log('[CardFormPlayground] Submitting form:', {
       formResponses,
       progress,
       timestamp: new Date().toISOString()
     });
-    if (progress < 90) {
+    if (progress < 10) {
       toast({
         title: "Cannot Submit Yet",
-        description: "Please complete at least 90% of the form before submitting.",
+        description: "Please complete at least 10% of the form before submitting.",
         variant: "destructive"
       });
       return;
     }
 
-    onSubmit(formResponses);
+    submitAssessment.mutate();
   };
 
   if (isLoadingFields || isLoadingResponses) {
@@ -420,7 +459,7 @@ export function CardFormPlayground({
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={progress < 90}
+          disabled={progress < 10}
           className="px-8"
         >
           Submit Assessment
