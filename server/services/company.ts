@@ -202,20 +202,28 @@ export async function updateCompanyAfterCardCompletion(
       throw new Error(`Company with ID ${companyId} not found`);
     }
 
-    // Define new tabs to add based on company category
+    // Define basic tabs that all companies get
     let newTabs: string[] = ['dashboard', 'insights', 'file-vault'];
+
+    // Add additional tabs based on company category
     if (company.category === 'Invela') {
-      newTabs.push('builder', 'playground');
+      newTabs.push('builder', 'playground', 'network');
     } else if (company.category === 'Bank') {
-      newTabs.push('builder');
-    } else if (company.category === 'FinTech') {
-      // FinTech companies only get the basic tabs
-      // No additional tabs like network, builder, or playground
+      newTabs.push('builder', 'network');
     }
+    // FinTech companies only get the basic tabs
 
     // Combine existing tabs with new ones, removing duplicates
+    // For FinTech companies, ensure network, builder, and playground are never included
     const currentTabs = company.available_tabs || ['task-center'];
-    const updatedTabs = Array.from(new Set([...currentTabs, ...newTabs]));
+    let updatedTabs = Array.from(new Set([...currentTabs, ...newTabs]));
+
+    // If company is FinTech, remove restricted tabs
+    if (company.category === 'FinTech') {
+      updatedTabs = updatedTabs.filter(tab =>
+        !['network', 'builder', 'playground'].includes(tab)
+      );
+    }
 
     // Update company with new tabs and completed onboarding
     const [updatedCompany] = await db.update(companies)
