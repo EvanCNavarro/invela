@@ -145,13 +145,17 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       .execute()
       .then(fields => fields.length);
 
-    // Get number of completed responses
+    // Get number of completed responses (excluding "Unanswered" responses)
     const completedResponses = await db.select()
       .from(cardResponses)
       .where(
         and(
           eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.status, 'COMPLETE')
+          eq(cardResponses.status, 'COMPLETE'),
+          and(
+            cardResponses.response_value.isNotNull(),
+            cardResponses.response_value.not.equals('Unanswered.')
+          )
         )
       )
       .execute()
