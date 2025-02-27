@@ -473,7 +473,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
 }
 
 interface CardResponseAnalysis {
-  suspicionLevel: number;  // 0-1 scale
+  suspicionLevel: number;  // 0-100 scale
   riskScore: number;      // Based on partial_risk_score_max
   reasoning: string;
 }
@@ -510,7 +510,7 @@ Analyze for:
 
 Respond with a JSON object containing:
 {
-  "suspicionLevel": number (0-1, higher means more concerning),
+  "suspicionLevel": number (0-100, higher means more concerning),
   "riskScore": number (0-${maxRiskScore}, higher means more risk),
   "reasoning": string (explanation of the analysis)
 }
@@ -547,9 +547,13 @@ Respond with a JSON object containing:
 
     const result = JSON.parse(response.choices[0].message.content);
 
+    // Validate and normalize the results
+    const suspicionLevel = Math.min(100, Math.max(0, result.suspicionLevel));
+    const riskScore = Math.min(maxRiskScore, Math.max(0, result.riskScore));
+
     console.log('[OpenAI Service] Parsed analysis result:', {
-      suspicionLevel: result.suspicionLevel,
-      riskScore: result.riskScore,
+      suspicionLevel,
+      riskScore,
       reasoningLength: result.reasoning?.length,
       duration,
       timestamp: new Date().toISOString()
@@ -576,8 +580,8 @@ Respond with a JSON object containing:
     });
 
     return {
-      suspicionLevel: result.suspicionLevel,
-      riskScore: result.riskScore,
+      suspicionLevel,
+      riskScore,
       reasoning: result.reasoning,
     };
   } catch (error) {
