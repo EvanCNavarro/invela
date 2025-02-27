@@ -71,6 +71,7 @@ export function CardFormPlayground({
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
     queryFn: async () => {
+      console.log('[CardFormPlayground] Fetching task data:', { companyName, timestamp: new Date().toISOString() });
       const response = await fetch(`/api/tasks/card/${companyName}`);
       if (!response.ok) {
         throw new Error('Failed to fetch task data');
@@ -88,7 +89,7 @@ export function CardFormPlayground({
   const { data: cardFields = [], isLoading: isLoadingFields } = useQuery({
     queryKey: ['/api/card/fields'],
     queryFn: async () => {
-      console.log('[CardFormPlayground] Fetching CARD fields');
+      console.log('[CardFormPlayground] Fetching CARD fields', { timestamp: new Date().toISOString() });
       const response = await fetch('/api/card/fields');
       if (!response.ok) {
         throw new Error('Failed to fetch CARD fields');
@@ -100,7 +101,7 @@ export function CardFormPlayground({
   const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery({
     queryKey: ['/api/card/responses', taskId],
     queryFn: async () => {
-      console.log('[CardFormPlayground] Fetching existing responses:', { taskId });
+      console.log('[CardFormPlayground] Fetching existing responses:', { taskId, timestamp: new Date().toISOString() });
       const response = await fetch(`/api/card/responses/${taskId}`);
       if (!response.ok) {
         throw new Error('Failed to fetch responses');
@@ -115,7 +116,8 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Saving response:', {
         taskId,
         fieldId,
-        hasResponse: !!response
+        hasResponse: !!response,
+        timestamp: new Date().toISOString()
       });
 
       const res = await fetch(`/api/card/response/${taskId}/${fieldId}`, {
@@ -133,7 +135,8 @@ export function CardFormPlayground({
     onSuccess: (data) => {
       console.log('[CardFormPlayground] Response saved successfully:', {
         progress: data.progress,
-        status: data.status
+        status: data.status,
+        timestamp: new Date().toISOString()
       });
       if (typeof data.progress === 'number') {
         setProgress(data.progress);
@@ -141,7 +144,7 @@ export function CardFormPlayground({
       queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
     },
     onError: (error) => {
-      console.error('[CardFormPlayground] Error saving response:', error);
+      console.error('[CardFormPlayground] Error saving response:', { error, timestamp: new Date().toISOString() });
       toast({
         title: "Error",
         description: "Failed to save response. Please try again.",
@@ -155,7 +158,8 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Starting OpenAI analysis:', {
         taskId,
         fieldId,
-        responseLength: response.length
+        responseLength: response.length,
+        timestamp: new Date().toISOString()
       });
 
       const res = await fetch(`/api/card/analyze/${taskId}/${fieldId}`, {
@@ -172,7 +176,8 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] OpenAI analysis complete:', {
         fieldId,
         suspicionLevel: result.ai_suspicion_level,
-        riskScore: result.partial_risk_score
+        riskScore: result.partial_risk_score,
+        timestamp: new Date().toISOString()
       });
 
       return result;
@@ -181,7 +186,8 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Updating UI with analysis:', {
         fieldId: data.field_id,
         suspicionLevel: data.ai_suspicion_level,
-        riskScore: data.partial_risk_score
+        riskScore: data.partial_risk_score,
+        timestamp: new Date().toISOString()
       });
 
       setFieldAnalysis(prev => ({
@@ -194,7 +200,7 @@ export function CardFormPlayground({
       }));
     },
     onError: (error) => {
-      console.error('[CardFormPlayground] OpenAI analysis error:', error);
+      console.error('[CardFormPlayground] OpenAI analysis error:', { error, timestamp: new Date().toISOString() });
       toast({
         title: "Error",
         description: "Failed to analyze response. Please try again.",
@@ -206,7 +212,8 @@ export function CardFormPlayground({
   useEffect(() => {
     if (existingResponses.length > 0 && cardFields.length > 0) {
       console.log('[CardFormPlayground] Loading existing responses:', {
-        responseCount: existingResponses.length
+        responseCount: existingResponses.length,
+        timestamp: new Date().toISOString()
       });
 
       const fieldMap = new Map(cardFields.map(f => [f.id, f.field_key]));
@@ -240,23 +247,22 @@ export function CardFormPlayground({
   const handleResponseChange = async (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field updated:', {
       fieldKey: field.field_key,
-      hasValue: !!value
+      hasValue: !!value,
+      timestamp: new Date().toISOString()
     });
 
-    // Update local state immediately for responsive UI
     setFormResponses(prev => ({
       ...prev,
       [field.field_key]: value
     }));
 
-    // Save to database
     try {
       await saveResponse.mutateAsync({
         fieldId: field.id,
         response: value
       });
     } catch (error) {
-      console.error('[CardFormPlayground] Error saving response:', error);
+      console.error('[CardFormPlayground] Error saving response:', { error, timestamp: new Date().toISOString() });
     }
   };
 
@@ -267,30 +273,45 @@ export function CardFormPlayground({
   };
 
   const handleBlur = async (field: CardField, value: string) => {
-    if (!value || !validateResponse(value)) return;
+    if (!value || !validateResponse(value)) {
+      console.log('[CardFormPlayground] Validation failed:', {
+        fieldId: field.id,
+        fieldKey: field.field_key,
+        valueLength: value?.length,
+        hasValue: !!value,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
-    console.log('[CardFormPlayground] Field blur - starting analysis chain:', {
+    console.log('[CardFormPlayground] Field blur - initiating analysis chain:', {
       fieldId: field.id,
       fieldKey: field.field_key,
-      hasValue: !!value
+      responseLength: value.length,
+      timestamp: new Date().toISOString()
     });
 
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      console.log('[CardFormPlayground] Starting OpenAI analysis...');
+      console.log('[CardFormPlayground] Step 1: Saving initial response');
+      await saveResponse.mutateAsync({
+        fieldId: field.id,
+        response: value
+      });
 
-      // Trigger OpenAI analysis
+      console.log('[CardFormPlayground] Step 2: Starting OpenAI analysis');
       const analysis = await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
       });
 
-      console.log('[CardFormPlayground] OpenAI analysis complete:', {
+      console.log('[CardFormPlayground] Step 3: Analysis complete:', {
         fieldId: field.id,
         suspicionLevel: analysis.ai_suspicion_level,
         riskScore: analysis.partial_risk_score,
-        reasoning: analysis.reasoning
+        hasReasoning: !!analysis.reasoning,
+        timestamp: new Date().toISOString()
       });
 
       setFieldAnalysis(prev => ({
@@ -302,34 +323,33 @@ export function CardFormPlayground({
         }
       }));
 
-      //Save to database -  This step is missing from the edited code and is crucial based on the intention.
-      try {
-        await saveResponse.mutateAsync({
-          fieldId: field.id,
-          response: value
-        });
-      } catch (error) {
-        console.error('[CardFormPlayground] Error saving response after analysis:', error);
-        toast({
-          title: "Error",
-          description: "Failed to save response after analysis. Please try again.",
-          variant: "destructive"
-        });
-      }
-
     } catch (error) {
-      console.error('[CardFormPlayground] Analysis chain error:', error);
+      console.error('[CardFormPlayground] Analysis chain error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        fieldId: field.id,
+        timestamp: new Date().toISOString()
+      });
       toast({
         title: "Error",
         description: "Failed to analyze response. Please try again.",
         variant: "destructive"
       });
     } finally {
+      console.log('[CardFormPlayground] Analysis chain complete for field:', {
+        fieldId: field.id,
+        timestamp: new Date().toISOString()
+      });
       setLoadingFields(prev => ({ ...prev, [field.id]: false }));
     }
   };
 
   const handleSubmit = () => {
+    console.log('[CardFormPlayground] Submitting form:', {
+      formResponses,
+      progress,
+      timestamp: new Date().toISOString()
+    });
     if (progress < 90) {
       toast({
         title: "Cannot Submit Yet",
