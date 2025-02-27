@@ -6,7 +6,12 @@ import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipTrigger,
+  TooltipProvider 
+} from "@/components/ui/tooltip";
 import { CheckCircle2 } from "lucide-react";
 
 interface CardFormPlaygroundProps {
@@ -347,50 +352,52 @@ export function CardFormPlayground({
         ))}
       </div>
 
-      {currentSection && sections[currentSection] && (
-        <div className="space-y-6">
-          {sections[currentSection].map((field) => (
-            <Card key={field.id} className="p-6 space-y-4 relative">
-              {formResponses[field.field_key] && (
-                <div className="absolute top-4 right-4">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+      <TooltipProvider>
+        {currentSection && sections[currentSection] && (
+          <div className="space-y-6">
+            {sections[currentSection].map((field) => (
+              <Card key={field.id} className="p-6 space-y-4 relative">
+                {formResponses[field.field_key] && (
+                  <div className="absolute top-4 right-4">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <h3 className="text-base text-muted-foreground font-medium">
+                    {field.question_label}
+                  </h3>
+                  <p className="text-lg text-foreground">
+                    {field.question}
+                    {field.example_response && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
+                          >
+                            ℹ️
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Example: {field.example_response}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    )}
+                  </p>
                 </div>
-              )}
 
-              <div className="space-y-3">
-                <h3 className="text-base text-muted-foreground font-medium">
-                  {field.question_label}
-                </h3>
-                <p className="text-lg text-foreground">
-                  {field.question}
-                  {field.example_response && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
-                        >
-                          ℹ️
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Example: {field.example_response}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  )}
-                </p>
-              </div>
-
-              <Textarea
-                value={formResponses[field.field_key] || ''}
-                onChange={(e) => handleResponseChange(field, e.target.value)}
-                placeholder="Enter your response..."
-                className="min-h-[100px]"
-              />
-            </Card>
-          ))}
-        </div>
-      )}
+                <Textarea
+                  value={formResponses[field.field_key] || ''}
+                  onChange={(e) => handleResponseChange(field, e.target.value)}
+                  placeholder="Enter your response..."
+                  className="min-h-[100px]"
+                />
+              </Card>
+            ))}
+          </div>
+        )}
+      </TooltipProvider>
 
       <div className="flex justify-end pt-6">
         <Button
