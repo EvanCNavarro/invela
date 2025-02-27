@@ -147,53 +147,25 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         .returning();
     }
 
-    // Get total number of fields in the current section
-    const [field] = await db.select()
-      .from(cardFields)
-      .where(eq(cardFields.id, parseInt(fieldId)));
-
-    if (!field) {
-      throw new Error('Field not found');
-    }
-
-    const totalSectionFields = await db.select()
-      .from(cardFields)
-      .where(eq(cardFields.wizard_section, field.wizard_section))
-      .execute()
-      .then(fields => fields.length);
-
-    // Get number of completed responses in the current section
-    const completedSectionResponses = await db.select()
+    // Calculate progress based on completed responses count
+    const completedCount = await db.select()
       .from(cardResponses)
-      .leftJoin(cardFields, eq(cardResponses.field_id, cardFields.id))
       .where(
         and(
           eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardFields.wizard_section, field.wizard_section),
           eq(cardResponses.status, 'COMPLETE')
         )
       )
       .execute()
       .then(responses => responses.length);
 
-    // Calculate progress percentage by section
-    const progress = Math.floor((completedSectionResponses / totalSectionFields) * 100);
+    // Progress is simply the count as a percentage
+    const progress = completedCount;
 
     console.log('[Card Routes] Progress calculation:', {
-      section: field.wizard_section,
-      totalSectionFields,
-      completedSectionResponses,
-      rawProgress: (completedSectionResponses / totalSectionFields) * 100,
-      finalProgress: progress,
+      completedCount,
+      progress,
       timestamp: new Date().toISOString()
-    });
-
-    console.log('[Card Routes] Updating task progress:', {
-      taskId,
-      totalSectionFields,
-      completedSectionResponses,
-      calculatedProgress: progress,
-      timestamp: timestamp.toISOString()
     });
 
     // Update task progress
