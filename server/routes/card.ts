@@ -448,7 +448,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           type: 'card_assessment',
           status: 'active',
           company_id: task.company_id,
-          created_by: req.user!.id,
+          user_id: req.user!.id, // Changed from created_by to user_id
           created_at: timestamp,
           updated_at: timestamp,
           size: Buffer.from(fileContent).length,
