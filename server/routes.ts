@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
-import { users, companies, files, companyLogos, relationships, tasks, invitations } from '@db/schema';
+import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
@@ -12,18 +12,17 @@ import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
-import { TaskStatus, taskStatusToProgress } from './types';
 import kybRouter from './routes/kyb';
-import cardRouter from './routes/card';  // Add import for card router
+import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
-  app.use(cardRouter);  // Register card router
+  app.use(cardRouter);
   app.use(filesRouter);
-  app.use(accessRouter); // Register the new access router
+  app.use(accessRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
@@ -111,7 +110,7 @@ export function registerRoutes(app: Express): Express {
         fundingStage: company.funding_stage || null,
         keyClientsPartners: company.key_partners || [],
         foundersAndLeadership: company.leadership_team || 'No leadership information available',
-        riskScore: company.risk_score // Added riskScore
+        riskScore: company.risk_score
       }));
 
       res.json(transformedCompanies);
@@ -208,7 +207,7 @@ export function registerRoutes(app: Express): Express {
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
         incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
-        riskScore: company.risk_score // Added riskScore
+        riskScore: company.risk_score
       };
 
       res.json(transformedCompany);
@@ -860,7 +859,7 @@ export function registerRoutes(app: Express): Express {
         where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
       });
 
-      if(existingCompany) {
+      if (existingCompany) {
         console.log('[FinTech Invite] Company already exists:', existingCompany.name);
         return res.status(409).json({
           message: "A company with this name already exists",
@@ -882,6 +881,11 @@ export function registerRoutes(app: Express): Express {
         if (!userCompany) {
           throw new Error("Your company information not found");
         }
+
+        console.log('[FinTech Invite] Found sender company:', {
+          id: userCompany.id,
+          name: userCompany.name
+        });
 
         // Create new company
         const [newCompany] = await tx.insert(companies)
@@ -956,7 +960,7 @@ export function registerRoutes(app: Express): Express {
 
         console.log('[FinTech Invite] Created invitation:', {
           id: invitation.id,
-          code: invitation.code,
+          code: invitationCode,
           companyId: newCompany.id
         });
 
@@ -976,8 +980,8 @@ export function registerRoutes(app: Express): Express {
             due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
             metadata: {
               company_id: newCompany.id,
-              created_at: new Date().toISOString(),
-              status_flow: [TaskStatus.NOT_STARTED]
+              status_flow: [TaskStatus.NOT_STARTED],
+              created_at: new Date().toISOString()
             }
           })
           .returning();
@@ -1003,8 +1007,8 @@ export function registerRoutes(app: Express): Express {
             due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
             metadata: {
               company_id: newCompany.id,
-              created_at: new Date().toISOString(),
-              status_flow: [TaskStatus.NOT_STARTED]
+              status_flow: [TaskStatus.NOT_STARTED],
+              created_at: new Date().toISOString()
             }
           })
           .returning();
@@ -1059,6 +1063,18 @@ export function registerRoutes(app: Express): Express {
         };
       });
 
+      console.log('[FinTech Invite] Process completed successfully:', {
+        companyId: result.company.id,
+        companyName: result.company.name,
+        userId: result.user.id,
+        invitationId: result.invitation.id,
+        tasks: {
+          kyb: result.tasks.kyb.id,
+          card: result.tasks.card.id,
+          onboarding: result.tasks.onboarding.id
+        }
+      });
+
       // Send invitation email outside transaction
       const protocol = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers.host;
@@ -1084,18 +1100,6 @@ export function registerRoutes(app: Express): Express {
         // If email fails, we don't rollback the transaction, but log it
         // The user can retry sending the email later
       }
-
-      console.log('[FinTech Invite] Process completed successfully:', {
-        companyId: result.company.id,
-        companyName: result.company.name,
-        userId: result.user.id,
-        invitationId: result.invitation.id,
-        tasks: {
-          kyb: result.tasks.kyb.id,
-          card: result.tasks.card.id,
-          onboarding: result.tasks.onboarding.id
-        }
-      });
 
       return res.status(201).json({
         message: "Invitation sent successfully",
