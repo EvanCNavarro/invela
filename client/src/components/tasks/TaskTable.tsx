@@ -2,12 +2,18 @@ import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Task {
   id: number;
@@ -60,6 +66,16 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [, navigate] = useLocation();
 
+  // Find KYB task completion status for the company
+  const isKybCompleted = (companyId: number | null): boolean => {
+    if (!companyId) return false;
+    return tasks.some(task => 
+      task.company_id === companyId && 
+      task.task_type === 'company_kyb' && 
+      task.status === 'COMPLETED'
+    );
+  };
+
   const handleTaskClick = (task: Task) => {
     console.log('[TaskTable] Task clicked:', {
       id: task.id,
@@ -69,6 +85,12 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       metadata: task.metadata,
       timestamp: new Date().toISOString()
     });
+
+    // Check if CARD task is locked
+    if (task.task_type === 'company_card' && !isKybCompleted(task.company_id)) {
+      console.log('[TaskTable] CARD task locked - KYB not completed');
+      return; // Prevent navigation
+    }
 
     // Navigate to form pages for KYB and CARD tasks if not in submitted status
     if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
@@ -139,69 +161,87 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tasks.map((task) => (
-              <TableRow 
-                key={task.id}
-                className={classNames(
-                  "cursor-pointer hover:bg-muted/50 transition-colors",
-                  task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50"
-                )}
-                onClick={() => handleTaskClick(task)}
-              >
-                <TableCell className="font-medium">
-                  <div className="flex items-center space-x-2">
-                    <span>{task.title}</span>
-                    {task.task_type === 'company_kyb' && (
-                      <Badge variant="outline" className="ml-2">KYB</Badge>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(task.status)}>
-                    {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="w-full bg-secondary h-2 rounded-full">
-                    <div
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${task.progress}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    {task.progress}%
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
-                </TableCell>
-                <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 p-0 hover:bg-accent"
-                      >
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setSelectedTask(task);
-                          setDetailsModalOpen(true);
-                        }}
-                        className="cursor-pointer"
-                      >
-                        View Details
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
+            {tasks.map((task) => {
+              const isCardTask = task.task_type === 'company_card';
+              const isLocked = isCardTask && !isKybCompleted(task.company_id);
+
+              return (
+                <TableRow 
+                  key={task.id}
+                  className={classNames(
+                    "cursor-pointer hover:bg-muted/50 transition-colors",
+                    task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                    isLocked && "opacity-50 cursor-not-allowed"
+                  )}
+                  onClick={() => !isLocked && handleTaskClick(task)}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center space-x-2">
+                      <span>{task.title}</span>
+                      {task.task_type === 'company_kyb' && (
+                        <Badge variant="outline" className="ml-2">KYB</Badge>
+                      )}
+                      {isLocked && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Complete the KYB form to unlock CARD tasks</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(task.status)}>
+                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="w-full bg-secondary h-2 rounded-full">
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${task.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground mt-1">
+                      {task.progress}%
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
+                  </TableCell>
+                  <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 p-0 hover:bg-accent"
+                        >
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[160px]">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedTask(task);
+                            setDetailsModalOpen(true);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          View Details
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>
