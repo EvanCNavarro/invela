@@ -823,7 +823,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Update the fintech invite endpoint to properly set task status
+  // Fix fintech invite endpoint task creation
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
     console.log('[FinTech Invite] Starting invitation process');
     console.log('[FinTech Invite] Request body:', req.body);
@@ -831,7 +831,7 @@ export function registerRoutes(app: Express): Express {
     try {
       const { email, company_name, full_name, sender_name } = req.body;
 
-      // Input validation before starting transaction
+      // Input validation
       const invalidFields = [];
       if (!email) invalidFields.push('email');
       if (!company_name) invalidFields.push('company name');
@@ -858,9 +858,9 @@ export function registerRoutes(app: Express): Express {
       // Check for existing company before starting transaction
       const existingCompany = await db.query.companies.findFirst({
         where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
-            });
+      });
 
-      if (existingCompany) {
+      if(existingCompany) {
         console.log('[FinTech Invite] Company already exists:', existingCompany.name);
         return res.status(409).json({
           message: "A company with this name already exists",
@@ -884,29 +884,33 @@ export function registerRoutes(app: Express): Express {
         }
 
         // Create new company
-        const companyData = {
-          name: company_name.trim(),
-          description: `FinTech partner company ${company_name}`,
-          category: 'FinTech',
-          status: 'active',
-          accreditation_status: 'PENDING',
-          onboarding_company_completed: false,
-          available_tabs: ['task-center', 'file-vault'],
-          metadata: {
-            invited_by: req.user!.id,
-            invited_at: new Date().toISOString(),
-            invited_from: userCompany.name,
-            created_via: 'fintech_invite'
-          }
-        };
-
         const [newCompany] = await tx.insert(companies)
-          .values(companyData)
+          .values({
+            name: company_name.trim(),
+            description: `FinTech partner company ${company_name}`,
+            category: 'FinTech',
+            status: 'active',
+            accreditation_status: 'PENDING',
+            onboarding_company_completed: false,
+            available_tabs: ['task-center', 'file-vault'],
+            metadata: {
+              invited_by: req.user!.id,
+              invited_at: new Date().toISOString(),
+              invited_from: userCompany.name,
+              created_via: 'fintech_invite'
+            }
+          })
           .returning();
 
         if (!newCompany) {
           throw new Error("Failed to create company");
         }
+
+        console.log('[FinTech Invite] Created new company:', {
+          id: newCompany.id,
+          name: newCompany.name,
+          category: newCompany.category
+        });
 
         // Create user account
         const tempPassword = crypto.randomBytes(32).toString('hex');
@@ -926,6 +930,12 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
+        console.log('[FinTech Invite] Created new user:', {
+          id: newUser.id,
+          email: newUser.email,
+          companyId: newCompany.id
+        });
+
         // Create invitation
         const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
         const [invitation] = await tx.insert(invitations)
@@ -944,7 +954,14 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
+        console.log('[FinTech Invite] Created invitation:', {
+          id: invitation.id,
+          code: invitation.code,
+          companyId: newCompany.id
+        });
+
         // Create required tasks
+        // KYB Task
         const [kybTask] = await tx.insert(tasks)
           .values({
             title: `Company KYB: ${company_name}`,
@@ -965,6 +982,13 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
+        console.log('[FinTech Invite] Created KYB task:', {
+          id: kybTask.id,
+          status: kybTask.status,
+          companyId: newCompany.id
+        });
+
+        // CARD Task
         const [cardTask] = await tx.insert(tasks)
           .values({
             title: `Company CARD: ${company_name}`,
@@ -985,6 +1009,13 @@ export function registerRoutes(app: Express): Express {
           })
           .returning();
 
+        console.log('[FinTech Invite] Created CARD task:', {
+          id: cardTask.id,
+          status: cardTask.status,
+          companyId: newCompany.id
+        });
+
+        // Onboarding Task
         const [onboardingTask] = await tx.insert(tasks)
           .values({
             title: `New User Invitation: ${email}`,
@@ -1008,6 +1039,13 @@ export function registerRoutes(app: Express): Express {
             }
           })
           .returning();
+
+        console.log('[FinTech Invite] Created onboarding task:', {
+          id: onboardingTask.id,
+          status: onboardingTask.status,
+          companyId: newCompany.id,
+          assignedTo: newUser.id
+        });
 
         return {
           company: newCompany,
