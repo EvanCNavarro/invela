@@ -237,11 +237,27 @@ export function CardFormPlayground({
     }
   }, [sections]);
 
-  const handleResponseChange = (field: CardField, value: string) => {
+  const handleResponseChange = async (field: CardField, value: string) => {
+    console.log('[CardFormPlayground] Field updated:', {
+      fieldKey: field.field_key,
+      hasValue: !!value
+    });
+
+    // Update local state immediately for responsive UI
     setFormResponses(prev => ({
       ...prev,
       [field.field_key]: value
     }));
+
+    // Save to database
+    try {
+      await saveResponse.mutateAsync({
+        fieldId: field.id,
+        response: value
+      });
+    } catch (error) {
+      console.error('[CardFormPlayground] Error saving response:', error);
+    }
   };
 
   const validateResponse = (value: string): boolean => {
@@ -253,7 +269,7 @@ export function CardFormPlayground({
   const handleBlur = async (field: CardField, value: string) => {
     if (!value || !validateResponse(value)) return;
 
-    console.log('[CardFormPlayground] Field blur - starting analysis chain:', {
+    console.log('[CardFormPlayground] Field blur - starting OpenAI analysis:', {
       fieldId: field.id,
       hasValidResponse: true
     });
@@ -261,13 +277,6 @@ export function CardFormPlayground({
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      // First save the response
-      await saveResponse.mutateAsync({
-        fieldId: field.id,
-        response: value
-      });
-
-      // Then trigger OpenAI analysis
       await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
