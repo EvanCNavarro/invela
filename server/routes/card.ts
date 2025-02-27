@@ -453,13 +453,32 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       const updatedCompany = await updateCompanyAfterCardCompletion(task.company_id);
 
       // Generate assessment file
+      console.log('[Card Routes] Starting assessment file generation:', {
+        taskId,
+        title: task.title,
+        timestamp: new Date().toISOString()
+      });
+
+      // Ensure uploads directory exists
+      const uploadDir = path.join(process.cwd(), 'uploads', 'card-assessments');
+      if (!fs.existsSync(uploadDir)) {
+        console.log('[Card Routes] Creating uploads directory:', uploadDir);
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
       const { fileName } = await generateAssessmentFile(
         parseInt(taskId),
         task.title.replace('Company CARD: ', '')
       );
 
+      console.log('[Card Routes] Assessment file generated:', {
+        fileName,
+        path: path.join(uploadDir, fileName),
+        timestamp: new Date().toISOString()
+      });
+
       // Update task status to submitted
-      await db.update(tasks)
+      const [updatedTask] = await db.update(tasks)
         .set({ 
           status: TaskStatus.SUBMITTED,
           completion_date: new Date(),
@@ -471,7 +490,16 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
             submission_date: new Date().toISOString()
           }
         })
-        .where(eq(tasks.id, parseInt(taskId)));
+        .where(eq(tasks.id, parseInt(taskId)))
+        .returning();
+
+      console.log('[Card Routes] Task updated with file details:', {
+        taskId: updatedTask.id,
+        status: updatedTask.status,
+        progress: updatedTask.progress,
+        fileName: updatedTask.metadata.assessment_file,
+        timestamp: new Date().toISOString()
+      });
 
       res.json({ 
         success: true,
