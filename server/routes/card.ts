@@ -358,32 +358,57 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       .from(cardResponses)
       .where(eq(cardResponses.task_id, parseInt(taskId)));
 
-    const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
-
-    // Create "Unanswered" responses for missing fields
     const timestamp = new Date();
-    for (const field of fields) {
-      if (!existingFieldIds.has(field.id)) {
-        console.log('[Card Routes] Creating unanswered response:', {
-          fieldId: field.id,
-          taskId,
-          timestamp: timestamp.toISOString()
-        });
 
-        await db.insert(cardResponses)
-          .values({
-            task_id: parseInt(taskId),
-            field_id: field.id,
-            response_value: "Unanswered.",
-            status: 'COMPLETE',
-            ai_suspicion_level: 100,
-            partial_risk_score: field.partial_risk_score_max,
-            ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-            version: 1,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
-      }
+    // First, update all existing EMPTY responses
+    const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
+    for (const response of emptyResponses) {
+      console.log('[Card Routes] Updating empty response:', {
+        fieldId: response.field_id,
+        taskId,
+        timestamp: timestamp.toISOString()
+      });
+
+      // Get the field to access partial_risk_score_max
+      const [field] = fields.filter(f => f.id === response.field_id);
+
+      await db.update(cardResponses)
+        .set({
+          response_value: "Unanswered.",
+          status: 'COMPLETE',
+          ai_suspicion_level: 100,
+          partial_risk_score: field.partial_risk_score_max,
+          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+          version: response.version + 1,
+          updated_at: timestamp
+        })
+        .where(eq(cardResponses.id, response.id));
+    }
+
+    // Then create responses for fields that don't have any response
+    const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
+    const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
+
+    for (const field of missingFields) {
+      console.log('[Card Routes] Creating unanswered response:', {
+        fieldId: field.id,
+        taskId,
+        timestamp: timestamp.toISOString()
+      });
+
+      await db.insert(cardResponses)
+        .values({
+          task_id: parseInt(taskId),
+          field_id: field.id,
+          response_value: "Unanswered.",
+          status: 'COMPLETE',
+          ai_suspicion_level: 100,
+          partial_risk_score: field.partial_risk_score_max,
+          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+          version: 1,
+          created_at: timestamp,
+          updated_at: timestamp
+        });
     }
 
     // Update task status to submitted
@@ -399,7 +424,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       taskId,
       totalFields: fields.length,
       existingResponses: existingResponses.length,
-      newResponses: fields.length - existingResponses.length,
+      updatedEmptyResponses: emptyResponses.length,
+      newResponses: missingFields.length,
       timestamp: timestamp.toISOString()
     });
 
@@ -407,8 +433,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       success: true,
       message: "Form submitted successfully",
       totalFields: fields.length,
-      completedFields: existingResponses.length,
-      autoFilledFields: fields.length - existingResponses.length
+      completedFields: existingResponses.length - emptyResponses.length,
+      autoFilledFields: emptyResponses.length + missingFields.length
     });
 
   } catch (error) {
