@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CheckCircle2 } from "lucide-react";
 
 interface CardFormPlaygroundProps {
   taskId: number;
@@ -51,7 +53,6 @@ export function CardFormPlayground({
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
 
-  // Fetch task data to get initial progress
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
     queryFn: async () => {
@@ -63,14 +64,12 @@ export function CardFormPlayground({
     }
   });
 
-  // Set initial progress from task data
   useEffect(() => {
     if (taskData?.progress !== undefined) {
       setProgress(taskData.progress);
     }
   }, [taskData]);
 
-  // Fetch all CARD fields
   const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery({
     queryKey: ['/api/card/fields'],
     queryFn: async () => {
@@ -120,7 +119,6 @@ export function CardFormPlayground({
     }
   });
 
-  // Fetch existing responses for this task
   const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery({
     queryKey: ['/api/card/responses', taskId],
     queryFn: async () => {
@@ -154,7 +152,6 @@ export function CardFormPlayground({
     enabled: !!taskId
   });
 
-  // Save field response mutation
   const saveResponse = useMutation({
     mutationFn: async ({ fieldId, response }: { fieldId: number, response: string }) => {
       console.log('[CardFormPlayground] Saving response:', {
@@ -193,11 +190,9 @@ export function CardFormPlayground({
       return data;
     },
     onSuccess: (data) => {
-      // Update progress from server response
       if (typeof data.progress === 'number') {
         setProgress(data.progress);
       }
-      // Invalidate the responses query to force a refresh
       queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
     },
     onError: (error) => {
@@ -214,7 +209,6 @@ export function CardFormPlayground({
     }
   });
 
-  // Load existing responses into form whenever they change
   useEffect(() => {
     if (existingResponses.length > 0 && cardFields.length > 0) {
       console.log('[CardFormPlayground] Loading existing responses:', {
@@ -242,7 +236,6 @@ export function CardFormPlayground({
     }
   }, [existingResponses, cardFields]);
 
-  // Group fields by section with logging
   const sections = cardFields.reduce((acc, field) => {
     if (!acc[field.wizard_section]) {
       acc[field.wizard_section] = [];
@@ -255,7 +248,6 @@ export function CardFormPlayground({
     return acc;
   }, {} as Record<string, CardField[]>);
 
-  // Set initial section if not set
   useEffect(() => {
     if (!currentSection && Object.keys(sections).length > 0) {
       const firstSection = Object.keys(sections)[0];
@@ -274,7 +266,6 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    // Update local state immediately for smooth UX
     setFormResponses(prev => ({
       ...prev,
       [field.field_key]: value
@@ -326,7 +317,6 @@ export function CardFormPlayground({
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl font-semibold">
           CARD Assessment for {companyData?.name || companyName}
@@ -336,7 +326,6 @@ export function CardFormPlayground({
         )}
       </div>
 
-      {/* Progress Bar */}
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Progress</span>
@@ -345,7 +334,6 @@ export function CardFormPlayground({
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Section Navigation */}
       <div className="flex gap-2 flex-wrap">
         {Object.keys(sections).map((section) => (
           <Button
@@ -359,25 +347,40 @@ export function CardFormPlayground({
         ))}
       </div>
 
-      {/* Questions */}
       {currentSection && sections[currentSection] && (
         <div className="space-y-6">
           {sections[currentSection].map((field) => (
-            <Card key={field.id} className="p-6 space-y-4">
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium">{field.question_label}</h3>
-                <p className="text-muted-foreground">{field.question}</p>
-                {field.example_response && (
-                  <p className="text-sm text-muted-foreground italic">
-                    Example: {field.example_response}
-                  </p>
-                )}
-                {field.ai_search_instructions && (
-                  <p className="text-sm text-blue-600">
-                    AI Hint: {field.ai_search_instructions}
-                  </p>
-                )}
+            <Card key={field.id} className="p-6 space-y-4 relative">
+              {formResponses[field.field_key] && (
+                <div className="absolute top-4 right-4">
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <h3 className="text-base text-muted-foreground font-medium">
+                  {field.question_label}
+                </h3>
+                <p className="text-lg text-foreground">
+                  {field.question}
+                  {field.example_response && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
+                        >
+                          ℹ️
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Example: {field.example_response}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </p>
               </div>
+
               <Textarea
                 value={formResponses[field.field_key] || ''}
                 onChange={(e) => handleResponseChange(field, e.target.value)}
@@ -389,7 +392,6 @@ export function CardFormPlayground({
         </div>
       )}
 
-      {/* Submit Button */}
       <div className="flex justify-end pt-6">
         <Button
           onClick={handleSubmit}
