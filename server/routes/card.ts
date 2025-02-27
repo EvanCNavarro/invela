@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, cardFields, cardResponses, files } from '@db/schema';
+import { tasks, cardFields, cardResponses, files, TaskStatus } from '@db/schema';
 import { eq, ilike, and } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
