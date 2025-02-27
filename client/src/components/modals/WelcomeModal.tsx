@@ -59,7 +59,7 @@ export function WelcomeModal() {
         throw new Error("User email not found");
       }
 
-      const response = await fetch('/api/users/complete-onboarding', {
+      const response = await fetch('/api/user/complete-onboarding', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -77,12 +77,12 @@ export function WelcomeModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      if (connected && socket && data.task) {
+      if (connected && socket && onboardingTask) {
         try {
           socket.send(JSON.stringify({
             type: 'task_update',
             data: {
-              taskId: data.task.id,
+              taskId: onboardingTask.id,
               status: 'completed',
               metadata: {
                 onboardingCompleted: true,
@@ -126,13 +126,21 @@ export function WelcomeModal() {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      // When modal is closed, complete onboarding
+      completeOnboardingMutation.mutate();
+    }
+    setShowModal(open);
+  };
+
   // Don't render anything if user has completed onboarding
   if (!user || user.onboarding_user_completed) {
     return null;
   }
 
   return (
-    <Dialog open={showModal} onOpenChange={setShowModal}>
+    <Dialog open={showModal} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-xl">
         <DialogTitle>{carouselImages[currentSlide].title}</DialogTitle>
         <DialogDescription>
