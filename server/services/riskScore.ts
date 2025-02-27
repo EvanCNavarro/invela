@@ -25,6 +25,8 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
   console.log('[Risk Score] Retrieved responses:', {
     taskId,
     responseCount: responses.length,
+    completeResponses: responses.filter(r => r.response.status === 'COMPLETE').length,
+    responsesWithScore: responses.filter(r => r.response.partial_risk_score !== null).length,
     timestamp: new Date().toISOString()
   });
 
@@ -34,7 +36,24 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
 
   // Calculate risk score
   for (const { response, field } of responses) {
-    if (!field) continue; // Skip if field is null
+    if (!field) {
+      console.warn('[Risk Score] Missing field for response:', {
+        responseId: response.id,
+        fieldId: response.field_id,
+        timestamp: new Date().toISOString()
+      });
+      continue;
+    }
+
+    console.log('[Risk Score] Processing response:', {
+      responseId: response.id,
+      fieldId: field.id,
+      fieldKey: field.field_key,
+      status: response.status,
+      partialScore: response.partial_risk_score,
+      maxScore: field.partial_risk_score_max,
+      timestamp: new Date().toISOString()
+    });
 
     // Add to max possible score
     maxPossibleScore += field.partial_risk_score_max || 0;
@@ -78,16 +97,31 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
   try {
     const result = await calculateCardRiskScore(taskId);
 
+    console.log('[Risk Score] Risk calculation result:', {
+      companyId,
+      taskId,
+      calculatedScore: result.riskScore,
+      metrics: {
+        totalFields: result.totalFields,
+        answeredFields: result.answeredFields,
+        maxPossible: result.maxPossibleScore,
+        actual: result.actualScore
+      },
+      timestamp: new Date().toISOString()
+    });
+
     // Update company risk score
-    await db.update(companies)
+    const [updatedCompany] = await db.update(companies)
       .set({ 
         riskScore: result.riskScore,
         updatedAt: new Date()
       })
-      .where(eq(companies.id, companyId));
+      .where(eq(companies.id, companyId))
+      .returning();
 
     console.log('[Risk Score] Company risk score updated:', {
-      companyId,
+      companyId: updatedCompany.id,
+      oldRiskScore: updatedCompany.riskScore,
       newRiskScore: result.riskScore,
       timestamp: new Date().toISOString()
     });
@@ -98,6 +132,8 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       error,
       companyId,
       taskId,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
     throw new Error(`Failed to update company risk score: ${error instanceof Error ? error.message : 'Unknown error'}`);

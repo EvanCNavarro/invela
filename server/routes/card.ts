@@ -356,6 +356,15 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       where: eq(tasks.id, parseInt(taskId))
     });
 
+    console.log('[Card Routes] Task lookup result:', {
+      found: !!task,
+      taskId: task?.id,
+      taskType: task?.task_type,
+      taskStatus: task?.status,
+      companyId: task?.company_id,
+      timestamp: new Date().toISOString()
+    });
+
     if (!task) {
       throw new Error('Task not found');
     }
@@ -368,6 +377,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     const fields = await db.select().from(cardFields);
     console.log('[Card Routes] Retrieved all card fields:', {
       totalFields: fields.length,
+      wizardSections: [...new Set(fields.map(f => f.wizard_section))],
       timestamp: new Date().toISOString()
     });
 
@@ -380,6 +390,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       totalExistingResponses: existingResponses.length,
       emptyResponsesCount: existingResponses.filter(r => r.status === 'EMPTY').length,
       completeResponsesCount: existingResponses.filter(r => r.status === 'COMPLETE').length,
+      partialScoresPresent: existingResponses.filter(r => r.partial_risk_score !== null).length,
       timestamp: new Date().toISOString()
     });
 
@@ -397,6 +408,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         responseId: response.id,
         fieldId: response.field_id,
         oldStatus: response.status,
+        oldPartialScore: response.partial_risk_score,
+        oldSuspicionLevel: response.ai_suspicion_level,
         timestamp: timestamp.toISOString()
       });
 
@@ -411,17 +424,44 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         continue;
       }
 
-      await db.update(cardResponses)
-        .set({
-          response_value: "Unanswered.",
-          status: 'COMPLETE',
-          ai_suspicion_level: 100,
-          partial_risk_score: field.partial_risk_score_max,
-          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-          version: response.version + 1,
-          updated_at: timestamp
-        })
-        .where(eq(cardResponses.id, response.id));
+      console.log('[Card Routes] Found field for empty response:', {
+        fieldId: field.id,
+        fieldKey: field.field_key,
+        maxRiskScore: field.partial_risk_score_max,
+        wizardSection: field.wizard_section,
+        timestamp: timestamp.toISOString()
+      });
+
+      try {
+        const [updatedResponse] = await db.update(cardResponses)
+          .set({
+            response_value: "Unanswered.",
+            status: 'COMPLETE',
+            ai_suspicion_level: 100,
+            partial_risk_score: field.partial_risk_score_max,
+            ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+            version: response.version + 1,
+            updated_at: timestamp
+          })
+          .where(eq(cardResponses.id, response.id))
+          .returning();
+
+        console.log('[Card Routes] Successfully updated empty response:', {
+          responseId: updatedResponse.id,
+          newStatus: updatedResponse.status,
+          newPartialScore: updatedResponse.partial_risk_score,
+          newVersion: updatedResponse.version,
+          timestamp: timestamp.toISOString()
+        });
+      } catch (error) {
+        console.error('[Card Routes] Error updating empty response:', {
+          error,
+          responseId: response.id,
+          fieldId: response.field_id,
+          timestamp: timestamp.toISOString()
+        });
+        throw error;
+      }
     }
 
     // Then create responses for fields that don't have any response
@@ -431,6 +471,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     console.log('[Card Routes] Processing missing fields:', {
       missingFieldsCount: missingFields.length,
       missingFieldIds: missingFields.map(f => f.id),
+      existingFieldCount: existingFieldIds.size,
       timestamp: timestamp.toISOString()
     });
 
@@ -438,74 +479,114 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       console.log('[Card Routes] Creating new response for missing field:', {
         fieldId: field.id,
         fieldKey: field.field_key,
+        maxRiskScore: field.partial_risk_score_max,
+        wizardSection: field.wizard_section,
         timestamp: timestamp.toISOString()
       });
 
-      await db.insert(cardResponses)
-        .values({
-          task_id: parseInt(taskId),
-          field_id: field.id,
-          response_value: "Unanswered.",
-          status: 'COMPLETE',
-          ai_suspicion_level: 100,
-          partial_risk_score: field.partial_risk_score_max,
-          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-          version: 1,
-          created_at: timestamp,
-          updated_at: timestamp
+      try {
+        const [newResponse] = await db.insert(cardResponses)
+          .values({
+            task_id: parseInt(taskId),
+            field_id: field.id,
+            response_value: "Unanswered.",
+            status: 'COMPLETE',
+            ai_suspicion_level: 100,
+            partial_risk_score: field.partial_risk_score_max,
+            ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+            version: 1,
+            created_at: timestamp,
+            updated_at: timestamp
+          })
+          .returning();
+
+        console.log('[Card Routes] Successfully created new response:', {
+          responseId: newResponse.id,
+          fieldId: newResponse.field_id,
+          status: newResponse.status,
+          partialScore: newResponse.partial_risk_score,
+          timestamp: timestamp.toISOString()
         });
+      } catch (error) {
+        console.error('[Card Routes] Error creating new response:', {
+          error,
+          fieldId: field.id,
+          timestamp: timestamp.toISOString()
+        });
+        throw error;
+      }
     }
 
     // Calculate and update company risk score
     console.log('[Card Routes] Calculating risk score:', {
       taskId,
       companyId: task.company_id,
+      totalResponses: existingResponses.length + missingFields.length,
       timestamp: timestamp.toISOString()
     });
 
-    const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
+    try {
+      const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
 
-    console.log('[Card Routes] Updated company risk score:', {
-      companyId: task.company_id,
-      newRiskScore,
-      timestamp: timestamp.toISOString()
-    });
+      console.log('[Card Routes] Updated company risk score:', {
+        companyId: task.company_id,
+        newRiskScore,
+        timestamp: timestamp.toISOString()
+      });
 
-    // Update task status to submitted
-    console.log('[Card Routes] Updating task status:', {
-      taskId,
-      oldStatus: task.status,
-      newStatus: TaskStatus.SUBMITTED,
-      timestamp: timestamp.toISOString()
-    });
+      // Update task status to submitted
+      console.log('[Card Routes] Updating task status:', {
+        taskId,
+        oldStatus: task.status,
+        newStatus: TaskStatus.SUBMITTED,
+        timestamp: timestamp.toISOString()
+      });
 
-    await db.update(tasks)
-      .set({ 
-        status: TaskStatus.SUBMITTED,
-        completion_date: timestamp,
-        updated_at: timestamp
-      })
-      .where(eq(tasks.id, parseInt(taskId)));
+      const [updatedTask] = await db.update(tasks)
+        .set({ 
+          status: TaskStatus.SUBMITTED,
+          completion_date: timestamp,
+          updated_at: timestamp
+        })
+        .where(eq(tasks.id, parseInt(taskId)))
+        .returning();
 
-    console.log('[Card Routes] Form submission completed:', {
-      taskId,
-      totalFields: fields.length,
-      existingResponses: existingResponses.length,
-      updatedEmptyResponses: emptyResponses.length,
-      newResponses: missingFields.length,
-      finalStatus: TaskStatus.SUBMITTED,
-      newRiskScore,
-      timestamp: timestamp.toISOString()
-    });
+      console.log('[Card Routes] Task status updated:', {
+        taskId: updatedTask.id,
+        newStatus: updatedTask.status,
+        completionDate: updatedTask.completion_date,
+        timestamp: timestamp.toISOString()
+      });
 
-    res.json({ 
-      success: true,
-      message: "Form submitted successfully",
-      totalFields: fields.length,
-      completedFields: existingResponses.length - emptyResponses.length,
-      autoFilledFields: emptyResponses.length + missingFields.length,
-      riskScore: newRiskScore
-    });
+      console.log('[Card Routes] Form submission completed:', {
+        taskId,
+        totalFields: fields.length,
+        existingResponses: existingResponses.length,
+        updatedEmptyResponses: emptyResponses.length,
+        newResponses: missingFields.length,
+        finalStatus: TaskStatus.SUBMITTED,
+        newRiskScore,
+        timestamp: timestamp.toISOString()
+      });
+
+      res.json({ 
+        success: true,
+        message: "Form submitted successfully",
+        totalFields: fields.length,
+        completedFields: existingResponses.length - emptyResponses.length,
+        autoFilledFields: emptyResponses.length + missingFields.length,
+        riskScore: newRiskScore
+      });
+
+    } catch (error) {
+      console.error('[Card Routes] Error in final submission steps:', {
+        error,
+        taskId,
+        companyId: task.company_id,
+        timestamp: timestamp.toISOString()
+      });
+      throw error;
+    }
 
   } catch (error) {
     console.error('[Card Routes] Error in form submission:', {
