@@ -223,6 +223,7 @@ export const cardResponses = pgTable("card_responses", {
   field_id: integer("field_id").references(() => cardFields.id).notNull(),
   response_value: text("response_value"),
   ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
+  ai_reasoning: text("ai_reasoning"),  // Add new column
   partial_risk_score: integer("partial_risk_score").notNull().default(0),
   status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default("empty"),
   version: integer("version").notNull().default(1),
