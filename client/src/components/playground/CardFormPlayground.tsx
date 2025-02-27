@@ -260,15 +260,20 @@ export function CardFormPlayground({
 
   const handleResponseChange = async (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field updated:', {
+      fieldId: field.id,
       fieldKey: field.field_key,
       hasValue: !!value,
       timestamp: new Date().toISOString()
     });
 
-    setFormResponses(prev => ({
-      ...prev,
+    // Create a new object with the updated value for this specific field
+    const updatedResponses = {
+      ...formResponses,
       [field.field_key]: value
-    }));
+    };
+
+    // Update state with the new responses object
+    setFormResponses(updatedResponses);
 
     // If the field is emptied, update the database immediately
     if (!value.trim()) {
