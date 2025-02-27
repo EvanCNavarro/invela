@@ -55,17 +55,17 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
       timestamp: new Date().toISOString()
     });
 
-    // Add to max possible score
+    // Add to max possible score, safely handle nulls
     maxPossibleScore += field.partial_risk_score_max || 0;
 
-    // Only count complete responses
+    // Only count complete responses with a valid score
     if (response.status === 'COMPLETE' && response.partial_risk_score !== null) {
       totalScore += response.partial_risk_score;
       answeredCount++;
     }
   }
 
-  // Calculate final risk score as percentage of max possible
+  // Calculate final risk score as percentage of max possible, handle zero case
   const riskScore = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
 
   console.log('[Risk Score] Calculation complete:', {
@@ -95,6 +95,15 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
   });
 
   try {
+    // Verify company exists before calculating
+    const company = await db.query.companies.findFirst({
+      where: eq(companies.id, companyId)
+    });
+
+    if (!company) {
+      throw new Error(`Company with ID ${companyId} not found`);
+    }
+
     const result = await calculateCardRiskScore(taskId);
 
     console.log('[Risk Score] Risk calculation result:', {
@@ -110,7 +119,7 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score
+    // Update company risk score with proper error handling
     const [updatedCompany] = await db.update(companies)
       .set({ 
         riskScore: result.riskScore,
@@ -119,9 +128,13 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       .where(eq(companies.id, companyId))
       .returning();
 
+    if (!updatedCompany) {
+      throw new Error(`Failed to update risk score for company ${companyId}`);
+    }
+
     console.log('[Risk Score] Company risk score updated:', {
       companyId: updatedCompany.id,
-      oldRiskScore: updatedCompany.riskScore,
+      oldRiskScore: company.riskScore,
       newRiskScore: result.riskScore,
       timestamp: new Date().toISOString()
     });
