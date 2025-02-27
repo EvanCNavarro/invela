@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
   TooltipProvider 
 } from "@/components/ui/tooltip";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Info } from "lucide-react";
 
 interface CardFormPlaygroundProps {
   taskId: number;
@@ -336,7 +336,10 @@ export function CardFormPlayground({
           <span>Progress</span>
           <span>{progress}%</span>
         </div>
-        <Progress value={progress} className="h-2" />
+        <Progress 
+          value={progress} 
+          className="h-2 bg-gray-100" 
+        />
       </div>
 
       <div className="flex gap-2 flex-wrap">
@@ -356,18 +359,25 @@ export function CardFormPlayground({
         {currentSection && sections[currentSection] && (
           <div className="space-y-6">
             {sections[currentSection].map((field) => (
-              <Card key={field.id} className="p-6 space-y-4 relative">
-                {formResponses[field.field_key] && (
-                  <div className="absolute top-4 right-4">
+              <Card 
+                key={field.id} 
+                className={`p-6 space-y-4 relative ${
+                  formResponses[field.field_key] 
+                    ? 'border-green-500 border-2' 
+                    : ''
+                }`}
+              >
+                <div className="absolute top-4 right-4 w-5 h-5">
+                  {formResponses[field.field_key] && (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div className="space-y-3">
                   <h3 className="text-base text-muted-foreground font-medium">
                     {field.question_label}
                   </h3>
-                  <p className="text-lg text-foreground">
+                  <p className="text-lg text-foreground font-semibold flex items-center gap-2">
                     {field.question}
                     {field.example_response && (
                       <Tooltip>
@@ -376,11 +386,15 @@ export function CardFormPlayground({
                             variant="ghost"
                             className="ml-2 h-auto p-0 text-muted-foreground hover:text-foreground"
                           >
-                            ℹ️
+                            <Info className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Example: {field.example_response}</p>
+                        <TooltipContent 
+                          className="p-4 max-w-[300px] text-sm rounded-md"
+                        >
+                          <p className="whitespace-normal">
+                            Example: {field.example_response}
+                          </p>
                         </TooltipContent>
                       </Tooltip>
                     )}
