@@ -322,13 +322,22 @@ export function CardFormPlayground({
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold">
-          CARD Assessment for {companyData?.name || companyName}
-        </h1>
-        {companyData?.description && (
-          <p className="text-muted-foreground">{companyData.description}</p>
-        )}
+      <div className="flex justify-between items-start mb-6">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold">
+            Compliance And Risk Documentation Request Form
+          </h1>
+          {companyData?.description && (
+            <p className="text-muted-foreground">{companyData.description}</p>
+          )}
+        </div>
+        <Button
+          onClick={handleSubmit}
+          disabled={progress < 90}
+          className="px-8"
+        >
+          Submit Assessment
+        </Button>
       </div>
 
       <div className="space-y-2">
@@ -338,7 +347,7 @@ export function CardFormPlayground({
         </div>
         <Progress 
           value={progress} 
-          className="h-2 bg-gray-100" 
+          className="h-2 bg-gray-200" 
         />
       </div>
 
@@ -361,10 +370,10 @@ export function CardFormPlayground({
             {sections[currentSection].map((field) => (
               <Card 
                 key={field.id} 
-                className={`p-6 space-y-4 relative ${
+                className={`p-6 space-y-4 relative border-2 ${
                   formResponses[field.field_key] 
-                    ? 'border-green-500 border-2' 
-                    : ''
+                    ? 'border-green-500/50' 
+                    : 'border-transparent'
                 }`}
               >
                 <div className="absolute top-4 right-4 w-5 h-5">
@@ -412,16 +421,6 @@ export function CardFormPlayground({
           </div>
         )}
       </TooltipProvider>
-
-      <div className="flex justify-end pt-6">
-        <Button
-          onClick={handleSubmit}
-          disabled={progress < 90}
-          className="px-8"
-        >
-          Submit CARD Assessment
-        </Button>
-      </div>
     </div>
   );
 }
