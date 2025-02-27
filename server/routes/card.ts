@@ -73,7 +73,7 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Get individual CARD field response and update progress
+// Save individual CARD field response and update progress
 router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
   try {
     const { taskId, fieldId } = req.params;
@@ -86,7 +86,8 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       timestamp: new Date().toISOString()
     });
 
-    const status = response ? 'COMPLETE' : 'EMPTY';
+    // Set appropriate status based on response content
+    const status = response && response.trim() !== '' ? 'COMPLETE' : 'EMPTY';
     const timestamp = new Date();
 
     // Check if response already exists with exact match on task_id and field_id
@@ -145,17 +146,16 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       .execute()
       .then(fields => fields.length);
 
-    // Get number of completed responses (excluding "Unanswered" responses)
+    // Get number of completed responses (excluding empty and null responses)
     const completedResponses = await db.select()
       .from(cardResponses)
       .where(
         and(
           eq(cardResponses.task_id, parseInt(taskId)),
           eq(cardResponses.status, 'COMPLETE'),
-          and(
-            cardResponses.response_value.isNotNull(),
-            cardResponses.response_value.not.equals('Unanswered.')
-          )
+          cardResponses.response_value.isNotNull(),
+          cardResponses.response_value.not.equals(''),
+          cardResponses.response_value.not.equals('Unanswered.')
         )
       )
       .execute()
