@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, cardFields, cardResponses } from '@db/schema';
-import { eq, and, ilike, not } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
+import { updateCompanyAfterCardCompletion } from '../services/company';
+import { generateAssessmentFile } from '../services/fileGeneration';
 import { TaskStatus } from '@db/schema';
 
 const router = Router();
@@ -96,10 +98,8 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     const [existingResponse] = await db.select()
       .from(cardResponses)
       .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.field_id, parseInt(fieldId))
-        )
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.field_id, parseInt(fieldId))
       );
 
     let savedResponse;
@@ -152,10 +152,8 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     const completedCount = await db.select()
       .from(cardResponses)
       .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.status, 'COMPLETE')
-        )
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.status, 'COMPLETE')
       )
       .execute()
       .then(responses => responses.length);
@@ -308,10 +306,8 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
         updated_at: new Date()
       })
       .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.field_id, parseInt(fieldId))
-        )
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.field_id, parseInt(fieldId))
       )
       .returning();
 
@@ -351,7 +347,6 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    // Get task to get company_id
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, parseInt(taskId))
     });
@@ -439,19 +434,31 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
       const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
 
-      console.log('[Card Routes] Risk score calculated:', {
-        taskId,
+      // Update company onboarding status and available tabs
+      console.log('[Card Routes] Updating company status:', {
         companyId: task.company_id,
-        riskScore: newRiskScore,
-        timestamp: timestamp.toISOString()
+        timestamp: new Date().toISOString()
       });
+
+      const updatedCompany = await updateCompanyAfterCardCompletion(task.company_id);
+
+      // Generate assessment file
+      const { fileName } = await generateAssessmentFile(
+        parseInt(taskId),
+        task.title.replace('Company CARD: ', '')
+      );
 
       // Update task status to submitted
       await db.update(tasks)
         .set({ 
           status: TaskStatus.SUBMITTED,
-          completion_date: timestamp,
-          updated_at: timestamp
+          completion_date: new Date(),
+          updated_at: new Date(),
+          metadata: {
+            ...task.metadata,
+            assessment_file: fileName,
+            submission_date: new Date().toISOString()
+          }
         })
         .where(eq(tasks.id, parseInt(taskId)));
 
@@ -461,7 +468,13 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         totalFields: fields.length,
         completedFields: existingResponses.length - emptyResponses.length,
         autoFilledFields: emptyResponses.length + missingFields.length,
-        riskScore: newRiskScore
+        riskScore: newRiskScore,
+        assessmentFile: fileName,
+        company: {
+          id: updatedCompany.id,
+          onboardingCompleted: updatedCompany.onboarding_company_completed,
+          availableTabs: updatedCompany.available_tabs
+        }
       });
 
     } catch (error) {
@@ -470,7 +483,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         message: error instanceof Error ? error.message : 'Unknown error',
         taskId,
         companyId: task.company_id,
-        timestamp: timestamp.toISOString()
+        timestamp: new Date().toISOString()
       });
       throw error;
     }

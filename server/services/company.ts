@@ -182,3 +182,66 @@ export async function updateCompany(
 
   return updatedCompany;
 }
+
+/**
+ * Updates company onboarding status and available tabs after CARD completion
+ */
+export async function updateCompanyAfterCardCompletion(
+  companyId: number
+): Promise<typeof companies.$inferSelect> {
+  console.log('[Company Service] Updating company after CARD completion:', {
+    companyId,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    // Get company's current available tabs
+    const [company] = await db.select().from(companies).where(eq(companies.id, companyId));
+
+    if (!company) {
+      throw new Error(`Company with ID ${companyId} not found`);
+    }
+
+    // Define new tabs to add based on company category
+    let newTabs: string[] = ['dashboard', 'network', 'file-vault'];
+    if (company.category === 'Invela') {
+      newTabs.push('insights', 'builder', 'playground');
+    } else if (company.category === 'Bank') {
+      newTabs.push('insights', 'builder');
+    }
+
+    // Combine existing tabs with new ones, removing duplicates
+    const currentTabs = company.available_tabs || ['task-center'];
+    const updatedTabs = Array.from(new Set([...currentTabs, ...newTabs]));
+
+    // Update company with new tabs and completed onboarding
+    const [updatedCompany] = await db.update(companies)
+      .set({
+        onboarding_company_completed: true,
+        available_tabs: updatedTabs,
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, companyId))
+      .returning();
+
+    if (!updatedCompany) {
+      throw new Error(`Failed to update company ${companyId} after CARD completion`);
+    }
+
+    console.log('[Company Service] Company updated after CARD completion:', {
+      companyId: updatedCompany.id,
+      availableTabs: updatedCompany.available_tabs,
+      onboardingCompleted: updatedCompany.onboarding_company_completed,
+      timestamp: new Date().toISOString()
+    });
+
+    return updatedCompany;
+  } catch (error) {
+    console.error('[Company Service] Error updating company after CARD completion:', {
+      error,
+      companyId,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
