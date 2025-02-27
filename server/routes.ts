@@ -483,6 +483,31 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Add new endpoint after account setup endpoint
+  app.post("/api/user/complete-onboarding", requireAuth, async (req, res) => {
+    try {
+      console.log('[User Onboarding] Completing onboarding for user:', req.user!.id);
+
+      const [updatedUser] = await db.update(users)
+        .set({
+          onboarding_user_completed: true,
+          updated_at: new Date()
+        })
+        .where(eq(users.id, req.user!.id))
+        .returning();
+
+      console.log('[User Onboarding] Updated user onboarding status:', {
+        id: updatedUser.id,
+        onboarding_completed: updatedUser.onboarding_user_completed
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("[User Onboarding] Error updating onboarding status:", error);
+      res.status(500).json({ message: "Error updating onboarding status" });
+    }
+  });
+
   // File upload endpoint
   app.post("/api/files/upload", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
