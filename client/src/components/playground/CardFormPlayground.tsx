@@ -51,14 +51,24 @@ export function CardFormPlayground({
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
 
-  console.log('[CardFormPlayground] Initializing with props:', {
-    taskId,
-    companyName,
-    companyDataPresent: !!companyData,
-    hasSavedFormData: !!savedFormData,
-    savedFormDataKeys: savedFormData ? Object.keys(savedFormData) : [],
-    timestamp: new Date().toISOString()
+  // Fetch task data to get initial progress
+  const { data: taskData } = useQuery({
+    queryKey: ['/api/tasks/card', companyName],
+    queryFn: async () => {
+      const response = await fetch(`/api/tasks/card/${companyName}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch task data');
+      }
+      return response.json();
+    }
   });
+
+  // Set initial progress from task data
+  useEffect(() => {
+    if (taskData?.progress !== undefined) {
+      setProgress(taskData.progress);
+    }
+  }, [taskData]);
 
   // Fetch all CARD fields
   const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery({
