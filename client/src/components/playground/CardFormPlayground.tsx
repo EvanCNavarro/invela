@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -21,6 +20,8 @@ import {
 } from "@/components/ui/tooltip";
 import { CheckCircle2, Info, Download } from "lucide-react";
 import confetti from 'canvas-confetti';
+import { Trophy } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface CardFormPlaygroundProps {
   taskId: number;
@@ -80,6 +81,7 @@ export function CardFormPlayground({
     riskScore: number;
     assessmentFile: string;
   } | null>(null);
+  const [, navigate] = useLocation();
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -474,9 +476,10 @@ export function CardFormPlayground({
 
       // Trigger confetti animation
       confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
       });
 
       // Show success modal
@@ -704,34 +707,41 @@ export function CardFormPlayground({
       <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Assessment Completed!</DialogTitle>
-            <DialogDescription>
-              Your CARD assessment has been successfully submitted.
-            </DialogDescription>
+            <div className="flex flex-col items-center text-center gap-4">
+              <div className="rounded-full bg-green-100 p-3">
+                <Trophy className="h-6 w-6 text-green-600" />
+              </div>
+              <DialogTitle className="text-xl font-semibold">
+                Success! 🎉
+              </DialogTitle>
+            </div>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Risk Score:</span>
-              <span className="text-xl font-bold">{successData?.riskScore}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Assessment File:</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => {
-                  console.log('[CardFormPlayground] Downloading assessment file:', {
-                    fileName: successData?.assessmentFile,
-                    timestamp: new Date().toISOString()
-                  });
-                  window.location.href = `/api/card/download/${successData?.assessmentFile}`;
-                }}
-              >
-                <Download className="h-4 w-4" />
-                Download
-              </Button>
-            </div>
+          <div className="py-6 text-center space-y-4">
+            <p className="text-base">
+              You successfully submitted the CARD Survey on behalf of <span className="font-semibold">{companyName}</span>.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              🔓 <span className="font-medium">Achievement Unlocked:</span> You've gained access to new insights! Explore your company's risk analysis and data in the Insights tab.
+            </p>
+          </div>
+          <div className="flex justify-between gap-4 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigate('/insights');
+                setIsSuccessModalOpen(false);
+              }}
+            >
+              Go to Insights
+            </Button>
+            <Button
+              onClick={() => {
+                navigate('/dashboard');
+                setIsSuccessModalOpen(false);
+              }}
+            >
+              Go to Dashboard
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

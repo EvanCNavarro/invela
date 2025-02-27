@@ -203,11 +203,11 @@ export async function updateCompanyAfterCardCompletion(
     }
 
     // Define new tabs to add based on company category
-    let newTabs: string[] = ['dashboard', 'network', 'file-vault'];
+    let newTabs: string[] = ['dashboard', 'insights', 'file-vault'];
     if (company.category === 'Invela') {
-      newTabs.push('insights', 'builder', 'playground');
+      newTabs.push('builder', 'playground');
     } else if (company.category === 'Bank') {
-      newTabs.push('insights', 'builder');
+      newTabs.push('builder');
     }
 
     // Combine existing tabs with new ones, removing duplicates
