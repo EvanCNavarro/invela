@@ -60,6 +60,7 @@ export function CardFormPlayground({
   const queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<string>("");
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
+  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
   const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, {
@@ -67,6 +68,7 @@ export function CardFormPlayground({
     riskScore: number;
     reasoning: string;
   }>>({});
+  const [openTooltip, setOpenTooltip] = useState<number | null>(null);
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -227,6 +229,7 @@ export function CardFormPlayground({
       });
 
       setFormResponses(responses);
+      setPreviousResponses(responses);
     }
   }, [existingResponses, cardFields]);
 
@@ -266,23 +269,42 @@ export function CardFormPlayground({
     }
   };
 
-  const validateResponse = (value: string): boolean => {
+  const validateResponse = (value: string, previousValue?: string): boolean => {
+    // Skip if response is empty
+    if (!value) return false;
+
+    // Skip if response hasn't changed
+    if (previousValue && value === previousValue) return false;
+
+    // Minimum length check
     if (value.length < 10) return false;
+
+    // Complete sentence check
     if (!/[.!?](\s|$)/.test(value)) return false;
+
     return true;
   };
 
   const handleBlur = async (field: CardField, value: string) => {
-    if (!value || !validateResponse(value)) {
+    const previousValue = previousResponses[field.field_key];
+
+    if (!validateResponse(value, previousValue)) {
       console.log('[CardFormPlayground] Validation failed:', {
         fieldId: field.id,
         fieldKey: field.field_key,
         valueLength: value?.length,
         hasValue: !!value,
+        previousValue: !!previousValue,
         timestamp: new Date().toISOString()
       });
       return;
     }
+
+    // Update previous responses for future comparison
+    setPreviousResponses(prev => ({
+      ...prev,
+      [field.field_key]: value
+    }));
 
     console.log('[CardFormPlayground] Field blur - initiating analysis chain:', {
       fieldId: field.id,
@@ -428,11 +450,57 @@ export function CardFormPlayground({
                     : 'border-transparent'
                 }`}
               >
-                <div className="absolute top-4 right-4 w-5 h-5">
+                <div className="absolute top-4 right-4">
                   {loadingFields[field.id] ? (
-                    <LoadingSpinner size="sm" />
+                    <LoadingSpinner size="sm" className="w-5 h-5" />
                   ) : formResponses[field.field_key] && (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <Tooltip open={openTooltip === field.id} onOpenChange={(open) => setOpenTooltip(open ? field.id : null)}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                          onClick={() => setOpenTooltip(openTooltip === field.id ? null : field.id)}
+                        >
+                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        </Button>
+                      </TooltipTrigger>
+                      {fieldAnalysis[field.id] && (
+                        <TooltipContent
+                          side="right"
+                          align="start"
+                          className="p-4 max-w-[300px] space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Risk Score:</span>
+                            <span className={`font-medium ${
+                              fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.7
+                                ? 'text-red-500'
+                                : fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.3
+                                ? 'text-yellow-500'
+                                : 'text-green-500'
+                            }`}>
+                              {fieldAnalysis[field.id].riskScore}/{field.partial_risk_score_max}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">Suspicion Level:</span>
+                            <span className={`font-medium ${
+                              fieldAnalysis[field.id].suspicionLevel > 70
+                                ? 'text-red-500'
+                                : fieldAnalysis[field.id].suspicionLevel > 30
+                                ? 'text-yellow-500'
+                                : 'text-green-500'
+                            }`}>
+                              {fieldAnalysis[field.id].suspicionLevel}%
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground whitespace-normal">
+                            {fieldAnalysis[field.id].reasoning}
+                          </p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                   )}
                 </div>
 
@@ -472,26 +540,6 @@ export function CardFormPlayground({
                   className="min-h-[100px]"
                   disabled={loadingFields[field.id]}
                 />
-
-                {fieldAnalysis[field.id] && (
-                  <div className="mt-2 text-sm space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Risk Score:</span>
-                      <span className={`font-medium ${
-                        fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.7
-                          ? 'text-red-500'
-                          : fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.3
-                          ? 'text-yellow-500'
-                          : 'text-green-500'
-                      }`}>
-                        {fieldAnalysis[field.id].riskScore}/{field.partial_risk_score_max}
-                      </span>
-                    </div>
-                    <p className="text-muted-foreground">
-                      {fieldAnalysis[field.id].reasoning}
-                    </p>
-                  </div>
-                )}
               </Card>
             ))}
           </div>
