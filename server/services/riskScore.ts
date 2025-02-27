@@ -95,15 +95,7 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
   });
 
   try {
-    // Verify company exists before calculating
-    const company = await db.query.companies.findFirst({
-      where: eq(companies.id, companyId)
-    });
-
-    if (!company) {
-      throw new Error(`Company with ID ${companyId} not found`);
-    }
-
+    // Calculate risk score first
     const result = await calculateCardRiskScore(taskId);
 
     console.log('[Risk Score] Risk calculation result:', {
@@ -119,8 +111,9 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score with proper error handling
-    const [updatedCompany] = await db.update(companies)
+    // Update company risk score
+    const [updatedCompany] = await db
+      .update(companies)
       .set({ 
         riskScore: result.riskScore,
         updatedAt: new Date()
@@ -132,13 +125,6 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       throw new Error(`Failed to update risk score for company ${companyId}`);
     }
 
-    console.log('[Risk Score] Company risk score updated:', {
-      companyId: updatedCompany.id,
-      oldRiskScore: company.riskScore,
-      newRiskScore: result.riskScore,
-      timestamp: new Date().toISOString()
-    });
-
     return result.riskScore;
   } catch (error) {
     console.error('[Risk Score] Error updating company risk score:', {
@@ -149,6 +135,6 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
-    throw new Error(`Failed to update company risk score: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
