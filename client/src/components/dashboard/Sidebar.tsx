@@ -127,7 +127,7 @@ export function Sidebar({
       icon: Network,
       label: "Network",
       href: "/network",
-      locked: !availableTabs.includes('network'),
+      locked: !availableTabs.includes('network') || category === 'FinTech',
       pulsingDot: showPulsingDot
     },
     {
@@ -146,7 +146,7 @@ export function Sidebar({
       icon: Hammer,
       label: "Builder",
       href: "/builder",
-      locked: !availableTabs.includes('builder')
+      locked: !availableTabs.includes('builder') || category === 'FinTech'
     }
   ];
 
