@@ -54,6 +54,33 @@ export async function createCompany(
       })
       .returning();
 
+    // Create CARD compliance task
+    const [cardTask] = await tx.insert(tasks)
+      .values({
+        title: `Company CARD: ${newCompany.name}`,
+        description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
+        task_type: 'company_card',
+        task_scope: 'company',
+        status: TaskStatus.PENDING,
+        priority: 'high',
+        progress: taskStatusToProgress[TaskStatus.PENDING],
+        company_id: newCompany.id,
+        assigned_to: null, // Explicitly set to null so all company users can see it
+        created_by: data.metadata?.invited_by || null,
+        due_date: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() + 14); // 14 days deadline
+          return date;
+        })(),
+        metadata: {
+          company_id: newCompany.id,
+          company_name: newCompany.name,
+          created_via: data.metadata?.created_via || 'company_creation',
+          status_flow: [TaskStatus.PENDING]
+        }
+      })
+      .returning();
+
     // Create automatic relationship with Invela (company_id: 1)
     console.log('[Company Service] Creating relationship with Invela');
     const [invelaRelationship] = await tx.insert(relationships)
@@ -102,13 +129,22 @@ export async function createCompany(
       });
     }
 
-    // Broadcast task update
+    // Broadcast task updates
     if (kybTask) {
       broadcastTaskUpdate({
         id: kybTask.id,
         status: kybTask.status,
         progress: kybTask.progress,
         metadata: kybTask.metadata || undefined
+      });
+    }
+
+    if (cardTask) {
+      broadcastTaskUpdate({
+        id: cardTask.id,
+        status: cardTask.status,
+        progress: cardTask.progress,
+        metadata: cardTask.metadata || undefined
       });
     }
 
