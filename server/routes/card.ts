@@ -344,7 +344,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
 router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
-    console.log('[Card Routes] Processing form submission:', {
+    console.log('[Card Routes] Starting form submission process:', {
       taskId,
       userId: req.user?.id,
       timestamp: new Date().toISOString()
@@ -352,20 +352,37 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
     // Get all fields
     const fields = await db.select().from(cardFields);
+    console.log('[Card Routes] Retrieved all card fields:', {
+      totalFields: fields.length,
+      timestamp: new Date().toISOString()
+    });
 
     // Get existing responses
     const existingResponses = await db.select()
       .from(cardResponses)
       .where(eq(cardResponses.task_id, parseInt(taskId)));
 
+    console.log('[Card Routes] Current response state:', {
+      totalExistingResponses: existingResponses.length,
+      emptyResponsesCount: existingResponses.filter(r => r.status === 'EMPTY').length,
+      completeResponsesCount: existingResponses.filter(r => r.status === 'COMPLETE').length,
+      timestamp: new Date().toISOString()
+    });
+
     const timestamp = new Date();
 
     // First, update all existing EMPTY responses
     const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
+    console.log('[Card Routes] Processing empty responses:', {
+      emptyResponsesCount: emptyResponses.length,
+      timestamp: timestamp.toISOString()
+    });
+
     for (const response of emptyResponses) {
       console.log('[Card Routes] Updating empty response:', {
+        responseId: response.id,
         fieldId: response.field_id,
-        taskId,
+        oldStatus: response.status,
         timestamp: timestamp.toISOString()
       });
 
@@ -389,10 +406,16 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
     const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
 
+    console.log('[Card Routes] Processing missing fields:', {
+      missingFieldsCount: missingFields.length,
+      missingFieldIds: missingFields.map(f => f.id),
+      timestamp: timestamp.toISOString()
+    });
+
     for (const field of missingFields) {
-      console.log('[Card Routes] Creating unanswered response:', {
+      console.log('[Card Routes] Creating new response for missing field:', {
         fieldId: field.id,
-        taskId,
+        fieldKey: field.field_key,
         timestamp: timestamp.toISOString()
       });
 
@@ -412,6 +435,13 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     }
 
     // Update task status to submitted
+    console.log('[Card Routes] Updating task status:', {
+      taskId,
+      oldStatus: 'pending',
+      newStatus: TaskStatus.SUBMITTED,
+      timestamp: timestamp.toISOString()
+    });
+
     await db.update(tasks)
       .set({ 
         status: TaskStatus.SUBMITTED,
@@ -426,6 +456,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       existingResponses: existingResponses.length,
       updatedEmptyResponses: emptyResponses.length,
       newResponses: missingFields.length,
+      finalStatus: TaskStatus.SUBMITTED,
       timestamp: timestamp.toISOString()
     });
 
