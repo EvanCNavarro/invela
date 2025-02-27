@@ -445,13 +445,14 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           name: fileName,
           content: fileContent,
           mime_type: 'application/json',
-          type: 'card_assessment', // Changed from file_type to type
+          type: 'card_assessment',
           status: 'active',
           company_id: task.company_id,
           created_by: req.user!.id,
           created_at: timestamp,
           updated_at: timestamp,
-          size: Buffer.from(fileContent).length, // Add file size in bytes
+          size: Buffer.from(fileContent).length,
+          path: `/card-assessments/${fileName}`, // Add virtual path for the file
           metadata: {
             taskId: taskId,
             assessmentDate: timestamp.toISOString(),
