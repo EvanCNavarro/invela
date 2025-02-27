@@ -429,10 +429,10 @@ export function CardFormPlayground({
       progress,
       timestamp: new Date().toISOString()
     });
-    if (progress < 10) {
+    if (progress < 11) {
       toast({
         title: "Cannot Submit Yet",
-        description: "Please complete at least 10% of the form before submitting.",
+        description: "Please complete at least 11% of the form before submitting.",
         variant: "destructive"
       });
       return;
@@ -462,7 +462,7 @@ export function CardFormPlayground({
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={progress < 10}
+          disabled={progress < 11}
           className="px-8"
         >
           Submit Assessment
