@@ -35,6 +35,7 @@ interface CardResponse {
   response_value: string | null;
   status: 'EMPTY' | 'COMPLETE';
   version: number;
+  progress?: number;
 }
 
 export function CardFormPlayground({
@@ -174,13 +175,18 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Response saved:', {
         responseId: data.id,
         status: data.status,
+        progress: data.progress,
         version: data.version,
         timestamp: new Date().toISOString()
       });
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Update progress from server response
+      if (typeof data.progress === 'number') {
+        setProgress(data.progress);
+      }
       // Invalidate the responses query to force a refresh
       queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
     },
@@ -250,22 +256,6 @@ export function CardFormPlayground({
       setCurrentSection(firstSection);
     }
   }, [sections]);
-
-  // Calculate and update progress
-  useEffect(() => {
-    const totalFields = cardFields.length;
-    const answeredFields = Object.values(formResponses).filter(Boolean).length;
-    const calculatedProgress = Math.floor((answeredFields / totalFields) * 100);
-
-    console.log('[CardFormPlayground] Updating progress:', {
-      totalFields,
-      answeredFields,
-      progress: calculatedProgress,
-      timestamp: new Date().toISOString()
-    });
-
-    setProgress(calculatedProgress);
-  }, [formResponses, cardFields]);
 
   const handleResponseChange = async (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field updated:', {

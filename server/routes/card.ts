@@ -13,7 +13,8 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
     console.log('[Card Routes] Fetching CARD fields');
 
     const fields = await db.select()
-      .from(cardFields);
+      .from(cardFields)
+      .orderBy(cardFields.order);
 
     console.log('[Card Routes] Fields retrieved:', {
       count: fields.length,
@@ -73,7 +74,7 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Save individual CARD field response
+// Save individual CARD field response and update progress
 router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
   try {
     const { taskId, fieldId } = req.params;
@@ -86,6 +87,9 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       timestamp: new Date().toISOString()
     });
 
+    const status = response ? 'COMPLETE' : 'EMPTY';
+    const timestamp = new Date();
+
     // Check if response already exists
     const [existingResponse] = await db.select()
       .from(cardResponses)
@@ -96,9 +100,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         )
       );
 
-    const status = response ? 'COMPLETE' : 'EMPTY';
-    const timestamp = new Date();
-
+    let savedResponse;
     if (existingResponse) {
       console.log('[Card Routes] Updating existing response:', {
         responseId: existingResponse.id,
@@ -108,7 +110,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         timestamp: timestamp.toISOString()
       });
 
-      const [updatedResponse] = await db.update(cardResponses)
+      [savedResponse] = await db.update(cardResponses)
         .set({
           response_value: response,
           status,
@@ -117,8 +119,6 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         })
         .where(eq(cardResponses.id, existingResponse.id))
         .returning();
-
-      res.json(updatedResponse);
     } else {
       console.log('[Card Routes] Creating new response:', {
         taskId,
@@ -127,7 +127,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         timestamp: timestamp.toISOString()
       });
 
-      const [newResponse] = await db.insert(cardResponses)
+      [savedResponse] = await db.insert(cardResponses)
         .values({
           task_id: parseInt(taskId),
           field_id: parseInt(fieldId),
@@ -138,17 +138,15 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
           updated_at: timestamp
         })
         .returning();
-
-      res.json(newResponse);
     }
 
-    // Get total number of fields
+    // Get total fields count
     const [{ count: totalFields }] = await db.select({
       count: db.fn.count()
     })
     .from(cardFields);
 
-    // Get number of completed responses
+    // Get completed responses count
     const [{ count: completedResponses }] = await db.select({
       count: db.fn.count()
     })
@@ -175,6 +173,12 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     await db.update(tasks)
       .set({ progress })
       .where(eq(tasks.id, parseInt(taskId)));
+
+    // Return response with updated progress
+    res.json({
+      ...savedResponse,
+      progress
+    });
 
   } catch (error) {
     console.error('[Card Routes] Error saving response:', {
