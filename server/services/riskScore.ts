@@ -111,7 +111,13 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score using the correct schema fields
+    // Update company risk score using the correct field names and proper error handling
+    const company = await db.select().from(companies).where(eq(companies.id, companyId)).limit(1);
+
+    if (!company || company.length === 0) {
+      throw new Error(`Company with ID ${companyId} not found`);
+    }
+
     const [updatedCompany] = await db
       .update(companies)
       .set({
