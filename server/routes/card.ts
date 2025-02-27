@@ -170,11 +170,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         and(
           eq(cardResponses.task_id, parseInt(taskId)),
           eq(cardFields.wizard_section, field.wizard_section),
-          eq(cardResponses.status, 'COMPLETE'),
-          // Fix TypeScript errors by using proper drizzle operators
-          not(eq(cardResponses.response_value, null)),
-          not(eq(cardResponses.response_value, '')),
-          not(eq(cardResponses.response_value, 'Unanswered.'))
+          eq(cardResponses.status, 'COMPLETE')
         )
       )
       .execute()
