@@ -258,6 +258,18 @@ export function CardFormPlayground({
       ...prev,
       [field.field_key]: value
     }));
+
+    // If the field is emptied, update the database immediately
+    if (!value.trim()) {
+      try {
+        await saveResponse.mutateAsync({
+          fieldId: field.id,
+          response: ''
+        });
+      } catch (error) {
+        console.error('[CardFormPlayground] Error saving empty response:', { error, timestamp: new Date().toISOString() });
+      }
+    }
   };
 
   const validateResponse = (value: string, previousValue?: string): boolean => {
