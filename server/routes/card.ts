@@ -245,10 +245,11 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
     const { taskId, fieldId } = req.params;
     const { response } = req.body;
 
-    console.log('[Card Routes] Starting response analysis:', {
+    console.log('[Card Routes] Starting OpenAI analysis:', {
       taskId,
       fieldId,
       responseLength: response?.length,
+      userId: req.user?.id,
       timestamp: new Date().toISOString()
     });
 
@@ -258,13 +259,19 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       .where(eq(cardFields.id, parseInt(fieldId)));
 
     if (!field) {
-      console.log('[Card Routes] Field not found:', { fieldId });
+      console.log('[Card Routes] Field not found:', {
+        fieldId,
+        timestamp: new Date().toISOString()
+      });
       return res.status(404).json({ message: "Field not found" });
     }
 
-    console.log('[Card Routes] Retrieved field details:', {
+    console.log('[Card Routes] Found field for analysis:', {
+      fieldId: field.id,
       fieldKey: field.field_key,
-      maxRiskScore: field.partial_risk_score_max
+      maxRiskScore: field.partial_risk_score_max,
+      hasExample: !!field.example_response,
+      timestamp: new Date().toISOString()
     });
 
     // Analyze the response
@@ -275,11 +282,18 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       field.example_response
     );
 
-    console.log('[Card Routes] OpenAI analysis results:', {
+    console.log('[Card Routes] OpenAI analysis received:', {
       taskId,
       fieldId,
       suspicionLevel: analysis.suspicionLevel,
       riskScore: analysis.riskScore,
+      hasReasoning: !!analysis.reasoning,
+      timestamp: new Date().toISOString()
+    });
+
+    console.log('[Card Routes] Updating database with analysis results:', {
+      taskId,
+      fieldId,
       timestamp: new Date().toISOString()
     });
 
@@ -298,10 +312,11 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       )
       .returning();
 
-    console.log('[Card Routes] Database updated with analysis:', {
+    console.log('[Card Routes] Database updated successfully:', {
       responseId: updatedResponse.id,
       newSuspicionLevel: updatedResponse.ai_suspicion_level,
-      newRiskScore: updatedResponse.partial_risk_score
+      newRiskScore: updatedResponse.partial_risk_score,
+      timestamp: new Date().toISOString()
     });
 
     res.json({

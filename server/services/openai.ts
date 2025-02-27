@@ -486,12 +486,12 @@ export async function analyzeCardResponse(
 ): Promise<CardResponseAnalysis> {
   const startTime = Date.now();
 
-  console.log('[OpenAI Analysis] Starting response analysis:', {
+  console.log('[OpenAI Service] Starting response analysis:', {
     questionLength: question.length,
     responseLength: response.length,
     maxRiskScore,
     hasExample: !!exampleResponse,
-    timestamp: new Date().toISOString()
+    startTime: new Date().toISOString()
   });
 
   const prompt = `
@@ -517,7 +517,9 @@ Respond with a JSON object containing:
 `;
 
   try {
-    console.log('[OpenAI Analysis] Sending request to OpenAI');
+    console.log('[OpenAI Service] Sending request to GPT-4:', {
+      timestamp: new Date().toISOString()
+    });
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -536,13 +538,20 @@ Respond with a JSON object containing:
     });
 
     const duration = Date.now() - startTime;
+
+    console.log('[OpenAI Service] Received raw response:', {
+      content: response.choices[0].message.content,
+      duration,
+      timestamp: new Date().toISOString()
+    });
+
     const result = JSON.parse(response.choices[0].message.content);
 
-    console.log('[OpenAI Analysis] Analysis complete:', {
+    console.log('[OpenAI Service] Parsed analysis result:', {
       suspicionLevel: result.suspicionLevel,
       riskScore: result.riskScore,
       reasoningLength: result.reasoning?.length,
-      durationMs: duration,
+      duration,
       timestamp: new Date().toISOString()
     });
 
@@ -572,9 +581,11 @@ Respond with a JSON object containing:
       reasoning: result.reasoning,
     };
   } catch (error) {
-    console.error('[OpenAI Analysis] Error analyzing card response:', {
+    const duration = Date.now() - startTime;
+    console.error('[OpenAI Service] Error during analysis:', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
+      duration,
       timestamp: new Date().toISOString()
     });
     throw error;
