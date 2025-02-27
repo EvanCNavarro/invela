@@ -445,7 +445,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           name: fileName,
           content: fileContent,
           mime_type: 'application/json',
-          file_type: 'card_assessment',
+          type: 'card_assessment', // Changed from file_type to type
+          status: 'active',
           company_id: task.company_id,
           created_by: req.user!.id,
           created_at: timestamp,
