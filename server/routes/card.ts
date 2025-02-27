@@ -446,13 +446,13 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           content: fileContent,
           mime_type: 'application/json',
           type: 'card_assessment',
-          status: 'active',
+          status: 'uploaded', // Changed from 'active' to 'uploaded'
           company_id: task.company_id,
-          user_id: req.user!.id, // Changed from created_by to user_id
+          user_id: req.user!.id,
           created_at: timestamp,
           updated_at: timestamp,
           size: Buffer.from(fileContent).length,
-          path: `/card-assessments/${fileName}`, // Add virtual path for the file
+          path: `/card-assessments/${fileName}`,
           metadata: {
             taskId: taskId,
             assessmentDate: timestamp.toISOString(),
