@@ -96,7 +96,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
     if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
       // Get company name from metadata or task title
       const companyName = task.metadata?.company_name || 
-                       task.title.replace(/Company (KYB|CARD): /, '');
+                      task.title.replace(/Company (KYB|CARD): /, '');
 
       // Build the URL based on task type
       const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
@@ -166,80 +166,83 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
               const isLocked = isCardTask && !isKybCompleted(task.company_id);
 
               return (
-                <TableRow 
-                  key={task.id}
-                  className={classNames(
-                    "cursor-pointer hover:bg-muted/50 transition-colors",
-                    task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
-                    isLocked && "opacity-50 cursor-not-allowed"
-                  )}
-                  onClick={() => !isLocked && handleTaskClick(task)}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-2">
-                      <span>{task.title}</span>
-                      {task.task_type === 'company_kyb' && (
-                        <Badge variant="outline" className="ml-2">KYB</Badge>
-                      )}
-                      {isLocked && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger>
+                <TooltipProvider key={task.id}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <TableRow 
+                        className={classNames(
+                          "cursor-pointer hover:bg-muted/50 transition-colors",
+                          task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          isLocked && "opacity-50 cursor-not-allowed"
+                        )}
+                        onClick={() => !isLocked && handleTaskClick(task)}
+                      >
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-2">
+                            <span>{task.title}</span>
+                            {task.task_type === 'company_kyb' && (
+                              <Badge variant="outline" className="ml-2">KYB</Badge>
+                            )}
+                            {isLocked && (
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Complete the KYB form to unlock CARD tasks</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(task.status)}>
-                      {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="w-full bg-secondary h-2 rounded-full">
-                      <div
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${task.progress}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-muted-foreground mt-1">
-                      {task.progress}%
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
-                  </TableCell>
-                  <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 p-0 hover:bg-accent"
-                        >
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-[160px]">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setSelectedTask(task);
-                            setDetailsModalOpen(true);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          View Details
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getStatusVariant(task.status)}>
+                            {taskStatusMap[task.status as keyof typeof taskStatusMap] || task.status.replace(/_/g, ' ')}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="w-full bg-secondary h-2 rounded-full">
+                            <div
+                              className="bg-primary h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${task.progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-muted-foreground mt-1">
+                            {task.progress}%
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {task.due_date ? format(new Date(task.due_date), 'MMM d, yyyy') : '-'}
+                        </TableCell>
+                        <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
+                          {!isLocked && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 p-0 hover:bg-accent"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-[160px]">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedTask(task);
+                                    setDetailsModalOpen(true);
+                                  }}
+                                  className="cursor-pointer"
+                                >
+                                  View Details
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    </TooltipTrigger>
+                    {isLocked && (
+                      <TooltipContent>
+                        <p>Complete the KYB form to unlock CARD tasks</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               );
             })}
           </TableBody>
