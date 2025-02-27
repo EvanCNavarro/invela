@@ -64,11 +64,11 @@ export async function createCompany(
         description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
         task_type: 'company_card',
         task_scope: 'company',
-        status: TaskStatus.PENDING,
+        status: TaskStatus.NOT_STARTED,
         priority: 'high',
-        progress: taskStatusToProgress[TaskStatus.PENDING],
+        progress: 0,
         company_id: newCompany.id,
-        assigned_to: createdById, // Assign to the same user as KYB task
+        assigned_to: createdById,
         created_by: createdById,
         due_date: (() => {
           const date = new Date();
@@ -79,7 +79,13 @@ export async function createCompany(
           company_id: newCompany.id,
           company_name: newCompany.name,
           created_via: data.metadata?.created_via || 'company_creation',
-          status_flow: [TaskStatus.PENDING]
+          statusFlow: [TaskStatus.NOT_STARTED],
+          progressHistory: [{
+            value: 0,
+            timestamp: new Date().toISOString()
+          }],
+          created_at: new Date().toISOString(),
+          last_updated: new Date().toISOString()
         }
       })
       .returning();
