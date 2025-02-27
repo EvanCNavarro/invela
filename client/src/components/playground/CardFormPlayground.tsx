@@ -258,15 +258,6 @@ export function CardFormPlayground({
       ...prev,
       [field.field_key]: value
     }));
-
-    try {
-      await saveResponse.mutateAsync({
-        fieldId: field.id,
-        response: value
-      });
-    } catch (error) {
-      console.error('[CardFormPlayground] Error saving response:', { error, timestamp: new Date().toISOString() });
-    }
   };
 
   const validateResponse = (value: string, previousValue?: string): boolean => {

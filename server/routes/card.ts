@@ -73,7 +73,7 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Save individual CARD field response and update progress
+// Get individual CARD field response and update progress
 router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
   try {
     const { taskId, fieldId } = req.params;
@@ -89,7 +89,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     const status = response ? 'COMPLETE' : 'EMPTY';
     const timestamp = new Date();
 
-    // Check if response already exists
+    // Check if response already exists with exact match on task_id and field_id
     const [existingResponse] = await db.select()
       .from(cardResponses)
       .where(
@@ -188,7 +188,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     });
     res.status(500).json({
       message: "Failed to save response",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error" 
     });
   }
 });
