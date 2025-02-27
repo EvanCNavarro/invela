@@ -288,12 +288,6 @@ export function CardFormPlayground({
       return false;
     }
 
-    // Complete sentence check
-    if (!/[.!?](\s|$)/.test(value)) {
-      console.log('[CardFormPlayground] Validation failed: incomplete sentence');
-      return false;
-    }
-
     console.log('[CardFormPlayground] Validation passed:', {
       valueLength: value.length,
       hasChanged: value !== previousValue,
