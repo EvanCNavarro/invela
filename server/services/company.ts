@@ -208,6 +208,9 @@ export async function updateCompanyAfterCardCompletion(
       newTabs.push('builder', 'playground');
     } else if (company.category === 'Bank') {
       newTabs.push('builder');
+    } else if (company.category === 'FinTech') {
+      // FinTech companies only get the basic tabs
+      // No additional tabs like network, builder, or playground
     }
 
     // Combine existing tabs with new ones, removing duplicates
