@@ -4,6 +4,7 @@ import { tasks, cardFields, cardResponses } from '@db/schema';
 import { eq, and, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
+import { TaskStatus } from '@db/schema';
 
 const router = Router();
 
@@ -334,6 +335,91 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
     });
     res.status(500).json({
       message: "Failed to analyze response",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// Add new endpoint for form submission
+router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    console.log('[Card Routes] Processing form submission:', {
+      taskId,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    // Get all fields
+    const fields = await db.select().from(cardFields);
+
+    // Get existing responses
+    const existingResponses = await db.select()
+      .from(cardResponses)
+      .where(eq(cardResponses.task_id, parseInt(taskId)));
+
+    const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
+
+    // Create "Unanswered" responses for missing fields
+    const timestamp = new Date();
+    for (const field of fields) {
+      if (!existingFieldIds.has(field.id)) {
+        console.log('[Card Routes] Creating unanswered response:', {
+          fieldId: field.id,
+          taskId,
+          timestamp: timestamp.toISOString()
+        });
+
+        await db.insert(cardResponses)
+          .values({
+            task_id: parseInt(taskId),
+            field_id: field.id,
+            response_value: "Unanswered.",
+            status: 'COMPLETE',
+            ai_suspicion_level: 100,
+            partial_risk_score: field.partial_risk_score_max,
+            ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+            version: 1,
+            created_at: timestamp,
+            updated_at: timestamp
+          });
+      }
+    }
+
+    // Update task status to submitted
+    await db.update(tasks)
+      .set({ 
+        status: TaskStatus.SUBMITTED,
+        completion_date: timestamp,
+        updated_at: timestamp
+      })
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    console.log('[Card Routes] Form submission completed:', {
+      taskId,
+      totalFields: fields.length,
+      existingResponses: existingResponses.length,
+      newResponses: fields.length - existingResponses.length,
+      timestamp: timestamp.toISOString()
+    });
+
+    res.json({ 
+      success: true,
+      message: "Form submitted successfully",
+      totalFields: fields.length,
+      completedFields: existingResponses.length,
+      autoFilledFields: fields.length - existingResponses.length
+    });
+
+  } catch (error) {
+    console.error('[Card Routes] Error in form submission:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      message: "Failed to submit form",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
