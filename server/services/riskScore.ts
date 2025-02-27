@@ -13,7 +13,7 @@ interface RiskScoreResult {
 export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreResult> {
   console.log('[Risk Score] Starting risk score calculation for task:', taskId);
 
-  // Get all responses for this task
+  // Get all responses for this task with their corresponding fields
   const responses = await db.select({
     response: cardResponses,
     field: cardFields
@@ -55,8 +55,9 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
       timestamp: new Date().toISOString()
     });
 
-    // Add to max possible score, safely handle nulls
-    maxPossibleScore += field.partial_risk_score_max || 0;
+    // Add to max possible score
+    const maxFieldScore = field.partial_risk_score_max || 0;
+    maxPossibleScore += maxFieldScore;
 
     // Only count complete responses with a valid score
     if (response.status === 'COMPLETE' && response.partial_risk_score !== null) {
@@ -65,8 +66,19 @@ export async function calculateCardRiskScore(taskId: number): Promise<RiskScoreR
     }
   }
 
-  // Calculate final risk score as percentage of max possible, handle zero case
-  const riskScore = maxPossibleScore > 0 ? Math.round((totalScore / maxPossibleScore) * 100) : 0;
+  // For unanswered fields, assume maximum risk (maxFieldScore)
+  const unansweredCount = responses.length - answeredCount;
+  if (unansweredCount > 0) {
+    console.log('[Risk Score] Processing unanswered fields:', {
+      unansweredCount,
+      assumingMaxRisk: true,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Calculate final risk score as percentage of max possible
+  // No need to scale to 100 as we're already working with the actual scores
+  const riskScore = maxPossibleScore > 0 ? Math.round(totalScore) : 0;
 
   console.log('[Risk Score] Calculation complete:', {
     taskId,
@@ -111,7 +123,7 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score using the correct field names and proper error handling
+    // Update company risk score
     const company = await db.select().from(companies).where(eq(companies.id, companyId)).limit(1);
 
     if (!company || company.length === 0) {
