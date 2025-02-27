@@ -259,10 +259,12 @@ export function CardFormPlayground({
   }, [sections]);
 
   const handleResponseChange = async (field: CardField, value: string) => {
-    console.log('[CardFormPlayground] Field updated:', {
+    console.log('[CardFormPlayground] Field value changing:', {
       fieldId: field.id,
       fieldKey: field.field_key,
-      hasValue: !!value,
+      currentValue: formResponses[field.field_key],
+      newValue: value,
+      allCurrentResponses: formResponses,
       timestamp: new Date().toISOString()
     });
 
@@ -272,18 +274,37 @@ export function CardFormPlayground({
       [field.field_key]: value
     };
 
+    console.log('[CardFormPlayground] Updated responses state:', {
+      fieldId: field.id,
+      fieldKey: field.field_key,
+      updatedValue: value,
+      allUpdatedResponses: updatedResponses,
+      timestamp: new Date().toISOString()
+    });
+
     // Update state with the new responses object
     setFormResponses(updatedResponses);
 
     // If the field is emptied, update the database immediately
     if (!value.trim()) {
+      console.log('[CardFormPlayground] Empty field detected - saving empty response:', {
+        fieldId: field.id,
+        fieldKey: field.field_key,
+        timestamp: new Date().toISOString()
+      });
+
       try {
         await saveResponse.mutateAsync({
           fieldId: field.id,
           response: ''
         });
       } catch (error) {
-        console.error('[CardFormPlayground] Error saving empty response:', { error, timestamp: new Date().toISOString() });
+        console.error('[CardFormPlayground] Error saving empty response:', {
+          error,
+          fieldId: field.id,
+          fieldKey: field.field_key,
+          timestamp: new Date().toISOString()
+        });
       }
     }
   };
@@ -319,12 +340,19 @@ export function CardFormPlayground({
   const handleBlur = async (field: CardField, value: string) => {
     const previousValue = previousResponses[field.field_key];
 
+    console.log('[CardFormPlayground] Field blur event:', {
+      fieldId: field.id,
+      fieldKey: field.field_key,
+      currentValue: value,
+      previousValue,
+      timestamp: new Date().toISOString()
+    });
+
     if (!validateResponse(value, previousValue)) {
       console.log('[CardFormPlayground] Validation failed:', {
         fieldId: field.id,
         fieldKey: field.field_key,
-        valueLength: value?.length,
-        hasValue: !!value,
+        value: value,
         previousValue,
         timestamp: new Date().toISOString()
       });
@@ -332,15 +360,24 @@ export function CardFormPlayground({
     }
 
     // Update previous responses for future comparison
-    setPreviousResponses(prev => ({
-      ...prev,
-      [field.field_key]: value
-    }));
+    setPreviousResponses(prev => {
+      const updated = {
+        ...prev,
+        [field.field_key]: value
+      };
+      console.log('[CardFormPlayground] Updated previous responses:', {
+        fieldId: field.id,
+        fieldKey: field.field_key,
+        updatedPreviousResponses: updated,
+        timestamp: new Date().toISOString()
+      });
+      return updated;
+    });
 
-    console.log('[CardFormPlayground] Field blur - initiating analysis chain:', {
+    console.log('[CardFormPlayground] Starting save and analysis chain:', {
       fieldId: field.id,
       fieldKey: field.field_key,
-      responseLength: value.length,
+      value: value,
       timestamp: new Date().toISOString()
     });
 
@@ -349,9 +386,16 @@ export function CardFormPlayground({
     try {
       // Step 1: Save the response first
       console.log('[CardFormPlayground] Step 1: Saving response');
-      await saveResponse.mutateAsync({
+      const saveResult = await saveResponse.mutateAsync({
         fieldId: field.id,
         response: value
+      });
+
+      console.log('[CardFormPlayground] Save response result:', {
+        fieldId: field.id,
+        status: saveResult.status,
+        progress: saveResult.progress,
+        timestamp: new Date().toISOString()
       });
 
       // Step 2: Trigger OpenAI analysis

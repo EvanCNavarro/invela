@@ -89,6 +89,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       taskId,
       fieldId,
       hasResponse: !!trimmedResponse,
+      responseLength: trimmedResponse.length,
       timestamp: new Date().toISOString()
     });
 
@@ -96,12 +97,14 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     const status = trimmedResponse ? 'COMPLETE' : 'EMPTY';
     const timestamp = new Date();
 
-    // Check if response already exists with exact match on task_id and field_id
+    // Check if response already exists
     const [existingResponse] = await db.select()
       .from(cardResponses)
       .where(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.field_id, parseInt(fieldId))
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.field_id, parseInt(fieldId))
+        )
       );
 
     let savedResponse;
@@ -145,26 +148,27 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
           status,
           version: 1,
           created_at: timestamp,
-          updated_at: timestamp
+          updated_at: timestamp,
+          ai_suspicion_level: 0,
+          partial_risk_score: 0
         })
         .returning();
     }
 
     // Calculate progress based on completed responses count
-    const completedCount = await db.select()
+    const responses = await db.select()
       .from(cardResponses)
-      .where(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.status, 'COMPLETE')
-      )
-      .execute()
-      .then(responses => responses.length);
+      .where(eq(cardResponses.task_id, parseInt(taskId)));
 
-    // Progress is simply the count as a percentage
-    const progress = completedCount;
+    const totalFields = await db.select().from(cardFields);
+    const completedCount = responses.filter(r => r.status === 'COMPLETE').length;
+
+    // Progress is percentage of completed fields
+    const progress = Math.round((completedCount / totalFields.length) * 100);
 
     console.log('[Card Routes] Progress calculation:', {
       completedCount,
+      totalFields: totalFields.length,
       progress,
       timestamp: new Date().toISOString()
     });
