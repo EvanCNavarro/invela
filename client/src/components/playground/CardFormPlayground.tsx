@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -45,6 +45,7 @@ export function CardFormPlayground({
   onSubmit
 }: CardFormPlaygroundProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<string>("");
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
@@ -59,7 +60,7 @@ export function CardFormPlayground({
   });
 
   // Fetch all CARD fields
-  const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery<CardField[]>({
+  const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery({
     queryKey: ['/api/card/fields'],
     queryFn: async () => {
       console.log('[CardFormPlayground] Fetching CARD fields - Start');
@@ -109,7 +110,7 @@ export function CardFormPlayground({
   });
 
   // Fetch existing responses for this task
-  const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery<CardResponse[]>({
+  const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery({
     queryKey: ['/api/card/responses', taskId],
     queryFn: async () => {
       console.log('[CardFormPlayground] Fetching existing responses for task:', {
@@ -179,6 +180,10 @@ export function CardFormPlayground({
 
       return data;
     },
+    onSuccess: () => {
+      // Invalidate the responses query to force a refresh
+      queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
+    },
     onError: (error) => {
       console.error('[CardFormPlayground] Mutation error:', {
         error,
@@ -193,7 +198,7 @@ export function CardFormPlayground({
     }
   });
 
-  // Load existing responses into form
+  // Load existing responses into form whenever they change
   useEffect(() => {
     if (existingResponses.length > 0 && cardFields.length > 0) {
       console.log('[CardFormPlayground] Loading existing responses:', {
@@ -213,6 +218,7 @@ export function CardFormPlayground({
 
       console.log('[CardFormPlayground] Responses loaded:', {
         fieldCount: Object.keys(responses).length,
+        responseValues: responses,
         timestamp: new Date().toISOString()
       });
 
@@ -268,6 +274,7 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
+    // Update local state immediately for smooth UX
     setFormResponses(prev => ({
       ...prev,
       [field.field_key]: value
