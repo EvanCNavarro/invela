@@ -158,17 +158,18 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     // Calculate progress based on completed responses count
     const responses = await db.select()
       .from(cardResponses)
-      .where(eq(cardResponses.task_id, parseInt(taskId)));
+      .where(
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.status, 'COMPLETE')
+        )
+      );
 
-    const totalFields = await db.select().from(cardFields);
-    const completedCount = responses.filter(r => r.status === 'COMPLETE').length;
-
-    // Progress is percentage of completed fields
-    const progress = Math.round((completedCount / totalFields.length) * 100);
+    // Each completed response is worth 1%
+    const progress = responses.length;
 
     console.log('[Card Routes] Progress calculation:', {
-      completedCount,
-      totalFields: totalFields.length,
+      completedCount: responses.length,
       progress,
       timestamp: new Date().toISOString()
     });
