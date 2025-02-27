@@ -38,7 +38,6 @@ interface Task {
 export default function CardForm({ params }: CardFormProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const taskId = parseInt(params.taskId);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -49,46 +48,8 @@ export default function CardForm({ params }: CardFormProps) {
     enabled: !isNaN(taskId)
   });
 
-  // Handle form submission and file saving
-  const saveMutation = useMutation({
-    mutationFn: async (formData: Record<string, any>) => {
-      const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
-      const fileName = `card_${task?.title.toLowerCase().replace(/\s+/g, '-')}_${timestamp}`;
-
-      const response = await fetch('/api/card/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName,
-          formData,
-          taskId
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save CARD form data');
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-      setFileId(data.fileId);
-      setIsSubmitted(true);
-      toast({
-        title: "CARD Form Submitted",
-        description: "Your CARD form has been saved and the task has been updated.",
-      });
-    },
-    onError: (error: Error) => {
-      console.error('Failed to save CARD form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save CARD form. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
+  // Handle form submission and file saving - REMOVED DUPLICATE LOGIC
+  //const saveMutation = useMutation({ ... }); //This entire section is removed
 
   const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
     if (!fileId) return;
@@ -181,9 +142,16 @@ export default function CardForm({ params }: CardFormProps) {
         companyName={task.metadata?.companyName || task.title.replace('Company CARD: ', '')}
         companyData={{
           name: task.metadata?.companyName || task.title.replace('Company CARD: ', ''),
-          description: task.description
+          description: task.description || undefined
         }}
-        onSubmit={(formData) => saveMutation.mutate(formData)}
+        onSubmit={() => {
+          setIsSubmitted(true);
+          toast({
+            title: "CARD Form Submitted",
+            description: "Your CARD form has been submitted successfully.",
+          });
+          navigate('/task-center');
+        }}
       />
     </div>
   );
