@@ -312,7 +312,7 @@ export function CardFormPlayground({
         fieldKey: field.field_key,
         valueLength: value?.length,
         hasValue: !!value,
-        previousValue: !!previousValue,
+        previousValue,
         timestamp: new Date().toISOString()
       });
       return;
@@ -334,19 +334,21 @@ export function CardFormPlayground({
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      console.log('[CardFormPlayground] Step 1: Saving initial response');
+      // Step 1: Save the response first
+      console.log('[CardFormPlayground] Step 1: Saving response');
       await saveResponse.mutateAsync({
         fieldId: field.id,
         response: value
       });
 
+      // Step 2: Trigger OpenAI analysis
       console.log('[CardFormPlayground] Step 2: Starting OpenAI analysis');
       const analysis = await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
       });
 
-      console.log('[CardFormPlayground] Step 3: Analysis complete:', {
+      console.log('[CardFormPlayground] Analysis complete:', {
         fieldId: field.id,
         suspicionLevel: analysis.ai_suspicion_level,
         riskScore: analysis.partial_risk_score,
@@ -354,6 +356,7 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
+      // Step 3: Update UI with analysis results
       setFieldAnalysis(prev => ({
         ...prev,
         [field.id]: {
