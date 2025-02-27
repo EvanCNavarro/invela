@@ -283,7 +283,7 @@ export function CardFormPlayground({
     }
 
     // Minimum length check
-    if (value.trim().length < 10) {
+    if (value.trim().length < 2) {
       console.log('[CardFormPlayground] Validation failed: too short');
       return false;
     }
