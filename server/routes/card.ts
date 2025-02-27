@@ -366,6 +366,12 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
     // Get all fields
     const fields = await db.select().from(cardFields);
+    console.log('[Card Routes] Processing form submission:', {
+      taskId,
+      companyId: task.company_id,
+      totalFields: fields.length,
+      timestamp: new Date().toISOString()
+    });
 
     // Get existing responses
     const existingResponses = await db.select()
@@ -376,6 +382,10 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
     // First, update all existing EMPTY responses
     const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
+    console.log('[Card Routes] Processing empty responses:', {
+      count: emptyResponses.length,
+      timestamp: timestamp.toISOString()
+    });
 
     for (const response of emptyResponses) {
       const field = fields.find(f => f.id === response.field_id);
@@ -398,6 +408,11 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
     const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
 
+    console.log('[Card Routes] Processing missing fields:', {
+      count: missingFields.length,
+      timestamp: timestamp.toISOString()
+    });
+
     for (const field of missingFields) {
       await db.insert(cardResponses)
         .values({
@@ -416,7 +431,20 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
     try {
       // Calculate and update company risk score
+      console.log('[Card Routes] Calculating risk score:', {
+        taskId,
+        companyId: task.company_id,
+        timestamp: timestamp.toISOString()
+      });
+
       const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
+
+      console.log('[Card Routes] Risk score calculated:', {
+        taskId,
+        companyId: task.company_id,
+        riskScore: newRiskScore,
+        timestamp: timestamp.toISOString()
+      });
 
       // Update task status to submitted
       await db.update(tasks)
@@ -439,6 +467,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     } catch (error) {
       console.error('[Card Routes] Error in final submission steps:', {
         error,
+        message: error instanceof Error ? error.message : 'Unknown error',
         taskId,
         companyId: task.company_id,
         timestamp: timestamp.toISOString()
@@ -454,7 +483,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
     res.status(500).json({
-      message: "Failed to submit form",
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to submit form",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
