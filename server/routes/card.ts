@@ -1,13 +1,15 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, cardFields, cardResponses } from '@db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, ilike, and } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
 import { generateAssessmentFile } from '../services/fileGeneration';
 import { TaskStatus } from '@db/schema';
+import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
@@ -498,6 +500,54 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Failed to submit form",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// Download assessment file
+router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
+  try {
+    const { fileName } = req.params;
+    console.log('[Card Routes] Downloading assessment file:', {
+      fileName,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    const filePath = path.join(process.cwd(), 'uploads', 'card-assessments', fileName);
+
+    if (!fs.existsSync(filePath)) {
+      console.error('[Card Routes] Assessment file not found:', {
+        fileName,
+        filePath,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ message: 'Assessment file not found' });
+    }
+
+    res.download(filePath, fileName, (err) => {
+      if (err) {
+        console.error('[Card Routes] Error downloading file:', {
+          error: err,
+          fileName,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('[Card Routes] File downloaded successfully:', {
+          fileName,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+  } catch (error) {
+    console.error('[Card Routes] Error handling file download:', {
+      error,
+      fileName: req.params.fileName,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      message: "Failed to download assessment file",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
