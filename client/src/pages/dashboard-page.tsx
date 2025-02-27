@@ -132,7 +132,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="space-y-8"> 
+        <div className="mt-12 space-y-8"> 
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
