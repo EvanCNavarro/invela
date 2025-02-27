@@ -395,26 +395,27 @@ export function CardFormPlayground({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to submit assessment');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to submit assessment');
       }
 
       const data = await response.json();
+      return data;
+    },
+    onSuccess: (data) => {
       console.log('[CardFormPlayground] Assessment submitted successfully:', {
+        taskId,
         riskScore: data.riskScore,
         timestamp: new Date().toISOString()
       });
 
-      return data;
-    },
-    onSuccess: (data) => {
-      console.log('[CardFormPlayground] Submission success, invoking callbacks:', {
-        hasOnSubmit: !!onSubmit,
-        timestamp: new Date().toISOString()
+      toast({
+        title: "Assessment Submitted",
+        description: `Assessment completed successfully. Risk Score: ${data.riskScore}`,
       });
 
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-      // Call the parent's onSubmit if provided
       if (onSubmit) {
         onSubmit(data);
       }
@@ -425,9 +426,10 @@ export function CardFormPlayground({
         message: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
+
       toast({
         title: "Error",
-        description: "Failed to submit assessment. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to submit assessment. Please try again.",
         variant: "destructive"
       });
     }
