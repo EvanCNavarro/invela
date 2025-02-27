@@ -57,7 +57,7 @@ export function CardFormPlayground({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<string>("");
-  const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
+  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
   const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
