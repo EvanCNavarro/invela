@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, cardFields, cardResponses } from '@db/schema';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, not } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { TaskStatus } from '@db/schema';
@@ -171,9 +171,10 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
           eq(cardResponses.task_id, parseInt(taskId)),
           eq(cardFields.wizard_section, field.wizard_section),
           eq(cardResponses.status, 'COMPLETE'),
-          cardResponses.response_value.isNotNull(),
-          cardResponses.response_value.not.equals(''),
-          cardResponses.response_value.not.equals('Unanswered.')
+          // Fix TypeScript errors by using proper drizzle operators
+          not(eq(cardResponses.response_value, null)),
+          not(eq(cardResponses.response_value, '')),
+          not(eq(cardResponses.response_value, 'Unanswered.'))
         )
       )
       .execute()
