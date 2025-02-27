@@ -439,16 +439,18 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       });
 
       // Store file in database
+      const fileContent = JSON.stringify(assessmentData, null, 2);
       const [file] = await db.insert(files)
         .values({
           name: fileName,
-          content: JSON.stringify(assessmentData, null, 2),
+          content: fileContent,
           mime_type: 'application/json',
           file_type: 'card_assessment',
           company_id: task.company_id,
           created_by: req.user!.id,
           created_at: timestamp,
           updated_at: timestamp,
+          size: Buffer.from(fileContent).length, // Add file size in bytes
           metadata: {
             taskId: taskId,
             assessmentDate: timestamp.toISOString(),
