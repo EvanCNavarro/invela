@@ -511,7 +511,6 @@ Analyze for:
 Respond with a JSON object containing:
 {
   "suspicionLevel": number (0-100, higher means more concerning),
-  "riskScore": number (0-${maxRiskScore}, higher means more risk),
   "reasoning": string (explanation of the analysis)
 }
 `;
@@ -547,13 +546,16 @@ Respond with a JSON object containing:
 
     const result = JSON.parse(response.choices[0].message.content);
 
-    // Validate and normalize the results
+    // Validate and normalize the suspicion level
     const suspicionLevel = Math.min(100, Math.max(0, result.suspicionLevel));
-    const riskScore = Math.min(maxRiskScore, Math.max(0, result.riskScore));
 
-    console.log('[OpenAI Service] Parsed analysis result:', {
+    // Calculate risk score as percentage of max score, rounded up
+    const riskScore = Math.ceil((suspicionLevel / 100) * maxRiskScore);
+
+    console.log('[OpenAI Service] Calculated analysis result:', {
       suspicionLevel,
       riskScore,
+      maxRiskScore,
       reasoningLength: result.reasoning?.length,
       duration,
       timestamp: new Date().toISOString()
