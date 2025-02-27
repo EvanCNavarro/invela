@@ -302,6 +302,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       .set({
         ai_suspicion_level: analysis.suspicionLevel,
         partial_risk_score: analysis.riskScore,
+        ai_reasoning: analysis.reasoning, // Store the reasoning
         updated_at: new Date()
       })
       .where(
@@ -316,6 +317,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       responseId: updatedResponse.id,
       newSuspicionLevel: updatedResponse.ai_suspicion_level,
       newRiskScore: updatedResponse.partial_risk_score,
+      hasReasoning: !!updatedResponse.ai_reasoning,
       timestamp: new Date().toISOString()
     });
 
