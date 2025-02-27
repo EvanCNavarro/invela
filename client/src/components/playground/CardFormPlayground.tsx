@@ -325,7 +325,7 @@ export function CardFormPlayground({
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">
-            Compliance And Risk Documentation Request Form
+            Compliance & Risk Documentation Request
           </h1>
           {companyData?.description && (
             <p className="text-muted-foreground">{companyData.description}</p>
