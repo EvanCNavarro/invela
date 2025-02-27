@@ -308,17 +308,20 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       .set({
         ai_suspicion_level: analysis.suspicionLevel,
         partial_risk_score: analysis.riskScore,
-        ai_reasoning: analysis.reasoning, // Store the reasoning
+        ai_reasoning: analysis.reasoning,
         updated_at: new Date()
       })
       .where(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.field_id, parseInt(fieldId))
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.field_id, parseInt(fieldId))
+        )
       )
       .returning();
 
     console.log('[Card Routes] Database updated successfully:', {
       responseId: updatedResponse.id,
+      fieldId: updatedResponse.field_id,
       newSuspicionLevel: updatedResponse.ai_suspicion_level,
       newRiskScore: updatedResponse.partial_risk_score,
       hasReasoning: !!updatedResponse.ai_reasoning,
