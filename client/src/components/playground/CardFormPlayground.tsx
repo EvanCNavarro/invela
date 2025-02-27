@@ -33,7 +33,7 @@ interface CardField {
   question: string;
   example_response?: string;
   ai_search_instructions?: string;
-  partial_risk_score_max: number; // Added field for maximum risk score
+  partial_risk_score_max: number;
 }
 
 interface CardResponse {
@@ -46,7 +46,7 @@ interface CardResponse {
   progress?: number;
   ai_suspicion_level: number;
   partial_risk_score: number;
-  reasoning: string; // Added field for reasoning
+  reasoning: string;
 }
 
 export function CardFormPlayground({
@@ -85,84 +85,27 @@ export function CardFormPlayground({
     }
   }, [taskData]);
 
-  const { data: cardFields = [], isLoading: isLoadingFields, error: fieldsError } = useQuery({
+  const { data: cardFields = [], isLoading: isLoadingFields } = useQuery({
     queryKey: ['/api/card/fields'],
     queryFn: async () => {
-      console.log('[CardFormPlayground] Fetching CARD fields - Start');
-
-      try {
-        const response = await fetch('/api/card/fields');
-
-        console.log('[CardFormPlayground] CARD fields API response:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText,
-          timestamp: new Date().toISOString()
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[CardFormPlayground] Error fetching fields:', {
-            status: response.status,
-            statusText: response.statusText,
-            errorText,
-            timestamp: new Date().toISOString()
-          });
-          throw new Error('Failed to fetch CARD fields');
-        }
-
-        const data = await response.json();
-        console.log('[CardFormPlayground] Fields fetched successfully:', {
-          count: data.length,
-          sections: [...new Set(data.map((f: CardField) => f.wizard_section))],
-          fieldsPreview: data.slice(0, 3).map((f: CardField) => ({
-            key: f.field_key,
-            section: f.wizard_section
-          })),
-          timestamp: new Date().toISOString()
-        });
-
-        return data;
-      } catch (error) {
-        console.error('[CardFormPlayground] Error in queryFn:', {
-          error,
-          message: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        });
-        throw error;
+      console.log('[CardFormPlayground] Fetching CARD fields');
+      const response = await fetch('/api/card/fields');
+      if (!response.ok) {
+        throw new Error('Failed to fetch CARD fields');
       }
+      return response.json();
     }
   });
 
   const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery({
     queryKey: ['/api/card/responses', taskId],
     queryFn: async () => {
-      console.log('[CardFormPlayground] Fetching existing responses for task:', {
-        taskId,
-        timestamp: new Date().toISOString()
-      });
-
+      console.log('[CardFormPlayground] Fetching existing responses:', { taskId });
       const response = await fetch(`/api/card/responses/${taskId}`);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[CardFormPlayground] Error fetching responses:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText,
-          timestamp: new Date().toISOString()
-        });
         throw new Error('Failed to fetch responses');
       }
-
-      const data = await response.json();
-      console.log('[CardFormPlayground] Responses fetched:', {
-        count: data.length,
-        hasResponses: data.length > 0,
-        timestamp: new Date().toISOString()
-      });
-
-      return data;
+      return response.json();
     },
     enabled: !!taskId
   });
@@ -172,8 +115,7 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Saving response:', {
         taskId,
         fieldId,
-        hasResponse: !!response,
-        timestamp: new Date().toISOString()
+        hasResponse: !!response
       });
 
       const res = await fetch(`/api/card/response/${taskId}/${fieldId}`, {
@@ -183,39 +125,23 @@ export function CardFormPlayground({
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error('[CardFormPlayground] Error saving response:', {
-          status: res.status,
-          statusText: res.statusText,
-          errorText,
-          timestamp: new Date().toISOString()
-        });
         throw new Error('Failed to save response');
       }
 
-      const data = await res.json();
-      console.log('[CardFormPlayground] Response saved:', {
-        responseId: data.id,
-        status: data.status,
-        progress: data.progress,
-        version: data.version,
-        timestamp: new Date().toISOString()
-      });
-
-      return data;
+      return res.json();
     },
     onSuccess: (data) => {
+      console.log('[CardFormPlayground] Response saved successfully:', {
+        progress: data.progress,
+        status: data.status
+      });
       if (typeof data.progress === 'number') {
         setProgress(data.progress);
       }
       queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
     },
     onError: (error) => {
-      console.error('[CardFormPlayground] Mutation error:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
+      console.error('[CardFormPlayground] Error saving response:', error);
       toast({
         title: "Error",
         description: "Failed to save response. Please try again.",
@@ -226,11 +152,10 @@ export function CardFormPlayground({
 
   const analyzeResponse = useMutation({
     mutationFn: async ({ fieldId, response }: { fieldId: number, response: string }) => {
-      console.log('[CardFormPlayground] Analyzing response:', {
+      console.log('[CardFormPlayground] Starting OpenAI analysis:', {
         taskId,
         fieldId,
-        hasResponse: !!response,
-        timestamp: new Date().toISOString()
+        responseLength: response.length
       });
 
       const res = await fetch(`/api/card/analyze/${taskId}/${fieldId}`, {
@@ -243,9 +168,22 @@ export function CardFormPlayground({
         throw new Error('Failed to analyze response');
       }
 
-      return res.json();
+      const result = await res.json();
+      console.log('[CardFormPlayground] OpenAI analysis complete:', {
+        fieldId,
+        suspicionLevel: result.ai_suspicion_level,
+        riskScore: result.partial_risk_score
+      });
+
+      return result;
     },
     onSuccess: (data) => {
+      console.log('[CardFormPlayground] Updating UI with analysis:', {
+        fieldId: data.field_id,
+        suspicionLevel: data.ai_suspicion_level,
+        riskScore: data.partial_risk_score
+      });
+
       setFieldAnalysis(prev => ({
         ...prev,
         [data.field_id]: {
@@ -254,14 +192,9 @@ export function CardFormPlayground({
           reasoning: data.reasoning
         }
       }));
-      queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
     },
     onError: (error) => {
-      console.error('[CardFormPlayground] Analysis error:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
+      console.error('[CardFormPlayground] OpenAI analysis error:', error);
       toast({
         title: "Error",
         description: "Failed to analyze response. Please try again.",
@@ -273,8 +206,7 @@ export function CardFormPlayground({
   useEffect(() => {
     if (existingResponses.length > 0 && cardFields.length > 0) {
       console.log('[CardFormPlayground] Loading existing responses:', {
-        responseCount: existingResponses.length,
-        timestamp: new Date().toISOString()
+        responseCount: existingResponses.length
       });
 
       const fieldMap = new Map(cardFields.map(f => [f.id, f.field_key]));
@@ -287,12 +219,6 @@ export function CardFormPlayground({
         }
       });
 
-      console.log('[CardFormPlayground] Responses loaded:', {
-        fieldCount: Object.keys(responses).length,
-        responseValues: responses,
-        timestamp: new Date().toISOString()
-      });
-
       setFormResponses(responses);
     }
   }, [existingResponses, cardFields]);
@@ -300,10 +226,6 @@ export function CardFormPlayground({
   const sections = cardFields.reduce((acc, field) => {
     if (!acc[field.wizard_section]) {
       acc[field.wizard_section] = [];
-      console.log('[CardFormPlayground] New section created:', {
-        section: field.wizard_section,
-        timestamp: new Date().toISOString()
-      });
     }
     acc[field.wizard_section].push(field);
     return acc;
@@ -311,34 +233,41 @@ export function CardFormPlayground({
 
   useEffect(() => {
     if (!currentSection && Object.keys(sections).length > 0) {
-      const firstSection = Object.keys(sections)[0];
-      console.log('[CardFormPlayground] Setting initial section:', {
-        section: firstSection,
-        timestamp: new Date().toISOString()
-      });
-      setCurrentSection(firstSection);
+      setCurrentSection(Object.keys(sections)[0]);
     }
   }, [sections]);
 
   const handleResponseChange = (field: CardField, value: string) => {
-    console.log('[CardFormPlayground] Field updated:', {
-      fieldKey: field.field_key,
-      hasValue: !!value,
-      timestamp: new Date().toISOString()
-    });
-
     setFormResponses(prev => ({
       ...prev,
       [field.field_key]: value
     }));
   };
 
+  const validateResponse = (value: string): boolean => {
+    if (value.length < 10) return false;
+    if (!/[.!?](\s|$)/.test(value)) return false;
+    return true;
+  };
+
   const handleBlur = async (field: CardField, value: string) => {
     if (!value || !validateResponse(value)) return;
+
+    console.log('[CardFormPlayground] Field blur - starting analysis chain:', {
+      fieldId: field.id,
+      hasValidResponse: true
+    });
 
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
+      // First save the response
+      await saveResponse.mutateAsync({
+        fieldId: field.id,
+        response: value
+      });
+
+      // Then trigger OpenAI analysis
       await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
@@ -348,25 +277,7 @@ export function CardFormPlayground({
     }
   };
 
-  const validateResponse = (value: string): boolean => {
-    // Minimum length check
-    if (value.length < 10) return false;
-
-    // Complete sentence check
-    if (!/[.!?](\s|$)/.test(value)) return false;
-
-    return true;
-  };
-
-
   const handleSubmit = () => {
-    console.log('[CardFormPlayground] Submitting form:', {
-      taskId,
-      responseCount: Object.keys(formResponses).length,
-      progress,
-      timestamp: new Date().toISOString()
-    });
-
     if (progress < 90) {
       toast({
         title: "Cannot Submit Yet",
@@ -379,9 +290,7 @@ export function CardFormPlayground({
     onSubmit(formResponses);
   };
 
-  const isLoading = isLoadingFields || isLoadingResponses;
-
-  if (isLoading) {
+  if (isLoadingFields || isLoadingResponses) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <LoadingSpinner size="lg" />
@@ -440,13 +349,17 @@ export function CardFormPlayground({
               <Card 
                 key={field.id} 
                 className={`p-6 space-y-4 relative border-2 ${
-                  formResponses[field.field_key] 
+                  loadingFields[field.id]
+                    ? 'border-gray-300'
+                    : formResponses[field.field_key] 
                     ? 'border-green-500/50' 
                     : 'border-transparent'
                 }`}
               >
                 <div className="absolute top-4 right-4 w-5 h-5">
-                  {formResponses[field.field_key] && (
+                  {loadingFields[field.id] ? (
+                    <LoadingSpinner size="sm" />
+                  ) : formResponses[field.field_key] && (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   )}
                 </div>
@@ -487,13 +400,6 @@ export function CardFormPlayground({
                   className="min-h-[100px]"
                   disabled={loadingFields[field.id]}
                 />
-
-                {loadingFields[field.id] && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <LoadingSpinner size="sm" />
-                    <span>Analyzing response...</span>
-                  </div>
-                )}
 
                 {fieldAnalysis[field.id] && (
                   <div className="mt-2 text-sm space-y-1">
