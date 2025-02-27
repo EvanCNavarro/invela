@@ -78,16 +78,17 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
   try {
     const { taskId, fieldId } = req.params;
     const { response } = req.body;
+    const trimmedResponse = response ? response.trim() : '';
 
     console.log('[Card Routes] Saving field response:', {
       taskId,
       fieldId,
-      hasResponse: !!response,
+      hasResponse: !!trimmedResponse,
       timestamp: new Date().toISOString()
     });
 
     // Set appropriate status based on response content
-    const status = response && response.trim() !== '' ? 'COMPLETE' : 'EMPTY';
+    const status = trimmedResponse ? 'COMPLETE' : 'EMPTY';
     const timestamp = new Date();
 
     // Check if response already exists with exact match on task_id and field_id
@@ -112,10 +113,16 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
 
       [savedResponse] = await db.update(cardResponses)
         .set({
-          response_value: response,
+          response_value: trimmedResponse,
           status,
           version: existingResponse.version + 1,
-          updated_at: timestamp
+          updated_at: timestamp,
+          // Reset analysis fields when emptied
+          ...(status === 'EMPTY' ? {
+            ai_suspicion_level: 0,
+            partial_risk_score: 0,
+            ai_reasoning: null
+          } : {})
         })
         .where(eq(cardResponses.id, existingResponse.id))
         .returning();
@@ -131,7 +138,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         .values({
           task_id: parseInt(taskId),
           field_id: parseInt(fieldId),
-          response_value: response,
+          response_value: trimmedResponse,
           status,
           version: 1,
           created_at: timestamp,
@@ -152,10 +159,7 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       .where(
         and(
           eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.status, 'COMPLETE'),
-          cardResponses.response_value.isNotNull(),
-          cardResponses.response_value.not.equals(''),
-          cardResponses.response_value.not.equals('Unanswered.')
+          eq(cardResponses.status, 'COMPLETE')
         )
       )
       .execute()
