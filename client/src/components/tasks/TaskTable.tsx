@@ -72,7 +72,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
     return tasks.some(task => 
       task.company_id === companyId && 
       task.task_type === 'company_kyb' && 
-      task.status === 'COMPLETED'
+      ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
 
