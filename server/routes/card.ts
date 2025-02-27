@@ -4,6 +4,7 @@ import { tasks, cardFields, cardResponses } from '@db/schema';
 import { eq, and, ilike, not } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
+import { updateCompanyRiskScore } from '../services/riskScore';
 import { TaskStatus } from '@db/schema';
 
 const router = Router();
@@ -350,6 +351,15 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
+    // Get task to get company_id
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, parseInt(taskId))
+    });
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
     // Get all fields
     const fields = await db.select().from(cardFields);
     console.log('[Card Routes] Retrieved all card fields:', {
@@ -434,6 +444,21 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         });
     }
 
+    // Calculate and update company risk score
+    console.log('[Card Routes] Calculating risk score:', {
+      taskId,
+      companyId: task.company_id,
+      timestamp: timestamp.toISOString()
+    });
+
+    const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
+
+    console.log('[Card Routes] Updated company risk score:', {
+      companyId: task.company_id,
+      newRiskScore,
+      timestamp: timestamp.toISOString()
+    });
+
     // Update task status to submitted
     console.log('[Card Routes] Updating task status:', {
       taskId,
@@ -457,6 +482,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       updatedEmptyResponses: emptyResponses.length,
       newResponses: missingFields.length,
       finalStatus: TaskStatus.SUBMITTED,
+      newRiskScore,
       timestamp: timestamp.toISOString()
     });
 
@@ -465,7 +491,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       message: "Form submitted successfully",
       totalFields: fields.length,
       completedFields: existingResponses.length - emptyResponses.length,
-      autoFilledFields: emptyResponses.length + missingFields.length
+      autoFilledFields: emptyResponses.length + missingFields.length,
+      riskScore: newRiskScore
     });
 
   } catch (error) {
