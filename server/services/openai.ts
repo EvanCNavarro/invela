@@ -486,6 +486,14 @@ export async function analyzeCardResponse(
 ): Promise<CardResponseAnalysis> {
   const startTime = Date.now();
 
+  console.log('[OpenAI Analysis] Starting response analysis:', {
+    questionLength: question.length,
+    responseLength: response.length,
+    maxRiskScore,
+    hasExample: !!exampleResponse,
+    timestamp: new Date().toISOString()
+  });
+
   const prompt = `
 As a security and compliance expert, analyze this response to a security practice question.
 Compare it to best practices and the example response if provided.
@@ -509,6 +517,8 @@ Respond with a JSON object containing:
 `;
 
   try {
+    console.log('[OpenAI Analysis] Sending request to OpenAI');
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -527,6 +537,14 @@ Respond with a JSON object containing:
 
     const duration = Date.now() - startTime;
     const result = JSON.parse(response.choices[0].message.content);
+
+    console.log('[OpenAI Analysis] Analysis complete:', {
+      suspicionLevel: result.suspicionLevel,
+      riskScore: result.riskScore,
+      reasoningLength: result.reasoning?.length,
+      durationMs: duration,
+      timestamp: new Date().toISOString()
+    });
 
     // Log analytics
     await logSearchAnalytics({

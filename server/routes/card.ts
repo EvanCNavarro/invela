@@ -245,7 +245,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
     const { taskId, fieldId } = req.params;
     const { response } = req.body;
 
-    console.log('[Card Routes] Analyzing response:', {
+    console.log('[Card Routes] Starting response analysis:', {
       taskId,
       fieldId,
       responseLength: response?.length,
@@ -258,8 +258,14 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       .where(eq(cardFields.id, parseInt(fieldId)));
 
     if (!field) {
+      console.log('[Card Routes] Field not found:', { fieldId });
       return res.status(404).json({ message: "Field not found" });
     }
+
+    console.log('[Card Routes] Retrieved field details:', {
+      fieldKey: field.field_key,
+      maxRiskScore: field.partial_risk_score_max
+    });
 
     // Analyze the response
     const analysis = await analyzeCardResponse(
@@ -268,6 +274,14 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       field.partial_risk_score_max,
       field.example_response
     );
+
+    console.log('[Card Routes] OpenAI analysis results:', {
+      taskId,
+      fieldId,
+      suspicionLevel: analysis.suspicionLevel,
+      riskScore: analysis.riskScore,
+      timestamp: new Date().toISOString()
+    });
 
     // Update the response record with analysis results
     const [updatedResponse] = await db.update(cardResponses)
@@ -284,12 +298,10 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       )
       .returning();
 
-    console.log('[Card Routes] Analysis complete:', {
-      taskId,
-      fieldId,
-      suspicionLevel: analysis.suspicionLevel,
-      riskScore: analysis.riskScore,
-      timestamp: new Date().toISOString()
+    console.log('[Card Routes] Database updated with analysis:', {
+      responseId: updatedResponse.id,
+      newSuspicionLevel: updatedResponse.ai_suspicion_level,
+      newRiskScore: updatedResponse.partial_risk_score
     });
 
     res.json({
@@ -297,7 +309,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
       reasoning: analysis.reasoning
     });
   } catch (error) {
-    console.error('[Card Routes] Error analyzing response:', {
+    console.error('[Card Routes] Error in analysis chain:', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
