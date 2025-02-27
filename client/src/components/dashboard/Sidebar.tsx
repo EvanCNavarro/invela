@@ -127,8 +127,9 @@ export function Sidebar({
       icon: Network,
       label: "Network",
       href: "/network",
-      locked: !availableTabs.includes('network') || category === 'FinTech',
-      pulsingDot: showPulsingDot
+      locked: !availableTabs.includes('network'),
+      pulsingDot: showPulsingDot,
+      hideForFinTech: true
     },
     {
       icon: FileIcon,
@@ -146,9 +147,15 @@ export function Sidebar({
       icon: Hammer,
       label: "Builder",
       href: "/builder",
-      locked: !availableTabs.includes('builder') || category === 'FinTech'
+      locked: !availableTabs.includes('builder'),
+      hideForFinTech: true
     }
   ];
+
+  // Filter out tabs that should be hidden for FinTech companies
+  const visibleMenuItems = category === 'FinTech'
+    ? menuItems.filter(item => !item.hideForFinTech)
+    : menuItems;
 
   // Admin menu items (only for Invela users)
   const { isVisible: showPlayground } = usePlaygroundVisibility();
@@ -187,7 +194,7 @@ export function Sidebar({
       <nav className="mt-8 flex flex-col justify-between h-[calc(100vh-4rem-2rem)]">
         <div className="space-y-1">
           <div>
-            {menuItems.map((item) => (
+            {visibleMenuItems.map((item) => (
               <SidebarTab
                 key={item.href}
                 icon={item.icon}
