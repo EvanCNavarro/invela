@@ -33,6 +33,7 @@ interface CardField {
   question: string;
   example_response?: string;
   ai_search_instructions?: string;
+  partial_risk_score_max: number; // Added field for maximum risk score
 }
 
 interface CardResponse {
@@ -43,6 +44,9 @@ interface CardResponse {
   status: 'EMPTY' | 'COMPLETE';
   version: number;
   progress?: number;
+  ai_suspicion_level: number;
+  partial_risk_score: number;
+  reasoning: string; // Added field for reasoning
 }
 
 export function CardFormPlayground({
@@ -57,6 +61,12 @@ export function CardFormPlayground({
   const [currentSection, setCurrentSection] = useState<string>("");
   const [formResponses, setFormResponses] = useState<Record<string, string>>(savedFormData || {});
   const [progress, setProgress] = useState(0);
+  const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
+  const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, { 
+    suspicionLevel: number;
+    riskScore: number;
+    reasoning: string;
+  }>>({});
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -214,6 +224,52 @@ export function CardFormPlayground({
     }
   });
 
+  const analyzeResponse = useMutation({
+    mutationFn: async ({ fieldId, response }: { fieldId: number, response: string }) => {
+      console.log('[CardFormPlayground] Analyzing response:', {
+        taskId,
+        fieldId,
+        hasResponse: !!response,
+        timestamp: new Date().toISOString()
+      });
+
+      const res = await fetch(`/api/card/analyze/${taskId}/${fieldId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ response })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to analyze response');
+      }
+
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setFieldAnalysis(prev => ({
+        ...prev,
+        [data.field_id]: {
+          suspicionLevel: data.ai_suspicion_level,
+          riskScore: data.partial_risk_score,
+          reasoning: data.reasoning
+        }
+      }));
+      queryClient.invalidateQueries({ queryKey: ['/api/card/responses', taskId] });
+    },
+    onError: (error) => {
+      console.error('[CardFormPlayground] Analysis error:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+      toast({
+        title: "Error",
+        description: "Failed to analyze response. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
+
   useEffect(() => {
     if (existingResponses.length > 0 && cardFields.length > 0) {
       console.log('[CardFormPlayground] Loading existing responses:', {
@@ -264,7 +320,7 @@ export function CardFormPlayground({
     }
   }, [sections]);
 
-  const handleResponseChange = async (field: CardField, value: string) => {
+  const handleResponseChange = (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field updated:', {
       fieldKey: field.field_key,
       hasValue: !!value,
@@ -275,20 +331,33 @@ export function CardFormPlayground({
       ...prev,
       [field.field_key]: value
     }));
+  };
+
+  const handleBlur = async (field: CardField, value: string) => {
+    if (!value || !validateResponse(value)) return;
+
+    setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      await saveResponse.mutateAsync({
+      await analyzeResponse.mutateAsync({
         fieldId: field.id,
         response: value
       });
-    } catch (error) {
-      console.error('[CardFormPlayground] Error saving response:', {
-        fieldKey: field.field_key,
-        error,
-        timestamp: new Date().toISOString()
-      });
+    } finally {
+      setLoadingFields(prev => ({ ...prev, [field.id]: false }));
     }
   };
+
+  const validateResponse = (value: string): boolean => {
+    // Minimum length check
+    if (value.length < 10) return false;
+
+    // Complete sentence check
+    if (!/[.!?](\s|$)/.test(value)) return false;
+
+    return true;
+  };
+
 
   const handleSubmit = () => {
     console.log('[CardFormPlayground] Submitting form:', {
@@ -413,9 +482,38 @@ export function CardFormPlayground({
                 <Textarea
                   value={formResponses[field.field_key] || ''}
                   onChange={(e) => handleResponseChange(field, e.target.value)}
+                  onBlur={(e) => handleBlur(field, e.target.value)}
                   placeholder="Enter your response..."
                   className="min-h-[100px]"
+                  disabled={loadingFields[field.id]}
                 />
+
+                {loadingFields[field.id] && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoadingSpinner size="sm" />
+                    <span>Analyzing response...</span>
+                  </div>
+                )}
+
+                {fieldAnalysis[field.id] && (
+                  <div className="mt-2 text-sm space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Risk Score:</span>
+                      <span className={`font-medium ${
+                        fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.7
+                          ? 'text-red-500'
+                          : fieldAnalysis[field.id].riskScore > field.partial_risk_score_max * 0.3
+                          ? 'text-yellow-500'
+                          : 'text-green-500'
+                      }`}>
+                        {fieldAnalysis[field.id].riskScore}/{field.partial_risk_score_max}
+                      </span>
+                    </div>
+                    <p className="text-muted-foreground">
+                      {fieldAnalysis[field.id].reasoning}
+                    </p>
+                  </div>
+                )}
               </Card>
             ))}
           </div>

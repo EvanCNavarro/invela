@@ -472,6 +472,97 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
   return rawData as CleanedCompanyData;
 }
 
+interface CardResponseAnalysis {
+  suspicionLevel: number;  // 0-1 scale
+  riskScore: number;      // Based on partial_risk_score_max
+  reasoning: string;
+}
+
+export async function analyzeCardResponse(
+  response: string,
+  question: string,
+  maxRiskScore: number,
+  exampleResponse?: string
+): Promise<CardResponseAnalysis> {
+  const startTime = Date.now();
+
+  const prompt = `
+As a security and compliance expert, analyze this response to a security practice question.
+Compare it to best practices and the example response if provided.
+
+Question: ${question}
+User Response: ${response}
+${exampleResponse ? `Example of Good Response: ${exampleResponse}` : ''}
+
+Analyze for:
+1. Completeness of security measures described
+2. Alignment with industry best practices
+3. Potential red flags or concerning omissions
+4. Comparison with the example response (if provided)
+
+Respond with a JSON object containing:
+{
+  "suspicionLevel": number (0-1, higher means more concerning),
+  "riskScore": number (0-${maxRiskScore}, higher means more risk),
+  "reasoning": string (explanation of the analysis)
+}
+`;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert in security compliance and risk assessment.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const duration = Date.now() - startTime;
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'card_response_analysis',
+      searchPrompt: prompt,
+      searchResults: result,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-4o'
+      ),
+      model: 'gpt-4o',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      suspicionLevel: result.suspicionLevel,
+      riskScore: result.riskScore,
+      reasoning: result.reasoning,
+    };
+  } catch (error) {
+    console.error('[OpenAI Analysis] Error analyzing card response:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
+}
+
 interface SearchAnalytics {
   searchType: string;
   companyId?: number;
