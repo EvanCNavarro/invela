@@ -12,8 +12,7 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
   try {
     console.log('[Card Routes] Fetching CARD fields');
 
-    const fields = await db.select()
-      .from(cardFields);
+    const fields = await db.select().from(cardFields);
 
     console.log('[Card Routes] Fields retrieved:', {
       count: fields.length,
@@ -139,23 +138,23 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
         .returning();
     }
 
-    // Get total fields count
-    const [{ count: totalFields }] = await db.select({
-      count: db.fn.count()
-    })
-    .from(cardFields);
+    // Get total number of fields
+    const totalFields = await db.select()
+      .from(cardFields)
+      .execute()
+      .then(fields => fields.length);
 
-    // Get completed responses count
-    const [{ count: completedResponses }] = await db.select({
-      count: db.fn.count()
-    })
-    .from(cardResponses)
-    .where(
-      and(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.status, 'COMPLETE')
+    // Get number of completed responses
+    const completedResponses = await db.select()
+      .from(cardResponses)
+      .where(
+        and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.status, 'COMPLETE')
+        )
       )
-    );
+      .execute()
+      .then(responses => responses.length);
 
     // Calculate progress percentage
     const progress = Math.floor((completedResponses / totalFields) * 100);
@@ -190,43 +189,6 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       message: "Failed to save response",
       error: error instanceof Error ? error.message : "Unknown error"
     });
-  }
-});
-
-// Get CARD task by company name
-router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
-  try {
-    console.log('[Card Routes] Fetching CARD task:', {
-      companyName: req.params.companyName,
-      userId: req.user?.id,
-      companyId: req.user?.company_id
-    });
-
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
-        eq(tasks.company_id, req.user!.company_id)
-      )
-    });
-
-    console.log('[Card Routes] Task lookup result:', {
-      found: !!task,
-      taskId: task?.id,
-      taskType: task?.task_type,
-      taskStatus: task?.status
-    });
-
-    if (!task) {
-      return res.status(404).json({
-        message: `Could not find CARD task for company: ${req.params.companyName}`
-      });
-    }
-
-    res.json(task);
-  } catch (error) {
-    console.error('[Card Routes] Error fetching CARD task:', error);
-    res.status(500).json({ message: "Failed to fetch CARD task" });
   }
 });
 
