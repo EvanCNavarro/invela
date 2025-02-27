@@ -417,12 +417,16 @@ export function registerRoutes(app: Express): Express {
           last_name: lastName,
           full_name: fullName,
           password: await bcrypt.hash(password, 10),
-          onboarding_user_completed: false, // Changed to false so new user modal appears
+          onboarding_user_completed: false, // Ensure this stays false for new user registration
         })
         .where(eq(users.id, existingUser.id))
         .returning();
 
-      console.log('[Account Setup] Updated user:', updatedUser.id);
+      console.log('[Account Setup] Updated user:', {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        onboarding_completed: updatedUser.onboarding_user_completed
+      });
 
       // Update the related task
       const [task] = await db.select()
