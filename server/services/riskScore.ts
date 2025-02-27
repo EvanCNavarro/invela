@@ -111,19 +111,28 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score
+    // Update company risk score using the correct Drizzle syntax
     const [updatedCompany] = await db
       .update(companies)
-      .set({ 
+      .set({
         riskScore: result.riskScore,
         updatedAt: new Date()
       })
       .where(eq(companies.id, companyId))
-      .returning();
+      .returning({
+        id: companies.id,
+        riskScore: companies.riskScore
+      });
 
     if (!updatedCompany) {
       throw new Error(`Failed to update risk score for company ${companyId}`);
     }
+
+    console.log('[Risk Score] Company risk score updated successfully:', {
+      companyId: updatedCompany.id,
+      newRiskScore: updatedCompany.riskScore,
+      timestamp: new Date().toISOString()
+    });
 
     return result.riskScore;
   } catch (error) {
@@ -135,6 +144,6 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
-    throw error;
+    throw new Error(`Failed to update company risk score: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
