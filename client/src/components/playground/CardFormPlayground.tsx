@@ -7,12 +7,20 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
-import { CheckCircle2, Info } from "lucide-react";
+import { CheckCircle2, Info, Download } from "lucide-react";
+import confetti from 'canvas-confetti';
 
 interface CardFormPlaygroundProps {
   taskId: number;
@@ -67,6 +75,11 @@ export function CardFormPlayground({
     reasoning: string;
   }>>({});
   const [openTooltip, setOpenTooltip] = useState<number | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    riskScore: number;
+    assessmentFile: string;
+  } | null>(null);
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -406,8 +419,23 @@ export function CardFormPlayground({
       console.log('[CardFormPlayground] Assessment submitted successfully:', {
         taskId,
         riskScore: data.riskScore,
+        assessmentFile: data.assessmentFile,
         timestamp: new Date().toISOString()
       });
+
+      // Trigger confetti animation
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      // Show success modal
+      setSuccessData({
+        riskScore: data.riskScore,
+        assessmentFile: data.assessmentFile
+      });
+      setIsSuccessModalOpen(true);
 
       toast({
         title: "Assessment Submitted",
@@ -475,10 +503,17 @@ export function CardFormPlayground({
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={progress < 11}
+          disabled={progress < 11 || submitAssessment.isPending}
           className="px-8"
         >
-          Submit Assessment
+          {submitAssessment.isPending ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Submitting...
+            </>
+          ) : (
+            'Submit Assessment'
+          )}
         </Button>
       </div>
 
@@ -615,6 +650,42 @@ export function CardFormPlayground({
           </div>
         )}
       </TooltipProvider>
+
+      {/* Success Modal */}
+      <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Assessment Completed!</DialogTitle>
+            <DialogDescription>
+              Your CARD assessment has been successfully submitted.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Risk Score:</span>
+              <span className="text-xl font-bold">{successData?.riskScore}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Assessment File:</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  console.log('[CardFormPlayground] Downloading assessment file:', {
+                    fileName: successData?.assessmentFile,
+                    timestamp: new Date().toISOString()
+                  });
+                  window.location.href = `/api/card/download/${successData?.assessmentFile}`;
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
