@@ -857,8 +857,8 @@ export function registerRoutes(app: Express): Express {
 
       // Check for existing company before starting transaction
       const existingCompany = await db.query.companies.findFirst({
-        where: sql`LOWER(${companies.name}) = LOWER(${companyname})`
-      });
+        where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
+            });
 
       if (existingCompany) {
         console.log('[FinTech Invite] Company already exists:', existingCompany.name);
