@@ -1,15 +1,12 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, cardFields, cardResponses } from '@db/schema';
+import { tasks, cardFields, cardResponses, files } from '@db/schema';
 import { eq, ilike, and } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
-import { generateAssessmentFile } from '../services/fileGeneration';
-import { TaskStatus } from '@db/schema';
 import path from 'path';
-import fs from 'fs';
 
 const router = Router();
 
@@ -353,7 +350,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     const { taskId } = req.params;
     console.log('[Card Routes] Starting form submission process:', {
       taskId,
-      userId: req.user?.id,
+      userId: req.user!.id,
       timestamp: new Date().toISOString()
     });
 
@@ -369,70 +366,24 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       throw new Error('Task has no associated company');
     }
 
-    // Get all fields
+    // Get all fields and responses
     const fields = await db.select().from(cardFields);
-    console.log('[Card Routes] Processing form submission:', {
-      taskId,
-      companyId: task.company_id,
-      totalFields: fields.length,
-      timestamp: new Date().toISOString()
-    });
-
-    // Get existing responses
     const existingResponses = await db.select()
       .from(cardResponses)
       .where(eq(cardResponses.task_id, parseInt(taskId)));
 
+    console.log('[Card Routes] Processing form submission:', {
+      taskId,
+      companyId: task.company_id,
+      totalFields: fields.length,
+      existingResponses: existingResponses.length,
+      timestamp: new Date().toISOString()
+    });
+
     const timestamp = new Date();
 
-    // First, update all existing EMPTY responses
-    const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
-    console.log('[Card Routes] Processing empty responses:', {
-      count: emptyResponses.length,
-      timestamp: timestamp.toISOString()
-    });
-
-    for (const response of emptyResponses) {
-      const field = fields.find(f => f.id === response.field_id);
-      if (!field) continue;
-
-      await db.update(cardResponses)
-        .set({
-          response_value: "Unanswered.",
-          status: 'COMPLETE',
-          ai_suspicion_level: 100,
-          partial_risk_score: field.partial_risk_score_max,
-          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-          version: response.version + 1,
-          updated_at: timestamp
-        })
-        .where(eq(cardResponses.id, response.id));
-    }
-
-    // Create responses for fields that don't have any response
-    const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
-    const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
-
-    console.log('[Card Routes] Processing missing fields:', {
-      count: missingFields.length,
-      timestamp: timestamp.toISOString()
-    });
-
-    for (const field of missingFields) {
-      await db.insert(cardResponses)
-        .values({
-          task_id: parseInt(taskId),
-          field_id: field.id,
-          response_value: "Unanswered.",
-          status: 'COMPLETE',
-          ai_suspicion_level: 100,
-          partial_risk_score: field.partial_risk_score_max,
-          ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-          version: 1,
-          created_at: timestamp,
-          updated_at: timestamp
-        });
-    }
+    // Process empty/missing responses
+    await processEmptyResponses(taskId, fields, existingResponses, timestamp);
 
     try {
       // Calculate and update company risk score
@@ -452,28 +403,63 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
       const updatedCompany = await updateCompanyAfterCardCompletion(task.company_id);
 
-      // Generate assessment file
-      console.log('[Card Routes] Starting assessment file generation:', {
+      // Generate assessment JSON file
+      console.log('[Card Routes] Generating assessment file:', {
         taskId,
-        title: task.title,
         timestamp: new Date().toISOString()
       });
 
-      // Ensure uploads directory exists
-      const uploadDir = path.join(process.cwd(), 'uploads', 'card-assessments');
-      if (!fs.existsSync(uploadDir)) {
-        console.log('[Card Routes] Creating uploads directory:', uploadDir);
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
+      const allResponses = await db.select()
+        .from(cardResponses)
+        .where(eq(cardResponses.task_id, parseInt(taskId)));
 
-      const { fileName } = await generateAssessmentFile(
-        parseInt(taskId),
-        task.title.replace('Company CARD: ', '')
-      );
+      const assessmentData = {
+        taskId: parseInt(taskId),
+        companyName: task.title.replace('Company CARD: ', ''),
+        completionDate: timestamp.toISOString(),
+        responses: await Promise.all(allResponses.map(async (response) => {
+          const field = fields.find(f => f.id === response.field_id);
+          return {
+            fieldKey: field?.field_key,
+            question: field?.question,
+            response: response.response_value,
+            status: response.status,
+            riskScore: response.partial_risk_score,
+            reasoning: response.ai_reasoning
+          };
+        })),
+        totalRiskScore: newRiskScore
+      };
 
-      console.log('[Card Routes] Assessment file generated:', {
+      const fileName = `card_assessment_${task.title.replace('Company CARD: ', '').toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
+
+      console.log('[Card Routes] Storing assessment file in database:', {
         fileName,
-        path: path.join(uploadDir, fileName),
+        timestamp: new Date().toISOString()
+      });
+
+      // Store file in database
+      const [file] = await db.insert(files)
+        .values({
+          name: fileName,
+          content: JSON.stringify(assessmentData, null, 2),
+          mime_type: 'application/json',
+          file_type: 'card_assessment',
+          company_id: task.company_id,
+          created_by: req.user!.id,
+          created_at: timestamp,
+          updated_at: timestamp,
+          metadata: {
+            taskId: taskId,
+            assessmentDate: timestamp.toISOString(),
+            totalRiskScore: newRiskScore
+          }
+        })
+        .returning();
+
+      console.log('[Card Routes] Assessment file stored:', {
+        fileId: file.id,
+        fileName: file.name,
         timestamp: new Date().toISOString()
       });
 
@@ -481,19 +467,19 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       const [updatedTask] = await db.update(tasks)
         .set({ 
           status: TaskStatus.SUBMITTED,
-          completion_date: new Date(),
-          updated_at: new Date(),
+          completion_date: timestamp,
+          updated_at: timestamp,
           progress: 100,
           metadata: {
             ...task.metadata,
             assessment_file: fileName,
-            submission_date: new Date().toISOString()
+            submission_date: timestamp.toISOString()
           }
         })
         .where(eq(tasks.id, parseInt(taskId)))
         .returning();
 
-      console.log('[Card Routes] Task updated with file details:', {
+      console.log('[Card Routes] Task updated:', {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
@@ -505,8 +491,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         success: true,
         message: "Form submitted successfully",
         totalFields: fields.length,
-        completedFields: existingResponses.length - emptyResponses.length,
-        autoFilledFields: emptyResponses.length + missingFields.length,
+        completedFields: existingResponses.length,
         riskScore: newRiskScore,
         assessmentFile: fileName,
         company: {
@@ -542,6 +527,63 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   }
 });
 
+// Helper function to process empty responses
+async function processEmptyResponses(
+  taskId: string,
+  fields: typeof cardFields.$inferSelect[],
+  existingResponses: typeof cardResponses.$inferSelect[],
+  timestamp: Date
+) {
+  // First, update all existing EMPTY responses
+  const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
+  console.log('[Card Routes] Processing empty responses:', {
+    count: emptyResponses.length,
+    timestamp: timestamp.toISOString()
+  });
+
+  for (const response of emptyResponses) {
+    const field = fields.find(f => f.id === response.field_id);
+    if (!field) continue;
+
+    await db.update(cardResponses)
+      .set({
+        response_value: "Unanswered.",
+        status: 'COMPLETE',
+        ai_suspicion_level: 100,
+        partial_risk_score: field.partial_risk_score_max,
+        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+        version: response.version + 1,
+        updated_at: timestamp
+      })
+      .where(eq(cardResponses.id, response.id));
+  }
+
+  // Create responses for fields that don't have any response
+  const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
+  const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
+
+  console.log('[Card Routes] Processing missing fields:', {
+    count: missingFields.length,
+    timestamp: timestamp.toISOString()
+  });
+
+  for (const field of missingFields) {
+    await db.insert(cardResponses)
+      .values({
+        task_id: parseInt(taskId),
+        field_id: field.id,
+        response_value: "Unanswered.",
+        status: 'COMPLETE',
+        ai_suspicion_level: 100,
+        partial_risk_score: field.partial_risk_score_max,
+        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+        version: 1,
+        created_at: timestamp,
+        updated_at: timestamp
+      });
+  }
+}
+
 // Download assessment file
 router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
   try {
@@ -552,31 +594,23 @@ router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const filePath = path.join(process.cwd(), 'uploads', 'card-assessments', fileName);
+    const file = await db.query.files.findFirst({
+      where: eq(files.name, fileName)
+    });
 
-    if (!fs.existsSync(filePath)) {
+    if (!file) {
       console.error('[Card Routes] Assessment file not found:', {
         fileName,
-        filePath,
         timestamp: new Date().toISOString()
       });
       return res.status(404).json({ message: 'Assessment file not found' });
     }
 
-    res.download(filePath, fileName, (err) => {
-      if (err) {
-        console.error('[Card Routes] Error downloading file:', {
-          error: err,
-          fileName,
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.log('[Card Routes] File downloaded successfully:', {
-          fileName,
-          timestamp: new Date().toISOString()
-        });
-      }
-    });
+    res.setHeader('Content-Type', file.mime_type);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(Buffer.from(file.content, 'utf-8'));
+
+
   } catch (error) {
     console.error('[Card Routes] Error handling file download:', {
       error,
