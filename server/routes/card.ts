@@ -13,8 +13,7 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
     console.log('[Card Routes] Fetching CARD fields');
 
     const fields = await db.select()
-      .from(cardFields)
-      .orderBy(cardFields.order);
+      .from(cardFields);
 
     console.log('[Card Routes] Fields retrieved:', {
       count: fields.length,
