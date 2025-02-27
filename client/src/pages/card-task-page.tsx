@@ -141,32 +141,12 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
               name: task.metadata?.company_name || companyName,
               description: task.description || undefined
             }}
-            onSubmit={(formData) => {
-              // Updated to use the correct endpoint
-              fetch(`/api/card/submit/${task.id}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-              })
-              .then(response => {
-                if (!response.ok) throw new Error('Failed to submit CARD form');
-                return response.json();
-              })
-              .then((data) => {
-                toast({
-                  title: "CARD Form Submitted",
-                  description: `Your CARD form has been saved and the task has been updated. Risk Score: ${data.riskScore}`,
-                });
-                navigate('/task-center');
-              })
-              .catch(error => {
-                console.error('[CardTaskPage] Form submission failed:', error);
-                toast({
-                  title: "Error",
-                  description: "Failed to save CARD form. Please try again.",
-                  variant: "destructive",
-                });
+            onSubmit={() => {
+              toast({
+                title: "CARD Form Submitted",
+                description: "Your CARD form has been submitted successfully.",
               });
+              navigate('/task-center');
             }}
           />
         </div>

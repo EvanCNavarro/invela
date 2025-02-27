@@ -21,7 +21,6 @@ interface CardFormPlaygroundProps {
     name: string;
     description?: string;
   };
-  savedFormData?: Record<string, any>;
   onSubmit: (formData: Record<string, any>) => void;
 }
 
@@ -53,7 +52,6 @@ export function CardFormPlayground({
   taskId,
   companyName,
   companyData,
-  savedFormData,
   onSubmit
 }: CardFormPlaygroundProps) {
   const { toast } = useToast();
@@ -400,14 +398,26 @@ export function CardFormPlayground({
         throw new Error('Failed to submit assessment');
       }
 
-      return response.json();
-    },
-    onSuccess: (data) => {
+      const data = await response.json();
       console.log('[CardFormPlayground] Assessment submitted successfully:', {
-        data,
+        riskScore: data.riskScore,
         timestamp: new Date().toISOString()
       });
+
+      return data;
+    },
+    onSuccess: (data) => {
+      console.log('[CardFormPlayground] Submission success, invoking callbacks:', {
+        hasOnSubmit: !!onSubmit,
+        timestamp: new Date().toISOString()
+      });
+
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+
+      // Call the parent's onSubmit if provided
+      if (onSubmit) {
+        onSubmit(data);
+      }
     },
     onError: (error) => {
       console.error('[CardFormPlayground] Error submitting assessment:', {
@@ -424,11 +434,12 @@ export function CardFormPlayground({
   });
 
   const handleSubmit = () => {
-    console.log('[CardFormPlayground] Submitting form:', {
+    console.log('[CardFormPlayground] Handling submit:', {
       formResponses,
       progress,
       timestamp: new Date().toISOString()
     });
+
     if (progress < 11) {
       toast({
         title: "Cannot Submit Yet",
