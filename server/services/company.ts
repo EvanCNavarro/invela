@@ -27,6 +27,9 @@ export async function createCompany(
       throw new Error("Failed to create company");
     }
 
+    // Get the creator's user ID for task assignment
+    const createdById = data.metadata?.invited_by || null;
+
     // Create KYB onboarding task
     const [kybTask] = await tx.insert(tasks)
       .values({
@@ -38,8 +41,8 @@ export async function createCompany(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
-        assigned_to: null, // Explicitly set to null so all company users can see it
-        created_by: data.metadata?.invited_by || null,
+        assigned_to: createdById, // Assign to the creator
+        created_by: createdById,
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -65,8 +68,8 @@ export async function createCompany(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
-        assigned_to: null, // Explicitly set to null so all company users can see it
-        created_by: data.metadata?.invited_by || null,
+        assigned_to: createdById, // Assign to the same user as KYB task
+        created_by: createdById,
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline

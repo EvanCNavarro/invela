@@ -516,9 +516,9 @@ export function CardFormPlayground({
                               {fieldAnalysis[field.id].suspicionLevel}%
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground whitespace-normal">
+                          <div className="text-sm text-muted-foreground whitespace-normal">
                             {fieldAnalysis[field.id].reasoning}
-                          </p>
+                          </div>
                         </TooltipContent>
                       )}
                     </Tooltip>
