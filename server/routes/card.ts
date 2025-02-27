@@ -456,6 +456,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           status: TaskStatus.SUBMITTED,
           completion_date: new Date(),
           updated_at: new Date(),
+          progress: 100,
           metadata: {
             ...task.metadata,
             assessment_file: fileName,
