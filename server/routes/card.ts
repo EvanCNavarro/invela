@@ -360,6 +360,10 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       throw new Error('Task not found');
     }
 
+    if (!task.company_id) {
+      throw new Error('Task has no associated company');
+    }
+
     // Get all fields
     const fields = await db.select().from(cardFields);
     console.log('[Card Routes] Retrieved all card fields:', {
@@ -397,7 +401,15 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       });
 
       // Get the field to access partial_risk_score_max
-      const [field] = fields.filter(f => f.id === response.field_id);
+      const field = fields.find(f => f.id === response.field_id);
+      if (!field) {
+        console.warn('[Card Routes] Field not found for response:', {
+          responseId: response.id,
+          fieldId: response.field_id,
+          timestamp: timestamp.toISOString()
+        });
+        continue;
+      }
 
       await db.update(cardResponses)
         .set({
@@ -462,7 +474,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     // Update task status to submitted
     console.log('[Card Routes] Updating task status:', {
       taskId,
-      oldStatus: 'pending',
+      oldStatus: task.status,
       newStatus: TaskStatus.SUBMITTED,
       timestamp: timestamp.toISOString()
     });
