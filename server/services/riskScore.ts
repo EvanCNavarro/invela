@@ -1,6 +1,6 @@
 import { db } from '@db';
 import { companies, cardResponses, cardFields } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 interface RiskScoreResult {
   riskScore: number;
@@ -111,18 +111,15 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
       timestamp: new Date().toISOString()
     });
 
-    // Update company risk score using the correct Drizzle syntax
+    // Update company risk score using the correct schema fields
     const [updatedCompany] = await db
       .update(companies)
       .set({
-        riskScore: result.riskScore,
-        updatedAt: new Date()
+        risk_score: result.riskScore,
+        updated_at: new Date()
       })
       .where(eq(companies.id, companyId))
-      .returning({
-        id: companies.id,
-        riskScore: companies.riskScore
-      });
+      .returning();
 
     if (!updatedCompany) {
       throw new Error(`Failed to update risk score for company ${companyId}`);
@@ -130,7 +127,7 @@ export async function updateCompanyRiskScore(companyId: number, taskId: number):
 
     console.log('[Risk Score] Company risk score updated successfully:', {
       companyId: updatedCompany.id,
-      newRiskScore: updatedCompany.riskScore,
+      newRiskScore: updatedCompany.risk_score,
       timestamp: new Date().toISOString()
     });
 
