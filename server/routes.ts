@@ -859,8 +859,7 @@ export function registerRoutes(app: Express): Express {
 
   // Fix fintech invite endpoint task creation
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Starting invitation process');
-    console.log('[FinTech Invite] Request body:', req.body);
+    console.log('[FinTech Invite] Starting invitation process');console.log('[FinTech Invite] Request body:', req.body);
 
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -931,7 +930,7 @@ export function registerRoutes(app: Express): Express {
             status: 'active',
             accreditation_status: 'PENDING',
             onboarding_company_completed: false,
-            available_tabs: ['task-center', 'file-vault'],
+            available_tabs: ['task-center'], // Only task-center initially
             metadata: {
               invited_by: req.user!.id,
               invited_at: new Date().toISOString(),
@@ -948,7 +947,8 @@ export function registerRoutes(app: Express): Express {
         console.log('[FinTech Invite] Created new company:', {
           id: newCompany.id,
           name: newCompany.name,
-          category: newCompany.category
+          category: newCompany.category,
+          available_tabs: newCompany.available_tabs
         });
 
         // Create user account
