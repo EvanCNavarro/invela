@@ -37,6 +37,42 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
   }
 });
 
+// Get CARD responses for a task
+router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    console.log('[Card Routes] Fetching responses for task:', {
+      taskId,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    const responses = await db.select()
+      .from(cardResponses)
+      .where(eq(cardResponses.task_id, parseInt(taskId)));
+
+    console.log('[Card Routes] Responses retrieved:', {
+      count: responses.length,
+      responseStatuses: responses.map(r => r.status),
+      timestamp: new Date().toISOString()
+    });
+
+    res.json(responses);
+  } catch (error) {
+    console.error('[Card Routes] Error fetching responses:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ 
+      message: "Failed to fetch responses",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Save individual CARD field response
 router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
   try {
@@ -106,24 +142,36 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       res.json(newResponse);
     }
 
-    // Update task progress
-    const [taskResponses] = await db.select({
-      total: db.fn.count<number>(),
-      completed: db.fn.count<number>().filter(eq(cardResponses.status, 'COMPLETE'))
+    // Get total number of fields
+    const [{ count: totalFields }] = await db.select({
+      count: db.fn.count()
+    })
+    .from(cardFields);
+
+    // Get number of completed responses
+    const [{ count: completedResponses }] = await db.select({
+      count: db.fn.count()
     })
     .from(cardResponses)
-    .where(eq(cardResponses.task_id, parseInt(taskId)));
+    .where(
+      and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.status, 'COMPLETE')
+      )
+    );
 
-    const progress = Math.floor((taskResponses.completed / taskResponses.total) * 100);
+    // Calculate progress percentage
+    const progress = Math.floor((completedResponses / totalFields) * 100);
 
     console.log('[Card Routes] Updating task progress:', {
       taskId,
-      totalResponses: taskResponses.total,
-      completedResponses: taskResponses.completed,
+      totalFields,
+      completedResponses,
       calculatedProgress: progress,
       timestamp: timestamp.toISOString()
     });
 
+    // Update task progress
     await db.update(tasks)
       .set({ progress })
       .where(eq(tasks.id, parseInt(taskId)));
@@ -137,42 +185,6 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
     });
     res.status(500).json({
       message: "Failed to save response",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
-// Get CARD responses for a task
-router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
-  try {
-    const { taskId } = req.params;
-
-    console.log('[Card Routes] Fetching responses for task:', {
-      taskId,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-
-    const responses = await db.select()
-      .from(cardResponses)
-      .where(eq(cardResponses.task_id, parseInt(taskId)));
-
-    console.log('[Card Routes] Responses retrieved:', {
-      count: responses.length,
-      responseStatuses: responses.map(r => r.status),
-      timestamp: new Date().toISOString()
-    });
-
-    res.json(responses);
-  } catch (error) {
-    console.error('[Card Routes] Error fetching responses:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({ 
-      message: "Failed to fetch responses",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
@@ -212,87 +224,6 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('[Card Routes] Error fetching CARD task:', error);
     res.status(500).json({ message: "Failed to fetch CARD task" });
-  }
-});
-
-// Save CARD form data
-router.post('/api/card/save', requireAuth, async (req, res) => {
-  try {
-    const { fileName, formData, taskId } = req.body;
-
-    console.log('[Card Routes] Processing form save:', {
-      fileName,
-      taskId,
-      formDataKeys: Object.keys(formData)
-    });
-
-    // Get task details
-    const [task] = await db.select()
-      .from(tasks)
-      .where(eq(tasks.id, taskId));
-
-    if (!task) {
-      console.error('[Card Routes] Task not found:', taskId);
-      return res.status(404).json({ message: "Task not found" });
-    }
-
-    // Save form data as JSON file
-    const jsonData = JSON.stringify({
-      taskId,
-      formData,
-      metadata: {
-        submittedAt: new Date().toISOString(),
-        taskType: 'company_card',
-        taskStatus: TaskStatus.SUBMITTED
-      }
-    }, null, 2);
-
-    const fileSize = Buffer.from(jsonData).length;
-
-    // Create file record
-    const [fileRecord] = await db.insert(files)
-      .values({
-        name: `${fileName}.json`,
-        size: fileSize,
-        type: 'application/json',
-        path: jsonData,
-        status: 'uploaded',
-        user_id: req.user!.id,
-        company_id: task.company_id,
-        upload_time: new Date(),
-        version: 1.0
-      })
-      .returning();
-
-    // Update task status
-    await db.update(tasks)
-      .set({
-        status: TaskStatus.SUBMITTED,
-        progress: 100,
-        metadata: {
-          ...task.metadata,
-          cardFormFile: fileRecord.id,
-          submissionDate: new Date().toISOString()
-        }
-      })
-      .where(eq(tasks.id, taskId));
-
-    console.log('[Card Routes] Save completed:', {
-      taskId,
-      fileId: fileRecord.id,
-      status: TaskStatus.SUBMITTED
-    });
-
-    res.json({
-      success: true,
-      fileId: fileRecord.id
-    });
-  } catch (error) {
-    console.error('[Card Routes] Error saving form:', error);
-    res.status(500).json({
-      message: "Failed to save CARD form",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
   }
 });
 
