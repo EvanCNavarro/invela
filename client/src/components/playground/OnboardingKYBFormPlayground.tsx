@@ -13,6 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Update the field type to include suggestion
 type FormField = {
@@ -21,6 +28,8 @@ type FormField = {
   question: string;
   tooltip: string;
   suggestion?: string;
+  field_type?: string;
+  options?: string[];
 };
 
 // Function to extract tooltip content from question text
@@ -129,6 +138,19 @@ const FORM_STEPS: FormField[][] = [
       label: 'Tax Identification',
       question: 'What is the business tax ID?',
       tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
+    },
+    {
+      name: 'revenueTier',
+      label: 'Annual Revenue Tier',
+      question: 'Which annual revenue tier does the company fall under?',
+      tooltip: 'Select the appropriate revenue range for your company',
+      field_type: 'MULTIPLE_CHOICE',
+      options: [
+        'Less than $100 million',
+        '$100 - $499 million',
+        '$500 - $1 billion',
+        'Greater than $1 billion'
+      ]
     },
     {
       name: 'financialStatements',
@@ -773,6 +795,7 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [companyName, dataInitialized]);
 
+  // Update renderField function to handle multiple choice fields
   const renderField = (field: FormField) => {
     if (!formReady) return null;
 
@@ -783,6 +806,7 @@ export const OnboardingKYBFormPlayground = ({
       fieldName: field.name,
       rawValue: fieldValue,
       processedValue: value,
+      fieldType: field.field_type,
       formDataKeys: Object.keys(formData),
       isReady: formReady,
       timestamp: new Date().toISOString()
@@ -791,6 +815,52 @@ export const OnboardingKYBFormPlayground = ({
     const { mainText, tooltipText } = extractTooltipContent(field.question);
     const variant = getFieldVariant(field, value);
 
+    // Return dropdown/select for multiple choice fields
+    if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
+      return (
+        <div key={field.name} className="space-y-3">
+          <div className="flex flex-col gap-1.5 mb-2">
+            <label className="text-sm font-semibold text-foreground">
+              {field.label}
+            </label>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-muted-foreground">
+                {mainText}
+              </span>
+              {field.tooltip && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">{field.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </div>
+          <Select
+            value={value}
+            onValueChange={(newValue) => handleFormDataUpdate(field.name, newValue)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select revenue tier" />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    // Original input field rendering for text fields
     return (
       <div key={field.name} className="space-y-3">
         <div className="flex flex-col gap-1.5 mb-2">
