@@ -424,13 +424,40 @@ router.post('/api/kyb/save', async (req, res) => {
       currentStatus: task.status
     });
 
-    // Get company record to update available tabs
+    // Get company record to update available tabs and revenue tier
     const [company] = await db.select()
       .from(companies)
       .where(eq(companies.id, task.company_id));
 
     if (!company) {
       throw new Error('Company not found');
+    }
+
+    // Handle revenue tier update if the field is present
+    const revenueTierField = await db.select()
+      .from(kybFields)
+      .where(eq(kybFields.field_key, 'revenueTier'))
+      .limit(1);
+
+    if (revenueTierField.length > 0 && formData.revenueTier) {
+      const validationRules = revenueTierField[0].validation_rules;
+      const tierMapping = validationRules?.mapping || {};
+      const selectedTier = tierMapping[formData.revenueTier];
+
+      if (selectedTier) {
+        await db.update(companies)
+          .set({
+            revenue_tier: selectedTier,
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, task.company_id));
+
+        logFileDebug('Updated company revenue tier', {
+          companyId: task.company_id,
+          selectedOption: formData.revenueTier,
+          mappedTier: selectedTier
+        });
+      }
     }
 
     // Add file-vault to available tabs if not already present
@@ -658,6 +685,68 @@ router.post('/api/kyb/save', async (req, res) => {
       error: 'Failed to save KYB form data',
       details: errorDetails
     });
+  }
+});
+
+// Get saved progress for KYB form
+router.get('/api/kyb/progress/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    console.log('[KYB API Debug] Loading progress for task:', taskId);
+
+    // Get task data
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    logTaskDebug('Retrieved task', task);
+
+    if (!task) {
+      console.log('[KYB API Debug] Task not found:', taskId);
+      return res.status(404).json({ error: 'Task not found' });
+    }
+
+    // Get all KYB responses for this task with their field information
+    const responses = await db.select({
+      response_value: kybResponses.response_value,
+      field_key: kybFields.field_key,
+      status: kybResponses.status
+    })
+      .from(kybResponses)
+      .innerJoin(kybFields, eq(kybResponses.field_id, kybFields.id))
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+
+    logResponseDebug('Retrieved responses', responses);
+
+    // Transform responses into form data
+    const formData: Record<string, any> = {};
+    for (const response of responses) {
+      if (response.response_value !== null) {
+        formData[response.field_key] = response.response_value;
+      }
+    }
+
+    console.log('[KYB API Debug] Retrieved task data:', {
+      id: task.id,
+      responseCount: responses.length,
+      progress: task.progress,
+      status: task.status,
+      formDataKeys: Object.keys(formData),
+      formData
+    });
+
+    // Return saved form data and progress
+    res.json({
+      formData,
+      progress: Math.min(task.progress || 0, 100)
+    });
+  } catch (error) {
+    console.error('[KYB API Debug] Error loading progress:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({ error: 'Failed to load progress' });
   }
 });
 
