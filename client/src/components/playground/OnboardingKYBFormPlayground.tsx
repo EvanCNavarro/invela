@@ -511,7 +511,7 @@ export const OnboardingKYBFormPlayground = ({
     try {
       const updatedFormData = {
         ...formData,
-        [fieldName]: value.trim()
+        [fieldName]: value
       };
 
       if (isEmptyValue(updatedFormData[fieldName])) {
@@ -534,8 +534,8 @@ export const OnboardingKYBFormPlayground = ({
           formData: updatedFormData,
           fieldUpdates: {
             [fieldName]: {
-              value: value.trim(),
-              status: isEmptyValue(value.trim()) ? 'EMPTY' : 'COMPLETE',
+              value: value,
+              status: isEmptyValue(value) ? 'EMPTY' : 'COMPLETE',
               updatedAt: new Date().toISOString()
             }
           }
@@ -847,7 +847,7 @@ export const OnboardingKYBFormPlayground = ({
             value={value}
             onValueChange={(newValue) => handleFormDataUpdate(field.name, newValue)}
           >
-            <SelectTrigger className={`w-full ${isSelected ? 'border-green-500 bg-green-50' : ''}`}>
+            <SelectTrigger className={`w-full ${isSelected ? 'border-green-500' : ''}`}>
               <SelectValue placeholder="Select revenue tier" />
             </SelectTrigger>
             <SelectContent>
@@ -977,7 +977,7 @@ export const OnboardingKYBFormPlayground = ({
                       <div
                         className={`absolute top-3.5 left-[calc(50%+16px)] h-[2px] transition-all duration-200
                           ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                        style={{ width:`calc(100% - 24px)` }}
+                        style={{ width:`calc(100% -24px)` }}
                       />
                     )}
 
