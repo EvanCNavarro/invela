@@ -674,7 +674,7 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-  // Update getFieldVariant function to properly handle pre-populated fields
+  // Update getFieldVariant function to properly handle dropdown fields
   const getFieldVariant = (field: FormField, value: string | undefined) => {
     const isEmpty = isEmptyValue(value);
     const suggestion = getSuggestionForField(field.name);
@@ -685,6 +685,7 @@ export const OnboardingKYBFormPlayground = ({
         fieldName: field.name,
         value,
         variant: 'successful',
+        fieldType: field.field_type,
         timestamp: new Date().toISOString()
       });
       return 'successful';
@@ -817,6 +818,7 @@ export const OnboardingKYBFormPlayground = ({
 
     // Return dropdown/select for multiple choice fields
     if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
+      const isSelected = !isEmptyValue(value);
       return (
         <div key={field.name} className="space-y-3">
           <div className="flex flex-col gap-1.5 mb-2">
@@ -845,7 +847,7 @@ export const OnboardingKYBFormPlayground = ({
             value={value}
             onValueChange={(newValue) => handleFormDataUpdate(field.name, newValue)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className={`w-full ${isSelected ? 'border-green-500 bg-green-50' : ''}`}>
               <SelectValue placeholder="Select revenue tier" />
             </SelectTrigger>
             <SelectContent>
@@ -975,7 +977,7 @@ export const OnboardingKYBFormPlayground = ({
                       <div
                         className={`absolute top-3.5 left-[calc(50%+16px)] h-[2px] transition-all duration-200
                           ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                        style={{ width: 'calc(100% - 24px)' }}
+                        style={{ width:`calc(100% - 24px)` }}
                       />
                     )}
 
