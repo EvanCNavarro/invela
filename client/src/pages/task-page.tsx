@@ -258,7 +258,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}.csv`, // Changed extension to .csv
+                    fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}.csv`,
                     formData,
                     taskId: task.id
                   })

@@ -2,7 +2,31 @@ import { Router } from 'express';
 import { join } from 'path';
 import { db } from '@db';
 import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, sql } from 'drizzle-orm';
+
+// Add CSV conversion helper function at the top of the file
+function convertResponsesToCSV(fields: any[], formData: any) {
+  // CSV headers
+  const headers = ['Group', 'Question', 'Answer', 'Type'];
+  const rows = [headers];
+
+  // Add data rows
+  for (const field of fields) {
+    rows.push([
+      field.group || 'Uncategorized',
+      field.display_name,
+      formData[field.field_key] || '',
+      field.field_type
+    ]);
+  }
+
+  // Convert to CSV string
+  return rows.map(row =>
+    row.map(cell =>
+      typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+    ).join(',')
+  ).join('\n');
+}
 
 const router = Router();
 
@@ -399,12 +423,7 @@ router.post('/api/kyb/save', async (req, res) => {
     logFileDebug('Save request received', {
       fileName,
       taskId,
-      formDataKeys: Object.keys(formData),
-      formDataValues: Object.entries(formData).map(([k, v]) => ({
-        key: k,
-        hasValue: !!v,
-        valueType: typeof v
-      }))
+      formDataKeys: Object.keys(formData)
     });
 
     // Get task details
@@ -413,71 +432,7 @@ router.post('/api/kyb/save', async (req, res) => {
       .where(eq(tasks.id, taskId));
 
     if (!task) {
-      const error = 'Task not found';
-      logFileDebug('Task lookup failed', { taskId, error });
-      throw new Error(error);
-    }
-
-    logFileDebug('Task found', {
-      taskId: task.id,
-      title: task.title,
-      currentStatus: task.status
-    });
-
-    // Get company record to update available tabs and revenue tier
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-
-    if (!company) {
-      throw new Error('Company not found');
-    }
-
-    // Handle revenue tier update if the field is present
-    const revenueTierField = await db.select()
-      .from(kybFields)
-      .where(eq(kybFields.field_key, 'revenueTier'))
-      .limit(1);
-
-    if (revenueTierField.length > 0 && formData.revenueTier) {
-      const validationRules = revenueTierField[0].validation_rules;
-      const tierMapping = validationRules?.mapping || {};
-      const selectedTier = tierMapping[formData.revenueTier];
-
-      if (selectedTier) {
-        await db.update(companies)
-          .set({
-            revenue_tier: selectedTier,
-            updated_at: new Date()
-          })
-          .where(eq(companies.id, task.company_id));
-
-        logFileDebug('Updated company revenue tier', {
-          companyId: task.company_id,
-          selectedOption: formData.revenueTier,
-          mappedTier: selectedTier
-        });
-      }
-    }
-
-    // Add file-vault to available tabs if not already present
-    const currentTabs = company.available_tabs || ['task-center'];
-    if (!currentTabs.includes('file-vault')) {
-      const updatedTabs = [...currentTabs, 'file-vault'];
-
-      // Update company's available tabs
-      await db.update(companies)
-        .set({
-          available_tabs: updatedTabs,
-          updated_at: new Date()
-        })
-        .where(eq(companies.id, task.company_id));
-
-      logFileDebug('Updated company available tabs', {
-        companyId: task.company_id,
-        previousTabs: currentTabs,
-        newTabs: updatedTabs
-      });
+      throw new Error('Task not found');
     }
 
     // Get all KYB fields with their groups
@@ -485,82 +440,20 @@ router.post('/api/kyb/save', async (req, res) => {
       .from(kybFields)
       .orderBy(kybFields.order);
 
-    logFileDebug('Fields retrieved', {
-      fieldCount: fields.length,
-      fieldGroups: [...new Set(fields.map(f => f.group))],
-      fieldTypes: [...new Set(fields.map(f => f.field_type))]
-    });
+    // Convert form data to CSV
+    const csvData = convertResponsesToCSV(fields, formData);
+    const fileSize = Buffer.from(csvData).length;
 
-    // Create comprehensive submission data
-    const submissionData = {
-      metadata: {
-        taskId,
-        taskTitle: task.title,
-        submissionDate: new Date().toISOString(),
-        formVersion: '1.0',
-        status: TaskStatus.SUBMITTED
-      },
-      taskData: {
-        ...task,
-        progress: 100,
-        status: TaskStatus.SUBMITTED
-      },
-      formStructure: {
-        fields: fields.map(field => ({
-          key: field.field_key,
-          name: field.display_name,
-          type: field.field_type,
-          group: field.group,
-          required: field.required,
-          order: field.order
-        }))
-      },
-      responses: {}
-    };
-
-    logFileDebug('Submission data prepared', {
-      metadataKeys: Object.keys(submissionData.metadata),
-      formStructureFields: submissionData.formStructure.fields.length
-    });
-
-    // Group responses by field group
-    const groupedResponses: Record<string, Record<string, any>> = {};
-    for (const field of fields) {
-      const group = field.group || 'Uncategorized';
-      if (!groupedResponses[group]) {
-        groupedResponses[group] = {};
-      }
-      groupedResponses[group][field.field_key] = {
-        question: field.display_name,
-        answer: field.field_type === 'boolean'
-          ? formData[field.field_key] === 'true' || formData[field.field_key] === true
-          : formData[field.field_key] || null,
-        type: field.field_type,
-        answeredAt: new Date().toISOString()
-      };
-    }
-    submissionData.responses = groupedResponses;
-
-    logFileDebug('Responses grouped', {
-      groupCount: Object.keys(groupedResponses).length,
-      groups: Object.keys(groupedResponses),
-      responseCount: Object.values(groupedResponses).reduce((acc, group) => acc + Object.keys(group).length, 0)
-    });
-
-    // Convert submission data to JSON string
-    const jsonData = JSON.stringify(submissionData, null, 2);
-    const fileSize = Buffer.from(jsonData).length;
-
-    // Create file record in database
+    // Create file record in database with CSV content and type
     const timestamp = new Date();
     const [fileRecord] = await db.insert(files)
       .values({
-        name: `${fileName}.json`,
+        name: fileName,
         size: fileSize,
-        type: 'application/json',
-        path: jsonData, // Store JSON content directly in path field
+        type: 'text/csv',
+        path: csvData, // Store CSV content directly
         status: 'uploaded',
-        user_id: task.created_by || 1, // Default to user ID 1 if no creator
+        user_id: task.created_by || 1,
         company_id: task.company_id,
         upload_time: timestamp,
         created_at: timestamp,
@@ -569,80 +462,29 @@ router.post('/api/kyb/save', async (req, res) => {
       })
       .returning();
 
-    logFileDebug('File record created', {
-      fileId: fileRecord.id,
-      fileName: fileRecord.name,
-      size: fileRecord.size,
-      timestamp: timestamp.toISOString()
-    });
+    // Handle revenue tier update if the field is present
+    if (formData.revenueTier) {
+      const [revenueTierField] = await db.select()
+        .from(kybFields)
+        .where(eq(kybFields.field_key, 'revenueTier'))
+        .limit(1);
 
-    // Save responses to database
-    const fieldMap = new Map(fields.map(f => [f.field_key, f.id]));
+      if (revenueTierField?.validation_rules?.mapping) {
+        const tierMapping = revenueTierField.validation_rules.mapping;
+        const selectedTier = tierMapping[formData.revenueTier];
 
-    // Save responses to database
-    for (const [fieldKey, value] of Object.entries(formData)) {
-      const fieldId = fieldMap.get(fieldKey);
-      if (!fieldId) {
-        logFileDebug('Field not found', { fieldKey });
-        continue;
-      }
-
-      const responseValue = value === '' ? null : String(value);
-      const status = responseValue === null ? 'EMPTY' : 'COMPLETE';
-
-      // Check if response exists
-      const [existingResponse] = await db.select()
-        .from(kybResponses)
-        .where(
-          and(
-            eq(kybResponses.task_id, taskId),
-            eq(kybResponses.field_id, fieldId)
-          )
-        );
-
-      if (existingResponse) {
-        logFileDebug('Updating existing response', {
-          fieldKey,
-          responseId: existingResponse.id,
-          oldValue: existingResponse.response_value,
-          newValue: responseValue
-        });
-
-        await db.update(kybResponses)
-          .set({
-            response_value: responseValue,
-            status,
-            version: existingResponse.version + 1,
-            updated_at: timestamp
-          })
-          .where(eq(kybResponses.id, existingResponse.id));
-      } else {
-        logFileDebug('Creating new response', {
-          fieldKey,
-          status,
-          value: responseValue
-        });
-
-        await db.insert(kybResponses)
-          .values({
-            task_id: taskId,
-            field_id: fieldId,
-            response_value: responseValue,
-            status,
-            version: 1,
-            created_at: timestamp,
-            updated_at: timestamp
-          });
+        if (selectedTier) {
+          await db.update(companies)
+            .set({
+              revenue_tier: selectedTier,
+              updated_at: timestamp
+            })
+            .where(eq(companies.id, task.company_id));
+        }
       }
     }
 
-    // Update task status
-    logFileDebug('Updating task status', {
-      taskId,
-      newStatus: TaskStatus.SUBMITTED,
-      progress: 100
-    });
-
+    // Update task status and metadata
     await db.update(tasks)
       .set({
         status: TaskStatus.SUBMITTED,
@@ -650,7 +492,7 @@ router.post('/api/kyb/save', async (req, res) => {
         updated_at: timestamp,
         metadata: {
           ...task.metadata,
-          kybFormFile: fileRecord.id, // Store file ID instead of filename
+          kybFormFile: fileRecord.id,
           submissionDate: timestamp.toISOString(),
           formVersion: '1.0',
           statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
@@ -659,32 +501,39 @@ router.post('/api/kyb/save', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
-    logFileDebug('Save completed', {
-      fileId: fileRecord.id,
-      taskId,
-      status: TaskStatus.SUBMITTED,
-      timestamp: timestamp.toISOString()
-    });
+    // Save responses to database
+    for (const field of fields) {
+      const value = formData[field.field_key];
+      const status = value ? 'COMPLETE' : 'EMPTY';
+
+      await db.insert(kybResponses)
+        .values({
+          task_id: taskId,
+          field_id: field.id,
+          response_value: value || null,
+          status,
+          version: 1,
+          created_at: timestamp,
+          updated_at: timestamp
+        })
+        .onConflictDoUpdate({
+          target: [kybResponses.task_id, kybResponses.field_id],
+          set: {
+            response_value: value || null,
+            status,
+            version: sql`${kybResponses.version} + 1`,
+            updated_at: timestamp
+          }
+        });
+    }
 
     res.json({
       success: true,
-      fileId: fileRecord.id,
-      metadata: submissionData.metadata
+      fileId: fileRecord.id
     });
   } catch (error) {
-    const errorDetails = {
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    };
-
-    logFileDebug('Error saving KYB form', errorDetails);
-    console.error('[KYB API Debug] Error saving KYB form:', errorDetails);
-
-    res.status(500).json({
-      error: 'Failed to save KYB form data',
-      details: errorDetails
-    });
+    console.error('[KYB API Debug] Error saving KYB form:', error);
+    res.status(500).json({ error: 'Failed to save KYB form data' });
   }
 });
 
@@ -754,13 +603,7 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 router.get('/api/kyb/download/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
-    const format = req.query.format as string || 'json';
-
-    logFileDebug('Download request received', {
-      fileId,
-      format,
-      timestamp: new Date().toISOString()
-    });
+    const format = (req.query.format as string)?.toLowerCase() || 'csv';
 
     // Get file from database
     const [file] = await db.select()
@@ -768,137 +611,54 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       .where(eq(files.id, parseInt(fileId)));
 
     if (!file) {
-      logFileDebug('File not found', { fileId });
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // Get all field questions
-    const fields = await db.select({
-      field_key: kybFields.field_key,
-      display_name: kybFields.display_name,
-      question: kybFields.question,
-      group: kybFields.group,
-      field_type: kybFields.field_type
-    })
-      .from(kybFields)
-      .orderBy(kybFields.order);
-
-    logFileDebug('Retrieved field information', {
-      fieldCount: fields.length,
-      sampleField: fields[0],
-      allKeys: fields.map(f => f.field_key)
-    });
-
-    const fieldQuestions = new Map(
-      fields.map(f => [f.field_key, {
-        name: f.display_name,
-        question: f.question,
-        group: f.group,
-        type: f.field_type
-      }])
-    );
-
-    // Parse the stored JSON data
-    const jsonData = JSON.parse(file.path);
-
-    let downloadData: string;
-    let contentType: string;
-    let fileExtension: string;
-
-    switch (format.toLowerCase()) {
-      case 'json':
-        downloadData = JSON.stringify(jsonData, null, 2);
-        contentType = 'application/json';
-        fileExtension = 'json';
-        break;
-
+    // Set response headers based on format
+    switch (format) {
       case 'csv':
-        // Convert the responses object to CSV format
-        const csvRows = [];
-
-        // Add headers
-        csvRows.push(['Group', 'Question', 'Answer', 'Type', 'Answered At']);
-
-        // Add data rows for each response
-        if (jsonData.responses && typeof jsonData.responses === 'object') {
-          // Get all responses regardless of group
-          const allResponses = Object.values(jsonData.responses)
-            .reduce((acc: any, group: any) => ({ ...acc, ...group }), {});
-
-          // Add a row for each field, maintaining order from the database
-          for (const field of fields) {
-            const response = allResponses[field.field_key];
-            if (response) {
-              csvRows.push([
-                field.group || 'Uncategorized',
-                field.question || field.display_name,
-                response.answer || '',
-                response.type || field.field_type,
-                response.answeredAt || new Date().toISOString()
-              ]);
-            }
-          }
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.csv`);
+        // If file is already CSV, send it directly
+        if (file.type === 'text/csv') {
+          return res.send(file.path);
         }
+        // If file is JSON, convert it to CSV
+        const jsonData = JSON.parse(file.path);
+        // Convert JSON to CSV format
+        const csvRows = [['Group', 'Question', 'Answer', 'Type']];
+        Object.entries(jsonData.responses).forEach(([group, fields]: [string, any]) => {
+          Object.entries(fields).forEach(([key, data]: [string, any]) => {
+            csvRows.push([
+              group,
+              data.question,
+              data.answer || '',
+              data.type
+            ]);
+          });
+        });
+        return res.send(csvRows.map(row => row.join(',')).join('\n'));
 
-        // Convert to CSV string
-        downloadData = csvRows.map(row => row.map(cell =>
-          typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
-        ).join(',')).join('\n');
-
-        contentType = 'text/csv';
-        fileExtension = 'csv';
-        break;
+      case 'json':
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.json`);
+        return res.send(file.type === 'application/json' ? file.path : JSON.stringify(JSON.parse(file.path), null, 2));
 
       case 'txt':
-        // Convert to human-readable text format
-        const textParts = [];
-        textParts.push('KYB Form Submission\n' + '='.repeat(20) + '\n');
-        textParts.push(`Task: ${jsonData.metadata.taskTitle}`);
-        textParts.push(`Submission Date: ${jsonData.metadata.submissionDate}`);
-        textParts.push(`Status: ${jsonData.metadata.status}\n`);
-
-        // Group fields by their category
-        const groupedFields = new Map<string, Array<{field: any, response: any}>>();
-
-        for (const field of fields) {
-          const response = jsonData.responses?.Uncategorized?.[field.field_key];
-          if (response) {
-            if (!groupedFields.has(field.group)) {
-              groupedFields.set(field.group, []);
-            }
-            groupedFields.get(field.group)?.push({ field, response });
-          }
-        }
-
-        // Output by group
-        for (const [group, items] of groupedFields) {
-          textParts.push(`\n${group}:\n` + '='.repeat(group.length) + '\n');
-          for (const { field, response } of items) {
-            textParts.push(`${field.question}\nAnswer: ${response.answer || 'Not provided'}\n`);
-          }
-        }
-
-        downloadData = textParts.join('\n');
-        contentType = 'text/plain';
-        fileExtension = 'txt';
-        break;
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.txt`);
+        const data = file.type === 'application/json' ? JSON.parse(file.path) : { responses: {} };
+        const textContent = Object.entries(data.responses).map(([group, fields]: [string, any]) => {
+          return `\n${group}:\n${'='.repeat(group.length)}\n` +
+            Object.entries(fields).map(([key, data]: [string, any]) =>
+              `${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`
+            ).join('\n');
+        }).join('\n');
+        return res.send(textContent);
 
       default:
         return res.status(400).json({ error: 'Invalid format specified' });
     }
-
-    // Set response headers for file download
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `attachment; filename=kyb_form.${fileExtension}`);
-
-    logFileDebug('Sending download', {
-      fileId,
-      format,
-      contentType,
-      size: downloadData.length
-    });
-
-    res.send(downloadData);
   } catch (error) {
     console.error('[KYB API Debug] Error processing download:', error);
     res.status(500).json({ error: 'Failed to process download' });
