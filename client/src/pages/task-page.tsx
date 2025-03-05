@@ -18,6 +18,7 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import confetti from 'canvas-confetti';
+import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 
 interface TaskPageProps {
   params: {
@@ -200,6 +201,141 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
+  if (taskType === 'card') {
+    const flowType = params.taskSlug.split('-').pop(); 
+
+    if (!flowType || flowType === companyName) {
+      return (
+        <DashboardLayout>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+              </div>
+            </div>
+
+            <CardMethodChoice 
+              taskId={task.id} 
+              companyName={displayName}
+            />
+          </PageTemplate>
+        </DashboardLayout>
+      );
+    }
+
+    if (flowType === 'upload') {
+      return (
+        <DashboardLayout>
+          <div>Upload flow coming soon</div>
+        </DashboardLayout>
+      );
+    }
+
+    if (flowType === 'manual') {
+      return (
+        <DashboardLayout>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+
+                {(isSubmitted || task.metadata?.[`${taskType}FormFile`]) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleDownload('json')}>
+                        <FileJson className="mr-2 h-4 w-4" />
+                        Download as JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                        <FileSpreadsheet className="mr-2 h-4 w-4" />
+                        Download as CSV
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        Download as Text
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+            </div>
+
+            <div className="container max-w-7xl mx-auto">
+              <CardFormPlayground
+                taskId={task.id}
+                companyName={companyName}
+                companyData={{
+                  name: displayName,
+                  description: task.metadata?.company?.description || null
+                }}
+                savedFormData={task.savedFormData}
+                onSubmit={(formData) => {
+                  fetch('/api/card/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      fileName: `card_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                      formData,
+                      taskId: task.id
+                    })
+                  })
+                    .then(response => {
+                      if (!response.ok) throw new Error('Failed to save CARD form');
+                      return response.json();
+                    })
+                    .then((result) => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setFileId(result.fileId);
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Form submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: "Failed to save CARD form. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            </div>
+          </PageTemplate>
+        </DashboardLayout>
+      );
+    }
+  }
+
   return (
     <DashboardLayout>
       <PageTemplate className="space-y-6">
@@ -290,50 +426,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               }}
             />
           ) : (
-            <CardFormPlayground
-              taskId={task.id}
-              companyName={companyName}
-              companyData={{
-                name: displayName,
-                description: task.metadata?.company?.description || null
-              }}
-              savedFormData={task.savedFormData}
-              onSubmit={(formData) => {
-                fetch('/api/card/save', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    fileName: `card_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                    formData,
-                    taskId: task.id
-                  })
-                })
-                  .then(response => {
-                    if (!response.ok) throw new Error('Failed to save CARD form');
-                    return response.json();
-                  })
-                  .then((result) => {
-                    confetti({
-                      particleCount: 150,
-                      spread: 80,
-                      origin: { y: 0.6 },
-                      colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                    });
-
-                    setFileId(result.fileId);
-                    setIsSubmitted(true);
-                    setShowSuccessModal(true);
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Form submission failed:', error);
-                    toast({
-                      title: "Error",
-                      description: "Failed to save CARD form. Please try again.",
-                      variant: "destructive",
-                    });
-                  });
-              }}
-            />
+            <></>
           )}
         </div>
 
