@@ -202,7 +202,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
   if (taskType === 'card') {
-    const flowType = params.taskSlug.split('-').pop(); 
+    const flowType = params.taskSlug.split('-').pop();
 
     if (!flowType || flowType === companyName) {
       return (
@@ -223,8 +223,8 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             </div>
 
-            <CardMethodChoice 
-              taskId={task.id} 
+            <CardMethodChoice
+              taskId={task.id}
               companyName={displayName}
             />
           </PageTemplate>
@@ -386,24 +386,39 @@ export default function TaskPage({ params }: TaskPageProps) {
               companyName={companyName}
               companyData={{
                 name: displayName,
-                description: task.metadata?.company?.description
+                description: task.metadata?.company?.description || undefined
               }}
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
+                // Ensure form data is properly structured
+                const submitData = {
+                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}.csv`,
+                  formData,
+                  taskId: task.id
+                };
+
+                // Show loading toast
+                toast({
+                  title: "Saving KYB form",
+                  description: "Please wait while we process your submission...",
+                });
+
                 fetch('/api/kyb/save', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}.csv`,
-                    formData,
-                    taskId: task.id
-                  })
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify(submitData)
                 })
-                  .then(response => {
-                    if (!response.ok) throw new Error('Failed to save KYB form');
+                  .then(async response => {
+                    if (!response.ok) {
+                      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+                      throw new Error(errorData.error || 'Failed to save KYB form');
+                    }
                     return response.json();
                   })
                   .then((result) => {
+                    // Success handling
                     confetti({
                       particleCount: 150,
                       spread: 80,
@@ -414,12 +429,20 @@ export default function TaskPage({ params }: TaskPageProps) {
                     setFileId(result.fileId);
                     setIsSubmitted(true);
                     setShowSuccessModal(true);
+
+                    // Show success toast
+                    toast({
+                      title: "Success",
+                      description: "KYB form has been saved successfully.",
+                      variant: "default",
+                    });
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);
+                    // Show error toast with more specific message
                     toast({
                       title: "Error",
-                      description: "Failed to save KYB form. Please try again.",
+                      description: error.message || "Failed to save KYB form. Please try again.",
                       variant: "destructive",
                     });
                   });
