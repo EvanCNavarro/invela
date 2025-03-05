@@ -22,10 +22,12 @@ export class APIError extends Error {
 const app = express();
 const server = createServer(app);
 
-// Configure CORS for Replit environment
+// Configure CORS for all environments
 app.use(cors({
-  origin: true,
-  credentials: true
+  origin: true, // This allows requests from any origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Configure body parsing middleware first
