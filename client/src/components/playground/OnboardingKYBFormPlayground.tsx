@@ -32,6 +32,17 @@ type FormField = {
   options?: string[];
 };
 
+// Function to extract tooltip content from question text
+const extractTooltipContent = (text: string): { mainText: string; tooltipText: string | null } => {
+  // The main text is the question itself
+  const mainText = text;
+  // The tooltip text comes from the tooltip property directly
+  return {
+    mainText,
+    tooltipText: null // We don't need to parse the question since we have a separate tooltip field
+  };
+};
+
 // Define the form steps based on updated KYB requirements
 const FORM_STEPS: FormField[][] = [
   // Step 1: Legal Entity Name
@@ -991,7 +1002,7 @@ export const OnboardingKYBFormPlayground = ({
                     <div
                       className={`flex items-center justify-center h-7 w-7 rounded-full border-2 transition-all duration-200
                         ${index === currentStep
-                        ? 'border-[#4F46E5] bg-[#4F4F6E5] text-white shadow-sm'
+                        ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
                         : index < currentStep
                         ? 'border-[#4F46E5] text-[#4F46E5] bg-white'
                         : 'border-[#D1D5DB] text-[#6B7280] bg-white'
