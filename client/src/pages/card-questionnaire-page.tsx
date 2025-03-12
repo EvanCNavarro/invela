@@ -3,7 +3,7 @@ import { useLocation, useParams } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
