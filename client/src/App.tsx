@@ -222,6 +222,9 @@ function Router() {
         }}
       </Route>
 
+      {/* Added route for the questionnaire page */}
+      <ProtectedRoute path="/task-center/task/card-:companyName/questionnaire" component={CardQuestionnairePage} />
+
       <Route component={NotFound} />
     </Switch>
   );

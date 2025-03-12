@@ -12,19 +12,12 @@ console.log("[Module] Import trace:", {
   timestamp: new Date().toISOString()
 });
 
-// Verify dependencies are loaded
-try {
-  // Test critical dependencies
-  const React = require('react');
-  const Wouter = require('wouter');
-  console.log("[CardQuestionnairePage] Dependencies verified:", {
-    react: !!React,
-    wouter: !!Wouter,
-    timestamp: new Date().toISOString()
-  });
-} catch (error) {
-  console.error("[CardQuestionnairePage] Import error:", error);
-}
+// Simple dependency check that works in browser
+console.log("[CardQuestionnairePage] Dependencies check:", {
+  react: typeof React !== 'undefined',
+  wouter: typeof useParams !== 'undefined',
+  timestamp: new Date().toISOString()
+});
 
 import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
