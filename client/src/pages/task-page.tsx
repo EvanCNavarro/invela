@@ -256,3 +256,29 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     </DashboardLayout>
   );
 }
+import { useParams, useLocation } from "wouter";
+import { useEffect } from "react";
+
+export default function TaskPage() {
+  const params = useParams();
+  const [location] = useLocation();
+  
+  useEffect(() => {
+    console.log('[TaskPage] Route debugging:', {
+      taskSlug: params.taskSlug,
+      taskType: params.taskSlug?.split('-')[0],
+      companyName: params.taskSlug?.split('-')[1],
+      match: location.includes(params.taskSlug || ''),
+      questMatch: location.includes('questionnaire'),
+      timestamp: new Date().toISOString()
+    });
+  }, [params, location]);
+  
+  return (
+    <div>
+      <h1>Task Page Router</h1>
+      <p>This is a debugging page for task routing.</p>
+      <pre>{JSON.stringify(params, null, 2)}</pre>
+    </div>
+  );
+}

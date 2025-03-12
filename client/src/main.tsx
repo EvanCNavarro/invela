@@ -13,7 +13,9 @@ createRoot(rootElement).render(
   <Router>
     <App>
       <Route path="/task-center/task/card-:companyName" component={CardTaskPage} />
-      <Route path="/task-center/task/card-:companyName/questionnaire" component={CardQuestionnairePage} />
+      <Route path="/task-center/task/card-:companyName/questionnaire">
+        {(params) => <CardQuestionnairePage />}
+      </Route>
     </App>
   </Router>
 );
