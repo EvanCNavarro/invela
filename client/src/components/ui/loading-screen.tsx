@@ -10,7 +10,7 @@ export function LoadingScreen({ message = 'Loading...' }: LoadingScreenProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <LoadingSpinner size="lg" />
-      {message && <p className="text-muted-foreground">{message}</p>}
+      {message && <p className="text-muted-foreground text-center">{message}</p>}
     </div>
   );
 }
