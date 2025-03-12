@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, useRoute, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import { useLocation } from "wouter";
+import CardQuestionnairePage from "./pages/card-questionnaire-page";
 
 // Debug component imports
 console.log("[App] Component imports starting");
@@ -40,12 +40,12 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   const [location] = useLocation();
   console.log('[Router] Current location:', location);
-  
+
   // Debug route structure
   const isTaskRoute = location.startsWith('/task-center/task');
   const isCardRoute = isTaskRoute && location.includes('/card-');
   const isQuestionnaireRoute = isCardRoute && location.endsWith('/questionnaire');
-  
+
   console.log('[Router] Route matching:', {
     isTaskRoute,
     isCardRoute,
