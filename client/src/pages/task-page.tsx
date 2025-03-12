@@ -30,6 +30,7 @@ interface TaskPageProps {
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match] = useRoute("/task-center/task/:taskSlug");
+  const [questMatch] = useRoute("/task-center/task/card-:company/questionnaire");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -39,15 +40,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
-  // Check if we're on the questionnaire route
-  const isQuestionnaire = pageParams.taskSlug.includes('questionnaire');
-
   console.log('[TaskPage] Route debugging:', {
     taskSlug: pageParams.taskSlug,
     taskType,
     companyName,
     match,
-    isQuestionnaire,
+    questMatch,
     timestamp: new Date().toISOString()
   });
 
@@ -62,52 +60,56 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
         timestamp: new Date().toISOString()
       });
 
-      try {
-        const response = await fetch(`${apiEndpoint}/${companyName}`);
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log('[TaskPage] Task data fetched:', {
-          taskId: data.id,
-          hasMetadata: !!data.metadata,
+      const response = await fetch(`${apiEndpoint}/${companyName}`);
+      console.log('[TaskPage] API response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+        timestamp: new Date().toISOString()
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('[TaskPage] API error:', {
+          status: response.status,
+          errorText,
           timestamp: new Date().toISOString()
         });
-
-        if (data.metadata?.[`${taskType}FormFile`]) {
-          setFileId(data.metadata[`${taskType}FormFile`]);
-          setIsSubmitted(true);
-        }
-        return data;
-      } catch (error) {
-        console.error('[TaskPage] Task fetch error:', error);
-        throw error;
+        throw new Error('Failed to load task');
       }
+
+      const data = await response.json();
+      console.log('[TaskPage] Task data received:', {
+        taskId: data.id,
+        taskType: data.task_type,
+        status: data.status,
+        metadata: data.metadata,
+        timestamp: new Date().toISOString()
+      });
+
+      return data;
     },
-    enabled: taskType === 'kyb' || taskType === 'card',
-    staleTime: 0,
+    enabled: !!companyName
   });
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Task load error effect:', error);
+      console.error('[TaskPage] Error loading task:', {
+        error,
+        companyName,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: "Error",
-        description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
+        description: "Failed to load task. Please try again.",
         variant: "destructive",
       });
       navigate('/task-center');
     }
-  }, [error, navigate, toast, taskType]);
-
-  const handleBackClick = () => {
-    console.log('[TaskPage] Navigating back to task center');
-    navigate('/task-center');
-  };
+  }, [error, navigate, toast, companyName]);
 
   if (isLoading) {
-    console.log('[TaskPage] Showing loading state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -118,14 +120,13 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   }
 
   if (!task) {
-    console.log('[TaskPage] Task not found, showing error state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
             <p className="text-muted-foreground">
-              Could not find the {taskType.toUpperCase()} task for {companyName}. Please try again.
+              Could not find the task for {companyName}. Please try again.
             </p>
           </div>
         </div>
@@ -137,52 +138,41 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   console.log('[TaskPage] Rendering decision:', {
     taskType,
-    isQuestionnaire,
+    questMatch,
     displayName,
     timestamp: new Date().toISOString()
   });
 
   if (taskType === 'card') {
     // Handle questionnaire route
-    if (isQuestionnaire) {
+    if (questMatch) {
       console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-              </div>
-            </div>
+          <div className="space-y-8">
+            <PageHeader
+              title={`CARD Form: ${task.metadata?.company_name || companyName}`}
+              description="Complete the Compliance and Risk Disclosure (CARD) form"
+            />
 
             <div className="container max-w-7xl mx-auto">
-              <CardFormPlayground
+              <CardFormPlayground 
                 taskId={task.id}
-                companyName={displayName}
+                companyName={task.metadata?.company_name || companyName}
                 companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || ''
+                  name: task.metadata?.company_name || companyName,
+                  description: task.description || undefined
                 }}
-                onSubmit={(formData) => {
+                onSubmit={() => {
                   toast({
-                    title: "Success",
-                    description: "Card form has been submitted successfully.",
-                    variant: "default",
+                    title: "CARD Form Submitted",
+                    description: "Your CARD form has been submitted successfully.",
                   });
                   navigate('/task-center');
                 }}
               />
             </div>
-          </PageTemplate>
+          </div>
         </DashboardLayout>
       );
     }
@@ -200,7 +190,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
                   variant="outline"
                   size="sm"
                   className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
+                  onClick={() => navigate('/task-center')}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
@@ -230,7 +220,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
               variant="outline"
               size="sm"
               className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={handleBackClick}
+              onClick={() => navigate('/task-center')}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Task Center
@@ -249,57 +239,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
               }}
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
-                const submitData = {
-                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                  formData,
-                  taskId: task.id
-                };
-
                 toast({
-                  title: "Saving KYB form",
-                  description: "Please wait while we process your submission...",
+                  title: "Success",
+                  description: "KYB form has been submitted successfully.",
+                  variant: "default",
                 });
-
-                fetch('/api/kyb/save', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(submitData)
-                })
-                  .then(async response => {
-                    const data = await response.json();
-                    if (!response.ok) {
-                      throw new Error(data.details || data.error || 'Failed to save KYB form');
-                    }
-                    return data;
-                  })
-                  .then((result) => {
-                    confetti({
-                      particleCount: 150,
-                      spread: 80,
-                      origin: { y: 0.6 },
-                      colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                    });
-
-                    setFileId(result.fileId);
-                    setIsSubmitted(true);
-                    setShowSuccessModal(true);
-
-                    toast({
-                      title: "Success",
-                      description: "KYB form has been saved successfully.",
-                      variant: "default",
-                    });
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Form submission failed:', error);
-                    toast({
-                      title: "Error",
-                      description: error.message || "Failed to save KYB form. Please try again.",
-                      variant: "destructive",
-                    });
-                  });
+                navigate('/task-center');
               }}
             />
           )}
