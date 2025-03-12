@@ -1,3 +1,54 @@
+
+// Add debug logging for TaskPage navigation
+import { useParams, useLocation } from "wouter";
+import { useEffect } from "react";
+
+export default function TaskPage() {
+  const params = useParams();
+  const [location, navigate] = useLocation();
+  
+  // Debug route parsing
+  const taskSlug = params?.taskSlug || "";
+  const taskParts = taskSlug.split('-');
+  const taskType = taskParts[0];
+  const companyName = taskParts.slice(1).join('-');
+  
+  // Check if we're on the questionnaire route
+  const isQuestionnaire = location.endsWith('/questionnaire');
+  const shouldRedirectToQuestionnaire = taskType === 'card' && !isQuestionnaire;
+  
+  console.log("[TaskPage] Route debugging:", {
+    taskSlug,
+    taskType,
+    companyName,
+    match: true,
+    questMatch: isQuestionnaire,
+    shouldRedirectToQuestionnaire,
+    location,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Redirection logic
+  useEffect(() => {
+    if (shouldRedirectToQuestionnaire) {
+      console.log("[TaskPage] Navigation triggered:", {
+        from: location,
+        to: `${location}/questionnaire`,
+        timestamp: new Date().toISOString()
+      });
+      navigate(`${location}/questionnaire`);
+    }
+  }, [location, shouldRedirectToQuestionnaire, navigate]);
+  
+  // Rest of component...
+  return (
+    <div>
+      <h1>Task Page: {taskSlug}</h1>
+      {/* Task content */}
+    </div>
+  );
+}
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";

@@ -1,3 +1,52 @@
+
+// Add debugging for params handling
+console.log("[CardQuestionnairePage] Component imported");
+
+// Track module dependency tree
+console.log("[Module] Import trace:", {
+  module: "card-questionnaire-page.tsx",
+  imports: [
+    "react",
+    "wouter" 
+    // List all actual imports here
+  ],
+  timestamp: new Date().toISOString()
+});
+
+// Verify dependencies are loaded
+try {
+  // Test critical dependencies
+  const React = require('react');
+  const Wouter = require('wouter');
+  console.log("[CardQuestionnairePage] Dependencies verified:", {
+    react: !!React,
+    wouter: !!Wouter,
+    timestamp: new Date().toISOString()
+  });
+} catch (error) {
+  console.error("[CardQuestionnairePage] Import error:", error);
+}
+
+export default function CardQuestionnairePage({ params }) {
+  console.log("[CardQuestionnairePage] Received params:", params);
+  
+  try {
+    const companyName = params?.companyName;
+    console.log("[CardQuestionnairePage] Extracted company name:", companyName);
+    
+    // Rest of the component code...
+    return (
+      <div>
+        <h1>Card Questionnaire for {companyName}</h1>
+        {/* Questionnaire content */}
+      </div>
+    );
+  } catch (error) {
+    console.error("[CardQuestionnairePage] Error handling params:", error);
+    return <div>Error loading questionnaire</div>;
+  }
+}
+
 import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
