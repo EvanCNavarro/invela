@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
-import { BrowserRouter as Router, Route } from "react-router-dom"; //Import necessary components
+import { Router, Route } from "wouter"; //Import necessary components
 import CardTaskPage from "./pages/card-task-page";
 import CardQuestionnairePage from "./pages/card-questionnaire-page";
 
