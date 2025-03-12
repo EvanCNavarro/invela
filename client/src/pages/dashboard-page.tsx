@@ -282,3 +282,117 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
+import React from 'react';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, BarChart, Clock, FileText, Users } from 'lucide-react';
+
+export default function DashboardPage() {
+  return (
+    <DashboardLayout>
+      <div className="flex flex-col gap-6 p-6">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Tasks</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">3</div>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">2 pending tasks</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Network Companies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">12</div>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">+2 since last month</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Documents</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">24</div>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">8 recently updated</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold">Low</div>
+                <BarChart className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground">Last updated 2 days ago</p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>Your latest compliance activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-primary"></div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">Task {i} was updated</p>
+                      <p className="text-xs text-muted-foreground">2 hours ago</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Common tasks and activities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-2">
+                <Button variant="outline" className="justify-between">
+                  View Tasks
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="justify-between">
+                  Upload Document
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button variant="outline" className="justify-between">
+                  Manage Network
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

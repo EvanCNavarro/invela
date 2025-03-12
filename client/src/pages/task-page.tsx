@@ -91,3 +91,30 @@ export const TaskPage: React.FC = () => {
 };
 
 export default TaskPage;
+import React, { useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface TaskPageProps {
+  params: {
+    slug: string;
+  };
+}
+
+export default function TaskPage({ params }: TaskPageProps) {
+  const [, navigate] = useLocation();
+  const { slug } = params;
+  
+  useEffect(() => {
+    // If task slug starts with card-, redirect to the questionnaire
+    if (slug.startsWith('card-')) {
+      navigate(`/task-center/task/${slug}/questionnaire`);
+    }
+  }, [slug, navigate]);
+  
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <LoadingSpinner />
+    </div>
+  );
+}
