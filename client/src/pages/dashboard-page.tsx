@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { PageTemplate } from '@/components/templates/PageTemplate';
+import { PageTemplate } from '@/components/PageTemplate';
 import { Button } from '@/components/ui/button';
 import { Widget } from '@/components/widgets/Widget';
 import { InviteModal } from '@/components/modals/InviteModal';
