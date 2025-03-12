@@ -73,8 +73,13 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   // Show CARD questionnaire for card task with questionnaire route
   if (questMatch && taskType === 'card') {
-    console.log('[TaskPage] Rendering CardQuestionnairePage directly');
-    const displayName = companyName;
+    console.log('[TaskPage] Rendering CardQuestionnairePage directly', {
+      companyName,
+      questMatch,
+      taskType,
+      path: window.location.pathname,
+      timestamp: new Date().toISOString()
+    });
     
     // Pass params directly to the questionnaire page
     return <CardQuestionnairePage params={{ companyName }} />;
