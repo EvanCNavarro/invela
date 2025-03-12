@@ -33,7 +33,7 @@ export default function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><DashboardPage /></Suspense>} />
-                  <Route path="/task-center/task/card-:slug" element={<CardTaskPage params={{ slug: `card-${params.slug}` }} />} />
+                  <Route path="/task-center/task/card-:slug" element={props => <CardTaskPage params={props.params} />} />
                   <Route path="/task-center/task/:taskSlug" element={<TaskPage />} />
                 </Routes>
               </BrowserRouter>
