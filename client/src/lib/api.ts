@@ -31,6 +31,7 @@ export const api = {
     return fetchAPI(`/api/tasks${queryString}`);
   },
   getTask: (id: number) => fetchAPI(`/api/tasks/${id}`),
+  getCardTask: (companyName: string) => fetchAPI(`/api/tasks/card/${companyName}`),
   
   // Companies
   getCurrentCompany: () => fetchAPI('/api/companies/current'),

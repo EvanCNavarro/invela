@@ -1,16 +1,17 @@
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { PageHeader } from "@/components/ui/page-header";
-import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+
+import React, { useState } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { api } from '@/lib/api';
 
 interface CardTaskPageProps {
   params: {
     slug: string;
-  }
+  };
 }
 
 interface Task {
@@ -31,7 +32,6 @@ interface Task {
 
 export default function CardTaskPage({ params }: CardTaskPageProps) {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
   const companyName = params.slug.replace('card-', '');
 
   console.log('[CardTaskPage] Initializing with params:', {
@@ -51,73 +51,52 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
         timestamp: new Date().toISOString()
       });
 
-      const response = await fetch(endpoint);
-      console.log('[CardTaskPage] API response received:', {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText,
-        timestamp: new Date().toISOString()
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[CardTaskPage] API error:', {
-          status: response.status,
-          errorText,
-          timestamp: new Date().toISOString()
-        });
-        throw new Error('Failed to load CARD task');
+      try {
+        const response = await fetch(endpoint);
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status}`);
+        }
+        return await response.json();
+      } catch (err) {
+        console.error('[CardTaskPage] API request error:', err);
+        throw err;
       }
-
-      const data = await response.json();
-      console.log('[CardTaskPage] Task data received:', {
-        taskId: data.id,
-        taskType: data.task_type,
-        status: data.status,
-        metadata: data.metadata,
-        timestamp: new Date().toISOString()
-      });
-
-      return data;
     },
-    enabled: !!companyName
+    retry: 1,
   });
-
-  useEffect(() => {
-    if (error) {
-      console.error('[CardTaskPage] Error loading task:', {
-        error,
-        companyName,
-        timestamp: new Date().toISOString()
-      });
-
-      toast({
-        title: "Error",
-        description: "Failed to load CARD task. Please try again.",
-        variant: "destructive",
-      });
-      navigate('/task-center');
-    }
-  }, [error, navigate, toast, companyName]);
 
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
+        <div className="container max-w-7xl mx-auto py-6">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (!task) {
+  if (error || !task) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
+        <div className="container max-w-7xl mx-auto py-6">
+          <div className="flex justify-between items-center mb-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/task-center')}
+              className="text-sm font-medium bg-white border-muted-foreground/20"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Task Center
+            </Button>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">Error Loading Task</h2>
             <p className="text-muted-foreground">
-              Could not find the CARD task for {companyName}. Please try again.
+              Could not load the CARD task information for {companyName}. Please try again later.
             </p>
           </div>
         </div>
@@ -127,28 +106,43 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
-        <PageHeader
-          title={`CARD Form: ${task.metadata?.company_name || companyName}`}
-          description="Complete the Compliance and Risk Disclosure (CARD) form"
-        />
-
-        <div className="container max-w-7xl mx-auto">
-          <CardFormPlayground 
-            taskId={task.id}
-            companyName={task.metadata?.company_name || companyName}
-            companyData={{
-              name: task.metadata?.company_name || companyName,
-              description: task.description || undefined
-            }}
-            onSubmit={() => {
-              toast({
-                title: "CARD Form Submitted",
-                description: "Your CARD form has been submitted successfully.",
-              });
-              navigate('/task-center');
-            }}
-          />
+      <div className="container max-w-7xl mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/task-center')}
+            className="text-sm font-medium bg-white border-muted-foreground/20"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Task Center
+          </Button>
+        </div>
+        
+        <div className="space-y-6">
+          <h1 className="text-2xl font-bold">Company CARD: {companyName}</h1>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-muted-foreground mb-4">{task.description || "Complete the Company CARD Assessment"}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium">Status</p>
+                <p>{task.status}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium">Progress</p>
+                <p>{task.progress}%</p>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <Button 
+                onClick={() => navigate(`/task-center/task/${params.slug}/questionnaire`)}
+                className="w-full"
+              >
+                {task.status === 'not_started' ? 'Start Assessment' : 'Continue Assessment'}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </DashboardLayout>
