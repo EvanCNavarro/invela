@@ -21,8 +21,17 @@ interface TaskPageProps {
 
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const [match] = useRoute("/task-center/task/:taskSlug");
-  const [questMatch] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
+  const [match, matchParams] = useRoute("/task-center/task/:taskSlug");
+  const [questMatch, questParams] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
+  
+  console.log('[TaskPage] Route matches:', {
+    basicMatch: !!match,
+    basicMatchParams: matchParams,
+    questMatch: !!questMatch,
+    questMatchParams: questParams,
+    currentPath: window.location.pathname,
+    timestamp: new Date().toISOString()
+  });
 
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -36,8 +45,9 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     taskSlug: pageParams.taskSlug,
     taskType,
     companyName,
-    match,
-    questMatch,
+    match: !!match,
+    questMatch: !!questMatch,
+    path: window.location.pathname,
     timestamp: new Date().toISOString()
   });
 
@@ -119,8 +129,14 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   if (taskType === 'card') {
     // If we're on the questionnaire route
-    if (questMatch) {
-      console.log('[TaskPage] Rendering CARD questionnaire form');
+    if (questMatch || window.location.pathname.includes('/questionnaire')) {
+      console.log('[TaskPage] Rendering CARD questionnaire form', {
+        match: !!match,
+        questMatch: !!questMatch,
+        path: window.location.pathname,
+        taskId: task?.id,
+        displayName
+      });
       return (
         <DashboardLayout>
           <div className="space-y-8">
