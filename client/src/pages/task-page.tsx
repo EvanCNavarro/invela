@@ -30,7 +30,7 @@ interface TaskPageProps {
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match] = useRoute<{ taskSlug: string }>("/task-center/task/:taskSlug");
-  const [questMatch, questParams] = useRoute<{ taskSlug: string }>("/task-center/task/:taskSlug/questionnaire");
+  const [questMatch] = useRoute("/task-center/task/card-DataTechCompany/questionnaire");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -46,7 +46,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     companyName,
     match,
     questMatch,
-    questParams,
     timestamp: new Date().toISOString()
   });
 
