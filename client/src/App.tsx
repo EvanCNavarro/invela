@@ -5,7 +5,7 @@ import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
 import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
-import AppRoutes from './routes';
+import AppRoutes from './routes'; // Assuming AppRoutes is updated to use Routes and Route
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,7 +26,7 @@ export default function App() {
             <PlaygroundVisibilityProvider>
               <BrowserRouter>
                 <Toaster />
-                <AppRoutes />
+                <AppRoutes /> {/* AppRoutes should now use Routes and Route */}
               </BrowserRouter>
             </PlaygroundVisibilityProvider>
           </SocketProvider>
