@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
+import { SocketProvider } from './contexts/SocketContext';
 import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes'; // Assuming AppRoutes is updated to use Routes and Route
