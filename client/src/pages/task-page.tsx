@@ -28,6 +28,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     questMatchResult: !!questMatch,
     questParams,
     path: window.location.pathname,
+    pathParts: window.location.pathname.split('/'),
     timestamp: new Date().toISOString()
   });
 
