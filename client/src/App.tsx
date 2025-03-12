@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from 'react';
 import { Switch, Route } from 'wouter';
 import { Toaster } from 'react-hot-toast';
