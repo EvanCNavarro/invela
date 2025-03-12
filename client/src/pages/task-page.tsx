@@ -7,18 +7,11 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import confetti from 'canvas-confetti';
-import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 
 interface TaskPageProps {
   params: {
@@ -26,21 +19,20 @@ interface TaskPageProps {
   }
 }
 
-export default function TaskPage({ params }: TaskPageProps) {
+export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const [match, routeParams] = useRoute("/task-center/task/:fullPath*");
+  const [match, routeParams] = useRoute<{ '*': string }>("/task-center/task/:taskSlug/*");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Parse the taskSlug to get task type and company name
-  const [taskType, ...companyNameParts] = params.taskSlug.split('-');
+  const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
   // Get the flow type from the full path
-  const fullPath = routeParams?.fullPath || '';
-  const flowType = fullPath.split('/').pop();
+  const flowType = routeParams?.['*']?.split('/').pop();
 
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
