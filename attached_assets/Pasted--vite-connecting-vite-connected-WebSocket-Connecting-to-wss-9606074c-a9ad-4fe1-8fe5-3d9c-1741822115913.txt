@@ -1,0 +1,41 @@
+[vite] connecting...
+[vite] connected.
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[App] Component imports starting
+[App] Router initialized with routes configuration
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connected successfully
+[WebSocket] Connection established: 
+Object {timestamp: "2025-03-12T23:28:21.610Z"}
+InviteModal is not defined
+InviteModal is not defined
+The above error occurred in the <DashboardPage> component:
+
+    at DashboardPage (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/pages/dashboard-page.tsx:38:39)
+    at Suspense
+    at RenderedRoute (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=e0532854:5713:26)
+    at Routes (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=e0532854:6444:3)
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=e0532854:6387:13)
+    at BrowserRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/react-router-dom.js?v=e0532854:8612:3)
+    at div
+    at PlaygroundVisibilityProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/playground/playground-context.tsx:30:48)
+    at SocketProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/contexts/SocketContext.tsx:27:3)
+    at ThemeProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/contexts/ThemeContext.tsx:25:3)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:147:32)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6NCKF6OH.js?v=e0532854:2848:3)
+    at App
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e0532854:159:17)
+    at RouterWithDebug (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/main.tsx?v=Zokh3OrwdjU2MWRFqFkxM:26:28)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:147:32)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6NCKF6OH.js?v=e0532854:2848:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.

@@ -4,7 +4,7 @@ import { PageTemplate } from '@/components/ui/page-template';
 import { Button } from '@/components/ui/button';
 import { Widget } from '@/components/dashboard/Widget';
 import { InviteUserModal } from '@/components/modals/InviteUserModal';
-import { PageSideDrawer } from '@/components/ui/templates/PageSideDrawer';
+import { PageSideDrawer } from '@/components/ui/page-side-drawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { Check, Clock, DollarSign, FileText, Globe, Info, LineChart, MessagesSquare, Settings, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
