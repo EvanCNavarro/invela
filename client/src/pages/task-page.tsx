@@ -240,7 +240,7 @@ export default function TaskPage({ params }: TaskPageProps) {
       );
     }
 
-    if (flowType === 'manual') {
+    if (flowType === 'questionnaire') {
       return (
         <DashboardLayout>
           <PageTemplate className="space-y-6">
@@ -290,7 +290,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 companyName={companyName}
                 companyData={{
                   name: displayName,
-                  description: task.metadata?.company?.description || null
+                  description: task.metadata?.company?.description || undefined
                 }}
                 savedFormData={task.savedFormData}
                 onSubmit={(formData) => {
