@@ -10,13 +10,26 @@ interface CardMethodChoiceProps {
 export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps) {
   const [, navigate] = useLocation();
 
+  console.log('[CardMethodChoice] Initializing with:', {
+    taskId,
+    companyName,
+    timestamp: new Date().toISOString()
+  });
+
   const handleChoiceClick = (method: 'upload' | 'manual') => {
+    console.log('[CardMethodChoice] Choice clicked:', {
+      method,
+      taskId,
+      companyName,
+      timestamp: new Date().toISOString()
+    });
+
     if (method === 'upload') {
-      // For now, we'll just console.log since this flow isn't implemented yet
-      console.log('Upload flow selected - to be implemented');
+      console.log('[CardMethodChoice] Upload flow selected - to be implemented');
       navigate(`/task-center/task/card-${companyName}/upload`);
     } else {
-      navigate(`/task-center/task/card-${companyName}/questionnaire`);
+      // Navigate to the card form page with taskId
+      navigate(`/card-form/${taskId}`);
     }
   };
 
