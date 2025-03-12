@@ -392,7 +392,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               onSubmit={(formData) => {
                 // Ensure form data is properly structured
                 const submitData = {
-                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}.csv`,
+                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
                   taskId: task.id
                 };
@@ -412,8 +412,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                 })
                   .then(async response => {
                     if (!response.ok) {
-                      const errorData = await response.json().catch(() => ({ error: response.statusText }));
-                      throw new Error(errorData.error || 'Failed to save KYB form');
+                      const errorData = await response.json();
+                      throw new Error(errorData.details || errorData.error || 'Failed to save KYB form');
                     }
                     return response.json();
                   })
