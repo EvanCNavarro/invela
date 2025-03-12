@@ -35,7 +35,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { BreadcrumbNav } from "@/components/common/breadcrumb-nav";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { PageHeader } from "@/components/common/page-header";
 
 interface CardQuestionnairePageProps {
