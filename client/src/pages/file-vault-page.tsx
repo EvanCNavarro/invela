@@ -1,13 +1,15 @@
 
 import React from 'react';
-import { Redirect } from "wouter";
+import { PageTemplate } from '@/components/ui/page-side-drawer';
 
-export const FileVaultPage: React.FC = () => {
+const FileVaultPage: React.FC = () => {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">File Vault</h1>
-      <p>File management and document storage center.</p>
-    </div>
+    <PageTemplate title="File Vault">
+      <div className="container mx-auto py-8">
+        <h1 className="text-2xl font-bold mb-6">File Vault</h1>
+        <p>Access and manage your secure files here.</p>
+      </div>
+    </PageTemplate>
   );
 };
 
