@@ -18,7 +18,19 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
-      staleTime: 5 * 60 * 1000, 
+      staleTime: 5 * 60 * 1000,
+      queryFn: async ({ queryKey }) => {
+        // First element of queryKey should be the URL
+        const url = queryKey[0];
+        // Rest of the elements might be params or additional options
+        const params = queryKey.length > 1 ? queryKey[1] : undefined;
+        
+        if (typeof url !== 'string') {
+          throw new Error('Invalid queryKey: first element must be a string URL');
+        }
+        
+        return await api.get(url, params);
+      },
     },
   },
 });
