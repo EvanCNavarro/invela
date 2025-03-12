@@ -21,7 +21,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ThemeProvider defaultTheme="light" storageKey="dstreet-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme"> {/* Changed defaultTheme to 'dark' as per edited code */}
           <SocketProvider>
             <PlaygroundVisibilityProvider>
               <BrowserRouter>
