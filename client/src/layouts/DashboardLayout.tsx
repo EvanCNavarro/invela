@@ -111,6 +111,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  
+  // Ensure we're showing TaskCenterPage when on task-center route
+  if (location.pathname === '/task-center') {
+    console.log('[DashboardLayout] Rendering Task Center Page');
+  }
 
   return (
     <div className="min-h-screen bg-[hsl(220,33%,97%)] relative">

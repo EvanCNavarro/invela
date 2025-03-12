@@ -48,8 +48,8 @@ export default function App() {
                 <Routes>
                   <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><DashboardPage /></Suspense>} />
                   <Route path="/task-center" element={<TaskCenterPage />} />
-                  <Route path="/task-center/task/card-:slug" element={props => <CardTaskPage params={props.params} />} />
-                  <Route path="/task-center/task/:taskSlug" element={<TaskPage />} /> {/*Corrected Route*/}
+                  <Route path="/task-center/task/card-:slug" element={<CardTaskPage />} />
+                  <Route path="/task-center/task/:taskSlug" element={<TaskPage />} />
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </BrowserRouter>
