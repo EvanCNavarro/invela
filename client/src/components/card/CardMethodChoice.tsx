@@ -28,7 +28,7 @@ export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps)
       console.log('[CardMethodChoice] Upload flow selected - to be implemented');
       navigate(`/task-center/task/card-${companyName}/upload`);
     } else {
-      // Navigate to the questionnaire page
+      // Navigate to the questionnaire route
       console.log('[CardMethodChoice] Manual entry selected - navigating to questionnaire');
       // Making sure we have the correct route construction
       const questionnairePath = `/task-center/task/card-${companyName}/questionnaire`;
