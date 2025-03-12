@@ -1,4 +1,5 @@
-import React, { ReactNode, lazy, Suspense } from 'react';
+import React from 'react';
+import { ReactNode, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
@@ -8,7 +9,9 @@ import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
 import { TaskPage } from "./pages/task-page";
 import CardTaskPage from "./pages/card-task-page";
-import TaskCenterPage from './pages/task-center-page'; // Added import
+import TaskCenterPage from './pages/task-center-page';
+import NotFoundPage from './pages/not-found-page'; // Added import
+
 
 const DashboardPage = lazy(() => import('./pages/dashboard-page'));
 
@@ -24,11 +27,11 @@ const queryClient = new QueryClient({
         const url = queryKey[0];
         // Rest of the elements might be params or additional options
         const params = queryKey.length > 1 ? queryKey[1] : undefined;
-        
+
         if (typeof url !== 'string') {
           throw new Error('Invalid queryKey: first element must be a string URL');
         }
-        
+
         return await api.get(url, params);
       },
     },
