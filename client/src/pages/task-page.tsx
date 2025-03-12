@@ -29,7 +29,8 @@ interface TaskPageProps {
 
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const [match, routeParams] = useRoute<{ taskSlug: string, '*': string }>("/task-center/task/:taskSlug/*");
+  const [match] = useRoute<{ taskSlug: string }>("/task-center/task/:taskSlug");
+  const [questMatch, questParams] = useRoute<{ taskSlug: string }>("/task-center/task/:taskSlug/questionnaire");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -39,16 +40,13 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
-  // Get the flow type from the full path
-  const flowType = routeParams?.['*']?.split('/').pop();
-
   console.log('[TaskPage] Route debugging:', {
     taskSlug: pageParams.taskSlug,
     taskType,
     companyName,
-    routeParams,
-    flowType,
     match,
+    questMatch,
+    questParams,
     timestamp: new Date().toISOString()
   });
 
@@ -82,12 +80,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
         }
         return data;
       } catch (error) {
-        console.error('[TaskPage] Task fetch error:', {
-          error,
-          endpoint: apiEndpoint,
-          companyName,
-          timestamp: new Date().toISOString()
-        });
+        console.error('[TaskPage] Task fetch error:', error);
         throw error;
       }
     },
@@ -97,12 +90,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Task load error effect:', {
-        error,
-        taskType,
-        timestamp: new Date().toISOString()
-      });
-
+      console.error('[TaskPage] Task load error effect:', error);
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
@@ -148,14 +136,14 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   console.log('[TaskPage] Rendering decision:', {
     taskType,
-    flowType,
+    questMatch,
     displayName,
     timestamp: new Date().toISOString()
   });
 
   if (taskType === 'card') {
     // Handle questionnaire route
-    if (flowType === 'questionnaire') {
+    if (questMatch) {
       console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
@@ -178,10 +166,10 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
             <div className="container max-w-7xl mx-auto">
               <CardFormPlayground
                 taskId={task.id}
-                companyName={companyName}
+                companyName={displayName}
                 companyData={{
                   name: displayName,
-                  description: task.metadata?.company?.description || undefined
+                  description: task.metadata?.company?.description || ''
                 }}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
@@ -214,15 +202,9 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
                       toast({
                         title: "Success",
-                        description: result.warnings?.length
-                          ? "Card form has been saved successfully with some updates to existing data."
-                          : "Card form has been saved successfully.",
+                        description: "Card form has been saved successfully.",
                         variant: "default",
                       });
-
-                      if (result.warnings?.length) {
-                        console.log('[TaskPage] Save completed with warnings:', result.warnings);
-                      }
                     })
                     .catch(error => {
                       console.error('[TaskPage] Form submission failed:', error);
@@ -240,8 +222,8 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
       );
     }
 
-    // Show choice page if no flow type specified
-    if (!flowType) {
+    // Show choice page if not on questionnaire route
+    if (match) {
       console.log('[TaskPage] Rendering CARD method choice');
       return (
         <DashboardLayout>
@@ -266,15 +248,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
               companyName={displayName}
             />
           </PageTemplate>
-        </DashboardLayout>
-      );
-    }
-
-    if (flowType === 'upload') {
-      console.log('[TaskPage] Rendering CARD upload flow (not implemented)');
-      return (
-        <DashboardLayout>
-          <div>Upload flow coming soon</div>
         </DashboardLayout>
       );
     }
@@ -307,7 +280,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
               companyName={companyName}
               companyData={{
                 name: displayName,
-                description: task.metadata?.company?.description || undefined
+                description: task.metadata?.company?.description || ''
               }}
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
@@ -350,15 +323,9 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
                     toast({
                       title: "Success",
-                      description: result.warnings?.length
-                        ? "KYB form has been saved successfully with some updates to existing data."
-                        : "KYB form has been saved successfully.",
+                      description: "KYB form has been saved successfully.",
                       variant: "default",
                     });
-
-                    if (result.warnings?.length) {
-                      console.log('[TaskPage] Save completed with warnings:', result.warnings);
-                    }
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);
