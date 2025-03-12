@@ -1,6 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+import React, { ReactNode, lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider, ReactQueryDevtools } from '@tanstack/react-query';
-import { ReactNode, Suspense, lazy } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
