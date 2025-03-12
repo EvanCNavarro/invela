@@ -10,7 +10,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TaskPage } from "./pages/task-page";
 import CardTaskPage from "./pages/card-task-page";
 import TaskCenterPage from './pages/task-center-page';
-import NotFoundPage from './pages/not-found-page'; // Added import
+import NotFoundPage from './pages/not-found-page';
 
 
 const DashboardPage = lazy(() => import('./pages/dashboard-page'));
@@ -23,9 +23,7 @@ const queryClient = new QueryClient({
       retry: 1,
       staleTime: 5 * 60 * 1000,
       queryFn: async ({ queryKey }) => {
-        // First element of queryKey should be the URL
         const url = queryKey[0];
-        // Rest of the elements might be params or additional options
         const params = queryKey.length > 1 ? queryKey[1] : undefined;
 
         if (typeof url !== 'string') {
@@ -51,7 +49,7 @@ export default function App() {
                   <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><DashboardPage /></Suspense>} />
                   <Route path="/task-center" element={<TaskCenterPage />} />
                   <Route path="/task-center/task/card-:slug" element={props => <CardTaskPage params={props.params} />} />
-                  <Route path="/task-center/task/:taskSlug" element={<TaskPage />} />
+                  <Route path="/task-center/task/:taskSlug" element={<TaskPage />} /> {/*Corrected Route*/}
                   <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </BrowserRouter>
@@ -62,6 +60,3 @@ export default function App() {
     </QueryClientProvider>
   );
 }
-
-// DashboardPage is now imported from its own file
-// Don't define it here to avoid duplication
