@@ -29,8 +29,7 @@ interface TaskPageProps {
 
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const [match] = useRoute<{ taskSlug: string }>("/task-center/task/:taskSlug");
-  const [questMatch] = useRoute("/task-center/task/card-DataTechCompany/questionnaire");
+  const [match] = useRoute("/task-center/task/:taskSlug");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -45,7 +44,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     taskType,
     companyName,
     match,
-    questMatch,
     timestamp: new Date().toISOString()
   });
 
@@ -135,14 +133,13 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   console.log('[TaskPage] Rendering decision:', {
     taskType,
-    questMatch,
     displayName,
     timestamp: new Date().toISOString()
   });
 
   if (taskType === 'card') {
     // Handle questionnaire route
-    if (questMatch) {
+    if (match && pageParams.taskSlug.includes('questionnaire')) {
       console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
