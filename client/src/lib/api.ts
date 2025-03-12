@@ -30,6 +30,7 @@ export const api = {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
     return fetchAPI(`/api/tasks${queryString}`);
   },
+  getTask: (id: number) => fetchAPI(`/api/tasks/${id}`),
   
   // Companies
   getCurrentCompany: () => fetchAPI('/api/companies/current'),

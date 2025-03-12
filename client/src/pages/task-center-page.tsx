@@ -217,6 +217,20 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
+  // Check if there are any pending user invitations with the current user's email
+  const { data: emailInvitations = [] } = useQuery<Task[]>({
+    queryKey: ["emailInvitations", user?.email],
+    queryFn: () => api.getTasks({ email: user?.email, type: "user_invitation" }),
+    enabled: !!user?.email,
+  });
+
+  const { data: userInvitations = [] } = useQuery<Task[]>({
+    queryKey: ["userInvitations"],
+    queryFn: () => api.getTasks({ type: "user_invitation" }),
+    enabled: activeTab === "invitations",
+  });
+
+
   if (isLoading) {
     return (
       <DashboardLayout>
