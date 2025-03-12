@@ -11,9 +11,17 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
 
-export default function CardQuestionnairePage() {
+interface CardQuestionnairePageProps {
+  params?: {
+    companyName: string;
+  };
+}
+
+export default function CardQuestionnairePage({ params: routeParams }: CardQuestionnairePageProps = {}) {
   const [, navigate] = useLocation();
-  const params = useParams<{companyName: string}>();
+  // Use the passed params if available, otherwise use useParams hook
+  const hookParams = useParams<{companyName: string}>();
+  const params = routeParams || hookParams;
   
   // Extract company name from URL pattern /task-center/task/card-:companyName/questionnaire
   const companyName = params.companyName;
