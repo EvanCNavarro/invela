@@ -204,6 +204,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   if (taskType === 'card') {
     const flowType = params.taskSlug.split('-').pop();
 
+    // If no specific flow type, show the choice page
     if (!flowType || flowType === companyName) {
       return (
         <DashboardLayout>
