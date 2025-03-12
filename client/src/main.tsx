@@ -39,7 +39,7 @@ const RouterWithDebug = (props) => {
       });
       
       // Test all routes for current location
-      if (location.startsWith('/task-center/task/card-')) {
+      if (window.location.pathname.startsWith('/task-center/task/card-')) {
         const isQuestionnaireRoute = location.endsWith('/questionnaire');
         
         console.log("[Router] Match attempt:", {
