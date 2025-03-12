@@ -40,7 +40,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   // Get the flow type from the full path
   const fullPath = routeParams?.fullPath || '';
-  const flowType = fullPath.includes('/') ? fullPath.split('/')[1] : '';
+  const flowType = fullPath.includes('/') ? fullPath.split('/').pop() : '';
 
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
@@ -82,33 +82,6 @@ export default function TaskPage({ params }: TaskPageProps) {
     navigate('/task-center');
   };
 
-  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
-    if (!fileId) return;
-
-    try {
-      const downloadEndpoint = taskType === 'kyb' ? '/api/kyb/download' : '/api/card/download';
-      const response = await fetch(`${downloadEndpoint}/${fileId}?format=${format}`);
-      if (!response.ok) throw new Error('Failed to download file');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${taskType}_form.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download the file. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -137,43 +110,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
   if (taskType === 'card') {
-    // Show choice page if no flow type specified
-    if (!flowType) {
-      return (
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-              </div>
-            </div>
-
-            <CardMethodChoice
-              taskId={task.id}
-              companyName={displayName}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      );
-    }
-
-    if (flowType === 'upload') {
-      return (
-        <DashboardLayout>
-          <div>Upload flow coming soon</div>
-        </DashboardLayout>
-      );
-    }
-
+    // Handle questionnaire route
     if (flowType === 'questionnaire') {
       return (
         <DashboardLayout>
@@ -191,7 +128,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   Back to Task Center
                 </Button>
 
-                {(isSubmitted || task.metadata?.[`${taskType}FormFile`]) && (
+                {(isSubmitted || task.metadata?.cardFormFile) && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -279,6 +216,43 @@ export default function TaskPage({ params }: TaskPageProps) {
               />
             </div>
           </PageTemplate>
+        </DashboardLayout>
+      );
+    }
+
+    // Show choice page if no flow type specified
+    if (!flowType) {
+      return (
+        <DashboardLayout>
+          <PageTemplate className="space-y-6">
+            <div className="space-y-4">
+              <BreadcrumbNav forceFallback={true} />
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm font-medium bg-white border-muted-foreground/20"
+                  onClick={handleBackClick}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Task Center
+                </Button>
+              </div>
+            </div>
+
+            <CardMethodChoice
+              taskId={task.id}
+              companyName={displayName}
+            />
+          </PageTemplate>
+        </DashboardLayout>
+      );
+    }
+
+    if (flowType === 'upload') {
+      return (
+        <DashboardLayout>
+          <div>Upload flow coming soon</div>
         </DashboardLayout>
       );
     }
