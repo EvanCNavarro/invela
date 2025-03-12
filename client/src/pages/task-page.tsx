@@ -292,7 +292,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
                 }}
-                savedFormData={task.savedFormData}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
                     method: 'POST',
