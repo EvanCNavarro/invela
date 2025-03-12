@@ -39,11 +39,15 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
+  // Check if we're on the questionnaire route
+  const isQuestionnaire = pageParams.taskSlug.includes('questionnaire');
+
   console.log('[TaskPage] Route debugging:', {
     taskSlug: pageParams.taskSlug,
     taskType,
     companyName,
     match,
+    isQuestionnaire,
     timestamp: new Date().toISOString()
   });
 
@@ -133,13 +137,14 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   console.log('[TaskPage] Rendering decision:', {
     taskType,
+    isQuestionnaire,
     displayName,
     timestamp: new Date().toISOString()
   });
 
   if (taskType === 'card') {
     // Handle questionnaire route
-    if (match && pageParams.taskSlug.includes('questionnaire')) {
+    if (isQuestionnaire) {
       console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
@@ -168,48 +173,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
                   description: task.metadata?.company?.description || ''
                 }}
                 onSubmit={(formData) => {
-                  fetch('/api/card/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      fileName: `card_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                      formData,
-                      taskId: task.id
-                    })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save CARD form');
-                      }
-                      return data;
-                    })
-                    .then((result) => {
-                      confetti({
-                        particleCount: 150,
-                        spread: 80,
-                        origin: { y: 0.6 },
-                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                      });
-
-                      setFileId(result.fileId);
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "Card form has been saved successfully.",
-                        variant: "default",
-                      });
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Form submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to save CARD form. Please try again.",
-                        variant: "destructive",
-                      });
-                    });
+                  toast({
+                    title: "Success",
+                    description: "Card form has been submitted successfully.",
+                    variant: "default",
+                  });
+                  navigate('/task-center');
                 }}
               />
             </div>
