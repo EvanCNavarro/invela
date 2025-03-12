@@ -28,35 +28,40 @@ const matchingRoutes = routeConfig.filter(route => {
 console.log("[Router Debug] Routes matching test URL:", { url: testUrl, matches: matchingRoutes });
 
 // Create custom router hook for debugging
+// Import useLocation from wouter
+import { useLocation } from "wouter";
+
 const RouterWithDebug = (props) => {
   return (
-    <Router hook={() => {
-      const [location, navigate] = useLocation();
-      
-      console.log("[Router] Debug hook execution:", {
-        currentLocation: location,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Test all routes for current location
-      if (window.location.pathname.startsWith('/task-center/task/card-')) {
-        const isQuestionnaireRoute = location.endsWith('/questionnaire');
+    <Router hook={useLocation} {...props}>
+      {({ children }) => {
+        const [location, navigate] = useLocation();
         
-        console.log("[Router] Match attempt:", {
-          path: location,
-          questionnairePath: isQuestionnaireRoute,
-          basePath: location.replace('/questionnaire', ''),
+        console.log("[Router] Debug hook execution:", {
+          currentLocation: location,
           timestamp: new Date().toISOString()
         });
         
-        if (isQuestionnaireRoute) {
-          const companyName = location.split('/card-')[1].replace('/questionnaire', '');
-          console.log("[Router] Questionnaire route parameters:", { companyName });
+        // Test all routes for current location
+        if (window.location.pathname.startsWith('/task-center/task/card-')) {
+          const isQuestionnaireRoute = location.endsWith('/questionnaire');
+          
+          console.log("[Router] Match attempt:", {
+            path: location,
+            questionnairePath: isQuestionnaireRoute,
+            basePath: location.replace('/questionnaire', ''),
+            timestamp: new Date().toISOString()
+          });
+          
+          if (isQuestionnaireRoute) {
+            const companyName = location.split('/card-')[1].replace('/questionnaire', '');
+            console.log("[Router] Questionnaire route parameters:", { companyName });
+          }
         }
-      }
-      
-      return [location, navigate];
-    }} {...props} />
+        
+        return children;
+      }}
+    </Router>
   );
 };
 
