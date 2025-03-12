@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Route, Switch } from 'wouter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './lib/protected-route';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoginPage from './pages/login-page';
 import RegisterPage from './pages/register-page';
@@ -32,83 +31,83 @@ export default function App() {
       <Switch>
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
-        
+
         <ProtectedRoute path="/" exact>
           <DashboardLayout>
             <WelcomePage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/task-center">
           <DashboardLayout>
             <TaskCenterPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/task-center/task/kyb-:companyName">
           <DashboardLayout>
             <CompanyKYBFormPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/task-center/task/card-:companyName/questionnaire">
           <DashboardLayout>
             <CardQuestionnairePage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/task-center/task/card-:companyName">
           <DashboardLayout>
             <TaskPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/task-center/task/:taskId">
           <DashboardLayout>
             <TaskPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/file-vault">
           <DashboardLayout>
             <FileVaultPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/network">
           <DashboardLayout>
             <NetworkPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/network/companies/:companyId">
           <DashboardLayout>
             <NetworkCompanyPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/company">
           <DashboardLayout>
             <CompanyDetailsPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/admin">
           <DashboardLayout>
             <AdminPanelPage />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/onboarding">
           <CompanyOnboardingPage />
         </ProtectedRoute>
-        
+
         <ProtectedRoute path="/profile">
           <DashboardLayout>
             <UserProfile />
           </DashboardLayout>
         </ProtectedRoute>
-        
+
         <Route component={NotFoundPage} />
       </Switch>
     </div>
