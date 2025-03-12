@@ -5,7 +5,7 @@ import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingK
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
+import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,31 +26,9 @@ interface TaskPageProps {
   }
 }
 
-interface Task {
-  id: number;
-  title: string;
-  description: string | null;
-  task_type: string;
-  task_scope: string;
-  status: string;
-  priority: string;
-  progress: number;
-  metadata: {
-    companyId?: number;
-    companyName?: string;
-    company?: {
-      name: string;
-      description?: string;
-    };
-    kybFormFile?: number;
-    cardFormFile?: number;
-    [key: string]: any;
-  } | null;
-  savedFormData?: Record<string, any>;
-}
-
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
+  const [match, routeParams] = useRoute("/task-center/task/:fullPath*");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
@@ -60,61 +38,28 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
-  console.log('[TaskPage] Initializing with params:', {
-    taskSlug: params.taskSlug,
-    taskType,
-    companyName,
-  });
+  // Get the flow type from the full path
+  const fullPath = routeParams?.fullPath || '';
+  const flowType = fullPath.includes('/') ? fullPath.split('/')[1] : '';
 
-  // Determine API endpoint based on task type
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
-  console.log('[TaskPage] Using API endpoint:', {
-    apiEndpoint,
-    fullUrl: `${apiEndpoint}/${companyName}`,
-  });
-
-  const { data: task, isLoading, error } = useQuery<Task>({
+  const { data: task, isLoading, error } = useQuery({
     queryKey: [apiEndpoint, companyName],
     queryFn: async () => {
-      console.log('[TaskPage] Fetching task data:', {
-        endpoint: `${apiEndpoint}/${companyName}`,
-        taskType,
-        companyName,
-      });
-
       try {
         const response = await fetch(`${apiEndpoint}/${companyName}`);
-        console.log('[TaskPage] API response:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText,
-        });
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('[TaskPage] API error response:', {
-            status: response.status,
-            text: errorText,
-          });
           throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
         }
-
         const data = await response.json();
-        console.log('[TaskPage] Task data received:', {
-          taskId: data.id,
-          title: data.title,
-          status: data.status,
-          metadata: data.metadata,
-        });
-
         if (data.metadata?.[`${taskType}FormFile`]) {
           setFileId(data.metadata[`${taskType}FormFile`]);
           setIsSubmitted(true);
         }
         return data;
       } catch (error) {
-        console.error('[TaskPage] Error in task fetch:', error);
         throw error;
       }
     },
@@ -124,11 +69,6 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Error in useEffect:', {
-        error,
-        taskType,
-        companyName,
-      });
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
@@ -194,18 +134,11 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  if (taskType !== 'kyb' && taskType !== 'card') {
-    navigate('/task-center');
-    return null;
-  }
-
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
   if (taskType === 'card') {
-    const flowType = params.taskSlug.split('-').pop();
-
-    // If no specific flow type, show the choice page
-    if (!flowType || flowType === companyName) {
+    // Show choice page if no flow type specified
+    if (!flowType) {
       return (
         <DashboardLayout>
           <PageTemplate className="space-y-6">
@@ -351,6 +284,7 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   }
 
+  // KYB form rendering
   return (
     <DashboardLayout>
       <PageTemplate className="space-y-6">
@@ -395,7 +329,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         </div>
 
         <div className="container max-w-7xl mx-auto">
-          {taskType === 'kyb' ? (
+          {taskType === 'kyb' && (
             <OnboardingKYBFormPlayground
               taskId={task.id}
               companyName={companyName}
@@ -405,14 +339,12 @@ export default function TaskPage({ params }: TaskPageProps) {
               }}
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
-                // Ensure form data is properly structured
                 const submitData = {
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
                   taskId: task.id
                 };
 
-                // Show loading toast
                 toast({
                   title: "Saving KYB form",
                   description: "Please wait while we process your submission...",
@@ -433,7 +365,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     return data;
                   })
                   .then((result) => {
-                    // Success handling
                     confetti({
                       particleCount: 150,
                       spread: 80,
@@ -445,7 +376,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     setIsSubmitted(true);
                     setShowSuccessModal(true);
 
-                    // Show success toast with warnings if any
                     toast({
                       title: "Success",
                       description: result.warnings?.length
@@ -460,7 +390,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);
-                    // Show error toast with more specific message
                     toast({
                       title: "Error",
                       description: error.message || "Failed to save KYB form. Please try again.",
@@ -469,8 +398,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   });
               }}
             />
-          ) : (
-            <></>
           )}
         </div>
 
