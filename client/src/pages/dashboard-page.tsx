@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { PageTemplate } from '@/components/PageTemplate';
+import { PageTemplate } from '@/components/ui/page-template';
 import { Button } from '@/components/ui/button';
 import { Widget } from '@/components/widgets/Widget';
 import { InviteModal } from '@/components/modals/InviteModal';
