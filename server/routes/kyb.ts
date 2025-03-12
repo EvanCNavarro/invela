@@ -420,10 +420,10 @@ router.post('/api/kyb/save', async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
 
-    logFileDebug('Save request received', {
-      fileName,
+    console.log('[KYB API Debug] Save request received:', {
       taskId,
-      formDataKeys: Object.keys(formData)
+      formDataKeys: Object.keys(formData),
+      fileName
     });
 
     // Get task details
@@ -451,29 +451,54 @@ router.post('/api/kyb/save', async (req, res) => {
         name: fileName,
         size: fileSize,
         type: 'text/csv',
-        path: csvData, // Store CSV content directly
+        path: csvData,
         status: 'uploaded',
-        user_id: task.created_by || 1,
+        user_id: task.created_by,
         company_id: task.company_id,
         upload_time: timestamp,
         created_at: timestamp,
         updated_at: timestamp,
-        version: 1.0
+        version: 1.0,
+        download_count: 0
       })
       .returning();
 
-    // Handle revenue tier update if the field is present
-    if (formData.revenueTier) {
+    // Get company record to update available tabs
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+
+    if (company) {
+      // Add file-vault to available tabs if not already present
+      const currentTabs = company.available_tabs || ['task-center'];
+      if (!currentTabs.includes('file-vault')) {
+        await db.update(companies)
+          .set({
+            available_tabs: [...currentTabs, 'file-vault'],
+            updated_at: timestamp
+          })
+          .where(eq(companies.id, task.company_id));
+      }
+    }
+
+    // Handle revenue tier update if present
+    if (formData.annualRecurringRevenue) {
       const [revenueTierField] = await db.select()
         .from(kybFields)
-        .where(eq(kybFields.field_key, 'revenueTier'))
+        .where(eq(kybFields.field_key, 'annualRecurringRevenue'))
         .limit(1);
 
-      if (revenueTierField?.validation_rules?.mapping) {
-        const tierMapping = revenueTierField.validation_rules.mapping;
-        const selectedTier = tierMapping[formData.revenueTier];
+      if (revenueTierField?.validation_rules?.options) {
+        // Map ARR ranges to revenue tiers
+        const tierMapping = {
+          'Less than $1 million': 'small',
+          '$1 million - $10 million': 'medium',
+          '$10 million - $50 million': 'large',
+          'Greater than $50 million': 'xlarge'
+        };
 
-        if (selectedTier) {
+        const selectedTier = tierMapping[formData.annualRecurringRevenue];
+        if (selectedTier && company) {
           await db.update(companies)
             .set({
               revenue_tier: selectedTier,
@@ -527,13 +552,25 @@ router.post('/api/kyb/save', async (req, res) => {
         });
     }
 
+    console.log('[KYB API Debug] Save completed successfully:', {
+      taskId,
+      fileId: fileRecord.id,
+      responseCount: fields.length
+    });
+
     res.json({
       success: true,
       fileId: fileRecord.id
     });
   } catch (error) {
-    console.error('[KYB API Debug] Error saving KYB form:', error);
-    res.status(500).json({ error: 'Failed to save KYB form data' });
+    console.error('[KYB API Debug] Error saving KYB form:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({ 
+      error: 'Failed to save KYB form data',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 });
 
