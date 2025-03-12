@@ -59,9 +59,13 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   });
 
+  // Get current tab based on route
   const getCurrentTab = () => {
-    const path = location.split('/')[1] || 'dashboard';
-    return path === '' ? 'dashboard' : path;
+    console.log('[DashboardLayout] Getting current tab from path:', location);
+    if (location === '/task-center' || location.startsWith('/task-center/')) return 'task-center';
+    if (location === '/file-vault' || location.startsWith('/file-vault/')) return 'file-vault';
+    // Add other routes as needed
+    return 'dashboard';
   };
 
   const isRouteAccessible = () => {
@@ -71,6 +75,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
     console.log('[DashboardLayout] Checking route access:', {
       currentTab,
+      path: location,
       availableTabs,
       isLoadingCompany,
       isCompanyError

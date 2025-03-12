@@ -46,9 +46,10 @@ export default function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><DashboardPage /></Suspense>} />
-                  <Route path="/task-center" element={<TaskCenterPage />} /> {/* Added route for TaskCenterPage */}
+                  <Route path="/task-center" element={<TaskCenterPage />} />
                   <Route path="/task-center/task/card-:slug" element={props => <CardTaskPage params={props.params} />} />
                   <Route path="/task-center/task/:taskSlug" element={<TaskPage />} />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </BrowserRouter>
             </PlaygroundVisibilityProvider>
