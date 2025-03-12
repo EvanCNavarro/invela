@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { useRoute } from 'wouter';
+import { useRoute, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'wouter';
 
 export const TaskPage: React.FC = () => {
   const [, params] = useRoute('/task-center/task/:taskSlug');
-  const navigate = useNavigate();
+  const [, navigate] = useLocation();
   const taskSlug = params?.taskSlug;
 
   // Debugging log for TaskPage route
