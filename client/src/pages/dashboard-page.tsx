@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { Button } from '@/components/ui/button';
-import { Widget } from '@/components/ui/widget';
+import { Widget } from '@/components/dashboard/Widget';
 import { InviteModal } from '@/components/modals/InviteModal';
 import { PageSideDrawer } from '@/components/templates/PageSideDrawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
