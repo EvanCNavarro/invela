@@ -23,7 +23,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match, matchParams] = useRoute("/task-center/task/:taskSlug");
   const [questMatch, questParams] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
-  
+
   console.log('[TaskPage] Questionnaire match check:', {
     questMatchResult: !!questMatch,
     questParams,
@@ -254,31 +254,5 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
         </div>
       </PageTemplate>
     </DashboardLayout>
-  );
-}
-import { useParams, useLocation } from "wouter";
-import { useEffect } from "react";
-
-export default function TaskPage() {
-  const params = useParams();
-  const [location] = useLocation();
-  
-  useEffect(() => {
-    console.log('[TaskPage] Route debugging:', {
-      taskSlug: params.taskSlug,
-      taskType: params.taskSlug?.split('-')[0],
-      companyName: params.taskSlug?.split('-')[1],
-      match: location.includes(params.taskSlug || ''),
-      questMatch: location.includes('questionnaire'),
-      timestamp: new Date().toISOString()
-    });
-  }, [params, location]);
-  
-  return (
-    <div>
-      <h1>Task Page Router</h1>
-      <p>This is a debugging page for task routing.</p>
-      <pre>{JSON.stringify(params, null, 2)}</pre>
-    </div>
   );
 }
