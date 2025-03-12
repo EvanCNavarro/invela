@@ -350,7 +350,7 @@ export function DashboardPage() {
           )}
         </div>
 
-        <InviteModal
+        <InviteUserModal
           variant="fintech"
           open={openFinTechModal}
           onOpenChange={setOpenFinTechModal}
