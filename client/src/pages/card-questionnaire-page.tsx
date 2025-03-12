@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useParams } from "wouter";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { CardFormPlayground } from "@/components/card/CardFormPlayground";
+import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -102,20 +102,4 @@ export default function CardQuestionnairePage() {
       </PageTemplate>
     </DashboardLayout>
   );
-}
-import * as React from "react"
-import { useParams } from "react-router-dom"
-import CardFormPlayground from "@/components/card/CardFormPlayground"
-
-export default function CardQuestionnairePage() {
-  const { companyName } = useParams<{ companyName: string }>()
-  
-  return (
-    <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6">
-        CARD Questionnaire: {companyName || "Company"}
-      </h1>
-      <CardFormPlayground />
-    </div>
-  )
 }
