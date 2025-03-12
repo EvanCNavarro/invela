@@ -8,18 +8,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useRoute } from "wouter";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
-import confetti from 'canvas-confetti';
 
 interface TaskPageProps {
   params: {
@@ -30,11 +22,11 @@ interface TaskPageProps {
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match] = useRoute("/task-center/task/:taskSlug");
-  const [questMatch] = useRoute("/task-center/task/card-:company/questionnaire");
+  const [questMatch] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
+
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
@@ -61,20 +53,8 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
       });
 
       const response = await fetch(`${apiEndpoint}/${companyName}`);
-      console.log('[TaskPage] API response received:', {
-        status: response.status,
-        ok: response.ok,
-        statusText: response.statusText,
-        timestamp: new Date().toISOString()
-      });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('[TaskPage] API error:', {
-          status: response.status,
-          errorText,
-          timestamp: new Date().toISOString()
-        });
         throw new Error('Failed to load task');
       }
 
@@ -94,12 +74,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Error loading task:', {
-        error,
-        companyName,
-        timestamp: new Date().toISOString()
-      });
-
       toast({
         title: "Error",
         description: "Failed to load task. Please try again.",
@@ -107,7 +81,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
       });
       navigate('/task-center');
     }
-  }, [error, navigate, toast, companyName]);
+  }, [error, navigate, toast]);
 
   if (isLoading) {
     return (
@@ -144,23 +118,23 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   });
 
   if (taskType === 'card') {
-    // Handle questionnaire route
+    // If we're on the questionnaire route
     if (questMatch) {
       console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
           <div className="space-y-8">
             <PageHeader
-              title={`CARD Form: ${task.metadata?.company_name || companyName}`}
+              title={`CARD Form: ${displayName}`}
               description="Complete the Compliance and Risk Disclosure (CARD) form"
             />
 
             <div className="container max-w-7xl mx-auto">
               <CardFormPlayground 
                 taskId={task.id}
-                companyName={task.metadata?.company_name || companyName}
+                companyName={displayName}
                 companyData={{
-                  name: task.metadata?.company_name || companyName,
+                  name: displayName,
                   description: task.description || undefined
                 }}
                 onSubmit={() => {
@@ -177,7 +151,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
       );
     }
 
-    // Show choice page if not on questionnaire route
+    // Show method choice page for base route
     if (match) {
       console.log('[TaskPage] Rendering CARD method choice');
       return (
@@ -209,7 +183,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   }
 
   // KYB form rendering
-  console.log('[TaskPage] Rendering KYB form');
   return (
     <DashboardLayout>
       <PageTemplate className="space-y-6">
@@ -249,12 +222,6 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
             />
           )}
         </div>
-
-        <KYBSuccessModal
-          open={showSuccessModal}
-          onOpenChange={setShowSuccessModal}
-          companyName={displayName}
-        />
       </PageTemplate>
     </DashboardLayout>
   );
