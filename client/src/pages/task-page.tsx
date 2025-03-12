@@ -39,7 +39,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   // Debug route parsing
   const isQuestionnaire = location.endsWith('/questionnaire');
-  const shouldRedirectToQuestionnaire = taskType === 'card' && !isQuestionnaire;
+  // Removed automatic redirection
 
   console.log("[TaskPage] Route debugging:", {
     taskSlug,
@@ -68,17 +68,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     timestamp: new Date().toISOString()
   });
 
-  // Redirection logic
-  useEffect(() => {
-    if (shouldRedirectToQuestionnaire) {
-      console.log("[TaskPage] Navigation triggered:", {
-        from: location,
-        to: `${location}/questionnaire`,
-        timestamp: new Date().toISOString()
-      });
-      navigate(`${location}/questionnaire`);
-    }
-  }, [location, shouldRedirectToQuestionnaire, navigate]);
+  // Redirection logic removed to allow choice page to display
 
   // Show CARD questionnaire for card task with questionnaire route
   if (questMatch && taskType === 'card') {
