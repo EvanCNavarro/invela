@@ -28,8 +28,9 @@ export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps)
       console.log('[CardMethodChoice] Upload flow selected - to be implemented');
       navigate(`/task-center/task/card-${companyName}/upload`);
     } else {
-      // Use the existing card-form page with taskId
-      navigate(`/card-form/${taskId}`);
+      // Navigate to the questionnaire page
+      console.log('[CardMethodChoice] Manual entry selected - navigating to questionnaire');
+      navigate(`/task-center/task/card-${companyName}/questionnaire`);
     }
   };
 
