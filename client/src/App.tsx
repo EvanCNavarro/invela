@@ -1,5 +1,5 @@
 import React, { ReactNode, lazy, Suspense } from 'react';
-import { QueryClient, QueryClientProvider, ReactQueryDevtools } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
@@ -32,7 +32,7 @@ export default function App() {
           </SocketProvider>
         </ThemeProvider>
       </AuthProvider>
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+      {/* DevTools are now in main.tsx */}
     </QueryClientProvider>
   );
 }
