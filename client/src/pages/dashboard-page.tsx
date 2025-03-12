@@ -1,67 +1,40 @@
-import { useState } from "react";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { Widget } from "@/components/dashboard/Widget";
-import { Button } from "@/components/ui/button";
-import { PageHeader } from "@/components/ui/page-header";
-import { PageTemplate } from "@/components/ui/page-template";
-import { PageSideDrawer } from "@/components/ui/page-side-drawer";
-import {
-  Settings,
-  Check,
-  Info,
-  Activity,
-  Bell,
-  Zap,
-  Globe,
-  AlertTriangle,
-  LayoutGrid
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
-import { RiskMeter } from "@/components/dashboard/RiskMeter";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
-import type { Company } from "@/types/company";
-import { InviteModal } from "@/components/playground/InviteModal";
-import { cn } from "@/lib/utils";
 
+import React, { useState } from 'react';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { PageTemplate } from '@/components/templates/PageTemplate';
+import { Button } from '@/components/ui/button';
+import { Widget } from '@/components/widgets/Widget';
+import { InviteModal } from '@/components/modals/InviteModal';
+import { PageSideDrawer } from '@/components/templates/PageSideDrawer';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
+import { Check, Clock, DollarSign, FileText, Globe, Info, LineChart, MessagesSquare, Settings, Target, TrendingDown, TrendingUp, Users } from 'lucide-react';
+
+// Define the widget structure
 const DEFAULT_WIDGETS = {
-  updates: true,
-  announcements: true,
-  quickActions: true,
-  companyScore: true,
-  networkVisualization: true
+  activityLog: true,
+  recentDocuments: true,
+  performanceMetrics: true,
+  teamProductivity: true,
+  upcomingTasks: true,
+  revenueOverview: true,
+  networkVisualization: true,
 };
 
-export default function DashboardPage() {
-  const { user } = useAuth();
+export function DashboardPage() {
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [visibleWidgets, setVisibleWidgets] = useState(DEFAULT_WIDGETS);
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { data: companyData, isLoading } = useQuery<Company>({
-    queryKey: ["/api/companies/current"],
-    enabled: !!user
-  });
-
-  const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
-    setVisibleWidgets(prev => ({
+  const toggleWidget = (widgetKey: keyof typeof DEFAULT_WIDGETS) => {
+    setVisibleWidgets((prev) => ({
       ...prev,
-      [widgetId]: !prev[widgetId]
+      [widgetKey]: !prev[widgetKey],
     }));
   };
 
-  const toggleDrawer = () => {
-    setDrawerOpen(prev => !prev);
-  };
-
-  const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
+  // Check if all widgets are hidden
+  const allWidgetsHidden = Object.values(visibleWidgets).every((visible) => !visible);
 
   return (
     <DashboardLayout>
@@ -138,119 +111,224 @@ export default function DashboardPage() {
               {[...Array(6)].map((_, i) => (
                 <div
                   key={i}
-                  className="border-2 border-dashed border-muted rounded-lg flex items-center justify-center p-6 text-center bg-background/40 backdrop-blur-sm"
+                  className="flex items-center justify-center border border-dashed border-muted-foreground/20 rounded-lg bg-card/50 p-8"
                 >
-                  <div className="space-y-2">
-                    <LayoutGrid className="h-8 w-8 mx-auto text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      No widgets selected. Click "Customize Dashboard" to add widgets.
-                    </p>
-                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    No widgets visible. Use the "Customize Dashboard" button to show widgets.
+                  </p>
                 </div>
               ))}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-4">
-              {visibleWidgets.updates && (
+              {visibleWidgets.activityLog && (
                 <Widget
-                  title="Recent Updates"
-                  icon={<Activity className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('updates')}
-                  isVisible={visibleWidgets.updates}
+                  title="Recent Activity"
+                  icon={<Clock className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('activityLog')}
+                  isVisible={visibleWidgets.activityLog}
                 >
                   <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      No recent updates to show.
-                    </p>
-                  </div>
-                </Widget>
-              )}
-
-              {visibleWidgets.announcements && (
-                <Widget
-                  title="Announcements"
-                  icon={<Bell className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('announcements')}
-                  isVisible={visibleWidgets.announcements}
-                >
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      Welcome to Invela! Check out our latest features.
-                    </p>
-                  </div>
-                </Widget>
-              )}
-
-              {visibleWidgets.quickActions && (
-                <Widget
-                  title="Quick Actions"
-                  icon={<Zap className="h-5 w-5" />}
-                  size="double"
-                  onVisibilityToggle={() => toggleWidget('quickActions')}
-                  isVisible={visibleWidgets.quickActions}
-                >
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="default"
-                      className="w-full font-medium"
-                      onClick={() => setOpenFinTechModal(true)}
-                    >
-                      Invite a New FinTech
-                    </Button>
-                    <Button variant="outline" className="w-full font-medium">
-                      Add User
-                    </Button>
-                    <Button variant="outline" className="w-full font-medium">
-                      Set Risk Tracker
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full font-medium"
-                      onClick={toggleDrawer}
-                    >
-                      {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
-                    </Button>
-                  </div>
-                </Widget>
-              )}
-
-              {visibleWidgets.companyScore && companyData && (
-                <Widget
-                  title="Company Score"
-                  icon={<AlertTriangle className="h-5 w-5" />}
-                  onVisibilityToggle={() => toggleWidget('companyScore')}
-                  isVisible={visibleWidgets.companyScore}
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[200px]">
-                      <p className="text-sm text-muted-foreground">Loading company data...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData.logoId ? (
-                          <img
-                            src={`/api/companies/${companyData.id}/logo`}
-                            alt={`${companyData.name} logo`}
-                            className="w-6 h-6 object-contain"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                              console.debug(`Failed to load logo for company: ${companyData.name}`);
-                            }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-xs font-medium text-primary">
-                              {companyData.name.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        <span className="text-sm font-medium">{companyData.name}</span>
+                    <div className="flex items-start gap-2 border-l-2 border-primary/50 pl-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Task completed</p>
+                        <p className="text-xs text-muted-foreground">Business structure verification</p>
                       </div>
-                      <RiskMeter score={companyData.riskScore || 0} />
+                      <span className="text-xs text-muted-foreground">Just now</span>
                     </div>
-                  )}
+                    <div className="flex items-start gap-2 border-l-2 border-primary/50 pl-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Document uploaded</p>
+                        <p className="text-xs text-muted-foreground">Articles of Incorporation</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">1h ago</span>
+                    </div>
+                    <div className="flex items-start gap-2 border-l-2 border-primary/50 pl-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Onboarding progress</p>
+                        <p className="text-xs text-muted-foreground">KYB process 65% complete</p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">2h ago</span>
+                    </div>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.recentDocuments && (
+                <Widget
+                  title="Recent Documents"
+                  icon={<FileText className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('recentDocuments')}
+                  isVisible={visibleWidgets.recentDocuments}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="text-sm">Business Plan.pdf</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">Today</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="text-sm">Financial Statements.xlsx</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">Yesterday</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-primary" />
+                        <span className="text-sm">Compliance Report Q3.docx</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">3 days ago</span>
+                    </div>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.performanceMetrics && (
+                <Widget
+                  title="Performance Metrics"
+                  icon={<LineChart className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('performanceMetrics')}
+                  isVisible={visibleWidgets.performanceMetrics}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Completion Rate</p>
+                        <p className="text-xs text-muted-foreground">Task completion efficiency</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium text-green-500">94%</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Response Time</p>
+                        <p className="text-xs text-muted-foreground">Average time to respond</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TrendingDown className="h-4 w-4 text-green-500" />
+                        <span className="text-sm font-medium text-green-500">1.2h</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">Approval Rate</p>
+                        <p className="text-xs text-muted-foreground">Document approvals</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <TrendingDown className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-medium text-red-500">78%</span>
+                      </div>
+                    </div>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.teamProductivity && (
+                <Widget
+                  title="Team Productivity"
+                  icon={<Users className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('teamProductivity')}
+                  isVisible={visibleWidgets.teamProductivity}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Sarah Johnson</span>
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: '87%' }}></div>
+                      </div>
+                      <span className="text-xs font-medium">87%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Michael Chen</span>
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-green-500 rounded-full" style={{ width: '92%' }}></div>
+                      </div>
+                      <span className="text-xs font-medium">92%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Alex Rodriguez</span>
+                      <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: '65%' }}></div>
+                      </div>
+                      <span className="text-xs font-medium">65%</span>
+                    </div>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.upcomingTasks && (
+                <Widget
+                  title="Upcoming Tasks"
+                  icon={<Target className="h-5 w-5" />}
+                  onVisibilityToggle={() => toggleWidget('upcomingTasks')}
+                  isVisible={visibleWidgets.upcomingTasks}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-[60px] text-xs text-muted-foreground">Today</div>
+                      <div>
+                        <p className="text-sm font-medium">Compliance Check</p>
+                        <p className="text-xs text-muted-foreground">Review latest regulations</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-[60px] text-xs text-muted-foreground">Tomorrow</div>
+                      <div>
+                        <p className="text-sm font-medium">Team Meeting</p>
+                        <p className="text-xs text-muted-foreground">Quarterly planning</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-[60px] text-xs text-muted-foreground">Mar 15</div>
+                      <div>
+                        <p className="text-sm font-medium">Document Review</p>
+                        <p className="text-xs text-muted-foreground">Verify new client documents</p>
+                      </div>
+                    </div>
+                  </div>
+                </Widget>
+              )}
+
+              {visibleWidgets.revenueOverview && (
+                <Widget
+                  title="Revenue Overview"
+                  icon={<DollarSign className="h-5 w-5" />}
+                  size="double"
+                  onVisibilityToggle={() => toggleWidget('revenueOverview')}
+                  isVisible={visibleWidgets.revenueOverview}
+                >
+                  <div className="flex justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Monthly Revenue</p>
+                      <p className="text-2xl font-bold">$24,345</p>
+                      <div className="flex items-center gap-1 text-green-500">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-xs font-medium">+12.5% from last month</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">YTD Revenue</p>
+                      <p className="text-2xl font-bold">$158,764</p>
+                      <div className="flex items-center gap-1 text-green-500">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-xs font-medium">+8.3% from last year</span>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm text-muted-foreground">Active Clients</p>
+                      <p className="text-2xl font-bold">37</p>
+                      <div className="flex items-center gap-1 text-green-500">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="text-xs font-medium">+3 from last month</span>
+                      </div>
+                    </div>
+                  </div>
                 </Widget>
               )}
 
@@ -282,117 +360,5 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
-import React from 'react';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart, Clock, FileText, Users } from 'lucide-react';
 
-export default function DashboardPage() {
-  return (
-    <DashboardLayout>
-      <div className="flex flex-col gap-6 p-6">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Tasks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">3</div>
-                <Clock className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">2 pending tasks</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Network Companies</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">12</div>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">+2 since last month</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">24</div>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">8 recently updated</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Risk Score</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="text-2xl font-bold">Low</div>
-                <BarChart className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-xs text-muted-foreground">Last updated 2 days ago</p>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest compliance activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-primary"></div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Task {i} was updated</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Common tasks and activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-2">
-                <Button variant="outline" className="justify-between">
-                  View Tasks
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="justify-between">
-                  Upload Document
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" className="justify-between">
-                  Manage Network
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    </DashboardLayout>
-  );
-}
+export default DashboardPage;
