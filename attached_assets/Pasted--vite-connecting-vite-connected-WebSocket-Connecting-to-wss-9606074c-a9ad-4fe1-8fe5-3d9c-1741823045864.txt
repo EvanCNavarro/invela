@@ -1,0 +1,57 @@
+[vite] connecting...
+[vite] connected.
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[App] Component imports starting
+[App] Router initialized with routes configuration
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+NotFoundPage is not defined
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+NotFoundPage is not defined
+at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1741823021654&v=mHqCLk1ljIeh583baWNfy:99:82)
+at renderWithHooks (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:11548:26)
+at mountIndeterminateComponent (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:14926:21)
+at beginWork (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:15914:22)
+at HTMLUnknownElement.callCallback2 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:3674:22)
+at Object.invokeGuardedCallbackDev (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:3699:24)
+at invokeGuardedCallback (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:3733:39)
+at beginWork$1 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19765:15)
+at performUnitOfWork (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19198:20)
+at workLoopSync (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19137:13)
+The above error occurred in the <App> component:
+
+    at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1741823021654&v=mHqCLk1ljIeh583baWNfy:99:82)
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=e0532854:159:17)
+    at RouterWithDebug (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/main.tsx?v=mHqCLk1ljIeh583baWNfy:26:28)
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:147:32)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-6NCKF6OH.js?v=e0532854:2848:3)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+NotFoundPage is not defined
+at App (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/App.tsx?t=1741823021654&v=mHqCLk1ljIeh583baWNfy:99:82)
+at renderWithHooks (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:11548:26)
+at mountIndeterminateComponent (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:14926:21)
+at beginWork (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:15914:22)
+at beginWork$1 (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19753:22)
+at performUnitOfWork (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19198:20)
+at workLoopSync (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19137:13)
+at renderRootSync (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:19116:15)
+at recoverFromConcurrentError (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:18736:28)
+at performConcurrentWorkOnRoot (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-RPCDYKBN.js?v=e0532854:18684:30)
+[WebSocket] Connected successfully
+[WebSocket] Connection established: 
+Object {timestamp: "2025-03-12T23:43:45.877Z"}
