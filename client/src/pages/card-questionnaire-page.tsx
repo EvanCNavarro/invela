@@ -30,6 +30,7 @@ import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
+// useLocation is already imported elsewhere in this file
 
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageTemplate } from "@/components/ui/page-template";
