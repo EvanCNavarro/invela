@@ -1,79 +1,53 @@
-
-// Add debug logging for TaskPage navigation
-import { useParams, useLocation } from "wouter";
-import { useEffect } from "react";
-
-export default function TaskPage() {
-  const params = useParams();
-  const [location, navigate] = useLocation();
-  
-  // Debug route parsing
-  const taskSlug = params?.taskSlug || "";
-  const taskParts = taskSlug.split('-');
-  const taskType = taskParts[0];
-  const companyName = taskParts.slice(1).join('-');
-  
-  // Check if we're on the questionnaire route
-  const isQuestionnaire = location.endsWith('/questionnaire');
-  const shouldRedirectToQuestionnaire = taskType === 'card' && !isQuestionnaire;
-  
-  console.log("[TaskPage] Route debugging:", {
-    taskSlug,
-    taskType,
-    companyName,
-    match: true,
-    questMatch: isQuestionnaire,
-    shouldRedirectToQuestionnaire,
-    location,
-    timestamp: new Date().toISOString()
-  });
-  
-  // Redirection logic
-  useEffect(() => {
-    if (shouldRedirectToQuestionnaire) {
-      console.log("[TaskPage] Navigation triggered:", {
-        from: location,
-        to: `${location}/questionnaire`,
-        timestamp: new Date().toISOString()
-      });
-      navigate(`${location}/questionnaire`);
-    }
-  }, [location, shouldRedirectToQuestionnaire, navigate]);
-  
-  // Rest of component...
-  return (
-    <div>
-      <h1>Task Page: {taskSlug}</h1>
-      {/* Task content */}
-    </div>
-  );
-}
-
-import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useParams, useLocation, useRoute } from "wouter";
+import { useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageTemplate } from "@/components/ui/page-template";
+import { Button } from "@/components/ui/button";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { PageHeader } from "@/components/ui/page-header";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { ArrowLeft } from "lucide-react";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation, useRoute } from "wouter";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
-import { PageTemplate } from "@/components/ui/page-template";
-import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
+
 
 interface TaskPageProps {
-  params: {
+  params?: {
     taskSlug: string;
   }
 }
 
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
-  const [, navigate] = useLocation();
+  const params = useParams();
+  const [location, navigate] = useLocation();
   const [match, matchParams] = useRoute("/task-center/task/:taskSlug");
   const [questMatch, questParams] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
+
+  const { toast } = useToast();
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [fileId, setFileId] = useState<number | null>(null);
+
+  // Parse the taskSlug to get task type and company name
+  const taskSlug = pageParams?.taskSlug || params?.taskSlug || "";
+  const taskParts = taskSlug.split('-');
+  const taskType = taskParts[0];
+  const companyName = taskParts.slice(1).join('-');
+
+  // Debug route parsing
+  const isQuestionnaire = location.endsWith('/questionnaire');
+  const shouldRedirectToQuestionnaire = taskType === 'card' && !isQuestionnaire;
+
+  console.log("[TaskPage] Route debugging:", {
+    taskSlug,
+    taskType,
+    companyName,
+    match: !!match,
+    questMatch: !!questMatch,
+    path: window.location.pathname,
+    timestamp: new Date().toISOString()
+  });
 
   console.log('[TaskPage] Questionnaire match check:', {
     questMatchResult: !!questMatch,
@@ -92,23 +66,61 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     timestamp: new Date().toISOString()
   });
 
-  const { toast } = useToast();
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [fileId, setFileId] = useState<number | null>(null);
+  // Redirection logic
+  useEffect(() => {
+    if (shouldRedirectToQuestionnaire) {
+      console.log("[TaskPage] Navigation triggered:", {
+        from: location,
+        to: `${location}/questionnaire`,
+        timestamp: new Date().toISOString()
+      });
+      navigate(`${location}/questionnaire`);
+    }
+  }, [location, shouldRedirectToQuestionnaire, navigate]);
 
-  // Parse the taskSlug to get task type and company name
-  const [taskType, ...companyNameParts] = pageParams.taskSlug.split('-');
-  const companyName = companyNameParts.join('-');
+  // Show CARD questionnaire for card task with questionnaire route
+  if (questMatch && taskType === 'card') {
+    const displayName = companyName;
 
-  console.log('[TaskPage] Route debugging:', {
-    taskSlug: pageParams.taskSlug,
-    taskType,
-    companyName,
-    match: !!match,
-    questMatch: !!questMatch,
-    path: window.location.pathname,
-    timestamp: new Date().toISOString()
-  });
+    console.log('[TaskPage] Rendering CARD questionnaire');
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={() => navigate('/task-center')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+            </div>
+          </div>
+          <div className="container max-w-7xl mx-auto">
+            <CardFormPlayground 
+              taskId={0} // Replace with actual task ID when available
+              companyName={displayName}
+              companyData={{
+                name: displayName,
+                description: "Company description" // Replace with actual description
+              }}
+              onSubmit={() => {
+                toast({
+                  title: "CARD Form Submitted",
+                  description: "Your CARD form has been submitted successfully.",
+                });
+                navigate('/task-center');
+              }}
+            />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
 
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
@@ -192,98 +204,56 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     timestamp: new Date().toISOString()
   });
 
-  if (taskType === 'card') {
-    // If we're on the questionnaire route
-    if (questMatch || window.location.pathname.includes('/questionnaire')) {
-      console.log('[TaskPage] Rendering CARD questionnaire form', {
-        match: !!match,
-        questMatch: !!questMatch,
-        path: window.location.pathname,
-        taskId: task?.id,
-        displayName
-      });
-      return (
-        <DashboardLayout>
-          <div className="space-y-8">
-            <PageHeader
-              title={`CARD Form: ${displayName}`}
-              description="Complete the Compliance and Risk Disclosure (CARD) form"
-            />
-
-            <div className="container max-w-7xl mx-auto">
-              <CardFormPlayground 
-                taskId={task.id}
-                companyName={displayName}
-                companyData={{
-                  name: displayName,
-                  description: task.description || undefined
-                }}
-                onSubmit={() => {
-                  toast({
-                    title: "CARD Form Submitted",
-                    description: "Your CARD form has been submitted successfully.",
-                  });
-                  navigate('/task-center');
-                }}
-              />
+  // Show method choice page for base route
+  if (match && taskType === 'card') {
+    console.log('[TaskPage] Rendering CARD method choice');
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={() => navigate('/task-center')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
             </div>
           </div>
-        </DashboardLayout>
-      );
-    }
-
-    // Show method choice page for base route
-    if (match) {
-      console.log('[TaskPage] Rendering CARD method choice');
-      return (
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={() => navigate('/task-center')}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-              </div>
-            </div>
-
-            <CardMethodChoice
-              taskId={task.id}
-              companyName={displayName}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      );
-    }
+          <CardMethodChoice
+            taskId={task.id}
+            companyName={displayName}
+          />
+        </PageTemplate>
+      </DashboardLayout>
+    );
   }
 
   // KYB form rendering
-  return (
-    <DashboardLayout>
-      <PageTemplate className="space-y-6">
-        <div className="space-y-4">
-          <BreadcrumbNav forceFallback={true} />
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={() => navigate('/task-center')}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Task Center
-            </Button>
+  if (taskType === 'kyb') {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={() => navigate('/task-center')}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+            </div>
           </div>
-        </div>
 
-        <div className="container max-w-7xl mx-auto">
-          {taskType === 'kyb' && (
+          <div className="container max-w-7xl mx-auto">
             <OnboardingKYBFormPlayground
               taskId={task.id}
               companyName={companyName}
@@ -301,9 +271,17 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
                 navigate('/task-center');
               }}
             />
-          )}
-        </div>
-      </PageTemplate>
-    </DashboardLayout>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+
+  // Fallback view - This should ideally never be reached if all cases are handled correctly
+  return (
+    <div>
+      <h1>Task Page: {taskSlug}</h1>
+      {/* Task content */}
+    </div>
   );
 }
