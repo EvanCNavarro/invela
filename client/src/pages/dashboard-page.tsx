@@ -3,7 +3,7 @@ import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { PageTemplate } from '@/components/ui/page-template';
 import { Button } from '@/components/ui/button';
 import { Widget } from '@/components/dashboard/Widget';
-import { InviteModal } from '@/components/modals/InviteModal';
+import { InviteModal } from '@/components/ui/modals/InviteModal';
 import { PageSideDrawer } from '@/components/templates/PageSideDrawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
