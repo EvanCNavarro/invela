@@ -16,7 +16,7 @@ export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps)
       console.log('Upload flow selected - to be implemented');
       navigate(`/task-center/task/card-${companyName}/upload`);
     } else {
-      navigate(`/task-center/task/card-${companyName}/manual`);
+      navigate(`/task-center/task/card-${companyName}/questionnaire`);
     }
   };
 
