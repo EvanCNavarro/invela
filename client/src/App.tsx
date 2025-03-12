@@ -8,6 +8,7 @@ import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
 import { TaskPage } from "./pages/task-page";
 import CardTaskPage from "./pages/card-task-page";
+import TaskCenterPage from './pages/task-center-page'; // Added import
 
 const DashboardPage = lazy(() => import('./pages/dashboard-page'));
 
@@ -33,6 +34,7 @@ export default function App() {
                 <Toaster />
                 <Routes>
                   <Route path="/" element={<Suspense fallback={<div>Loading...</div>}><DashboardPage /></Suspense>} />
+                  <Route path="/task-center" element={<TaskCenterPage />} /> {/* Added route for TaskCenterPage */}
                   <Route path="/task-center/task/card-:slug" element={props => <CardTaskPage params={props.params} />} />
                   <Route path="/task-center/task/:taskSlug" element={<TaskPage />} />
                 </Routes>
