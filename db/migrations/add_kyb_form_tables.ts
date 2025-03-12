@@ -49,7 +49,8 @@ export async function addKybFormTables() {
         status TEXT NOT NULL DEFAULT 'empty',
         version INTEGER NOT NULL DEFAULT 1,
         created_at TIMESTAMP DEFAULT NOW(),
-        updated_at TIMESTAMP DEFAULT NOW()
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(task_id, field_id)
       );
 
       DROP INDEX IF EXISTS idx_kyb_responses_task_id;
@@ -85,6 +86,16 @@ export async function addKybFormTables() {
       // For each field in the metadata that matches our KYB fields
       for (const field of DEFAULT_KYB_FIELDS) {
         if (metadata && metadata[field.key]) {
+          // First delete any existing responses to avoid conflicts
+          await db.execute(sql`
+            DELETE FROM kyb_responses
+            WHERE task_id = ${task.id}
+            AND field_id IN (
+              SELECT id FROM kyb_fields WHERE field_key = ${field.key}
+            );
+          `);
+
+          // Then insert the new response
           await db.execute(sql`
             INSERT INTO kyb_responses (
               task_id,
@@ -101,8 +112,7 @@ export async function addKybFormTables() {
                 ELSE 'complete'
               END
             FROM kyb_fields kf
-            WHERE kf.field_key = ${field.key}
-            ON CONFLICT DO NOTHING;
+            WHERE kf.field_key = ${field.key};
           `);
         }
       }

@@ -303,9 +303,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                       taskId: task.id
                     })
                   })
-                    .then(response => {
-                      if (!response.ok) throw new Error('Failed to save CARD form');
-                      return response.json();
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to save CARD form');
+                      }
+                      return data;
                     })
                     .then((result) => {
                       confetti({
@@ -318,12 +321,24 @@ export default function TaskPage({ params }: TaskPageProps) {
                       setFileId(result.fileId);
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: result.warnings?.length
+                          ? "Card form has been saved successfully with some updates to existing data."
+                          : "Card form has been saved successfully.",
+                        variant: "default",
+                      });
+
+                      if (result.warnings?.length) {
+                        console.log('[TaskPage] Save completed with warnings:', result.warnings);
+                      }
                     })
                     .catch(error => {
                       console.error('[TaskPage] Form submission failed:', error);
                       toast({
                         title: "Error",
-                        description: "Failed to save CARD form. Please try again.",
+                        description: error.message || "Failed to save CARD form. Please try again.",
                         variant: "destructive",
                       });
                     });
@@ -411,11 +426,11 @@ export default function TaskPage({ params }: TaskPageProps) {
                   body: JSON.stringify(submitData)
                 })
                   .then(async response => {
+                    const data = await response.json();
                     if (!response.ok) {
-                      const errorData = await response.json();
-                      throw new Error(errorData.details || errorData.error || 'Failed to save KYB form');
+                      throw new Error(data.details || data.error || 'Failed to save KYB form');
                     }
-                    return response.json();
+                    return data;
                   })
                   .then((result) => {
                     // Success handling
@@ -430,12 +445,18 @@ export default function TaskPage({ params }: TaskPageProps) {
                     setIsSubmitted(true);
                     setShowSuccessModal(true);
 
-                    // Show success toast
+                    // Show success toast with warnings if any
                     toast({
                       title: "Success",
-                      description: "KYB form has been saved successfully.",
+                      description: result.warnings?.length
+                        ? "KYB form has been saved successfully with some updates to existing data."
+                        : "KYB form has been saved successfully.",
                       variant: "default",
                     });
+
+                    if (result.warnings?.length) {
+                      console.log('[TaskPage] Save completed with warnings:', result.warnings);
+                    }
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);

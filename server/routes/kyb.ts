@@ -526,41 +526,58 @@ router.post('/api/kyb/save', async (req, res) => {
       })
       .where(eq(tasks.id, taskId));
 
+    let warnings = [];
     // Save responses to database
     for (const field of fields) {
       const value = formData[field.field_key];
       const status = value ? 'COMPLETE' : 'EMPTY';
 
-      await db.insert(kybResponses)
-        .values({
-          task_id: taskId,
-          field_id: field.id,
-          response_value: value || null,
-          status,
-          version: 1,
-          created_at: timestamp,
-          updated_at: timestamp
-        })
-        .onConflictDoUpdate({
-          target: [kybResponses.task_id, kybResponses.field_id],
-          set: {
+      try {
+        // First try to insert
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
             response_value: value || null,
             status,
-            version: sql`${kybResponses.version} + 1`,
+            version: 1,
+            created_at: timestamp,
             updated_at: timestamp
-          }
-        });
+          });
+      } catch (err) {
+        if (err.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(kybResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${kybResponses.version} + 1`,
+              updated_at: timestamp
+            })
+            .where(
+              and(
+                eq(kybResponses.task_id, taskId),
+                eq(kybResponses.field_id, field.id)
+              )
+            );
+          warnings.push(`Updated existing response for field: ${field.field_key}`);
+        } else {
+          throw err;
+        }
+      }
     }
 
     console.log('[KYB API Debug] Save completed successfully:', {
       taskId,
       fileId: fileRecord.id,
-      responseCount: fields.length
+      responseCount: fields.length,
+      warningCount: warnings.length
     });
 
     res.json({
       success: true,
-      fileId: fileRecord.id
+      fileId: fileRecord.id,
+      warnings: warnings.length ? warnings : undefined
     });
   } catch (error) {
     console.error('[KYB API Debug] Error saving KYB form:', {
