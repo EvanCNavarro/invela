@@ -1,4 +1,5 @@
 import { useParams, useLocation, useRoute } from "wouter";
+import CardQuestionnairePage from "./card-questionnaire-page";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
@@ -72,7 +73,11 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   // Show CARD questionnaire for card task with questionnaire route
   if (questMatch && taskType === 'card') {
+    console.log('[TaskPage] Rendering CardQuestionnairePage directly');
     const displayName = companyName;
+    
+    // Pass params directly to the questionnaire page
+    return <CardQuestionnairePage params={{ companyName }} />;
 
     console.log('[TaskPage] Rendering CARD questionnaire');
     return (
