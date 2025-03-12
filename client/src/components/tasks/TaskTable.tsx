@@ -65,7 +65,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [, navigate] = useLocation();
-  
+
   // Log when tasks are rendered to help with debugging
   useEffect(() => {
     console.log('[TaskTable] Rendering tasks:', { 
