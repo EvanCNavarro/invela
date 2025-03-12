@@ -29,7 +29,7 @@ interface TaskPageProps {
 
 export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
-  const [match, routeParams] = useRoute<{ '*': string }>("/task-center/task/:taskSlug/*");
+  const [match, routeParams] = useRoute<{ taskSlug: string, '*': string }>("/task-center/task/:taskSlug/*");
   const { toast } = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
