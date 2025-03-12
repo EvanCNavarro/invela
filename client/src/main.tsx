@@ -43,6 +43,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
           <App />
         </RouterWithDebug>
       </AuthProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   </React.StrictMode>
 );
