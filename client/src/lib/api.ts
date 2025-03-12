@@ -44,13 +44,29 @@ export const api = {
   // Additional endpoints can be added here
 };
 
-// Create and configure query client
+// Create and configure query client with default query function
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // 5 minutes
+      queryFn: async ({ queryKey }) => {
+        // Default query function that uses the first element of queryKey as the URL
+        const url = queryKey[0];
+        if (typeof url !== 'string') {
+          throw new Error('Invalid query key: first element must be a string URL');
+        }
+        
+        // If second element is an object, use it as query params
+        if (queryKey.length > 1 && typeof queryKey[1] === 'object') {
+          const params = queryKey[1];
+          const queryString = new URLSearchParams(params as any).toString();
+          return fetchAPI(`${url}?${queryString}`);
+        }
+        
+        return fetchAPI(url);
+      }
     },
   },
 });
