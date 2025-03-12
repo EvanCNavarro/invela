@@ -8,6 +8,7 @@ import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-quer
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
+import { api } from "@/lib/api"; // Assuming api.ts exports an api object
 
 interface Company {
   id: number;
@@ -25,17 +26,6 @@ interface Task {
   task_type: string;
 }
 
-//Default Query Functions
-const queryFn = {
-  getTasks: async () => {
-    const res = await fetch('/api/tasks');
-    return res.json();
-  },
-  getCurrentCompany: async () => {
-    const res = await fetch('/api/companies/current');
-    return res.json();
-  }
-};
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
@@ -45,15 +35,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   // Add refetchInterval to automatically check for updates
   const { data: tasks = [], isError: isTasksError } = useQuery({
-    queryKey: ["/api/tasks"],
-    queryFn: queryFn.getTasks,
+    queryKey: ["tasks"], //Simplified key
+    queryFn: api.getTasks, // Use api.getTasks
     refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   // Add refetchInterval to automatically check for company updates
   const { data: currentCompany, isLoading: isLoadingCompany, isError: isCompanyError } = useQuery({
-    queryKey: ["/api/companies/current"],
-    queryFn: queryFn.getCurrentCompany,
+    queryKey: ["currentCompany"], //Simplified key
+    queryFn: api.getCurrentCompany, //Use api.getCurrentCompany
     refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
   });
 
