@@ -69,11 +69,19 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading: isTasksLoading } = useQuery({
+  const { data: tasks = [], isLoading, isFetching } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     queryFn: () => api.getTasks(), // Updated useQuery to use api.getTasks()
     staleTime: 1000,
     refetchInterval: 5000,
+  });
+
+  // Add logging to help debug loading state
+  console.log('[TaskCenter] Tasks loading status:', { 
+    isLoading, 
+    isFetching, 
+    tasksCount: tasks?.length || 0,
+    timestamp: new Date().toISOString()
   });
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
