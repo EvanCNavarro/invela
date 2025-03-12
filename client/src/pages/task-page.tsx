@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRoute, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -8,13 +7,37 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DashboardLayout } from '@/layouts/DashboardLayout';
 import { api } from '@/lib/api';
 
-export const TaskPage: React.FC = () => {
+interface TaskPageProps {
+  params: {
+    slug: string;
+  };
+}
+
+function TaskPage({ params }: TaskPageProps) {
+  const [, navigate] = useLocation();
+  const { slug } = params;
+
+  useEffect(() => {
+    // If task slug starts with card-, redirect to the questionnaire
+    if (slug.startsWith('card-')) {
+      navigate(`/task-center/task/${slug}/questionnaire`);
+    }
+  }, [slug, navigate]);
+
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <LoadingSpinner />
+    </div>
+  );
+}
+
+export const TaskPage2: React.FC = () => {
   const [, params] = useRoute('/task-center/task/:taskSlug');
   const [, navigate] = useLocation();
   const taskSlug = params?.taskSlug;
 
   // Extract task ID from slug if available (can be enhanced based on your URL structure)
-  const taskId = taskSlug?.split('-')[0] === 'card' ? null : 
+  const taskId = taskSlug?.split('-')[0] === 'card' ? null :
                 (taskSlug ? parseInt(taskSlug.split('-')[0]) : null);
 
   // Debugging log for TaskPage route
@@ -48,7 +71,7 @@ export const TaskPage: React.FC = () => {
             Back to Task Center
           </Button>
         </div>
-        
+
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <LoadingSpinner size="lg" />
@@ -91,30 +114,3 @@ export const TaskPage: React.FC = () => {
 };
 
 export default TaskPage;
-import React, { useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
-
-interface TaskPageProps {
-  params: {
-    slug: string;
-  };
-}
-
-export default function TaskPage({ params }: TaskPageProps) {
-  const [, navigate] = useLocation();
-  const { slug } = params;
-  
-  useEffect(() => {
-    // If task slug starts with card-, redirect to the questionnaire
-    if (slug.startsWith('card-')) {
-      navigate(`/task-center/task/${slug}/questionnaire`);
-    }
-  }, [slug, navigate]);
-  
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <LoadingSpinner />
-    </div>
-  );
-}
