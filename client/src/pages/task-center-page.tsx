@@ -425,3 +425,18 @@ export default function TaskCenterPage() {
     </DashboardLayout>
   );
 }
+import React from 'react';
+import { PageTemplate } from '@/components/ui/page-side-drawer';
+
+const TaskCenterPage: React.FC = () => {
+  return (
+    <PageTemplate title="Task Center">
+      <div className="container mx-auto py-6">
+        <h1 className="text-2xl font-bold mb-6">Task Center</h1>
+        <p>Welcome to your task center. Here you can manage all your tasks and assignments.</p>
+      </div>
+    </PageTemplate>
+  );
+};
+
+export default TaskCenterPage;

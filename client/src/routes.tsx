@@ -3,8 +3,6 @@ import React from 'react';
 import { Route, Switch } from 'wouter';
 import { TaskPage } from './pages/task-page';
 import FileVaultPage from './pages/file-vault-page';
-
-// Import the correct default export
 import TaskCenterPage from './pages/task-center-page';
 
 const AppRoutes = () => {
