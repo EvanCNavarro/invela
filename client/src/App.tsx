@@ -12,7 +12,7 @@ import TaskPage from './pages/task-page';
 import CompanyKYBFormPage from './pages/kyb-task-page';
 import FileVaultPage from './pages/file-vault-page';
 import NetworkPage from './pages/network-page';
-import NetworkCompanyPage from './pages/network/network-company-page';
+import NetworkCompanyPage from './pages/company-profile-page';
 import CompanyDetailsPage from './pages/company-details-page';
 import AdminPanelPage from './pages/admin-panel-page';
 import CardQuestionnairePage from './pages/card-questionnaire-page';
