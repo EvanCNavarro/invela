@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation, useRoute } from "wouter";
@@ -41,11 +42,27 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   // Get the flow type from the full path
   const flowType = routeParams?.['*']?.split('/').pop();
 
+  console.log('[TaskPage] Route debugging:', {
+    taskSlug: pageParams.taskSlug,
+    taskType,
+    companyName,
+    routeParams,
+    flowType,
+    match,
+    timestamp: new Date().toISOString()
+  });
+
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
   const { data: task, isLoading, error } = useQuery({
     queryKey: [apiEndpoint, companyName],
     queryFn: async () => {
+      console.log('[TaskPage] Fetching task data:', {
+        endpoint: apiEndpoint,
+        companyName,
+        timestamp: new Date().toISOString()
+      });
+
       try {
         const response = await fetch(`${apiEndpoint}/${companyName}`);
         if (!response.ok) {
@@ -53,12 +70,24 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
           throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
         }
         const data = await response.json();
+        console.log('[TaskPage] Task data fetched:', {
+          taskId: data.id,
+          hasMetadata: !!data.metadata,
+          timestamp: new Date().toISOString()
+        });
+
         if (data.metadata?.[`${taskType}FormFile`]) {
           setFileId(data.metadata[`${taskType}FormFile`]);
           setIsSubmitted(true);
         }
         return data;
       } catch (error) {
+        console.error('[TaskPage] Task fetch error:', {
+          error,
+          endpoint: apiEndpoint,
+          companyName,
+          timestamp: new Date().toISOString()
+        });
         throw error;
       }
     },
@@ -68,6 +97,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
+      console.error('[TaskPage] Task load error effect:', {
+        error,
+        taskType,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
@@ -78,10 +113,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   }, [error, navigate, toast, taskType]);
 
   const handleBackClick = () => {
+    console.log('[TaskPage] Navigating back to task center');
     navigate('/task-center');
   };
 
   if (isLoading) {
+    console.log('[TaskPage] Showing loading state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -92,6 +129,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   }
 
   if (!task) {
+    console.log('[TaskPage] Task not found, showing error state');
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -108,9 +146,17 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
+  console.log('[TaskPage] Rendering decision:', {
+    taskType,
+    flowType,
+    displayName,
+    timestamp: new Date().toISOString()
+  });
+
   if (taskType === 'card') {
     // Handle questionnaire route
     if (flowType === 'questionnaire') {
+      console.log('[TaskPage] Rendering CARD questionnaire form');
       return (
         <DashboardLayout>
           <PageTemplate className="space-y-6">
@@ -196,6 +242,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
     // Show choice page if no flow type specified
     if (!flowType) {
+      console.log('[TaskPage] Rendering CARD method choice');
       return (
         <DashboardLayout>
           <PageTemplate className="space-y-6">
@@ -224,6 +271,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
     }
 
     if (flowType === 'upload') {
+      console.log('[TaskPage] Rendering CARD upload flow (not implemented)');
       return (
         <DashboardLayout>
           <div>Upload flow coming soon</div>
@@ -233,6 +281,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   }
 
   // KYB form rendering
+  console.log('[TaskPage] Rendering KYB form');
   return (
     <DashboardLayout>
       <PageTemplate className="space-y-6">
