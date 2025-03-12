@@ -1,0 +1,47 @@
+[vite] connecting...
+[vite] connected.
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[App] Component imports starting
+[App] Router initialized with routes configuration
+[Router Debug] Registered routes: 
+(2) [{…}, {…}]
+0: Object
+1: Object
+length: 2
+[[Prototype]]: Array(0)
+[Router Debug] Route resolution order: 
+(2) [{…}, {…}]
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+Maximum call stack size exceeded
+at Object.get [as useContext] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-WOOG5QLI.js?v=2a933cc6:22:35)
+at useRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:125:40)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:47)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+Maximum call stack size exceeded
+at useRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:125:17)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:47)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+at useLocationFromRouter (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:130:41)
+at Object.useLocation [as hook] (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:136:25)
+The above error occurred in the <AuthProvider> component:
+
+    at AuthProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/hooks/use-auth.tsx:147:32)
+    at QueryClientProvider (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=2a933cc6:2805:3)
+    at App
+    at Router (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=2a933cc6:159:17)
+    at RouterWithDebug (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/main.tsx?v=jrohGwDbKdYxBbVJjkU0b:37:28)
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
