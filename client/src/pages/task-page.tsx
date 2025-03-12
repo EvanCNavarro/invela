@@ -23,7 +23,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match, matchParams] = useRoute("/task-center/task/:taskSlug");
   const [questMatch, questParams] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
-  
+
   console.log('[TaskPage] Route matches:', {
     basicMatch: !!match,
     basicMatchParams: matchParams,
@@ -63,6 +63,12 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
       });
 
       const response = await fetch(`${apiEndpoint}/${companyName}`);
+      console.log('[TaskPage] API response received:', {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText,
+        timestamp: new Date().toISOString()
+      });
 
       if (!response.ok) {
         throw new Error('Failed to load task');
@@ -122,7 +128,7 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
 
   console.log('[TaskPage] Rendering decision:', {
     taskType,
-    questMatch,
+    questMatch: !!questMatch,
     displayName,
     timestamp: new Date().toISOString()
   });
