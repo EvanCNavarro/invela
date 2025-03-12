@@ -9,7 +9,7 @@ import LoginPage from './pages/login-page';
 import RegisterPage from './pages/register-page';
 import TaskCenterPage from './pages/task-center-page';
 import TaskPage from './pages/task-page';
-import CompanyKYBFormPage from './pages/company-kyb-form-page';
+import CompanyKYBFormPage from './pages/kyb-task-page';
 import FileVaultPage from './pages/file-vault-page';
 import NetworkPage from './pages/network-page';
 import NetworkCompanyPage from './pages/network-company-page';
