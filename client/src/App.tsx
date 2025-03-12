@@ -40,12 +40,20 @@ import { useEffect } from 'react';
 import { Radar } from './components/playground/Radar';
 import { init as initSendtryDev } from './lib/sentry';
 
+// Configure default query function
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 30000, // 30 seconds
+      queryFn: async ({ queryKey }) => {
+        const [url, params] = Array.isArray(queryKey) ? queryKey : [queryKey, {}];
+        const queryParams = new URLSearchParams(params).toString();
+        const fullUrl = queryParams ? `${url}?${queryParams}` : url;
+        const response = await fetch(fullUrl);
+        if (!response.ok) {
+          throw new Error(`Network error: ${response.status} ${response.statusText}`);
+        }
+        return response.json();
+      },
     },
   },
 });
