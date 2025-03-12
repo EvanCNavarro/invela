@@ -23,6 +23,13 @@ export default function TaskPage({ params: pageParams }: TaskPageProps) {
   const [, navigate] = useLocation();
   const [match, matchParams] = useRoute("/task-center/task/:taskSlug");
   const [questMatch, questParams] = useRoute("/task-center/task/:taskSlug/questionnaire"); // Match any taskSlug with questionnaire
+  
+  console.log('[TaskPage] Questionnaire match check:', {
+    questMatchResult: !!questMatch,
+    questParams,
+    path: window.location.pathname,
+    timestamp: new Date().toISOString()
+  });
 
   console.log('[TaskPage] Route matches:', {
     basicMatch: !!match,
