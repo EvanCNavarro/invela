@@ -5,7 +5,7 @@ import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
 import { Toaster } from './components/ui/toaster';
 import { AuthProvider } from './contexts/AuthContext';
-import AppRoutes from './routes.tsx';
+import AppRoutes from './routes';
 
 const queryClient = new QueryClient({
   defaultOptions: {
