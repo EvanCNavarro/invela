@@ -1,4 +1,3 @@
-
 import { QueryClient } from '@tanstack/react-query';
 
 // Default fetch wrapper with error handling
@@ -30,17 +29,17 @@ export const api = {
     const queryString = params ? `?${new URLSearchParams(params as any).toString()}` : '';
     return fetchAPI(`/api/tasks${queryString}`);
   },
-  
+
   // Companies
   getCurrentCompany: () => fetchAPI('/api/companies/current'),
   getCompanies: (filter?: string) => {
     const queryString = filter ? `?filter=${filter}` : '';
     return fetchAPI(`/api/companies${queryString}`);
   },
-  
+
   // Files
   getFiles: () => fetchAPI('/api/files'),
-  
+
   // Additional endpoints can be added here
 };
 

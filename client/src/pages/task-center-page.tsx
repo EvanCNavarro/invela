@@ -30,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { api } from '@/lib/api'; // Added import for api
 
 interface Company {
   id: number;
@@ -68,8 +69,9 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
+  const { data: tasks = [], isLoading: isTasksLoading } = useQuery({
     queryKey: ["/api/tasks"],
+    queryFn: () => api.getTasks(), // Updated useQuery to use api.getTasks()
     staleTime: 1000,
     refetchInterval: 5000,
   });
