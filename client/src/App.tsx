@@ -4,8 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from './components/theme-provider';
 import { PlaygroundVisibilityProvider } from './components/playground/playground-context';
 import { Toaster } from './components/ui/toaster';
-import { AuthProvider } from './context/auth-context';
-import { SocketProvider } from './context/socket-context';
+import { AuthProvider } from './contexts/AuthContext';
 import AppRoutes from './routes';
 
 const queryClient = new QueryClient({
