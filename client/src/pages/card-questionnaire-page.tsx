@@ -18,6 +18,7 @@ export default function CardQuestionnairePage() {
 
   console.log('[CardQuestionnairePage] Initializing with params:', {
     companyName,
+    rawParams: params,
     timestamp: new Date().toISOString()
   });
 
