@@ -103,3 +103,19 @@ export default function CardQuestionnairePage() {
     </DashboardLayout>
   );
 }
+import * as React from "react"
+import { useParams } from "react-router-dom"
+import CardFormPlayground from "@/components/card/CardFormPlayground"
+
+export default function CardQuestionnairePage() {
+  const { companyName } = useParams<{ companyName: string }>()
+  
+  return (
+    <div className="container py-8">
+      <h1 className="text-2xl font-bold mb-6">
+        CARD Questionnaire: {companyName || "Company"}
+      </h1>
+      <CardFormPlayground />
+    </div>
+  )
+}
