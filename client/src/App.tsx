@@ -45,13 +45,5 @@ export default function App() {
   );
 }
 
-//Creating a dummy dashboard-page.tsx file.  Replace this with your actual component.
-//src/pages/dashboard-page.tsx
-export const DashboardPage = () => {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>This is the dashboard page.</p>
-    </div>
-  );
-};
+// DashboardPage is now imported from its own file
+// Don't define it here to avoid duplication
