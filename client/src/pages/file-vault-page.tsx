@@ -1,11 +1,6 @@
-// This file is deprecated in favor of FileVault.tsx
-// Redirect to the new implementation
-import { Redirect } from "wouter";
 
-export default function FileVaultPage() {
-  return <Redirect to="/file-vault" />;
-}
 import React from 'react';
+import { Redirect } from "wouter";
 
 export const FileVaultPage: React.FC = () => {
   return (
