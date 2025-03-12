@@ -8,6 +8,9 @@ import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
+// Debug component imports
+console.log("[App] Component imports starting");
+
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login-page";
@@ -37,6 +40,19 @@ function ProtectedLayout({ children }: { children: React.ReactNode }) {
 function Router() {
   const [location] = useLocation();
   console.log('[Router] Current location:', location);
+  
+  // Debug route structure
+  const isTaskRoute = location.startsWith('/task-center/task');
+  const isCardRoute = isTaskRoute && location.includes('/card-');
+  const isQuestionnaireRoute = isCardRoute && location.endsWith('/questionnaire');
+  
+  console.log('[Router] Route matching:', {
+    isTaskRoute,
+    isCardRoute,
+    isQuestionnaireRoute,
+    segments: location.split('/').filter(Boolean),
+    timestamp: new Date().toISOString()
+  });
 
   return (
     <Switch>
@@ -198,10 +214,21 @@ function Router() {
         )} 
       />
 
+      {/* Debug route for explicit testing */}
+      <Route path="/debug/card-questionnaire">
+        {() => {
+          console.log("[App] Debug route accessed");
+          return <div>Debug Card Questionnaire Page</div>;
+        }}
+      </Route>
+
       <Route component={NotFound} />
     </Switch>
   );
 }
+
+// Log App routes configuration on init
+console.log("[App] Router initialized with routes configuration");
 
 export default function App() {
   return (

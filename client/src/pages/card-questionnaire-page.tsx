@@ -1,15 +1,42 @@
-import { useState, useEffect } from "react";
-import { useLocation, useParams } from "wouter";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { PageHeader } from "@/components/ui/page-header";
-import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
-import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { PageTemplate } from "@/components/ui/page-template";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+// Add debugging for params handling
+console.log("[CardQuestionnairePage] Component imported");
+
+// Track module dependency tree
+console.log("[Module] Import trace:", {
+  module: "card-questionnaire-page.tsx",
+  imports: [
+    "react",
+    "wouter" 
+    // List all actual imports here
+  ],
+  timestamp: new Date().toISOString()
+});
+
+// Verify dependencies are loaded
+try {
+  // Test critical dependencies
+  const React = require('react');
+  const Wouter = require('wouter');
+  console.log("[CardQuestionnairePage] Dependencies verified:", {
+    react: !!React,
+    wouter: !!Wouter,
+    timestamp: new Date().toISOString()
+  });
+} catch (error) {
+  console.error("[CardQuestionnairePage] Import error:", error);
+}
+
+import { useParams, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
+
+import { DashboardLayout } from "@/layouts/DashboardLayout";
+import { PageTemplate } from "@/components/ui/page-template";
+import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
+import { PageHeader } from "@/components/ui/page-header";
 
 interface CardQuestionnairePageProps {
   params?: {
@@ -22,10 +49,10 @@ export default function CardQuestionnairePage({ params: routeParams }: CardQuest
   // Use the passed params if available, otherwise use useParams hook
   const hookParams = useParams<{companyName: string}>();
   const params = routeParams || hookParams;
-  
+
   // Extract company name from URL pattern /task-center/task/card-:companyName/questionnaire
   const companyName = params.companyName;
-  
+
   console.log('[CardQuestionnairePage] Initializing with params:', {
     companyName,
     rawParams: params,
@@ -96,22 +123,20 @@ export default function CardQuestionnairePage({ params: routeParams }: CardQuest
           description="Complete the Compliance and Risk Disclosure (CARD) questionnaire"
         />
 
-        <div className="container max-w-7xl mx-auto">
-          <CardFormPlayground 
-            taskId={task.id}
-            companyName={task.metadata?.company_name || companyName}
-            companyData={{
-              name: task.metadata?.company_name || companyName,
-              description: task.description || undefined
-            }}
-            onSubmit={() => {
-              toast({
-                title: "CARD Form Submitted",
-                description: "Your CARD form has been submitted successfully.",
-              });
-              navigate('/task-center');
-            }}
-          />
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-semibold mb-4">Questionnaire</h2>
+          <p className="text-muted-foreground mb-6">
+            Please answer the following questions to complete your CARD assessment.
+          </p>
+
+          {/* Questionnaire form will be implemented here */}
+          <div className="space-y-4">
+            <div className="p-4 bg-gray-50 rounded-md">
+              <p className="text-sm text-muted-foreground">
+                The questionnaire form implementation is in progress.
+              </p>
+            </div>
+          </div>
         </div>
       </PageTemplate>
     </DashboardLayout>
