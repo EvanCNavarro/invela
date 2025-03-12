@@ -30,7 +30,10 @@ export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps)
     } else {
       // Navigate to the questionnaire page
       console.log('[CardMethodChoice] Manual entry selected - navigating to questionnaire');
-      navigate(`/task-center/task/card-${companyName}/questionnaire`);
+      // Making sure we have the correct route construction
+      const questionnairePath = `/task-center/task/card-${companyName}/questionnaire`;
+      console.log('[CardMethodChoice] Navigating to:', questionnairePath);
+      navigate(questionnairePath);
     }
   };
 
