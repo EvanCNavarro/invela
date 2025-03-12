@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -5,6 +6,7 @@ interface SocketContextType {
   connected: boolean;
   error: Error | null;
   lastMessage: any | null;
+  sendMessage?: (message: any) => void;
 }
 
 const initialState: SocketContextType = {
@@ -98,12 +100,22 @@ export function SocketProvider({
     }
   }, [endpoint, queryClient]);
 
+  // Provide function to send messages
+  const sendMessage = (message: any) => {
+    if (socket && connected) {
+      socket.send(typeof message === 'string' ? message : JSON.stringify(message));
+    } else {
+      console.warn('[WebSocket] Cannot send message: Socket not connected');
+    }
+  };
+
   return (
     <SocketContext.Provider 
       value={{ 
         connected, 
         error, 
-        lastMessage 
+        lastMessage,
+        sendMessage
       }}
     >
       {children}
