@@ -40,7 +40,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   // Get the flow type from the full path
   const fullPath = routeParams?.fullPath || '';
-  const flowType = fullPath.includes('/') ? fullPath.split('/').pop() : '';
+  const flowType = fullPath.split('/').pop();
 
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
 
@@ -127,31 +127,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Task Center
                 </Button>
-
-                {(isSubmitted || task.metadata?.cardFormFile) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleDownload('json')}>
-                        <FileJson className="mr-2 h-4 w-4" />
-                        Download as JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        Download as CSV
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Download as Text
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
               </div>
             </div>
 
@@ -274,31 +249,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Task Center
             </Button>
-
-            {(isSubmitted || task.metadata?.[`${taskType}FormFile`]) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDownload('json')}>
-                    <FileJson className="mr-2 h-4 w-4" />
-                    Download as JSON
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Download as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download as Text
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
         </div>
 
