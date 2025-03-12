@@ -105,7 +105,7 @@ export default function CardQuestionnairePage() {
 }
 import * as React from "react"
 import { useParams } from "react-router-dom"
-import CardFormPlayground from "@/components/card/CardFormPlayground"
+import { CardFormPlayground } from "@/components/playground/CardFormPlayground"
 
 export default function CardQuestionnairePage() {
   const { companyName } = useParams<{ companyName: string }>()
@@ -115,7 +115,17 @@ export default function CardQuestionnairePage() {
       <h1 className="text-2xl font-bold mb-6">
         CARD Questionnaire: {companyName || "Company"}
       </h1>
-      <CardFormPlayground />
+      <CardFormPlayground 
+        taskId={193}
+        companyName="DataTechCompany"
+        companyData={{
+          name: "DataTechCompany",
+          description: "Company description for CARD questionnaire"
+        }}
+        onSubmit={(formData) => {
+          console.log('[CardQuestionnairePage] Form submitted:', formData);
+        }}
+      />
     </div>
   )
 }
