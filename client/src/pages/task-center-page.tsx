@@ -78,6 +78,7 @@ export default function TaskCenterPage() {
 
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
+    queryFn: () => api.getCurrentCompany(), // Added queryFn
     staleTime: 5 * 60 * 1000,
   });
 

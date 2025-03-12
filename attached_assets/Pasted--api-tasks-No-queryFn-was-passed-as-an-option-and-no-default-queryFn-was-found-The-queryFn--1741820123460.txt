@@ -1,0 +1,40 @@
+[["/api/tasks"]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+[["/api/tasks",{"email":"ev.ancnav.a.r.ro@gmail.com","type":"user_invitation"}]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+[["/api/tasks"]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+[TaskCenter] Filtering task: 
+Object {taskId: 193, status: "not_started", scope: "company", activeTab: "my-tasks", userId: 149, …}
+[TaskCenter] Filtering task: 
+Object {taskId: 194, status: "completed", scope: "user", activeTab: "my-tasks", userId: 149, …}
+[TaskCenter] Filtering task: 
+Object {taskId: 192, status: "submitted", scope: "company", activeTab: "my-tasks", userId: 149, …}
+[TaskCenter] Filtering task: 
+Object {taskId: 193, status: "not_started", scope: "company", activeTab: "my-tasks", userId: 149, …}
+[TaskCenter] Filtering task: 
+Object {taskId: 194, status: "completed", scope: "user", activeTab: "my-tasks", userId: 149, …}
+[TaskCenter] Filtering task: 
+Object {taskId: 192, status: "submitted", scope: "company", activeTab: "my-tasks", userId: 149, …}
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+availableTabs: Array(2)
+currentTab: "task-center"
+isCompanyError: false
+isLoadingCompany: false
+[[Prototype]]: Object
+[["/api/tasks"]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+[["/api/companies",""]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+[["/api/tasks",{"email":"ev.ancnav.a.r.ro@gmail.com","type":"user_invitation"}]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+[["/api/tasks"]]: No queryFn was passed as an option, and no default queryFn was found. The queryFn parameter is only optional when using a default queryFn. More info here: https://tanstack.com/query/latest/docs/framework/react/guides/default-query-function
