@@ -1,0 +1,47 @@
+[vite] connecting...
+[vite] connected.
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[App] Component imports starting
+[App] Router initialized with routes configuration
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[Router Debug] Registered routes: 
+[Router Debug] Route resolution order: 
+[Router Debug] Routes matching test URL: 
+Object {url: "/task-center/task/card-DataTechCompany/questionnaire", matches: Array(1)}
+[WebSocket] Connecting to: wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws
+[WebSocket] Connected successfully
+[WebSocket] Connection established: 
+Object {timestamp: "2025-03-12T23:47:59.344Z"}
+[DashboardLayout] Waiting for company data...
+[DashboardLayout] Getting current tab from path: /
+[DashboardLayout] Checking route access: 
+Object {currentTab: "dashboard", path: "/", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Getting current tab from path: /
+[DashboardLayout] Checking route access: 
+Object {currentTab: "dashboard", path: "/", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Getting current tab from path: /
+[DashboardLayout] Checking route access: 
+Object {currentTab: "dashboard", path: "/", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Route not accessible, redirecting to task-center
+[DashboardLayout] Getting current tab from path: /task-center
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", path: "/task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Getting current tab from path: /task-center
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", path: "/task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+availableTabs: Array(2)
+currentTab: "task-center"
+isCompanyError: false
+isLoadingCompany: false
+path: "/task-center"
+[[Prototype]]: Object
+[DashboardLayout] Getting current tab from path: /task-center
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", path: "/task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[DashboardLayout] Getting current tab from path: /task-center
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", path: "/task-center", availableTabs: Array(2), isLoadingCompany: false, isCompanyError: false}
+[WebSocket] Connected successfully
