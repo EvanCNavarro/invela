@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Switch, Route } from 'wouter';
 import { Toaster } from 'react-hot-toast';
-import LoadingScreen from './components/ui/loading-screen';
+import { LoadingScreen } from './components/ui/loading-screen';
 import './globals.css';
 
 // Lazy loaded components
@@ -30,7 +30,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import RequireAuth from './components/auth/RequireAuth';
-import DashboardLayout from './components/layouts/DashboardLayout';
+import { DashboardLayout } from './components/layouts/DashboardLayout';
 import { SocketProvider } from './contexts/SocketContext';
 import { PlaygroundVisibilityProvider } from './contexts/PlaygroundVisibilityContext';
 import { HelpProvider } from './contexts/HelpContext';
