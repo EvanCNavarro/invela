@@ -6,7 +6,7 @@ import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
-import { BreadcrumbNav } from "@/components/ui/breadcrumb-nav";
+import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { PageTemplate } from "@/components/ui/page-template";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
