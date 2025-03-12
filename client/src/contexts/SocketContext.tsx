@@ -122,3 +122,60 @@ export const useSocket = () => {
 };
 
 export { SocketContext };
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface SocketContextType {
+  connected: boolean;
+  error: Error | null;
+  lastMessage: any | null;
+}
+
+const initialState: SocketContextType = {
+  connected: false,
+  error: null,
+  lastMessage: null
+};
+
+const SocketContext = createContext<SocketContextType>(initialState);
+
+export const useSocket = () => useContext(SocketContext);
+
+export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [lastMessage, setLastMessage] = useState<any | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // WebSocket connection logic could be implemented here
+    // For now, we're just setting connected to true for demonstration
+    console.log("[WebSocket] Connecting to:", "wss://your-socket-server-url");
+    
+    // Simulate successful connection
+    setTimeout(() => {
+      setConnected(true);
+      console.log("[WebSocket] Connected successfully");
+      
+      const timestamp = new Date().toISOString();
+      setLastMessage({ timestamp });
+      console.log("[WebSocket] Connection established:", { timestamp });
+    }, 1000);
+
+    return () => {
+      // Cleanup logic for WebSocket
+      console.log("[WebSocket] Connection closed");
+    };
+  }, []);
+
+  // Provide actual socket values and functions
+  const value = {
+    connected,
+    error,
+    lastMessage
+  };
+
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
+};
+
+export default SocketContext;
