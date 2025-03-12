@@ -32,7 +32,7 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { PageTemplate } from "@/components/layouts/page-template";
+import { PageTemplate } from "@/components/ui/page-template";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { BreadcrumbNav } from "@/components/common/breadcrumb-nav";
