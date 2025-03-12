@@ -4,6 +4,7 @@ import App from "./App";
 import "./index.css";
 import { Router } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { AuthProvider } from "@/hooks/use-auth";
 
 const queryClient = new QueryClient({
