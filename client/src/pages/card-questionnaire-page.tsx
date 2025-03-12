@@ -13,18 +13,23 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function CardQuestionnairePage() {
   const [, navigate] = useLocation();
-  const params = useParams();
+  const params = useParams<{companyName: string}>();
+  
+  // Extract company name from URL pattern /task-center/task/card-:companyName/questionnaire
   const companyName = params.companyName;
-
+  
   console.log('[CardQuestionnairePage] Initializing with params:', {
     companyName,
     rawParams: params,
+    path: window.location.pathname,
     timestamp: new Date().toISOString()
   });
 
+  // Ensure we have a valid company name before making the API call
   const { data: task, isLoading, error } = useQuery({
     queryKey: [`/api/tasks/card/${companyName}`],
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: !!companyName, // Only run the query if companyName exists
   });
 
   useEffect(() => {
