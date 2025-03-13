@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 interface DocumentCategory {
   id: string;
   name: string;
-  description?: string;
   acceptedFormats?: string;
 }
 
@@ -34,16 +33,16 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
     id: 'other',
     name: 'Other Documents',
-    description: 'Additional supporting documentation',
     acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG, .JPEG'
   }
 ];
 
 interface DocumentUploadStepProps {
   onFilesUpdated?: (files: File[]) => void;
+  companyName: string;
 }
 
-export function DocumentUploadStep({ onFilesUpdated }: DocumentUploadStepProps) {
+export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUploadStepProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleFilesAccepted = (files: File[]) => {
@@ -54,7 +53,9 @@ export function DocumentUploadStep({ onFilesUpdated }: DocumentUploadStepProps) 
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Upload Documents</h1>
+      <h1 className="text-2xl font-semibold">
+        1. Upload {companyName}'s Compliance Documentation
+      </h1>
 
       <FileUploadZone
         onFilesAccepted={handleFilesAccepted}
@@ -63,24 +64,32 @@ export function DocumentUploadStep({ onFilesUpdated }: DocumentUploadStepProps) 
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-        {DOCUMENT_CATEGORIES.map((category) => (
-          <div 
-            key={category.id}
-            className="p-4 rounded-lg border-2 border-muted bg-muted/5"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium">{category.name}</h3>
-              <Badge variant="secondary" className="text-xs">
-                {uploadedFiles.length} files
-              </Badge>
+        {DOCUMENT_CATEGORIES.map((category) => {
+          const fileCount = uploadedFiles.length;
+          const hasFiles = fileCount > 0;
+
+          return (
+            <div 
+              key={category.id}
+              className={cn(
+                "p-4 rounded-lg border-2",
+                hasFiles 
+                  ? "border-green-600/30 bg-green-50/50" 
+                  : "border-gray-200 bg-gray-50/50"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-gray-900">{category.name}</h3>
+                <Badge 
+                  variant={hasFiles ? "default" : "secondary"} 
+                  className="text-xs"
+                >
+                  {hasFiles ? `${fileCount} files` : '0'}
+                </Badge>
+              </div>
             </div>
-            {category.description && (
-              <p className="text-xs text-muted-foreground">
-                {category.description}
-              </p>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
