@@ -18,7 +18,14 @@ if (!fs.existsSync(uploadDir)) {
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     console.log('[Upload] Setting destination:', uploadDir);
-    cb(null, uploadDir);
+    try {
+      // Verify directory is writable
+      fs.accessSync(uploadDir, fs.constants.W_OK);
+      cb(null, uploadDir);
+    } catch (error) {
+      console.error('[Upload] Directory access error:', error);
+      cb(new Error('Upload directory is not writable. Please contact support.'), uploadDir);
+    }
   },
   filename: (req, file, cb) => {
     const timestamp = Date.now();
@@ -37,15 +44,41 @@ export const fileUpload = multer({
     files: 1 // Allow only 1 file per request
   },
   fileFilter: (req, file, cb) => {
-    console.log('[Upload] Checking file:', {
+    console.log('[Upload] Processing file:', {
       originalname: file.originalname,
-      mimetype: file.mimetype
+      mimetype: file.mimetype,
+      size: file.size
     });
 
-    if (file.mimetype === 'application/pdf') {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF files are allowed'));
+    // Check file presence
+    if (!file) {
+      console.error('[Upload] No file received');
+      cb(new Error('No file was selected for upload'));
+      return;
     }
+
+    // Check file size early
+    if (file.size > 50 * 1024 * 1024) {
+      console.error('[Upload] File too large:', file.size);
+      cb(new Error('File size exceeds 50MB limit. Please compress your PDF or split it into smaller files.'));
+      return;
+    }
+
+    // Validate file type
+    if (file.mimetype !== 'application/pdf') {
+      console.error('[Upload] Invalid file type:', file.mimetype);
+      cb(new Error(`Invalid file type: ${file.mimetype}. Only PDF files are allowed. Please ensure you're uploading a valid PDF document.`));
+      return;
+    }
+
+    // Check file extension
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext !== '.pdf') {
+      console.error('[Upload] Invalid file extension:', ext);
+      cb(new Error('File must have a .pdf extension. Please rename your file to end with .pdf'));
+      return;
+    }
+
+    cb(null, true);
   }
 });
