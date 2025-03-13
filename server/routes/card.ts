@@ -443,20 +443,20 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       const [file] = await db.insert(files)
         .values({
           name: fileName,
-          content: fileContent,
-          mime_type: 'application/json',
+          status: 'uploaded',
           type: 'card_assessment',
-          status: 'uploaded', // Changed from 'active' to 'uploaded'
+          path: `/card-assessments/${fileName}`,
           company_id: task.company_id,
           user_id: req.user!.id,
           created_at: timestamp,
           updated_at: timestamp,
           size: Buffer.from(fileContent).length,
-          path: `/card-assessments/${fileName}`,
+          version: 1,
           metadata: {
             taskId: taskId,
             assessmentDate: timestamp.toISOString(),
-            totalRiskScore: newRiskScore
+            totalRiskScore: newRiskScore,
+            content: fileContent 
           }
         })
         .returning();
