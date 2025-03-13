@@ -57,6 +57,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [fileId, setFileId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
@@ -209,14 +210,14 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            {selectedMethod === 'upload' ? (
+            {selectedMethod === 'upload' && !showForm ? (
               <DocumentUploadWizard
                 companyName={companyName}
                 onComplete={() => {
-                  navigate('/task-center');
+                  setShowForm(true);
                 }}
               />
-            ) : selectedMethod === 'manual' ? (
+            ) : (selectedMethod === 'manual' || showForm) ? (
               <CardFormPlayground
                 taskId={task?.id || 0}
                 companyName={companyName}
