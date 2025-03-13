@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface DocumentCategory {
   id: string;
@@ -44,11 +46,75 @@ interface DocumentUploadStepProps {
 
 export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUploadStepProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleFilesAccepted = (files: File[]) => {
-    const newFiles = [...uploadedFiles, ...files];
-    setUploadedFiles(newFiles);
-    onFilesUpdated?.(newFiles);
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
+      try {
+        const res = await fetch('/api/files', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json'
+          },
+          body: formData
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Upload failed');
+        }
+
+        return await res.json();
+      } catch (error) {
+        console.error('[Document Upload] Upload error:', error);
+        throw error;
+      }
+    }
+  });
+
+  const uploadFile = async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      await uploadMutation.mutateAsync(formData);
+
+      // Update UI and trigger parent callback
+      setUploadedFiles(prev => [...prev, file]);
+      onFilesUpdated?.([...uploadedFiles, file]);
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `${file.name} uploaded successfully`,
+        duration: 3000,
+      });
+
+      // Invalidate files query to refresh file list
+      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+    } catch (error) {
+      toast({
+        title: "Upload Error",
+        description: error instanceof Error ? error.message : "Failed to upload file",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
+
+  const handleFilesAccepted = async (files: File[]) => {
+    if (isUploading) return;
+
+    setIsUploading(true);
+    try {
+      for (const file of files) {
+        await uploadFile(file);
+      }
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -61,6 +127,7 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
         onFilesAccepted={handleFilesAccepted}
         acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
         className="min-h-[200px]"
+        disabled={isUploading}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
