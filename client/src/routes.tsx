@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Route, Switch } from 'wouter';
 import { TaskPage } from './pages/task-page';

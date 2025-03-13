@@ -115,6 +115,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   // Ensure we're showing TaskCenterPage when on task-center route
   if (location.pathname === '/task-center') {
     console.log('[DashboardLayout] Rendering Task Center Page');
+    // No need to override the children here as the correct component is now set in routes.tsx
   }
 
   return (
