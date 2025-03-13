@@ -43,7 +43,7 @@ router.post('/api/files', (req, res) => {
       // Handle other errors from multer
       if (err) {
         console.error('[Files] Upload middleware error:', err);
-        console.log('[Files] Error details:', err.stack); //Added more detailed logging
+        console.log('[Files] Error details:', err.stack);
         return res.status(400).json({
           error: 'Upload failed',
           detail: err.message,
@@ -107,7 +107,7 @@ router.post('/api/files', (req, res) => {
       }
 
       try {
-        // Create database record
+        // Create database record - only using columns that exist in the schema
         console.log('[Files] Creating database record for:', req.file.originalname);
         const [fileRecord] = await db.insert(files)
           .values({
@@ -132,7 +132,8 @@ router.post('/api/files', (req, res) => {
         res.status(201).json(fileRecord);
       } catch (dbError) {
         console.error('[Files] Database error:', dbError);
-        console.log('[Files] Database error details:', dbError.stack); //Added more detailed logging
+        console.log('[Files] Database error details:', dbError.stack);
+
         // Clean up uploaded file if database operation fails
         try {
           fs.unlinkSync(uploadedFilePath);
@@ -145,7 +146,7 @@ router.post('/api/files', (req, res) => {
       }
     } catch (error) {
       console.error('[Files] Server error:', error);
-      console.log('[Files] Server error details:', error.stack); //Added more detailed logging
+      console.log('[Files] Server error details:', error.stack);
 
       // Clean up uploaded file if request fails
       if (req.file) {
@@ -208,7 +209,7 @@ router.get('/api/files', async (req, res) => {
     res.json(fileRecords);
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
-    console.log('[Files] Error details:', error.stack); //Added more detailed logging
+    console.log('[Files] Error details:', error.stack); 
     res.status(500).json({ 
       error: 'Internal server error',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
@@ -251,7 +252,7 @@ router.get("/api/files/:id/download", async (req, res) => {
           fileId,
           filePath
         });
-        console.log('[Files] Error details:', err.stack); //Added more detailed logging
+        console.log('[Files] Error details:', err.stack); 
         if (!res.headersSent) {
           res.status(500).json({ error: "Error downloading file" });
         }
@@ -259,7 +260,7 @@ router.get("/api/files/:id/download", async (req, res) => {
     });
   } catch (error) {
     console.error("[Files] Error in download endpoint:", error);
-    console.log('[Files] Error details:', error.stack); //Added more detailed logging
+    console.log('[Files] Error details:', error.stack); 
     if (!res.headersSent) {
       res.status(500).json({ error: "Internal server error" });
     }
