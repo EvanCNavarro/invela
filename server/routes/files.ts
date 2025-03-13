@@ -12,7 +12,10 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 
 // File upload endpoint
 router.post('/api/files', (req, res) => {
-  console.log('[Files] Starting PDF upload request');
+  console.log('[Files] Starting PDF upload request:', {
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length']
+  });
 
   fileUpload.single('file')(req, res, async (err) => {
     try {
@@ -104,6 +107,7 @@ router.post('/api/files', (req, res) => {
 
       try {
         // Create database record
+        console.log('[Files] Creating database record for:', req.file.originalname);
         const [fileRecord] = await db.insert(files)
           .values({
             name: req.file.originalname,
@@ -147,6 +151,7 @@ router.post('/api/files', (req, res) => {
         if (fs.existsSync(filePath)) {
           try {
             fs.unlinkSync(filePath);
+            console.log('[Files] Cleaned up file after error:', filePath);
           } catch (cleanupError) {
             console.error('[Files] Error cleaning up file:', cleanupError);
           }
