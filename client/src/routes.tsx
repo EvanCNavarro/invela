@@ -1,6 +1,7 @@
 import React from 'react';
 import { Route, Switch } from 'wouter';
 import { TaskPage } from './pages/task-page';
+import TaskCenterPage from './pages/task-center-page';
 import FileVaultPage from './pages/file-vault-page';
 import TaskCenterPage from './pages/task-center-page';
 import CardTaskPage from './pages/card-task-page';
