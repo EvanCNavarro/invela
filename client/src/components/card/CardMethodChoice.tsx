@@ -14,7 +14,8 @@ export function CardMethodChoice({ taskId, companyName, onMethodSelect }: CardMe
 
   return (
     <div className="container max-w-7xl mx-auto py-8">
-      <h1 className="text-2xl font-semibold mb-6">Choose Your Preferred Method</h1>
+      <h1 className="text-3xl font-bold mb-4">Compliance & Risk Documentation Request</h1>
+      <h2 className="text-xl font-medium mb-6">Choose Your Preferred Method</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recommended Upload Option */}
@@ -32,7 +33,7 @@ export function CardMethodChoice({ taskId, companyName, onMethodSelect }: CardMe
           </div>
 
           <p className="text-gray-600 mb-4">
-            Upload your existing documentation to automatically fill out the CARD form.
+            Upload your existing documentation to automatically fill out the compliance form.
             This method is faster and more efficient.
           </p>
 
@@ -66,7 +67,7 @@ export function CardMethodChoice({ taskId, companyName, onMethodSelect }: CardMe
           </div>
 
           <p className="text-gray-600 mb-4">
-            Manually fill out the CARD form by answering each question individually.
+            Manually fill out the compliance form by answering each question individually.
             Choose this if you prefer to input information directly.
           </p>
 
