@@ -24,13 +24,13 @@ const WIZARD_STEPS = [
 ];
 
 interface DocumentUploadWizardProps {
+  companyName: string;
   onComplete?: () => void;
 }
 
-export const DocumentUploadWizard = ({ onComplete }: DocumentUploadWizardProps) => {
+export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUploadWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const { company } = useCompany();
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -71,7 +71,7 @@ export const DocumentUploadWizard = ({ onComplete }: DocumentUploadWizardProps) 
                 <h2 className="text-xl font-semibold">Document Upload</h2>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                {company?.name} | Upload Documents
+                {companyName} | Upload Documents
               </p>
             </div>
             {!isSubmitted && (
