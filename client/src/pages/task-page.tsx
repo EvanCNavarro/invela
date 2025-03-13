@@ -19,6 +19,7 @@ import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
+import {PageHeader} from "@/components/ui/page-header"
 
 interface TaskPageProps {
   params: {
@@ -167,6 +168,10 @@ export default function TaskPage({ params }: TaskPageProps) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
+          <PageHeader
+            title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
+            description="Complete the Compliance and Risk Disclosure form"
+          />
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
             <div className="flex justify-between items-center">
@@ -222,7 +227,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      fileName: `card_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                      fileName: `compliance_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                       formData,
                       taskId: task?.id
                     })
@@ -230,7 +235,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     .then(async response => {
                       const data = await response.json();
                       if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save CARD form');
+                        throw new Error(data.details || data.error || 'Failed to save compliance form');
                       }
                       return data;
                     })
@@ -249,8 +254,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                       toast({
                         title: "Success",
                         description: result.warnings?.length
-                          ? "Card form has been saved successfully with some updates to existing data."
-                          : "Card form has been saved successfully.",
+                          ? "Compliance form has been saved successfully with some updates to existing data."
+                          : "Compliance form has been saved successfully.",
                         variant: "default",
                       });
 
@@ -262,7 +267,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                       console.error('[TaskPage] Form submission failed:', error);
                       toast({
                         title: "Error",
-                        description: error.message || "Failed to save CARD form. Please try again.",
+                        description: error.message || "Failed to save compliance form. Please try again.",
                         variant: "destructive",
                       });
                     });
