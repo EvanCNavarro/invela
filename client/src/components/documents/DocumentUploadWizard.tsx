@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useCompany } from "@/hooks/use-company";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 
 // Define the wizard steps
 const WIZARD_STEPS = [
@@ -169,7 +168,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               onClick={handleNext}
               className="ml-auto"
             >
-              {isLastStep ? 'Complete' : 'Next'}
+              {isLastStep ? 'Continue to Form' : 'Next'}
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
         </div>
