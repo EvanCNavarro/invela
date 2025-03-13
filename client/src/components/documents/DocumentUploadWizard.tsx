@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { DocumentUploadStep } from "./DocumentUploadStep";
 
 // Define the wizard steps
 const WIZARD_STEPS = [
@@ -30,6 +31,7 @@ interface DocumentUploadWizardProps {
 export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUploadWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
 
   const handleBack = () => {
     if (currentStep > 0) {
@@ -137,9 +139,20 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
         <hr className="border-t border-gray-200 my-6" />
 
-        {/* Content Section - Placeholder for step content */}
-        <div className="min-h-[300px] flex items-center justify-center text-muted-foreground">
-          {WIZARD_STEPS[currentStep].description}
+        {/* Content Section */}
+        <div className="min-h-[300px]">
+          {currentStep === 0 ? (
+            <DocumentUploadStep
+              onFilesUpdated={(files) => {
+                setUploadedFiles(files);
+              }}
+              companyName={companyName}
+            />
+          ) : (
+            <div className="flex items-center justify-center text-muted-foreground">
+              {WIZARD_STEPS[currentStep].description}
+            </div>
+          )}
         </div>
 
         {/* Navigation Buttons */}
@@ -150,7 +163,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               onClick={handleBack}
               disabled={currentStep === 0}
             >
-              {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
+              <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           )}
