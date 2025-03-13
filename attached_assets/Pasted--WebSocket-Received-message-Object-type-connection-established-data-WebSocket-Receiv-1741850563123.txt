@@ -1,0 +1,41 @@
+[WebSocket] Received message: 
+Object {type: "connection_established", data: {…}}
+[WebSocket] Received message: 
+Object {type: "pong"}
+[WebSocket] Received pong
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[FileUploadZone] Accepted files: 
+Array [{…}]
+[Document Upload] Files accepted: 
+Array [{…}]
+[Document Upload] Starting upload: 
+Object {fileName: "SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt", fileType: "text/plain"}
+fileName: "SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt"
+fileType: "text/plain"
+[[Prototype]]: Object
+[Document Upload] Error response parsing failed: 
+Error {}
+
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+[Document Upload] Upload error: 
+Object {error: Error, message: "Upload failed: Internal Server Error", stack: "Error: Upload failed: Internal Server Error↵    at Object.mutationFn…"}
+error: Error
+message: "Upload failed: Internal Server Error"
+stack: "Error: Upload failed: Internal Server Error↵ at Object.mutationFn (https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/src/components/documents/DocumentUploadStep.tsx:85:19)"
+[[Prototype]]: Object
+
+[Document Upload] Error uploading file: 
+Object {fileName: "SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt", fileType: "text/plain", error: Error}
+error: Error
+fileName: "SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt"
+fileType: "text/plain"
+[[Prototype]]: Object
+
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}

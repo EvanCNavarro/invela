@@ -12,7 +12,7 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 
 // File upload endpoint
 router.post('/api/files', (req, res) => {
-  console.log('[Files] Starting PDF upload request:', {
+  console.log('[Files] Starting file upload request:', {
     contentType: req.headers['content-type'],
     contentLength: req.headers['content-length']
   });
@@ -23,16 +23,16 @@ router.post('/api/files', (req, res) => {
       if (err instanceof multer.MulterError) {
         console.error('[Files] Multer error:', err);
         return res.status(400).json({
-          error: 'PDF upload error',
+          error: 'File upload error',
           detail: err.code === 'LIMIT_FILE_SIZE' 
-            ? 'File size exceeds 50MB limit. Please compress your PDF or split it into smaller files.'
+            ? 'File size exceeds 50MB limit. Please compress your file or split it into smaller files.'
             : err.code === 'LIMIT_UNEXPECTED_FILE'
             ? 'Please ensure you are uploading a file with the field name "file"'
             : err.message,
           code: err.code,
           field: err.field,
           suggestions: [
-            'Try compressing your PDF file',
+            'Try compressing your file',
             'Check if the file is not corrupted',
             'Ensure you\'re using the correct form field name (file)',
             'Clear your browser cache and try again'
@@ -48,9 +48,9 @@ router.post('/api/files', (req, res) => {
           error: 'Upload failed',
           detail: err.message,
           suggestions: [
-            'Check if the file is a valid PDF',
-            'Ensure the file has a .pdf extension',
-            'Try uploading a different PDF file',
+            'Check if the file is valid',
+            'Ensure the file has the correct extension (.pdf or .txt)',
+            'Try uploading a different file',
             'Make sure you have a stable internet connection'
           ]
         });
@@ -61,16 +61,16 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] No file received');
         return res.status(400).json({
           error: 'No file uploaded',
-          detail: 'Request must include a PDF file',
+          detail: 'Request must include a file',
           suggestions: [
-            'Select a PDF file before submitting',
+            'Select a file before submitting',
             'Ensure your browser supports file uploads',
             'Try using a different browser'
           ]
         });
       }
 
-      console.log('[Files] PDF file received:', {
+      console.log('[Files] File received:', {
         originalname: req.file.originalname,
         filename: req.file.filename,
         mimetype: req.file.mimetype,
@@ -97,17 +97,17 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] File not saved to disk:', uploadedFilePath);
         return res.status(500).json({
           error: 'File processing error',
-          detail: 'Failed to save PDF file to server',
+          detail: 'Failed to save file to server',
           suggestions: [
             'Try uploading the file again',
             'Check if the file is not locked or in use',
-            'Ensure the PDF is not password protected'
+            'Ensure the file is not corrupted'
           ]
         });
       }
 
       try {
-        // Create database record - using only columns that exist in schema
+        // Create database record using only columns that exist in schema
         console.log('[Files] Creating database record for:', req.file.originalname);
         const [fileRecord] = await db.insert(files)
           .values({
@@ -120,6 +120,8 @@ router.post('/api/files', (req, res) => {
             status: 'uploaded',
             download_count: 0,
             version: 1,
+            created_at: new Date(),
+            updated_at: new Date(),
             upload_time: new Date()
           })
           .returning();
@@ -210,7 +212,7 @@ router.get('/api/files', async (req, res) => {
     res.json(fileRecords);
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
-    console.log('[Files] Error details:', error.stack); 
+    console.log('[Files] Error details:', error.stack);
     res.status(500).json({ 
       error: 'Internal server error',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
