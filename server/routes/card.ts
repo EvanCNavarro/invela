@@ -359,11 +359,17 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     });
 
     if (!task) {
-      throw new Error('Task not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Task not found'
+      });
     }
 
     if (!task.company_id) {
-      throw new Error('Task has no associated company');
+      return res.status(400).json({
+        success: false,
+        message: 'Task has no associated company'
+      });
     }
 
     // Get all fields and responses
@@ -510,7 +516,11 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         companyId: task.company_id,
         timestamp: new Date().toISOString()
       });
-      throw error;
+      return res.status(500).json({
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to submit form",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
 
   } catch (error) {
@@ -520,7 +530,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Failed to submit form",
       error: error instanceof Error ? error.message : "Unknown error"
