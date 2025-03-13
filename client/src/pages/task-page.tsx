@@ -19,7 +19,6 @@ import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
-import {PageHeader} from "@/components/ui/page-header"
 
 interface TaskPageProps {
   params: {
@@ -206,10 +205,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                 </DropdownMenu>
               )}
             </div>
-            <PageHeader
-              title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
-              description="Complete the Compliance and Risk Disclosure form"
-            />
           </div>
 
           <div className="container max-w-7xl mx-auto">
@@ -222,6 +217,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task?.metadata?.company?.description || undefined
                 }}
                 savedFormData={task?.savedFormData}
+                title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
+                description="Complete the Compliance and Risk Disclosure form"
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
                     method: 'POST',
@@ -279,8 +276,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                 <p className="text-muted-foreground">
                   The document upload feature is currently under development.
                 </p>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="mt-4"
                   onClick={() => setSelectedMethod(null)}
                 >
@@ -341,10 +338,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               </DropdownMenu>
             )}
           </div>
-          <PageHeader
-            title={`${taskType === 'kyb' ? 'KYB' : 'Compliance'} Form: ${displayName}`}
-            description={`${taskType === 'kyb' ? 'Complete the Know Your Business (KYB) form' : 'Complete the Compliance and Risk Disclosure form'}`}
-          />
         </div>
 
         <div className="container max-w-7xl mx-auto">
@@ -357,6 +350,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                 description: task.metadata?.company?.description || undefined
               }}
               savedFormData={task.savedFormData}
+              title={`${taskType === 'kyb' ? 'KYB' : 'Compliance'} Form: ${displayName}`}
+              description={`${taskType === 'kyb' ? 'Complete the Know Your Business (KYB) form' : 'Complete the Compliance and Risk Disclosure form'}`}
               onSubmit={(formData) => {
                 const submitData = {
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
