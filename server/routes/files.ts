@@ -24,7 +24,7 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] Multer error:', err);
         return res.status(400).json({
           error: 'File upload error',
-          detail: err.code === 'LIMIT_FILE_SIZE' 
+          detail: err.code === 'LIMIT_FILE_SIZE'
             ? 'File size exceeds 50MB limit. Please compress your file or split it into smaller files.'
             : err.code === 'LIMIT_UNEXPECTED_FILE'
             ? 'Please ensure you are uploading a file with the field name "file"'
@@ -186,21 +186,21 @@ router.get('/api/files', async (req, res) => {
     const userId = req.user?.id;
 
     if (!companyId) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Company ID is required'
       });
     }
 
     const parsedCompanyId = parseInt(companyId.toString(), 10);
     if (isNaN(parsedCompanyId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid company ID format'
       });
     }
 
     // Verify user has access to this company
     if (req.user?.company_id !== parsedCompanyId) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Access denied'
       });
     }
@@ -213,7 +213,7 @@ router.get('/api/files', async (req, res) => {
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
     console.log('[Files] Error details:', error.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
@@ -255,7 +255,7 @@ router.get("/api/files/:id/download", async (req, res) => {
           fileId,
           filePath
         });
-        console.log('[Files] Error details:', err.stack); 
+        console.log('[Files] Error details:', err.stack);
         if (!res.headersSent) {
           res.status(500).json({ error: "Error downloading file" });
         }
@@ -263,7 +263,7 @@ router.get("/api/files/:id/download", async (req, res) => {
     });
   } catch (error) {
     console.error("[Files] Error in download endpoint:", error);
-    console.log('[Files] Error details:', error.stack); 
+    console.log('[Files] Error details:', error.stack);
     if (!res.headersSent) {
       res.status(500).json({ error: "Internal server error" });
     }
