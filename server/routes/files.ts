@@ -11,14 +11,37 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 
 // Ensure upload directory exists with proper permissions
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+  try {
+    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
+    console.log('[Files] Created upload directory:', uploadDir);
+  } catch (error) {
+    console.error('[Files] Error creating upload directory:', error);
+    throw error;
+  }
 }
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    console.log('[Files] Setting upload destination:', uploadDir);
-    cb(null, uploadDir);
+    console.log('[Files] Processing file upload:', {
+      directory: uploadDir,
+      filename: file.originalname,
+      mimetype: file.mimetype
+    });
+
+    if (!fs.existsSync(uploadDir)) {
+      const error = new Error(`Upload directory ${uploadDir} does not exist`);
+      console.error('[Files] Upload directory error:', error);
+      return cb(error, uploadDir);
+    }
+
+    try {
+      fs.accessSync(uploadDir, fs.constants.W_OK);
+      cb(null, uploadDir);
+    } catch (error) {
+      console.error('[Files] Directory access error:', error);
+      cb(error as Error, uploadDir);
+    }
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
@@ -29,6 +52,7 @@ const storage = multer.diskStorage({
   }
 });
 
+// File filter configuration
 const fileFilter = (req: any, file: any, cb: any) => {
   console.log('[Files] Checking file:', {
     originalname: file.originalname,
