@@ -14,77 +14,38 @@ if (!fs.existsSync(uploadDir)) {
   }
 }
 
-// Configure storage for file uploads
+// Configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    try {
-      // Check directory permissions
-      fs.accessSync(uploadDir, fs.constants.W_OK);
-      console.log('[Upload] Directory is writable:', uploadDir);
-      cb(null, uploadDir);
-    } catch (error) {
-      console.error('[Upload] Directory access error:', error);
-      cb(error as Error, uploadDir);
-    }
+    console.log('[Upload] Setting destination:', uploadDir);
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    try {
-      // Generate a safe filename with timestamp
-      const timestamp = Date.now();
-      const randomString = Math.random().toString(36).substring(2, 15);
-      const safeFilename = `${timestamp}-${randomString}.pdf`;
-      console.log('[Upload] Generated filename:', safeFilename);
-      cb(null, safeFilename);
-    } catch (error) {
-      console.error('[Upload] Filename generation error:', error);
-      cb(error as Error, '');
-    }
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 15);
+    const filename = `${timestamp}-${randomString}.pdf`;
+    console.log('[Upload] Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
-// Create multer instance for PDF uploads
+// Export only fileUpload middleware
 export const fileUpload = multer({
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit for PDFs
+    fileSize: 50 * 1024 * 1024, // 50MB limit
     files: 1 // Allow only 1 file per request
   },
   fileFilter: (req, file, cb) => {
-    try {
-      console.log('[Upload] Processing file:', {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size
-      });
+    console.log('[Upload] Checking file:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype
+    });
 
-      // Accept only PDF files
-      if (file.mimetype === 'application/pdf') {
-        // Check if file has PDF extension
-        const ext = path.extname(file.originalname).toLowerCase();
-        if (ext !== '.pdf') {
-          file.originalname = `${file.originalname}.pdf`;
-        }
-
-        // Basic PDF header check (will be enhanced by checking magic numbers)
-        if (file.stream) {
-          const firstBytes = Buffer.alloc(5);
-          file.stream.read(firstBytes, 0, 5);
-          if (firstBytes.toString().startsWith('%PDF-')) {
-            cb(null, true);
-            return;
-          }
-          cb(new Error('Invalid PDF file format'));
-          return;
-        }
-
-        cb(null, true);
-        return;
-      }
-
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
       cb(new Error('Only PDF files are allowed'));
-    } catch (error) {
-      console.error('[Upload] File filter error:', error);
-      cb(error as Error);
     }
   }
 });
