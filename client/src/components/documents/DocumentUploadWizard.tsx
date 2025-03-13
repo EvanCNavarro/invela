@@ -31,13 +31,7 @@ interface DocumentUploadWizardProps {
 export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUploadWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      setCurrentStep(current => current - 1);
-    }
-  };
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -45,6 +39,12 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     } else {
       setIsSubmitted(true);
       onComplete?.();
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(current => current - 1);
     }
   };
 
@@ -69,11 +69,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">Document Upload</h2>
+                <h2 className="text-xl font-semibold">Upload {companyName}'s Compliance Documentation</h2>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                {companyName} | Upload Documents
-              </p>
             </div>
             {!isSubmitted && (
               <div className="text-sm text-muted-foreground">
@@ -146,7 +143,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               onFilesUpdated={(files) => {
                 setUploadedFiles(files);
               }}
-              companyName={companyName}
             />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
@@ -180,6 +176,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <Button 
               onClick={handleNext}
               className="ml-auto"
+              disabled={currentStep === 0 && uploadedFiles.length === 0}
             >
               {isLastStep ? 'Continue to Form' : 'Next'}
               <ArrowRight className="h-4 w-4 ml-2" />
