@@ -61,18 +61,10 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
   }
 };
 
-export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks: Task[], companyOnboardingCompleted?: boolean }) {
+export function TaskTable({ tasks }: { tasks: Task[] }) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [, navigate] = useLocation();
-
-  // Log when tasks are rendered to help with debugging
-  useEffect(() => {
-    console.log('[TaskTable] Rendering tasks:', { 
-      count: tasks?.length || 0,
-      timestamp: new Date().toISOString() 
-    });
-  }, [tasks]);
 
   // Find KYB task completion status for the company
   const isKybCompleted = (companyId: number | null): boolean => {

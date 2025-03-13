@@ -222,38 +222,6 @@ export function registerRoutes(app: Express): Express {
 
 
   // Tasks endpoints
-  app.get("/api/tasks/card/:companyName", requireAuth, async (req, res) => {
-    try {
-      const { companyName } = req.params;
-
-      // Find the company by name
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.name, companyName)
-      });
-
-      if (!company) {
-        return res.status(404).json({ error: 'Company not found' });
-      }
-
-      // Find card task for this company
-      const task = await db.query.tasks.findFirst({
-        where: and(
-          eq(tasks.company_id, company.id),
-          eq(tasks.task_type, 'company_card')
-        )
-      });
-
-      if (!task) {
-        return res.status(404).json({ error: 'Card task not found for this company' });
-      }
-
-      return res.json(task);
-    } catch (error) {
-      console.error('Error fetching card task:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] ====== Starting task fetch =====');
@@ -859,7 +827,8 @@ export function registerRoutes(app: Express): Express {
 
       if (!company_name) {
         return res.status(400).json({
-          message: "Company name is required"        });
+          message: "Company name is required"
+        });
       }
 
       // Check for existing company with same name
