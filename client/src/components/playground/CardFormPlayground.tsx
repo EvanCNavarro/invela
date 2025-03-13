@@ -506,10 +506,13 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    if (progress < 3) {
+    // Count completed responses
+    const completedResponses = Object.values(formResponses).filter(response => response && response.trim().length > 0).length;
+
+    if (completedResponses < 3) {
       toast({
         title: "Cannot Submit Yet",
-        description: "Please complete at least 3% of the form before submitting.",
+        description: "Please complete at least 3 questions before submitting.",
         variant: "destructive"
       });
       return;
@@ -545,7 +548,7 @@ export function CardFormPlayground({
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={progress < 3 || submitAssessment.isPending}
+          disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
           className="px-8"
         >
           {submitAssessment.isPending ? (
@@ -562,10 +565,10 @@ export function CardFormPlayground({
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Progress</span>
-          <span>{progress}%</span>
+          <span>{Object.values(formResponses).filter(response => response && response.trim().length > 0).length} / {cardFields.length}</span>
         </div>
         <Progress
-          value={progress}
+          value={Object.values(formResponses).filter(response => response && response.trim().length > 0).length / cardFields.length *100}
           className="h-2 bg-gray-200"
         />
       </div>
