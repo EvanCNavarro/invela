@@ -22,8 +22,18 @@ router.post('/api/files', (req, res) => {
         return res.status(400).json({
           error: 'PDF upload error',
           detail: err.code === 'LIMIT_FILE_SIZE' 
-            ? 'File size exceeds 50MB limit'
-            : err.message
+            ? 'File size exceeds 50MB limit. Please compress your PDF or split it into smaller files.'
+            : err.code === 'LIMIT_UNEXPECTED_FILE'
+            ? 'Please ensure you are uploading a file with the field name "file"'
+            : err.message,
+          code: err.code,
+          field: err.field,
+          suggestions: [
+            'Try compressing your PDF file',
+            'Check if the file is not corrupted',
+            'Ensure you\'re using the correct form field name (file)',
+            'Clear your browser cache and try again'
+          ]
         });
       }
 
@@ -32,7 +42,13 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] Upload middleware error:', err);
         return res.status(400).json({
           error: 'Upload failed',
-          detail: err.message
+          detail: err.message,
+          suggestions: [
+            'Check if the file is a valid PDF',
+            'Ensure the file has a .pdf extension',
+            'Try uploading a different PDF file',
+            'Make sure you have a stable internet connection'
+          ]
         });
       }
 
@@ -41,7 +57,12 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] No file received');
         return res.status(400).json({
           error: 'No file uploaded',
-          detail: 'Request must include a PDF file'
+          detail: 'Request must include a PDF file',
+          suggestions: [
+            'Select a PDF file before submitting',
+            'Ensure your browser supports file uploads',
+            'Try using a different browser'
+          ]
         });
       }
 
@@ -57,7 +78,12 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] Authentication required');
         return res.status(401).json({
           error: 'Authentication required',
-          detail: 'User must be logged in to upload files'
+          detail: 'User must be logged in to upload files',
+          suggestions: [
+            'Please log in again',
+            'Check if your session has expired',
+            'Clear your browser cookies and try logging in again'
+          ]
         });
       }
 
@@ -67,7 +93,12 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] File not saved to disk:', uploadedFilePath);
         return res.status(500).json({
           error: 'File processing error',
-          detail: 'Failed to save PDF file'
+          detail: 'Failed to save PDF file to server',
+          suggestions: [
+            'Try uploading the file again',
+            'Check if the file is not locked or in use',
+            'Ensure the PDF is not password protected'
+          ]
         });
       }
 
@@ -124,7 +155,12 @@ router.post('/api/files', (req, res) => {
 
       res.status(500).json({
         error: 'Server error',
-        detail: error instanceof Error ? error.message : 'Unknown error occurred'
+        detail: error instanceof Error ? error.message : 'Unknown error occurred',
+        suggestions: [
+          'Please try uploading again in a few minutes',
+          'Check your internet connection',
+          'If the problem persists, contact support'
+        ]
       });
     }
   });
