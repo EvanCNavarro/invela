@@ -30,7 +30,8 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const filename = `${timestamp}-${randomString}.pdf`;
+    const ext = file.mimetype === 'application/pdf' ? '.pdf' : '.txt';
+    const filename = `${timestamp}-${randomString}${ext}`;
     console.log('[Upload] Generated filename:', filename);
     cb(null, filename);
   }
@@ -60,22 +61,23 @@ export const fileUpload = multer({
     // Check file size early
     if (file.size > 50 * 1024 * 1024) {
       console.error('[Upload] File too large:', file.size);
-      cb(new Error('File size exceeds 50MB limit. Please compress your PDF or split it into smaller files.'));
+      cb(new Error('File size exceeds 50MB limit. Please compress your file or split it into smaller files.'));
       return;
     }
 
     // Validate file type
-    if (file.mimetype !== 'application/pdf') {
+    const acceptedTypes = ['application/pdf', 'text/plain'];
+    if (!acceptedTypes.includes(file.mimetype)) {
       console.error('[Upload] Invalid file type:', file.mimetype);
-      cb(new Error(`Invalid file type: ${file.mimetype}. Only PDF files are allowed. Please ensure you're uploading a valid PDF document.`));
+      cb(new Error(`Invalid file type: ${file.mimetype}. Only PDF and TXT files are allowed.`));
       return;
     }
 
     // Check file extension
     const ext = path.extname(file.originalname).toLowerCase();
-    if (ext !== '.pdf') {
+    if (!['.pdf', '.txt'].includes(ext)) {
       console.error('[Upload] Invalid file extension:', ext);
-      cb(new Error('File must have a .pdf extension. Please rename your file to end with .pdf'));
+      cb(new Error('File must have a .pdf or .txt extension.'));
       return;
     }
 
