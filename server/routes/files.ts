@@ -5,236 +5,159 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import { fileUpload } from '../middleware/upload';
 
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads');
 
-// Ensure upload directory exists with proper permissions
-if (!fs.existsSync(uploadDir)) {
-  try {
-    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
-    console.log('[Files] Created upload directory:', uploadDir);
-  } catch (error) {
-    console.error('[Files] Error creating upload directory:', error);
-    throw error;
-  }
-}
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    console.log('[Files] Processing file upload:', {
-      directory: uploadDir,
-      filename: file.originalname,
-      mimetype: file.mimetype
-    });
-
-    if (!fs.existsSync(uploadDir)) {
-      const error = new Error(`Upload directory ${uploadDir} does not exist`);
-      console.error('[Files] Upload directory error:', error);
-      return cb(error, uploadDir);
-    }
-
-    try {
-      fs.accessSync(uploadDir, fs.constants.W_OK);
-      cb(null, uploadDir);
-    } catch (error) {
-      console.error('[Files] Directory access error:', error);
-      cb(error as Error, uploadDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    const ext = path.extname(file.originalname);
-    const filename = `${uniqueSuffix}${ext}`;
-    console.log('[Files] Generated filename:', filename);
-    cb(null, filename);
-  }
-});
-
-// File filter configuration
-const fileFilter = (req: any, file: any, cb: any) => {
-  console.log('[Files] Checking file:', {
-    originalname: file.originalname,
-    mimetype: file.mimetype,
-    size: file.size
-  });
-
-  // Accept PDF files
-  if (file.mimetype === 'application/pdf') {
-    cb(null, true);
-    return;
-  } 
-  // Accept common document formats
-  else if (
-    ['application/msword', 
-     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-     'application/vnd.oasis.opendocument.text',
-     'text/plain'].includes(file.mimetype)
-  ) {
-    cb(null, true);
-    return;
-  }
-  // Accept image formats
-  else if (file.mimetype.startsWith('image/')) {
-    cb(null, true);
-    return;
-  }
-
-  cb(new Error(`File type ${file.mimetype} not supported`));
-};
-
-const upload = multer({ 
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
-  }
-});
-
 // File upload endpoint
-router.post('/api/files', upload.single('file'), async (req, res) => {
-  try {
-    console.log('[Files] Processing file upload request');
+router.post('/api/files', (req, res) => {
+  console.log('[Files] Starting file upload request');
 
-    if (!req.file) {
-      console.log('[Files] No file received in request');
-      return res.status(400).json({ 
-        error: 'No file uploaded',
-        detail: 'Request must include a file'
-      });
-    }
-
-    console.log('[Files] File details:', {
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      filename: req.file.filename
-    });
-
-    if (!req.user?.id || !req.user?.company_id) {
-      console.log('[Files] Authentication required');
-      return res.status(401).json({ 
-        error: 'Authentication required',
-        detail: 'User must be logged in to upload files'
-      });
-    }
-
-    // Create file record in database
-    const [fileRecord] = await db.insert(files)
-      .values({
-        name: req.file.originalname,
-        path: req.file.filename,
-        type: req.file.mimetype,
-        size: req.file.size,
-        user_id: req.user.id,
-        company_id: req.user.company_id,
-        status: 'uploaded',
-        download_count: 0,
-        version: 1
-      })
-      .returning();
-
-    console.log('[Files] Created file record:', {
-      id: fileRecord.id,
-      name: fileRecord.name,
-      size: fileRecord.size
-    });
-
-    res.status(201).json(fileRecord);
-  } catch (error) {
-    console.error('[Files] Error processing upload:', error);
-
-    // Clean up uploaded file if database operation fails
-    if (req.file) {
-      const filePath = path.join(uploadDir, req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+  fileUpload.single('file')(req, res, async (err) => {
+    try {
+      // Handle multer errors
+      if (err instanceof multer.MulterError) {
+        console.error('[Files] Multer error:', err);
+        return res.status(400).json({
+          error: 'File upload error',
+          detail: err.message
+        });
       }
-    }
 
-    // Send appropriate error response
-    if (error instanceof multer.MulterError) {
-      return res.status(400).json({
-        error: 'File upload error',
-        detail: error.message
+      // Handle other errors from multer
+      if (err) {
+        console.error('[Files] Upload middleware error:', err);
+        return res.status(400).json({
+          error: 'Upload failed',
+          detail: err.message
+        });
+      }
+
+      // Check if file was provided
+      if (!req.file) {
+        console.error('[Files] No file received');
+        return res.status(400).json({
+          error: 'No file uploaded',
+          detail: 'Request must include a file'
+        });
+      }
+
+      console.log('[Files] File received:', {
+        originalname: req.file.originalname,
+        filename: req.file.filename,
+        mimetype: req.file.mimetype,
+        size: req.file.size
+      });
+
+      // Verify authentication
+      if (!req.user?.id || !req.user?.company_id) {
+        console.error('[Files] Authentication required');
+        return res.status(401).json({
+          error: 'Authentication required',
+          detail: 'User must be logged in to upload files'
+        });
+      }
+
+      // Verify file exists on disk
+      const uploadedFilePath = path.join(uploadDir, req.file.filename);
+      if (!fs.existsSync(uploadedFilePath)) {
+        console.error('[Files] File not saved to disk:', uploadedFilePath);
+        return res.status(500).json({
+          error: 'File processing error',
+          detail: 'Failed to save uploaded file'
+        });
+      }
+
+      try {
+        // Create database record
+        const [fileRecord] = await db.insert(files)
+          .values({
+            name: req.file.originalname,
+            path: req.file.filename,
+            type: req.file.mimetype,
+            size: req.file.size,
+            user_id: req.user.id,
+            company_id: req.user.company_id,
+            status: 'uploaded',
+            download_count: 0,
+            version: 1
+          })
+          .returning();
+
+        console.log('[Files] Created database record:', {
+          id: fileRecord.id,
+          name: fileRecord.name,
+          type: fileRecord.type
+        });
+
+        res.status(201).json(fileRecord);
+      } catch (dbError) {
+        console.error('[Files] Database error:', dbError);
+
+        // Clean up uploaded file if database operation fails
+        try {
+          fs.unlinkSync(uploadedFilePath);
+          console.log('[Files] Cleaned up file after database error:', uploadedFilePath);
+        } catch (cleanupError) {
+          console.error('[Files] Error cleaning up file:', cleanupError);
+        }
+
+        throw dbError;
+      }
+    } catch (error) {
+      console.error('[Files] Server error:', error);
+
+      // Clean up uploaded file if database operation fails
+      if (req.file) {
+        const filePath = path.join(uploadDir, req.file.filename);
+        if (fs.existsSync(filePath)) {
+          try {
+            fs.unlinkSync(filePath);
+          } catch (cleanupError) {
+            console.error('[Files] Error cleaning up file:', cleanupError);
+          }
+        }
+      }
+
+      res.status(500).json({
+        error: 'Server error',
+        detail: error instanceof Error ? error.message : 'Unknown error occurred'
       });
     }
-
-    res.status(500).json({ 
-      error: 'Upload failed',
-      detail: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
-  }
+  });
 });
 
 // Get all files for a company
 router.get('/api/files', async (req, res) => {
   try {
     console.log('[Files] Starting file fetch request');
-    console.log('[Files] Authentication state:', {
-      isAuthenticated: req.isAuthenticated(),
-      hasUser: !!req.user,
-      sessionID: req.sessionID
-    });
 
     const companyId = req.query.company_id;
     const userId = req.user?.id;
 
-    console.log('[Files] Request parameters:', {
-      companyId,
-      userId,
-      query: req.query,
-      user: req.user,
-      headers: req.headers
-    });
-
     if (!companyId) {
-      console.log('[Files] Missing company_id parameter');
       return res.status(400).json({ 
-        error: 'Company ID is required',
-        detail: 'The company_id query parameter must be provided'
-      });
-    }
-
-    if (typeof companyId !== 'string' && typeof companyId !== 'number') {
-      console.log('[Files] Invalid company_id type:', typeof companyId);
-      return res.status(400).json({ 
-        error: 'Invalid company ID format',
-        detail: `Expected string or number, got ${typeof companyId}`
+        error: 'Company ID is required'
       });
     }
 
     const parsedCompanyId = parseInt(companyId.toString(), 10);
     if (isNaN(parsedCompanyId)) {
-      console.log('[Files] Failed to parse company_id:', companyId);
       return res.status(400).json({ 
-        error: 'Invalid company ID format',
-        detail: 'Company ID must be a valid number'
+        error: 'Invalid company ID format'
       });
     }
 
     // Verify user has access to this company
     if (req.user?.company_id !== parsedCompanyId) {
-      console.log('[Files] Company ID mismatch:', {
-        requestedCompanyId: parsedCompanyId,
-        userCompanyId: req.user?.company_id
-      });
       return res.status(403).json({ 
-        error: 'Access denied',
-        detail: 'User does not have access to this company\'s files'
+        error: 'Access denied'
       });
     }
 
-    console.log('[Files] Executing database query for company:', parsedCompanyId);
     const fileRecords = await db.query.files.findMany({
       where: eq(files.company_id, parsedCompanyId)
-    });
-
-    console.log('[Files] Query results:', {
-      recordCount: fileRecords.length,
-      firstRecord: fileRecords[0],
-      lastRecord: fileRecords[fileRecords.length - 1]
     });
 
     res.json(fileRecords);
