@@ -65,6 +65,7 @@ export function CardFormPlayground({
 }: CardFormPlaygroundProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [currentSection, setCurrentSection] = useState<string>("");
   const [progress, setProgress] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [successData, setSuccessData] = useState<{
@@ -80,6 +81,8 @@ export function CardFormPlayground({
   }>>({});
   const [openTooltip, setOpenTooltip] = useState<number | null>(null);
   const [, navigate] = useLocation();
+  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
+  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -244,9 +247,6 @@ export function CardFormPlayground({
     }
   }, [existingResponses, cardFields]);
 
-  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
-  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
-
 
   const sections = cardFields.reduce((acc, field) => {
     if (!acc[field.wizard_section]) {
@@ -266,7 +266,6 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    // Create a new object with the updated value for this specific field
     const updatedResponses = {
       ...formResponses,
       [field.field_key]: value
@@ -280,10 +279,8 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    // Update state with the new responses object
     setFormResponses(updatedResponses);
 
-    // If the field is emptied, update the database immediately
     if (!value.trim()) {
       console.log('[CardFormPlayground] Empty field detected - saving empty response:', {
         fieldId: field.id,
@@ -308,19 +305,16 @@ export function CardFormPlayground({
   };
 
   const validateResponse = (value: string, previousValue?: string): boolean => {
-    // Skip if response is empty
     if (!value) {
       console.log('[CardFormPlayground] Validation failed: empty value');
       return false;
     }
 
-    // Skip if response hasn't changed from previous value
     if (previousValue && value.trim() === previousValue.trim()) {
       console.log('[CardFormPlayground] Validation failed: unchanged value');
       return false;
     }
 
-    // Minimum length check
     if (value.trim().length < 2) {
       console.log('[CardFormPlayground] Validation failed: too short');
       return false;
@@ -357,7 +351,6 @@ export function CardFormPlayground({
       return;
     }
 
-    // Update previous responses for future comparison
     setPreviousResponses(prev => {
       const updated = {
         ...prev,
@@ -382,7 +375,6 @@ export function CardFormPlayground({
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      // Step 1: Save the response first
       console.log('[CardFormPlayground] Step 1: Saving response');
       const saveResult = await saveResponse.mutateAsync({
         fieldId: field.id,
@@ -396,7 +388,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Step 2: Trigger OpenAI analysis
       console.log('[CardFormPlayground] Step 2: Starting OpenAI analysis');
       const analysis = await analyzeResponse.mutateAsync({
         fieldId: field.id,
@@ -411,7 +402,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Step 3: Update UI with analysis results
       setFieldAnalysis(prev => ({
         ...prev,
         [field.id]: {
@@ -470,7 +460,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Trigger confetti animation
       confetti({
         particleCount: 150,
         spread: 80,
@@ -478,7 +467,6 @@ export function CardFormPlayground({
         colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
       });
 
-      // Show success modal
       setSuccessData({
         riskScore: data.riskScore,
         assessmentFile: data.assessmentFile
@@ -530,6 +518,12 @@ export function CardFormPlayground({
     submitAssessment.mutate();
   };
 
+  useEffect(() => {
+    if (!currentSection && Object.keys(sections).length > 0) {
+      setCurrentSection(Object.keys(sections)[0]);
+    }
+  }, [sections]);
+
   if (isLoadingFields || isLoadingResponses) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -541,31 +535,20 @@ export function CardFormPlayground({
   return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <div className="flex justify-between items-center mb-6">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold">
-              Compliance & Risk Documentation Request
-            </h1>
-            {companyData?.description && (
-              <p className="text-muted-foreground">{companyData.description}</p>
-            )}
-          </div>
-          <Button
-            onClick={handleSubmit}
-            disabled={progress < 11 || submitAssessment.isPending}
-            className="px-8"
-          >
-            {submitAssessment.isPending ? (
-              <>
-                <LoadingSpinner size="sm" className="mr-2" />
-                Submitting...
-              </>
-            ) : (
-              'Submit Assessment'
-            )}
-          </Button>
-        </div>
-
+        <Button
+          onClick={handleSubmit}
+          disabled={progress < 11 || submitAssessment.isPending}
+          className="px-8 mb-6"
+        >
+          {submitAssessment.isPending ? (
+            <>
+              <LoadingSpinner size="sm" className="mr-2" />
+              Submitting...
+            </>
+          ) : (
+            'Submit Assessment'
+          )}
+        </Button>
         <div className="flex justify-between text-sm">
           <span>Progress</span>
           <span>{progress}%</span>
@@ -699,7 +682,6 @@ export function CardFormPlayground({
         )}
       </TooltipProvider>
 
-      {/* Success Modal */}
       <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
