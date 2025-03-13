@@ -55,66 +55,29 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
 
-  // Parse the taskSlug to get task type and company name
   const [taskType, ...companyNameParts] = params.taskSlug.split('-');
   const companyName = companyNameParts.join('-');
 
-  console.log('[TaskPage] Initializing with params:', {
-    taskSlug: params.taskSlug,
-    taskType,
-    companyName,
-  });
-
-  // Determine API endpoint based on task type
   const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
-
-  console.log('[TaskPage] Using API endpoint:', {
-    apiEndpoint,
-    fullUrl: `${apiEndpoint}/${companyName}`,
-  });
 
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, companyName],
     queryFn: async () => {
-      console.log('[TaskPage] Fetching task data:', {
-        endpoint: `${apiEndpoint}/${companyName}`,
-        taskType,
-        companyName,
-      });
-
       try {
         const response = await fetch(`${apiEndpoint}/${companyName}`);
-        console.log('[TaskPage] API response:', {
-          status: response.status,
-          ok: response.ok,
-          statusText: response.statusText,
-        });
-
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('[TaskPage] API error response:', {
-            status: response.status,
-            text: errorText,
-          });
           throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
         }
-
         const data = await response.json();
-        console.log('[TaskPage] Task data received:', {
-          taskId: data.id,
-          title: data.title,
-          status: data.status,
-          metadata: data.metadata,
-        });
-
         if (data.metadata?.[`${taskType}FormFile`]) {
           setFileId(data.metadata[`${taskType}FormFile`]);
           setIsSubmitted(true);
         }
         return data;
       } catch (error) {
-        console.error('[TaskPage] Error in task fetch:', error);
         throw error;
       }
     },
@@ -124,11 +87,6 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
-      console.error('[TaskPage] Error in useEffect:', {
-        error,
-        taskType,
-        companyName,
-      });
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
@@ -169,6 +127,10 @@ export default function TaskPage({ params }: TaskPageProps) {
     }
   };
 
+  const handleMethodSelect = (method: 'upload' | 'manual') => {
+    setSelectedMethod(method);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -202,97 +164,59 @@ export default function TaskPage({ params }: TaskPageProps) {
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
   if (taskType === 'card') {
-    const flowType = params.taskSlug.split('-').pop();
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
 
-    if (!flowType || flowType === companyName) {
-      return (
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-              </div>
+              {(isSubmitted || task?.metadata?.cardFormFile) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as Text
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
+          </div>
 
-            <CardMethodChoice
-              taskId={task.id}
-              companyName={displayName}
-            />
-          </PageTemplate>
-        </DashboardLayout>
-      );
-    }
-
-    if (flowType === 'upload') {
-      return (
-        <DashboardLayout>
-          <div>Upload flow coming soon</div>
-        </DashboardLayout>
-      );
-    }
-
-    if (flowType === 'manual') {
-      return (
-        <DashboardLayout>
-          <PageTemplate className="space-y-6">
-            <div className="space-y-4">
-              <BreadcrumbNav forceFallback={true} />
-              <div className="flex justify-between items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-sm font-medium bg-white border-muted-foreground/20"
-                  onClick={handleBackClick}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Task Center
-                </Button>
-
-                {(isSubmitted || task.metadata?.[`${taskType}FormFile`]) && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleDownload('json')}>
-                        <FileJson className="mr-2 h-4 w-4" />
-                        Download as JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                        <FileSpreadsheet className="mr-2 h-4 w-4" />
-                        Download as CSV
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Download as Text
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
-              </div>
-            </div>
-
-            <div className="container max-w-7xl mx-auto">
+          <div className="container max-w-7xl mx-auto">
+            {selectedMethod === 'manual' ? (
               <CardFormPlayground
-                taskId={task.id}
+                taskId={task?.id || 0}
                 companyName={companyName}
                 companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || null
+                  name: task?.metadata?.company?.name || companyName,
+                  description: task?.metadata?.company?.description || undefined
                 }}
-                savedFormData={task.savedFormData}
+                savedFormData={task?.savedFormData}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
                     method: 'POST',
@@ -300,7 +224,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     body: JSON.stringify({
                       fileName: `card_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                       formData,
-                      taskId: task.id
+                      taskId: task?.id
                     })
                   })
                     .then(async response => {
@@ -344,11 +268,31 @@ export default function TaskPage({ params }: TaskPageProps) {
                     });
                 }}
               />
-            </div>
-          </PageTemplate>
-        </DashboardLayout>
-      );
-    }
+            ) : selectedMethod === 'upload' ? (
+              <div className="text-center p-8">
+                <h2 className="text-xl font-semibold mb-4">Upload Feature Coming Soon</h2>
+                <p className="text-muted-foreground">
+                  The document upload feature is currently under development.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setSelectedMethod(null)}
+                >
+                  Go Back to Method Selection
+                </Button>
+              </div>
+            ) : (
+              <CardMethodChoice
+                taskId={task?.id || 0}
+                companyName={companyName}
+                onMethodSelect={handleMethodSelect}
+              />
+            )}
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
   }
 
   return (
@@ -405,14 +349,12 @@ export default function TaskPage({ params }: TaskPageProps) {
               }}
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
-                // Ensure form data is properly structured
                 const submitData = {
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
                   taskId: task.id
                 };
 
-                // Show loading toast
                 toast({
                   title: "Saving KYB form",
                   description: "Please wait while we process your submission...",
@@ -433,7 +375,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     return data;
                   })
                   .then((result) => {
-                    // Success handling
                     confetti({
                       particleCount: 150,
                       spread: 80,
@@ -445,7 +386,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     setIsSubmitted(true);
                     setShowSuccessModal(true);
 
-                    // Show success toast with warnings if any
                     toast({
                       title: "Success",
                       description: result.warnings?.length
@@ -460,7 +400,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);
-                    // Show error toast with more specific message
                     toast({
                       title: "Error",
                       description: error.message || "Failed to save KYB form. Please try again.",
