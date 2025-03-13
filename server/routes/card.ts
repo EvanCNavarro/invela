@@ -351,6 +351,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     console.log('[Card Routes] Starting form submission process:', {
       taskId,
       userId: req.user!.id,
+      body: req.body,
       timestamp: new Date().toISOString()
     });
 
@@ -358,7 +359,19 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       where: eq(tasks.id, parseInt(taskId))
     });
 
+    console.log('[Card Routes] Task lookup result:', {
+      found: !!task,
+      taskId: task?.id,
+      companyId: task?.company_id,
+      status: task?.status,
+      timestamp: new Date().toISOString()
+    });
+
     if (!task) {
+      console.log('[Card Routes] Task not found:', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
       return res.status(404).json({
         success: false,
         message: 'Task not found'
@@ -366,6 +379,10 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     }
 
     if (!task.company_id) {
+      console.log('[Card Routes] Task has no company:', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
       return res.status(400).json({
         success: false,
         message: 'Task has no associated company'
@@ -388,10 +405,10 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
     const timestamp = new Date();
 
-    // Process empty/missing responses
-    await processEmptyResponses(taskId, fields, existingResponses, timestamp);
-
     try {
+      // Process empty/missing responses
+      await processEmptyResponses(taskId, fields, existingResponses, timestamp);
+
       // Calculate and update company risk score
       console.log('[Card Routes] Calculating risk score:', {
         taskId,
@@ -442,16 +459,17 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
       console.log('[Card Routes] Storing assessment file in database:', {
         fileName,
+        contentLength: fileContent.length,
         timestamp: new Date().toISOString()
       });
 
-      // Store file in database - updated to match schema and KYB implementation
+      // Store file in database - updated to match schema
       const [file] = await db.insert(files)
         .values({
           name: fileName,
           size: Buffer.from(fileContent).length,
           type: 'application/json',
-          path: fileContent, // Store content directly in path like KYB does
+          path: fileContent,
           status: 'uploaded',
           user_id: req.user!.id,
           company_id: task.company_id,
@@ -486,15 +504,15 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         .where(eq(tasks.id, parseInt(taskId)))
         .returning();
 
-      console.log('[Card Routes] Task updated:', {
+      console.log('[Card Routes] Task update completed:', {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
-        fileName: updatedTask.metadata.assessment_file,
+        fileName: updatedTask.metadata?.assessment_file,
         timestamp: new Date().toISOString()
       });
 
-      res.json({ 
+      const response = { 
         success: true,
         message: "Form submitted successfully",
         totalFields: fields.length,
@@ -506,16 +524,27 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           onboardingCompleted: updatedCompany.onboarding_company_completed,
           availableTabs: updatedCompany.available_tabs
         }
+      };
+
+      console.log('[Card Routes] Sending success response:', {
+        taskId,
+        success: true,
+        responseBody: response,
+        timestamp: new Date().toISOString()
       });
 
+      return res.json(response);
+
     } catch (error) {
-      console.error('[Card Routes] Error in final submission steps:', {
+      console.error('[Card Routes] Error in submission process:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
         taskId,
         companyId: task.company_id,
         timestamp: new Date().toISOString()
       });
+
       return res.status(500).json({
         success: false,
         message: error instanceof Error ? error.message : "Failed to submit form",
@@ -524,12 +553,13 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     }
 
   } catch (error) {
-    console.error('[Card Routes] Error in form submission:', {
+    console.error('[Card Routes] Fatal error in submission handler:', {
       error,
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
+
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Failed to submit form",
