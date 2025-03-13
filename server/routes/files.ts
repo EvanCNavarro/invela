@@ -107,7 +107,7 @@ router.post('/api/files', (req, res) => {
       }
 
       try {
-        // Create database record - only using existing columns
+        // Create database record - using only existing columns from schema
         console.log('[Files] Creating database record for:', req.file.originalname);
         const [fileRecord] = await db.insert(files)
           .values({
@@ -119,7 +119,8 @@ router.post('/api/files', (req, res) => {
             company_id: req.user.company_id,
             status: 'uploaded',
             download_count: 0,
-            version: 1
+            version: 1,
+            upload_time: new Date()
           })
           .returning();
 
