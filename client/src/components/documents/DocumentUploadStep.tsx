@@ -1,137 +1,87 @@
 import React, { useState } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
-import { FileUploadPreview } from '@/components/files/FileUploadPreview';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle2 } from 'lucide-react';
 
 interface DocumentCategory {
   id: string;
   name: string;
   description?: string;
-  required: boolean;
-  acceptedFormats: string;
-  files: File[];
+  acceptedFormats?: string;
 }
 
+const DOCUMENT_CATEGORIES: DocumentCategory[] = [
+  {
+    id: 'soc2',
+    name: 'SOC 2 Audit Report',
+    acceptedFormats: '.PDF, .DOC, .DOCX'
+  },
+  {
+    id: 'iso27001',
+    name: 'ISO 27001 Certification',
+    acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG'
+  },
+  {
+    id: 'pentest',
+    name: 'Penetration Test Report',
+    acceptedFormats: '.PDF, .DOC, .DOCX'
+  },
+  {
+    id: 'bcp',
+    name: 'Business Continuity Plan',
+    acceptedFormats: '.PDF, .DOC, .DOCX'
+  },
+  {
+    id: 'other',
+    name: 'Other Documents',
+    description: 'Additional supporting documentation',
+    acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG, .JPEG'
+  }
+];
+
 interface DocumentUploadStepProps {
-  onFilesUpdated?: (files: Record<string, File[]>) => void;
+  onFilesUpdated?: (files: File[]) => void;
 }
 
 export function DocumentUploadStep({ onFilesUpdated }: DocumentUploadStepProps) {
-  const [categories] = useState<DocumentCategory[]>([
-    {
-      id: 'soc2',
-      name: 'SOC 2 Audit Report',
-      required: true,
-      acceptedFormats: '.PDF, .DOC, .DOCX',
-      files: []
-    },
-    {
-      id: 'iso27001',
-      name: 'ISO 27001 Certification',
-      required: true,
-      acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG',
-      files: []
-    },
-    {
-      id: 'pentest',
-      name: 'Penetration Test Report',
-      required: true,
-      acceptedFormats: '.PDF, .DOC, .DOCX',
-      files: []
-    },
-    {
-      id: 'bcp',
-      name: 'Business Continuity Plan',
-      required: false,
-      acceptedFormats: '.PDF, .DOC, .DOCX',
-      files: []
-    },
-    {
-      id: 'other',
-      name: 'Other Documents',
-      required: false,
-      description: 'Additional supporting documentation',
-      acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG, .JPEG',
-      files: []
-    }
-  ]);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File[]>>({});
-
-  const handleFilesAccepted = (categoryId: string, files: File[]) => {
-    const updatedFiles = {
-      ...uploadedFiles,
-      [categoryId]: [...(uploadedFiles[categoryId] || []), ...files]
-    };
-    setUploadedFiles(updatedFiles);
-    onFilesUpdated?.(updatedFiles);
-  };
-
-  const handleRemoveFile = (categoryId: string, fileIndex: number) => {
-    const updatedFiles = {
-      ...uploadedFiles,
-      [categoryId]: uploadedFiles[categoryId]?.filter((_, i) => i !== fileIndex) || []
-    };
-    setUploadedFiles(updatedFiles);
-    onFilesUpdated?.(updatedFiles);
+  const handleFilesAccepted = (files: File[]) => {
+    const newFiles = [...uploadedFiles, ...files];
+    setUploadedFiles(newFiles);
+    onFilesUpdated?.(newFiles);
   };
 
   return (
     <div className="space-y-6">
-      {categories.map((category) => (
-        <div 
-          key={category.id}
-          className={cn(
-            "p-6 rounded-lg border-2",
-            uploadedFiles[category.id]?.length 
-              ? "border-primary/30 bg-primary/5" 
-              : "border-muted"
-          )}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold">{category.name}</h3>
-                {category.required && (
-                  <Badge variant="secondary">Required</Badge>
-                )}
-                {uploadedFiles[category.id]?.length > 0 && (
-                  <CheckCircle2 className="h-5 w-5 text-primary" />
-                )}
-              </div>
-              {category.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {category.description}
-                </p>
-              )}
-            </div>
-            {uploadedFiles[category.id]?.length > 0 && (
-              <Badge variant="outline">
-                {uploadedFiles[category.id].length} file{uploadedFiles[category.id].length !== 1 ? 's' : ''} uploaded
+      <h1 className="text-2xl font-semibold">Upload Documents</h1>
+
+      <FileUploadZone
+        onFilesAccepted={handleFilesAccepted}
+        acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
+        className="min-h-[200px]"
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+        {DOCUMENT_CATEGORIES.map((category) => (
+          <div 
+            key={category.id}
+            className="p-4 rounded-lg border-2 border-muted bg-muted/5"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium">{category.name}</h3>
+              <Badge variant="secondary" className="text-xs">
+                {uploadedFiles.length} files
               </Badge>
+            </div>
+            {category.description && (
+              <p className="text-xs text-muted-foreground">
+                {category.description}
+              </p>
             )}
           </div>
-
-          <FileUploadZone
-            onFilesAccepted={(files) => handleFilesAccepted(category.id, files)}
-            acceptedFormats={category.acceptedFormats}
-            variant="row"
-            className="mb-4"
-          />
-
-          {uploadedFiles[category.id]?.map((file, index) => (
-            <FileUploadPreview
-              key={`${file.name}-${index}`}
-              file={file}
-              variant="compact"
-              onRemove={() => handleRemoveFile(category.id, index)}
-              className="mb-2"
-            />
-          ))}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
