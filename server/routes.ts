@@ -7,7 +7,7 @@ import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
-import { fileUpload } from './middleware/upload'; 
+import { logoUpload } from './middleware/upload';
 import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
@@ -23,51 +23,6 @@ export function registerRoutes(app: Express): Express {
   app.use(cardRouter);
   app.use(filesRouter);
   app.use(accessRouter);
-
-  // File upload endpoint
-  app.post("/api/files/upload", requireAuth, fileUpload.single('file'), async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-      }
-
-      console.log('[Upload] File details:', {
-        originalname: req.file.originalname,
-        filename: req.file.filename,
-        mimetype: req.file.mimetype,
-        size: req.file.size
-      });
-
-      // Create file record
-      const [file] = await db.insert(files)
-        .values({
-          name: req.file.originalname,
-          path: req.file.filename,
-          type: req.file.mimetype,
-          size: req.file.size,
-          status: 'uploaded',
-          user_id: req.user!.id,
-          company_id: req.user!.company_id,
-          download_count: 0,
-          version: 1
-        })
-        .returning();
-
-      res.status(201).json(file);
-    } catch (error) {
-      console.error("[Upload] Error:", error);
-
-      // Clean up uploaded file on error
-      if (req.file) {
-        const filePath = path.join(uploadDir, req.file.filename);
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      }
-
-      res.status(500).json({ message: "Error uploading file" });
-    }
-  });
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
@@ -462,7 +417,7 @@ export function registerRoutes(app: Express): Express {
           last_name: lastName,
           full_name: fullName,
           password: await bcrypt.hash(password, 10),
-          onboarding_user_completed: false, 
+          onboarding_user_completed: false, // Ensure this stays false for new user registration
         })
         .where(eq(users.id, existingUser.id))
         .returning();
@@ -485,7 +440,7 @@ export function registerRoutes(app: Express): Express {
         const [updatedTask] = await db.update(tasks)
           .set({
             status: TaskStatus.COMPLETED,
-            progress: 100, 
+            progress: 100, // Set directly to 100 for completed status
             assigned_to: updatedUser.id,
             metadata: {
               ...task.metadata,
@@ -550,6 +505,82 @@ export function registerRoutes(app: Express): Express {
     } catch (error) {
       console.error("[User Onboarding] Error updating onboarding status:", error);
       res.status(500).json({ message: "Error updating onboarding status" });
+    }
+  });
+
+  // File upload endpoint
+  app.post("/api/files/upload", requireAuth, logoUpload.single('logo'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const storedPath = req.file.filename;
+
+      // Check if file already exists
+      const existingFile = await db.select()
+        .from(files)
+        .where(and(
+          eq(files.name, req.file.originalname),
+          eq(files.user_id, req.user!.id)
+        ));
+
+      if (existingFile.length > 0) {
+        try {
+          // Update existing file record
+          const [updatedFile] = await db.update(files)
+            .set({
+              size: req.file.size,
+              type: req.file.mimetype,
+              path: storedPath,
+              version: existingFile[0].version + 1
+            })
+            .where(eq(files.id, existingFile[0].id))
+            .returning();
+
+          console.log('Debug - Updated existing file record:', updatedFile);
+          return res.status(200).json(updatedFile);
+        } catch (error) {
+          console.error('Error updating existing file:', error);
+          // Clean up uploaded file on error
+          const newFilePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
+          if (fs.existsSync(newFilePath)) {
+            fs.unlinkSync(newFilePath);
+          }
+          throw error;
+        }
+      }
+
+      // Create new file record
+      const fileData = {
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype,
+        path: storedPath,
+        status: 'uploaded',
+        user_id: req.user!.id,
+        company_id: req.user!.company_id,
+        download_count: 0,
+        version: 1.0,
+      };
+
+      const [file] = await db.insert(files)
+        .values(fileData)
+        .returning();
+
+      console.log('Debug - Created new file record:', file);
+      res.status(201).json(file);
+    } catch (error) {
+      console.error("File upload error:", error);
+      res.status(500).json({ message: "Error uploading file" });
+
+      // Clean up uploaded file on error
+      if (req.file) {
+        const filePath = path.resolve('/home/runner/workspace/uploads', req.file.filename);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
     }
   });
 
@@ -618,7 +649,7 @@ export function registerRoutes(app: Express): Express {
   });
 
   // Update company logo upload endpoint
-  app.post("/api/companies/:id/logo", requireAuth, fileUpload.single('logo'), async (req, res) => { //Updated middleware
+  app.post("/api/companies/:id/logo", requireAuth, logoUpload.single('logo'), async (req, res) => {
     try {
       if (!req.file) {
         console.log('Debug - No logo filein request');
@@ -899,7 +930,7 @@ export function registerRoutes(app: Express): Express {
             status: 'active',
             accreditation_status: 'PENDING',
             onboarding_company_completed: false,
-            available_tabs: ['task-center'], 
+            available_tabs: ['task-center'], // Only task-center initially
             metadata: {
               invited_by: req.user!.id,
               invited_at: new Date().toISOString(),
@@ -1197,7 +1228,7 @@ export function registerRoutes(app: Express): Express {
             .values({
               email: inviteData.email,
               full_name: inviteData.full_name,
-              company_id: inviteData.company_id, 
+              company_id: inviteData.company_id, // Explicitly set company_id from invite data
               password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
               onboarding_user_completed: false
             })
@@ -1232,11 +1263,11 @@ export function registerRoutes(app: Express): Express {
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
-              progress: 100, 
+              progress: 100, // Set directly to 100 for completed status
               priority: 'high',
               company_id: inviteData.company_id,
               user_email: inviteData.email,
-              created_by: req.user!.id, 
+              created_by: req.user!.id, // Ensure created_by is set
               metadata: {
                 invitation_id: invitation.id,
                 invited_by: req.user!.id,

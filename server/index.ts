@@ -5,8 +5,6 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./services/websocket";
 import cors from "cors";
-import path from "path";
-import fs from 'fs';
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -33,34 +31,11 @@ app.use(cors({
 }));
 
 // Configure body parsing middleware first
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Set up authentication before routes
 setupAuth(app);
-
-// Ensure uploads directory exists and has proper permissions
-const uploadDir = path.join(process.cwd(), 'uploads');
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
-    log(`Created upload directory: ${uploadDir}`, 'info');
-  }
-
-  // Verify directory permissions
-  fs.accessSync(uploadDir, fs.constants.W_OK);
-  log(`Upload directory is writable: ${uploadDir}`, 'info');
-
-  // Get directory stats
-  const stats = fs.statSync(uploadDir);
-  log(`Upload directory permissions: ${stats.mode}`, 'info');
-} catch (error) {
-  log(`Error setting up upload directory: ${error}`, 'error');
-  process.exit(1); // Exit if we can't set up the upload directory properly
-}
-
-// Serve uploaded files statically
-app.use('/uploads', express.static(uploadDir));
 
 // Request logging middleware with detailed error tracking
 app.use((req, res, next) => {
@@ -70,9 +45,9 @@ app.use((req, res, next) => {
   let errorCaptured: Error | undefined = undefined;
 
   // Debug request body for specific endpoints
-  if (path === '/api/files' && req.method === 'POST') {
-    log(`Incoming file upload request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
-    log(`Content-Type: ${req.headers['content-type']}`, 'debug');
+  if (path === '/api/users/invite' && req.method === 'POST') {
+    log(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
+    log(`Request body (raw): ${JSON.stringify(req.body)}`, 'debug');
   }
 
   const originalResJson = res.json;
@@ -137,29 +112,6 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 
   const isProduction = process.env.NODE_ENV === 'production';
   const shouldExposeError = !isProduction || status < 500;
-
-  // Special handling for file upload errors
-  if (err.name === 'MulterError') {
-    const errorResponse = {
-      status: 400,
-      message: err.message,
-      code: 'FILE_UPLOAD_ERROR',
-      timestamp,
-      path: req.path,
-      method: req.method,
-      details: {
-        field: err.field,
-        code: err.code,
-        suggestions: [
-          'Check if the file size is within limits (max 50MB)',
-          'Ensure you are uploading a valid PDF file',
-          'Try using a different PDF file',
-          'Clear your browser cache and try again'
-        ]
-      }
-    };
-    return res.status(400).json(errorResponse);
-  }
 
   const errorResponse = {
     status,
