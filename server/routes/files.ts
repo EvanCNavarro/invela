@@ -9,20 +9,23 @@ import multer from 'multer';
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads');
 
-// Ensure upload directory exists
+// Ensure upload directory exists with proper permissions
 if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o755 });
 }
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    console.log('[Files] Setting upload destination:', uploadDir);
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
     const ext = path.extname(file.originalname);
-    cb(null, `${uniqueSuffix}${ext}`);
+    const filename = `${uniqueSuffix}${ext}`;
+    console.log('[Files] Generated filename:', filename);
+    cb(null, filename);
   }
 });
 
@@ -36,6 +39,7 @@ const fileFilter = (req: any, file: any, cb: any) => {
   // Accept PDF files
   if (file.mimetype === 'application/pdf') {
     cb(null, true);
+    return;
   } 
   // Accept common document formats
   else if (
@@ -45,14 +49,15 @@ const fileFilter = (req: any, file: any, cb: any) => {
      'text/plain'].includes(file.mimetype)
   ) {
     cb(null, true);
+    return;
   }
   // Accept image formats
   else if (file.mimetype.startsWith('image/')) {
     cb(null, true);
+    return;
   }
-  else {
-    cb(new Error(`File type ${file.mimetype} not supported`));
-  }
+
+  cb(new Error(`File type ${file.mimetype} not supported`));
 };
 
 const upload = multer({ 
