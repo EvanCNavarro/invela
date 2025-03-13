@@ -450,8 +450,10 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           user_id: req.user!.id,
           created_at: timestamp,
           updated_at: timestamp,
+          upload_time: timestamp,
           size: Buffer.from(fileContent).length,
           version: 1,
+          download_count: 0,
           metadata: {
             taskId: taskId,
             assessmentDate: timestamp.toISOString(),
