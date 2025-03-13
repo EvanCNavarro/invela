@@ -1,23 +1,15 @@
-import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { ArrowRight, Upload, ClipboardList } from "lucide-react";
 
 interface CardMethodChoiceProps {
   taskId: number;
   companyName: string;
+  onMethodSelect: (method: 'upload' | 'manual') => void;
 }
 
-export function CardMethodChoice({ taskId, companyName }: CardMethodChoiceProps) {
-  const [, navigate] = useLocation();
-
+export function CardMethodChoice({ taskId, companyName, onMethodSelect }: CardMethodChoiceProps) {
   const handleChoiceClick = (method: 'upload' | 'manual') => {
-    if (method === 'upload') {
-      // For now, we'll just console.log since this flow isn't implemented yet
-      console.log('Upload flow selected - to be implemented');
-      navigate(`/task-center/task/card-${companyName}/upload`);
-    } else {
-      navigate(`/task-center/task/card-${companyName}/manual`);
-    }
+    onMethodSelect(method);
   };
 
   return (
