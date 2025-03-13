@@ -27,14 +27,6 @@ export const TaskStatus = {
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
-export const DocumentCategory = {
-  SOC2_AUDIT: 'soc2_audit',
-  ISO27001: 'iso27001',
-  PENETRATION_TEST: 'penetration_test',
-  BUSINESS_CONTINUITY: 'business_continuity',
-  OTHER: 'other'
-} as const;
-
 export const DocumentProcessingStatus = {
   PENDING: 'pending',
   PROCESSING: 'processing',
@@ -42,7 +34,6 @@ export const DocumentProcessingStatus = {
   FAILED: 'failed'
 } as const;
 
-export type DocumentCategory = typeof DocumentCategory[keyof typeof DocumentCategory];
 export type DocumentProcessingStatus = typeof DocumentProcessingStatus[keyof typeof DocumentProcessingStatus];
 
 export const tasks = pgTable("tasks", {
@@ -141,12 +132,11 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   user_id: integer("user_id").references(() => users.id).notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
-  upload_time: timestamp("upload_time").notNull().defaultNow(),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+  upload_time: timestamp("upload_time").notNull().defaultNow(),
   download_count: integer("download_count").default(0),
   version: real("version").notNull().default(1.0),
-  document_category: text("document_category").$type<DocumentCategory>(),
   processing_status: text("processing_status").$type<DocumentProcessingStatus>().notNull().default('pending'),
   processing_error: text("processing_error"),
   processed_at: timestamp("processed_at"),
