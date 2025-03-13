@@ -1,0 +1,88 @@
+7:30:23 AM [info] GET /api/tasks/card/DataTechCompany 304 in 67ms :: {"id":193,"title":"Company CARD: DataTechCompany","description":"Provide Comp...
+New WebSocket client connected
+[Auth] Deserializing user: 149
+[Auth] Deserializing user: 149
+[Current Company] Fetching company for user: { userId: 149, companyId: 112 }
+7:30:27 AM [debug] Incoming file upload request - Headers: {"host":"9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev","user-agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36","content-length":"137869","accept":"*/*","accept-encoding":"gzip, deflate, br, zstd","accept-language":"en-US,en;q=0.9","content-type":"multipart/form-data; boundary=----WebKitFormBoundary2rQXmAjljmxUoiKB","cookie":"connect.sid=s%3ArYKyfIEUCrRkZ03t4DIvwZefNjyjs7_P.ia7q2jIHExu1zWk9hcBc%2FeJaGd5J4ImzjucEXUA5jXE; sid=s%3ALwHzJtoXvPE7HGoP4Cowtngyvi-Azpw6.%2B9ImBDzRoKvvFzPkKTy0%2FOpKQq0u7sdFSmpztKY9YPc","dnt":"1","origin":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev","referer":"https://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/task-center/task/card-DataTechCompany","sec-ch-ua":"\"Not:A-Brand\";v=\"24\", \"Chromium\";v=\"134\"","sec-ch-ua-mobile":"?0","sec-ch-ua-platform":"\"macOS\"","sec-fetch-dest":"empty","sec-fetch-mode":"cors","sec-fetch-site":"same-origin","sec-fetch-storage-access":"active","x-forwarded-for":"35.145.39.149, 10.81.8.206","x-forwarded-proto":"https","x-replit-user-bio":"","x-replit-user-id":"","x-replit-user-name":"","x-replit-user-profile-image":"","x-replit-user-roles":"","x-replit-user-teams":"","x-replit-user-url":""}
+7:30:27 AM [debug] Content-Type: multipart/form-data; boundary=----WebKitFormBoundary2rQXmAjljmxUoiKB
+[Files] Starting file upload request: {
+  contentType: 'multipart/form-data; boundary=----WebKitFormBoundary2rQXmAjljmxUoiKB',
+  contentLength: '137869'
+}
+[Upload] Processing file: {
+  originalname: 'SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt',
+  mimetype: 'text/plain',
+  size: undefined
+}
+[Upload] Setting destination: /home/runner/workspace/uploads
+[Upload] Generated filename: 1741851027681-3hxzdzpoo45.txt
+[Files] File received: {
+  originalname: 'SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt',
+  filename: '1741851027681-3hxzdzpoo45.txt',
+  mimetype: 'text/plain',
+  size: 137642
+}
+[Files] Creating database record for: SOC 2 Type II Report 2022 Cyient (1)_unlocked (1).txt
+[Current Company] Found company: { id: 112, name: 'DataTechCompany', onboardingCompleted: false }
+[Files] Database error: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30) {
+  length: 136,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '167',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+[Files] Database error details: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30)
+[Files] Cleaned up file after database error: /home/runner/workspace/uploads/1741851027681-3hxzdzpoo45.txt
+[Files] Server error: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30) {
+  length: 136,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '167',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+[Files] Server error details: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30)
+7:30:27 AM [info] GET /api/companies/current 304 in 70ms :: {"id":112,"name":"DataTechCompany","description":"FinTech partner company Dat...
+[Auth] Deserializing user: 149
+[Tasks] ====== Starting task fetch =====
+[Tasks] User details: { id: 149, company_id: 112, email: 'ev.ancnav.a.r.ro@gmail.com' }
+[2025-03-13T07:30:27.810Z] New client connected to the pool
