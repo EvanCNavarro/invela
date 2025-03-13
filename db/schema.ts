@@ -27,6 +27,24 @@ export const TaskStatus = {
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
+export const DocumentCategory = {
+  SOC2_AUDIT: 'soc2_audit',
+  ISO27001: 'iso27001',
+  PENETRATION_TEST: 'penetration_test',
+  BUSINESS_CONTINUITY: 'business_continuity',
+  OTHER: 'other'
+} as const;
+
+export const DocumentProcessingStatus = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed'
+} as const;
+
+export type DocumentCategory = typeof DocumentCategory[keyof typeof DocumentCategory];
+export type DocumentProcessingStatus = typeof DocumentProcessingStatus[keyof typeof DocumentProcessingStatus];
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -128,6 +146,10 @@ export const files = pgTable("files", {
   updated_at: timestamp("updated_at").defaultNow(),
   download_count: integer("download_count").default(0),
   version: real("version").notNull().default(1.0),
+  document_category: text("document_category").$type<DocumentCategory>(),
+  processing_status: text("processing_status").$type<DocumentProcessingStatus>().notNull().default('pending'),
+  processing_error: text("processing_error"),
+  processed_at: timestamp("processed_at"),
 });
 
 export const invitations = pgTable("invitations", {
@@ -223,10 +245,21 @@ export const cardResponses = pgTable("card_responses", {
   field_id: integer("field_id").references(() => cardFields.id).notNull(),
   response_value: text("response_value"),
   ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
-  ai_reasoning: text("ai_reasoning"),  // Add new column
+  ai_reasoning: text("ai_reasoning"),  
   partial_risk_score: integer("partial_risk_score").notNull().default(0),
   status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default("empty"),
   version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const documentAnswers = pgTable("document_answers", {
+  id: serial("id").primaryKey(),
+  file_id: integer("file_id").references(() => files.id).notNull(),
+  response_id: integer("response_id").references(() => cardResponses.id).notNull(),
+  confidence_score: real("confidence_score").notNull().default(0),
+  extracted_text: text("extracted_text").notNull(),
+  page_number: integer("page_number"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -311,6 +344,30 @@ export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
     references: [tasks.id]
   })
 }));
+
+export const filesRelations = relations(files, ({ one, many }) => ({
+  user: one(users, {
+    fields: [files.user_id],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [files.company_id],
+    references: [companies.id],
+  }),
+  documentAnswers: many(documentAnswers),
+}));
+
+export const documentAnswersRelations = relations(documentAnswers, ({ one }) => ({
+  file: one(files, {
+    fields: [documentAnswers.file_id],
+    references: [files.id],
+  }),
+  response: one(cardResponses, {
+    fields: [documentAnswers.response_id],
+    references: [cardResponses.id],
+  }),
+}));
+
 
 export const registrationSchema = z.object({
   email: z.string().email(),
@@ -401,7 +458,6 @@ export const insertTaskSchema = z.object({
     }
     if (data.task_type === "company_card") {
       data.priority = "high";
-      // If no due date is provided, set it to 2 weeks from now
       if (!data.due_date) {
         const twoWeeksFromNow = new Date();
         twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
@@ -445,3 +501,9 @@ export const insertCardFieldSchema = createInsertSchema(cardFields);
 export const selectCardFieldSchema = createSelectSchema(cardFields);
 export const insertCardResponseSchema = createInsertSchema(cardResponses);
 export const selectCardResponseSchema = createSelectSchema(cardResponses);
+
+export const insertDocumentAnswerSchema = createInsertSchema(documentAnswers);
+export const selectDocumentAnswerSchema = createSelectSchema(documentAnswers);
+
+export type InsertDocumentAnswer = typeof documentAnswers.$inferInsert;
+export type SelectDocumentAnswer = typeof documentAnswers.$inferSelect;
