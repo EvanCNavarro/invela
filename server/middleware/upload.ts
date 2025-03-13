@@ -1,7 +1,6 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { formatTimestampForFilename } from '../utils';
 
 // Ensure upload directory exists with proper permissions
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -30,9 +29,10 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     try {
-      const timestamp = formatTimestampForFilename();
-      const ext = path.extname(file.originalname).toLowerCase();
-      const safeFilename = `${timestamp}-${file.originalname.replace(/[^a-zA-Z0-9]/g, '_')}${ext}`;
+      // Generate a safe filename with timestamp
+      const timestamp = Date.now();
+      const randomString = Math.random().toString(36).substring(2, 15);
+      const safeFilename = `${timestamp}-${randomString}.pdf`;
       console.log('[Upload] Generated filename:', safeFilename);
       cb(null, safeFilename);
     } catch (error) {
@@ -42,11 +42,11 @@ const storage = multer.diskStorage({
   }
 });
 
-// Create multer instance for file uploads
+// Create multer instance for PDF uploads
 export const fileUpload = multer({
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit for PDFs and other documents
+    fileSize: 50 * 1024 * 1024, // 50MB limit for PDFs
     files: 1 // Allow only 1 file per request
   },
   fileFilter: (req, file, cb) => {
@@ -57,29 +57,31 @@ export const fileUpload = multer({
         size: file.size
       });
 
-      // Define accepted mime types and their corresponding extensions
-      const allowedMimes = {
-        'application/pdf': ['.pdf'],
-        'application/msword': ['.doc'],
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-        'application/vnd.oasis.opendocument.text': ['.odt'],
-        'text/plain': ['.txt'],
-        'image/jpeg': ['.jpg', '.jpeg'],
-        'image/png': ['.png'],
-        'image/gif': ['.gif'],
-        'image/webp': ['.webp'],
-        'image/svg+xml': ['.svg']
-      };
-
-      if (file.mimetype in allowedMimes) {
-        // For PDF files, ensure proper content type and extension
-        if (file.mimetype === 'application/pdf' && !file.originalname.toLowerCase().endsWith('.pdf')) {
+      // Accept only PDF files
+      if (file.mimetype === 'application/pdf') {
+        // Check if file has PDF extension
+        const ext = path.extname(file.originalname).toLowerCase();
+        if (ext !== '.pdf') {
           file.originalname = `${file.originalname}.pdf`;
         }
+
+        // Basic PDF header check (will be enhanced by checking magic numbers)
+        if (file.stream) {
+          const firstBytes = Buffer.alloc(5);
+          file.stream.read(firstBytes, 0, 5);
+          if (firstBytes.toString().startsWith('%PDF-')) {
+            cb(null, true);
+            return;
+          }
+          cb(new Error('Invalid PDF file format'));
+          return;
+        }
+
         cb(null, true);
-      } else {
-        cb(new Error(`File type ${file.mimetype} not allowed. Allowed types: PDF, DOC, DOCX, ODT, TXT, JPG, PNG, GIF, WEBP, SVG`));
+        return;
       }
+
+      cb(new Error('Only PDF files are allowed'));
     } catch (error) {
       console.error('[Upload] File filter error:', error);
       cb(error as Error);

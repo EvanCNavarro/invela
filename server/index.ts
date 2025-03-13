@@ -5,6 +5,8 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./services/websocket";
 import cors from "cors";
+import path from "path";
+import fs from 'fs';
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -31,11 +33,20 @@ app.use(cors({
 }));
 
 // Configure body parsing middleware first
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Set up authentication before routes
 setupAuth(app);
+
+// Ensure uploads directory exists
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true, mode: 0o777 });
+}
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(uploadDir));
 
 // Request logging middleware with detailed error tracking
 app.use((req, res, next) => {
@@ -45,9 +56,9 @@ app.use((req, res, next) => {
   let errorCaptured: Error | undefined = undefined;
 
   // Debug request body for specific endpoints
-  if (path === '/api/users/invite' && req.method === 'POST') {
-    log(`Incoming invite request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
-    log(`Request body (raw): ${JSON.stringify(req.body)}`, 'debug');
+  if (path === '/api/files' && req.method === 'POST') {
+    log(`Incoming file upload request - Headers: ${JSON.stringify(req.headers)}`, 'debug');
+    log(`Content-Type: ${req.headers['content-type']}`, 'debug');
   }
 
   const originalResJson = res.json;
@@ -112,6 +123,23 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
 
   const isProduction = process.env.NODE_ENV === 'production';
   const shouldExposeError = !isProduction || status < 500;
+
+  // Special handling for file upload errors
+  if (err.name === 'MulterError') {
+    const errorResponse = {
+      status: 400,
+      message: err.message,
+      code: 'FILE_UPLOAD_ERROR',
+      timestamp,
+      path: req.path,
+      method: req.method,
+      details: {
+        field: err.field,
+        code: err.code
+      }
+    };
+    return res.status(400).json(errorResponse);
+  }
 
   const errorResponse = {
     status,

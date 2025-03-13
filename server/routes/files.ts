@@ -12,7 +12,7 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 
 // File upload endpoint
 router.post('/api/files', (req, res) => {
-  console.log('[Files] Starting file upload request');
+  console.log('[Files] Starting PDF upload request');
 
   fileUpload.single('file')(req, res, async (err) => {
     try {
@@ -20,8 +20,10 @@ router.post('/api/files', (req, res) => {
       if (err instanceof multer.MulterError) {
         console.error('[Files] Multer error:', err);
         return res.status(400).json({
-          error: 'File upload error',
-          detail: err.message
+          error: 'PDF upload error',
+          detail: err.code === 'LIMIT_FILE_SIZE' 
+            ? 'File size exceeds 50MB limit'
+            : err.message
         });
       }
 
@@ -39,11 +41,11 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] No file received');
         return res.status(400).json({
           error: 'No file uploaded',
-          detail: 'Request must include a file'
+          detail: 'Request must include a PDF file'
         });
       }
 
-      console.log('[Files] File received:', {
+      console.log('[Files] PDF file received:', {
         originalname: req.file.originalname,
         filename: req.file.filename,
         mimetype: req.file.mimetype,
@@ -65,7 +67,7 @@ router.post('/api/files', (req, res) => {
         console.error('[Files] File not saved to disk:', uploadedFilePath);
         return res.status(500).json({
           error: 'File processing error',
-          detail: 'Failed to save uploaded file'
+          detail: 'Failed to save PDF file'
         });
       }
 
@@ -108,7 +110,7 @@ router.post('/api/files', (req, res) => {
     } catch (error) {
       console.error('[Files] Server error:', error);
 
-      // Clean up uploaded file if database operation fails
+      // Clean up uploaded file if request fails
       if (req.file) {
         const filePath = path.join(uploadDir, req.file.filename);
         if (fs.existsSync(filePath)) {
