@@ -1,0 +1,67 @@
+6:56:31 AM [info] GET /api/tasks 304 in 100ms :: [{"id":193,"title":"Company CARD: DataTechCompany","description":"Provide Com...
+[Files] PDF file received: {
+  originalname: 'SOC 2 Type II Report 2022 Cyient (1).pdf',
+  filename: '1741848990928-znu2jhviwug.pdf',
+  mimetype: 'application/pdf',
+  size: 1259898
+}
+[Files] Creating database record for: SOC 2 Type II Report 2022 Cyient (1).pdf
+[Files] Database error: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30) {
+  length: 136,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '167',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+[Files] Database error details: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30)
+[Files] Cleaned up file after database error: /home/runner/workspace/uploads/1741848990928-znu2jhviwug.pdf
+[Files] Server error: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30) {
+  length: 136,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '167',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_target.c',
+  line: '1065',
+  routine: 'checkInsertTargets'
+}
+[Files] Server error details: error: column "document_category" of relation "files" does not exist
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async <anonymous> (/home/runner/workspace/server/routes/files.ts:112:30)
+6:56:32 AM [error] POST /api/files 500 in 1579ms :: {"error":"Server error","detail":"column \"document_category\" of relation \"...
+[Auth] Deserializing user: 149
