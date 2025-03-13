@@ -21,12 +21,43 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueSuffix}${ext}`);
   }
 });
 
+const fileFilter = (req: any, file: any, cb: any) => {
+  console.log('[Files] Checking file:', {
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    size: file.size
+  });
+
+  // Accept PDF files
+  if (file.mimetype === 'application/pdf') {
+    cb(null, true);
+  } 
+  // Accept common document formats
+  else if (
+    ['application/msword', 
+     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+     'application/vnd.oasis.opendocument.text',
+     'text/plain'].includes(file.mimetype)
+  ) {
+    cb(null, true);
+  }
+  // Accept image formats
+  else if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  }
+  else {
+    cb(new Error(`File type ${file.mimetype} not supported`));
+  }
+};
+
 const upload = multer({ 
   storage,
+  fileFilter,
   limits: {
     fileSize: 50 * 1024 * 1024 // 50MB limit
   }
@@ -91,6 +122,14 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
+    }
+
+    // Send appropriate error response
+    if (error instanceof multer.MulterError) {
+      return res.status(400).json({
+        error: 'File upload error',
+        detail: error.message
+      });
     }
 
     res.status(500).json({ 

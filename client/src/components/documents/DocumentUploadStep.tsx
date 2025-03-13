@@ -53,22 +53,46 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       try {
+        console.log('[Document Upload] Starting upload:', {
+          fileName: formData.get('file')?.['name'],
+          fileType: formData.get('file')?.['type'],
+        });
+
         const res = await fetch('/api/files', {
           method: 'POST',
           headers: {
-            'Accept': 'application/json'
+            'Accept': 'application/json',
           },
           body: formData
         });
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.message || 'Upload failed');
+        const contentType = res.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          console.error('[Document Upload] Invalid content type:', {
+            received: contentType,
+            expected: 'application/json'
+          });
+          throw new Error('Invalid server response type. Please try again.');
         }
 
-        return await res.json();
+        if (!res.ok) {
+          try {
+            const errorData = await res.json();
+            throw new Error(errorData.message || errorData.error || 'Upload failed');
+          } catch (parseError) {
+            console.error('[Document Upload] Error response parsing failed:', parseError);
+            throw new Error(`Upload failed: ${res.statusText}`);
+          }
+        }
+
+        const data = await res.json();
+        return data;
       } catch (error) {
-        console.error('[Document Upload] Upload error:', error);
+        console.error('[Document Upload] Upload error:', {
+          error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
         throw error;
       }
     }
@@ -95,6 +119,12 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
       // Invalidate files query to refresh file list
       queryClient.invalidateQueries({ queryKey: ['/api/files'] });
     } catch (error) {
+      console.error('[Document Upload] Error uploading file:', {
+        fileName: file.name,
+        fileType: file.type,
+        error
+      });
+
       toast({
         title: "Upload Error",
         description: error instanceof Error ? error.message : "Failed to upload file",
@@ -106,6 +136,12 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
 
   const handleFilesAccepted = async (files: File[]) => {
     if (isUploading) return;
+
+    console.log('[Document Upload] Files accepted:', files.map(f => ({
+      name: f.name,
+      type: f.type,
+      size: f.size
+    })));
 
     setIsUploading(true);
     try {
