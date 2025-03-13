@@ -27,14 +27,6 @@ export const TaskStatus = {
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
-export const DocumentProcessingStatus = {
-  PENDING: 'pending',
-  PROCESSING: 'processing',
-  COMPLETED: 'completed',
-  FAILED: 'failed'
-} as const;
-
-export type DocumentProcessingStatus = typeof DocumentProcessingStatus[keyof typeof DocumentProcessingStatus];
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -132,14 +124,11 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   user_id: integer("user_id").references(() => users.id).notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
-  upload_time: timestamp("upload_time").notNull().defaultNow(),
-  download_count: integer("download_count").default(0),
+  created_at: timestamp("created_at"),
+  updated_at: timestamp("updated_at"),
+  upload_time: timestamp("upload_time"),
+  download_count: integer("download_count"),
   version: real("version").notNull().default(1.0),
-  processing_status: text("processing_status").$type<DocumentProcessingStatus>().notNull().default('pending'),
-  processing_error: text("processing_error"),
-  processed_at: timestamp("processed_at"),
 });
 
 export const invitations = pgTable("invitations", {
