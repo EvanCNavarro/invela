@@ -1,4 +1,5 @@
-import { getDb, getSchemas } from '../utils/db-adapter';
+import { db } from "@db";
+import { files } from "@db/schema";
 import { eq } from "drizzle-orm";
 import { Router } from 'express';
 import path from 'path';
@@ -60,7 +61,7 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
     }
 
     // Create file record in database
-    const [fileRecord] = await getDb().insert(getSchemas().files)
+    const [fileRecord] = await db.insert(files)
       .values({
         name: req.file.originalname,
         path: req.file.filename,
@@ -158,8 +159,8 @@ router.get('/api/files', async (req, res) => {
     }
 
     console.log('[Files] Executing database query for company:', parsedCompanyId);
-    const fileRecords = await getDb().query.files.findMany({
-      where: eq(getSchemas().files.company_id, parsedCompanyId)
+    const fileRecords = await db.query.files.findMany({
+      where: eq(files.company_id, parsedCompanyId)
     });
 
     console.log('[Files] Query results:', {
@@ -184,9 +185,9 @@ router.get("/api/files/:id/download", async (req, res) => {
     const fileId = parseInt(req.params.id);
     console.log('[Files] Download request for file:', fileId);
 
-    const [fileRecord] = await getDb().select()
-      .from(getSchemas().files)
-      .where(eq(getSchemas().files.id, fileId));
+    const [fileRecord] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
 
     if (!fileRecord) {
       console.log('[Files] File not found:', fileId);
@@ -202,9 +203,9 @@ router.get("/api/files/:id/download", async (req, res) => {
     }
 
     // Update download count
-    await getDb().update(getSchemas().files)
+    await db.update(files)
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
-      .where(eq(getSchemas().files.id, fileId));
+      .where(eq(files.id, fileId));
 
     res.download(filePath, fileRecord.name, (err) => {
       if (err) {

@@ -1,251 +1,104 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
-import { PageTemplate } from "@/components/ui/page-template";
-import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
-import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
-import confetti from 'canvas-confetti';
 
-interface TaskPageProps {
-  params: {
-    taskSlug: string;
-  }
-}
+import React, { useEffect } from 'react';
+import { useRoute, useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { api } from '@/lib/api';
 
-interface Task {
-  id: number;
-  title: string;
-  description: string | null;
-  task_type: string;
-  task_scope: string;
-  status: string;
-  priority: string;
-  progress: number;
-  metadata: {
-    companyId?: number;
-    companyName?: string;
-    company?: {
-      name: string;
-      description?: string;
-    };
-    kybFormFile?: number;
-    [key: string]: any;
-  } | null;
-  savedFormData?: Record<string, any>;
-}
-
-export default function TaskPage({ params }: TaskPageProps) {
+// Export the component as TaskPage (the name that's being imported)
+export const TaskPage: React.FC = () => {
+  const [, params] = useRoute('/task-center/task/:taskSlug');
   const [, navigate] = useLocation();
-  const { toast } = useToast();
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [fileId, setFileId] = useState<number | null>(null);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const taskSlug = params?.taskSlug;
 
-  // Parse the taskSlug to get task type and company name
-  const [taskType, ...companyNameParts] = params.taskSlug.split('-');
-  const companyName = companyNameParts.join('-');
+  // Extract task ID from slug if available
+  const taskId = taskSlug?.split('-')[0] === 'card' ? null : 
+                (taskSlug ? parseInt(taskSlug.split('-')[0]) : null);
 
-  const { data: task, isLoading, error } = useQuery<Task>({
-    queryKey: ['/api/tasks/kyb', companyName],
-    queryFn: async () => {
-      const response = await fetch(`/api/tasks/kyb/${companyName}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch KYB task');
-      }
-      const data = await response.json();
-      if (data.metadata?.kybFormFile) {
-        setFileId(data.metadata.kybFormFile);
-        setIsSubmitted(true);
-      }
-      return data;
-    },
-    enabled: taskType === 'kyb',
-    staleTime: 0
+  console.log('[TaskPage] Route debugging:', {
+    taskSlug,
+    taskType: taskSlug?.split('-')[0],
+    companyName: taskSlug?.replace('card-', ''),
+    match: true,
+    questMatch: false,
+    timestamp: new Date().toISOString()
   });
 
+  // Redirect card tasks to the questionnaire
   useEffect(() => {
-    if (error) {
-      console.error('[TaskPage] Error loading task:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load KYB task. Please try again.",
-        variant: "destructive",
-      });
-      navigate('/task-center');
+    if (taskSlug && taskSlug.startsWith('card-')) {
+      navigate(`/task-center/task/${taskSlug}/questionnaire`);
     }
-  }, [error, navigate, toast]);
-
-  const handleBackClick = () => {
-    navigate('/task-center');
-  };
-
-  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
-    if (!fileId) return;
-
-    try {
-      const response = await fetch(`/api/kyb/download/${fileId}?format=${format}`);
-      if (!response.ok) throw new Error('Failed to download file');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `kyb_form.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download the file. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  if (isLoading) {
+  }, [taskSlug, navigate]);
+  
+  // If it's a card task, we'll redirect, so just show a loading spinner
+  if (taskSlug?.startsWith('card-')) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!task) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
-            <p className="text-muted-foreground">
-              Could not find the KYB task for {companyName}. Please try again.
-            </p>
+        <div className="container max-w-7xl mx-auto py-6">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
           </div>
         </div>
       </DashboardLayout>
     );
   }
 
-  if (taskType !== 'kyb') {
-    navigate('/task-center');
-    return null;
-  }
-
-  const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
+  // For regular tasks, proceed with fetching task details
+  const { data: task, isLoading, error } = useQuery({
+    queryKey: ['/api/tasks', taskId],
+    queryFn: async () => {
+      if (!taskId) return null;
+      return await api.get(`/api/tasks/${taskId}`);
+    },
+    enabled: !!taskId,
+  });
 
   return (
     <DashboardLayout>
-      <PageTemplate className="space-y-6">
-        <div className="space-y-4">
-          <BreadcrumbNav forceFallback={true} />
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={handleBackClick}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Task Center
-            </Button>
+      <div className="container max-w-7xl mx-auto py-6">
+        <div className="flex justify-between items-center mb-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/task-center')}
+            className="text-sm font-medium bg-white border-muted-foreground/20"
+          >
+            Back to Task Center
+          </Button>
+        </div>
 
-            {(isSubmitted || task.metadata?.kybFormFile) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDownload('json')}>
-                    <FileJson className="mr-2 h-4 w-4" />
-                    Download as JSON
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Download as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download as Text
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
           </div>
-        </div>
-
-        <div className="container max-w-7xl mx-auto">
-          <OnboardingKYBFormPlayground
-            taskId={task.id}
-            companyName={companyName}
-            companyData={{
-              name: displayName,
-              description: task.metadata?.company?.description
-            }}
-            savedFormData={task.savedFormData}
-            onSubmit={(formData) => {
-              fetch('/api/kyb/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                  formData,
-                  taskId: task.id
-                })
-              })
-                .then(response => {
-                  if (!response.ok) throw new Error('Failed to save KYB form');
-                  return response.json();
-                })
-                .then((result) => {
-                  // Trigger confetti on successful submission
-                  confetti({
-                    particleCount: 150,
-                    spread: 80,
-                    origin: { y: 0.6 },
-                    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                  });
-
-                  setFileId(result.fileId);
-                  setIsSubmitted(true);
-                  setShowSuccessModal(true);
-                })
-                .catch(error => {
-                  console.error('[TaskPage] Form submission failed:', error);
-                  toast({
-                    title: "Error",
-                    description: "Failed to save KYB form. Please try again.",
-                    variant: "destructive",
-                  });
-                });
-            }}
-          />
-        </div>
-
-        <KYBSuccessModal
-          open={showSuccessModal}
-          onOpenChange={setShowSuccessModal}
-          companyName={displayName}
-        />
-      </PageTemplate>
+        ) : error ? (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">Error Loading Task</h2>
+            <p className="text-muted-foreground">
+              Could not load the task information. Please try again later.
+            </p>
+          </div>
+        ) : !task ? (
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
+            <p className="text-muted-foreground">
+              The requested task could not be found.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-2xl font-semibold mb-4">{task.title}</h2>
+            <div className="prose max-w-none">
+              {task.description && <p>{task.description}</p>}
+            </div>
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
-}
+};
+
+export default TaskPage;

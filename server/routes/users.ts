@@ -10,37 +10,6 @@ import { TaskStatus } from "@db/schema";
 
 const router = Router();
 
-/**
- * @swagger
- * components:
- *   schemas:
- *     UserInvite:
- *       type: object
- *       required:
- *         - email
- *         - full_name
- *         - company_id
- *         - company_name
- *         - sender_name
- *       properties:
- *         email:
- *           type: string
- *           format: email
- *           description: Email address of the user to invite
- *         full_name:
- *           type: string
- *           description: Full name of the user to invite
- *         company_id:
- *           type: integer
- *           description: ID of the company the user belongs to
- *         company_name:
- *           type: string
- *           description: Name of the company for the invitation email
- *         sender_name:
- *           type: string
- *           description: Name of the person sending the invitation
- */
-
 // Schema for user invitation with explicit error messages
 const inviteUserSchema = z.object({
   email: z.string().email("Valid email is required"),
@@ -64,48 +33,6 @@ async function hashPassword(password: string) {
   return bcrypt.hash(password, salt);
 }
 
-/**
- * @swagger
- * /users/invite:
- *   post:
- *     summary: Invite a new user to the platform
- *     description: Sends an invitation email to a new user with a temporary password
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UserInvite'
- *     responses:
- *       201:
- *         description: Invitation sent successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: User invited successfully
- *                 invitationId:
- *                   type: integer
- *                   description: ID of the created invitation
- *       400:
- *         description: Invalid input data
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ErrorResponse'
- *       401:
- *         description: Authentication required
- *       409:
- *         description: User with this email already exists
- *       500:
- *         description: Server error
- */
 router.post("/api/users/invite", async (req, res) => {
   const maxRetries = 3;
   let retryCount = 0;

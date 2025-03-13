@@ -98,7 +98,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         company_name: formData.company_name.trim(),
         sender_name: user?.full_name,
         sender_company: user?.company_name || 'Invela',
-        company_id: companyId || 0
+        ...(variant === 'user' && { company_id: companyId }) // Only include company_id for user invites
       };
 
       console.log(`[InviteModal] Sending ${variant} invitation with payload:`, payload);

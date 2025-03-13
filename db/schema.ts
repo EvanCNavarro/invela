@@ -19,6 +19,7 @@ export const TaskStatus = {
   COMPLETED: 'completed',
   NOT_STARTED: 'not_started',
   IN_PROGRESS: 'in_progress',
+  READY_FOR_REVIEW: 'ready_for_review',
   READY_FOR_SUBMISSION: 'ready_for_submission',
   SUBMITTED: 'submitted',
   APPROVED: 'approved',
@@ -98,7 +99,6 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
   onboarding_user_completed: boolean("onboarding_user_completed").notNull().default(false),
-  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -141,7 +141,6 @@ export const invitations = pgTable("invitations", {
   invitee_company: text("invitee_company").notNull(),
   expires_at: timestamp("expires_at").notNull(),
   used_at: timestamp("used_at"),
-  metadata: jsonb("metadata").$type<Record<string, any>>().default({}),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -205,12 +204,31 @@ export const kybResponses = pgTable("kyb_responses", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const refreshTokens = pgTable("refresh_tokens", {
+export const cardFields = pgTable("card_fields", {
   id: serial("id").primaryKey(),
-  user_id: integer("user_id").notNull().references(() => users.id),
-  token: text("token").notNull(),
-  expires_at: timestamp("expires_at").notNull(),
+  field_key: text("field_key").notNull().unique(),
+  wizard_section: text("wizard_section").notNull(),
+  question_label: text("question_label").notNull(),
+  question: text("question").notNull(),
+  example_response: text("example_response"),
+  ai_search_instructions: text("ai_search_instructions"),
+  partial_risk_score_max: integer("partial_risk_score_max").notNull(),
   created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const cardResponses = pgTable("card_responses", {
+  id: serial("id").primaryKey(),
+  task_id: integer("task_id").references(() => tasks.id).notNull(),
+  field_id: integer("field_id").references(() => cardFields.id).notNull(),
+  response_value: text("response_value"),
+  ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
+  ai_reasoning: text("ai_reasoning"),  // Add new column
+  partial_risk_score: integer("partial_risk_score").notNull().default(0),
+  status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default("empty"),
+  version: integer("version").notNull().default(1),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -279,6 +297,21 @@ export const kybResponsesRelations = relations(kybResponses, ({ one }) => ({
   }),
 }));
 
+export const cardFieldsRelations = relations(cardFields, ({ many }) => ({
+  responses: many(cardResponses)
+}));
+
+export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
+  field: one(cardFields, {
+    fields: [cardResponses.field_id],
+    references: [cardFields.id]
+  }),
+  task: one(tasks, {
+    fields: [cardResponses.task_id],
+    references: [tasks.id]
+  })
+}));
+
 export const registrationSchema = z.object({
   email: z.string().email(),
   full_name: z.string().min(1),
@@ -294,7 +327,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB"]),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "company_card", "compliance_and_risk"]),
   task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -309,6 +342,7 @@ export const insertTaskSchema = z.object({
     TaskStatus.COMPLETED,
     TaskStatus.NOT_STARTED,
     TaskStatus.IN_PROGRESS,
+    TaskStatus.READY_FOR_REVIEW,
     TaskStatus.READY_FOR_SUBMISSION,
     TaskStatus.SUBMITTED,
     TaskStatus.APPROVED,
@@ -353,13 +387,26 @@ export const insertTaskSchema = z.object({
         path: ["company_id"],
       });
     }
-  } else if (data.task_type === "company_onboarding_KYB") {
+  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
     if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Company is required for KYB tasks",
+        message: data.task_type === "company_onboarding_KYB" 
+          ? "Company is required for KYB tasks"
+          : data.task_type === "company_card"
+          ? "Company is required for CARD tasks"
+          : "Company is required for CARD tasks",
         path: ["company_id"],
       });
+    }
+    if (data.task_type === "company_card") {
+      data.priority = "high";
+      // If no due date is provided, set it to 2 weeks from now
+      if (!data.due_date) {
+        const twoWeeksFromNow = new Date();
+        twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
+        data.due_date = twoWeeksFromNow;
+      }
     }
     data.task_scope = "company";
   }
@@ -393,3 +440,8 @@ export const insertKybFieldSchema = createInsertSchema(kybFields);
 export const selectKybFieldSchema = createSelectSchema(kybFields);
 export const insertKybResponseSchema = createInsertSchema(kybResponses);
 export const selectKybResponseSchema = createSelectSchema(kybResponses);
+
+export const insertCardFieldSchema = createInsertSchema(cardFields);
+export const selectCardFieldSchema = createSelectSchema(cardFields);
+export const insertCardResponseSchema = createInsertSchema(cardResponses);
+export const selectCardResponseSchema = createSelectSchema(cardResponses);

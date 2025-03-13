@@ -1,0 +1,36 @@
+[WebSocket] Connected successfully
+[TaskTable] Task clicked: 
+Object {id: 193, title: "Company CARD: DataTechCompany", type: "company_card", status: "not_started", metadata: {…}, …}
+[TaskTable] Navigation preparation: 
+Object {taskType: "company_card", originalTitle: "Company CARD: DataTechCompany", extractedCompanyName: "DataTechCompany", taskTypePrefix: "card", constructedUrl: "/task-center/task/card-DataTechCompany", …}
+[TaskTable] Task validation: 
+Object {hasMetadata: true, hasCompanyName: false, titleMatchResult: Array(3), formattedCompanyName: "DataTechCompany", timestamp: "2025-03-12T19:22:33.131Z"}
+[TaskTable] Initiating navigation to: /task-center/task/card-DataTechCompany
+[Router] Current location: /task-center/task/card-DataTechCompany
+[TaskPage] Route debugging: 
+Object {taskSlug: "card-DataTechCompany", taskType: "card", companyName: "DataTechCompany", match: true, questMatch: false, …}
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[TaskPage] Fetching task data: 
+Object {endpoint: "/api/tasks/card", companyName: "DataTechCompany", timestamp: "2025-03-12T19:22:33.136Z"}
+[TaskPage] API response received: 
+Object {status: 200, ok: true, statusText: "OK", timestamp: "2025-03-12T19:22:33.331Z"}
+[TaskPage] Task data received: 
+Object {taskId: 193, taskType: "company_card", status: "not_started", metadata: {…}, timestamp: "2025-03-12T19:22:33.332Z"}
+[TaskPage] Route debugging: 
+Object {taskSlug: "card-DataTechCompany", taskType: "card", companyName: "DataTechCompany", match: true, questMatch: false, …}
+[TaskPage] Rendering decision: 
+Object {taskType: "card", questMatch: false, displayName: "DataTechCompany", timestamp: "2025-03-12T19:22:33.332Z"}
+[TaskPage] Rendering CARD method choice
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(2), isLoadingCompany: false}
+[CardMethodChoice] Initializing with: 
+Object {taskId: 193, companyName: "DataTechCompany", timestamp: "2025-03-12T19:22:33.335Z"}
+companyName: "DataTechCompany"
+taskId: 193
+timestamp: "2025-03-12T19:22:33.335Z"
+[[Prototype]]: Object
+[WebSocket] Connected successfully
+[CardMethodChoice] Choice clicked: 
+Object {method: "manual", taskId: 193, companyName: "DataTechCompany", timestamp: "2025-03-12T19:22:33.954Z"}
+[Router] Current location: /task-center/task/card-DataTechCompany/questionnaire

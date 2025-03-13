@@ -18,6 +18,7 @@ export default function TaskCenter() {
 
   const { data: tasks = [], isLoading } = useQuery<SelectTask[]>({
     queryKey: ["/api/tasks"],
+    queryFn: () => api.getTasks(),
     staleTime: 1000, // Consider data stale after 1 second
     refetchInterval: 5000, // Poll every 5 seconds for updates
   });

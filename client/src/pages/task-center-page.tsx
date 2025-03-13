@@ -30,6 +30,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { api } from '@/lib/api'; // Added import for api
 
 interface Company {
   id: number;
@@ -68,20 +69,30 @@ export default function TaskCenterPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading: isTasksLoading } = useQuery<Task[]>({
+  const { data: tasks = [], isLoading: isTasksLoading, isFetching } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+    queryFn: () => api.getTasks(), // Updated useQuery to use api.getTasks()
     staleTime: 1000,
     refetchInterval: 5000,
   });
 
+  // Add logging to help debug loading state
+  console.log('[TaskCenter] Tasks loading status:', { 
+    isLoading: isTasksLoading, 
+    isFetching, 
+    tasksCount: tasks?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+
   const { data: currentCompany, isLoading: isCompanyLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
+    queryFn: () => api.getCurrentCompany(), // Added queryFn
     staleTime: 5 * 60 * 1000,
   });
 
   const isCompanyOnboarded = currentCompany?.onboarding_company_completed ?? false;
 
-  const isLoading = isTasksLoading || isCompanyLoading;
+  const combinedLoading = isTasksLoading || isCompanyLoading;
 
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
@@ -138,7 +149,7 @@ export default function TaskCenterPage() {
     };
   }, [queryClient]);
 
-  const myTasksCount = !isLoading && currentCompany?.id
+  const myTasksCount = !combinedLoading && currentCompany?.id
     ? tasks.filter(task => 
         task.company_id === currentCompany.id && 
         (task.assigned_to === user?.id || 
@@ -146,14 +157,14 @@ export default function TaskCenterPage() {
       ).length
     : 0;
 
-  const forOthersCount = !isLoading && user?.id
+  const forOthersCount = !combinedLoading && user?.id
     ? tasks.filter(task => 
         task.created_by === user.id && 
         (!task.assigned_to || task.assigned_to !== user.id)
       ).length
     : 0;
 
-  const filteredTasks = (!isLoading && currentCompany?.id)
+  const filteredTasks = (!combinedLoading && currentCompany?.id)
     ? tasks.filter((task) => {
         console.log('[TaskCenter] Filtering task:', {
           taskId: task.id,
@@ -214,7 +225,21 @@ export default function TaskCenterPage() {
     setSearchResults([]);
   };
 
-  if (isLoading) {
+  // Check if there are any pending user invitations with the current user's email
+  const { data: emailInvitations = [] } = useQuery<Task[]>({
+    queryKey: ["emailInvitations", user?.email],
+    queryFn: () => api.getTasks({ email: user?.email, type: "user_invitation" }),
+    enabled: !!user?.email,
+  });
+
+  const { data: userInvitations = [] } = useQuery<Task[]>({
+    queryKey: ["userInvitations"],
+    queryFn: () => api.getTasks({ type: "user_invitation" }),
+    enabled: activeTab === "invitations",
+  });
+
+
+  if (combinedLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -317,7 +342,7 @@ export default function TaskCenterPage() {
                     setSearchResults(results.map(result => result.item) as Task[]);
                   }}
                   onSearch={(value) => setSearchQuery(value)}
-                  isLoading={isLoading}
+                  isLoading={combinedLoading}
                   placeholder="Search for tasks"
                   containerClassName="w-full"
                 />
@@ -389,7 +414,7 @@ export default function TaskCenterPage() {
                   </TabsContent>
                 </div>
 
-                {!isLoading && totalPages > 1 && (
+                {!combinedLoading && totalPages > 1 && (
                   <div className="flex flex-col sm:flex-row items-center justify-between pt-4 border-t gap-4">
                     <div className="text-sm text-muted-foreground">
                       Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedAndFilteredTasks.length)} of {sortedAndFilteredTasks.length} tasks

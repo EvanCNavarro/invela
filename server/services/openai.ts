@@ -1,22 +1,10 @@
 import OpenAI from "openai";
-import { getSchemas, getDb } from "../utils/db-adapter";
+import { companies } from "@db/schema";
+import { db } from "@db";
+import { openaiSearchAnalytics } from "@db/schema";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-// Define lazy-loaded schema variables to avoid initialization at import time
-let companiesSchema: any;
-let openaiSearchAnalyticsSchema: any;
-
-// Helper function to ensure schemas are loaded when needed
-function ensureSchemas() {
-  if (!companiesSchema || !openaiSearchAnalyticsSchema) {
-    const schemas = getSchemas();
-    companiesSchema = schemas.companies;
-    openaiSearchAnalyticsSchema = schemas.openaiSearchAnalytics;
-  }
-  return { companies: companiesSchema, openaiSearchAnalytics: openaiSearchAnalyticsSchema };
-}
 
 interface CleanedCompanyData {
   name: string;
@@ -163,10 +151,8 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
       default:
         if (typeof value === 'string') {
-          // @ts-ignore - type safety handled at runtime
           cleanedData[key as keyof CleanedCompanyData] = value.trim();
         } else {
-          // @ts-ignore - type safety handled at runtime
           cleanedData[key as keyof CleanedCompanyData] = value;
         }
     }
@@ -177,8 +163,7 @@ function cleanOpenAIResponse(result: any): Partial<CleanedCompanyData> {
 
 async function logSearchAnalytics(analytics: SearchAnalytics) {
   try {
-    const { openaiSearchAnalytics } = ensureSchemas();
-    await getDb().insert(openaiSearchAnalytics).values({
+    await db.insert(openaiSearchAnalytics).values({
       search_type: analytics.searchType || 'missing_data',
       company_id: analytics.companyId,
       search_prompt: analytics.searchPrompt,
@@ -298,8 +283,7 @@ export async function findMissingCompanyData(
     console.log("[OpenAI Search] ⏱️ Search completed in", duration, "ms");
 
     // Parse and clean the OpenAI response
-    const content = response.choices[0].message.content;
-    const rawResult = content ? JSON.parse(content) : {};
+    const rawResult = JSON.parse(response.choices[0].message.content);
     console.log("[OpenAI Search] 📥 Received raw data:", rawResult);
 
     // Clean and format the data for storage
@@ -364,7 +348,7 @@ export async function findMissingCompanyData(
   }
 }
 
-export async function validateAndCleanCompanyData(rawData: Partial<CleanedCompanyData>): Promise<CleanedCompanyData> {
+export async function validateAndCleanCompanyData(rawData: Partial<typeof companies.$inferInsert>): Promise<CleanedCompanyData> {
   const startTime = Date.now();
   const prompt = `
     As a financial data expert, analyze and clean the following company information. 
@@ -437,8 +421,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<CleanedCompan
         throw new Error("Empty response from OpenAI");
       }
 
-      const content = response.choices[0].message.content;
-      const rawResult = content ? JSON.parse(content) : {};
+      const rawResult = JSON.parse(response.choices[0].message.content);
       const cleanedData = cleanOpenAIResponse(rawResult);
 
       await logSearchAnalytics({
@@ -487,6 +470,132 @@ export async function validateAndCleanCompanyData(rawData: Partial<CleanedCompan
 
   console.error("All OpenAI validation attempts failed:", lastError);
   return rawData as CleanedCompanyData;
+}
+
+interface CardResponseAnalysis {
+  suspicionLevel: number;  // 0-100 scale
+  riskScore: number;      // Based on partial_risk_score_max
+  reasoning: string;
+}
+
+export async function analyzeCardResponse(
+  response: string,
+  question: string,
+  maxRiskScore: number,
+  exampleResponse?: string
+): Promise<CardResponseAnalysis> {
+  const startTime = Date.now();
+
+  console.log('[OpenAI Service] Starting response analysis:', {
+    questionLength: question.length,
+    responseLength: response.length,
+    maxRiskScore,
+    hasExample: !!exampleResponse,
+    startTime: new Date().toISOString()
+  });
+
+  const prompt = `
+As a security and compliance expert, analyze this response to a security practice question.
+Compare it to best practices and the example response if provided.
+
+Question: ${question}
+User Response: ${response}
+${exampleResponse ? `Example of Good Response: ${exampleResponse}` : ''}
+
+Analyze for:
+1. Completeness of security measures described
+2. Alignment with industry best practices
+3. Potential red flags or concerning omissions
+4. Comparison with the example response (if provided)
+
+Respond with a JSON object containing:
+{
+  "suspicionLevel": number (0-100, higher means more concerning),
+  "reasoning": string (explanation of the analysis)
+}
+`;
+
+  try {
+    console.log('[OpenAI Service] Sending request to GPT-4:', {
+      timestamp: new Date().toISOString()
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "You are an expert in security compliance and risk assessment.",
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const duration = Date.now() - startTime;
+
+    console.log('[OpenAI Service] Received raw response:', {
+      content: response.choices[0].message.content,
+      duration,
+      timestamp: new Date().toISOString()
+    });
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Validate and normalize the suspicion level
+    const suspicionLevel = Math.min(100, Math.max(0, result.suspicionLevel));
+
+    // Calculate risk score as percentage of max score, rounded up
+    const riskScore = Math.ceil((suspicionLevel / 100) * maxRiskScore);
+
+    console.log('[OpenAI Service] Calculated analysis result:', {
+      suspicionLevel,
+      riskScore,
+      maxRiskScore,
+      reasoningLength: result.reasoning?.length,
+      duration,
+      timestamp: new Date().toISOString()
+    });
+
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'card_response_analysis',
+      searchPrompt: prompt,
+      searchResults: result,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-4o'
+      ),
+      model: 'gpt-4o',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      suspicionLevel,
+      riskScore,
+      reasoning: result.reasoning,
+    };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[OpenAI Service] Error during analysis:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      duration,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
 }
 
 interface SearchAnalytics {

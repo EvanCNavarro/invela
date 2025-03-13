@@ -1,23 +1,18 @@
-import { getSchemas, getDb, executeWithNeonRetry } from "../utils/db-adapter";
+import { db } from "@db";
+import { companies, tasks, relationships } from "@db/schema";
 import { TaskStatus, taskStatusToProgress } from "../types";
 import { broadcastTaskUpdate } from "./websocket";
 import { eq } from "drizzle-orm";
-
-// Define a temporary type for tx until we have proper types
-type Transaction = any;
 
 /**
  * Creates a new company and handles all associated rules/tasks
  */
 export async function createCompany(
-  data: any // We'll improve this type later
-): Promise<any> {
+  data: typeof companies.$inferInsert
+): Promise<typeof companies.$inferSelect> {
   console.log('[Company Service] Creating new company:', data.name);
 
-  const db = getDb();
-  const { companies, tasks, relationships } = getSchemas();
-
-  return await db.transaction(async (tx: Transaction) => {
+  return await db.transaction(async (tx) => {
     // Create the company
     const [newCompany] = await tx.insert(companies)
       .values({
@@ -32,6 +27,9 @@ export async function createCompany(
       throw new Error("Failed to create company");
     }
 
+    // Get the creator's user ID for task assignment
+    const createdById = data.metadata?.invited_by || null;
+
     // Create KYB onboarding task
     const [kybTask] = await tx.insert(tasks)
       .values({
@@ -43,8 +41,8 @@ export async function createCompany(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
-        assigned_to: null, // Explicitly set to null so all company users can see it
-        created_by: data.metadata?.invited_by || null,
+        assigned_to: createdById, // Assign to the creator
+        created_by: createdById,
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -55,6 +53,39 @@ export async function createCompany(
           company_name: newCompany.name,
           created_via: data.metadata?.created_via || 'company_creation',
           status_flow: [TaskStatus.PENDING]
+        }
+      })
+      .returning();
+
+    // Create CARD compliance task
+    const [cardTask] = await tx.insert(tasks)
+      .values({
+        title: `Company CARD: ${newCompany.name}`,
+        description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
+        task_type: 'company_card',
+        task_scope: 'company',
+        status: TaskStatus.NOT_STARTED,
+        priority: 'high',
+        progress: 0,
+        company_id: newCompany.id,
+        assigned_to: createdById,
+        created_by: createdById,
+        due_date: (() => {
+          const date = new Date();
+          date.setDate(date.getDate() + 14); // 14 days deadline
+          return date;
+        })(),
+        metadata: {
+          company_id: newCompany.id,
+          company_name: newCompany.name,
+          created_via: data.metadata?.created_via || 'company_creation',
+          statusFlow: [TaskStatus.NOT_STARTED],
+          progressHistory: [{
+            value: 0,
+            timestamp: new Date().toISOString()
+          }],
+          created_at: new Date().toISOString(),
+          last_updated: new Date().toISOString()
         }
       })
       .returning();
@@ -107,13 +138,22 @@ export async function createCompany(
       });
     }
 
-    // Broadcast task update
+    // Broadcast task updates
     if (kybTask) {
       broadcastTaskUpdate({
         id: kybTask.id,
         status: kybTask.status,
         progress: kybTask.progress,
         metadata: kybTask.metadata || undefined
+      });
+    }
+
+    if (cardTask) {
+      broadcastTaskUpdate({
+        id: cardTask.id,
+        status: cardTask.status,
+        progress: cardTask.progress,
+        metadata: cardTask.metadata || undefined
       });
     }
 
@@ -126,11 +166,8 @@ export async function createCompany(
  */
 export async function updateCompany(
   companyId: number,
-  data: any // We'll improve this type later
-): Promise<any> {
-  const db = getDb();
-  const { companies } = getSchemas();
-  
+  data: Partial<typeof companies.$inferInsert>
+): Promise<typeof companies.$inferSelect> {
   const [updatedCompany] = await db.update(companies)
     .set({
       ...data,
@@ -144,4 +181,78 @@ export async function updateCompany(
   }
 
   return updatedCompany;
+}
+
+/**
+ * Updates company onboarding status and available tabs after CARD completion
+ */
+export async function updateCompanyAfterCardCompletion(
+  companyId: number
+): Promise<typeof companies.$inferSelect> {
+  console.log('[Company Service] Updating company after CARD completion:', {
+    companyId,
+    timestamp: new Date().toISOString()
+  });
+
+  try {
+    // Get company's current available tabs
+    const [company] = await db.select().from(companies).where(eq(companies.id, companyId));
+
+    if (!company) {
+      throw new Error(`Company with ID ${companyId} not found`);
+    }
+
+    // Define basic tabs that all companies get
+    let newTabs: string[] = ['dashboard', 'insights', 'file-vault'];
+
+    // Add additional tabs based on company category
+    if (company.category === 'Invela') {
+      newTabs.push('builder', 'playground', 'network');
+    } else if (company.category === 'Bank') {
+      newTabs.push('builder', 'network');
+    }
+    // FinTech companies only get the basic tabs
+
+    // Combine existing tabs with new ones, removing duplicates
+    // For FinTech companies, ensure network, builder, and playground are never included
+    const currentTabs = company.available_tabs || ['task-center'];
+    let updatedTabs = Array.from(new Set([...currentTabs, ...newTabs]));
+
+    // If company is FinTech, remove restricted tabs
+    if (company.category === 'FinTech') {
+      updatedTabs = updatedTabs.filter(tab =>
+        !['network', 'builder', 'playground'].includes(tab)
+      );
+    }
+
+    // Update company with new tabs and completed onboarding
+    const [updatedCompany] = await db.update(companies)
+      .set({
+        onboarding_company_completed: true,
+        available_tabs: updatedTabs,
+        updated_at: new Date()
+      })
+      .where(eq(companies.id, companyId))
+      .returning();
+
+    if (!updatedCompany) {
+      throw new Error(`Failed to update company ${companyId} after CARD completion`);
+    }
+
+    console.log('[Company Service] Company updated after CARD completion:', {
+      companyId: updatedCompany.id,
+      availableTabs: updatedCompany.available_tabs,
+      onboardingCompleted: updatedCompany.onboarding_company_completed,
+      timestamp: new Date().toISOString()
+    });
+
+    return updatedCompany;
+  } catch (error) {
+    console.error('[Company Service] Error updating company after CARD completion:', {
+      error,
+      companyId,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
 }

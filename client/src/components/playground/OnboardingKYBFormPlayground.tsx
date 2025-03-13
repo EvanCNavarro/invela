@@ -13,6 +13,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Update the field type to include suggestion
 type FormField = {
@@ -21,22 +28,24 @@ type FormField = {
   question: string;
   tooltip: string;
   suggestion?: string;
+  field_type?: string;
+  options?: string[];
 };
 
 // Function to extract tooltip content from question text
-const extractTooltipContent = (question: string): { mainText: string; tooltipText: string | null } => {
-  const match = question.match(/^(.*?)(?:\s*\((e\.g\.|i\.e\.,|example:)?(.*?)\))?$/i);
-  if (!match || !match[2]) {
-    return { mainText: question, tooltipText: null };
-  }
+const extractTooltipContent = (text: string): { mainText: string; tooltipText: string | null } => {
+  // The main text is the question itself
+  const mainText = text;
+  // The tooltip text comes from the tooltip property directly
   return {
-    mainText: match[1].trim(),
-    tooltipText: match[2].replace(/^(?:e\.g\.|i\.e\.,|example:)\s*/i, '').trim()
+    mainText,
+    tooltipText: null // We don't need to parse the question since we have a separate tooltip field
   };
 };
 
-// Define the form steps based on KYB requirements
+// Define the form steps based on updated KYB requirements
 const FORM_STEPS: FormField[][] = [
+  // Step 1: Legal Entity Name
   [
     {
       name: 'legalEntityName',
@@ -49,112 +58,166 @@ const FORM_STEPS: FormField[][] = [
       name: 'registrationNumber',
       label: 'Registration Number',
       question: 'What is the corporation or business number?',
-      tooltip: 'Issued by Corporations Canada or the relevant state authority',
+      tooltip: 'Issued by Corporations Canada or the relevant state authority'
     },
     {
       name: 'incorporationDate',
-      label: 'Date of Incorporation',
-      question: 'When was the business formed?',
+      label: 'Incorporation Date',
+      question: 'When was the company incorporated?',
       tooltip: 'The official date when the business was legally incorporated',
-      suggestion: 'incorporation_year'
+      field_type: 'DATE'
     },
     {
       name: 'registeredAddress',
       label: 'Registered Business Address',
-      question: 'What is the principal business address?',
+      question: 'What is the registered business address?',
       tooltip: 'The official registered address where the business operates',
       suggestion: 'hq_address'
     },
     {
       name: 'businessType',
-      label: 'Business Type/Legal Structure',
-      question: 'What is the legal structure of the business?',
+      label: 'Business Type',
+      question: 'What type of business entity is this?',
       tooltip: 'Options include: corporation, limited liability company (LLC), partnership, or other forms',
       suggestion: 'legal_structure'
     },
     {
       name: 'jurisdiction',
-      label: 'Jurisdiction of Incorporation',
-      question: 'In which jurisdiction is the business incorporated?',
-      tooltip: 'Examples: Ontario, British Columbia, or U.S. state',
+      label: 'Jurisdiction',
+      question: 'In which jurisdiction is the company registered?',
+      tooltip: 'The jurisdiction where the business is legally registered',
       suggestion: 'hq_address'
     }
   ],
+  // Step 2: Directors & Officers
   [
     {
       name: 'directorsAndOfficers',
       label: 'Directors and Officers',
-      question: 'Who are the current directors and senior officers?',
-      tooltip: 'Include full legal names, dates of birth, and contact details',
+      question: 'Who are the current directors and officers?',
+      tooltip: 'Include full legal names and positions of all directors and officers',
       suggestion: 'founders_and_leadership'
     },
     {
       name: 'ultimateBeneficialOwners',
-      label: 'Ultimate Beneficial Owners (UBOs)',
-      question: 'Which individuals hold 25% or more ownership?',
-      tooltip: 'Include direct and indirect ownership with supporting documentation',
+      label: 'Ultimate Beneficial Owners',
+      question: 'Who are the ultimate beneficial owners?',
+      tooltip: 'Individuals who own 25% or more of the company, directly or indirectly',
       suggestion: 'investors'
     },
     {
       name: 'authorizedSigners',
       label: 'Authorized Signers',
-      question: 'Who has legal signing authority for the business?',
-      tooltip: 'Include documentation of signing authority',
+      question: 'Who are the authorized signers for the company?',
+      tooltip: 'Individuals with legal authority to sign on behalf of the company',
       suggestion: 'founders_and_leadership'
     }
   ],
+  // Step 3: Corporate Registration
   [
     {
       name: 'corporateRegistration',
-      label: 'Corporate Registration Documents',
-      question: 'What are the official registration documents?',
-      tooltip: 'Documents that confirm business registration and legal status',
+      label: 'Corporate Registration',
+      question: 'Can you provide corporate registration details?',
+      tooltip: 'Official registration documents and identification numbers'
     },
     {
       name: 'goodStanding',
-      label: 'Proof of Good Standing',
-      question: 'Is the business in good standing with regulators?',
-      tooltip: 'Current status with the regulatory body',
+      label: 'Good Standing',
+      question: 'Is the company in good standing with regulatory authorities?',
+      tooltip: 'Current compliance status with relevant regulatory bodies',
+      field_type: 'BOOLEAN'
     },
     {
       name: 'licenses',
-      label: 'Licensing and Regulatory Documents',
-      question: 'What business licenses and permits are held?',
-      tooltip: 'All current licenses and permits related to business activities',
+      label: 'Licenses',
+      question: 'What licenses and permits does the company hold?',
+      tooltip: 'All current business licenses and regulatory permits'
     }
   ],
+  // Step 4: Tax Identification
   [
     {
       name: 'taxId',
-      label: 'Tax Identification',
-      question: 'What is the business tax ID?',
-      tooltip: 'EIN in the U.S. or CRA Business Number in Canada',
+      label: 'Tax ID',
+      question: 'What is the company\'s tax identification number?',
+      tooltip: 'EIN in the U.S. or equivalent tax ID in other jurisdictions'
+    },
+    {
+      name: 'taxReceipts',
+      label: 'Tax Receipts',
+      question: 'Please provide the company\'s most recent tax receipts or fiscal year tax filings.',
+      tooltip: 'Most recent fiscal year tax documentation'
+    },
+    {
+      name: 'annualRecurringRevenue',
+      label: 'Annual Recurring Revenue',
+      question: 'What is the company\'s most recent Annual Recurring Revenue (ARR)?',
+      tooltip: 'Select the appropriate revenue range for your company',
+      field_type: 'MULTIPLE_CHOICE',
+      options: [
+        'Less than $1 million',
+        '$1 million - $10 million',
+        '$10 million - $50 million',
+        'Greater than $50 million'
+      ]
+    },
+    {
+      name: 'monthlyRecurringRevenue',
+      label: 'Monthly Recurring Revenue',
+      question: 'What is the company\'s most recent Monthly Recurring Revenue (MRR)?',
+      tooltip: 'Current monthly recurring revenue figure'
+    },
+    {
+      name: 'marketCapitalization',
+      label: 'Market Capitalization',
+      question: 'What is the company\'s current market capitalization?',
+      tooltip: 'Current market value of the company\'s shares'
+    },
+    {
+      name: 'lifetimeCustomerValue',
+      label: 'Lifetime Customer Value',
+      question: 'What is the company\'s average Lifetime Customer Value (LCV)?',
+      tooltip: 'Average revenue generated by a customer over the entire relationship'
     },
     {
       name: 'financialStatements',
       label: 'Financial Statements',
-      question: 'Are recent financial statements available?',
-      tooltip: 'Recent audited financial statements or documentation of financial health',
+      question: 'Can you provide recent financial statements?',
+      tooltip: 'Recent audited financial statements or documentation'
     },
     {
       name: 'operationalPolicies',
       label: 'Operational Policies',
-      question: 'What security and compliance policies are in place?',
-      tooltip: 'Policies for data protection, cybersecurity (API security for OpenBanking), and business continuity',
+      question: 'What are the key operational policies?',
+      tooltip: 'Documentation of core business and operational procedures'
+    },
+    {
+      name: 'dataVolume',
+      label: 'Data Volume',
+      question: 'How much data does the company currently manage?',
+      tooltip: 'Total volume of data managed by the company'
+    },
+    {
+      name: 'dataTypes',
+      label: 'Data Types',
+      question: 'Which types of data does the company need access to?',
+      tooltip: 'Categories and types of data required for operations'
     }
   ],
+  // Step 5: Sanctions & Adverse Media
   [
     {
       name: 'sanctionsCheck',
-      label: 'Sanctions and Adverse Media Checks',
-      question: 'Are there any sanctions or adverse media flags?',
-      tooltip: 'History of sanctions or adverse media watchlist appearances',
+      label: 'Sanctions Check',
+      question: 'Has sanctions screening been completed?',
+      tooltip: 'Results of sanctions and watchlist screening'
     },
     {
       name: 'dueDiligence',
-      label: 'Due Diligence Reports',
-      question: 'What due diligence reports are available?',
-      tooltip: 'Recent third-party due diligence or risk assessment reports verifying compliance',
+      label: 'Due Diligence',
+      question: 'What due diligence has been performed?',
+      tooltip: 'Summary of completed due diligence processes and findings'
     }
   ]
 ];
@@ -489,7 +552,7 @@ export const OnboardingKYBFormPlayground = ({
     try {
       const updatedFormData = {
         ...formData,
-        [fieldName]: value.trim()
+        [fieldName]: value
       };
 
       if (isEmptyValue(updatedFormData[fieldName])) {
@@ -512,8 +575,8 @@ export const OnboardingKYBFormPlayground = ({
           formData: updatedFormData,
           fieldUpdates: {
             [fieldName]: {
-              value: value.trim(),
-              status: isEmptyValue(value.trim()) ? 'EMPTY' : 'COMPLETE',
+              value: value,
+              status: isEmptyValue(value) ? 'EMPTY' : 'COMPLETE',
               updatedAt: new Date().toISOString()
             }
           }
@@ -652,7 +715,7 @@ export const OnboardingKYBFormPlayground = ({
     });
   };
 
-  // Update getFieldVariant function to properly handle pre-populated fields
+  // Update getFieldVariant function to properly handle dropdown fields
   const getFieldVariant = (field: FormField, value: string | undefined) => {
     const isEmpty = isEmptyValue(value);
     const suggestion = getSuggestionForField(field.name);
@@ -663,6 +726,7 @@ export const OnboardingKYBFormPlayground = ({
         fieldName: field.name,
         value,
         variant: 'successful',
+        fieldType: field.field_type,
         timestamp: new Date().toISOString()
       });
       return 'successful';
@@ -773,6 +837,7 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [companyName, dataInitialized]);
 
+  // Update renderField function to handle multiple choice fields
   const renderField = (field: FormField) => {
     if (!formReady) return null;
 
@@ -783,6 +848,7 @@ export const OnboardingKYBFormPlayground = ({
       fieldName: field.name,
       rawValue: fieldValue,
       processedValue: value,
+      fieldType: field.field_type,
       formDataKeys: Object.keys(formData),
       isReady: formReady,
       timestamp: new Date().toISOString()
@@ -791,6 +857,53 @@ export const OnboardingKYBFormPlayground = ({
     const { mainText, tooltipText } = extractTooltipContent(field.question);
     const variant = getFieldVariant(field, value);
 
+    // Return dropdown/select for multiple choice fields
+    if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
+      const isSelected = !isEmptyValue(value);
+      return (
+        <div key={field.name} className="space-y-3">
+          <div className="flex flex-col gap-1.5 mb-2">
+            <label className="text-sm font-semibold text-foreground">
+              {field.label}
+            </label>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-muted-foreground">
+                {mainText}
+              </span>
+              {field.tooltip && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="text-sm">{field.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+          </div>
+          <Select
+            value={value}
+            onValueChange={(newValue) => handleFormDataUpdate(field.name, newValue)}
+          >
+            <SelectTrigger className={`w-full ${isSelected ? 'border-green-500' : ''}`}>
+              <SelectValue placeholder="Select option" />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options.map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      );
+    }
+
+    // Original input field rendering for text fields
     return (
       <div key={field.name} className="space-y-3">
         <div className="flex flex-col gap-1.5 mb-2">
@@ -905,7 +1018,7 @@ export const OnboardingKYBFormPlayground = ({
                       <div
                         className={`absolute top-3.5 left-[calc(50%+16px)] h-[2px] transition-all duration-200
                           ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                        style={{ width: 'calc(100% - 24px)' }}
+                        style={{ width:`calc(100% -24px)` }}
                       />
                     )}
 
