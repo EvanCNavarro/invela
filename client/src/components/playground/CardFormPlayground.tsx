@@ -534,11 +534,19 @@ export function CardFormPlayground({
 
   return (
     <div className="space-y-8">
-      <div className="space-y-2">
+      <div className="flex justify-between items-center mb-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold">
+            Compliance Form: {companyData?.name || companyName}
+          </h1>
+          <p className="text-muted-foreground">
+            Complete the Compliance and Risk Disclosure form
+          </p>
+        </div>
         <Button
           onClick={handleSubmit}
           disabled={progress < 11 || submitAssessment.isPending}
-          className="px-8 mb-6"
+          className="px-8"
         >
           {submitAssessment.isPending ? (
             <>
@@ -549,6 +557,9 @@ export function CardFormPlayground({
             'Submit Assessment'
           )}
         </Button>
+      </div>
+
+      <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Progress</span>
           <span>{progress}%</span>
