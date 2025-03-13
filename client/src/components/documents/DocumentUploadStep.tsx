@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface DocumentCategory {
   id: string;
@@ -46,78 +44,11 @@ interface DocumentUploadStepProps {
 
 export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUploadStepProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      try {
-        console.log('[Document Upload] Starting upload:', {
-          fileName: file.name,
-          fileType: file.type,
-        });
-
-        const formData = new FormData();
-        formData.append('file', file); // Ensure we use 'file' as the field name
-
-        const res = await fetch('/api/files', {
-          method: 'POST',
-          body: formData
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({
-            error: 'Upload failed',
-            message: res.statusText
-          }));
-          throw new Error(errorData.error || errorData.message || 'Upload failed');
-        }
-
-        const data = await res.json();
-        return data;
-      } catch (error) {
-        console.error('[Document Upload] Upload error:', error);
-        throw error;
-      }
-    }
-  });
-
-  const handleFilesAccepted = async (files: File[]) => {
-    if (isUploading) return;
-
-    console.log('[Document Upload] Files accepted:', files);
-    setIsUploading(true);
-
-    try {
-      for (const file of files) {
-        await uploadMutation.mutateAsync(file);
-        setUploadedFiles(prev => [...prev, file]);
-      }
-
-      // Update UI and trigger parent callback
-      onFilesUpdated?.(files);
-
-      // Show success toast
-      toast({
-        title: "Success",
-        description: `${files.length} file(s) uploaded successfully`,
-        duration: 3000,
-      });
-
-      // Invalidate files query to refresh file list
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-    } catch (error) {
-      console.error('[Document Upload] Error uploading files:', error);
-      toast({
-        title: "Upload Error",
-        description: error instanceof Error ? error.message : "Failed to upload files",
-        variant: "destructive",
-        duration: 5000,
-      });
-    } finally {
-      setIsUploading(false);
-    }
+  const handleFilesAccepted = (files: File[]) => {
+    const newFiles = [...uploadedFiles, ...files];
+    setUploadedFiles(newFiles);
+    onFilesUpdated?.(newFiles);
   };
 
   return (
@@ -128,9 +59,8 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
 
       <FileUploadZone
         onFilesAccepted={handleFilesAccepted}
-        acceptedFormats=".PDF, .TXT"
+        acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
         className="min-h-[200px]"
-        disabled={isUploading}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
