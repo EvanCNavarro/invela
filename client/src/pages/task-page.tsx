@@ -19,6 +19,7 @@ import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
+import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
 
 interface TaskPageProps {
   params: {
@@ -208,7 +209,14 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            {selectedMethod === 'manual' ? (
+            {selectedMethod === 'upload' ? (
+              <DocumentUploadWizard
+                companyName={companyName}
+                onComplete={() => {
+                  navigate('/task-center');
+                }}
+              />
+            ) : selectedMethod === 'manual' ? (
               <CardFormPlayground
                 taskId={task?.id || 0}
                 companyName={companyName}
@@ -270,20 +278,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                     });
                 }}
               />
-            ) : selectedMethod === 'upload' ? (
-              <div className="text-center p-8">
-                <h2 className="text-xl font-semibold mb-4">Upload Feature Coming Soon</h2>
-                <p className="text-muted-foreground">
-                  The document upload feature is currently under development.
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => setSelectedMethod(null)}
-                >
-                  Go Back to Method Selection
-                </Button>
-              </div>
             ) : (
               <CardMethodChoice
                 taskId={task?.id || 0}
