@@ -24,7 +24,7 @@ const server = createServer(app);
 
 // Configure CORS for all environments
 app.use(cors({
-  origin: true, // This allows requests from any origin
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -98,7 +98,7 @@ setupWebSocket(server);
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
   log("Setting up Vite development server", "info");
-  await setupVite(app, server);
+  setupVite(app, server);
 } else {
   // Serve static files only in production, after API routes
   serveStatic(app);
@@ -141,7 +141,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
+const PORT = Number(process.env.PORT) || 5000;
+server.listen(PORT, () => {
   log(`Server running on port ${PORT}`);
 });

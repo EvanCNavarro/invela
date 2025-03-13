@@ -27,8 +27,10 @@ export function useWebSocket(): UseWebSocketReturn {
     }
 
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      // Use current window location for WebSocket connection
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
+      console.log('[WebSocket] Connecting to:', wsUrl);
+
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -40,6 +42,9 @@ export function useWebSocket(): UseWebSocketReturn {
         setConnected(true);
         setError(null);
         reconnectAttempt.current = 0;
+
+        // Send initial ping
+        ws.send(JSON.stringify({ type: 'ping' }));
       };
 
       ws.onclose = (event) => {
@@ -49,6 +54,7 @@ export function useWebSocket(): UseWebSocketReturn {
         console.log(`[WebSocket] Connection closed (${event.code})`);
 
         if (event.code !== 1000 && event.code !== 1001 && reconnectAttempt.current < MAX_RETRIES) {
+          console.log(`[WebSocket] Attempting reconnect ${reconnectAttempt.current + 1}/${MAX_RETRIES}`);
           setTimeout(() => {
             if (mounted.current) {
               reconnectAttempt.current++;
@@ -58,8 +64,9 @@ export function useWebSocket(): UseWebSocketReturn {
         }
       };
 
-      ws.onerror = () => {
+      ws.onerror = (event) => {
         if (!mounted.current) return;
+        console.error('[WebSocket] Connection error:', event);
         setError(new Error('Connection error. Please check your internet connection.'));
       };
 
@@ -68,10 +75,14 @@ export function useWebSocket(): UseWebSocketReturn {
 
         try {
           const data = JSON.parse(event.data);
+          console.log('[WebSocket] Received message:', data);
+
           if (data.type === 'task_update') {
             queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
           } else if (data.type === 'file_update') {
             queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+          } else if (data.type === 'pong') {
+            console.log('[WebSocket] Received pong');
           }
         } catch (err) {
           console.error('[WebSocket] Message parse error:', err);

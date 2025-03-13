@@ -57,7 +57,7 @@ export function setupWebSocket(server: Server) {
           console.error('[WebSocket] Error sending ping:', error);
         }
       }
-    }, 45000); // Match client's interval
+    }, 45000); // 45 second interval
 
     ws.on('ping', () => {
       try {
@@ -68,7 +68,6 @@ export function setupWebSocket(server: Server) {
     });
 
     ws.on('pong', () => {
-      // Reset any ping timeouts here if needed
       console.log('[WebSocket] Received pong from client');
     });
 
