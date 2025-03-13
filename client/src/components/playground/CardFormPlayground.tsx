@@ -65,10 +65,13 @@ export function CardFormPlayground({
 }: CardFormPlaygroundProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [currentSection, setCurrentSection] = useState<string>("");
-  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
-  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    riskScore: number;
+    assessmentFile: string;
+  } | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
   const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, {
     suspicionLevel: number;
@@ -76,11 +79,6 @@ export function CardFormPlayground({
     reasoning: string;
   }>>({});
   const [openTooltip, setOpenTooltip] = useState<number | null>(null);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successData, setSuccessData] = useState<{
-    riskScore: number;
-    assessmentFile: string;
-  } | null>(null);
   const [, navigate] = useLocation();
 
   const { data: taskData } = useQuery({
@@ -246,6 +244,10 @@ export function CardFormPlayground({
     }
   }, [existingResponses, cardFields]);
 
+  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
+  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
+
+
   const sections = cardFields.reduce((acc, field) => {
     if (!acc[field.wizard_section]) {
       acc[field.wizard_section] = [];
@@ -253,12 +255,6 @@ export function CardFormPlayground({
     acc[field.wizard_section].push(field);
     return acc;
   }, {} as Record<string, CardField[]>);
-
-  useEffect(() => {
-    if (!currentSection && Object.keys(sections).length > 0) {
-      setCurrentSection(Object.keys(sections)[0]);
-    }
-  }, [sections]);
 
   const handleResponseChange = async (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field value changing:', {
@@ -544,32 +540,32 @@ export function CardFormPlayground({
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-start mb-6">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">
-            Compliance & Risk Documentation Request
-          </h1>
-          {companyData?.description && (
-            <p className="text-muted-foreground">{companyData.description}</p>
-          )}
-        </div>
-        <Button
-          onClick={handleSubmit}
-          disabled={progress < 11 || submitAssessment.isPending}
-          className="px-8"
-        >
-          {submitAssessment.isPending ? (
-            <>
-              <LoadingSpinner size="sm" className="mr-2" />
-              Submitting...
-            </>
-          ) : (
-            'Submit Assessment'
-          )}
-        </Button>
-      </div>
-
       <div className="space-y-2">
+        <div className="flex justify-between items-center mb-6">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold">
+              Compliance & Risk Documentation Request
+            </h1>
+            {companyData?.description && (
+              <p className="text-muted-foreground">{companyData.description}</p>
+            )}
+          </div>
+          <Button
+            onClick={handleSubmit}
+            disabled={progress < 11 || submitAssessment.isPending}
+            className="px-8"
+          >
+            {submitAssessment.isPending ? (
+              <>
+                <LoadingSpinner size="sm" className="mr-2" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Assessment'
+            )}
+          </Button>
+        </div>
+
         <div className="flex justify-between text-sm">
           <span>Progress</span>
           <span>{progress}%</span>
