@@ -431,6 +431,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         totalRiskScore: newRiskScore
       };
 
+      const fileContent = JSON.stringify(assessmentData, null, 2);
       const fileName = `card_assessment_${task.title.replace('Company CARD: ', '').toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
 
       console.log('[Card Routes] Storing assessment file in database:', {
@@ -438,28 +439,21 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         timestamp: new Date().toISOString()
       });
 
-      // Store file in database
-      const fileContent = JSON.stringify(assessmentData, null, 2);
+      // Store file in database - updated to match schema and KYB implementation
       const [file] = await db.insert(files)
         .values({
           name: fileName,
-          status: 'uploaded',
+          size: Buffer.from(fileContent).length,
           type: 'card_assessment',
-          path: `/card-assessments/${fileName}`,
-          company_id: task.company_id,
+          path: fileContent, // Store content directly in path like KYB
+          status: 'uploaded',
           user_id: req.user!.id,
+          company_id: task.company_id,
           created_at: timestamp,
           updated_at: timestamp,
           upload_time: timestamp,
-          size: Buffer.from(fileContent).length,
           version: 1,
-          download_count: 0,
-          metadata: {
-            taskId: taskId,
-            assessmentDate: timestamp.toISOString(),
-            totalRiskScore: newRiskScore,
-            content: fileContent 
-          }
+          download_count: 0
         })
         .returning();
 
