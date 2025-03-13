@@ -111,7 +111,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-  
+
   // Ensure we're showing TaskCenterPage when on task-center route
   if (location.pathname === '/task-center') {
     console.log('[DashboardLayout] Rendering Task Center Page');
@@ -156,7 +156,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             "transition-all duration-300 ease-in-out",
             "container mx-auto max-w-7xl"
           )}>
-            {children}
+            {location.pathname === '/task-center' ? children : (
+              <>
+                <h1 className="text-3xl font-bold">Dashboard</h1>
+                <p className="text-muted-foreground">
+                  Get an overview of your company's performance and recent activities.
+                </p>
+                {children}
+              </>
+            )}
           </div>
         </main>
       </div>
