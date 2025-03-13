@@ -565,7 +565,7 @@ export function CardFormPlayground({
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Progress</span>
-          <span>{Object.values(formResponses).filter(response => response && response.trim().length > 0).length} / {cardFields.length}</span>
+          <span>{Math.round((Object.values(formResponses).filter(response => response && response.trim().length > 0).length / cardFields.length) * 100)}%</span>
         </div>
         <Progress
           value={Object.values(formResponses).filter(response => response && response.trim().length > 0).length / cardFields.length *100}
