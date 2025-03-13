@@ -444,15 +444,15 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         .values({
           name: fileName,
           size: Buffer.from(fileContent).length,
-          type: 'card_assessment',
-          path: fileContent, // Store content directly in path like KYB
+          type: 'application/json',
+          path: fileContent, // Store content directly in path like KYB does
           status: 'uploaded',
           user_id: req.user!.id,
           company_id: task.company_id,
           created_at: timestamp,
           updated_at: timestamp,
           upload_time: timestamp,
-          version: 1,
+          version: 1.0,
           download_count: 0
         })
         .returning();
@@ -460,6 +460,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       console.log('[Card Routes] Assessment file stored:', {
         fileId: file.id,
         fileName: file.name,
+        contentLength: fileContent.length,
         timestamp: new Date().toISOString()
       });
 
