@@ -107,7 +107,7 @@ router.post('/api/files', (req, res) => {
       }
 
       try {
-        // Create database record - only using columns that exist in the schema
+        // Create database record - only using existing columns
         console.log('[Files] Creating database record for:', req.file.originalname);
         const [fileRecord] = await db.insert(files)
           .values({
