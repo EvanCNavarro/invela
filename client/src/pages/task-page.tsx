@@ -168,12 +168,12 @@ export default function TaskPage({ params }: TaskPageProps) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
-          <PageHeader
-            title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
-            description="Complete the Compliance and Risk Disclosure form"
-          />
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
+            <PageHeader
+              title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
+              description="Complete the Compliance and Risk Disclosure form"
+            />
             <div className="flex justify-between items-center">
               <Button
                 variant="outline"
@@ -305,6 +305,10 @@ export default function TaskPage({ params }: TaskPageProps) {
       <PageTemplate className="space-y-6">
         <div className="space-y-4">
           <BreadcrumbNav forceFallback={true} />
+          <PageHeader
+            title={`KYB Form: ${displayName}`}
+            description="Complete the Know Your Business (KYB) form"
+          />
           <div className="flex justify-between items-center">
             <Button
               variant="outline"

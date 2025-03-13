@@ -14,7 +14,6 @@ export function CardMethodChoice({ taskId, companyName, onMethodSelect }: CardMe
 
   return (
     <div className="container max-w-7xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-4">Compliance & Risk Documentation Request</h1>
       <h2 className="text-xl font-medium mb-6">Choose Your Preferred Method</h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
