@@ -143,6 +143,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               onFilesUpdated={(files) => {
                 setUploadedFiles(files);
               }}
+              companyName={companyName}
             />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
