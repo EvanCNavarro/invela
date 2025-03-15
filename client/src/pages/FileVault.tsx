@@ -369,6 +369,13 @@ export const FileVault: React.FC = () => {
                 acceptedFormats={ACCEPTED_FORMATS}
                 disabled={isUploading}
                 onFilesAccepted={handleFileUpload}
+                onClick={(e: React.MouseEvent) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (!isUploading) {
+                    fileInputRef.current?.click();
+                  }
+                }}
               />
             </DragDropProvider>
 
