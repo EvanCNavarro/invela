@@ -3,6 +3,10 @@ import { join } from 'path';
 import { db } from '@db';
 import { tasks, TaskStatus, kybFields, kybResponses, files, companies } from '@db/schema';
 import { eq, and, ilike, sql } from 'drizzle-orm';
+import { FileCreationService } from '../services/file-creation';
+import { Logger } from '../utils/logger';
+
+const logger = new Logger('KYBRoutes');
 
 // Add CSV conversion helper function at the top of the file
 function convertResponsesToCSV(fields: any[], formData: any) {
@@ -420,7 +424,7 @@ router.post('/api/kyb/save', async (req, res) => {
   try {
     const { fileName, formData, taskId } = req.body;
 
-    console.log('[KYB API Debug] Save request received:', {
+    logger.debug('Save request received', {
       taskId,
       formDataKeys: Object.keys(formData),
       fileName
@@ -442,26 +446,30 @@ router.post('/api/kyb/save', async (req, res) => {
 
     // Convert form data to CSV
     const csvData = convertResponsesToCSV(fields, formData);
-    const fileSize = Buffer.from(csvData).length;
 
-    // Create file record in database with CSV content and type
-    const timestamp = new Date();
-    const [fileRecord] = await db.insert(files)
-      .values({
-        name: fileName,
-        size: fileSize,
-        type: 'text/csv',
-        path: csvData,
-        status: 'uploaded',
-        user_id: task.created_by,
-        company_id: task.company_id,
-        upload_time: timestamp,
-        created_at: timestamp,
-        updated_at: timestamp,
-        version: 1.0,
-        download_count: 0
-      })
-      .returning();
+    // Create file using FileCreationService
+    const fileCreationResult = await FileCreationService.createFile({
+      name: fileName,
+      content: csvData,
+      type: 'text/csv',
+      userId: task.created_by,
+      companyId: task.company_id,
+      metadata: {
+        taskId,
+        formVersion: '1.0',
+        submissionDate: new Date().toISOString()
+      },
+      status: 'uploaded'
+    });
+
+    if (!fileCreationResult.success) {
+      logger.error('File creation failed', {
+        error: fileCreationResult.error,
+        taskId,
+        fileName
+      });
+      throw new Error(fileCreationResult.error);
+    }
 
     // Get company record to update available tabs
     const [company] = await db.select()
@@ -475,7 +483,7 @@ router.post('/api/kyb/save', async (req, res) => {
         await db.update(companies)
           .set({
             available_tabs: [...currentTabs, 'file-vault'],
-            updated_at: timestamp
+            updated_at: new Date()
           })
           .where(eq(companies.id, task.company_id));
       }
@@ -497,12 +505,12 @@ router.post('/api/kyb/save', async (req, res) => {
           'Greater than $50 million': 'xlarge'
         };
 
-        const selectedTier = tierMapping[formData.annualRecurringRevenue];
+        const selectedTier = tierMapping[formData.annualRecurringRevenue as keyof typeof tierMapping];
         if (selectedTier && company) {
           await db.update(companies)
             .set({
               revenue_tier: selectedTier,
-              updated_at: timestamp
+              updated_at: new Date()
             })
             .where(eq(companies.id, task.company_id));
         }
@@ -514,11 +522,11 @@ router.post('/api/kyb/save', async (req, res) => {
       .set({
         status: TaskStatus.SUBMITTED,
         progress: 100,
-        updated_at: timestamp,
+        updated_at: new Date(),
         metadata: {
           ...task.metadata,
-          kybFormFile: fileRecord.id,
-          submissionDate: timestamp.toISOString(),
+          kybFormFile: fileCreationResult.fileId,
+          submissionDate: new Date().toISOString(),
           formVersion: '1.0',
           statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
             .filter((v, i, a) => a.indexOf(v) === i)
@@ -541,18 +549,19 @@ router.post('/api/kyb/save', async (req, res) => {
             response_value: value || null,
             status,
             version: 1,
-            created_at: timestamp,
-            updated_at: timestamp
+            created_at: new Date(),
+            updated_at: new Date()
           });
       } catch (err) {
-        if (err.message.includes('duplicate key value violates unique constraint')) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
           // If duplicate, update instead
           await db.update(kybResponses)
             .set({
               response_value: value || null,
               status,
               version: sql`${kybResponses.version} + 1`,
-              updated_at: timestamp
+              updated_at: new Date()
             })
             .where(
               and(
@@ -562,25 +571,25 @@ router.post('/api/kyb/save', async (req, res) => {
             );
           warnings.push(`Updated existing response for field: ${field.field_key}`);
         } else {
-          throw err;
+          throw error;
         }
       }
     }
 
-    console.log('[KYB API Debug] Save completed successfully:', {
+    logger.info('Save completed successfully', {
       taskId,
-      fileId: fileRecord.id,
+      fileId: fileCreationResult.fileId,
       responseCount: fields.length,
       warningCount: warnings.length
     });
 
     res.json({
       success: true,
-      fileId: fileRecord.id,
+      fileId: fileCreationResult.fileId,
       warnings: warnings.length ? warnings : undefined
     });
   } catch (error) {
-    console.error('[KYB API Debug] Error saving KYB form:', {
+    logger.error('Error saving KYB form', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
