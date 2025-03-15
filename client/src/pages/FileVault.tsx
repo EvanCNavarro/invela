@@ -37,7 +37,7 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; // Changed back to 5 files per page
+  const itemsPerPage = 5; 
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -145,7 +145,6 @@ export const FileVault: React.FC = () => {
     return result;
   }, [allFiles, searchQuery, statusFilter, sortConfig]);
 
-  // Add effect to reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, sortConfig]);
@@ -166,15 +165,12 @@ export const FileVault: React.FC = () => {
     return result;
   }, [filteredFiles, currentPage, itemsPerPage]);
 
-  // Add effect to clear selection when page changes
   useEffect(() => {
     setSelectedFiles(new Set());
   }, [currentPage]);
 
-
   const totalPages = Math.ceil(filteredFiles.length / itemsPerPage);
 
-  // Reset to first page if current page is beyond total pages
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
@@ -335,6 +331,13 @@ export const FileVault: React.FC = () => {
     );
   };
 
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault(); 
+    if (fileInputRef.current && !isUploading) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <DashboardLayout>
       {!user ? (
@@ -350,7 +353,7 @@ export const FileVault: React.FC = () => {
             />
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => fileInputRef.current?.click()}
+                onClick={handleButtonClick}
                 className="gap-2"
                 disabled={isUploading}
               >
@@ -432,7 +435,7 @@ export const FileVault: React.FC = () => {
                 )}
               </div>
 
-              {totalPages >= 1 && ( // Changed condition to show pagination when there are any pages
+              {totalPages >= 1 && ( 
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -482,9 +485,11 @@ export const FileVault: React.FC = () => {
         ref={fileInputRef}
         className="hidden"
         multiple
+        accept={ACCEPTED_FORMATS}
         onChange={(e) => {
-          if (e.target.files) {
+          if (e.target.files?.length) {
             handleFileUpload(Array.from(e.target.files));
+            e.target.value = '';
           }
         }}
       />
