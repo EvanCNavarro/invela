@@ -37,7 +37,7 @@ export const FileVault: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
+  const itemsPerPage = 5;
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -332,7 +332,7 @@ export const FileVault: React.FC = () => {
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     if (fileInputRef.current && !isUploading) {
       fileInputRef.current.click();
     }
@@ -364,10 +364,11 @@ export const FileVault: React.FC = () => {
           </div>
 
           <div className="space-y-6">
-            <DragDropProvider onFilesAccepted={handleFileUpload}>
+            <DragDropProvider>
               <FileUploadZone
                 acceptedFormats={ACCEPTED_FORMATS}
                 disabled={isUploading}
+                onFilesAccepted={handleFileUpload}
               />
             </DragDropProvider>
 
@@ -435,7 +436,7 @@ export const FileVault: React.FC = () => {
                 )}
               </div>
 
-              {totalPages >= 1 && ( 
+              {totalPages >= 1 && (
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
