@@ -104,11 +104,6 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
 router.get('/api/files', async (req, res) => {
   try {
     console.log('[Files] Starting file fetch request');
-    console.log('[Files] Authentication state:', {
-      isAuthenticated: req.isAuthenticated(),
-      hasUser: !!req.user,
-      sessionID: req.sessionID
-    });
 
     const companyId = req.query.company_id;
     const userId = req.user?.id;
@@ -117,8 +112,7 @@ router.get('/api/files', async (req, res) => {
       companyId,
       userId,
       query: req.query,
-      user: req.user,
-      headers: req.headers
+      user: req.user
     });
 
     if (!companyId) {
@@ -159,8 +153,11 @@ router.get('/api/files', async (req, res) => {
     }
 
     console.log('[Files] Executing database query for company:', parsedCompanyId);
+
+    // Remove any status filter to show all files including those created by KYB
     const fileRecords = await db.query.files.findMany({
-      where: eq(files.company_id, parsedCompanyId)
+      where: eq(files.company_id, parsedCompanyId),
+      orderBy: (files, { desc }) => [desc(files.created_at)]
     });
 
     console.log('[Files] Query results:', {
