@@ -47,7 +47,7 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
     logger.error('Error fetching CARD task', {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to fetch CARD task",
       error: error instanceof Error ? error.message : "Unknown error"
     });
@@ -64,7 +64,7 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
     logger.error('Error fetching CARD fields', {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to fetch CARD fields",
       error: error instanceof Error ? error.message : "Unknown error"
     });
@@ -83,7 +83,7 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
     logger.error('Error fetching responses', {
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to fetch responses",
       error: error instanceof Error ? error.message : "Unknown error"
     });
@@ -135,7 +135,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     const timestamp = new Date();
 
     try {
-      // Process empty/missing responses
+      // Process empty responses
       await processEmptyResponses(taskId, fields, existingResponses, timestamp);
 
       // Calculate and update company risk score
@@ -178,7 +178,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         totalRiskScore: newRiskScore
       };
 
-      // Validate JSON before saving
+      // Validate and prepare JSON content
       let fileContent: string;
       try {
         fileContent = JSON.stringify(assessmentData, null, 2);
@@ -198,7 +198,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         contentLength: fileContent.length
       });
 
-      // Use FileCreationService to create the file
+      // Create file using FileCreationService
       const fileResult = await FileCreationService.createFile({
         name: fileName,
         content: fileContent,
@@ -229,11 +229,11 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
 
       // Update task status to submitted
       const [updatedTask] = await db.update(tasks)
-        .set({ 
+        .set({
           status: TaskStatus.SUBMITTED,
+          progress: 100,
           completion_date: timestamp,
           updated_at: timestamp,
-          progress: 100,
           metadata: {
             ...task.metadata,
             assessment_file: fileName,
@@ -247,11 +247,11 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
-        fileName: updatedTask.metadata?.assessment_file,
+        fileName: fileName,
         timestamp: timestamp.toISOString()
       });
 
-      const response = { 
+      const response = {
         success: true,
         message: "Form submitted successfully",
         totalFields: fields.length,
@@ -260,7 +260,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         assessmentFile: fileName,
         company: {
           id: updatedCompany.id,
-          onboardingCompleted: updatedCompany.onboarding_company_completed,
+          onboardingCompleted: updatedCompany.onboarding_completed,
           availableTabs: updatedCompany.available_tabs
         }
       };
@@ -297,43 +297,6 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to submit form",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
-// Download assessment file
-router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
-  try {
-    const { fileName } = req.params;
-    logger.info('Downloading assessment file', {
-      fileName,
-      userId: req.user?.id
-    });
-
-    const file = await db.query.files.findFirst({
-      where: eq(files.name, fileName)
-    });
-
-    if (!file) {
-      logger.error('Assessment file not found', { fileName });
-      return res.status(404).json({ message: 'Assessment file not found' });
-    }
-
-    // Set correct content type for JSON
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
-    // Send the JSON content directly
-    res.send(file.path);
-
-  } catch (error) {
-    logger.error('Error handling file download', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      fileName: req.params.fileName
-    });
-    res.status(500).json({
-      message: "Failed to download assessment file",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
@@ -385,5 +348,51 @@ async function processEmptyResponses(
       });
   }
 }
+
+// Download assessment file
+router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
+  try {
+    const { fileName } = req.params;
+    logger.info('Downloading assessment file', {
+      fileName,
+      userId: req.user?.id
+    });
+
+    const file = await db.query.files.findFirst({
+      where: eq(files.name, fileName)
+    });
+
+    if (!file) {
+      logger.error('Assessment file not found', { fileName });
+      return res.status(404).json({ message: 'Assessment file not found' });
+    }
+
+    // Set correct content type for JSON
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+    // Parse and re-stringify to ensure valid JSON
+    try {
+      const jsonContent = JSON.parse(file.path);
+      res.json(jsonContent);
+    } catch (error) {
+      logger.error('Error parsing file content as JSON', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        fileName
+      });
+      throw new Error('Invalid JSON content in file');
+    }
+
+  } catch (error) {
+    logger.error('Error handling file download', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      fileName: req.params.fileName
+    });
+    res.status(500).json({
+      message: "Failed to download assessment file",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
 
 export default router;
