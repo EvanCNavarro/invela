@@ -450,6 +450,10 @@ export function CardFormPlayground({
       }
 
       const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to submit assessment');
+      }
+
       return data;
     },
     onSuccess: (data) => {
@@ -486,8 +490,7 @@ export function CardFormPlayground({
     },
     onError: (error) => {
       console.error('[CardFormPlayground] Error submitting assessment:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
 
