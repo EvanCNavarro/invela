@@ -90,7 +90,7 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Add endpoint for form submission
+// Submit CARD form
 router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
@@ -178,7 +178,19 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         totalRiskScore: newRiskScore
       };
 
-      const fileContent = JSON.stringify(assessmentData, null, 2);
+      // Validate JSON before saving
+      let fileContent: string;
+      try {
+        fileContent = JSON.stringify(assessmentData, null, 2);
+        // Verify it can be parsed back
+        JSON.parse(fileContent);
+      } catch (error) {
+        logger.error('JSON validation failed', {
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+        throw new Error('Failed to create valid JSON content');
+      }
+
       const fileName = `card_assessment_${task.title.replace('Company CARD: ', '').toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
 
       logger.info('Creating assessment file', {
@@ -290,7 +302,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Update the download route to use correct file properties
+// Download assessment file
 router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
   try {
     const { fileName } = req.params;
@@ -308,9 +320,12 @@ router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
       return res.status(404).json({ message: 'Assessment file not found' });
     }
 
+    // Set correct content type for JSON
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.send(file.path); // Send file content directly from path field
+
+    // Send the JSON content directly
+    res.send(file.path);
 
   } catch (error) {
     logger.error('Error handling file download', {

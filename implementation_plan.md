@@ -52,21 +52,28 @@
 
 ---
 
-## 3. Adapt CARD Task (Complex Integration) 🔄 [NEXT STEP]
+## 3. Adapt CARD Task (Complex Integration) 🔄 [IN PROGRESS]
 
 ### a. Pre-Integration:
 - Isolate file creation logic from processing logic.
 - Identify touch points for new utility.
 - Plan preservation of complex processing.
 
-### b. Integration Steps:
+### b. JSON File Handling Enhancement:
+- Verify JSON content stringification before saving
+- Ensure correct Content-Type headers
+- Add proper JSON parsing/stringifying error handling
+- Fix file download route for JSON content
+- Add JSON content validation before saving
+
+### c. Integration Steps:
 - Implement new file creation while preserving:
   - Risk score calculations.
   - Question-level processing.
   - Company updates.
   - Metadata handling.
 
-### c. Validation:
+### d. Validation:
 - Comprehensive testing of all CARD scenarios.
 - Verify all additional functionality maintained.
 - Confirm error handling improvements.
