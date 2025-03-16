@@ -747,9 +747,6 @@ export function CardFormPlayground({
             <Button
               variant="outline"
               onClick={() => {
-                if (onSubmit) {
-                  onSubmit(successData!);
-                }
                 setIsSuccessModalOpen(false);
                 navigate('/insights');
               }}
@@ -758,9 +755,6 @@ export function CardFormPlayground({
             </Button>
             <Button
               onClick={() => {
-                if (onSubmit) {
-                  onSubmit(successData!);
-                }
                 setIsSuccessModalOpen(false);
                 navigate('/');
               }}
