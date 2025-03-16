@@ -444,12 +444,39 @@ export function CardFormPlayground({
         headers: { 'Content-Type': 'application/json' }
       });
 
+      console.log('[CardFormPlayground] Response received:', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('Content-Type'),
+        timestamp: new Date().toISOString()
+      });
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit assessment');
+        const errorText = await response.text();
+        console.error('[CardFormPlayground] Response error:', {
+          status: response.status,
+          errorText,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error(errorText || 'Failed to submit assessment');
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        const text = await response.text();
+        console.log('[CardFormPlayground] Response text:', {
+          text: text.substring(0, 200), // Log first 200 chars for debugging
+          timestamp: new Date().toISOString()
+        });
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error('[CardFormPlayground] JSON parse error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Invalid response format');
+      }
+
       if (!data.success) {
         throw new Error(data.message || 'Failed to submit assessment');
       }

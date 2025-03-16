@@ -236,8 +236,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
           updated_at: timestamp,
           metadata: {
             ...task.metadata,
-            assessment_file: fileName,
-            submission_date: timestamp.toISOString()
+            cardFormFile: fileResult.fileId,
+            submissionDate: timestamp.toISOString()
           }
         })
         .where(eq(tasks.id, parseInt(taskId)))
@@ -247,10 +247,14 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
-        fileName: fileName,
+        fileName,
         timestamp: timestamp.toISOString()
       });
 
+      // Set response headers
+      res.setHeader('Content-Type', 'application/json');
+
+      // Send success response
       const response = {
         success: true,
         message: "Form submitted successfully",
@@ -260,7 +264,6 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         assessmentFile: fileName,
         company: {
           id: updatedCompany.id,
-          onboardingCompleted: updatedCompany.onboarding_completed,
           availableTabs: updatedCompany.available_tabs
         }
       };
@@ -281,6 +284,9 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         companyId: task.company_id
       });
 
+      // Set error response headers
+      res.setHeader('Content-Type', 'application/json');
+
       return res.status(500).json({
         success: false,
         message: "Failed to submit form",
@@ -293,6 +299,9 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
+
+    // Set error response headers
+    res.setHeader('Content-Type', 'application/json');
 
     return res.status(500).json({
       success: false,
