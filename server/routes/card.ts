@@ -12,6 +12,48 @@ import { Logger } from '../utils/logger';
 const router = Router();
 const logger = new Logger('CardRoutes');
 
+// Get CARD task by company name
+router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
+  try {
+    logger.info('Fetching CARD task', {
+      companyName: req.params.companyName,
+      userId: req.user?.id,
+      companyId: req.user?.company_id
+    });
+
+    const task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'company_card'),
+        ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
+        eq(tasks.company_id, req.user!.company_id)
+      )
+    });
+
+    logger.info('Task lookup result', {
+      found: !!task,
+      taskId: task?.id,
+      taskType: task?.task_type,
+      taskStatus: task?.status
+    });
+
+    if (!task) {
+      return res.status(404).json({
+        message: `Could not find CARD task for company: ${req.params.companyName}`
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    logger.error('Error fetching CARD task', {
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    res.status(500).json({ 
+      message: "Failed to fetch CARD task",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Get CARD fields
 router.get('/api/card/fields', requireAuth, async (req, res) => {
   try {
