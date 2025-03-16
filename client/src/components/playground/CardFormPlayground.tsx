@@ -511,9 +511,10 @@ export function CardFormPlayground({
 
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-      if (onSubmit) {
-        onSubmit(data);
-      }
+      // Remove the direct navigation here - let the modal handle it
+      // if (onSubmit) {
+      //   onSubmit(data);
+      // }
     },
     onError: (error) => {
       console.error('[CardFormPlayground] Error submitting assessment:', {
@@ -750,16 +751,22 @@ export function CardFormPlayground({
             <Button
               variant="outline"
               onClick={() => {
-                navigate('/insights');
+                if (onSubmit) {
+                  onSubmit(successData!);
+                }
                 setIsSuccessModalOpen(false);
+                navigate('/insights');
               }}
             >
               Go to Insights
             </Button>
             <Button
               onClick={() => {
-                navigate('/dashboard');
+                if (onSubmit) {
+                  onSubmit(successData!);
+                }
                 setIsSuccessModalOpen(false);
+                navigate('/dashboard');
               }}
             >
               Go to Dashboard
