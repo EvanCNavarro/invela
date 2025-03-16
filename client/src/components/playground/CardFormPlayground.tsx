@@ -511,10 +511,6 @@ export function CardFormPlayground({
 
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-      // Remove the direct navigation here - let the modal handle it
-      // if (onSubmit) {
-      //   onSubmit(data);
-      // }
     },
     onError: (error) => {
       console.error('[CardFormPlayground] Error submitting assessment:', {
@@ -766,7 +762,7 @@ export function CardFormPlayground({
                   onSubmit(successData!);
                 }
                 setIsSuccessModalOpen(false);
-                navigate('/dashboard');
+                navigate('/');
               }}
             >
               Go to Dashboard
