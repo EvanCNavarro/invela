@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, cardFields, cardResponses, files, TaskStatus } from '@db/schema';
-import { eq, ilike, and } from 'drizzle-orm';
+import { eq, and, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
 import { FileCreationService } from '../services/file-creation';
 import { Logger } from '../utils/logger';
-import path from 'path';
 
 const router = Router();
 const logger = new Logger('CardRoutes');
@@ -16,24 +15,12 @@ const logger = new Logger('CardRoutes');
 // Get CARD fields
 router.get('/api/card/fields', requireAuth, async (req, res) => {
   try {
-    console.log('[Card Routes] Fetching CARD fields');
-
+    logger.info('Fetching CARD fields');
     const fields = await db.select().from(cardFields);
-
-    console.log('[Card Routes] Fields retrieved:', {
-      count: fields.length,
-      sections: fields.length > 0 ? [...new Set(fields.map(f => f.wizard_section))] : [],
-      fieldTypes: fields.length > 0 ? [...new Set(fields.map(f => f.field_key))] : [],
-      timestamp: new Date().toISOString()
-    });
-
     res.json(fields);
   } catch (error) {
-    console.error('[Card Routes] Error fetching CARD fields:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+    logger.error('Error fetching CARD fields', {
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     res.status(500).json({ 
       message: "Failed to fetch CARD fields",
@@ -46,30 +33,13 @@ router.get('/api/card/fields', requireAuth, async (req, res) => {
 router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
-
-    console.log('[Card Routes] Fetching responses for task:', {
-      taskId,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-
     const responses = await db.select()
       .from(cardResponses)
       .where(eq(cardResponses.task_id, parseInt(taskId)));
-
-    console.log('[Card Routes] Responses retrieved:', {
-      count: responses.length,
-      responseStatuses: responses.map(r => r.status),
-      timestamp: new Date().toISOString()
-    });
-
     res.json(responses);
   } catch (error) {
-    console.error('[Card Routes] Error fetching responses:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+    logger.error('Error fetching responses', {
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
     res.status(500).json({ 
       message: "Failed to fetch responses",
@@ -78,296 +48,17 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Save individual CARD field response and update progress
-router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
-  try {
-    const { taskId, fieldId } = req.params;
-    const { response } = req.body;
-    const trimmedResponse = response ? response.trim() : '';
-
-    console.log('[Card Routes] Saving field response:', {
-      taskId,
-      fieldId,
-      hasResponse: !!trimmedResponse,
-      responseLength: trimmedResponse.length,
-      timestamp: new Date().toISOString()
-    });
-
-    // Set appropriate status based on response content
-    const status = trimmedResponse ? 'COMPLETE' : 'EMPTY';
-    const timestamp = new Date();
-
-    // Check if response already exists
-    const [existingResponse] = await db.select()
-      .from(cardResponses)
-      .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.field_id, parseInt(fieldId))
-        )
-      );
-
-    let savedResponse;
-    if (existingResponse) {
-      console.log('[Card Routes] Updating existing response:', {
-        responseId: existingResponse.id,
-        oldStatus: existingResponse.status,
-        newStatus: status,
-        version: existingResponse.version + 1,
-        timestamp: timestamp.toISOString()
-      });
-
-      [savedResponse] = await db.update(cardResponses)
-        .set({
-          response_value: trimmedResponse,
-          status,
-          version: existingResponse.version + 1,
-          updated_at: timestamp,
-          // Reset analysis fields when emptied
-          ...(status === 'EMPTY' ? {
-            ai_suspicion_level: 0,
-            partial_risk_score: 0,
-            ai_reasoning: null
-          } : {})
-        })
-        .where(eq(cardResponses.id, existingResponse.id))
-        .returning();
-    } else {
-      console.log('[Card Routes] Creating new response:', {
-        taskId,
-        fieldId,
-        status,
-        timestamp: timestamp.toISOString()
-      });
-
-      [savedResponse] = await db.insert(cardResponses)
-        .values({
-          task_id: parseInt(taskId),
-          field_id: parseInt(fieldId),
-          response_value: trimmedResponse,
-          status,
-          version: 1,
-          created_at: timestamp,
-          updated_at: timestamp,
-          ai_suspicion_level: 0,
-          partial_risk_score: 0
-        })
-        .returning();
-    }
-
-    // Calculate progress based on completed responses count
-    const responses = await db.select()
-      .from(cardResponses)
-      .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.status, 'COMPLETE')
-        )
-      );
-
-    // Each completed response is worth 1%
-    const progress = responses.length;
-
-    console.log('[Card Routes] Progress calculation:', {
-      completedCount: responses.length,
-      progress,
-      timestamp: new Date().toISOString()
-    });
-
-    // Update task progress
-    await db.update(tasks)
-      .set({ progress })
-      .where(eq(tasks.id, parseInt(taskId)));
-
-    // Return response with updated progress
-    res.json({
-      ...savedResponse,
-      progress
-    });
-
-  } catch (error) {
-    console.error('[Card Routes] Error saving response:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({
-      message: "Failed to save response",
-      error: error instanceof Error ? error.message : "Unknown error" 
-    });
-  }
-});
-
-// Get CARD task by company name
-router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
-  try {
-    console.log('[Card Routes] Fetching CARD task:', {
-      companyName: req.params.companyName,
-      userId: req.user?.id,
-      companyId: req.user?.company_id,
-      timestamp: new Date().toISOString()
-    });
-
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
-        eq(tasks.company_id, req.user!.company_id)
-      )
-    });
-
-    console.log('[Card Routes] Task lookup result:', {
-      found: !!task,
-      taskId: task?.id,
-      taskType: task?.task_type,
-      taskStatus: task?.status,
-      timestamp: new Date().toISOString()
-    });
-
-    if (!task) {
-      return res.status(404).json({
-        message: `Could not find CARD task for company: ${req.params.companyName}`
-      });
-    }
-
-    res.json(task);
-  } catch (error) {
-    console.error('[Card Routes] Error fetching CARD task:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({ 
-      message: "Failed to fetch CARD task",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
-// Analyze card response
-router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) => {
-  try {
-    const { taskId, fieldId } = req.params;
-    const { response } = req.body;
-
-    console.log('[Card Routes] Starting OpenAI analysis:', {
-      taskId,
-      fieldId,
-      responseLength: response?.length,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-
-    // Get the field details to pass to analysis
-    const [field] = await db.select()
-      .from(cardFields)
-      .where(eq(cardFields.id, parseInt(fieldId)));
-
-    if (!field) {
-      console.log('[Card Routes] Field not found:', {
-        fieldId,
-        timestamp: new Date().toISOString()
-      });
-      return res.status(404).json({ message: "Field not found" });
-    }
-
-    console.log('[Card Routes] Found field for analysis:', {
-      fieldId: field.id,
-      fieldKey: field.field_key,
-      maxRiskScore: field.partial_risk_score_max,
-      hasExample: !!field.example_response,
-      timestamp: new Date().toISOString()
-    });
-
-    // Analyze the response
-    const analysis = await analyzeCardResponse(
-      response,
-      field.question,
-      field.partial_risk_score_max,
-      field.example_response
-    );
-
-    console.log('[Card Routes] OpenAI analysis received:', {
-      taskId,
-      fieldId,
-      suspicionLevel: analysis.suspicionLevel,
-      riskScore: analysis.riskScore,
-      hasReasoning: !!analysis.reasoning,
-      timestamp: new Date().toISOString()
-    });
-
-    console.log('[Card Routes] Updating database with analysis results:', {
-      taskId,
-      fieldId,
-      timestamp: new Date().toISOString()
-    });
-
-    // Update the response record with analysis results
-    const [updatedResponse] = await db.update(cardResponses)
-      .set({
-        ai_suspicion_level: analysis.suspicionLevel,
-        partial_risk_score: analysis.riskScore,
-        ai_reasoning: analysis.reasoning,
-        updated_at: new Date()
-      })
-      .where(
-        and(
-          eq(cardResponses.task_id, parseInt(taskId)),
-          eq(cardResponses.field_id, parseInt(fieldId))
-        )
-      )
-      .returning();
-
-    console.log('[Card Routes] Database updated successfully:', {
-      responseId: updatedResponse.id,
-      fieldId: updatedResponse.field_id,
-      newSuspicionLevel: updatedResponse.ai_suspicion_level,
-      newRiskScore: updatedResponse.partial_risk_score,
-      hasReasoning: !!updatedResponse.ai_reasoning,
-      timestamp: new Date().toISOString()
-    });
-
-    res.json({
-      ...updatedResponse,
-      reasoning: analysis.reasoning
-    });
-  } catch (error) {
-    console.error('[Card Routes] Error in analysis chain:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({
-      message: "Failed to analyze response",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
-// Add new endpoint for form submission
+// Add endpoint for form submission
 router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
     logger.info('Starting form submission process', {
       taskId,
-      userId: req.user!.id,
-      body: req.body,
-      timestamp: new Date().toISOString()
+      userId: req.user!.id
     });
 
     const task = await db.query.tasks.findFirst({
       where: eq(tasks.id, parseInt(taskId))
-    });
-
-    logger.info('Task lookup result', {
-      found: !!task,
-      taskId: task?.id,
-      companyId: task?.company_id,
-      status: task?.status,
-      timestamp: new Date().toISOString()
     });
 
     if (!task) {
@@ -469,7 +160,12 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       });
 
       if (!fileResult.success) {
-        throw new Error(`Failed to create assessment file: ${fileResult.error}`);
+        logger.error('File creation failed', {
+          error: fileResult.error,
+          taskId,
+          fileName
+        });
+        throw new Error(fileResult.error || 'Failed to create assessment file');
       }
 
       logger.info('Assessment file created', {
@@ -498,7 +194,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         status: updatedTask.status,
         progress: updatedTask.progress,
         fileName: updatedTask.metadata?.assessment_file,
-        timestamp: new Date().toISOString()
+        timestamp: timestamp.toISOString()
       });
 
       const response = { 
@@ -518,8 +214,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       logger.info('Sending success response', {
         taskId,
         success: true,
-        responseBody: response,
-        timestamp: new Date().toISOString()
+        responseBody: response
       });
 
       return res.json(response);
@@ -529,13 +224,12 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         taskId,
-        companyId: task.company_id,
-        timestamp: new Date().toISOString()
+        companyId: task.company_id
       });
 
       return res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : "Failed to submit form",
+        message: "Failed to submit form",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
@@ -543,26 +237,24 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   } catch (error) {
     logger.error('Fatal error in submission handler', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      timestamp: new Date().toISOString()
+      stack: error instanceof Error ? error.stack : undefined
     });
 
     return res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Failed to submit form",
+      message: "Failed to submit form",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
 });
 
-// Download assessment file
+// Update the download route to use correct file properties
 router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
   try {
     const { fileName } = req.params;
-    console.log('[Card Routes] Downloading assessment file:', {
+    logger.info('Downloading assessment file', {
       fileName,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
+      userId: req.user?.id
     });
 
     const file = await db.query.files.findFirst({
@@ -570,23 +262,18 @@ router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
     });
 
     if (!file) {
-      console.error('[Card Routes] Assessment file not found:', {
-        fileName,
-        timestamp: new Date().toISOString()
-      });
+      logger.error('Assessment file not found', { fileName });
       return res.status(404).json({ message: 'Assessment file not found' });
     }
 
-    res.setHeader('Content-Type', file.mime_type);
+    res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.send(Buffer.from(file.content, 'utf-8'));
-
+    res.send(file.path); // Send file content directly from path field
 
   } catch (error) {
-    console.error('[Card Routes] Error handling file download:', {
-      error,
-      fileName: req.params.fileName,
-      timestamp: new Date().toISOString()
+    logger.error('Error handling file download', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      fileName: req.params.fileName
     });
     res.status(500).json({
       message: "Failed to download assessment file",
@@ -604,11 +291,6 @@ async function processEmptyResponses(
 ) {
   // First, update all existing EMPTY responses
   const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
-  console.log('[Card Routes] Processing empty responses:', {
-    count: emptyResponses.length,
-    timestamp: timestamp.toISOString()
-  });
-
   for (const response of emptyResponses) {
     const field = fields.find(f => f.id === response.field_id);
     if (!field) continue;
@@ -629,11 +311,6 @@ async function processEmptyResponses(
   // Create responses for fields that don't have any response
   const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
   const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
-
-  console.log('[Card Routes] Processing missing fields:', {
-    count: missingFields.length,
-    timestamp: timestamp.toISOString()
-  });
 
   for (const field of missingFields) {
     await db.insert(cardResponses)
