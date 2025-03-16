@@ -6,9 +6,12 @@ import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
 import { updateCompanyAfterCardCompletion } from '../services/company';
+import { FileCreationService } from '../services/file-creation';
+import { Logger } from '../utils/logger';
 import path from 'path';
 
 const router = Router();
+const logger = new Logger('CardRoutes');
 
 // Get CARD fields
 router.get('/api/card/fields', requireAuth, async (req, res) => {
@@ -348,7 +351,7 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
 router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   try {
     const { taskId } = req.params;
-    console.log('[Card Routes] Starting form submission process:', {
+    logger.info('Starting form submission process', {
       taskId,
       userId: req.user!.id,
       body: req.body,
@@ -359,7 +362,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       where: eq(tasks.id, parseInt(taskId))
     });
 
-    console.log('[Card Routes] Task lookup result:', {
+    logger.info('Task lookup result', {
       found: !!task,
       taskId: task?.id,
       companyId: task?.company_id,
@@ -368,10 +371,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     });
 
     if (!task) {
-      console.log('[Card Routes] Task not found:', {
-        taskId,
-        timestamp: new Date().toISOString()
-      });
+      logger.error('Task not found', { taskId });
       return res.status(404).json({
         success: false,
         message: 'Task not found'
@@ -379,10 +379,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     }
 
     if (!task.company_id) {
-      console.log('[Card Routes] Task has no company:', {
-        taskId,
-        timestamp: new Date().toISOString()
-      });
+      logger.error('Task has no company', { taskId });
       return res.status(400).json({
         success: false,
         message: 'Task has no associated company'
@@ -395,12 +392,11 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       .from(cardResponses)
       .where(eq(cardResponses.task_id, parseInt(taskId)));
 
-    console.log('[Card Routes] Processing form submission:', {
+    logger.info('Processing form submission', {
       taskId,
       companyId: task.company_id,
       totalFields: fields.length,
-      existingResponses: existingResponses.length,
-      timestamp: new Date().toISOString()
+      existingResponses: existingResponses.length
     });
 
     const timestamp = new Date();
@@ -410,27 +406,22 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       await processEmptyResponses(taskId, fields, existingResponses, timestamp);
 
       // Calculate and update company risk score
-      console.log('[Card Routes] Calculating risk score:', {
+      logger.info('Calculating risk score', {
         taskId,
-        companyId: task.company_id,
-        timestamp: timestamp.toISOString()
+        companyId: task.company_id
       });
 
       const newRiskScore = await updateCompanyRiskScore(task.company_id, parseInt(taskId));
 
       // Update company onboarding status and available tabs
-      console.log('[Card Routes] Updating company status:', {
-        companyId: task.company_id,
-        timestamp: new Date().toISOString()
+      logger.info('Updating company status', {
+        companyId: task.company_id
       });
 
       const updatedCompany = await updateCompanyAfterCardCompletion(task.company_id);
 
       // Generate assessment JSON file
-      console.log('[Card Routes] Generating assessment file:', {
-        taskId,
-        timestamp: new Date().toISOString()
-      });
+      logger.info('Generating assessment file', { taskId });
 
       const allResponses = await db.select()
         .from(cardResponses)
@@ -457,35 +448,33 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       const fileContent = JSON.stringify(assessmentData, null, 2);
       const fileName = `card_assessment_${task.title.replace('Company CARD: ', '').toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
 
-      console.log('[Card Routes] Storing assessment file in database:', {
+      logger.info('Creating assessment file', {
         fileName,
-        contentLength: fileContent.length,
-        timestamp: new Date().toISOString()
+        contentLength: fileContent.length
       });
 
-      // Store file in database - updated to match schema
-      const [file] = await db.insert(files)
-        .values({
-          name: fileName,
-          size: Buffer.from(fileContent).length,
-          type: 'application/json',
-          path: fileContent,
-          status: 'uploaded',
-          user_id: req.user!.id,
-          company_id: task.company_id,
-          created_at: timestamp,
-          updated_at: timestamp,
-          upload_time: timestamp,
-          version: 1.0,
-          download_count: 0
-        })
-        .returning();
+      // Use FileCreationService to create the file
+      const fileResult = await FileCreationService.createFile({
+        name: fileName,
+        content: fileContent,
+        type: 'application/json',
+        userId: req.user!.id,
+        companyId: task.company_id,
+        metadata: {
+          taskId: parseInt(taskId),
+          formVersion: '1.0',
+          submissionDate: timestamp.toISOString()
+        },
+        status: 'uploaded'
+      });
 
-      console.log('[Card Routes] Assessment file stored:', {
-        fileId: file.id,
-        fileName: file.name,
-        contentLength: fileContent.length,
-        timestamp: new Date().toISOString()
+      if (!fileResult.success) {
+        throw new Error(`Failed to create assessment file: ${fileResult.error}`);
+      }
+
+      logger.info('Assessment file created', {
+        fileId: fileResult.fileId,
+        fileName
       });
 
       // Update task status to submitted
@@ -504,7 +493,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         .where(eq(tasks.id, parseInt(taskId)))
         .returning();
 
-      console.log('[Card Routes] Task update completed:', {
+      logger.info('Task update completed', {
         taskId: updatedTask.id,
         status: updatedTask.status,
         progress: updatedTask.progress,
@@ -526,7 +515,7 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         }
       };
 
-      console.log('[Card Routes] Sending success response:', {
+      logger.info('Sending success response', {
         taskId,
         success: true,
         responseBody: response,
@@ -536,9 +525,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
       return res.json(response);
 
     } catch (error) {
-      console.error('[Card Routes] Error in submission process:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
+      logger.error('Error in submission process', {
+        error: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         taskId,
         companyId: task.company_id,
@@ -553,9 +541,8 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     }
 
   } catch (error) {
-    console.error('[Card Routes] Fatal error in submission handler:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
+    logger.error('Fatal error in submission handler', {
+      error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
@@ -563,6 +550,46 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error instanceof Error ? error.message : "Failed to submit form",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// Download assessment file
+router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
+  try {
+    const { fileName } = req.params;
+    console.log('[Card Routes] Downloading assessment file:', {
+      fileName,
+      userId: req.user?.id,
+      timestamp: new Date().toISOString()
+    });
+
+    const file = await db.query.files.findFirst({
+      where: eq(files.name, fileName)
+    });
+
+    if (!file) {
+      console.error('[Card Routes] Assessment file not found:', {
+        fileName,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ message: 'Assessment file not found' });
+    }
+
+    res.setHeader('Content-Type', file.mime_type);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.send(Buffer.from(file.content, 'utf-8'));
+
+
+  } catch (error) {
+    console.error('[Card Routes] Error handling file download:', {
+      error,
+      fileName: req.params.fileName,
+      timestamp: new Date().toISOString()
+    });
+    res.status(500).json({
+      message: "Failed to download assessment file",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
@@ -624,45 +651,5 @@ async function processEmptyResponses(
       });
   }
 }
-
-// Download assessment file
-router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
-  try {
-    const { fileName } = req.params;
-    console.log('[Card Routes] Downloading assessment file:', {
-      fileName,
-      userId: req.user?.id,
-      timestamp: new Date().toISOString()
-    });
-
-    const file = await db.query.files.findFirst({
-      where: eq(files.name, fileName)
-    });
-
-    if (!file) {
-      console.error('[Card Routes] Assessment file not found:', {
-        fileName,
-        timestamp: new Date().toISOString()
-      });
-      return res.status(404).json({ message: 'Assessment file not found' });
-    }
-
-    res.setHeader('Content-Type', file.mime_type);
-    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-    res.send(Buffer.from(file.content, 'utf-8'));
-
-
-  } catch (error) {
-    console.error('[Card Routes] Error handling file download:', {
-      error,
-      fileName: req.params.fileName,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({
-      message: "Failed to download assessment file",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
 
 export default router;
