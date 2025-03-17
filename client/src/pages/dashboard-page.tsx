@@ -45,9 +45,15 @@ export default function DashboardPage() {
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  // Updated query configuration with shorter refetch interval and stale time
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    enabled: !!user
+    enabled: !!user,
+    refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 1000, // Consider data stale after 1 second
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {
