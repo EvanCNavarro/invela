@@ -3,14 +3,19 @@ import type { CardField } from './cardService';
 
 interface ProcessingResult {
   answersFound: number;
-  status: 'processing' | 'classified' | 'error';
+  status: 'processing' | 'processed' | 'error';
   error?: string;
+  progress?: {
+    chunksProcessed: number;
+    totalChunks: number;
+  };
 }
 
 interface DocumentAnswer {
   field_key: string;
   answer: string;
   source_document: string;
+  chunk_index?: number;
 }
 
 interface FileProcessingResult {
@@ -18,6 +23,8 @@ interface FileProcessingResult {
   fileName: string;
   answers?: DocumentAnswer[];
   error?: string;
+  totalChunks?: number;
+  processedChunks?: number;
 }
 
 class DocumentProcessingError extends Error {
@@ -31,7 +38,7 @@ export async function processDocuments(
   fileIds: number[],
   cardFields: CardField[],
   onProgress: (result: ProcessingResult) => void
-): Promise<FileProcessingResult[]> {
+): Promise<ProcessingResult> {
   try {
     // Validate inputs
     if (!fileIds?.length) {
@@ -48,107 +55,89 @@ export async function processDocuments(
       timestamp: new Date().toISOString()
     });
 
-    // Set initial processing state
+    // Start processing
     onProgress({
       answersFound: 0,
       status: 'processing'
     });
 
-    console.log('[DocumentProcessingService] Preparing API request:', {
-      endpoint: '/api/documents/process',
-      fileIds,
-      fieldCount: cardFields.length,
+    // Process each file sequentially
+    let totalAnswersFound = 0;
+
+    for (const fileId of fileIds) {
+      try {
+        // Start processing the file
+        const processResponse = await apiRequest('POST', `/api/documents/${fileId}/process`, {
+          fields: cardFields
+        });
+
+        const processData = await processResponse.json();
+
+        console.log('[DocumentProcessingService] Processing started:', {
+          fileId,
+          totalChunks: processData.totalChunks,
+          timestamp: new Date().toISOString()
+        });
+
+        // Track chunk processing progress
+        for (let chunk = 0; chunk < processData.totalChunks; chunk++) {
+          const progressResponse = await apiRequest('GET', `/api/documents/${fileId}/progress`);
+          const progressData = await progressResponse.json();
+
+          onProgress({
+            answersFound: progressData.answersFound,
+            status: 'processing',
+            progress: {
+              chunksProcessed: progressData.chunksProcessed,
+              totalChunks: processData.totalChunks
+            }
+          });
+
+          // Simulate waiting for chunk processing
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        // Get final results
+        const resultsResponse = await apiRequest('GET', `/api/documents/${fileId}/results`);
+        const results = await resultsResponse.json();
+
+        console.log('[DocumentProcessingService] File processing complete:', {
+          fileId,
+          answersFound: results.answers.length,
+          timestamp: new Date().toISOString()
+        });
+
+        totalAnswersFound += results.answers.length;
+
+      } catch (error: any) {
+        console.error('[DocumentProcessingService] Error processing file:', {
+          fileId,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+
+        onProgress({
+          answersFound: totalAnswersFound,
+          status: 'error',
+          error: `Error processing file: ${error.message}`
+        });
+      }
+    }
+
+    // All files processed
+    console.log('[DocumentProcessingService] All files processed:', {
+      totalAnswersFound,
       timestamp: new Date().toISOString()
     });
 
-    try {
-      const requestData = {
-        fileIds,
-        fields: cardFields.map(field => ({
-          field_key: field.field_key,
-          question: field.question,
-          ai_search_instructions: field.ai_search_instructions
-        }))
-      };
-
-      const response = await apiRequest('POST', '/api/documents/process', requestData);
-      const data = await response.json();
-
-      console.log('[DocumentProcessingService] API response received:', {
-        fileIds,
-        status: response.status,
-        timestamp: new Date().toISOString()
-      });
-
-      if (!data.results) {
-        throw new DocumentProcessingError('Invalid API response format', { data });
-      }
-
-      const results: FileProcessingResult[] = data.results;
-
-      // Validate results
-      if (!Array.isArray(results)) {
-        throw new DocumentProcessingError('Invalid results format', { results });
-      }
-
-      // Count total answers found across all files
-      const totalAnswers = results.reduce((sum, result) => {
-        if (result.error) {
-          console.error('[DocumentProcessingService] File processing error:', {
-            fileId: result.fileId,
-            fileName: result.fileName,
-            error: result.error,
-            timestamp: new Date().toISOString()
-          });
-        }
-        return sum + (result.answers?.length || 0);
-      }, 0);
-
-      console.log('[DocumentProcessingService] Processing complete:', {
-        fileCount: results.length,
-        totalAnswers,
-        results: results.map(r => ({
-          fileId: r.fileId,
-          fileName: r.fileName,
-          answersCount: r.answers?.length || 0,
-          hasError: !!r.error
-        })),
-        timestamp: new Date().toISOString()
-      });
-
-      // Update with final results
-      onProgress({
-        answersFound: totalAnswers,
-        status: 'classified'
-      });
-
-      return results;
-
-    } catch (apiError: any) {
-      // Handle API-specific errors
-      console.error('[DocumentProcessingService] API error:', {
-        error: apiError.message,
-        details: apiError.details,
-        timestamp: new Date().toISOString()
-      });
-
-      onProgress({
-        answersFound: 0,
-        status: 'error',
-        error: `API Error: ${apiError.message}`
-      });
-
-      throw new DocumentProcessingError(
-        'Failed to process documents through API',
-        { cause: apiError }
-      );
-    }
+    return {
+      answersFound: totalAnswersFound,
+      status: 'processed'
+    };
 
   } catch (error: any) {
-    // Handle all other errors
     console.error('[DocumentProcessingService] Processing error:', {
-      fileIds,
-      error: error instanceof Error ? error.message : String(error),
+      error: error.message,
       details: error.details,
       timestamp: new Date().toISOString()
     });
