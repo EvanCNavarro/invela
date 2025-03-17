@@ -9,6 +9,9 @@ const options = {
   verbosity: 0 // Reduce console noise
 };
 
+// Each token is approximately 4 characters
+const MAX_TEXT_LENGTH = 16000 * 4; // Set max length to stay within GPT-3.5-turbo's limit
+
 export async function extractTextFromFirstPages(filePath: string, maxPages: number = 3): Promise<string> {
   console.log('[PDF Service] Starting text extraction from first pages:', {
     filePath,
@@ -31,9 +34,18 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
     });
 
     // Combine text from all extracted pages
-    const text = data.pages
+    let text = data.pages
       .map(page => page.content.map(item => item.str).join(' '))
       .join('\n');
+
+    // Truncate text if it exceeds the maximum length
+    if (text.length > MAX_TEXT_LENGTH) {
+      console.log('[PDF Service] Truncating text to stay within token limits:', {
+        originalLength: text.length,
+        truncatedLength: MAX_TEXT_LENGTH
+      });
+      text = text.substring(0, MAX_TEXT_LENGTH);
+    }
 
     return text;
   } catch (error) {
