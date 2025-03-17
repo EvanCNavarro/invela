@@ -119,7 +119,7 @@ export function DocumentUploadStep({
       console.error('[DocumentUploadStep] Upload error:', error);
       throw error;
     }
-  }, [updateFileMetadata]);
+  }, [updateFileMetadata, toast]);
 
   const handleFilesAccepted = async (files: File[]) => {
     console.log('[DocumentUploadStep] Files accepted:', {
@@ -158,14 +158,21 @@ export function DocumentUploadStep({
     }
   };
 
-  // Update document counts when receiving WebSocket messages
+  // WebSocket effect remains the same but with additional logging
   React.useEffect(() => {
+    console.log('[DocumentUploadStep] Setting up WebSocket connection');
     const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
+      console.log('[DocumentUploadStep] WebSocket message received:', data);
 
       if (data.type === 'COUNT_UPDATE') {
+        console.log('[DocumentUploadStep] Updating document count:', {
+          category: data.category,
+          countChange: data.count
+        });
+
         setDocumentCounts(prev => ({
           ...prev,
           [data.category]: {
@@ -177,7 +184,12 @@ export function DocumentUploadStep({
       }
 
       if (data.type === 'CLASSIFICATION_UPDATE') {
-        // Mark document as processed
+        console.log('[DocumentUploadStep] Classification update received:', {
+          fileId: data.fileId,
+          category: data.category,
+          confidence: data.confidence
+        });
+
         setDocumentCounts(prev => ({
           ...prev,
           [data.category]: {
@@ -189,6 +201,7 @@ export function DocumentUploadStep({
     };
 
     return () => {
+      console.log('[DocumentUploadStep] Closing WebSocket connection');
       socket.close();
     };
   }, []);

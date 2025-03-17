@@ -42,6 +42,16 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const handleNext = () => {
+    console.log('[DocumentUploadWizard] Moving to next step:', {
+      currentStep,
+      nextStep: currentStep + 1,
+      uploadedFiles: uploadedFiles.map(f => ({
+        name: f.file.name,
+        status: f.status,
+        category: f.category
+      }))
+    });
+
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(current => current + 1);
     } else {
@@ -51,27 +61,57 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   };
 
   const handleBack = () => {
+    console.log('[DocumentUploadWizard] Moving to previous step:', {
+      currentStep,
+      previousStep: currentStep - 1,
+      uploadedFiles: uploadedFiles.map(f => ({
+        name: f.file.name,
+        status: f.status,
+        category: f.category
+      }))
+    });
+
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
   };
 
   const handleFilesUpdated = (files: File[]) => {
+    console.log('[DocumentUploadWizard] Updating files:', {
+      newFiles: files.map(f => f.name),
+      currentFileCount: uploadedFiles.length
+    });
+
     const newUploadedFiles = files.map((file, index) => ({
       file,
-      id: index + 1, // Assign a unique ID
+      id: uploadedFiles.length + index + 1, // Ensure unique IDs
       status: 'uploaded' as const
     }));
     setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+
+    console.log('[DocumentUploadWizard] Files state updated:', {
+      totalFiles: uploadedFiles.length + files.length
+    });
   };
 
   const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
+    console.log('[DocumentUploadWizard] Updating file metadata:', {
+      fileId,
+      metadata
+    });
+
     setUploadedFiles(prev => 
-      prev.map(file => 
-        file.id === fileId 
-          ? { ...file, ...metadata }
-          : file
-      )
+      prev.map(file => {
+        if (file.id === fileId) {
+          console.log('[DocumentUploadWizard] File metadata updated:', {
+            fileId,
+            oldStatus: file.status,
+            newStatus: metadata.status
+          });
+          return { ...file, ...metadata };
+        }
+        return file;
+      })
     );
   };
 
