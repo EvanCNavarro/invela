@@ -2,7 +2,7 @@ import React from 'react';
 import { DocumentRow } from './DocumentRow';
 import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
-import { startDocumentProcessing } from '@/services/documentProcessingService';
+import { processDocuments } from '@/services/documentProcessingService';
 
 interface UploadedFile {
   file: File;
@@ -45,43 +45,45 @@ export function DocumentProcessingStep({
 
   // Start processing files when component mounts
   React.useEffect(() => {
-    if (!cardFields) return;
+    if (!cardFields || uploadedFiles.length === 0) return;
 
     console.log('[DocumentProcessingStep] Starting document processing for files:', {
       fileCount: uploadedFiles.length,
       files: uploadedFiles.map(f => ({
         name: f.file.name,
-        status: f.status,
-        answersFound: f.answersFound
+        id: f.id,
+        status: f.status
       }))
     });
 
-    // Process each uploaded file
-    uploadedFiles.forEach((uploadedFile, index) => {
-      if (uploadedFile.status === 'uploaded') {
-        // Start processing after a delay to stagger the files
-        setTimeout(() => {
-          console.log('[DocumentProcessingStep] File transitioning to processing:', {
-            fileName: uploadedFile.file.name,
-            timestamp: new Date().toISOString()
-          });
+    // Get file IDs for processing
+    const fileIds = uploadedFiles
+      .filter(f => f.id && f.status === 'uploaded')
+      .map(f => f.id as number);
 
-          startDocumentProcessing(
-            uploadedFile.file,
-            cardFields,
-            (result) => {
-              uploadedFile.status = result.status;
-              uploadedFile.answersFound = result.answersFound;
-            }
-          ).catch(error => {
-            console.error('[DocumentProcessingStep] Processing error:', {
-              fileName: uploadedFile.file.name,
-              error: error.message,
-              timestamp: new Date().toISOString()
-            });
-          });
-        }, index * 1000); // Stagger processing starts
+    if (fileIds.length === 0) {
+      console.log('[DocumentProcessingStep] No files to process');
+      return;
+    }
+
+    // Process files
+    processDocuments(
+      fileIds,
+      cardFields,
+      (result) => {
+        // Update file statuses based on processing results
+        uploadedFiles.forEach(file => {
+          if (file.id && fileIds.includes(file.id)) {
+            file.status = result.status;
+            file.answersFound = result.answersFound;
+          }
+        });
       }
+    ).catch(error => {
+      console.error('[DocumentProcessingStep] Processing error:', {
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
     });
   }, [uploadedFiles, cardFields]);
 

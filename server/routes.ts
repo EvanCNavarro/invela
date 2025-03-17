@@ -858,7 +858,8 @@ export function registerRoutes(app: Express): Express {
     } catch (error) {
       console.error("Error checking company existence:", error);
       res.status(500).json({
-        message: "Error checking company existence"      });
+        message: "Error checking company existence"
+      });
     }
   });
 
@@ -1455,7 +1456,7 @@ export function registerRoutes(app: Express): Express {
             fileName: req.file.originalname,
             error: pdfError instanceof Error ? pdfError.message : String(pdfError)
           });
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: "Failed to parse PDF document",
             error: pdfError instanceof Error ? pdfError.message : String(pdfError)
           });
@@ -1469,7 +1470,7 @@ export function registerRoutes(app: Express): Express {
           timestamp: new Date().toISOString()
         });
       } else {
-        return res.status(400).json({ 
+        return res.status(400).json({
           message: "Unsupported file type",
           supportedTypes: ['application/pdf', 'text/plain']
         });
@@ -1524,6 +1525,134 @@ export function registerRoutes(app: Express): Express {
       console.error("[DocumentProcessing] Error:", error);
       res.status(500).json({
         message: "Error processing document",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  //Add new document processing endpoint using stored files
+  app.post("/api/documents/process", requireAuth, async (req, res) => {
+    try {
+      const { fileIds, fields } = req.body;
+
+      if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({ message: "File IDs are required" });
+      }
+
+      if (!fields || !Array.isArray(fields)) {
+        return res.status(400).json({ message: "Fields are required" });
+      }
+
+      console.log('[DocumentProcessing] Starting batch analysis:', {
+        fileCount: fileIds.length,
+        fieldsCount: fields.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Get files from database
+      const storedFiles = await db.select()
+        .from(files)
+        .where(
+          and(
+            sql`${files.id} = ANY(${fileIds})`,
+            eq(files.company_id, req.user!.company_id)
+          )
+        );
+
+      if (storedFiles.length === 0) {
+        return res.status(404).json({ message: "No valid files found" });
+      }
+
+      console.log('[DocumentProcessing] Retrieved files:', {
+        count: storedFiles.length,
+        files: storedFiles.map(f => ({
+          id: f.id,
+          name: f.name,
+          type: f.type
+        }))
+      });
+
+      const results = [];
+
+      // Process each file
+      for (const file of storedFiles) {
+        const filePath = path.join(process.cwd(), 'uploads', 'documents', file.path);
+
+        try {
+          console.log('[DocumentProcessing] Reading file:', {
+            fileName: file.name,
+            filePath: file.path
+          });
+
+          const fileContent = fs.readFileSync(filePath, 'utf-8');
+
+          // Split content into chunks
+          const CHUNK_SIZE = 4000;
+          const chunks = [];
+          for (let i = 0; i < fileContent.length; i += CHUNK_SIZE) {
+            chunks.push(fileContent.slice(i, i + CHUNK_SIZE));
+          }
+
+          console.log('[DocumentProcessing] Content chunked:', {
+            fileName: file.name,
+            chunks: chunks.length
+          });
+
+          const fileAnswers = [];
+
+          // Process each chunk
+          for (const [index, chunk] of chunks.entries()) {
+            console.log('[DocumentProcessing] Processing chunk:', {
+              fileName: file.name,
+              chunkIndex: index + 1,
+              totalChunks: chunks.length
+            });
+
+            const result = await analyzeDocument(chunk, fields);
+            if (result.answers && result.answers.length > 0) {
+              fileAnswers.push(...result.answers);
+            }
+          }
+
+          // Remove duplicates
+          const uniqueAnswers = Array.from(
+            new Map(fileAnswers.map(answer => [answer.field_key, answer])).values()
+          );
+
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            answers: uniqueAnswers
+          });
+
+          console.log('[DocumentProcessing] File analysis complete:', {
+            fileName: file.name,
+            answersFound: uniqueAnswers.length
+          });
+
+        } catch (fileError) {
+          console.error('[DocumentProcessing] Error processing file:', {
+            fileName: file.name,
+            error: fileError instanceof Error ? fileError.message : String(fileError)
+          });
+
+          // Continue with other files
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            error: fileError instanceof Error ? fileError.message : String(fileError)
+          });
+        }
+      }
+
+      res.json({
+        results
+      });
+
+    } catch (error) {
+      console.error('[DocumentProcessing] Error:', error);
+      res.status(500).json({
+        message: "Error processing documents",
         error: error instanceof Error ? error.message : String(error)
       });
     }
