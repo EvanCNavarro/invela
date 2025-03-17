@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 interface UploadedFile {
   file: File;
   id?: number;
-  status: 'uploaded' | 'processing' | 'classified' | 'error';
+  status: 'uploading' | 'uploaded' | 'processing' | 'error';
   answersFound?: number;
   error?: string;
 }
@@ -121,7 +121,7 @@ export function DocumentProcessingStep({
           setFiles(prevFiles => prevFiles.map((file, index) => 
             index === nextIndex ? {
               ...file,
-              status: result.status,
+              status: result.status === 'classified' ? 'uploaded' : result.status,
               answersFound: result.answersFound,
               error: undefined
             } : file

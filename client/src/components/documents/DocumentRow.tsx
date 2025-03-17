@@ -7,7 +7,7 @@ interface DocumentRowProps {
   file: {
     name: string;
     size: number;
-    status: 'uploaded' | 'processing' | 'classified' | 'error';
+    status: 'uploaded' | 'processing' | 'error';
     answersFound?: number;
     error?: string;
   };
@@ -38,7 +38,7 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   // Get status icon based on document state
   const StatusIcon = () => {
     switch (file.status) {
-      case 'classified':
+      case 'uploaded':
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'processing':
         return <LoadingSpinner size="sm" className="text-blue-500" />;
@@ -52,7 +52,7 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   // Get processing context text and style
   const ProcessingContext = () => {
     switch (file.status) {
-      case 'classified':
+      case 'uploaded':
         return (
           <span className="text-green-600 font-medium">
             {file.answersFound} Answers Found
@@ -76,7 +76,7 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   };
 
   return (
-    <div 
+    <div
       className={cn(
         "flex items-center gap-4 p-4 rounded-lg border transition-colors duration-200",
         isActive && "bg-blue-50/50 border-blue-200",
