@@ -24,6 +24,8 @@ export function DocumentProcessingStep({
 }: DocumentProcessingStepProps) {
   const { toast } = useToast();
   const [processingError, setProcessingError] = React.useState<string | null>(null);
+  const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
@@ -42,112 +44,63 @@ export function DocumentProcessingStep({
     };
   }, []);
 
-  React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Card fields loaded:', {
-      count: cardFields?.length,
-      fields: cardFields?.map(f => f.field_key),
-      timestamp: new Date().toISOString()
-    });
-  }, [cardFields]);
+  // Process next file in queue
+  const processNextFile = React.useCallback(async () => {
+    if (!cardFields || isProcessing) return;
 
-  React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Files state updated:', {
-      fileCount: uploadedFiles.length,
-      files: uploadedFiles.map(f => ({
-        name: f.file.name,
-        id: f.id,
-        status: f.status,
-        answersFound: f.answersFound,
-        error: f.error
-      })),
-      timestamp: new Date().toISOString()
-    });
-  }, [uploadedFiles]);
+    // Get next unprocessed file
+    const nextIndex = uploadedFiles.findIndex(
+      (file) => file.status === 'uploaded' && file.id
+    );
 
-  // Start processing files when component mounts
-  React.useEffect(() => {
-    // Clear any previous errors
-    setProcessingError(null);
-
-    if (!cardFields || uploadedFiles.length === 0) {
-      console.log('[DocumentProcessingStep] Waiting for prerequisites:', {
-        hasCardFields: !!cardFields,
-        uploadedFilesCount: uploadedFiles.length,
-        timestamp: new Date().toISOString()
-      });
+    if (nextIndex === -1) {
+      console.log('[DocumentProcessingStep] No more files to process');
+      setIsProcessing(false);
+      setCurrentProcessingIndex(-1);
       return;
     }
 
-    console.log('[DocumentProcessingStep] Starting document processing:', {
-      fileCount: uploadedFiles.length,
-      files: uploadedFiles.map(f => ({
-        name: f.file.name,
-        id: f.id,
-        status: f.status
-      })),
+    setCurrentProcessingIndex(nextIndex);
+    setIsProcessing(true);
+
+    const fileToProcess = uploadedFiles[nextIndex];
+    console.log('[DocumentProcessingStep] Starting to process file:', {
+      fileId: fileToProcess.id,
+      fileName: fileToProcess.file.name,
+      index: nextIndex,
       timestamp: new Date().toISOString()
     });
 
-    // Get file IDs for processing
-    const fileIds = uploadedFiles
-      .filter(f => f.id && f.status === 'uploaded')
-      .map(f => f.id as number);
-
-    if (fileIds.length === 0) {
-      console.log('[DocumentProcessingStep] No files to process:', {
-        reason: 'No uploaded files with IDs found',
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
-
-    console.log('[DocumentProcessingStep] Initiating processing for files:', {
-      fileIds,
-      cardFieldCount: cardFields.length,
-      timestamp: new Date().toISOString()
-    });
-
-    // Process files
-    processDocuments(
-      fileIds,
-      cardFields,
-      (result) => {
-        console.log('[DocumentProcessingStep] Processing progress update:', {
-          status: result.status,
-          answersFound: result.answersFound,
-          error: result.error,
-          timestamp: new Date().toISOString()
-        });
-
-        if (result.status === 'error') {
-          setProcessingError(result.error || 'An unknown error occurred');
-          toast({
-            variant: 'destructive',
-            title: 'Processing Error',
-            description: result.error || 'Failed to process documents'
+    try {
+      // Process single file
+      await processDocuments(
+        [fileToProcess.id!],
+        cardFields,
+        (result) => {
+          console.log('[DocumentProcessingStep] Processing progress update:', {
+            status: result.status,
+            answersFound: result.answersFound,
+            error: result.error,
+            timestamp: new Date().toISOString()
           });
-          return;
-        }
 
-        // Update file statuses based on processing results
-        uploadedFiles.forEach(file => {
-          if (file.id && fileIds.includes(file.id)) {
-            console.log('[DocumentProcessingStep] Updating file status:', {
-              fileId: file.id,
-              fileName: file.file.name,
-              oldStatus: file.status,
-              newStatus: result.status,
-              answersFound: result.answersFound,
-              timestamp: new Date().toISOString()
+          if (result.status === 'error') {
+            setProcessingError(result.error || 'An unknown error occurred');
+            toast({
+              variant: 'destructive',
+              title: 'Processing Error',
+              description: result.error || 'Failed to process document'
             });
-
-            file.status = result.status;
-            file.answersFound = result.answersFound;
-            file.error = undefined; // Clear any previous errors
+            return;
           }
-        });
-      }
-    ).catch(error => {
+
+          // Update file status
+          uploadedFiles[nextIndex].status = result.status;
+          uploadedFiles[nextIndex].answersFound = result.answersFound;
+          uploadedFiles[nextIndex].error = undefined;
+        }
+      );
+    } catch (error: any) {
       console.error('[DocumentProcessingStep] Processing error:', {
         error: error.message,
         timestamp: new Date().toISOString()
@@ -157,10 +110,24 @@ export function DocumentProcessingStep({
       toast({
         variant: 'destructive',
         title: 'Processing Error',
-        description: 'Failed to process documents. Please try again.'
+        description: 'Failed to process document. Please try again.'
       });
-    });
-  }, [uploadedFiles, cardFields]);
+    } finally {
+      setIsProcessing(false);
+      setCurrentProcessingIndex(-1);
+
+      // Process next file in queue
+      processNextFile();
+    }
+  }, [uploadedFiles, cardFields, isProcessing, toast]);
+
+  // Start processing when component mounts or new files are added
+  React.useEffect(() => {
+    if (!isProcessing && uploadedFiles.some(f => f.status === 'uploaded')) {
+      console.log('[DocumentProcessingStep] Starting document processing queue');
+      processNextFile();
+    }
+  }, [uploadedFiles, isProcessing, processNextFile]);
 
   return (
     <div className="space-y-6">
@@ -177,7 +144,7 @@ export function DocumentProcessingStep({
 
       {/* Document List */}
       <div className="space-y-2">
-        {uploadedFiles.map((uploadedFile) => (
+        {uploadedFiles.map((uploadedFile, index) => (
           <DocumentRow 
             key={uploadedFile.id || uploadedFile.file.name} 
             file={{
@@ -187,6 +154,7 @@ export function DocumentProcessingStep({
               answersFound: uploadedFile.answersFound,
               error: uploadedFile.error
             }}
+            isActive={index === currentProcessingIndex}
           />
         ))}
       </div>
