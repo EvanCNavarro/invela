@@ -46,7 +46,14 @@ export function DocumentProcessingStep({
 
   // Process next file in queue
   const processNextFile = React.useCallback(async () => {
-    if (!cardFields || isProcessing) return;
+    if (!cardFields || isProcessing) {
+      console.log('[DocumentProcessingStep] Skipping processing:', {
+        hasCardFields: !!cardFields,
+        isProcessing,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
     // Get next unprocessed file
     const nextIndex = uploadedFiles.findIndex(
@@ -72,6 +79,9 @@ export function DocumentProcessingStep({
     });
 
     try {
+      // Update file status to processing
+      uploadedFiles[nextIndex].status = 'processing';
+
       // Process single file
       await processDocuments(
         [fileToProcess.id!],
@@ -112,19 +122,33 @@ export function DocumentProcessingStep({
         title: 'Processing Error',
         description: 'Failed to process document. Please try again.'
       });
+
+      // Update file status to error
+      uploadedFiles[nextIndex].status = 'error';
+      uploadedFiles[nextIndex].error = error.message;
     } finally {
       setIsProcessing(false);
       setCurrentProcessingIndex(-1);
 
-      // Process next file in queue
-      processNextFile();
+      // Process next file in queue after a short delay
+      setTimeout(() => {
+        processNextFile();
+      }, 500);
     }
   }, [uploadedFiles, cardFields, isProcessing, toast]);
 
   // Start processing when component mounts or new files are added
   React.useEffect(() => {
     if (!isProcessing && uploadedFiles.some(f => f.status === 'uploaded')) {
-      console.log('[DocumentProcessingStep] Starting document processing queue');
+      console.log('[DocumentProcessingStep] Starting document processing queue:', {
+        filesCount: uploadedFiles.length,
+        uploadedFiles: uploadedFiles.map(f => ({
+          id: f.id,
+          name: f.file.name,
+          status: f.status
+        })),
+        timestamp: new Date().toISOString()
+      });
       processNextFile();
     }
   }, [uploadedFiles, isProcessing, processNextFile]);
