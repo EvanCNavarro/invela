@@ -39,7 +39,7 @@ This document outlines the implementation plan for enhancing the file upload sys
 
 ### Current Focus: Document Classification Optimization
 1. PDF Processing:
-   - Extract only first 3 pages for classification ✅
+   - Switch to pdf.js-extract for reliable PDF text extraction 🔄
    - Implement text length limits
    - Add fallback for corrupted PDFs
 
