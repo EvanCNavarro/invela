@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 interface UploadedFile {
   file: File;
   id?: number;
-  status: 'uploading' | 'uploaded' | 'processing' | 'error';
+  status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
   answersFound?: number;
   error?: string;
 }
@@ -29,11 +29,48 @@ export function DocumentProcessingStep({
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [files, setFiles] = React.useState<UploadedFile[]>([]);
   const [processingQueue, setProcessingQueue] = React.useState<number[]>([]);
+  const [isQueueInitialized, setIsQueueInitialized] = React.useState(false);
 
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
   });
+
+  // Validate files before adding to queue
+  const validateFiles = (filesToValidate: UploadedFile[]) => {
+    console.log('[DocumentProcessingStep] Starting file validation:', {
+      totalFiles: filesToValidate.length,
+      fileDetails: filesToValidate.map(f => ({
+        id: f.id,
+        name: f.file.name,
+        status: f.status,
+        isValid: f.file instanceof File
+      })),
+      timestamp: new Date().toISOString()
+    });
+
+    const validFiles = filesToValidate.filter(file => {
+      const isValid = file.file instanceof File && file.status === 'uploaded';
+      if (!isValid) {
+        console.log('[DocumentProcessingStep] Invalid file found:', {
+          fileId: file.id,
+          fileName: file.file.name,
+          status: file.status,
+          isFileObject: file.file instanceof File,
+          timestamp: new Date().toISOString()
+        });
+      }
+      return isValid;
+    });
+
+    console.log('[DocumentProcessingStep] File validation complete:', {
+      validFiles: validFiles.length,
+      invalidFiles: filesToValidate.length - validFiles.length,
+      timestamp: new Date().toISOString()
+    });
+
+    return validFiles;
+  };
 
   // Initialize files and processing queue
   React.useEffect(() => {
@@ -43,18 +80,20 @@ export function DocumentProcessingStep({
       fileDetails: initialFiles.map(f => ({
         id: f.id,
         name: f.file.name,
-        status: f.status
+        status: f.status,
+        isFileObject: f.file instanceof File
       })),
       timestamp: new Date().toISOString()
     });
 
-    // Set initial files
-    setFiles(initialFiles);
+    // Validate and set initial files
+    const validatedFiles = validateFiles(initialFiles);
+    setFiles(validatedFiles);
 
-    // Setup processing queue with file indices
-    const queue = initialFiles
+    // Setup processing queue with validated file indices
+    const queue = validatedFiles
       .map((_, index) => index)
-      .filter(index => initialFiles[index].status === 'uploaded');
+      .filter(index => validatedFiles[index].status === 'uploaded');
 
     console.log('[DocumentProcessingStep] Setting up processing queue:', {
       queueLength: queue.length,
@@ -65,11 +104,36 @@ export function DocumentProcessingStep({
     setProcessingQueue(queue);
   }, [initialFiles]);
 
+  // Initialize queue when card fields are ready
+  React.useEffect(() => {
+    if (isLoadingFields) {
+      console.log('[DocumentProcessingStep] Waiting for card fields to load');
+      return;
+    }
+
+    if (!cardFields?.length) {
+      console.error('[DocumentProcessingStep] No card fields available');
+      return;
+    }
+
+    if (!isQueueInitialized && files.length > 0) {
+      console.log('[DocumentProcessingStep] Queue initialization starting:', {
+        cardFieldsCount: cardFields.length,
+        filesCount: files.length,
+        queueLength: processingQueue.length,
+        timestamp: new Date().toISOString()
+      });
+
+      setIsQueueInitialized(true);
+    }
+  }, [cardFields, files, isLoadingFields, isQueueInitialized, processingQueue.length]);
+
   // Process next file in queue
   const processNextFile = React.useCallback(async () => {
-    if (isProcessing || processingQueue.length === 0) {
+    if (!isQueueInitialized || isProcessing || processingQueue.length === 0) {
       console.log('[DocumentProcessingStep] Processing skipped:', {
-        reason: isProcessing ? 'Already processing' : 'Queue empty',
+        reason: !isQueueInitialized ? 'Queue not initialized' :
+                isProcessing ? 'Already processing' : 'Queue empty',
         queueLength: processingQueue.length,
         timestamp: new Date().toISOString()
       });
@@ -105,7 +169,7 @@ export function DocumentProcessingStep({
         index === nextIndex ? { ...file, status: 'processing' } : file
       ));
 
-      // Process single file
+      // Process file
       const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
           fileId: fileToProcess.id,
@@ -124,7 +188,7 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
-          status: 'uploaded',
+          status: 'processed',
           answersFound: result.answersFound,
           error: undefined
         } : file
@@ -162,7 +226,7 @@ export function DocumentProcessingStep({
         processNextFile();
       }, 500);
     }
-  }, [files, isProcessing, cardFields, processingQueue, toast]);
+  }, [files, isProcessing, cardFields, processingQueue, toast, isQueueInitialized]);
 
   // Start processing when card fields load and we have files to process
   React.useEffect(() => {
@@ -176,7 +240,7 @@ export function DocumentProcessingStep({
       return;
     }
 
-    if (!isProcessing && processingQueue.length > 0) {
+    if (!isProcessing && processingQueue.length > 0 && isQueueInitialized) {
       console.log('[DocumentProcessingStep] Starting document processing queue:', {
         queueLength: processingQueue.length,
         cardFieldsCount: cardFields.length,
@@ -184,7 +248,7 @@ export function DocumentProcessingStep({
       });
       processNextFile();
     }
-  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields]);
+  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields, isQueueInitialized]);
 
   if (isLoadingFields) {
     return (
