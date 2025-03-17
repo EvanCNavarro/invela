@@ -23,7 +23,7 @@ export function DragDropProvider({
   children,
   acceptedFileTypes,
   maxFiles = 10,
-  maxSize = 5 * 1024 * 1024,
+  maxSize = 50 * 1024 * 1024,
   disabled = false,
   className,
   activeClassName,
