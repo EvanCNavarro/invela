@@ -65,7 +65,7 @@ OPENAI_API_KEY=<key>
 3. Create OpenAI service (server/services/openai.ts):
 ```typescript
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const CLASSIFICATION_PROMPT = `Analyze the provided document and classify it into one of the following categories:
+const CLASSIFICATION_PROMPT = `You are an expert compliance analyst. Analyze the provided document and classify it into one of the following categories:
 - SOC 2 Audit Report
 - ISO 27001 Certification
 - Penetration Test Report

@@ -6,6 +6,133 @@ import { openaiSearchAnalytics } from "@db/schema";
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// Document classification specific types
+export enum DocumentCategory {
+  SOC2_AUDIT = 'soc2_audit',
+  ISO27001_CERT = 'iso27001_cert',
+  PENTEST_REPORT = 'pentest_report',
+  BUSINESS_CONTINUITY = 'business_continuity',
+  OTHER = 'other'
+}
+
+export interface DocumentClassification {
+  category: DocumentCategory;
+  confidence: number;
+  reasoning: string;
+  suggestedName?: string;
+}
+
+const CLASSIFICATION_PROMPT = `As a security compliance expert, analyze this document and classify it into one of these categories:
+- SOC 2 Audit Report
+- ISO 27001 Certification  
+- Penetration Test Report
+- Business Continuity Plan
+- Other Documents
+
+Respond with a JSON object containing:
+{
+  "category": string (one of the above categories),
+  "confidence": number (0-1),
+  "reasoning": string (brief explanation),
+  "suggestedName": string (optional)
+}
+
+Consider:
+- Document structure and formatting
+- Key terminology and phrases
+- Standard compliance language
+- Certification markers and dates`;
+
+export const CONFIDENCE_THRESHOLDS = {
+  AUTO_CLASSIFY: 0.85, // Automatically classify if confidence is above this
+  SUGGEST: 0.60, // Suggest classification if confidence is above this
+  MINIMUM: 0.30 // Show as "Other Documents" if below this
+};
+
+export async function classifyDocument(content: string): Promise<DocumentClassification> {
+  const startTime = Date.now();
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: CLASSIFICATION_PROMPT },
+        { role: "user", content }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'document_classification',
+      searchPrompt: CLASSIFICATION_PROMPT,
+      searchResults: result,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-4o'
+      ),
+      model: 'gpt-4o',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return {
+      category: mapToDocumentCategory(result.category),
+      confidence: result.confidence,
+      reasoning: result.reasoning,
+      suggestedName: result.suggestedName
+    };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[OpenAI Service] Document classification error:', error);
+
+    await logSearchAnalytics({
+      searchType: 'document_classification',
+      searchPrompt: CLASSIFICATION_PROMPT,
+      searchResults: {},
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      model: 'gpt-4o',
+      success: false,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    throw error;
+  }
+}
+
+// Helper function to map classification response to DocumentCategory enum
+function mapToDocumentCategory(category: string): DocumentCategory {
+  const categoryMap: Record<string, DocumentCategory> = {
+    'SOC 2 Audit Report': DocumentCategory.SOC2_AUDIT,
+    'ISO 27001 Certification': DocumentCategory.ISO27001_CERT,
+    'Penetration Test Report': DocumentCategory.PENTEST_REPORT,
+    'Business Continuity Plan': DocumentCategory.BUSINESS_CONTINUITY,
+    'Other Documents': DocumentCategory.OTHER
+  };
+
+  return categoryMap[category] || DocumentCategory.OTHER;
+}
+
 interface CleanedCompanyData {
   name: string;
   description?: string;
