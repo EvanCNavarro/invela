@@ -2,15 +2,10 @@ import React from 'react';
 import { Circle, CheckCircle2, CircleDashed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { DocumentStatus, DocumentRowFile } from './types';
 
 interface DocumentRowProps {
-  file: {
-    name: string;
-    size: number;
-    status: 'uploaded' | 'processing' | 'error';
-    answersFound?: number;
-    error?: string;
-  };
+  file: DocumentRowFile;
   isActive?: boolean;
 }
 
@@ -33,12 +28,13 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
       isActive,
       timestamp: new Date().toISOString()
     });
-  }, [file.status, file.answersFound, isActive]);
+  }, [file.status, file.answersFound, isActive, file.name]);
 
   // Get status icon based on document state
   const StatusIcon = () => {
     switch (file.status) {
       case 'uploaded':
+      case 'processed':
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'processing':
         return <LoadingSpinner size="sm" className="text-blue-500" />;
@@ -53,6 +49,7 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   const ProcessingContext = () => {
     switch (file.status) {
       case 'uploaded':
+      case 'processed':
         return (
           <span className="text-green-600 font-medium">
             {file.answersFound} Answers Found
