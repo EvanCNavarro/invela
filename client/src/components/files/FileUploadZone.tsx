@@ -35,10 +35,7 @@ const getAcceptFromFormats = (formats?: string) => {
     '.rtf': ['application/rtf'],
     '.txt': ['text/plain'],
     '.jpg': ['image/jpeg'],
-    '.jpeg': ['image/jpeg'],
     '.png': ['image/png'],
-    '.gif': ['image/gif'],
-    '.webp': ['image/webp'],
     '.svg': ['image/svg+xml']
   };
 
