@@ -23,6 +23,14 @@ const WIZARD_STEPS = [
   }
 ];
 
+interface UploadedFile {
+  file: File;
+  id?: number;
+  status: 'uploaded' | 'processing' | 'classified';
+  category?: string;
+  confidence?: number;
+}
+
 interface DocumentUploadWizardProps {
   companyName: string;
   onComplete?: () => void;
@@ -31,7 +39,7 @@ interface DocumentUploadWizardProps {
 export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUploadWizardProps) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 
   const handleNext = () => {
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -46,6 +54,25 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
+  };
+
+  const handleFilesUpdated = (files: File[]) => {
+    const newUploadedFiles = files.map((file, index) => ({
+      file,
+      id: index + 1, // Assign a unique ID
+      status: 'uploaded' as const
+    }));
+    setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+  };
+
+  const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
+    setUploadedFiles(prev => 
+      prev.map(file => 
+        file.id === fileId 
+          ? { ...file, ...metadata }
+          : file
+      )
+    );
   };
 
   // Calculate progress percentage
@@ -140,10 +167,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         <div className="min-h-[300px]">
           {currentStep === 0 ? (
             <DocumentUploadStep
-              onFilesUpdated={(files) => {
-                setUploadedFiles(files);
-              }}
+              onFilesUpdated={handleFilesUpdated}
               companyName={companyName}
+              uploadedFiles={uploadedFiles}
+              updateFileMetadata={updateFileMetadata}
             />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
