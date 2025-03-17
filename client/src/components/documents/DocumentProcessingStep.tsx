@@ -27,21 +27,28 @@ export function DocumentProcessingStep({
   const [processingError, setProcessingError] = React.useState<string | null>(null);
   const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
   const [isProcessing, setIsProcessing] = React.useState(false);
-  const [files, setFiles] = React.useState<UploadedFile[]>(initialFiles);
+  const [files, setFiles] = React.useState<UploadedFile[]>([]);
 
-  // Log initial state
+  // Fetch card fields using React Query
+  const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
+    queryKey: ['/api/card/fields']
+  });
+
+  // Initialize files on mount and when initialFiles changes
   React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Component mounted:', {
+    console.log('[DocumentProcessingStep] Initializing with files:', {
       companyName,
-      uploadedFilesCount: files.length,
-      fileDetails: files.map(f => ({
+      uploadedFilesCount: initialFiles.length,
+      fileDetails: initialFiles.map(f => ({
         id: f.id,
         name: f.file.name,
         status: f.status
       })),
       timestamp: new Date().toISOString()
     });
-  }, []);
+
+    setFiles(initialFiles);
+  }, [initialFiles]);
 
   // Process next file in queue
   const processNextFile = React.useCallback(async () => {
@@ -60,7 +67,7 @@ export function DocumentProcessingStep({
       fileDetails: files.map(f => ({
         id: f.id,
         name: f.file.name,
-        status: f.status,
+        status: f.status
       })),
       foundIndex: nextIndex,
       timestamp: new Date().toISOString()
@@ -73,10 +80,10 @@ export function DocumentProcessingStep({
       return;
     }
 
+    const fileToProcess = files[nextIndex];
     setCurrentProcessingIndex(nextIndex);
     setIsProcessing(true);
 
-    const fileToProcess = files[nextIndex];
     console.log('[DocumentProcessingStep] Starting to process file:', {
       fileId: fileToProcess.id,
       fileName: fileToProcess.file.name,
@@ -92,14 +99,21 @@ export function DocumentProcessingStep({
       ));
 
       // Process single file
-      const result = await processDocuments([fileToProcess.id!]);
+      const result = await processDocuments([fileToProcess.id!], cardFields!, (progress) => {
+        console.log('[DocumentProcessingStep] Processing progress:', {
+          fileId: fileToProcess.id,
+          progress,
+          timestamp: new Date().toISOString()
+        });
+      });
+
       console.log('[DocumentProcessingStep] Processing complete:', {
         fileId: fileToProcess.id,
         result,
         timestamp: new Date().toISOString()
       });
 
-      // Update file status to uploaded and include answers
+      // Update file with results
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
@@ -139,53 +153,33 @@ export function DocumentProcessingStep({
         processNextFile();
       }, 500);
     }
-  }, [files, isProcessing, toast]);
+  }, [files, isProcessing, cardFields, toast]);
 
-  // Fetch card fields using React Query
-  const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
-    queryKey: ['/api/card/fields']
-  });
-
-  React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Component mounted:', {
-      companyName,
-      uploadedFilesCount: files.length,
-      cardFieldsLoaded: !!cardFields,
-      timestamp: new Date().toISOString()
-    });
-  }, []);
-
-  // Start processing when component mounts or new files are added
+  // Start processing when component mounts, card fields load, or new files are added
   React.useEffect(() => {
     if (isLoadingFields) {
       console.log('[DocumentProcessingStep] Waiting for card fields to load');
       return;
     }
 
-    if (!cardFields) {
-      console.log('[DocumentProcessingStep] No card fields available');
+    if (!cardFields?.length) {
+      console.error('[DocumentProcessingStep] No card fields available');
       return;
     }
 
     if (!isProcessing && files.some(f => f.status === 'uploaded')) {
       console.log('[DocumentProcessingStep] Starting document processing queue:', {
         filesCount: files.length,
-        cardFieldsCount: cardFields?.length, // Added ? to handle potential null
-        files: files.map(f => ({
+        cardFieldsCount: cardFields.length,
+        pendingFiles: files.filter(f => f.status === 'uploaded').map(f => ({
           id: f.id,
-          name: f.file.name,
-          status: f.status
+          name: f.file.name
         })),
         timestamp: new Date().toISOString()
       });
       processNextFile();
     }
-  }, [files, cardFields, isProcessing, processNextFile, isLoadingFields]);
-
-  // Update local files state when initialFiles changes
-  React.useEffect(() => {
-    setFiles(initialFiles);
-  }, [initialFiles]);
+  }, [files, cardFields, isProcessing, isLoadingFields, processNextFile]);
 
   if (isLoadingFields) {
     return (
