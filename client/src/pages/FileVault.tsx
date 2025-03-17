@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SearchBar } from "@/components/ui/search-bar";
 import { FileTable, type SortField, type SortOrder } from "@/components/files/FileTable";
 
-const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG";
+const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .PNG, .SVG";
 
 export const FileVault: React.FC = () => {
   const { toast } = useToast();
