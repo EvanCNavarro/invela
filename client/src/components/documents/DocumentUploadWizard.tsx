@@ -5,31 +5,11 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DocumentUploadStep } from "./DocumentUploadStep";
 import { DocumentProcessingStep } from "./DocumentProcessingStep";
 
-// Define the wizard steps
-const WIZARD_STEPS = [
-  {
-    id: 'upload',
-    title: 'Upload Documents',
-    description: 'Upload your compliance and security documents'
-  },
-  {
-    id: 'process',
-    title: 'Document Processing',
-    description: 'Processing and analyzing uploaded documents'
-  },
-  {
-    id: 'review',
-    title: 'Review & Continue',
-    description: 'Review extracted information and continue to form'
-  }
-];
-
+// Update the UploadedFile interface to ensure proper type checking
 interface UploadedFile {
   file: File;
   id?: number;
-  status: 'uploaded' | 'processing' | 'classified' | 'error';
-  category?: string;
-  confidence?: number;
+  status: 'uploading' | 'uploaded' | 'processing' | 'error';
   answersFound?: number;
   error?: string;
 }
@@ -56,12 +36,12 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       currentStep,
       nextStep: currentStep + 1,
       uploadedFiles: uploadedFiles.map(f => ({
+        id: f.id,
         name: f.file.name,
         status: f.status,
-        category: f.category,
-        id: f.id
-      })),
-      documentCounts
+        error: f.error,
+        answersFound: f.answersFound
+      }))
     });
 
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -77,13 +57,14 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       currentStep,
       previousStep: currentStep - 1,
       uploadedFiles: uploadedFiles.map(f => ({
+        id: f.id,
         name: f.file.name,
         status: f.status,
-        category: f.category,
-        id: f.id
-      })),
-      documentCounts
+        error: f.error,
+        answersFound: f.answersFound
+      }))
     });
+
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
@@ -96,9 +77,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       currentFileDetails: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
-        status: f.status
-      })),
-      timestamp: new Date().toISOString()
+        status: f.status,
+        error: f.error
+      }))
     });
 
     // Add new files to state, ensuring unique entries by file name
@@ -107,7 +88,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         .filter(file => !prev.some(existing => existing.file.name === file.name))
         .map(file => ({
           file,
-          status: 'uploaded' as const
+          status: 'uploaded' as const,
+          id: undefined // Will be set after upload
         }));
 
       const updatedFiles = [...prev, ...newFiles];
@@ -117,9 +99,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         fileDetails: updatedFiles.map(f => ({
           id: f.id,
           name: f.file.name,
-          status: f.status
-        })),
-        timestamp: new Date().toISOString()
+          status: f.status,
+          error: f.error
+        }))
       });
 
       return updatedFiles;
@@ -130,7 +112,11 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     console.log('[DocumentUploadWizard] Updating file metadata:', {
       fileId,
       metadata,
-      timestamp: new Date().toISOString()
+      currentFiles: uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.file.name,
+        status: f.status
+      }))
     });
 
     setUploadedFiles(prev => {
@@ -142,26 +128,54 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       if (!fileToUpdate) {
         console.log('[DocumentUploadWizard] No matching file found for update:', {
           fileId,
-          timestamp: new Date().toISOString()
+          metadata
         });
         return prev;
       }
 
-      return prev.map(file => {
+      const updatedFiles = prev.map(file => {
         if (file === fileToUpdate) {
-          console.log('[DocumentUploadWizard] File metadata updated:', {
-            fileId,
-            fileName: file.file.name,
-            oldStatus: file.status,
-            newStatus: metadata.status,
-            timestamp: new Date().toISOString()
+          const updatedFile = { ...file, ...metadata };
+          console.log('[DocumentUploadWizard] Updated file:', {
+            id: updatedFile.id,
+            name: updatedFile.file.name,
+            status: updatedFile.status
           });
-          return { ...file, ...metadata };
+          return updatedFile;
         }
         return file;
       });
+
+      console.log('[DocumentUploadWizard] Files after metadata update:', {
+        files: updatedFiles.map(f => ({
+          id: f.id,
+          name: f.file.name,
+          status: f.status
+        }))
+      });
+
+      return updatedFiles;
     });
   };
+
+  // Define the wizard steps
+  const WIZARD_STEPS = [
+    {
+      id: 'upload',
+      title: 'Upload Documents',
+      description: 'Upload your compliance and security documents'
+    },
+    {
+      id: 'process',
+      title: 'Document Processing',
+      description: 'Processing and analyzing uploaded documents'
+    },
+    {
+      id: 'review',
+      title: 'Review & Continue',
+      description: 'Review extracted information and continue to form'
+    }
+  ];
 
   const updateDocumentCounts = (category: string, count: number, isProcessing: boolean = false) => {
     console.log('[DocumentUploadWizard] Updating document counts:', {
