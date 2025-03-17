@@ -62,7 +62,7 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
   onFilesAccepted,
   acceptedFormats,
   maxFiles = 10,
-  maxSize = 5 * 1024 * 1024,
+  maxSize = 50 * 1024 * 1024,
   variant = 'box',
   className,
   disabled = false,
