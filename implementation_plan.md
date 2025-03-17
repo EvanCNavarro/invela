@@ -16,7 +16,6 @@
    - Store uploaded files in document wizard state ✅
    - Maintain file list across wizard steps ✅
    - Add file preview/list component ✅
-   - Implement file deletion capability 🔄
 
 2. Wizard Navigation Enhancement:
    - Save wizard state between steps ✅
@@ -27,15 +26,20 @@
 
 1. UI Structure & User Experience:
    - Document Row Layout:
-     - Status icons (✅, spinner, pending)
-     - File name and size columns
-     - Processing result context
-     - Active processing indicators
-     - Next/Back button state management
+     - Status Icon Implementation:
+       - Green circle-check for processed documents
+       - Invela logo spinner for documents currently processing
+       - Grey circle-dashed for pending documents
+     - File Name and Size columns
+     - Processing Result Context:
+       - "(Calculating Questions Answers...)" for active processing
+       - Total count of answers found in green text
+       - Empty state for pending documents
+     - Highlight active processing rows with light grey background
+     - Disable Next/Back buttons during processing
 
 2. Compliance Questions Integration:
-   - Retrieve questions from card_fields.json
-   - Structure fields:
+   - Retrieve questions from `card_fields.json`:
      - field_key
      - question
      - ai_search_instructions
@@ -43,31 +47,57 @@
      - id_card_responses_field_id
 
 3. Processing Time Management:
-   - Calculate and display initial estimate
-   - Dynamic updates based on processing speed
-   - Real-time remaining time updates
+   - Calculate initial estimated processing time
+   - Dynamic updates based on actual processing speed
+   - Real-time remaining time display
+   - Progress indicators per document
 
 4. Document Processing Architecture:
-   - Implement file chunking strategy:
-     - PDF: ~3 pages (~16,000 chars) per chunk
-     - DOC/DOCX/TXT/CSV handling
-   - Sequential processing with progress tracking
-   - OpenAI integration with custom prompts
+   - File Chunking Strategy:
+     - PDFs: Extract ~3 pages (~16,000 chars) using pdf.js-extract
+     - DOC/DOCX/TXT/CSV: Similar character limit chunking
+   - Sequential Processing:
+     - Process documents one at a time
+     - Update progress indicators per chunk
+   - OpenAI Integration:
+     ```javascript
+     const prompt = `
+     You are a compliance analyst. Given the document chunk below, analyze and determine which compliance questions it answers based on provided "ai_search_instructions" for each question. Provide extracted answers in JSON format as follows:
+
+     Document Text Chunk:
+     ${extractedTextChunk}
+
+     Compliance Questions:
+     ${questionsWithSearchInstructions}
+
+     JSON Response Format:
+     {
+       "answers": [
+         {"field_key": "question_field_key", "answer": "Extracted relevant information from the document."}
+       ]
+     }
+
+     Clearly reference the source document within each answer (e.g., "According to SOC2.pdf: [Answer Data]")."
+     ```
 
 5. Answer Aggregation System:
-   - Combine answers across documents
-   - Remove duplicate responses
-   - Maintain source attribution
-   - Clear result presentation
+   - Combine answers across documents:
+     - Eliminate duplicate answers
+     - Maintain source attribution
+     - Example format: "According to SOC2.pdf: [Answer Data]. According to Compliance.pdf: [Additional Answer Data]."
+   - Clear presentation in UI:
+     - Group by question
+     - Show source documents
+     - Display confidence scores
 
-## Success Metrics
+## (OLD) WizardStep1 Success Metrics
 - Upload success rate > 99% ✅
 - Classification accuracy > 95% ✅
 - Real-time updates < 500ms ✅
 - Fast classification time ✅
 - Support for files up to 50MB ✅
 
-### New Success Metrics
+### (NEW) WizardStep2 Success Metrics
 - Document state persistence across sessions ✅
 - < 2s response time for document analysis
 - > 90% accuracy in card task validation
