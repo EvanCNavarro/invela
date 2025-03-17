@@ -7,8 +7,13 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface UploadedFile {
-  file: File;
   id?: number;
+  fileData: {
+    name: string;
+    size: number;
+    type: string;
+    lastModified: number;
+  };
   status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
   answersFound?: number;
   error?: string;
@@ -36,30 +41,36 @@ export function DocumentProcessingStep({
     queryKey: ['/api/card/fields']
   });
 
-  // Validate file objects before adding to queue
+  // Helper function to recreate File object from fileData
+  const recreateFileObject = (fileData: UploadedFile['fileData']): File => {
+    // Create an empty file with the same metadata
+    return new File([], fileData.name, {
+      type: fileData.type,
+      lastModified: fileData.lastModified
+    });
+  };
+
+  // Validate files before adding to queue
   const validateFiles = (filesToValidate: UploadedFile[]) => {
     console.log('[DocumentProcessingStep] Starting file validation:', {
       totalFiles: filesToValidate.length,
       fileDetails: filesToValidate.map(f => ({
         id: f.id,
-        name: f.file.name,
-        size: f.file.size,
-        type: f.file.type,
-        status: f.status,
-        isFileObject: f.file instanceof File
+        name: f.fileData.name,
+        size: f.fileData.size,
+        type: f.fileData.type,
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
 
     const validFiles = filesToValidate.filter(file => {
-      const isValid = file.file instanceof File && file.status === 'uploaded';
+      const isValid = file.fileData && file.status === 'uploaded';
       if (!isValid) {
         console.log('[DocumentProcessingStep] Invalid file found:', {
           fileId: file.id,
-          fileName: file.file.name,
+          fileName: file.fileData?.name,
           status: file.status,
-          isFileObject: file.file instanceof File,
-          type: file.file.type,
           timestamp: new Date().toISOString()
         });
       }
@@ -71,8 +82,8 @@ export function DocumentProcessingStep({
       invalidFiles: filesToValidate.length - validFiles.length,
       validFileDetails: validFiles.map(f => ({
         id: f.id,
-        name: f.file.name,
-        type: f.file.type,
+        name: f.fileData.name,
+        type: f.fileData.type,
         status: f.status
       })),
       timestamp: new Date().toISOString()
@@ -88,11 +99,10 @@ export function DocumentProcessingStep({
       uploadedFilesCount: initialFiles.length,
       fileDetails: initialFiles.map(f => ({
         id: f.id,
-        name: f.file.name,
-        size: f.file.size,
-        type: f.file.type,
-        status: f.status,
-        isFileObject: f.file instanceof File
+        name: f.fileData.name,
+        size: f.fileData.size,
+        type: f.fileData.type,
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
@@ -111,7 +121,7 @@ export function DocumentProcessingStep({
       queueIndices: queue,
       queueFiles: queue.map(index => ({
         id: validatedFiles[index].id,
-        name: validatedFiles[index].file.name,
+        name: validatedFiles[index].fileData.name,
         status: validatedFiles[index].status
       })),
       timestamp: new Date().toISOString()
@@ -139,9 +149,8 @@ export function DocumentProcessingStep({
         queueLength: processingQueue.length,
         files: files.map(f => ({
           id: f.id,
-          name: f.file.name,
-          status: f.status,
-          isFileObject: f.file instanceof File
+          name: f.fileData.name,
+          status: f.status
         })),
         timestamp: new Date().toISOString()
       });
@@ -165,13 +174,12 @@ export function DocumentProcessingStep({
     const nextIndex = processingQueue[0];
     const fileToProcess = files[nextIndex];
 
-    if (!fileToProcess?.id || !(fileToProcess.file instanceof File)) {
+    if (!fileToProcess?.id) {
       console.error('[DocumentProcessingStep] Invalid file to process:', {
         index: nextIndex,
         file: fileToProcess ? {
           id: fileToProcess.id,
-          name: fileToProcess.file.name,
-          isFileObject: fileToProcess.file instanceof File
+          name: fileToProcess.fileData.name
         } : null,
         timestamp: new Date().toISOString()
       });
@@ -181,7 +189,7 @@ export function DocumentProcessingStep({
     console.log('[DocumentProcessingStep] Starting to process file:', {
       index: nextIndex,
       fileId: fileToProcess.id,
-      fileName: fileToProcess.file.name,
+      fileName: fileToProcess.fileData.name,
       remainingQueue: processingQueue.length,
       timestamp: new Date().toISOString()
     });
@@ -302,11 +310,11 @@ export function DocumentProcessingStep({
       <div className="space-y-2">
         {files.map((uploadedFile, index) => (
           <DocumentRow 
-            key={uploadedFile.id || uploadedFile.file.name} 
+            key={uploadedFile.id || uploadedFile.fileData.name} 
             file={{
-              name: uploadedFile.file.name,
-              size: uploadedFile.file.size,
-              type: uploadedFile.file.type,
+              name: uploadedFile.fileData.name,
+              size: uploadedFile.fileData.size,
+              type: uploadedFile.fileData.type,
               status: uploadedFile.status,
               answersFound: uploadedFile.answersFound,
               error: uploadedFile.error

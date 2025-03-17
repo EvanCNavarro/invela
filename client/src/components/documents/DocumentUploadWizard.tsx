@@ -5,10 +5,15 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DocumentUploadStep } from "./DocumentUploadStep";
 import { DocumentProcessingStep } from "./DocumentProcessingStep";
 
-// Update the UploadedFile interface to ensure proper type checking
+// Update UploadedFile interface to better handle file data persistence
 interface UploadedFile {
-  file: File;  // Must be browser File object
   id?: number;
+  fileData: {
+    name: string;
+    size: number;
+    type: string;
+    lastModified: number;
+  };
   status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
   answersFound?: number;
   error?: string;
@@ -32,39 +37,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
 
   const handleNext = () => {
-    // Log file state before transition
     console.log('[DocumentUploadWizard] Moving to next step:', {
       currentStep,
       nextStep: currentStep + 1,
-      uploadedFiles: uploadedFiles.map(f => ({
+      files: uploadedFiles.map(f => ({
         id: f.id,
-        name: f.file.name,
-        size: f.file.size,
-        type: f.file.type,
+        name: f.fileData.name,
+        size: f.fileData.size,
+        type: f.fileData.type,
         status: f.status,
-        isFileObject: f.file instanceof File,
         answersFound: f.answersFound
       })),
       timestamp: new Date().toISOString()
     });
-
-    // Validate file objects before transition
-    const validFiles = uploadedFiles.filter(f => f.file instanceof File);
-    if (validFiles.length !== uploadedFiles.length) {
-      console.error('[DocumentUploadWizard] Invalid file objects found:', {
-        totalFiles: uploadedFiles.length,
-        validFiles: validFiles.length,
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Ensure file objects are preserved during transition
-    const preservedFiles = uploadedFiles.map(f => ({
-      ...f,
-      file: new File([f.file], f.file.name, { type: f.file.type })
-    }));
-
-    setUploadedFiles(preservedFiles);
 
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(current => current + 1);
@@ -75,22 +60,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   };
 
   const handleBack = () => {
-    // Log file state before transition
     console.log('[DocumentUploadWizard] Moving to previous step:', {
       currentStep,
       previousStep: currentStep - 1,
-      uploadedFiles: uploadedFiles.map(f => ({
+      files: uploadedFiles.map(f => ({
         id: f.id,
-        name: f.file.name,
-        size: f.file.size,
-        type: f.file.type,
+        name: f.fileData.name,
+        size: f.fileData.size,
+        type: f.fileData.type,
         status: f.status,
-        isFileObject: f.file instanceof File,
         answersFound: f.answersFound
       })),
       timestamp: new Date().toISOString()
     });
-
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
@@ -102,28 +84,22 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         name: f.name,
         size: f.size,
         type: f.type,
-        isFileObject: f instanceof File
-      })),
-      currentFiles: uploadedFiles.map(f => ({
-        id: f.id,
-        name: f.file.name,
-        size: f.file.size,
-        type: f.file.type,
-        status: f.status,
-        isFileObject: f.file instanceof File
+        lastModified: f.lastModified
       })),
       timestamp: new Date().toISOString()
     });
 
-    // Add new files to state, ensuring unique entries by file name
     setUploadedFiles(prev => {
       const newFiles = files
-        .filter(file => !prev.some(existing => existing.file.name === file.name))
+        .filter(file => !prev.some(existing => existing.fileData.name === file.name))
         .map(file => ({
-          // Create new File object to ensure proper type
-          file: new File([file], file.name, { type: file.type }),
-          status: 'uploaded' as const,
-          id: undefined
+          fileData: {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: file.lastModified
+          },
+          status: 'uploaded' as const
         }));
 
       const updatedFiles = [...prev, ...newFiles];
@@ -132,11 +108,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         totalFiles: updatedFiles.length,
         fileDetails: updatedFiles.map(f => ({
           id: f.id,
-          name: f.file.name,
-          size: f.file.size,
-          type: f.file.type,
-          status: f.status,
-          isFileObject: f.file instanceof File
+          name: f.fileData.name,
+          size: f.fileData.size,
+          type: f.fileData.type,
+          status: f.status
         })),
         timestamp: new Date().toISOString()
       });
@@ -148,22 +123,12 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
     console.log('[DocumentUploadWizard] Updating file metadata:', {
       fileId,
-      metadata: {
-        ...metadata,
-        fileObject: metadata.file ? {
-          name: metadata.file.name,
-          size: metadata.file.size,
-          type: metadata.file.type,
-          isFileObject: metadata.file instanceof File
-        } : undefined
-      },
+      metadata,
       timestamp: new Date().toISOString()
     });
 
     setUploadedFiles(prev => {
-      const fileToUpdate = prev.find(
-        f => f.id === fileId || (!f.id && f.file.name === metadata.file?.name)
-      );
+      const fileToUpdate = prev.find(f => f.id === fileId);
 
       if (!fileToUpdate) {
         console.log('[DocumentUploadWizard] No matching file found for update:', {
@@ -176,22 +141,17 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
       const updatedFiles = prev.map(file => {
         if (file === fileToUpdate) {
-          // Create new File object when updating metadata
           const updatedFile = { 
             ...file,
-            ...metadata,
-            file: metadata.file ? 
-              new File([metadata.file], metadata.file.name, { type: metadata.file.type }) : 
-              file.file
+            ...metadata
           };
 
           console.log('[DocumentUploadWizard] Updated file:', {
             id: updatedFile.id,
-            name: updatedFile.file.name,
-            size: updatedFile.file.size,
-            type: updatedFile.file.type,
-            status: updatedFile.status,
-            isFileObject: updatedFile.file instanceof File
+            name: updatedFile.fileData.name,
+            size: updatedFile.fileData.size,
+            type: updatedFile.fileData.type,
+            status: updatedFile.status
           });
 
           return updatedFile;
