@@ -22,6 +22,7 @@ This document outlines the implementation plan for enhancing the file upload sys
 - Implemented confidence scoring
 - Added retry mechanism
 - Added comprehensive error handling
+- Switched to GPT-3.5-turbo for larger document support ✅
 
 ### Phase 3: File Processing Enhancement
 - Implemented efficient PDF processing (first 3 pages only)
@@ -39,17 +40,10 @@ This document outlines the implementation plan for enhancing the file upload sys
 
 ## In Progress 🔄
 
-### Current Focus: Classification Enhancement
-1. Classification Optimization:
-   - Add confidence thresholds
-   - Implement retry with smaller text samples
-   - Add manual override option
-
-2. Frontend Updates:
-   - Show classification progress
-   - Display confidence scores
-   - Add manual classification option
-   - Improve error messages
+### Next Focus: Document Count UI Updates
+1. User Interface Enhancements:
+   - Show loading toast during file upload/processing
+   - Update document count in category boxes after successful classification
 
 ## Success Metrics
 - Upload success rate > 99%

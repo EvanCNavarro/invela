@@ -13,22 +13,22 @@ interface DocumentCategory {
 
 const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   {
-    id: 'soc2',
+    id: 'soc2_audit',
     name: 'SOC 2 Audit Report',
     acceptedFormats: '.PDF, .DOC, .DOCX'
   },
   {
-    id: 'iso27001',
+    id: 'iso27001_cert',
     name: 'ISO 27001 Certification',
     acceptedFormats: '.PDF, .DOC, .DOCX, .PNG, .JPG'
   },
   {
-    id: 'pentest',
+    id: 'pentest_report',
     name: 'Penetration Test Report',
     acceptedFormats: '.PDF, .DOC, .DOCX'
   },
   {
-    id: 'bcp',
+    id: 'business_continuity',
     name: 'Business Continuity Plan',
     acceptedFormats: '.PDF, .DOC, .DOCX'
   },
@@ -69,6 +69,13 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
 
     try {
       console.log('[DocumentUploadStep] Sending file to server');
+
+      // Show loading toast
+      toast({
+        title: "Processing Document",
+        description: `Uploading and classifying ${file.name}...`,
+      });
+
       const response = await fetch('/api/files', {
         method: 'POST',
         body: formData
@@ -85,7 +92,7 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
         confidence: result.classification_confidence
       });
 
-      // Update document counts
+      // Update document counts based on WebSocket updates
       setDocumentCounts(prev => {
         const category = result.document_category;
         const currentCount = prev[category]?.count || 0;
