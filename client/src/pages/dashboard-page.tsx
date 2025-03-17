@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -137,7 +138,7 @@ export default function DashboardPage() {
           </PageSideDrawer>
         }
       >
-        <div className="mt-12 space-y-8"> 
+        <div className="mt-12 space-y-8">
           {allWidgetsHidden ? (
             <div className="grid grid-cols-3 gap-4 min-h-[400px]">
               {[...Array(6)].map((_, i) => (
@@ -234,7 +235,7 @@ export default function DashboardPage() {
                   ) : (
                     <div className="space-y-1">
                       <div className="bg-muted/50 rounded-lg py-2 px-3 flex items-center justify-center space-x-3">
-                        {companyData.logoId ? (
+                        {companyData?.logoId ? (
                           <img
                             src={`/api/companies/${companyData.id}/logo`}
                             alt={`${companyData.name} logo`}
@@ -247,13 +248,13 @@ export default function DashboardPage() {
                         ) : (
                           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-xs font-medium text-primary">
-                              {companyData.name.charAt(0).toUpperCase()}
+                              {companyData?.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         )}
-                        <span className="text-sm font-medium">{companyData.name}</span>
+                        <span className="text-sm font-medium">{companyData?.name}</span>
                       </div>
-                      <RiskMeter score={companyData.risk_score || 0} /> {/* Updated to use risk_score instead of riskScore */}
+                      <RiskMeter score={companyData?.risk_score || 0} /> {/* Using risk_score instead of riskScore */}
                     </div>
                   )}
                 </Widget>
