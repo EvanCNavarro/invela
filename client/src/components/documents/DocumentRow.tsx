@@ -56,7 +56,7 @@ export function DocumentRow({ file }: DocumentRowProps) {
       case 'processing':
         return (
           <span className="text-blue-600">
-            (Calculating Questions Answers...)
+            (Processing Document...)
           </span>
         );
       default:
@@ -67,8 +67,9 @@ export function DocumentRow({ file }: DocumentRowProps) {
   return (
     <div 
       className={cn(
-        "flex items-center gap-4 p-4 rounded-lg",
-        file.status === 'processing' && "bg-gray-50"
+        "flex items-center gap-4 p-4 rounded-lg border",
+        file.status === 'processing' && "bg-blue-50/50 border-blue-200",
+        file.status !== 'processing' && "border-transparent"
       )}
     >
       {/* Status Icon */}
