@@ -5,6 +5,20 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./services/websocket";
 import cors from "cors";
+import fs from 'fs';
+import path from 'path';
+
+// Create required directories
+const uploadsDir = path.join(process.cwd(), 'uploads');
+const documentsDir = path.join(uploadsDir, 'documents');
+
+// Ensure upload directories exist
+[uploadsDir, documentsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+});
 
 // Custom error class for API errors
 export class APIError extends Error {
