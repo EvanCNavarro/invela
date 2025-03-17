@@ -51,10 +51,10 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
       return "secondary";
     case 'COMPLETED':
     case 'APPROVED':
+    case 'SUBMITTED':  // Added SUBMITTED to use the same style as COMPLETED
       return "default";
     case 'IN_PROGRESS':
     case 'READY_FOR_SUBMISSION':
-    case 'SUBMITTED':
       return "outline";
     default:
       return "default";
