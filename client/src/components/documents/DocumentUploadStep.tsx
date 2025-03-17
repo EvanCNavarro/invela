@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -39,9 +39,19 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   }
 ];
 
+interface UploadedFile {
+  file: File;
+  id?: number;
+  status: 'uploaded' | 'processing' | 'classified';
+  category?: string;
+  confidence?: number;
+}
+
 interface DocumentUploadStepProps {
-  onFilesUpdated?: (files: File[]) => void;
+  onFilesUpdated: (files: File[]) => void;
   companyName: string;
+  uploadedFiles: UploadedFile[];
+  updateFileMetadata: (fileId: number, metadata: Partial<UploadedFile>) => void;
 }
 
 interface DocumentCount {
@@ -50,10 +60,14 @@ interface DocumentCount {
   isProcessing?: boolean;
 }
 
-export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUploadStepProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
-  const [isUploading, setIsUploading] = useState(false);
+export function DocumentUploadStep({ 
+  onFilesUpdated, 
+  companyName,
+  uploadedFiles,
+  updateFileMetadata
+}: DocumentUploadStepProps) {
+  const [documentCounts, setDocumentCounts] = React.useState<Record<string, DocumentCount>>({});
+  const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
 
   const uploadFile = useCallback(async (file: File) => {
@@ -92,12 +106,20 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
         confidence: result.classification_confidence
       });
 
+      // Update file metadata
+      updateFileMetadata(result.id, {
+        id: result.id,
+        status: 'classified',
+        category: result.document_category,
+        confidence: result.classification_confidence
+      });
+
       return result;
     } catch (error) {
       console.error('[DocumentUploadStep] Upload error:', error);
       throw error;
     }
-  }, []);
+  }, [updateFileMetadata]);
 
   const handleFilesAccepted = async (files: File[]) => {
     console.log('[DocumentUploadStep] Files accepted:', {
@@ -108,12 +130,9 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
     setIsUploading(true);
 
     try {
-      const newFiles = [...uploadedFiles];
-
       for (const file of files) {
         try {
           await uploadFile(file);
-          newFiles.push(file);
 
           toast({
             title: "Upload Successful",
@@ -133,15 +152,14 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
         }
       }
 
-      setUploadedFiles(newFiles);
-      onFilesUpdated?.(newFiles);
+      onFilesUpdated(files);
     } finally {
       setIsUploading(false);
     }
   };
 
   // Update document counts when receiving WebSocket messages
-  useEffect(() => {
+  React.useEffect(() => {
     const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
 
     socket.onmessage = (event) => {
