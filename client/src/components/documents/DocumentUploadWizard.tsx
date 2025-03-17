@@ -45,24 +45,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     }
   };
 
-  const handleBack = () => {
-    console.log('[DocumentUploadWizard] Moving to previous step:', {
-      currentStep,
-      previousStep: currentStep - 1,
-      files: uploadedFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        type: f.type,
-        status: f.status
-      })),
-      timestamp: new Date().toISOString()
-    });
-    if (currentStep > 0) {
-      setCurrentStep(current => current - 1);
-    }
-  };
-
   const handleFilesUpdated = (files: File[]) => {
     console.log('[DocumentUploadWizard] Updating files:', {
       newFiles: files.map(f => ({
@@ -74,6 +56,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     });
 
     setUploadedFiles(prev => {
+      // Only add files that aren't already in the list
       const newFiles = files
         .filter(file => !prev.some(existing => existing.name === file.name))
         .map(file => ({
@@ -104,12 +87,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
     console.log('[DocumentUploadWizard] Updating file metadata:', {
       fileId,
-      metadata,
+      metadata: {
+        id: metadata.id,
+        name: metadata.name,
+        status: metadata.status
+      },
       timestamp: new Date().toISOString()
     });
 
     setUploadedFiles(prev => {
-      const fileToUpdate = prev.find(f => f.id === fileId);
+      // Find file by name since we might not have an ID yet
+      const fileToUpdate = prev.find(f => 
+        f.name === metadata.name || f.id === fileId
+      );
 
       if (!fileToUpdate) {
         console.log('[DocumentUploadWizard] No matching file found for update:', {
@@ -120,31 +110,42 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         return prev;
       }
 
-      const updatedFiles = prev.map(file => {
-        if (file === fileToUpdate) {
-          const updatedFile = { 
-            ...file,
-            ...metadata
-          };
-
-          console.log('[DocumentUploadWizard] Updated file:', {
-            id: updatedFile.id,
-            name: updatedFile.name,
-            size: updatedFile.size,
-            type: updatedFile.type,
-            status: updatedFile.status
-          });
-
-          return updatedFile;
-        }
-        return file;
+      console.log('[DocumentUploadWizard] Found file to update:', {
+        currentFile: {
+          id: fileToUpdate.id,
+          name: fileToUpdate.name,
+          status: fileToUpdate.status
+        },
+        newMetadata: metadata,
+        timestamp: new Date().toISOString()
       });
 
-      return updatedFiles;
+      return prev.map(file =>
+        file === fileToUpdate
+          ? { ...file, ...metadata, id: fileId }  // Ensure ID is updated
+          : file
+      );
     });
   };
 
-  // Define the wizard steps
+  const handleBack = () => {
+    console.log('[DocumentUploadWizard] Moving to previous step:', {
+      currentStep,
+      previousStep: currentStep - 1,
+      files: uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        status: f.status
+      })),
+      timestamp: new Date().toISOString()
+    });
+    if (currentStep > 0) {
+      setCurrentStep(current => current - 1);
+    }
+  };
+
   const WIZARD_STEPS = [
     {
       id: 'upload',
@@ -181,14 +182,12 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     }));
   };
 
-  // Calculate progress percentage
   const progress = Math.round((currentStep / (WIZARD_STEPS.length - 1)) * 100);
   const isLastStep = currentStep === WIZARD_STEPS.length - 1;
 
   return (
     <div className="space-y-6">
       <Card className="p-6">
-        {/* Header Section */}
         <div className="mb-8">
           <div className="flex items-center mb-4">
             <div className="flex-1">
@@ -212,7 +211,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             )}
           </div>
 
-          {/* Progress bar */}
           {!isSubmitted && (
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
               <div
@@ -223,12 +221,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           )}
         </div>
 
-        {/* Step Indicators */}
         <div className="mb-8">
           <div className="flex justify-between items-center">
             {WIZARD_STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center flex-1">
-                {/* Step circle */}
                 <div className={`
                   flex items-center justify-center w-6 h-6 rounded-full text-sm
                   ${index < currentStep || isSubmitted
@@ -240,7 +236,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
                 `}>
                   {index < currentStep || isSubmitted ? '✓' : index + 1}
                 </div>
-                {/* Step title */}
                 <div className="mx-2">
                   <p className={`text-xs font-medium ${
                     index === currentStep && !isSubmitted
@@ -252,7 +247,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
                     {step.title}
                   </p>
                 </div>
-                {/* Connector line */}
                 {index < WIZARD_STEPS.length - 1 && (
                   <div className={`
                     flex-1 h-[1px]
@@ -269,7 +263,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
         <hr className="border-t border-gray-200 my-6" />
 
-        {/* Content Section */}
         <div className="min-h-[300px]">
           {currentStep === 0 ? (
             <DocumentUploadStep
@@ -292,7 +285,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           )}
         </div>
 
-        {/* Navigation Buttons */}
         <div className="flex justify-between mt-8 pt-4 border-t">
           {!isSubmitted && (
             <Button
