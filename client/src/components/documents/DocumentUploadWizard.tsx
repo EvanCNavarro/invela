@@ -84,8 +84,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         id: f.id,
         name: f.file.name,
         size: f.file.size,
-        status: f.status,
-        error: f.error
+        type: f.file.type,
+        status: f.status
       }))
     });
 
@@ -94,9 +94,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       const newFiles = files
         .filter(file => !prev.some(existing => existing.file.name === file.name))
         .map(file => ({
-          file: file, // Preserve entire File object
+          file,  // Preserve entire File object
           status: 'uploaded' as const,
-          id: undefined // Will be set after upload
+          id: undefined
         }));
 
       const updatedFiles = [...prev, ...newFiles];
@@ -107,8 +107,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           id: f.id,
           name: f.file.name,
           size: f.file.size,
-          status: f.status,
-          error: f.error
+          type: f.file.type,
+          status: f.status
         }))
       });
 
