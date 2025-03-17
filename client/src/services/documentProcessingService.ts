@@ -18,15 +18,6 @@ interface DocumentAnswer {
   chunk_index?: number;
 }
 
-interface FileProcessingResult {
-  fileId: number;
-  fileName: string;
-  answers?: DocumentAnswer[];
-  error?: string;
-  totalChunks?: number;
-  processedChunks?: number;
-}
-
 class DocumentProcessingError extends Error {
   constructor(message: string, public details?: any) {
     super(message);
@@ -40,7 +31,6 @@ export async function processDocuments(
   onProgress: (result: ProcessingResult) => void
 ): Promise<ProcessingResult> {
   try {
-    // Validate inputs
     if (!fileIds?.length) {
       throw new DocumentProcessingError('No file IDs provided');
     }
@@ -55,21 +45,19 @@ export async function processDocuments(
       timestamp: new Date().toISOString()
     });
 
-    // Start processing
-    onProgress({
-      answersFound: 0,
-      status: 'processing'
-    });
-
     // Process each file sequentially
     let totalAnswersFound = 0;
 
     for (const fileId of fileIds) {
       try {
-        // Start processing the file
+        // Start processing
         const processResponse = await apiRequest('POST', `/api/documents/${fileId}/process`, {
-          fields: cardFields
+          fields: cardFields.map(f => f.key)
         });
+
+        if (!processResponse.ok) {
+          throw new Error(`Failed to start processing for file ${fileId}`);
+        }
 
         const processData = await processResponse.json();
 
@@ -79,35 +67,58 @@ export async function processDocuments(
           timestamp: new Date().toISOString()
         });
 
-        // Track chunk processing progress
-        for (let chunk = 0; chunk < processData.totalChunks; chunk++) {
-          const progressResponse = await apiRequest('GET', `/api/documents/${fileId}/progress`);
-          const progressData = await progressResponse.json();
+        // Poll for progress
+        let isProcessing = true;
+        let retryCount = 0;
+        const maxRetries = 3;
 
-          onProgress({
-            answersFound: progressData.answersFound,
-            status: 'processing',
-            progress: {
-              chunksProcessed: progressData.chunksProcessed,
-              totalChunks: processData.totalChunks
+        while (isProcessing && retryCount < maxRetries) {
+          try {
+            const progressResponse = await apiRequest('GET', `/api/documents/${fileId}/progress`);
+
+            if (!progressResponse.ok) {
+              throw new Error('Progress check failed');
             }
-          });
 
-          // Simulate waiting for chunk processing
-          await new Promise(resolve => setTimeout(resolve, 1000));
+            const progressData = await progressResponse.json();
+
+            onProgress({
+              answersFound: progressData.answersFound || 0,
+              status: 'processing',
+              progress: progressData.progress
+            });
+
+            if (progressData.status === 'processed') {
+              isProcessing = false;
+            } else {
+              // Wait before next check
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          } catch (error) {
+            retryCount++;
+            if (retryCount >= maxRetries) {
+              throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
 
         // Get final results
         const resultsResponse = await apiRequest('GET', `/api/documents/${fileId}/results`);
+
+        if (!resultsResponse.ok) {
+          throw new Error('Failed to get processing results');
+        }
+
         const results = await resultsResponse.json();
 
         console.log('[DocumentProcessingService] File processing complete:', {
           fileId,
-          answersFound: results.answers.length,
+          answersFound: results.answersFound,
           timestamp: new Date().toISOString()
         });
 
-        totalAnswersFound += results.answers.length;
+        totalAnswersFound += results.answersFound || 0;
 
       } catch (error: any) {
         console.error('[DocumentProcessingService] Error processing file:', {
@@ -124,7 +135,6 @@ export async function processDocuments(
       }
     }
 
-    // All files processed
     console.log('[DocumentProcessingService] All files processed:', {
       totalAnswersFound,
       timestamp: new Date().toISOString()
@@ -140,14 +150,6 @@ export async function processDocuments(
       error: error.message,
       details: error.details,
       timestamp: new Date().toISOString()
-    });
-
-    onProgress({
-      answersFound: 0,
-      status: 'error',
-      error: error instanceof DocumentProcessingError 
-        ? error.message 
-        : 'An unexpected error occurred while processing documents'
     });
 
     throw error;
