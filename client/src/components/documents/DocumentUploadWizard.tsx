@@ -109,7 +109,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       metadata
     });
 
-    setUploadedFiles(prev => 
+    setUploadedFiles(prev =>
       prev.map(file => {
         if (file.id === fileId) {
           console.log('[DocumentUploadWizard] File metadata updated:', {
@@ -154,7 +154,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`px-2 py-1 text-xs rounded ${
-                  isSubmitted 
+                  isSubmitted
                     ? 'bg-green-100 text-green-600'
                     : 'bg-yellow-100 text-yellow-800'
                 }`}>
@@ -175,7 +175,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           {/* Progress bar */}
           {!isSubmitted && (
             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <div 
+              <div
                 className="h-full bg-blue-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
@@ -191,8 +191,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
                 {/* Step circle */}
                 <div className={`
                   flex items-center justify-center w-6 h-6 rounded-full text-sm
-                  ${index < currentStep || isSubmitted 
-                    ? 'bg-green-600 text-white' 
+                  ${index < currentStep || isSubmitted
+                    ? 'bg-green-600 text-white'
                     : index === currentStep && !isSubmitted
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-500'
@@ -240,6 +240,22 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               documentCounts={documentCounts}
               updateDocumentCounts={updateDocumentCounts}
             />
+          ) : currentStep === 1 ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold">Document Processing</h2>
+              {/* Debug information */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-medium mb-2">Uploaded Files:</h3>
+                <pre className="text-sm">
+                  {JSON.stringify(uploadedFiles.map(f => ({
+                    name: f.file.name,
+                    category: f.category,
+                    status: f.status,
+                    confidence: f.confidence
+                  })), null, 2)}
+                </pre>
+              </div>
+            </div>
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
               {WIZARD_STEPS[currentStep].description}
@@ -261,7 +277,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           )}
           {isSubmitted ? (
             <div className="ml-auto">
-              <Button 
+              <Button
                 disabled
                 className="bg-green-600 hover:bg-green-600 text-white"
               >
@@ -269,7 +285,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               </Button>
             </div>
           ) : (
-            <Button 
+            <Button
               onClick={handleNext}
               className="ml-auto"
               disabled={currentStep === 0 && uploadedFiles.length === 0}
