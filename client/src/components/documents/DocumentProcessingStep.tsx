@@ -45,14 +45,25 @@ export function DocumentProcessingStep({
 
     const validFiles = filesToValidate.filter(file => {
       const isValid = file.id !== undefined && file.status === 'uploaded';
+
       if (!isValid) {
         console.log('[DocumentProcessingStep] Invalid file found:', {
-          fileId: file.id,
+          id: file.id,
+          name: file.name,
+          status: file.status,
+          hasId: file.id !== undefined,
+          isUploaded: file.status === 'uploaded',
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.log('[DocumentProcessingStep] Valid file found:', {
+          id: file.id,
           name: file.name,
           status: file.status,
           timestamp: new Date().toISOString()
         });
       }
+
       return isValid;
     });
 
@@ -62,7 +73,6 @@ export function DocumentProcessingStep({
       validFileDetails: validFiles.map(f => ({
         id: f.id,
         name: f.name,
-        type: f.type,
         status: f.status
       })),
       timestamp: new Date().toISOString()
