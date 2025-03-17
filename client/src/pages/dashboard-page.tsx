@@ -20,7 +20,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
@@ -254,7 +253,7 @@ export default function DashboardPage() {
                         )}
                         <span className="text-sm font-medium">{companyData.name}</span>
                       </div>
-                      <RiskMeter score={companyData.riskScore || 0} />
+                      <RiskMeter score={companyData.risk_score || 0} /> {/* Updated to use risk_score instead of riskScore */}
                     </div>
                   )}
                 </Widget>
