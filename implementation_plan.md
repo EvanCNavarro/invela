@@ -38,14 +38,17 @@
      - Highlight active processing rows with blue-tinted background and border ✅
      - Proper state transitions from upload to processing ✅
 
-2. Compliance Questions Integration 🔄 (Next Step)
-   - Retrieve questions from card_fields:
-     - field_key
-     - question
-     - ai_search_instructions
-     - partial_risk_score_max
+2. Compliance Questions Integration 🔄 (Current Step)
+   - OpenAI Integration ✅
+     - Setup OpenAI service
+     - Implement answer extraction logic
+     - Add detailed logging
+   - Document Processing Service 🔄 (Next Step)
+     - Implement PDF chunking
+     - Create processing queue
+     - Handle processing state updates
    - Structure questions by wizard_section
-   - Prepare for OpenAI integration
+   - Prepare WebSocket updates
 
 3. Processing Time Management:
    - Calculate initial estimated processing time
