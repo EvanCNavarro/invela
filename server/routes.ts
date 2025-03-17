@@ -17,6 +17,8 @@ import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 import { analyzeDocument } from './services/openai';
+// Import pdf-parse dynamically to avoid test file loading at startup
+import type { PDFExtractResult } from 'pdf-parse/lib/pdf-parse';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
@@ -853,8 +855,7 @@ export function registerRoutes(app: Express): Express {
     } catch (error) {
       console.error("Error checking company existence:", error);
       res.status(500).json({
-        message: "Error checking company existence"
-      });
+        message: "Error checking company existence"      });
     }
   });
 
@@ -1431,14 +1432,45 @@ export function registerRoutes(app: Express): Express {
         timestamp: new Date().toISOString()
       });
 
-      // For text files, read buffer directly as UTF-8 text
-      const documentText = req.file.buffer.toString('utf-8');
+      let documentText: string;
 
-      console.log('[DocumentProcessing] Document text extracted:', {
-        fileName: req.file.originalname,
-        textLength: documentText.length,
-        timestamp: new Date().toISOString()
-      });
+      // Handle different file types
+      if (req.file.mimetype === 'application/pdf') {
+        try {
+          // Import pdf-parse dynamically
+          const pdfParse = (await import('pdf-parse')).default;
+          const documentData = await pdfParse(req.file.buffer);
+          documentText = documentData.text;
+
+          console.log('[DocumentProcessing] PDF text extracted:', {
+            fileName: req.file.originalname,
+            textLength: documentText.length,
+            timestamp: new Date().toISOString()
+          });
+        } catch (pdfError) {
+          console.error('[DocumentProcessing] PDF parsing error:', {
+            fileName: req.file.originalname,
+            error: pdfError instanceof Error ? pdfError.message : String(pdfError)
+          });
+          return res.status(400).json({ 
+            message: "Failed to parse PDF document",
+            error: pdfError instanceof Error ? pdfError.message : String(pdfError)
+          });
+        }
+      } else if (req.file.mimetype === 'text/plain') {
+        // For text files, read buffer directly as UTF-8 text
+        documentText = req.file.buffer.toString('utf-8');
+        console.log('[DocumentProcessing] Text file content loaded:', {
+          fileName: req.file.originalname,
+          textLength: documentText.length,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        return res.status(400).json({ 
+          message: "Unsupported file type",
+          supportedTypes: ['application/pdf', 'text/plain']
+        });
+      }
 
       // Process the document using analyzeDocument function
       const result = await analyzeDocument(documentText, fields);
