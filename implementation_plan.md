@@ -117,10 +117,4 @@ OPENAI_API_KEY=<key>
 - Classification can be disabled without affecting uploads
 - File size limits can be adjusted if needed
 
-## Future Enhancements
-1. Add file retention policies
-2. Implement version control
-3. Add cross-company file sharing
-4. Enhanced role-based access control
-
 End of Implementation Plan
