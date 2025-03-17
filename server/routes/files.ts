@@ -4,36 +4,19 @@ import { eq } from "drizzle-orm";
 import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
+import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 
 const router = Router();
-const uploadDir = path.join(process.cwd(), 'uploads');
+const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 
 // Ensure upload directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  }
-});
-
-const upload = multer({ 
-  storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
-  }
-});
-
 // File upload endpoint
-router.post('/api/files', upload.single('file'), async (req, res) => {
+router.post('/api/files', documentUpload.single('file'), async (req, res) => {
   try {
     console.log('[Files] Processing file upload request');
 
@@ -70,6 +53,7 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
         user_id: req.user.id,
         company_id: req.user.company_id,
         status: 'uploaded',
+        classification_status: 'pending',
         download_count: 0,
         version: 1
       })
@@ -90,6 +74,16 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
       const filePath = path.join(uploadDir, req.file.filename);
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
+      }
+    }
+
+    // Enhanced error handling
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: 'File too large',
+          detail: 'Maximum file size is 50MB'
+        });
       }
     }
 

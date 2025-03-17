@@ -2,136 +2,36 @@
 
 ## Overview
 This document outlines the implementation plan for enhancing the file upload system with:
-1. Automated document classification using OpenAI
-2. Real-time document count tracking per category
-3. Improved file size handling (50MB limit)
-4. Enhanced file type validation
-5. Better error handling and user feedback
+1. Automated document classification using OpenAI ✅
+2. Real-time document count tracking per category ✅
+3. Improved file size handling (50MB limit) 🔄
+4. Enhanced file type validation 🔄
+5. Better error handling and user feedback 🔄
 
-## Document Categories
-Primary document types to classify:
-- SOC 2 Audit Report
-- ISO 27001 Certification
-- Penetration Test Report
-- Business Continuity Plan
-- Other Documents
+## Completed Steps ✅
 
-## Phase 1: Database Enhancement
-1. Add new fields to files table:
-```sql
-CREATE TYPE document_category AS ENUM (
-  'soc2_audit',
-  'iso27001_cert',
-  'pentest_report',
-  'business_continuity',
-  'other'
-);
+### Phase 1: Database Enhancement
+- Added document_category enum type
+- Added new fields to files table
+- Created document count materialized view
+- Added necessary indices for performance
 
-ALTER TABLE files 
-  ADD COLUMN document_category document_category,
-  ADD COLUMN document_type VARCHAR(50),
-  ADD COLUMN classification_status VARCHAR(20) DEFAULT 'pending',
-  ADD COLUMN last_classified_at TIMESTAMP,
-  ADD COLUMN classification_confidence FLOAT;
+### Phase 2: OpenAI Integration
+- Installed and configured OpenAI SDK
+- Created document classification service
+- Implemented confidence scoring
+- Added retry mechanism
+- Added comprehensive error handling
 
-CREATE INDEX idx_files_document_category ON files(document_category);
-CREATE INDEX idx_files_company_category ON files(company_id, document_category);
-```
+### Initial WebSocket Setup
+- Implemented WebSocket server with proper configuration
+- Added real-time document count updates
+- Added classification status updates
+- Implemented connection health monitoring
 
-2. Add document count materialized view:
-```sql
-CREATE MATERIALIZED VIEW document_category_counts AS
-SELECT 
-  company_id,
-  document_category,
-  COUNT(*) as doc_count
-FROM files
-GROUP BY company_id, document_category;
+## In Progress 🔄
 
-CREATE UNIQUE INDEX ON document_category_counts (company_id, document_category);
-```
-
-## Phase 2: OpenAI Integration
-1. Install and configure OpenAI SDK:
-```bash
-npm install openai
-```
-
-2. Add environment variables:
-```
-OPENAI_API_KEY=<key>
-```
-
-3. Create OpenAI service (server/services/openai.ts):
-```typescript
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
-const CLASSIFICATION_PROMPT = `You are an expert compliance analyst. Analyze the provided document and classify it into one of the following categories:
-- SOC 2 Audit Report
-- ISO 27001 Certification
-- Penetration Test Report
-- Business Continuity Plan
-- Other Documents
-
-Respond with a JSON object containing:
-{
-  "category": string (one of the above categories),
-  "confidence": number (0-1),
-  "reasoning": string (brief explanation),
-  "suggestedName": string (optional)
-}
-
-Consider:
-- Document structure and formatting
-- Key terminology and phrases
-- Standard compliance language
-- Certification markers and dates`;
-
-export async function classifyDocument(content: string): Promise<ClassificationResult> {
-  const response = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: CLASSIFICATION_PROMPT },
-      { role: "user", content }
-    ],
-    response_format: { type: "json_object" }
-  });
-
-  const result = JSON.parse(response.choices[0].message.content);
-  return {
-    category: mapToDocumentCategory(result.category),
-    confidence: result.confidence,
-    reasoning: result.reasoning,
-    suggestedName: result.suggestedName
-  };
-}
-
-// Confidence thresholds for classification
-export const CONFIDENCE_THRESHOLDS = {
-  AUTO_CLASSIFY: 0.85, // Automatically classify if confidence is above this
-  SUGGEST: 0.60, // Suggest classification if confidence is above this
-  MINIMUM: 0.30 // Show as "Other Documents" if below this
-};
-```
-
-4. Create classification types:
-```typescript
-export enum DocumentCategory {
-  SOC2_AUDIT = 'soc2_audit',
-  ISO27001_CERT = 'iso27001_cert',
-  PENTEST_REPORT = 'pentest_report',
-  BUSINESS_CONTINUITY = 'business_continuity',
-  OTHER = 'other'
-}
-
-export interface ClassificationResult {
-  category: DocumentCategory;
-  confidence: number;
-  reasoning: string;
-  suggestedName?: string;
-}
-```
-
-## Phase 3: File Upload Enhancement
+### Phase 3: File Upload Enhancement (Current Step)
 1. Update upload middleware (server/middleware/upload.ts):
 - Increase file size limit to 50MB
 - Validate accepted file types:
