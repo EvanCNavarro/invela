@@ -33,13 +33,17 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   // Get status icon based on document state
   const StatusIcon = () => {
     switch (file.status) {
-      case 'uploaded':
       case 'processed':
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'processing':
         return <LoadingSpinner size="sm" className="text-blue-500" />;
       case 'error':
         return <Circle className="h-5 w-5 text-red-500" />;
+      case 'uploaded':
+        // Show different icon for waiting vs just uploaded
+        return isActive ? 
+          <LoadingSpinner size="sm" className="text-blue-500" /> :
+          <CircleDashed className="h-5 w-5 text-gray-400" />;
       default:
         return <CircleDashed className="h-5 w-5 text-gray-400" />;
     }
@@ -48,7 +52,6 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   // Get processing context text and style
   const ProcessingContext = () => {
     switch (file.status) {
-      case 'uploaded':
       case 'processed':
         return (
           <span className="text-green-600 font-medium">
@@ -58,7 +61,13 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
       case 'processing':
         return (
           <span className="text-blue-600">
-            {isActive ? '(Processing Document...)' : '(Waiting...)'}
+            (Processing Document...)
+          </span>
+        );
+      case 'uploaded':
+        return (
+          <span className="text-gray-500">
+            {isActive ? '(Processing...)' : '(Waiting...)'}
           </span>
         );
       case 'error':
@@ -77,9 +86,9 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
       className={cn(
         "flex items-center gap-4 p-4 rounded-lg border transition-colors duration-200",
         isActive && "bg-blue-50/50 border-blue-200",
-        !isActive && file.status === 'processing' && "bg-gray-50/50 border-gray-200",
+        !isActive && file.status === 'uploaded' && "bg-gray-50/50 border-gray-200",
         file.status === 'error' && "bg-red-50/50 border-red-200",
-        file.status !== 'processing' && !isActive && "border-transparent"
+        file.status === 'processed' && "border-green-200"
       )}
     >
       {/* Status Icon */}

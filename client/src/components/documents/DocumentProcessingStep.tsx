@@ -22,66 +22,12 @@ export function DocumentProcessingStep({
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [files, setFiles] = React.useState<UploadedFile[]>([]);
   const [processingQueue, setProcessingQueue] = React.useState<number[]>([]);
-  const [isQueueInitialized, setIsQueueInitialized] = React.useState(false);
 
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
   });
 
-  // Validate files before adding to queue
-  const validateFiles = (filesToValidate: UploadedFile[]) => {
-    console.log('[DocumentProcessingStep] Starting file validation:', {
-      totalFiles: filesToValidate.length,
-      fileDetails: filesToValidate.map(f => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        type: f.type,
-        status: f.status,
-        hasId: f.id !== undefined
-      })),
-      timestamp: new Date().toISOString()
-    });
-
-    const validFiles = filesToValidate.filter(file => {
-      const isValid = file.id !== undefined && file.status === 'uploaded';
-
-      if (!isValid) {
-        console.log('[DocumentProcessingStep] Invalid file found:', {
-          id: file.id,
-          name: file.name,
-          status: file.status,
-          hasId: file.id !== undefined,
-          isUploaded: file.status === 'uploaded',
-          timestamp: new Date().toISOString()
-        });
-      } else {
-        console.log('[DocumentProcessingStep] Valid file found:', {
-          id: file.id,
-          name: file.name,
-          status: file.status,
-          timestamp: new Date().toISOString()
-        });
-      }
-
-      return isValid;
-    });
-
-    console.log('[DocumentProcessingStep] File validation complete:', {
-      validFiles: validFiles.length,
-      invalidFiles: filesToValidate.length - validFiles.length,
-      validFileDetails: validFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        status: f.status
-      })),
-      timestamp: new Date().toISOString()
-    });
-
-    return validFiles;
-  };
-
-  // Initialize files and processing queue
+  // Validate files and set up the queue
   React.useEffect(() => {
     console.log('[DocumentProcessingStep] Initializing component:', {
       companyName,
@@ -97,61 +43,44 @@ export function DocumentProcessingStep({
       timestamp: new Date().toISOString()
     });
 
-    // Validate and set initial files
-    const validatedFiles = validateFiles(initialFiles);
-    setFiles(validatedFiles);
+    // Validate and filter files
+    const validFiles = initialFiles.filter(file => {
+      const isValid = file.id !== undefined && file.status === 'uploaded';
 
-    // Setup processing queue with validated file indices
-    const queue = validatedFiles
-      .map((_, index) => index)
-      .filter(index => validatedFiles[index].status === 'uploaded');
+      if (!isValid) {
+        console.log('[DocumentProcessingStep] Invalid file found:', {
+          id: file.id,
+          name: file.name,
+          status: file.status,
+          hasId: file.id !== undefined,
+          isUploaded: file.status === 'uploaded',
+          timestamp: new Date().toISOString()
+        });
+      }
 
-    console.log('[DocumentProcessingStep] Setting up processing queue:', {
+      return isValid;
+    });
+
+    // Set up initial files and queue
+    setFiles(validFiles);
+    const queue = validFiles.map((_, index) => index);
+    setProcessingQueue(queue);
+
+    console.log('[DocumentProcessingStep] Queue initialized:', {
+      validFiles: validFiles.length,
       queueLength: queue.length,
-      queueFiles: queue.map(index => ({
-        id: validatedFiles[index].id,
-        name: validatedFiles[index].name,
-        status: validatedFiles[index].status
+      fileDetails: validFiles.map(f => ({
+        id: f.id,
+        name: f.name,
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
-
-    setProcessingQueue(queue);
   }, [initialFiles, companyName]);
 
-  // Initialize queue when card fields are ready
-  React.useEffect(() => {
-    if (!cardFields?.length || isLoadingFields) {
-      console.log('[DocumentProcessingStep] Waiting for card fields to load');
-      return;
-    }
-
-    if (!isQueueInitialized && files.length > 0) {
-      console.log('[DocumentProcessingStep] Queue initialization starting:', {
-        cardFieldsCount: cardFields.length,
-        filesCount: files.length,
-        queueLength: processingQueue.length,
-        files: files.map(f => ({
-          id: f.id,
-          name: f.name,
-          status: f.status
-        })),
-        timestamp: new Date().toISOString()
-      });
-
-      setIsQueueInitialized(true);
-    }
-  }, [cardFields, files, isLoadingFields, isQueueInitialized, processingQueue.length]);
-
-  // Process next file in queue
+  // Process the next file in queue
   const processNextFile = React.useCallback(async () => {
-    if (!isQueueInitialized || isProcessing || processingQueue.length === 0) {
-      console.log('[DocumentProcessingStep] Processing skipped:', {
-        reason: !isQueueInitialized ? 'Queue not initialized' :
-                isProcessing ? 'Already processing' : 'Queue empty',
-        queueLength: processingQueue.length,
-        timestamp: new Date().toISOString()
-      });
+    if (!cardFields?.length || isProcessing || processingQueue.length === 0) {
       return;
     }
 
@@ -161,11 +90,7 @@ export function DocumentProcessingStep({
     if (!fileToProcess?.id) {
       console.error('[DocumentProcessingStep] Invalid file to process:', {
         index: nextIndex,
-        file: fileToProcess ? {
-          id: fileToProcess.id,
-          name: fileToProcess.name,
-          status: fileToProcess.status
-        } : null,
+        fileDetails: fileToProcess,
         timestamp: new Date().toISOString()
       });
       return;
@@ -183,13 +108,12 @@ export function DocumentProcessingStep({
     setIsProcessing(true);
 
     try {
-      // Update only the current file's status to processing
+      // Update only current file to processing status
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? { ...file, status: 'processing' as DocumentStatus } : file
       ));
 
-      // Process file using its ID
-      const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
+      const result = await processDocuments([fileToProcess.id], cardFields, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
           fileId: fileToProcess.id,
           progress,
@@ -203,7 +127,7 @@ export function DocumentProcessingStep({
         timestamp: new Date().toISOString()
       });
 
-      // Update file with results
+      // Update processed file with results
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
@@ -246,24 +170,18 @@ export function DocumentProcessingStep({
         processNextFile();
       }, 500);
     }
-  }, [files, isProcessing, cardFields, processingQueue, toast, isQueueInitialized]);
+  }, [cardFields, files, isProcessing, processingQueue, toast]);
 
-  // Start processing when card fields load and we have files to process
+  // Start processing when ready
   React.useEffect(() => {
     if (!cardFields?.length || isLoadingFields) {
-      console.log('[DocumentProcessingStep] Waiting for card fields to load');
       return;
     }
 
-    if (!isProcessing && processingQueue.length > 0 && isQueueInitialized) {
-      console.log('[DocumentProcessingStep] Starting document processing queue:', {
-        queueLength: processingQueue.length,
-        cardFieldsCount: cardFields.length,
-        timestamp: new Date().toISOString()
-      });
+    if (!isProcessing && processingQueue.length > 0) {
       processNextFile();
     }
-  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields, isQueueInitialized]);
+  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields]);
 
   if (isLoadingFields) {
     return (
