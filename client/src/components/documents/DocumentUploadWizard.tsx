@@ -93,18 +93,21 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       timestamp: new Date().toISOString()
     });
 
-    // Create new file entries with unique temporary IDs
-    const newUploadedFiles = files.map((file) => ({
-      file,
-      status: 'uploaded' as const
-    }));
+    // Add new files to state, ensuring unique entries by file name
+    setUploadedFiles(prev => {
+      const newFiles = files
+        .filter(file => !prev.some(existing => existing.file.name === file.name))
+        .map(file => ({
+          file,
+          status: 'uploaded' as const
+        }));
 
-    // Add new files to state
-    setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
+      console.log('[DocumentUploadWizard] Adding new unique files:', {
+        newFileCount: newFiles.length,
+        timestamp: new Date().toISOString()
+      });
 
-    console.log('[DocumentUploadWizard] Files state updated:', {
-      totalFiles: uploadedFiles.length + files.length,
-      timestamp: new Date().toISOString()
+      return [...prev, ...newFiles];
     });
   };
 
@@ -115,12 +118,25 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       timestamp: new Date().toISOString()
     });
 
-    setUploadedFiles(prev =>
-      prev.map(file => {
-        // If this file matches the ID we're updating
-        if (file.id === fileId || !file.id) {
+    setUploadedFiles(prev => {
+      // Find the file without an ID that matches the metadata's name
+      const fileToUpdate = prev.find(
+        f => (!f.id && f.file.name === metadata.file?.name) || f.id === fileId
+      );
+
+      if (!fileToUpdate) {
+        console.log('[DocumentUploadWizard] No matching file found for update:', {
+          fileId,
+          timestamp: new Date().toISOString()
+        });
+        return prev;
+      }
+
+      return prev.map(file => {
+        if (file === fileToUpdate) {
           console.log('[DocumentUploadWizard] File metadata updated:', {
             fileId,
+            fileName: file.file.name,
             oldStatus: file.status,
             newStatus: metadata.status,
             timestamp: new Date().toISOString()
@@ -128,8 +144,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           return { ...file, ...metadata };
         }
         return file;
-      })
-    );
+      });
+    });
   };
 
   const updateDocumentCounts = (category: string, count: number, isProcessing: boolean = false) => {

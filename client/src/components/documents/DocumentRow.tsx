@@ -7,12 +7,14 @@ interface DocumentRowProps {
   file: {
     name: string;
     size: number;
-    status: 'uploaded' | 'processing' | 'classified';
+    status: 'uploaded' | 'processing' | 'classified' | 'error';
     answersFound?: number;
+    error?: string;
   };
+  isActive?: boolean;
 }
 
-export function DocumentRow({ file }: DocumentRowProps) {
+export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
   // Format file size to human readable format
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -28,9 +30,10 @@ export function DocumentRow({ file }: DocumentRowProps) {
       fileName: file.name,
       status: file.status,
       answersFound: file.answersFound,
+      isActive,
       timestamp: new Date().toISOString()
     });
-  }, [file.status, file.answersFound]);
+  }, [file.status, file.answersFound, isActive]);
 
   // Get status icon based on document state
   const StatusIcon = () => {
@@ -39,6 +42,8 @@ export function DocumentRow({ file }: DocumentRowProps) {
         return <CheckCircle2 className="h-5 w-5 text-green-500" />;
       case 'processing':
         return <LoadingSpinner size="sm" className="text-blue-500" />;
+      case 'error':
+        return <Circle className="h-5 w-5 text-red-500" />;
       default:
         return <CircleDashed className="h-5 w-5 text-gray-400" />;
     }
@@ -56,7 +61,13 @@ export function DocumentRow({ file }: DocumentRowProps) {
       case 'processing':
         return (
           <span className="text-blue-600">
-            (Processing Document...)
+            {isActive ? '(Processing Document...)' : '(Waiting...)'}
+          </span>
+        );
+      case 'error':
+        return (
+          <span className="text-red-600">
+            {file.error || 'Error processing document'}
           </span>
         );
       default:
@@ -67,9 +78,11 @@ export function DocumentRow({ file }: DocumentRowProps) {
   return (
     <div 
       className={cn(
-        "flex items-center gap-4 p-4 rounded-lg border",
-        file.status === 'processing' && "bg-blue-50/50 border-blue-200",
-        file.status !== 'processing' && "border-transparent"
+        "flex items-center gap-4 p-4 rounded-lg border transition-colors duration-200",
+        isActive && "bg-blue-50/50 border-blue-200",
+        !isActive && file.status === 'processing' && "bg-gray-50/50 border-gray-200",
+        file.status === 'error' && "bg-red-50/50 border-red-200",
+        file.status !== 'processing' && !isActive && "border-transparent"
       )}
     >
       {/* Status Icon */}
