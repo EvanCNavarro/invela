@@ -93,6 +93,11 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     console.log('[DocumentUploadWizard] Updating files:', {
       newFiles: files.map(f => f.name),
       currentFileCount: uploadedFiles.length,
+      currentFileDetails: uploadedFiles.map(f => ({
+        id: f.id,
+        name: f.file.name,
+        status: f.status
+      })),
       timestamp: new Date().toISOString()
     });
 
@@ -105,7 +110,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           status: 'uploaded' as const
         }));
 
-      return [...prev, ...newFiles];
+      const updatedFiles = [...prev, ...newFiles];
+
+      console.log('[DocumentUploadWizard] Files state updated:', {
+        totalFiles: updatedFiles.length,
+        fileDetails: updatedFiles.map(f => ({
+          id: f.id,
+          name: f.file.name,
+          status: f.status
+        })),
+        timestamp: new Date().toISOString()
+      });
+
+      return updatedFiles;
     });
   };
 
