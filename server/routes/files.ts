@@ -6,6 +6,8 @@ import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
+import { classifyDocument } from '../services/openai';
+import { broadcastDocumentCountUpdate, broadcastClassificationUpdate } from '../services/websocket';
 
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
@@ -43,6 +45,18 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
+    // Read file content for classification
+    const filePath = path.join(uploadDir, req.file.filename);
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+
+    console.log('[Files] Attempting document classification');
+    const classification = await classifyDocument(fileContent);
+    console.log('[Files] Classification result:', {
+      category: classification.category,
+      confidence: classification.confidence,
+      reasoning: classification.reasoning
+    });
+
     // Create file record in database
     const [fileRecord] = await db.insert(files)
       .values({
@@ -53,7 +67,9 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         user_id: req.user.id,
         company_id: req.user.company_id,
         status: 'uploaded',
-        classification_status: 'pending',
+        document_category: classification.category,
+        classification_status: 'completed',
+        classification_confidence: classification.confidence,
         download_count: 0,
         version: 1
       })
@@ -62,7 +78,24 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     console.log('[Files] Created file record:', {
       id: fileRecord.id,
       name: fileRecord.name,
-      size: fileRecord.size
+      category: fileRecord.document_category,
+      confidence: fileRecord.classification_confidence
+    });
+
+    // Broadcast document count update
+    broadcastDocumentCountUpdate({
+      type: 'COUNT_UPDATE',
+      category: classification.category,
+      count: 1,
+      companyId: req.user.company_id.toString()
+    });
+
+    // Broadcast classification update
+    broadcastClassificationUpdate({
+      type: 'CLASSIFICATION_UPDATE',
+      fileId: fileRecord.id.toString(),
+      category: classification.category,
+      confidence: classification.confidence
     });
 
     res.status(201).json(fileRecord);
