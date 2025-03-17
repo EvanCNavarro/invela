@@ -787,6 +787,7 @@ export async function analyzeDocument(
     console.log('[OpenAI Service] Starting document analysis:', {
       textLength: documentText.length,
       fieldsCount: fields.length,
+      fieldKeys: fields.map(f => f.field_key),
       timestamp: new Date().toISOString()
     });
 
@@ -809,13 +810,19 @@ export async function analyzeDocument(
       "answers": [
         {
           "field_key": "the field key",
-          "answer": "extracted answer from document"
+          "answer": "extracted answer from document",
+          "source_document": "relevant section from document that supports this answer"
         }
       ]
     }
 
     Only include answers that are clearly supported by the document content.
     `;
+
+    console.log('[OpenAI Service] Sending request:', {
+      promptLength: prompt.length,
+      timestamp: new Date().toISOString()
+    });
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -841,6 +848,13 @@ export async function analyzeDocument(
 
     const result = JSON.parse(response.choices[0].message.content);
 
+    console.log('[OpenAI Service] Analysis completed:', {
+      answersFound: result.answers.length,
+      duration,
+      fieldsAnswered: result.answers.map(a => a.field_key),
+      timestamp: new Date().toISOString()
+    });
+
     // Log analytics
     await logSearchAnalytics({
       searchType: 'document_analysis',
@@ -864,7 +878,11 @@ export async function analyzeDocument(
     return result;
   } catch (error) {
     const duration = Date.now() - startTime;
-    console.error('[OpenAI Service] Document analysis error:', error);
+    console.error('[OpenAI Service] Document analysis error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration,
+      timestamp: new Date().toISOString()
+    });
 
     // Log failed attempt
     await logSearchAnalytics({
