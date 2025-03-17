@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
-import { DocumentRow } from './DocumentRow';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -200,7 +199,7 @@ export function DocumentUploadStep({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">
-        2. Extracting Compliance Information
+        1. Upload {companyName}'s Compliance Documentation
       </h1>
 
       {/* File Upload Zone */}
@@ -210,16 +209,6 @@ export function DocumentUploadStep({
         className="min-h-[200px]"
         disabled={isUploading}
       />
-
-      {/* Document List */}
-      <div className="mt-8 space-y-2">
-        {uploadedFiles.map((file) => (
-          <DocumentRow 
-            key={file.id} 
-            file={file}
-          />
-        ))}
-      </div>
 
       {/* Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
