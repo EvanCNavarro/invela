@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -92,20 +92,6 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
         confidence: result.classification_confidence
       });
 
-      // Update document counts based on WebSocket updates
-      setDocumentCounts(prev => {
-        const category = result.document_category;
-        const currentCount = prev[category]?.count || 0;
-        return {
-          ...prev,
-          [category]: {
-            category,
-            count: currentCount + 1,
-            isProcessing: false
-          }
-        };
-      });
-
       return result;
     } catch (error) {
       console.error('[DocumentUploadStep] Upload error:', error);
@@ -153,6 +139,41 @@ export function DocumentUploadStep({ onFilesUpdated, companyName }: DocumentUplo
       setIsUploading(false);
     }
   };
+
+  // Update document counts when receiving WebSocket messages
+  useEffect(() => {
+    const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'COUNT_UPDATE') {
+        setDocumentCounts(prev => ({
+          ...prev,
+          [data.category]: {
+            category: data.category,
+            count: (prev[data.category]?.count || 0) + data.count,
+            isProcessing: false
+          }
+        }));
+      }
+
+      if (data.type === 'CLASSIFICATION_UPDATE') {
+        // Mark document as processed
+        setDocumentCounts(prev => ({
+          ...prev,
+          [data.category]: {
+            ...prev[data.category],
+            isProcessing: false
+          }
+        }));
+      }
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
