@@ -1,67 +1,82 @@
 import { apiRequest } from '@/lib/queryClient';
 import type { CardField } from './cardService';
 
-const PDF_CHUNK_SIZE = 16000; // ~3 pages worth of text
-
 interface ProcessingResult {
   answersFound: number;
   status: 'processing' | 'classified';
 }
 
-export async function startDocumentProcessing(
-  file: File,
+interface DocumentAnswer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+}
+
+interface FileProcessingResult {
+  fileId: number;
+  fileName: string;
+  answers?: DocumentAnswer[];
+  error?: string;
+}
+
+export async function processDocuments(
+  fileIds: number[],
   cardFields: CardField[],
   onProgress: (result: ProcessingResult) => void
 ) {
   try {
     console.log('[DocumentProcessingService] Starting document processing:', {
-      fileName: file.name,
-      fileSize: file.size,
+      fileIds,
       timestamp: new Date().toISOString()
     });
 
-    // Create form data to send file and fields
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fields', JSON.stringify(cardFields.map(field => ({
-      field_key: field.field_key,
-      question: field.question,
-      ai_search_instructions: field.ai_search_instructions
-    }))));
-
-    // Set processing state
+    // Set initial processing state
     onProgress({
       answersFound: 0,
       status: 'processing'
     });
 
-    // Make API call to process document
-    const response = await fetch('/api/documents/process', {
+    // Make API call to process documents
+    const response = await apiRequest('/api/documents/process', {
       method: 'POST',
-      body: formData
+      body: JSON.stringify({
+        fileIds,
+        fields: cardFields.map(field => ({
+          field_key: field.field_key,
+          question: field.question,
+          ai_search_instructions: field.ai_search_instructions
+        }))
+      })
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to process document: ${response.statusText}`);
+      throw new Error(`Failed to process documents: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    const data = await response.json();
+    const results: FileProcessingResult[] = data.results;
+
+    // Count total answers found across all files
+    const totalAnswers = results.reduce((sum, result) => 
+      sum + (result.answers?.length || 0), 0);
 
     // Update with results
     onProgress({
-      answersFound: result.answersFound,
+      answersFound: totalAnswers,
       status: 'classified'
     });
 
     console.log('[DocumentProcessingService] Document processing complete:', {
-      fileName: file.name,
-      answersFound: result.answersFound,
+      fileCount: results.length,
+      totalAnswers,
       timestamp: new Date().toISOString()
     });
 
+    return results;
+
   } catch (error: unknown) {
     console.error('[DocumentProcessingService] Processing error:', {
-      fileName: file.name,
+      fileIds,
       error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     });
