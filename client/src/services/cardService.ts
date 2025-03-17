@@ -11,9 +11,8 @@ export interface CardField {
   partial_risk_score_max: number;
 }
 
-export async function getCardFields(): Promise<CardField[]> {
-  const response = await apiRequest<CardField[]>('/api/card/fields');
-  return response;
+export async function getCardFields() {
+  return apiRequest<CardField[]>('/api/card/fields');
 }
 
 export function groupCardFieldsBySection(fields: CardField[]): Record<string, CardField[]> {
