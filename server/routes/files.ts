@@ -8,6 +8,7 @@ import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { classifyDocument } from '../services/openai';
 import { broadcastDocumentCountUpdate, broadcastClassificationUpdate } from '../services/websocket';
+import { extractTextFromFirstPages } from '../services/pdf';
 
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
@@ -45,11 +46,24 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
-    // Read file content for classification
+    // Read only first few pages for classification
     const filePath = path.join(uploadDir, req.file.filename);
-    const fileContent = fs.readFileSync(filePath, 'utf8');
+    let fileContent: string;
 
-    console.log('[Files] Attempting document classification');
+    try {
+      if (req.file.mimetype === 'application/pdf') {
+        console.log('[Files] Processing PDF file, extracting first pages');
+        fileContent = await extractTextFromFirstPages(filePath, 3);
+      } else {
+        console.log('[Files] Processing non-PDF file');
+        fileContent = fs.readFileSync(filePath, 'utf8');
+      }
+    } catch (error) {
+      console.error('[Files] Error reading file:', error);
+      throw new Error('Failed to read uploaded file');
+    }
+
+    console.log('[Files] Starting document classification');
     const classification = await classifyDocument(fileContent);
     console.log('[Files] Classification result:', {
       category: classification.category,
@@ -102,7 +116,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('[Files] Error processing upload:', error);
 
-    // Clean up uploaded file if database operation fails
+    // Clean up uploaded file if operation fails
     if (req.file) {
       const filePath = path.join(uploadDir, req.file.filename);
       if (fs.existsSync(filePath)) {
