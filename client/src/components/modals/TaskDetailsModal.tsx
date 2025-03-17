@@ -23,6 +23,7 @@ const taskStatusMap = {
 const statusProgressMap = {
   EMAIL_SENT: 25,
   COMPLETED: 100,
+  SUBMITTED: 100, // Added SUBMITTED to have same progress as COMPLETED
 } as const;
 
 const formatDate = (date: Date) => format(date, 'MMM d, yyyy');
