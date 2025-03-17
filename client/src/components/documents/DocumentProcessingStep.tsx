@@ -28,15 +28,16 @@ export function DocumentProcessingStep({
   const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [files, setFiles] = React.useState<UploadedFile[]>([]);
+  const [processingQueue, setProcessingQueue] = React.useState<number[]>([]);
 
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
   });
 
-  // Initialize files on mount and when initialFiles changes
+  // Initialize files and processing queue
   React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Initializing with files:', {
+    console.log('[DocumentProcessingStep] Initializing component:', {
       companyName,
       uploadedFilesCount: initialFiles.length,
       fileDetails: initialFiles.map(f => ({
@@ -47,50 +48,56 @@ export function DocumentProcessingStep({
       timestamp: new Date().toISOString()
     });
 
+    // Set initial files
     setFiles(initialFiles);
+
+    // Setup processing queue with file indices
+    const queue = initialFiles
+      .map((_, index) => index)
+      .filter(index => initialFiles[index].status === 'uploaded');
+
+    console.log('[DocumentProcessingStep] Setting up processing queue:', {
+      queueLength: queue.length,
+      queueIndices: queue,
+      timestamp: new Date().toISOString()
+    });
+
+    setProcessingQueue(queue);
   }, [initialFiles]);
 
   // Process next file in queue
   const processNextFile = React.useCallback(async () => {
-    if (isProcessing) {
-      console.log('[DocumentProcessingStep] Already processing a file');
+    if (isProcessing || processingQueue.length === 0) {
+      console.log('[DocumentProcessingStep] Processing skipped:', {
+        reason: isProcessing ? 'Already processing' : 'Queue empty',
+        queueLength: processingQueue.length,
+        timestamp: new Date().toISOString()
+      });
       return;
     }
 
-    // Get next unprocessed file
-    const nextIndex = files.findIndex(
-      (file) => file.status === 'uploaded' && file.id
-    );
-
-    console.log('[DocumentProcessingStep] Looking for next file to process:', {
-      filesCount: files.length,
-      fileDetails: files.map(f => ({
-        id: f.id,
-        name: f.file.name,
-        status: f.status
-      })),
-      foundIndex: nextIndex,
-      timestamp: new Date().toISOString()
-    });
-
-    if (nextIndex === -1) {
-      console.log('[DocumentProcessingStep] No more files to process');
-      setIsProcessing(false);
-      setCurrentProcessingIndex(-1);
-      return;
-    }
-
+    const nextIndex = processingQueue[0];
     const fileToProcess = files[nextIndex];
-    setCurrentProcessingIndex(nextIndex);
-    setIsProcessing(true);
+
+    if (!fileToProcess?.id) {
+      console.error('[DocumentProcessingStep] Invalid file to process:', {
+        index: nextIndex,
+        file: fileToProcess,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
     console.log('[DocumentProcessingStep] Starting to process file:', {
+      index: nextIndex,
       fileId: fileToProcess.id,
       fileName: fileToProcess.file.name,
-      status: fileToProcess.status,
-      index: nextIndex,
+      remainingQueue: processingQueue.length,
       timestamp: new Date().toISOString()
     });
+
+    setCurrentProcessingIndex(nextIndex);
+    setIsProcessing(true);
 
     try {
       // Update file status to processing
@@ -99,7 +106,7 @@ export function DocumentProcessingStep({
       ));
 
       // Process single file
-      const result = await processDocuments([fileToProcess.id!], cardFields!, (progress) => {
+      const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
           fileId: fileToProcess.id,
           progress,
@@ -145,6 +152,8 @@ export function DocumentProcessingStep({
         } : file
       ));
     } finally {
+      // Remove processed file from queue
+      setProcessingQueue(prevQueue => prevQueue.slice(1));
       setIsProcessing(false);
       setCurrentProcessingIndex(-1);
 
@@ -153,9 +162,9 @@ export function DocumentProcessingStep({
         processNextFile();
       }, 500);
     }
-  }, [files, isProcessing, cardFields, toast]);
+  }, [files, isProcessing, cardFields, processingQueue, toast]);
 
-  // Start processing when component mounts, card fields load, or new files are added
+  // Start processing when card fields load and we have files to process
   React.useEffect(() => {
     if (isLoadingFields) {
       console.log('[DocumentProcessingStep] Waiting for card fields to load');
@@ -167,19 +176,15 @@ export function DocumentProcessingStep({
       return;
     }
 
-    if (!isProcessing && files.some(f => f.status === 'uploaded')) {
+    if (!isProcessing && processingQueue.length > 0) {
       console.log('[DocumentProcessingStep] Starting document processing queue:', {
-        filesCount: files.length,
+        queueLength: processingQueue.length,
         cardFieldsCount: cardFields.length,
-        pendingFiles: files.filter(f => f.status === 'uploaded').map(f => ({
-          id: f.id,
-          name: f.file.name
-        })),
         timestamp: new Date().toISOString()
       });
       processNextFile();
     }
-  }, [files, cardFields, isProcessing, isLoadingFields, processNextFile]);
+  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields]);
 
   if (isLoadingFields) {
     return (
