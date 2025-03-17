@@ -20,15 +20,16 @@ export function DocumentProcessingStep({
   uploadedFiles 
 }: DocumentProcessingStepProps) {
   // Fetch card fields using React Query
-  const { data: cardFields, isLoading: isLoadingFields } = useQuery({
-    queryKey: ['/api/card/fields'],
-    onSuccess: (data) => {
-      console.log('[DocumentProcessingStep] Card fields loaded:', {
-        count: data?.length,
-        timestamp: new Date().toISOString()
-      });
-    }
+  const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
+    queryKey: ['/api/card/fields']
   });
+
+  React.useEffect(() => {
+    console.log('[DocumentProcessingStep] Card fields loaded:', {
+      count: cardFields?.length,
+      timestamp: new Date().toISOString()
+    });
+  }, [cardFields]);
 
   React.useEffect(() => {
     console.log('[DocumentProcessingStep] Rendering with files:', {

@@ -25,26 +25,27 @@
 ### Phase 6: Document Analysis Integration 🔄
 
 1. UI Structure & User Experience ✅
-   - Document Row Layout:
+   - Document Row Layout ✅
      - Status Icon Implementation ✅
        - Green circle-check for processed documents
-       - Invela logo spinner for documents currently processing
+       - Loading spinner for documents currently processing
        - Grey circle-dashed for pending documents
      - File Name and Size columns ✅
      - Processing Result Context ✅
-       - "(Calculating Questions Answers...)" for active processing
+       - "(Processing Document...)" for active processing
        - Total count of answers found in green text
        - Empty state for pending documents
-     - Highlight active processing rows with light grey background ✅
-     - Disable Next/Back buttons during processing ✅
+     - Highlight active processing rows with blue-tinted background and border ✅
+     - Proper state transitions from upload to processing ✅
 
-2. Compliance Questions Integration 🔄
-   - Retrieve questions from `card_fields.json`:
+2. Compliance Questions Integration 🔄 (Next Step)
+   - Retrieve questions from card_fields:
      - field_key
      - question
      - ai_search_instructions
      - partial_risk_score_max
-     - id_card_responses_field_id
+   - Structure questions by wizard_section
+   - Prepare for OpenAI integration
 
 3. Processing Time Management:
    - Calculate initial estimated processing time
@@ -59,32 +60,12 @@
    - Sequential Processing:
      - Process documents one at a time
      - Update progress indicators per chunk
-   - OpenAI Integration:
-     ```javascript
-     const prompt = `
-     You are a compliance analyst. Given the document chunk below, analyze and determine which compliance questions it answers based on provided "ai_search_instructions" for each question. Provide extracted answers in JSON format as follows:
-
-     Document Text Chunk:
-     ${extractedTextChunk}
-
-     Compliance Questions:
-     ${questionsWithSearchInstructions}
-
-     JSON Response Format:
-     {
-       "answers": [
-         {"field_key": "question_field_key", "answer": "Extracted relevant information from the document."}
-       ]
-     }
-
-     Clearly reference the source document within each answer (e.g., "According to SOC2.pdf: [Answer Data]")."
-     ```
+   - OpenAI Integration
 
 5. Answer Aggregation System:
    - Combine answers across documents:
      - Eliminate duplicate answers
      - Maintain source attribution
-     - Example format: "According to SOC2.pdf: [Answer Data]. According to Compliance.pdf: [Additional Answer Data]."
    - Clear presentation in UI:
      - Group by question
      - Show source documents
@@ -96,7 +77,7 @@
 - Real-time updates < 500ms ✅
 - Support for files up to 50MB ✅
 
-### Success Metrics
+### Processing Success Metrics
 - Document state persistence across sessions ✅
 - < 2s response time for document analysis
 - > 90% accuracy in card task validation
