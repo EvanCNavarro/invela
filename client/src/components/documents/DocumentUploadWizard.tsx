@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DocumentUploadStep } from "./DocumentUploadStep";
+import { DocumentProcessingStep } from "./DocumentProcessingStep"; // Import the new component
+
 
 // Define the wizard steps
 const WIZARD_STEPS = [
@@ -241,21 +243,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               updateDocumentCounts={updateDocumentCounts}
             />
           ) : currentStep === 1 ? (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Document Processing</h2>
-              {/* Debug information */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium mb-2">Uploaded Files:</h3>
-                <pre className="text-sm">
-                  {JSON.stringify(uploadedFiles.map(f => ({
-                    name: f.file.name,
-                    category: f.category,
-                    status: f.status,
-                    confidence: f.confidence
-                  })), null, 2)}
-                </pre>
-              </div>
-            </div>
+            <DocumentProcessingStep
+              companyName={companyName}
+              uploadedFiles={uploadedFiles}
+            />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
               {WIZARD_STEPS[currentStep].description}
