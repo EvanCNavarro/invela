@@ -87,12 +87,6 @@ export function DocumentUploadStep({
     try {
       console.log('[DocumentUploadStep] Sending file to server');
 
-      // Show loading toast
-      toast({
-        title: "Processing Document",
-        description: `Uploading and classifying ${file.name}...`,
-      });
-
       const response = await fetch('/api/files', {
         method: 'POST',
         body: formData
@@ -103,18 +97,27 @@ export function DocumentUploadStep({
       }
 
       const result = await response.json();
+
+      // Log the received file ID and metadata
       console.log('[DocumentUploadStep] Upload successful:', {
         fileId: result.id,
+        fileName: file.name,
+        category: result.document_category,
+        answersFound: result.answers_found || 0,
+        timestamp: new Date().toISOString()
+      });
+
+      // Update file metadata with the correct database ID
+      updateFileMetadata(result.id, {
+        id: result.id, // Ensure we're using the database-assigned ID
+        status: 'classified',
         category: result.document_category,
         answersFound: result.answers_found || 0
       });
 
-      // Update file metadata
-      updateFileMetadata(result.id, {
-        id: result.id,
-        status: 'classified',
-        category: result.document_category,
-        answersFound: result.answers_found || 0
+      toast({
+        title: "Upload Successful",
+        description: `${file.name} has been uploaded and classified.`,
       });
 
       return result;
@@ -133,14 +136,19 @@ export function DocumentUploadStep({
     setIsUploading(true);
 
     try {
+      // Create new uploaded file entries first
+      const newFiles = files.map(file => ({
+        file,
+        status: 'uploaded' as const
+      }));
+
+      // Add files to state first so UI updates immediately
+      onFilesUpdated(files);
+
+      // Then process each file
       for (const file of files) {
         try {
           await uploadFile(file);
-
-          toast({
-            title: "Upload Successful",
-            description: `${file.name} has been uploaded and classified.`,
-          });
         } catch (error) {
           console.error('[DocumentUploadStep] Error uploading file:', {
             fileName: file.name,
@@ -154,8 +162,6 @@ export function DocumentUploadStep({
           });
         }
       }
-
-      onFilesUpdated(files);
     } finally {
       setIsUploading(false);
     }

@@ -3,8 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DocumentUploadStep } from "./DocumentUploadStep";
-import { DocumentProcessingStep } from "./DocumentProcessingStep"; // Import the new component
-
+import { DocumentProcessingStep } from "./DocumentProcessingStep";
 
 // Define the wizard steps
 const WIZARD_STEPS = [
@@ -90,34 +89,41 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const handleFilesUpdated = (files: File[]) => {
     console.log('[DocumentUploadWizard] Updating files:', {
       newFiles: files.map(f => f.name),
-      currentFileCount: uploadedFiles.length
+      currentFileCount: uploadedFiles.length,
+      timestamp: new Date().toISOString()
     });
 
-    const newUploadedFiles = files.map((file, index) => ({
+    // Create new file entries with unique temporary IDs
+    const newUploadedFiles = files.map((file) => ({
       file,
-      id: uploadedFiles.length + index + 1, // Ensure unique IDs
       status: 'uploaded' as const
     }));
+
+    // Add new files to state
     setUploadedFiles(prev => [...prev, ...newUploadedFiles]);
 
     console.log('[DocumentUploadWizard] Files state updated:', {
-      totalFiles: uploadedFiles.length + files.length
+      totalFiles: uploadedFiles.length + files.length,
+      timestamp: new Date().toISOString()
     });
   };
 
   const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
     console.log('[DocumentUploadWizard] Updating file metadata:', {
       fileId,
-      metadata
+      metadata,
+      timestamp: new Date().toISOString()
     });
 
     setUploadedFiles(prev =>
       prev.map(file => {
-        if (file.id === fileId) {
+        // If this file matches the ID we're updating
+        if (file.id === fileId || !file.id) {
           console.log('[DocumentUploadWizard] File metadata updated:', {
             fileId,
             oldStatus: file.status,
-            newStatus: metadata.status
+            newStatus: metadata.status,
+            timestamp: new Date().toISOString()
           });
           return { ...file, ...metadata };
         }
