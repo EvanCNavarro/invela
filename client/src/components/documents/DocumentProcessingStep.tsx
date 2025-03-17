@@ -163,7 +163,8 @@ export function DocumentProcessingStep({
         index: nextIndex,
         file: fileToProcess ? {
           id: fileToProcess.id,
-          name: fileToProcess.name
+          name: fileToProcess.name,
+          status: fileToProcess.status
         } : null,
         timestamp: new Date().toISOString()
       });
@@ -182,7 +183,7 @@ export function DocumentProcessingStep({
     setIsProcessing(true);
 
     try {
-      // Update file status to processing
+      // Update only the current file's status to processing
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? { ...file, status: 'processing' as DocumentStatus } : file
       ));
@@ -240,7 +241,7 @@ export function DocumentProcessingStep({
       setIsProcessing(false);
       setCurrentProcessingIndex(-1);
 
-      // Process next file in queue after a short delay
+      // Short delay before processing next file
       setTimeout(() => {
         processNextFile();
       }, 500);
