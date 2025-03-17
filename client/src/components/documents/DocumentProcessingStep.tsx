@@ -1,31 +1,11 @@
 import React from 'react';
-import { DocumentRow } from './DocumentRow';
-import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
+import { getCardFields, type CardField } from '@/services/cardService';
 import { processDocuments } from '@/services/documentProcessingService';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
-
-enum DocumentStatus {
-  uploading = 'uploading',
-  uploaded = 'uploaded',
-  processing = 'processing',
-  processed = 'processed',
-  error = 'error',
-}
-
-interface UploadedFile {
-  id?: number;
-  fileData: {
-    name: string;
-    size: number;
-    type: string;
-    lastModified: number;
-  };
-  status: DocumentStatus;
-  answersFound?: number;
-  error?: string;
-}
+import { DocumentRow } from './DocumentRow';
+import { UploadedFile, DocumentStatus } from './types';
 
 interface DocumentProcessingStepProps {
   companyName: string;
@@ -49,27 +29,26 @@ export function DocumentProcessingStep({
     queryKey: ['/api/card/fields']
   });
 
-
   // Validate files before adding to queue
   const validateFiles = (filesToValidate: UploadedFile[]) => {
     console.log('[DocumentProcessingStep] Starting file validation:', {
       totalFiles: filesToValidate.length,
       fileDetails: filesToValidate.map(f => ({
         id: f.id,
-        name: f.fileData.name,
-        size: f.fileData.size,
-        type: f.fileData.type,
+        name: f.name,
+        size: f.size,
+        type: f.type,
         status: f.status
       })),
       timestamp: new Date().toISOString()
     });
 
     const validFiles = filesToValidate.filter(file => {
-      const isValid = file.fileData && file.status === 'uploaded';
+      const isValid = file.id !== undefined && file.status === 'uploaded';
       if (!isValid) {
         console.log('[DocumentProcessingStep] Invalid file found:', {
           fileId: file.id,
-          fileName: file.fileData?.name,
+          name: file.name,
           status: file.status,
           timestamp: new Date().toISOString()
         });
@@ -82,8 +61,8 @@ export function DocumentProcessingStep({
       invalidFiles: filesToValidate.length - validFiles.length,
       validFileDetails: validFiles.map(f => ({
         id: f.id,
-        name: f.fileData.name,
-        type: f.fileData.type,
+        name: f.name,
+        type: f.type,
         status: f.status
       })),
       timestamp: new Date().toISOString()
@@ -99,9 +78,9 @@ export function DocumentProcessingStep({
       uploadedFilesCount: initialFiles.length,
       fileDetails: initialFiles.map(f => ({
         id: f.id,
-        name: f.fileData.name,
-        size: f.fileData.size,
-        type: f.fileData.type,
+        name: f.name,
+        size: f.size,
+        type: f.type,
         status: f.status
       })),
       timestamp: new Date().toISOString()
@@ -120,7 +99,7 @@ export function DocumentProcessingStep({
       queueLength: queue.length,
       queueFiles: queue.map(index => ({
         id: validatedFiles[index].id,
-        name: validatedFiles[index].fileData.name,
+        name: validatedFiles[index].name,
         status: validatedFiles[index].status
       })),
       timestamp: new Date().toISOString()
@@ -143,7 +122,7 @@ export function DocumentProcessingStep({
         queueLength: processingQueue.length,
         files: files.map(f => ({
           id: f.id,
-          name: f.fileData.name,
+          name: f.name,
           status: f.status
         })),
         timestamp: new Date().toISOString()
@@ -173,7 +152,7 @@ export function DocumentProcessingStep({
         index: nextIndex,
         file: fileToProcess ? {
           id: fileToProcess.id,
-          name: fileToProcess.fileData.name
+          name: fileToProcess.name
         } : null,
         timestamp: new Date().toISOString()
       });
@@ -183,7 +162,7 @@ export function DocumentProcessingStep({
     console.log('[DocumentProcessingStep] Starting to process file:', {
       index: nextIndex,
       fileId: fileToProcess.id,
-      fileName: fileToProcess.fileData.name,
+      fileName: fileToProcess.name,
       remainingQueue: processingQueue.length,
       timestamp: new Date().toISOString()
     });
@@ -194,10 +173,10 @@ export function DocumentProcessingStep({
     try {
       // Update file status to processing
       setFiles(prevFiles => prevFiles.map((file, index) => 
-        index === nextIndex ? { ...file, status: DocumentStatus.processing } : file
+        index === nextIndex ? { ...file, status: 'processing' as DocumentStatus } : file
       ));
 
-      // Process file
+      // Process file using its ID
       const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
           fileId: fileToProcess.id,
@@ -216,7 +195,7 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
-          status: DocumentStatus.processed,
+          status: 'processed' as DocumentStatus,
           answersFound: result.answersFound,
           error: undefined
         } : file
@@ -240,7 +219,7 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
-          status: DocumentStatus.error,
+          status: 'error' as DocumentStatus,
           error: error.message
         } : file
       ));
@@ -300,11 +279,11 @@ export function DocumentProcessingStep({
       <div className="space-y-2">
         {files.map((uploadedFile, index) => (
           <DocumentRow 
-            key={uploadedFile.id || uploadedFile.fileData.name} 
+            key={uploadedFile.id || uploadedFile.name} 
             file={{
-              name: uploadedFile.fileData.name,
-              size: uploadedFile.fileData.size,
-              type: uploadedFile.fileData.type,
+              name: uploadedFile.name,
+              size: uploadedFile.size,
+              type: uploadedFile.type,
               status: uploadedFile.status,
               answersFound: uploadedFile.answersFound,
               error: uploadedFile.error
