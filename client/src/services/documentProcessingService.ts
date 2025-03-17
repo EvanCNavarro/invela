@@ -36,11 +36,8 @@ export async function processDocuments(
       status: 'processing'
     });
 
-    const response = await apiRequest('/api/documents/process', {
+    const result = await apiRequest('/api/documents/process', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
       data: {
         fileIds,
         fields: cardFields.map(field => ({
@@ -51,11 +48,7 @@ export async function processDocuments(
       }
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to process documents: ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    const data = await result.json();
     const results: FileProcessingResult[] = data.results;
 
     // Count total answers found across all files
