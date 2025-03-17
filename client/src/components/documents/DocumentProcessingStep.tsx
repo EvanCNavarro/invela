@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { DocumentRow } from './DocumentRow';
 import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +22,24 @@ export function DocumentProcessingStep({
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery({
     queryKey: ['/api/card/fields'],
+    onSuccess: (data) => {
+      console.log('[DocumentProcessingStep] Card fields loaded:', {
+        count: data?.length,
+        timestamp: new Date().toISOString()
+      });
+    }
   });
+
+  React.useEffect(() => {
+    console.log('[DocumentProcessingStep] Rendering with files:', {
+      fileCount: uploadedFiles.length,
+      files: uploadedFiles.map(f => ({
+        name: f.file.name,
+        status: f.status,
+        answersFound: f.answersFound
+      }))
+    });
+  }, [uploadedFiles]);
 
   return (
     <div className="space-y-6">
@@ -30,18 +47,11 @@ export function DocumentProcessingStep({
         2. Extracting Compliance Information
       </h1>
 
-      {/* Loading State */}
-      {isLoadingFields && (
-        <div className="text-sm text-muted-foreground">
-          Loading compliance questions...
-        </div>
-      )}
-
       {/* Document List */}
       <div className="space-y-2">
         {uploadedFiles.map((uploadedFile) => (
           <DocumentRow 
-            key={uploadedFile.id} 
+            key={uploadedFile.id || uploadedFile.file.name} 
             file={{
               name: uploadedFile.file.name,
               size: uploadedFile.file.size,
@@ -51,16 +61,6 @@ export function DocumentProcessingStep({
           />
         ))}
       </div>
-
-      {/* Debug Info - Remove in production */}
-      {cardFields && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm">
-          <p className="font-medium mb-2">Loaded {cardFields.length} compliance questions</p>
-          <pre className="text-xs overflow-auto">
-            {JSON.stringify(cardFields[0], null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 }

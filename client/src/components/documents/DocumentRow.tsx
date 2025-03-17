@@ -1,3 +1,4 @@
+import React from 'react';
 import { Circle, CheckCircle2, CircleDashed } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -20,6 +21,16 @@ export function DocumentRow({ file }: DocumentRowProps) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // Log status changes
+  React.useEffect(() => {
+    console.log('[DocumentRow] Status update:', {
+      fileName: file.name,
+      status: file.status,
+      answersFound: file.answersFound,
+      timestamp: new Date().toISOString()
+    });
+  }, [file.status, file.answersFound]);
 
   // Get status icon based on document state
   const StatusIcon = () => {
