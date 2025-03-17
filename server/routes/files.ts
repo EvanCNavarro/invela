@@ -9,6 +9,8 @@ import multer from 'multer';
 import { classifyDocument } from '../services/openai';
 import { broadcastDocumentCountUpdate, broadcastClassificationUpdate } from '../services/websocket';
 import { extractTextFromFirstPages } from '../services/pdf';
+import { analyzeDocument } from '../services/openai';
+
 
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
@@ -263,6 +265,126 @@ router.get("/api/files/:id/download", async (req, res) => {
     if (!res.headersSent) {
       res.status(500).json({ error: "Internal server error" });
     }
+  }
+});
+
+
+// New endpoints for document processing
+router.post("/api/documents/:id/process", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+    const { fields } = req.body;
+
+    if (!fields?.length) {
+      return res.status(400).json({ 
+        error: "No fields provided for processing",
+        detail: "Field list is required"
+      });
+    }
+
+    const [fileRecord] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // Get file content
+    const filePath = path.join(uploadDir, fileRecord.path);
+    const fileContent = fs.readFileSync(filePath, 'utf8');
+
+    // Store fields in metadata for later use
+    await db.update(files)
+      .set({ 
+        metadata: { 
+          ...fileRecord.metadata,
+          processing_fields: fields,
+          chunks_total: Math.ceil(fileContent.length / 4000), // Rough chunk size
+          chunks_processed: 0
+        },
+        status: 'processing'
+      })
+      .where(eq(files.id, fileId));
+
+    res.json({ 
+      status: 'processing',
+      totalChunks: Math.ceil(fileContent.length / 4000)
+    });
+  } catch (error) {
+    console.error('[Document Processing] Process initiation error:', error);
+    res.status(500).json({ error: "Failed to start processing" });
+  }
+});
+
+router.get("/api/documents/:id/progress", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+
+    const [fileRecord] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // For now, simulate progress
+    const metadata = fileRecord.metadata || {};
+    const chunksTotal = metadata.chunks_total || 1;
+    const chunksProcessed = metadata.chunks_processed || 0;
+    const answersFound = metadata.answers_found || 0;
+
+    res.json({
+      status: fileRecord.status,
+      progress: {
+        chunksProcessed,
+        totalChunks: chunksTotal
+      },
+      answersFound
+    });
+  } catch (error) {
+    console.error('[Document Processing] Progress check error:', error);
+    res.status(500).json({ error: "Failed to check progress" });
+  }
+});
+
+router.get("/api/documents/:id/results", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+
+    const [fileRecord] = await db.select()
+      .from(files)
+      .where(eq(files.id, fileId));
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    // For now, return simulated results
+    const metadata = fileRecord.metadata || {};
+    const answers = metadata.answers || [];
+
+    res.json({
+      status: 'completed',
+      answers,
+      answersFound: answers.length
+    });
+
+    // Update file status to processed
+    await db.update(files)
+      .set({ 
+        status: 'processed',
+        metadata: {
+          ...metadata,
+          processing_completed: new Date().toISOString()
+        }
+      })
+      .where(eq(files.id, fileId));
+
+  } catch (error) {
+    console.error('[Document Processing] Results fetch error:', error);
+    res.status(500).json({ error: "Failed to get results" });
   }
 });
 
