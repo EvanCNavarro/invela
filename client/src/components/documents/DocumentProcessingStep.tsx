@@ -41,6 +41,34 @@ export function DocumentProcessingStep({
     });
   }, [uploadedFiles]);
 
+  // Start processing files when component mounts
+  React.useEffect(() => {
+    console.log('[DocumentProcessingStep] Starting document processing for files:', {
+      fileCount: uploadedFiles.length,
+      files: uploadedFiles.map(f => ({
+        name: f.file.name,
+        status: f.status,
+        answersFound: f.answersFound
+      }))
+    });
+
+    // Start processing each uploaded file
+    uploadedFiles.forEach((file, index) => {
+      if (file.status === 'uploaded') {
+        // Simulate transition to processing state
+        // In production this would be triggered by WebSocket messages
+        setTimeout(() => {
+          console.log('[DocumentProcessingStep] File transitioning to processing:', {
+            fileName: file.file.name,
+            timestamp: new Date().toISOString()
+          });
+
+          file.status = 'processing';
+        }, index * 1000); // Stagger processing starts
+      }
+    });
+  }, [uploadedFiles]);
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">
