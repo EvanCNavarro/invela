@@ -7,9 +7,9 @@ import { DocumentProcessingStep } from "./DocumentProcessingStep";
 
 // Update the UploadedFile interface to ensure proper type checking
 interface UploadedFile {
-  file: File;
+  file: File;  // Must be browser File object
   id?: number;
-  status: 'uploading' | 'uploaded' | 'processing' | 'error';
+  status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
   answersFound?: number;
   error?: string;
 }
@@ -32,6 +32,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
 
   const handleNext = () => {
+    // Log file state before transition
     console.log('[DocumentUploadWizard] Moving to next step:', {
       currentStep,
       nextStep: currentStep + 1,
@@ -39,10 +40,13 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         id: f.id,
         name: f.file.name,
         size: f.file.size,
+        type: f.file.type,
         status: f.status,
+        isFileObject: f.file instanceof File, // Validate File object
         error: f.error,
         answersFound: f.answersFound
-      }))
+      })),
+      timestamp: new Date().toISOString()
     });
 
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -54,6 +58,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   };
 
   const handleBack = () => {
+    // Log file state before transition
     console.log('[DocumentUploadWizard] Moving to previous step:', {
       currentStep,
       previousStep: currentStep - 1,
@@ -61,10 +66,13 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         id: f.id,
         name: f.file.name,
         size: f.file.size,
+        type: f.file.type,
         status: f.status,
+        isFileObject: f.file instanceof File, // Validate File object
         error: f.error,
         answersFound: f.answersFound
-      }))
+      })),
+      timestamp: new Date().toISOString()
     });
 
     if (currentStep > 0) {
@@ -77,7 +85,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       newFiles: files.map(f => ({
         name: f.name,
         size: f.size,
-        type: f.type
+        type: f.type,
+        isFileObject: f instanceof File // Validate File object
       })),
       currentFileCount: uploadedFiles.length,
       currentFileDetails: uploadedFiles.map(f => ({
@@ -85,8 +94,11 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         name: f.file.name,
         size: f.file.size,
         type: f.file.type,
-        status: f.status
-      }))
+        status: f.status,
+        isFileObject: f.file instanceof File, // Validate File object
+        error: f.error
+      })),
+      timestamp: new Date().toISOString()
     });
 
     // Add new files to state, ensuring unique entries by file name
@@ -94,7 +106,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       const newFiles = files
         .filter(file => !prev.some(existing => existing.file.name === file.name))
         .map(file => ({
-          file,  // Preserve entire File object
+          file: new File([file], file.name, { type: file.type }), // Create new File object
           status: 'uploaded' as const,
           id: undefined
         }));
@@ -108,8 +120,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           name: f.file.name,
           size: f.file.size,
           type: f.file.type,
-          status: f.status
-        }))
+          status: f.status,
+          isFileObject: f.file instanceof File // Validate File object
+        })),
+        timestamp: new Date().toISOString()
       });
 
       return updatedFiles;
@@ -119,17 +133,27 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const updateFileMetadata = (fileId: number, metadata: Partial<UploadedFile>) => {
     console.log('[DocumentUploadWizard] Updating file metadata:', {
       fileId,
-      metadata,
+      metadata: {
+        ...metadata,
+        fileObject: metadata.file ? {
+          name: metadata.file.name,
+          size: metadata.file.size,
+          type: metadata.file.type,
+          isFileObject: metadata.file instanceof File // Validate File object
+        } : undefined
+      },
       currentFiles: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
         size: f.file.size,
-        status: f.status
-      }))
+        type: f.file.type,
+        status: f.status,
+        isFileObject: f.file instanceof File // Validate File object
+      })),
+      timestamp: new Date().toISOString()
     });
 
     setUploadedFiles(prev => {
-      // Find file by ID or by matching file name for newly uploaded files
       const fileToUpdate = prev.find(
         f => f.id === fileId || (!f.id && f.file.name === metadata.file?.name)
       );
@@ -137,7 +161,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       if (!fileToUpdate) {
         console.log('[DocumentUploadWizard] No matching file found for update:', {
           fileId,
-          metadata
+          metadata,
+          timestamp: new Date().toISOString()
         });
         return prev;
       }
@@ -148,26 +173,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           const updatedFile = { 
             ...file,
             ...metadata,
-            file: metadata.file || file.file // Ensure File object is preserved
+            file: metadata.file ? new File([metadata.file], metadata.file.name, { type: metadata.file.type }) : file.file
           };
           console.log('[DocumentUploadWizard] Updated file:', {
             id: updatedFile.id,
             name: updatedFile.file.name,
             size: updatedFile.file.size,
-            status: updatedFile.status
+            type: updatedFile.file.type,
+            status: updatedFile.status,
+            isFileObject: updatedFile.file instanceof File // Validate File object
           });
           return updatedFile;
         }
         return file;
-      });
-
-      console.log('[DocumentUploadWizard] Files after metadata update:', {
-        files: updatedFiles.map(f => ({
-          id: f.id,
-          name: f.file.name,
-          size: f.file.size,
-          status: f.status
-        }))
       });
 
       return updatedFiles;
