@@ -4,20 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { DocumentUploadStep } from "./DocumentUploadStep";
 import { DocumentProcessingStep } from "./DocumentProcessingStep";
-
-// Update UploadedFile interface to better handle file data persistence
-interface UploadedFile {
-  id?: number;
-  fileData: {
-    name: string;
-    size: number;
-    type: string;
-    lastModified: number;
-  };
-  status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
-  answersFound?: number;
-  error?: string;
-}
+import { UploadedFile, DocumentStatus } from "./types";
 
 interface DocumentCount {
   category: string;
@@ -42,11 +29,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       nextStep: currentStep + 1,
       files: uploadedFiles.map(f => ({
         id: f.id,
-        name: f.fileData.name,
-        size: f.fileData.size,
-        type: f.fileData.type,
-        status: f.status,
-        answersFound: f.answersFound
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
@@ -65,11 +51,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       previousStep: currentStep - 1,
       files: uploadedFiles.map(f => ({
         id: f.id,
-        name: f.fileData.name,
-        size: f.fileData.size,
-        type: f.fileData.type,
-        status: f.status,
-        answersFound: f.answersFound
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
@@ -83,23 +68,19 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       newFiles: files.map(f => ({
         name: f.name,
         size: f.size,
-        type: f.type,
-        lastModified: f.lastModified
+        type: f.type
       })),
       timestamp: new Date().toISOString()
     });
 
     setUploadedFiles(prev => {
       const newFiles = files
-        .filter(file => !prev.some(existing => existing.fileData.name === file.name))
+        .filter(file => !prev.some(existing => existing.name === file.name))
         .map(file => ({
-          fileData: {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified
-          },
-          status: 'uploaded' as const
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: 'uploaded' as DocumentStatus
         }));
 
       const updatedFiles = [...prev, ...newFiles];
@@ -108,9 +89,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         totalFiles: updatedFiles.length,
         fileDetails: updatedFiles.map(f => ({
           id: f.id,
-          name: f.fileData.name,
-          size: f.fileData.size,
-          type: f.fileData.type,
+          name: f.name,
+          size: f.size,
+          type: f.type,
           status: f.status
         })),
         timestamp: new Date().toISOString()
@@ -148,9 +129,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
           console.log('[DocumentUploadWizard] Updated file:', {
             id: updatedFile.id,
-            name: updatedFile.fileData.name,
-            size: updatedFile.fileData.size,
-            type: updatedFile.fileData.type,
+            name: updatedFile.name,
+            size: updatedFile.size,
+            type: updatedFile.type,
             status: updatedFile.status
           });
 
