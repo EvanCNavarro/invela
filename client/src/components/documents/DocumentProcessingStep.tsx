@@ -60,6 +60,17 @@ export function DocumentProcessingStep({
       (file) => file.status === 'uploaded' && file.id
     );
 
+    console.log('[DocumentProcessingStep] Looking for next file to process:', {
+      filesCount: files.length,
+      fileDetails: files.map(f => ({
+        id: f.id,
+        name: f.file.name,
+        status: f.status,
+      })),
+      foundIndex: nextIndex,
+      timestamp: new Date().toISOString()
+    });
+
     if (nextIndex === -1) {
       console.log('[DocumentProcessingStep] No more files to process');
       setIsProcessing(false);

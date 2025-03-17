@@ -115,6 +115,13 @@ export function DocumentUploadStep({
         answersFound: result.answers_found || 0
       });
 
+      console.log('[DocumentUploadStep] Updated file metadata:', {
+        fileId: result.id,
+        status: 'classified',
+        fileName: file.name,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: "Upload Successful",
         description: `${file.name} has been uploaded and classified.`,
