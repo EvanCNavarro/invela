@@ -34,8 +34,6 @@ const getAcceptFromFormats = (formats?: string) => {
     '.pdf': ['application/pdf'],
     '.rtf': ['application/rtf'],
     '.txt': ['text/plain'],
-    '.wpd': ['application/vnd.ms-works'],
-    '.wpf': ['application/wordperfect'],
     '.jpg': ['image/jpeg'],
     '.jpeg': ['image/jpeg'],
     '.png': ['image/png'],
