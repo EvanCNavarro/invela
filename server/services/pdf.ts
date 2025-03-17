@@ -25,7 +25,17 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
 
     const data = await PDFParser(dataBuffer, {
       max: maxPages, // Only parse first N pages
-      pagerender: render_page // Use minimal page renderer
+      pagerender: function(pageData: any) {
+        let render_options = {
+          normalizeWhitespace: true,
+          disableCombineTextItems: false
+        };
+        return pageData.getTextContent(render_options)
+          .then(function(textContent: any) {
+            let strings = textContent.items.map((item: any) => item.str);
+            return strings.join(' ');
+          });
+      }
     });
 
     console.log('[PDF Service] Extraction successful:', {
@@ -44,17 +54,4 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
     });
     throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-}
-
-// Minimal page renderer to avoid unnecessary processing
-function render_page(pageData: any) {
-  let render_options = {
-    normalizeWhitespace: true,
-    disableCombineTextItems: false
-  };
-  return pageData.getTextContent(render_options)
-    .then(function(textContent: any) {
-      let strings = textContent.items.map((item: any) => item.str);
-      return strings.join(' ');
-    });
 }
