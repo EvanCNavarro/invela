@@ -10,12 +10,12 @@ import { classifyDocument } from '../services/openai';
 import { broadcastDocumentCountUpdate, broadcastClassificationUpdate } from '../services/websocket';
 import { extractTextFromFirstPages } from '../services/pdf';
 import { analyzeDocument } from '../services/openai';
+import { createDocumentChunks, processChunk } from '../services/documentChunking';
 
-
+// Ensure upload directory exists
 const router = Router();
 const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 
-// Ensure upload directory exists
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -300,86 +300,103 @@ router.post("/api/documents/:id/process", async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    const chunks = await createDocumentChunks(filePath, fileRecord.type);
+    try {
+      const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-    // Store fields and chunk info in metadata
-    await db.update(files)
-      .set({ 
-        metadata: { 
-          ...fileRecord.metadata,
-          processing_fields: fields,
-          chunks_total: chunks.length,
-          chunks_processed: 0,
-          answers: []
-        },
-        status: 'processing'
-      })
-      .where(eq(files.id, fileId));
-
-    res.json({ 
-      status: 'processing',
-      totalChunks: chunks.length
-    });
-
-    // Start processing chunks in background
-    (async () => {
-      let answersFound = 0;
-
-      for (const chunk of chunks) {
-        try {
-          console.log('[Document Processing] Processing chunk:', {
-            fileId,
-            chunkIndex: chunk.index,
-            timestamp: new Date().toISOString()
-          });
-
-          const result = await processChunk(chunk, fields);
-
-          if (result.answers?.length) {
-            answersFound += result.answers.length;
-
-            // Update metadata with new answers and progress
-            await db.update(files)
-              .set({ 
-                metadata: {
-                  ...fileRecord.metadata,
-                  chunks_processed: chunk.index + 1,
-                  answers: [...(fileRecord.metadata?.answers || []), ...result.answers],
-                  answers_found: answersFound
-                }
-              })
-              .where(eq(files.id, fileId));
-          }
-        } catch (error) {
-          console.error('[Document Processing] Chunk processing error:', {
-            fileId,
-            chunkIndex: chunk.index,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            timestamp: new Date().toISOString()
-          });
-        }
-      }
-
-      // Mark processing as complete
+      // Store fields and chunk info in metadata
       await db.update(files)
         .set({ 
-          status: 'processed',
-          metadata: {
+          metadata: { 
             ...fileRecord.metadata,
-            processing_completed: new Date().toISOString(),
-            chunks_processed: chunks.length,
-            answers_found: answersFound
-          }
+            processing_fields: fields,
+            chunks_total: chunks.length,
+            chunks_processed: 0,
+            answers: []
+          },
+          status: 'processing'
         })
         .where(eq(files.id, fileId));
 
-    })().catch(error => {
-      console.error('[Document Processing] Background processing error:', {
+      res.json({ 
+        status: 'processing',
+        totalChunks: chunks.length
+      });
+
+      // Start processing chunks in background
+      (async () => {
+        let answersFound = 0;
+        let processedChunks = 0;
+
+        for (const chunk of chunks) {
+          try {
+            console.log('[Document Processing] Processing chunk:', {
+              fileId,
+              chunkIndex: chunk.index,
+              progress: `${processedChunks + 1}/${chunks.length}`,
+              timestamp: new Date().toISOString()
+            });
+
+            const result = await processChunk(chunk, fields);
+            processedChunks++;
+
+            if (result.answers?.length) {
+              answersFound += result.answers.length;
+
+              // Update metadata with new answers and progress
+              await db.update(files)
+                .set({ 
+                  metadata: {
+                    ...fileRecord.metadata,
+                    chunks_processed: processedChunks,
+                    answers: [...(fileRecord.metadata?.answers || []), ...result.answers],
+                    answers_found: answersFound
+                  }
+                })
+                .where(eq(files.id, fileId));
+            }
+
+            // Short delay between chunks to prevent overloading
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+          } catch (error) {
+            console.error('[Document Processing] Chunk processing error:', {
+              fileId,
+              chunkIndex: chunk.index,
+              error: error instanceof Error ? error.message : 'Unknown error',
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+
+        // Mark processing as complete
+        await db.update(files)
+          .set({ 
+            status: 'processed',
+            metadata: {
+              ...fileRecord.metadata,
+              processing_completed: new Date().toISOString(),
+              chunks_processed: chunks.length,
+              answers_found: answersFound
+            }
+          })
+          .where(eq(files.id, fileId));
+
+      })().catch(error => {
+        console.error('[Document Processing] Background processing error:', {
+          fileId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+      });
+
+    } catch (error) {
+      console.error('[Document Processing] Chunk creation error:', {
         fileId,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
-    });
+      throw error;
+    }
 
   } catch (error) {
     console.error('[Document Processing] Process initiation error:', error);
