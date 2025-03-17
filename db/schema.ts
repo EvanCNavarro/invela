@@ -28,6 +28,14 @@ export const TaskStatus = {
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
 
+export const DocumentCategory = {
+  SOC2_AUDIT: 'soc2_audit',
+  ISO27001_CERT: 'iso27001_cert',
+  PENTEST_REPORT: 'pentest_report',
+  BUSINESS_CONTINUITY: 'business_continuity',
+  OTHER: 'other'
+} as const;
+
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -124,6 +132,9 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   user_id: integer("user_id").references(() => users.id).notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
+  document_category: text("document_category").$type<keyof typeof DocumentCategory>(),
+  classification_status: text("classification_status"),
+  classification_confidence: real("classification_confidence"),
   created_at: timestamp("created_at"),
   updated_at: timestamp("updated_at"),
   upload_time: timestamp("upload_time"),
