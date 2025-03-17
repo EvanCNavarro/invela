@@ -1,4 +1,3 @@
-```typescript
 import fs from 'fs';
 import { extractTextFromFirstPages } from './pdf';
 
@@ -45,12 +44,12 @@ export async function createDocumentChunks(
     while (currentPosition < content.length) {
       // Find a good breaking point
       let endPosition = Math.min(currentPosition + chunkSize, content.length);
-      
+
       // Try to break at a natural point if we're not at the end
       if (endPosition < content.length) {
         const nextPeriod = content.indexOf('.', endPosition - 100);
         const nextNewline = content.indexOf('\n', endPosition - 100);
-        
+
         if (nextPeriod !== -1 && nextPeriod < endPosition + 100) {
           endPosition = nextPeriod + 1;
         } else if (nextNewline !== -1 && nextNewline < endPosition + 100) {
@@ -66,6 +65,13 @@ export async function createDocumentChunks(
       });
 
       currentPosition = endPosition;
+
+      console.log('[DocumentChunking] Created chunk:', {
+        chunkIndex: chunks.length - 1,
+        chunkSize: endPosition - currentPosition,
+        totalChunks: chunks.length,
+        timestamp: new Date().toISOString()
+      });
     }
 
     console.log('[DocumentChunking] Chunks created:', {
@@ -101,6 +107,7 @@ export async function processChunk(
     console.log('[DocumentChunking] Processing chunk:', {
       chunkIndex: chunk.index,
       contentLength: chunk.content.length,
+      fieldsCount: cardFields.length,
       timestamp: new Date().toISOString()
     });
 
@@ -121,4 +128,3 @@ export async function processChunk(
     };
   }
 }
-```
