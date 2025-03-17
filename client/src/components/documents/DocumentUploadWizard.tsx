@@ -31,6 +31,12 @@ interface UploadedFile {
   confidence?: number;
 }
 
+interface DocumentCount {
+  category: string;
+  count: number;
+  isProcessing?: boolean;
+}
+
 interface DocumentUploadWizardProps {
   companyName: string;
   onComplete?: () => void;
@@ -40,6 +46,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
 
   const handleNext = () => {
     console.log('[DocumentUploadWizard] Moving to next step:', {
@@ -49,7 +56,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         name: f.file.name,
         status: f.status,
         category: f.category
-      }))
+      })),
+      documentCounts
     });
 
     if (currentStep < WIZARD_STEPS.length - 1) {
@@ -68,7 +76,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         name: f.file.name,
         status: f.status,
         category: f.category
-      }))
+      })),
+      documentCounts
     });
 
     if (currentStep > 0) {
@@ -113,6 +122,23 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         return file;
       })
     );
+  };
+
+  const updateDocumentCounts = (category: string, count: number, isProcessing: boolean = false) => {
+    console.log('[DocumentUploadWizard] Updating document counts:', {
+      category,
+      count,
+      isProcessing
+    });
+
+    setDocumentCounts(prev => ({
+      ...prev,
+      [category]: {
+        category,
+        count: (prev[category]?.count || 0) + count,
+        isProcessing
+      }
+    }));
   };
 
   // Calculate progress percentage
@@ -211,6 +237,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
               companyName={companyName}
               uploadedFiles={uploadedFiles}
               updateFileMetadata={updateFileMetadata}
+              documentCounts={documentCounts}
+              updateDocumentCounts={updateDocumentCounts}
             />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">

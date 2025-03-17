@@ -47,26 +47,29 @@ interface UploadedFile {
   confidence?: number;
 }
 
-interface DocumentUploadStepProps {
-  onFilesUpdated: (files: File[]) => void;
-  companyName: string;
-  uploadedFiles: UploadedFile[];
-  updateFileMetadata: (fileId: number, metadata: Partial<UploadedFile>) => void;
-}
-
 interface DocumentCount {
   category: string;
   count: number;
   isProcessing?: boolean;
 }
 
+interface DocumentUploadStepProps {
+  onFilesUpdated: (files: File[]) => void;
+  companyName: string;
+  uploadedFiles: UploadedFile[];
+  updateFileMetadata: (fileId: number, metadata: Partial<UploadedFile>) => void;
+  documentCounts: Record<string, DocumentCount>;
+  updateDocumentCounts: (category: string, count: number, isProcessing?: boolean) => void;
+}
+
 export function DocumentUploadStep({ 
   onFilesUpdated, 
   companyName,
   uploadedFiles,
-  updateFileMetadata
+  updateFileMetadata,
+  documentCounts,
+  updateDocumentCounts
 }: DocumentUploadStepProps) {
-  const [documentCounts, setDocumentCounts] = React.useState<Record<string, DocumentCount>>({});
   const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
 
@@ -158,7 +161,7 @@ export function DocumentUploadStep({
     }
   };
 
-  // WebSocket effect remains the same but with additional logging
+  // WebSocket effect for real-time updates
   React.useEffect(() => {
     console.log('[DocumentUploadStep] Setting up WebSocket connection');
     const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
@@ -173,14 +176,7 @@ export function DocumentUploadStep({
           countChange: data.count
         });
 
-        setDocumentCounts(prev => ({
-          ...prev,
-          [data.category]: {
-            category: data.category,
-            count: (prev[data.category]?.count || 0) + data.count,
-            isProcessing: false
-          }
-        }));
+        updateDocumentCounts(data.category, data.count, false);
       }
 
       if (data.type === 'CLASSIFICATION_UPDATE') {
@@ -190,13 +186,7 @@ export function DocumentUploadStep({
           confidence: data.confidence
         });
 
-        setDocumentCounts(prev => ({
-          ...prev,
-          [data.category]: {
-            ...prev[data.category],
-            isProcessing: false
-          }
-        }));
+        updateDocumentCounts(data.category, 0, false);
       }
     };
 
@@ -204,7 +194,7 @@ export function DocumentUploadStep({
       console.log('[DocumentUploadStep] Closing WebSocket connection');
       socket.close();
     };
-  }, []);
+  }, [updateDocumentCounts]);
 
   return (
     <div className="space-y-6">
