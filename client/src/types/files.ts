@@ -52,3 +52,19 @@ export interface UploadingFile extends Omit<FileItem, 'id'> {
 }
 
 export interface TableRowData extends FileItem {}
+
+export interface UploadedFile extends Omit<FileItem, 'id'> {
+  id: string;
+  progress: number;
+}
+
+// Add document processing specific types
+export type DocumentProcessingStatus = 'uploading' | 'uploaded' | 'processing' | 'error';
+
+export interface DocumentFile {
+  file: File;
+  id?: number;
+  status: DocumentProcessingStatus;
+  answersFound?: number;
+  error?: string;
+}
