@@ -50,53 +50,44 @@
      - Implemented retry mechanism
 
 3. Document Processing Service 🔄 (Current Implementation)
-   - Processing State Transition (Next Step) 🔄
-     - Fix initial state when moving to processing step
-       - [x] Ensure files retain IDs 
-       - [x] Add file.type property to match step 1 structure
-       - [ ] Handle PDF data chunking (TODO - Next Phase)
-     - Add console logging to verify state preservation
+   - Document Chunking Implementation 🔄 (Current Focus)
+     - [x] Define chunking process within existing /api/documents/process endpoint
+     - [ ] Implement sequential chunk processing
+     - [ ] Add chunk progress tracking
+     - [ ] Handle chunk aggregation for answers
      - Expected logs:
        ```
-       [DocumentUploadWizard] Moving to processing step with files:
-       {fileIds: [], statuses: [], fileTypes: [], timestamp}
-       [DocumentProcessingStep] Received files for processing:
-       {fileCount, fileDetails: [{id, status, type}], timestamp}
+       [DocumentProcessing] Starting processing:
+       {fileId, status: 'chunking', timestamp}
+       [DocumentProcessing] Chunk processed:
+       {fileId, chunksProcessed, totalChunks, timestamp}
+       [DocumentProcessing] Processing complete:
+       {fileId, status: 'processed', answersFound, timestamp}
        ```
 
-   - Processing Queue Activation
-     - Implement proper queue start on component mount
-     - Handle card fields loading state correctly
-
-   - PDF Processing Implementation (Next Phase)
-     - Add PDF chunking strategy
-       - Split large PDFs into manageable chunks
-       - Track chunk processing progress
-       - Merge results from all chunks
-     - Handle binary data preservation between steps
-     - Add chunk size configuration
+   - Processing Queue Management
+     - Properly initialize queue on component mount
+     - Handle sequential file processing
+     - Track individual file progress
      - Expected logs:
        ```
-       [PDFProcessing] Starting chunking for file:
-       {fileId, totalPages, chunkSize, timestamp}
-       [PDFProcessing] Chunk processed:
-       {fileId, chunkIndex, pagesProcessed, timestamp}
+       [ProcessingQueue] Queue initialized:
+       {pendingFiles: [], processingFile: null}
+       [ProcessingQueue] Starting next file:
+       {fileId, queuePosition, remainingFiles}
        ```
 
-4. Processing Time Management:
-   - Calculate initial estimated processing time
-   - Dynamic updates based on actual processing speed
-   - Real-time remaining time display
-   - Progress indicators per document
-
-5. Answer Aggregation System:
-   - Combine answers across documents:
-     - Eliminate duplicate answers
-     - Maintain source attribution
-   - Clear presentation in UI:
-     - Group by question
-     - Show source documents
-     - Display confidence scores
+   - WebSocket Integration
+     - Real-time status updates
+     - Progress tracking
+     - Error handling
+     - Required logs:
+       ```
+       [WebSocket] Processing update:
+       {fileId, status, progress}
+       [WebSocket] Error:
+       {fileId, error}
+       ```
 
 ## Logging Guidelines 📝
 - Every new feature must include detailed console logging
