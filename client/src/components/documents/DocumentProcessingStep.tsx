@@ -21,12 +21,13 @@ interface DocumentProcessingStepProps {
 
 export function DocumentProcessingStep({ 
   companyName,
-  uploadedFiles 
+  uploadedFiles: initialFiles 
 }: DocumentProcessingStepProps) {
   const { toast } = useToast();
   const [processingError, setProcessingError] = React.useState<string | null>(null);
   const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
   const [isProcessing, setIsProcessing] = React.useState(false);
+  const [files, setFiles] = React.useState<UploadedFile[]>(initialFiles);
 
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
@@ -36,14 +37,10 @@ export function DocumentProcessingStep({
   React.useEffect(() => {
     console.log('[DocumentProcessingStep] Component mounted:', {
       companyName,
-      uploadedFilesCount: uploadedFiles.length,
+      uploadedFilesCount: files.length,
       cardFieldsLoaded: !!cardFields,
       timestamp: new Date().toISOString()
     });
-
-    return () => {
-      console.log('[DocumentProcessingStep] Component unmounting');
-    };
   }, []);
 
   // Process next file in queue
@@ -59,7 +56,7 @@ export function DocumentProcessingStep({
     }
 
     // Get next unprocessed file
-    const nextIndex = uploadedFiles.findIndex(
+    const nextIndex = files.findIndex(
       (file) => file.status === 'uploaded' && file.id
     );
 
@@ -73,7 +70,7 @@ export function DocumentProcessingStep({
     setCurrentProcessingIndex(nextIndex);
     setIsProcessing(true);
 
-    const fileToProcess = uploadedFiles[nextIndex];
+    const fileToProcess = files[nextIndex];
     console.log('[DocumentProcessingStep] Starting to process file:', {
       fileId: fileToProcess.id,
       fileName: fileToProcess.file.name,
@@ -83,7 +80,9 @@ export function DocumentProcessingStep({
 
     try {
       // Update file status to processing
-      uploadedFiles[nextIndex].status = 'processing';
+      setFiles(prevFiles => prevFiles.map((file, index) => 
+        index === nextIndex ? { ...file, status: 'processing' } : file
+      ));
 
       // Process single file
       await processDocuments(
@@ -108,9 +107,14 @@ export function DocumentProcessingStep({
           }
 
           // Update file status
-          uploadedFiles[nextIndex].status = result.status;
-          uploadedFiles[nextIndex].answersFound = result.answersFound;
-          uploadedFiles[nextIndex].error = undefined;
+          setFiles(prevFiles => prevFiles.map((file, index) => 
+            index === nextIndex ? {
+              ...file,
+              status: result.status,
+              answersFound: result.answersFound,
+              error: undefined
+            } : file
+          ));
         }
       );
     } catch (error: any) {
@@ -127,8 +131,13 @@ export function DocumentProcessingStep({
       });
 
       // Update file status to error
-      uploadedFiles[nextIndex].status = 'error';
-      uploadedFiles[nextIndex].error = error.message;
+      setFiles(prevFiles => prevFiles.map((file, index) => 
+        index === nextIndex ? {
+          ...file,
+          status: 'error',
+          error: error.message
+        } : file
+      ));
     } finally {
       setIsProcessing(false);
       setCurrentProcessingIndex(-1);
@@ -138,7 +147,7 @@ export function DocumentProcessingStep({
         processNextFile();
       }, 500);
     }
-  }, [uploadedFiles, cardFields, isProcessing, toast]);
+  }, [files, cardFields, isProcessing, toast]);
 
   // Start processing when component mounts or new files are added
   React.useEffect(() => {
@@ -152,11 +161,11 @@ export function DocumentProcessingStep({
       return;
     }
 
-    if (!isProcessing && uploadedFiles.some(f => f.status === 'uploaded')) {
+    if (!isProcessing && files.some(f => f.status === 'uploaded')) {
       console.log('[DocumentProcessingStep] Starting document processing queue:', {
-        filesCount: uploadedFiles.length,
+        filesCount: files.length,
         cardFieldsCount: cardFields.length,
-        uploadedFiles: uploadedFiles.map(f => ({
+        files: files.map(f => ({
           id: f.id,
           name: f.file.name,
           status: f.status
@@ -165,7 +174,12 @@ export function DocumentProcessingStep({
       });
       processNextFile();
     }
-  }, [uploadedFiles, cardFields, isProcessing, processNextFile, isLoadingFields]);
+  }, [files, cardFields, isProcessing, processNextFile, isLoadingFields]);
+
+  // Update local files state when initialFiles changes
+  React.useEffect(() => {
+    setFiles(initialFiles);
+  }, [initialFiles]);
 
   if (isLoadingFields) {
     return (
@@ -191,7 +205,7 @@ export function DocumentProcessingStep({
 
       {/* Document List */}
       <div className="space-y-2">
-        {uploadedFiles.map((uploadedFile, index) => (
+        {files.map((uploadedFile, index) => (
           <DocumentRow 
             key={uploadedFile.id || uploadedFile.file.name} 
             file={{
