@@ -54,7 +54,7 @@ export async function classifyDocument(content: string): Promise<DocumentClassif
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo", // Changed from gpt-4o to handle larger documents
       messages: [
         { role: "system", content: CLASSIFICATION_PROMPT },
         { role: "user", content }
@@ -80,9 +80,9 @@ export async function classifyDocument(content: string): Promise<DocumentClassif
       estimatedCost: calculateOpenAICost(
         response.usage?.prompt_tokens || 0,
         response.usage?.completion_tokens || 0,
-        'gpt-4o'
+        'gpt-3.5-turbo'
       ),
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: true,
       duration,
       searchDate: new Date(),
@@ -107,7 +107,7 @@ export async function classifyDocument(content: string): Promise<DocumentClassif
       inputTokens: 0,
       outputTokens: 0,
       estimatedCost: 0,
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: false,
       errorMessage: error instanceof Error ? error.message : 'Unknown error',
       duration,
@@ -316,6 +316,10 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
     'gpt-4o': {
       input: 0.01,
       output: 0.03,
+    },
+    'gpt-3.5-turbo': {
+      input: 0.001,
+      output: 0.002,
     }
   };
 
@@ -391,7 +395,7 @@ export async function findMissingCompanyData(
   try {
     console.log("[OpenAI Search] 📤 Sending request to OpenAI");
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -428,9 +432,9 @@ export async function findMissingCompanyData(
       estimatedCost: calculateOpenAICost(
         response.usage?.prompt_tokens || 0,
         response.usage?.completion_tokens || 0,
-        'gpt-4o'
+        'gpt-3.5-turbo'
       ),
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: true,
       duration,
       searchDate: new Date(),
@@ -462,7 +466,7 @@ export async function findMissingCompanyData(
       inputTokens: 0,
       outputTokens: 0,
       estimatedCost: 0,
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: false,
       errorMessage,
       duration,
@@ -529,7 +533,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
   while (retries > 0) {
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
@@ -561,9 +565,9 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         estimatedCost: calculateOpenAICost(
           response.usage?.prompt_tokens || 0,
           response.usage?.completion_tokens || 0,
-          'gpt-4o'
+          'gpt-3.5-turbo'
         ),
-        model: 'gpt-4o',
+        model: 'gpt-3.5-turbo',
         success: true,
         duration,
         searchDate: new Date(),
@@ -648,7 +652,7 @@ Respond with a JSON object containing:
     });
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -698,9 +702,9 @@ Respond with a JSON object containing:
       estimatedCost: calculateOpenAICost(
         response.usage?.prompt_tokens || 0,
         response.usage?.completion_tokens || 0,
-        'gpt-4o'
+        'gpt-3.5-turbo'
       ),
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: true,
       duration,
       searchDate: new Date(),
