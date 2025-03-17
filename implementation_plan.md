@@ -38,25 +38,43 @@
      - Highlight active processing rows with blue-tinted background and border ✅
      - Proper state transitions from upload to processing ✅
 
-2. Compliance Questions Integration 🔄 (Current Step)
+2. Critical Fixes Needed 🚨
+   - File ID Management
+     - Fix mismatch between upload and processing steps
+     - Ensure correct database IDs are used (e.g., 207/208) instead of array indices
+     - Add validation to prevent processing with invalid IDs
+
+   - Sequential Processing
+     - Implement one-at-a-time document processing
+     - Only start next file after current one completes
+     - Add proper progress tracking per file
+     - Include processing time estimates
+
+   - Error Handling Enhancement
+     - Propagate specific error messages to UI
+     - Show detailed failure reasons (e.g., "No file found")
+     - Add recovery options for failed processing
+     - Implement retry mechanism
+
+3. Compliance Questions Integration 🔄
    - OpenAI Integration ✅
      - Setup OpenAI service
      - Implement answer extraction logic
      - Add detailed logging
-   - Document Processing Service 🔄 (Next Step)
+   - Document Processing Service
      - Implement PDF chunking
      - Create processing queue
      - Handle processing state updates
    - Structure questions by wizard_section
    - Prepare WebSocket updates
 
-3. Processing Time Management:
+4. Processing Time Management:
    - Calculate initial estimated processing time
    - Dynamic updates based on actual processing speed
    - Real-time remaining time display
    - Progress indicators per document
 
-4. Document Processing Architecture:
+5. Document Processing Architecture:
    - File Chunking Strategy:
      - PDFs: Extract ~3 pages (~16,000 chars) using pdf.js-extract
      - DOC/DOCX/TXT/CSV: Similar character limit chunking
@@ -65,7 +83,7 @@
      - Update progress indicators per chunk
    - OpenAI Integration
 
-5. Answer Aggregation System:
+6. Answer Aggregation System:
    - Combine answers across documents:
      - Eliminate duplicate answers
      - Maintain source attribution
