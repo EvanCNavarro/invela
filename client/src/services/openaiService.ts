@@ -1,7 +1,12 @@
 import OpenAI from "openai";
 
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+if (!apiKey) {
+  throw new Error('OpenAI API key not found. Please set VITE_OPENAI_API_KEY environment variable.');
+}
+
+const openai = new OpenAI({ apiKey });
 
 interface Answer {
   field_key: string;
@@ -54,22 +59,27 @@ Respond in JSON format with an array of answers, each containing:
       response_format: { type: "json_object" }
     });
 
-    const result = JSON.parse(response.choices[0].message.content);
-    
+    const content = response.choices[0].message.content;
+    if (!content) {
+      throw new Error('No content in OpenAI response');
+    }
+
+    const result = JSON.parse(content);
+
     console.log('[OpenAIService] Processed chunk successfully:', {
       fileName,
       answersFound: result.answers.length,
       timestamp: new Date().toISOString()
     });
 
-    return result.answers.map(answer => ({
+    return result.answers.map((answer: Answer) => ({
       ...answer,
       source_document: fileName
     }));
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[OpenAIService] Error processing document:', {
       fileName,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
       timestamp: new Date().toISOString()
     });
     throw error;

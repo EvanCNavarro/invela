@@ -766,3 +766,123 @@ interface SearchAnalytics {
   createdAt: Date;
   updatedAt: Date;
 }
+
+interface DocumentAnswer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+}
+
+interface DocumentAnalysisResult {
+  answers: DocumentAnswer[];
+}
+
+export async function analyzeDocument(
+  documentText: string,
+  fields: { field_key: string; question: string; ai_search_instructions: string }[]
+): Promise<DocumentAnalysisResult> {
+  const startTime = Date.now();
+
+  try {
+    console.log('[OpenAI Service] Starting document analysis:', {
+      textLength: documentText.length,
+      fieldsCount: fields.length,
+      timestamp: new Date().toISOString()
+    });
+
+    const prompt = `
+    As a compliance expert, analyze this document and extract answers to specific compliance questions.
+    Focus on accuracy and provide clear, factual responses based on the document content.
+
+    Document Text:
+    ${documentText}
+
+    For each of the following questions, provide an answer if found in the document:
+    ${fields.map(f => `
+    Question: ${f.question}
+    Field Key: ${f.field_key}
+    Search Instructions: ${f.ai_search_instructions}
+    `).join('\n')}
+
+    Respond with a JSON object containing:
+    {
+      "answers": [
+        {
+          "field_key": "the field key",
+          "answer": "extracted answer from document"
+        }
+      ]
+    }
+
+    Only include answers that are clearly supported by the document content.
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a compliance document analysis expert."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'document_analysis',
+      searchPrompt: prompt,
+      searchResults: result,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-3.5-turbo'
+      ),
+      model: 'gpt-3.5-turbo',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return result;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[OpenAI Service] Document analysis error:', error);
+
+    // Log failed attempt
+    await logSearchAnalytics({
+      searchType: 'document_analysis',
+      searchPrompt: '',
+      searchResults: {},
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      model: 'gpt-3.5-turbo',
+      success: false,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    throw error;
+  }
+}
