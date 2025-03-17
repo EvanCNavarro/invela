@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import type { TaskStatus } from '@db/schema';
+import { DocumentCategory } from './openai';
 
 let wss: WebSocketServer;
 
@@ -10,6 +11,22 @@ interface TaskUpdate {
   progress: number;
   metadata?: Record<string, any>;
 }
+
+interface DocumentCountUpdate {
+  type: 'COUNT_UPDATE';
+  category: DocumentCategory;
+  count: number;
+  companyId: string;
+}
+
+interface ClassificationUpdate {
+  type: 'CLASSIFICATION_UPDATE';
+  fileId: string;
+  category: DocumentCategory;
+  confidence: number;
+}
+
+type WebSocketMessage = TaskUpdate | DocumentCountUpdate | ClassificationUpdate;
 
 export function setupWebSocket(server: Server) {
   // Create WebSocket server with proper configuration
@@ -117,6 +134,40 @@ export function broadcastTaskUpdate(task: TaskUpdate) {
         }));
       } catch (error) {
         console.error('Error broadcasting task update:', error);
+      }
+    }
+  });
+}
+
+export function broadcastDocumentCountUpdate(update: DocumentCountUpdate) {
+  if (!wss) {
+    console.warn('WebSocket server not initialized');
+    return;
+  }
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('Error broadcasting document count update:', error);
+      }
+    }
+  });
+}
+
+export function broadcastClassificationUpdate(update: ClassificationUpdate) {
+  if (!wss) {
+    console.warn('WebSocket server not initialized');
+    return;
+  }
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('Error broadcasting classification update:', error);
       }
     }
   });
