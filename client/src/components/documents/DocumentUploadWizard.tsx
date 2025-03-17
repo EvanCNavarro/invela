@@ -32,7 +32,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         name: f.name,
         size: f.size,
         type: f.type,
-        status: f.status
+        status: f.status,
+        answersFound: f.answersFound //Added this line from edited code
       })),
       timestamp: new Date().toISOString()
     });
@@ -60,6 +61,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       const newFiles = files
         .filter(file => !prev.some(existing => existing.name === file.name))
         .map(file => ({
+          id: undefined,
           name: file.name,
           size: file.size,
           type: file.type,
@@ -96,15 +98,17 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     });
 
     setUploadedFiles(prev => {
-      // Find file by name since we might not have an ID yet
+      // Find file by name AND file ID
       const fileToUpdate = prev.find(f => 
-        f.name === metadata.name || f.id === fileId
+        (metadata.name && f.name === metadata.name) || 
+        (fileId && f.id === fileId)
       );
 
       if (!fileToUpdate) {
         console.log('[DocumentUploadWizard] No matching file found for update:', {
           fileId,
           metadata,
+          currentFiles: prev.map(f => ({ id: f.id, name: f.name })),
           timestamp: new Date().toISOString()
         });
         return prev;
@@ -117,12 +121,13 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           status: fileToUpdate.status
         },
         newMetadata: metadata,
+        fileId,
         timestamp: new Date().toISOString()
       });
 
       return prev.map(file =>
         file === fileToUpdate
-          ? { ...file, ...metadata, id: fileId }  // Ensure ID is updated
+          ? { ...file, ...metadata, id: fileId }
           : file
       );
     });

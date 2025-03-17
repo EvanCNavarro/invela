@@ -24,7 +24,6 @@ export function DocumentProcessingStep({
   const [processingQueue, setProcessingQueue] = React.useState<number[]>([]);
   const [isQueueInitialized, setIsQueueInitialized] = React.useState(false);
 
-  // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
   });
@@ -38,7 +37,8 @@ export function DocumentProcessingStep({
         name: f.name,
         size: f.size,
         type: f.type,
-        status: f.status
+        status: f.status,
+        hasId: f.id !== undefined
       })),
       timestamp: new Date().toISOString()
     });
@@ -91,7 +91,8 @@ export function DocumentProcessingStep({
         name: f.name,
         size: f.size,
         type: f.type,
-        status: f.status
+        status: f.status,
+        hasId: f.id !== undefined
       })),
       timestamp: new Date().toISOString()
     });
@@ -285,7 +286,6 @@ export function DocumentProcessingStep({
         </div>
       )}
 
-      {/* Document List */}
       <div className="space-y-2">
         {files.map((uploadedFile, index) => (
           <DocumentRow 
