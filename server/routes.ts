@@ -1431,8 +1431,16 @@ export function registerRoutes(app: Express): Express {
         timestamp: new Date().toISOString()
       });
 
-      // Read file buffer as text
-      const documentText = req.file.buffer.toString('utf-8');
+      // Use pdf-parse to extract text from PDF
+      const pdf = require('pdf-parse');
+      const documentData = await pdf(req.file.buffer);
+      const documentText = documentData.text;
+
+      console.log('[DocumentProcessing] PDF text extracted:', {
+        fileName: req.file.originalname,
+        textLength: documentText.length,
+        timestamp: new Date().toISOString()
+      });
 
       // Process the document using analyzeDocument function
       const result = await analyzeDocument(documentText, fields);
