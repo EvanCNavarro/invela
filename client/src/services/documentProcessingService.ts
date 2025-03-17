@@ -23,7 +23,7 @@ export async function processDocuments(
   fileIds: number[],
   cardFields: CardField[],
   onProgress: (result: ProcessingResult) => void
-) {
+): Promise<FileProcessingResult[]> {
   try {
     console.log('[DocumentProcessingService] Starting document processing:', {
       fileIds,
@@ -36,17 +36,19 @@ export async function processDocuments(
       status: 'processing'
     });
 
-    // Make API call to process documents
     const response = await apiRequest('/api/documents/process', {
       method: 'POST',
-      body: JSON.stringify({
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      data: {
         fileIds,
         fields: cardFields.map(field => ({
           field_key: field.field_key,
           question: field.question,
           ai_search_instructions: field.ai_search_instructions
         }))
-      })
+      }
     });
 
     if (!response.ok) {
@@ -60,7 +62,7 @@ export async function processDocuments(
     const totalAnswers = results.reduce((sum, result) => 
       sum + (result.answers?.length || 0), 0);
 
-    // Update with results
+    // Update with final results
     onProgress({
       answersFound: totalAnswers,
       status: 'classified'
