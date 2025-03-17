@@ -90,9 +90,30 @@ export async function classifyDocument(content: string): Promise<DocumentClassif
       updatedAt: new Date(),
     });
 
+    // Apply confidence thresholds
+    let category = result.category;
+    const confidence = result.confidence;
+
+    if (confidence < CONFIDENCE_THRESHOLDS.MINIMUM) {
+      console.log('[OpenAI Service] Classification confidence too low, marking as OTHER:', {
+        originalCategory: category,
+        confidence,
+        threshold: CONFIDENCE_THRESHOLDS.MINIMUM
+      });
+      category = DocumentCategory.OTHER;
+    }
+
+    if (confidence < CONFIDENCE_THRESHOLDS.AUTO_CLASSIFY) {
+      console.log('[OpenAI Service] Classification needs review:', {
+        category,
+        confidence,
+        threshold: CONFIDENCE_THRESHOLDS.AUTO_CLASSIFY
+      });
+    }
+
     return {
-      category: mapToDocumentCategory(result.category),
-      confidence: result.confidence,
+      category: mapToDocumentCategory(category),
+      confidence: confidence,
       reasoning: result.reasoning,
       suggestedName: result.suggestedName
     };

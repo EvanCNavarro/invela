@@ -71,6 +71,17 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       reasoning: classification.reasoning
     });
 
+    // Determine classification status based on confidence
+    const CONFIDENCE_THRESHOLDS = {
+      AUTO_CLASSIFY: 0.9,
+      SUGGEST: 0.7
+    };
+    let classificationStatus = classification.confidence >= CONFIDENCE_THRESHOLDS.AUTO_CLASSIFY 
+      ? 'completed' 
+      : classification.confidence >= CONFIDENCE_THRESHOLDS.SUGGEST 
+        ? 'needs_review' 
+        : 'manual_classification_required';
+
     // Create file record in database
     const [fileRecord] = await db.insert(files)
       .values({
@@ -82,7 +93,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         company_id: req.user.company_id,
         status: 'uploaded',
         document_category: classification.category,
-        classification_status: 'completed',
+        classification_status: classificationStatus,
         classification_confidence: classification.confidence,
         download_count: 0,
         version: 1
@@ -93,23 +104,27 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       id: fileRecord.id,
       name: fileRecord.name,
       category: fileRecord.document_category,
-      confidence: fileRecord.classification_confidence
+      confidence: fileRecord.classification_confidence,
+      status: fileRecord.classification_status
     });
 
-    // Broadcast document count update
-    broadcastDocumentCountUpdate({
-      type: 'COUNT_UPDATE',
-      category: classification.category,
-      count: 1,
-      companyId: req.user.company_id.toString()
-    });
+    // Only broadcast count update if classification is confident enough
+    if (classificationStatus === 'completed') {
+      broadcastDocumentCountUpdate({
+        type: 'COUNT_UPDATE',
+        category: classification.category,
+        count: 1,
+        companyId: req.user.company_id.toString()
+      });
+    }
 
     // Broadcast classification update
     broadcastClassificationUpdate({
       type: 'CLASSIFICATION_UPDATE',
       fileId: fileRecord.id.toString(),
       category: classification.category,
-      confidence: classification.confidence
+      confidence: classification.confidence,
+      status: classificationStatus
     });
 
     res.status(201).json(fileRecord);
