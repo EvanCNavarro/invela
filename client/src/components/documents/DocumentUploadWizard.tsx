@@ -27,9 +27,11 @@ const WIZARD_STEPS = [
 interface UploadedFile {
   file: File;
   id?: number;
-  status: 'uploaded' | 'processing' | 'classified';
+  status: 'uploaded' | 'processing' | 'classified' | 'error';
   category?: string;
   confidence?: number;
+  answersFound?: number;
+  error?: string;
 }
 
 interface DocumentCount {
@@ -56,7 +58,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       uploadedFiles: uploadedFiles.map(f => ({
         name: f.file.name,
         status: f.status,
-        category: f.category
+        category: f.category,
+        id: f.id
       })),
       documentCounts
     });
@@ -76,11 +79,11 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       uploadedFiles: uploadedFiles.map(f => ({
         name: f.file.name,
         status: f.status,
-        category: f.category
+        category: f.category,
+        id: f.id
       })),
       documentCounts
     });
-
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
@@ -102,11 +105,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           status: 'uploaded' as const
         }));
 
-      console.log('[DocumentUploadWizard] Adding new unique files:', {
-        newFileCount: newFiles.length,
-        timestamp: new Date().toISOString()
-      });
-
       return [...prev, ...newFiles];
     });
   };
@@ -119,9 +117,9 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     });
 
     setUploadedFiles(prev => {
-      // Find the file without an ID that matches the metadata's name
+      // Find file by ID or by matching file name for newly uploaded files
       const fileToUpdate = prev.find(
-        f => (!f.id && f.file.name === metadata.file?.name) || f.id === fileId
+        f => f.id === fileId || (!f.id && f.file.name === metadata.file?.name)
       );
 
       if (!fileToUpdate) {
@@ -152,7 +150,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     console.log('[DocumentUploadWizard] Updating document counts:', {
       category,
       count,
-      isProcessing
+      isProcessing,
+      timestamp: new Date().toISOString()
     });
 
     setDocumentCounts(prev => ({
