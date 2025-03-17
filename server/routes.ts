@@ -8,7 +8,7 @@ import { users, companies, files, companyLogos, relationships, tasks, invitation
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastTaskUpdate } from './services/websocket';
+import { broadcastTaskUpdate, broadcastClassificationUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -17,7 +17,6 @@ import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 import { analyzeDocument } from './services/openai';
-// Import PDFExtract class
 import { PDFExtract } from 'pdf.js-extract';
 
 // Create PDFExtract instance
@@ -826,7 +825,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add this endpoint before the fintech invite endpoint
+  // Add this endpoint to handle fintech company check
   app.post("/api/fintech/check-company", requireAuth, async (req, res) => {
     try {
       const { company_name } = req.body;
@@ -1654,6 +1653,110 @@ export function registerRoutes(app: Express): Express {
       res.status(500).json({
         message: "Error processing documents",
         error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  //Add the new document processing endpoint here.
+  app.post("/api/documents/process", requireAuth, async (req, res) => {
+    try {
+      const { fileIds, fields } = req.body;
+
+      if (!Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({
+          message: "No file IDs provided",
+          code: "INVALID_REQUEST"
+        });
+      }
+
+      console.log('[Document Processing] Starting processing:', {
+        fileIds,
+        fieldCount: fields?.length,
+        timestamp: new Date().toISOString()
+      });
+
+      const results = [];
+
+      // Process one file at a time
+      for (const fileId of fileIds) {
+        // Get file record from database
+        const [file] = await db.select()
+          .from(files)
+          .where(eq(files.id, fileId));
+
+        if (!file) {
+          console.error('[Document Processing] File not found:', fileId);
+          results.push({
+            fileId,
+            fileName: 'Unknown',
+            error: 'File not found'
+          });
+          continue;
+        }
+
+        try {
+          // Get file path
+          const filePath = path.resolve('/home/runner/workspace/uploads', file.path);
+
+          if (!fs.existsSync(filePath)) {
+            throw new Error('File not found on disk');
+          }
+
+          // Extract PDF text
+          const data = await pdfExtract.extract(filePath, {});
+          if (!data.pages || data.pages.length === 0) {
+            throw new Error('No text content found in PDF');
+          }
+
+          // Process in chunks of ~3 pages
+          const chunkSize = 3;
+          const answers = [];
+
+          for (let i = 0; i < data.pages.length; i += chunkSize) {
+            const chunk = data.pages.slice(i, i + chunkSize);
+            const chunkText = chunk.map(page => page.content).join('\n');
+
+            // Analyze chunk with OpenAI
+            const chunkAnswers = await analyzeDocument(chunkText, fields);
+            answers.push(...chunkAnswers);
+
+            // Send progress update via WebSocket
+            broadcastClassificationUpdate({
+              type: 'CLASSIFICATION_UPDATE',
+              fileId: file.id.toString(),
+              category: file.category || 'unknown',
+              confidence: 0.95
+            });
+          }
+
+          // Add results
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            answers
+          });
+
+        } catch (error) {
+          console.error('[Document Processing] Error processing file:', {
+            fileId,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+
+          results.push({
+            fileId,
+            fileName: file.name,
+            error: error instanceof Error ? error.message : 'Error processing document'
+          });
+        }
+      }
+
+      res.json({ results });
+
+    } catch (error) {
+      console.error('[Document Processing] Error:', error);
+      res.status(500).json({
+        message: "Error processing documents",
+        code: "PROCESSING_ERROR"
       });
     }
   });
