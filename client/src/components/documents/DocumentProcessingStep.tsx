@@ -3,12 +3,14 @@ import { DocumentRow } from './DocumentRow';
 import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
 import { processDocuments } from '@/services/documentProcessingService';
+import { useToast } from '@/hooks/use-toast';
 
 interface UploadedFile {
   file: File;
   id?: number;
-  status: 'uploaded' | 'processing' | 'classified';
+  status: 'uploaded' | 'processing' | 'classified' | 'error';
   answersFound?: number;
+  error?: string;
 }
 
 interface DocumentProcessingStepProps {
@@ -20,6 +22,9 @@ export function DocumentProcessingStep({
   companyName,
   uploadedFiles 
 }: DocumentProcessingStepProps) {
+  const { toast } = useToast();
+  const [processingError, setProcessingError] = React.useState<string | null>(null);
+
   // Fetch card fields using React Query
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
@@ -52,7 +57,8 @@ export function DocumentProcessingStep({
         name: f.file.name,
         id: f.id,
         status: f.status,
-        answersFound: f.answersFound
+        answersFound: f.answersFound,
+        error: f.error
       })),
       timestamp: new Date().toISOString()
     });
@@ -60,6 +66,9 @@ export function DocumentProcessingStep({
 
   // Start processing files when component mounts
   React.useEffect(() => {
+    // Clear any previous errors
+    setProcessingError(null);
+
     if (!cardFields || uploadedFiles.length === 0) {
       console.log('[DocumentProcessingStep] Waiting for prerequisites:', {
         hasCardFields: !!cardFields,
@@ -106,8 +115,19 @@ export function DocumentProcessingStep({
         console.log('[DocumentProcessingStep] Processing progress update:', {
           status: result.status,
           answersFound: result.answersFound,
+          error: result.error,
           timestamp: new Date().toISOString()
         });
+
+        if (result.status === 'error') {
+          setProcessingError(result.error || 'An unknown error occurred');
+          toast({
+            variant: 'destructive',
+            title: 'Processing Error',
+            description: result.error || 'Failed to process documents'
+          });
+          return;
+        }
 
         // Update file statuses based on processing results
         uploadedFiles.forEach(file => {
@@ -123,6 +143,7 @@ export function DocumentProcessingStep({
 
             file.status = result.status;
             file.answersFound = result.answersFound;
+            file.error = undefined; // Clear any previous errors
           }
         });
       }
@@ -130,6 +151,13 @@ export function DocumentProcessingStep({
       console.error('[DocumentProcessingStep] Processing error:', {
         error: error.message,
         timestamp: new Date().toISOString()
+      });
+
+      setProcessingError(error.message);
+      toast({
+        variant: 'destructive',
+        title: 'Processing Error',
+        description: 'Failed to process documents. Please try again.'
       });
     });
   }, [uploadedFiles, cardFields]);
@@ -140,6 +168,13 @@ export function DocumentProcessingStep({
         2. Extracting Compliance Information
       </h1>
 
+      {processingError && (
+        <div className="p-4 mb-4 text-sm text-red-800 bg-red-100 rounded-lg">
+          <p className="font-medium">Error processing documents:</p>
+          <p>{processingError}</p>
+        </div>
+      )}
+
       {/* Document List */}
       <div className="space-y-2">
         {uploadedFiles.map((uploadedFile) => (
@@ -149,7 +184,8 @@ export function DocumentProcessingStep({
               name: uploadedFile.file.name,
               size: uploadedFile.file.size,
               status: uploadedFile.status,
-              answersFound: uploadedFile.answersFound
+              answersFound: uploadedFile.answersFound,
+              error: uploadedFile.error
             }}
           />
         ))}
