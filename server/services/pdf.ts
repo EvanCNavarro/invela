@@ -1,6 +1,14 @@
+import { PDFExtract } from 'pdf.js-extract';
 import fs from 'fs';
 
-// Custom PDF text extraction without relying on pdf-parse test files
+const pdfExtract = new PDFExtract();
+const options = {
+  firstPageOnly: false,
+  max: 3, // Extract first 3 pages only
+  normalizeWhitespace: true,
+  verbosity: 0 // Reduce console noise
+};
+
 export async function extractTextFromFirstPages(filePath: string, maxPages: number = 3): Promise<string> {
   console.log('[PDF Service] Starting text extraction from first pages:', {
     filePath,
@@ -13,39 +21,21 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
       throw new Error(`File not found at path: ${filePath}`);
     }
 
-    const dataBuffer = fs.readFileSync(filePath);
-
-    // Import pdf-parse dynamically to avoid initialization issues
-    const PDFParser = (await import('pdf-parse')).default;
-
-    console.log('[PDF Service] Reading PDF buffer:', {
-      bufferSize: dataBuffer.length,
-      timestamp: new Date().toISOString()
-    });
-
-    const data = await PDFParser(dataBuffer, {
-      max: maxPages, // Only parse first N pages
-      pagerender: function(pageData: any) {
-        let render_options = {
-          normalizeWhitespace: true,
-          disableCombineTextItems: false
-        };
-        return pageData.getTextContent(render_options)
-          .then(function(textContent: any) {
-            let strings = textContent.items.map((item: any) => item.str);
-            return strings.join(' ');
-          });
-      }
-    });
+    console.log('[PDF Service] Reading PDF file');
+    const data = await pdfExtract.extract(filePath, { ...options, max: maxPages });
 
     console.log('[PDF Service] Extraction successful:', {
-      totalPages: data.numpages,
-      extractedPages: Math.min(maxPages, data.numpages),
-      extractedTextLength: data.text.length,
+      totalPages: data.pages.length,
+      extractedPages: Math.min(maxPages, data.pages.length),
       timestamp: new Date().toISOString()
     });
 
-    return data.text;
+    // Combine text from all extracted pages
+    const text = data.pages
+      .map(page => page.content.map(item => item.str).join(' '))
+      .join('\n');
+
+    return text;
   } catch (error) {
     console.error('[PDF Service] Text extraction failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
