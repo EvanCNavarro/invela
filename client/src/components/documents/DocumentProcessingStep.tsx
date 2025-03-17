@@ -43,7 +43,13 @@ export function DocumentProcessingStep({
 
   // Helper function to recreate File object from fileData
   const recreateFileObject = (fileData: UploadedFile['fileData']): File => {
-    // Create an empty file with the same metadata
+    console.log('[DocumentProcessingStep] Recreating file object:', {
+      name: fileData.name,
+      type: fileData.type,
+      timestamp: new Date().toISOString()
+    });
+
+    // Create a new File object with the stored metadata
     return new File([], fileData.name, {
       type: fileData.type,
       lastModified: fileData.lastModified
@@ -118,7 +124,6 @@ export function DocumentProcessingStep({
 
     console.log('[DocumentProcessingStep] Setting up processing queue:', {
       queueLength: queue.length,
-      queueIndices: queue,
       queueFiles: queue.map(index => ({
         id: validatedFiles[index].id,
         name: validatedFiles[index].fileData.name,
@@ -203,6 +208,15 @@ export function DocumentProcessingStep({
         index === nextIndex ? { ...file, status: 'processing' } : file
       ));
 
+      // Recreate File object for processing
+      const fileObject = recreateFileObject(fileToProcess.fileData);
+      console.log('[DocumentProcessingStep] File object recreated:', {
+        fileId: fileToProcess.id,
+        fileName: fileObject.name,
+        type: fileObject.type,
+        timestamp: new Date().toISOString()
+      });
+
       // Process file
       const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
@@ -230,6 +244,7 @@ export function DocumentProcessingStep({
 
     } catch (error: any) {
       console.error('[DocumentProcessingStep] Processing error:', {
+        fileId: fileToProcess.id,
         error: error.message,
         timestamp: new Date().toISOString()
       });
@@ -264,13 +279,8 @@ export function DocumentProcessingStep({
 
   // Start processing when card fields load and we have files to process
   React.useEffect(() => {
-    if (isLoadingFields) {
+    if (!cardFields?.length || isLoadingFields) {
       console.log('[DocumentProcessingStep] Waiting for card fields to load');
-      return;
-    }
-
-    if (!cardFields?.length) {
-      console.error('[DocumentProcessingStep] No card fields available');
       return;
     }
 
