@@ -17,8 +17,11 @@ import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 import { analyzeDocument } from './services/openai';
-// Import pdf-parse dynamically to avoid test file loading at startup
-import type { PDFExtractResult } from 'pdf-parse/lib/pdf-parse';
+// Import PDFExtract class
+import { PDFExtract } from 'pdf.js-extract';
+
+// Create PDFExtract instance
+const pdfExtract = new PDFExtract();
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
@@ -1437,14 +1440,14 @@ export function registerRoutes(app: Express): Express {
       // Handle different file types
       if (req.file.mimetype === 'application/pdf') {
         try {
-          // Import pdf-parse dynamically
-          const pdfParse = (await import('pdf-parse')).default;
-          const documentData = await pdfParse(req.file.buffer);
-          documentText = documentData.text;
+          // Extract text from PDF using pdf.js-extract
+          const data = await pdfExtract.extractBuffer(req.file.buffer);
+          documentText = data.pages.map(page => page.content.map(item => item.str).join(' ')).join('\n');
 
           console.log('[DocumentProcessing] PDF text extracted:', {
             fileName: req.file.originalname,
             textLength: documentText.length,
+            pages: data.pages.length,
             timestamp: new Date().toISOString()
           });
         } catch (pdfError) {
@@ -1472,18 +1475,49 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Process the document using analyzeDocument function
-      const result = await analyzeDocument(documentText, fields);
+      // Split text into chunks for processing
+      const CHUNK_SIZE = 4000; // Adjust based on OpenAI token limits
+      const chunks = [];
+      for (let i = 0; i < documentText.length; i += CHUNK_SIZE) {
+        chunks.push(documentText.slice(i, i + CHUNK_SIZE));
+      }
+
+      console.log('[DocumentProcessing] Document chunked:', {
+        fileName: req.file.originalname,
+        totalChunks: chunks.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Process each chunk and combine results
+      const allAnswers = [];
+      for (const [index, chunk] of chunks.entries()) {
+        console.log('[DocumentProcessing] Processing chunk:', {
+          fileName: req.file.originalname,
+          chunkIndex: index + 1,
+          totalChunks: chunks.length,
+          timestamp: new Date().toISOString()
+        });
+
+        const result = await analyzeDocument(chunk, fields);
+        if (result.answers && result.answers.length > 0) {
+          allAnswers.push(...result.answers);
+        }
+      }
+
+      // Remove duplicate answers based on field_key
+      const uniqueAnswers = Array.from(
+        new Map(allAnswers.map(answer => [answer.field_key, answer])).values()
+      );
 
       console.log('[DocumentProcessing] Document analysis complete:', {
         fileName: req.file.originalname,
-        answersFound: result.answers.length,
+        answersFound: uniqueAnswers.length,
         timestamp: new Date().toISOString()
       });
 
       res.json({
-        answersFound: result.answers.length,
-        answers: result.answers
+        answersFound: uniqueAnswers.length,
+        answers: uniqueAnswers
       });
 
     } catch (error) {
