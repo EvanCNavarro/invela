@@ -62,21 +62,21 @@ export async function processDocuments(
     });
 
     try {
-      const data = await apiRequest('/api/documents/process', {
-        method: 'POST',
-        data: {
-          fileIds,
-          fields: cardFields.map(field => ({
-            field_key: field.field_key,
-            question: field.question,
-            ai_search_instructions: field.ai_search_instructions
-          }))
-        }
-      });
+      const requestData = {
+        fileIds,
+        fields: cardFields.map(field => ({
+          field_key: field.field_key,
+          question: field.question,
+          ai_search_instructions: field.ai_search_instructions
+        }))
+      };
+
+      const response = await apiRequest('POST', '/api/documents/process', requestData);
+      const data = await response.json();
 
       console.log('[DocumentProcessingService] API response received:', {
         fileIds,
-        status: data.status,
+        status: response.status,
         timestamp: new Date().toISOString()
       });
 
