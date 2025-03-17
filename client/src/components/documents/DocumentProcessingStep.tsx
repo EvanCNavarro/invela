@@ -6,6 +6,14 @@ import { processDocuments } from '@/services/documentProcessingService';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+enum DocumentStatus {
+  uploading = 'uploading',
+  uploaded = 'uploaded',
+  processing = 'processing',
+  processed = 'processed',
+  error = 'error',
+}
+
 interface UploadedFile {
   id?: number;
   fileData: {
@@ -14,7 +22,7 @@ interface UploadedFile {
     type: string;
     lastModified: number;
   };
-  status: 'uploading' | 'uploaded' | 'processing' | 'processed' | 'error';
+  status: DocumentStatus;
   answersFound?: number;
   error?: string;
 }
@@ -41,20 +49,6 @@ export function DocumentProcessingStep({
     queryKey: ['/api/card/fields']
   });
 
-  // Helper function to recreate File object from fileData
-  const recreateFileObject = (fileData: UploadedFile['fileData']): File => {
-    console.log('[DocumentProcessingStep] Recreating file object:', {
-      name: fileData.name,
-      type: fileData.type,
-      timestamp: new Date().toISOString()
-    });
-
-    // Create a new File object with the stored metadata
-    return new File([], fileData.name, {
-      type: fileData.type,
-      lastModified: fileData.lastModified
-    });
-  };
 
   // Validate files before adding to queue
   const validateFiles = (filesToValidate: UploadedFile[]) => {
@@ -137,13 +131,8 @@ export function DocumentProcessingStep({
 
   // Initialize queue when card fields are ready
   React.useEffect(() => {
-    if (isLoadingFields) {
+    if (!cardFields?.length || isLoadingFields) {
       console.log('[DocumentProcessingStep] Waiting for card fields to load');
-      return;
-    }
-
-    if (!cardFields?.length) {
-      console.error('[DocumentProcessingStep] No card fields available');
       return;
     }
 
@@ -205,17 +194,8 @@ export function DocumentProcessingStep({
     try {
       // Update file status to processing
       setFiles(prevFiles => prevFiles.map((file, index) => 
-        index === nextIndex ? { ...file, status: 'processing' } : file
+        index === nextIndex ? { ...file, status: DocumentStatus.processing } : file
       ));
-
-      // Recreate File object for processing
-      const fileObject = recreateFileObject(fileToProcess.fileData);
-      console.log('[DocumentProcessingStep] File object recreated:', {
-        fileId: fileToProcess.id,
-        fileName: fileObject.name,
-        type: fileObject.type,
-        timestamp: new Date().toISOString()
-      });
 
       // Process file
       const result = await processDocuments([fileToProcess.id], cardFields!, (progress) => {
@@ -236,7 +216,7 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
-          status: 'processed',
+          status: DocumentStatus.processed,
           answersFound: result.answersFound,
           error: undefined
         } : file
@@ -260,7 +240,7 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? {
           ...file,
-          status: 'error',
+          status: DocumentStatus.error,
           error: error.message
         } : file
       ));
