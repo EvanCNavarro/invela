@@ -36,15 +36,17 @@ export function DocumentProcessingStep({
     queryKey: ['/api/card/fields']
   });
 
-  // Validate files before adding to queue
+  // Validate file objects before adding to queue
   const validateFiles = (filesToValidate: UploadedFile[]) => {
     console.log('[DocumentProcessingStep] Starting file validation:', {
       totalFiles: filesToValidate.length,
       fileDetails: filesToValidate.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
+        type: f.file.type,
         status: f.status,
-        isValid: f.file instanceof File
+        isFileObject: f.file instanceof File
       })),
       timestamp: new Date().toISOString()
     });
@@ -57,6 +59,7 @@ export function DocumentProcessingStep({
           fileName: file.file.name,
           status: file.status,
           isFileObject: file.file instanceof File,
+          type: file.file.type,
           timestamp: new Date().toISOString()
         });
       }
@@ -66,6 +69,12 @@ export function DocumentProcessingStep({
     console.log('[DocumentProcessingStep] File validation complete:', {
       validFiles: validFiles.length,
       invalidFiles: filesToValidate.length - validFiles.length,
+      validFileDetails: validFiles.map(f => ({
+        id: f.id,
+        name: f.file.name,
+        type: f.file.type,
+        status: f.status
+      })),
       timestamp: new Date().toISOString()
     });
 
@@ -80,6 +89,8 @@ export function DocumentProcessingStep({
       fileDetails: initialFiles.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
+        type: f.file.type,
         status: f.status,
         isFileObject: f.file instanceof File
       })),
@@ -98,11 +109,16 @@ export function DocumentProcessingStep({
     console.log('[DocumentProcessingStep] Setting up processing queue:', {
       queueLength: queue.length,
       queueIndices: queue,
+      queueFiles: queue.map(index => ({
+        id: validatedFiles[index].id,
+        name: validatedFiles[index].file.name,
+        status: validatedFiles[index].status
+      })),
       timestamp: new Date().toISOString()
     });
 
     setProcessingQueue(queue);
-  }, [initialFiles]);
+  }, [initialFiles, companyName]);
 
   // Initialize queue when card fields are ready
   React.useEffect(() => {
@@ -121,6 +137,12 @@ export function DocumentProcessingStep({
         cardFieldsCount: cardFields.length,
         filesCount: files.length,
         queueLength: processingQueue.length,
+        files: files.map(f => ({
+          id: f.id,
+          name: f.file.name,
+          status: f.status,
+          isFileObject: f.file instanceof File
+        })),
         timestamp: new Date().toISOString()
       });
 
@@ -143,10 +165,14 @@ export function DocumentProcessingStep({
     const nextIndex = processingQueue[0];
     const fileToProcess = files[nextIndex];
 
-    if (!fileToProcess?.id) {
+    if (!fileToProcess?.id || !(fileToProcess.file instanceof File)) {
       console.error('[DocumentProcessingStep] Invalid file to process:', {
         index: nextIndex,
-        file: fileToProcess,
+        file: fileToProcess ? {
+          id: fileToProcess.id,
+          name: fileToProcess.file.name,
+          isFileObject: fileToProcess.file instanceof File
+        } : null,
         timestamp: new Date().toISOString()
       });
       return;
@@ -280,6 +306,7 @@ export function DocumentProcessingStep({
             file={{
               name: uploadedFile.file.name,
               size: uploadedFile.file.size,
+              type: uploadedFile.file.type,
               status: uploadedFile.status,
               answersFound: uploadedFile.answersFound,
               error: uploadedFile.error
