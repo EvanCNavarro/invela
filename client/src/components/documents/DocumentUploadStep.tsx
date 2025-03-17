@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { FileUploadZone } from '@/components/files/FileUploadZone';
+import { DocumentRow } from './DocumentRow';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +45,7 @@ interface UploadedFile {
   id?: number;
   status: 'uploaded' | 'processing' | 'classified';
   category?: string;
-  confidence?: number;
+  answersFound?: number;
 }
 
 interface DocumentCount {
@@ -106,7 +107,7 @@ export function DocumentUploadStep({
       console.log('[DocumentUploadStep] Upload successful:', {
         fileId: result.id,
         category: result.document_category,
-        confidence: result.classification_confidence
+        answersFound: result.answers_found || 0
       });
 
       // Update file metadata
@@ -114,7 +115,7 @@ export function DocumentUploadStep({
         id: result.id,
         status: 'classified',
         category: result.document_category,
-        confidence: result.classification_confidence
+        answersFound: result.answers_found || 0
       });
 
       return result;
@@ -183,7 +184,7 @@ export function DocumentUploadStep({
         console.log('[DocumentUploadStep] Classification update received:', {
           fileId: data.fileId,
           category: data.category,
-          confidence: data.confidence
+          answersFound: data.answers_found
         });
 
         updateDocumentCounts(data.category, 0, false);
@@ -199,9 +200,10 @@ export function DocumentUploadStep({
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">
-        1. Upload {companyName}'s Compliance Documentation
+        2. Extracting Compliance Information
       </h1>
 
+      {/* File Upload Zone */}
       <FileUploadZone
         onFilesAccepted={handleFilesAccepted}
         acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
@@ -209,6 +211,17 @@ export function DocumentUploadStep({
         disabled={isUploading}
       />
 
+      {/* Document List */}
+      <div className="mt-8 space-y-2">
+        {uploadedFiles.map((file) => (
+          <DocumentRow 
+            key={file.id} 
+            file={file}
+          />
+        ))}
+      </div>
+
+      {/* Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         {DOCUMENT_CATEGORIES.map((category) => {
           const countData = documentCounts[category.id] || { count: 0, isProcessing: false };
