@@ -50,63 +50,37 @@
      - Implemented retry mechanism
 
 3. Document Processing Service 🔄 (Current Implementation)
-   - Processing State Transition (Next Step)
+   - Processing State Transition (Next Step) 🔄
      - Fix initial state when moving to processing step
-     - Ensure files retain IDs and correct status
+       - [x] Ensure files retain IDs 
+       - [x] Add file.type property to match step 1 structure
+       - [ ] Handle PDF data chunking (TODO - Next Phase)
      - Add console logging to verify state preservation
      - Expected logs:
        ```
        [DocumentUploadWizard] Moving to processing step with files:
-       {fileIds: [], statuses: [], timestamp}
+       {fileIds: [], statuses: [], fileTypes: [], timestamp}
        [DocumentProcessingStep] Received files for processing:
-       {fileCount, fileDetails: [{id, status}], timestamp}
+       {fileCount, fileDetails: [{id, status, type}], timestamp}
        ```
 
    - Processing Queue Activation
      - Implement proper queue start on component mount
      - Handle card fields loading state correctly
-     - Add verification logs for queue initialization:
-       ```
-       [DocumentProcessingStep] Queue initialized:
-       {pendingFiles: [], processingFile: null, timestamp}
-       [DocumentProcessingStep] Starting first file:
-       {fileId, status: 'processing', timestamp}
-       ```
 
-   - PDF Processing Implementation
-     - Implement PDF chunking
-     - Create processing queue
-     - Handle processing state updates
-     - Add logging for chunk processing:
+   - PDF Processing Implementation (Next Phase)
+     - Add PDF chunking strategy
+       - Split large PDFs into manageable chunks
+       - Track chunk processing progress
+       - Merge results from all chunks
+     - Handle binary data preservation between steps
+     - Add chunk size configuration
+     - Expected logs:
        ```
-       [DocumentProcessing] Starting chunk processing:
-       {fileId, chunkIndex, totalChunks, timestamp}
-       [DocumentProcessing] Chunk processed:
-       {fileId, chunkIndex, answersFound, timestamp}
-       ```
-
-   - WebSocket Integration
-     - Real-time status updates
-     - Progress tracking
-     - Error handling
-     - Required logs:
-       ```
-       [WebSocket] Processing update:
-       {fileId, progress, status, timestamp}
-       [WebSocket] Error encountered:
-       {fileId, error, timestamp}
-       ```
-
-   - OpenAI Integration
-     - Document analysis
-     - Answer extraction
-     - Confidence scoring
-     - Verification logs:
-       ```
-       [OpenAI] Starting analysis:
-       {fileId, chunkIndex, inputLength, timestamp}
-       [OpenAI] Analysis complete:
-       {fileId, answersFound, confidence, timestamp}
+       [PDFProcessing] Starting chunking for file:
+       {fileId, totalPages, chunkSize, timestamp}
+       [PDFProcessing] Chunk processed:
+       {fileId, chunkIndex, pagesProcessed, timestamp}
        ```
 
 4. Processing Time Management:
