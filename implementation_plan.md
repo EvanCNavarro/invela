@@ -63,11 +63,55 @@ OPENAI_API_KEY=<key>
 ```
 
 3. Create OpenAI service (server/services/openai.ts):
-- Configure GPT-4 model for classification
-- Implement document text extraction
-- Configure classification prompts
-- Handle confidence scoring
-- Implement retry mechanism
+```typescript
+// the newest OpenAI model is "gpt-4o" which was released May 13, 2024
+const CLASSIFICATION_PROMPT = `Analyze the provided document and classify it into one of the following categories:
+- SOC 2 Audit Report
+- ISO 27001 Certification
+- Penetration Test Report
+- Business Continuity Plan
+- Other Documents
+
+Respond with a JSON object containing:
+{
+  "category": string (one of the above categories),
+  "confidence": number (0-1),
+  "reasoning": string (brief explanation),
+  "suggestedName": string (optional)
+}
+
+Consider:
+- Document structure and formatting
+- Key terminology and phrases
+- Standard compliance language
+- Certification markers and dates`;
+
+export async function classifyDocument(content: string): Promise<ClassificationResult> {
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: CLASSIFICATION_PROMPT },
+      { role: "user", content }
+    ],
+    response_format: { type: "json_object" }
+  });
+
+  const result = JSON.parse(response.choices[0].message.content);
+  return {
+    category: mapToDocumentCategory(result.category),
+    confidence: result.confidence,
+    reasoning: result.reasoning,
+    suggestedName: result.suggestedName
+  };
+}
+
+// Confidence thresholds for classification
+export const CONFIDENCE_THRESHOLDS = {
+  AUTO_CLASSIFY: 0.85, // Automatically classify if confidence is above this
+  SUGGEST: 0.60, // Suggest classification if confidence is above this
+  MINIMUM: 0.30 // Show as "Other Documents" if below this
+};
+```
 
 4. Create classification types:
 ```typescript
@@ -82,6 +126,7 @@ export enum DocumentCategory {
 export interface ClassificationResult {
   category: DocumentCategory;
   confidence: number;
+  reasoning: string;
   suggestedName?: string;
 }
 ```
@@ -118,8 +163,64 @@ GET /api/files/counts (get document counts by category)
 WebSocket /ws/files/updates (real-time count updates)
 ```
 
+3. Create WebSocket message types:
+```typescript
+interface DocumentCountUpdate {
+  type: 'COUNT_UPDATE';
+  category: DocumentCategory;
+  count: number;
+  companyId: string;
+}
+
+interface ClassificationUpdate {
+  type: 'CLASSIFICATION_UPDATE';
+  fileId: string;
+  category: DocumentCategory;
+  confidence: number;
+}
+```
+
 ## Phase 5: Frontend Updates
 1. Update FileUploadZone component:
+```typescript
+interface FileUploadZoneProps {
+  onFilesAccepted: (files: File[]) => Promise<void>;
+  documentCounts: Record<DocumentCategory, number>;
+  isProcessing: boolean;
+}
+
+interface DocumentCountDisplay {
+  category: DocumentCategory;
+  count: number;
+  isUpdating: boolean;
+}
+
+const FileUploadZone: FC<FileUploadZoneProps> = ({
+  onFilesAccepted,
+  documentCounts,
+  isProcessing
+}) => {
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  // Animation states for count updates
+  const [updatingCategories, setUpdatingCategories] = useState<Set<DocumentCategory>>(new Set());
+
+  // Custom upload error messages
+  const getErrorMessage = (error: any): string => {
+    if (error.code === 'FILE_TOO_LARGE') {
+      return 'File size exceeds 50MB limit';
+    }
+    if (error.code === 'INVALID_FILE_TYPE') {
+      return 'Unsupported file type. Please upload documents in CSV, DOC, DOCX, PDF, or image formats';
+    }
+    return 'Error uploading file. Please try again.';
+  };
+
+  // ... rest of component implementation
+};
+```
+
 - Add real-time document count display
 - Show classification status and confidence
 - Add manual classification trigger
@@ -136,7 +237,15 @@ interface DocumentCount {
 const DocumentCountDisplay: FC<{
   counts: DocumentCount[];
   onCategoryClick: (category: DocumentCategory) => void;
-}>;
+}> = ({ counts, onCategoryClick }) => (
+  <div>
+    {counts.map((count) => (
+      <div key={count.category} onClick={() => onCategoryClick(count.category)}>
+        {count.category}: {count.count}
+      </div>
+    ))}
+  </div>
+);
 ```
 
 3. Update FileTable component:
@@ -156,11 +265,41 @@ const DocumentCountDisplay: FC<{
 class DocumentCountManager {
   private counts: Map<DocumentCategory, number>;
   private ws: WebSocket;
+  private pendingUpdates: Set<string>; // Track files being processed
 
-  updateCount(category: DocumentCategory, delta: number): void;
-  subscribeToUpdates(callback: (counts: DocumentCount[]) => void): void;
+  // Optimistically update count when upload starts
+  startUpload(fileId: string, predictedCategory: DocumentCategory): void {
+    this.pendingUpdates.add(fileId);
+    this.updateCount(predictedCategory, 1);
+  }
+
+  // Confirm or revert update when classification completes
+  confirmUpload(fileId: string, actualCategory: DocumentCategory, predictedCategory: DocumentCategory): void {
+    if (actualCategory !== predictedCategory) {
+      this.updateCount(predictedCategory, -1);
+      this.updateCount(actualCategory, 1);
+    }
+    this.pendingUpdates.delete(fileId);
+  }
+
+  updateCount(category: DocumentCategory, delta: number): void {
+    const currentCount = this.counts.get(category) || 0;
+    this.counts.set(category, currentCount + delta);
+    // Emit update event or trigger UI refresh
+  }
+
+  subscribeToUpdates(callback: (counts: DocumentCount[]) => void): void {
+    this.ws.onmessage = (event) => {
+        const update = JSON.parse(event.data);
+        this.updateCount(update.category, update.count);
+        callback(Array.from(this.counts.entries()).map(([key,value])=> ({category: key, count:value})));
+    };
+  }
 }
 ```
+
+3. Implement optimistic updates:
+
 
 ## Phase 7: Security & Performance
 1. Implement rate limiting for:
@@ -197,6 +336,9 @@ class DocumentCountManager {
 - Classification accuracy > 95%
 - Real-time count update latency < 500ms
 - User satisfaction with document management
+- Classification accuracy > 90% for standard compliance documents
+- Average classification time < 2 seconds per document
+- Real-time count update latency < 100ms
 
 ## Rollback Plan
 - Database changes can be reverted
