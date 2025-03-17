@@ -4,6 +4,7 @@ import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
 import { processDocuments } from '@/services/documentProcessingService';
 import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface UploadedFile {
   file: File;
@@ -36,6 +37,7 @@ export function DocumentProcessingStep({
     console.log('[DocumentProcessingStep] Component mounted:', {
       companyName,
       uploadedFilesCount: uploadedFiles.length,
+      cardFieldsLoaded: !!cardFields,
       timestamp: new Date().toISOString()
     });
 
@@ -46,12 +48,13 @@ export function DocumentProcessingStep({
 
   // Process next file in queue
   const processNextFile = React.useCallback(async () => {
-    if (!cardFields || isProcessing) {
-      console.log('[DocumentProcessingStep] Skipping processing:', {
-        hasCardFields: !!cardFields,
-        isProcessing,
-        timestamp: new Date().toISOString()
-      });
+    if (!cardFields) {
+      console.log('[DocumentProcessingStep] Waiting for card fields to load');
+      return;
+    }
+
+    if (isProcessing) {
+      console.log('[DocumentProcessingStep] Already processing a file');
       return;
     }
 
@@ -139,9 +142,20 @@ export function DocumentProcessingStep({
 
   // Start processing when component mounts or new files are added
   React.useEffect(() => {
+    if (isLoadingFields) {
+      console.log('[DocumentProcessingStep] Waiting for card fields to load');
+      return;
+    }
+
+    if (!cardFields) {
+      console.log('[DocumentProcessingStep] No card fields available');
+      return;
+    }
+
     if (!isProcessing && uploadedFiles.some(f => f.status === 'uploaded')) {
       console.log('[DocumentProcessingStep] Starting document processing queue:', {
         filesCount: uploadedFiles.length,
+        cardFieldsCount: cardFields.length,
         uploadedFiles: uploadedFiles.map(f => ({
           id: f.id,
           name: f.file.name,
@@ -151,7 +165,16 @@ export function DocumentProcessingStep({
       });
       processNextFile();
     }
-  }, [uploadedFiles, isProcessing, processNextFile]);
+  }, [uploadedFiles, cardFields, isProcessing, processNextFile, isLoadingFields]);
+
+  if (isLoadingFields) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <LoadingSpinner size="lg" className="text-blue-500" />
+        <span className="ml-2 text-muted-foreground">Loading document processing configuration...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
