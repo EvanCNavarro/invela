@@ -2,6 +2,7 @@ import React from 'react';
 import { DocumentRow } from './DocumentRow';
 import { getCardFields, type CardField } from '@/services/cardService';
 import { useQuery } from '@tanstack/react-query';
+import { startDocumentProcessing } from '@/services/documentProcessingService';
 
 interface UploadedFile {
   file: File;
@@ -44,6 +45,8 @@ export function DocumentProcessingStep({
 
   // Start processing files when component mounts
   React.useEffect(() => {
+    if (!cardFields) return;
+
     console.log('[DocumentProcessingStep] Starting document processing for files:', {
       fileCount: uploadedFiles.length,
       files: uploadedFiles.map(f => ({
@@ -53,22 +56,34 @@ export function DocumentProcessingStep({
       }))
     });
 
-    // Start processing each uploaded file
-    uploadedFiles.forEach((file, index) => {
-      if (file.status === 'uploaded') {
-        // Simulate transition to processing state
-        // In production this would be triggered by WebSocket messages
+    // Process each uploaded file
+    uploadedFiles.forEach((uploadedFile, index) => {
+      if (uploadedFile.status === 'uploaded') {
+        // Start processing after a delay to stagger the files
         setTimeout(() => {
           console.log('[DocumentProcessingStep] File transitioning to processing:', {
-            fileName: file.file.name,
+            fileName: uploadedFile.file.name,
             timestamp: new Date().toISOString()
           });
 
-          file.status = 'processing';
+          startDocumentProcessing(
+            uploadedFile.file,
+            cardFields,
+            (result) => {
+              uploadedFile.status = result.status;
+              uploadedFile.answersFound = result.answersFound;
+            }
+          ).catch(error => {
+            console.error('[DocumentProcessingStep] Processing error:', {
+              fileName: uploadedFile.file.name,
+              error: error.message,
+              timestamp: new Date().toISOString()
+            });
+          });
         }, index * 1000); // Stagger processing starts
       }
     });
-  }, [uploadedFiles]);
+  }, [uploadedFiles, cardFields]);
 
   return (
     <div className="space-y-6">

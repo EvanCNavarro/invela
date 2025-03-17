@@ -16,6 +16,7 @@ import kybRouter from './routes/kyb';
 import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
+import { analyzeDocument } from './services/openai';
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
@@ -859,7 +860,7 @@ export function registerRoutes(app: Express): Express {
 
   // Fix fintech invite endpoint task creation
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Starting invitation process');console.log('[FinTech Invite] Request body:', req.body);
+    console.log('[FinTech Invite] Startinginvitation process');console.log('[FinTech Invite] Request body:', req.body);
 
     try {
       const { email, company_name, full_name, sender_name } = req.body;
@@ -1404,6 +1405,53 @@ export function registerRoutes(app: Express): Express {
       console.error("[Complete Onboarding] Error:", error);
       res.status(500).json({
         message: "Error completing onboarding",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Add document processing endpoint after the file endpoints
+  app.post("/api/documents/process", requireAuth, logoUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fieldsJson = req.body.fields;
+      if (!fieldsJson) {
+        return res.status(400).json({ message: "No fields provided" });
+      }
+
+      const fields = JSON.parse(fieldsJson);
+
+      console.log('[DocumentProcessing] Starting document analysis:', {
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        fieldsCount: fields.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Read file buffer as text
+      const documentText = req.file.buffer.toString('utf-8');
+
+      // Process the document using analyzeDocument function
+      const result = await analyzeDocument(documentText, fields);
+
+      console.log('[DocumentProcessing] Document analysis complete:', {
+        fileName: req.file.originalname,
+        answersFound: result.answers.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        answersFound: result.answers.length,
+        answers: result.answers
+      });
+
+    } catch (error) {
+      console.error("[DocumentProcessing] Error:", error);
+      res.status(500).json({
+        message: "Error processing document",
         error: error instanceof Error ? error.message : String(error)
       });
     }
