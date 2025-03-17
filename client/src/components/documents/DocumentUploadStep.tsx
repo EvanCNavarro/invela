@@ -98,7 +98,6 @@ export function DocumentUploadStep({
 
       const result = await response.json();
 
-      // Log the received file ID and metadata
       console.log('[DocumentUploadStep] Upload successful:', {
         fileId: result.id,
         fileName: file.name,
@@ -107,24 +106,23 @@ export function DocumentUploadStep({
         timestamp: new Date().toISOString()
       });
 
-      // Update file metadata with the correct database ID
+      // Update file metadata with the correct database ID and keep status as uploaded
       updateFileMetadata(result.id, {
-        id: result.id, // Ensure we're using the database-assigned ID
-        status: 'classified',
-        category: result.document_category,
+        id: result.id,
+        status: 'uploaded',
         answersFound: result.answers_found || 0
       });
 
       console.log('[DocumentUploadStep] Updated file metadata:', {
         fileId: result.id,
-        status: 'classified',
+        status: 'uploaded',
         fileName: file.name,
         timestamp: new Date().toISOString()
       });
 
       toast({
         title: "Upload Successful",
-        description: `${file.name} has been uploaded and classified.`,
+        description: `${file.name} has been uploaded.`,
       });
 
       return result;
@@ -192,6 +190,7 @@ export function DocumentUploadStep({
         updateDocumentCounts(data.category, data.count, false);
       }
 
+      // No longer updating file status on CLASSIFICATION_UPDATE
       if (data.type === 'CLASSIFICATION_UPDATE') {
         console.log('[DocumentUploadStep] Classification update received:', {
           fileId: data.fileId,
@@ -199,6 +198,7 @@ export function DocumentUploadStep({
           answersFound: data.answers_found
         });
 
+        // Only update document counts, not file status
         updateDocumentCounts(data.category, 0, false);
       }
     };

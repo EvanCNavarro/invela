@@ -117,11 +117,11 @@ export function DocumentProcessingStep({
             return;
           }
 
-          // Update file status
+          // Update file status - keep as 'uploaded' when done
           setFiles(prevFiles => prevFiles.map((file, index) => 
             index === nextIndex ? {
               ...file,
-              status: result.status === 'classified' ? 'uploaded' : result.status,
+              status: 'uploaded',
               answersFound: result.answersFound,
               error: undefined
             } : file
