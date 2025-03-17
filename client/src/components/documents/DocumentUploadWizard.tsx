@@ -38,6 +38,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       uploadedFiles: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
         status: f.status,
         error: f.error,
         answersFound: f.answersFound
@@ -59,6 +60,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       uploadedFiles: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
         status: f.status,
         error: f.error,
         answersFound: f.answersFound
@@ -72,11 +74,16 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
   const handleFilesUpdated = (files: File[]) => {
     console.log('[DocumentUploadWizard] Updating files:', {
-      newFiles: files.map(f => f.name),
+      newFiles: files.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type
+      })),
       currentFileCount: uploadedFiles.length,
       currentFileDetails: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
         status: f.status,
         error: f.error
       }))
@@ -87,7 +94,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       const newFiles = files
         .filter(file => !prev.some(existing => existing.file.name === file.name))
         .map(file => ({
-          file,
+          file: file, // Preserve entire File object
           status: 'uploaded' as const,
           id: undefined // Will be set after upload
         }));
@@ -99,6 +106,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         fileDetails: updatedFiles.map(f => ({
           id: f.id,
           name: f.file.name,
+          size: f.file.size,
           status: f.status,
           error: f.error
         }))
@@ -115,6 +123,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
       currentFiles: uploadedFiles.map(f => ({
         id: f.id,
         name: f.file.name,
+        size: f.file.size,
         status: f.status
       }))
     });
@@ -135,10 +144,16 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
       const updatedFiles = prev.map(file => {
         if (file === fileToUpdate) {
-          const updatedFile = { ...file, ...metadata };
+          // Preserve the original File object when updating metadata
+          const updatedFile = { 
+            ...file,
+            ...metadata,
+            file: metadata.file || file.file // Ensure File object is preserved
+          };
           console.log('[DocumentUploadWizard] Updated file:', {
             id: updatedFile.id,
             name: updatedFile.file.name,
+            size: updatedFile.file.size,
             status: updatedFile.status
           });
           return updatedFile;
@@ -150,6 +165,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         files: updatedFiles.map(f => ({
           id: f.id,
           name: f.file.name,
+          size: f.file.size,
           status: f.status
         }))
       });
