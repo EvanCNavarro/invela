@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { DocumentStatus, UploadedFile } from './types';
 
 interface DocumentCategory {
   id: string;
@@ -39,26 +40,12 @@ const DOCUMENT_CATEGORIES: DocumentCategory[] = [
   }
 ];
 
-interface UploadedFile {
-  file: File;
-  id?: number;
-  status: 'uploaded' | 'processing' | 'classified';
-  category?: string;
-  answersFound?: number;
-}
-
-interface DocumentCount {
-  category: string;
-  count: number;
-  isProcessing?: boolean;
-}
-
 interface DocumentUploadStepProps {
   onFilesUpdated: (files: File[]) => void;
   companyName: string;
   uploadedFiles: UploadedFile[];
   updateFileMetadata: (fileId: number, metadata: Partial<UploadedFile>) => void;
-  documentCounts: Record<string, DocumentCount>;
+  documentCounts: Record<string, { category: string; count: number; isProcessing?: boolean }>;
   updateDocumentCounts: (category: string, count: number, isProcessing?: boolean) => void;
 }
 
@@ -106,10 +93,13 @@ export function DocumentUploadStep({
         timestamp: new Date().toISOString()
       });
 
-      // Update file metadata with the correct database ID and keep status as uploaded
+      // Update file metadata with the server-assigned ID and status
       updateFileMetadata(result.id, {
         id: result.id,
-        status: 'uploaded',
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        status: 'uploaded' as DocumentStatus,
         answersFound: result.answers_found || 0
       });
 
@@ -141,12 +131,6 @@ export function DocumentUploadStep({
     setIsUploading(true);
 
     try {
-      // Create new uploaded file entries first
-      const newFiles = files.map(file => ({
-        file,
-        status: 'uploaded' as const
-      }));
-
       // Add files to state first so UI updates immediately
       onFilesUpdated(files);
 
@@ -186,20 +170,7 @@ export function DocumentUploadStep({
           category: data.category,
           countChange: data.count
         });
-
         updateDocumentCounts(data.category, data.count, false);
-      }
-
-      // No longer updating file status on CLASSIFICATION_UPDATE
-      if (data.type === 'CLASSIFICATION_UPDATE') {
-        console.log('[DocumentUploadStep] Classification update received:', {
-          fileId: data.fileId,
-          category: data.category,
-          answersFound: data.answers_found
-        });
-
-        // Only update document counts, not file status
-        updateDocumentCounts(data.category, 0, false);
       }
     };
 
@@ -215,7 +186,6 @@ export function DocumentUploadStep({
         1. Upload {companyName}'s Compliance Documentation
       </h1>
 
-      {/* File Upload Zone */}
       <FileUploadZone
         onFilesAccepted={handleFilesAccepted}
         acceptedFormats=".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .WPD, .WPF, .JPG, .JPEG, .PNG, .GIF, .WEBP, .SVG"
@@ -223,7 +193,6 @@ export function DocumentUploadStep({
         disabled={isUploading}
       />
 
-      {/* Category Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         {DOCUMENT_CATEGORIES.map((category) => {
           const countData = documentCounts[category.id] || { count: 0, isProcessing: false };
