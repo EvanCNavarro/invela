@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentStatus, UploadedFile } from './types';
+import { wsService } from '@/lib/websocket';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface DocumentCategory {
   id: string;
@@ -59,6 +61,7 @@ export function DocumentUploadStep({
 }: DocumentUploadStepProps) {
   const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
+  const { connected } = useWebSocket();
 
   const uploadFile = useCallback(async (file: File) => {
     console.log('[DocumentUploadStep] Starting file upload:', {
@@ -103,11 +106,6 @@ export function DocumentUploadStep({
         answersFound: result.answers_found || 0
       });
 
-      // Update document counts directly after successful upload
-      if (result.document_category) {
-        updateDocumentCounts(result.document_category, 1);
-      }
-
       toast({
         title: "Upload Successful",
         description: `${file.name} has been uploaded.`,
@@ -118,7 +116,7 @@ export function DocumentUploadStep({
       console.error('[DocumentUploadStep] Upload error:', error);
       throw error;
     }
-  }, [updateFileMetadata, updateDocumentCounts, toast]);
+  }, [updateFileMetadata, toast]);
 
   const handleFilesAccepted = async (files: File[]) => {
     console.log('[DocumentUploadStep] Files accepted:', {
@@ -139,7 +137,11 @@ export function DocumentUploadStep({
       // Then process each file
       for (const file of files) {
         try {
-          await uploadFile(file);
+          const result = await uploadFile(file);
+          // Update document counts directly after successful upload
+          if (result.document_category) {
+            updateDocumentCounts(result.document_category, 1);
+          }
         } catch (error) {
           console.error('[DocumentUploadStep] Error uploading file:', {
             fileName: file.name,
@@ -158,42 +160,63 @@ export function DocumentUploadStep({
     }
   };
 
-  // WebSocket effect for real-time updates
+  // Subscribe to WebSocket events using the shared service
   React.useEffect(() => {
-    console.log('[DocumentUploadStep] Setting up WebSocket connection');
-    const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
+    if (!connected) return;
 
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log('[DocumentUploadStep] WebSocket message received:', data);
+    console.log('[DocumentUploadStep] Setting up WebSocket subscriptions');
 
-      if (data.type === 'UPLOAD_PROGRESS') {
-        if (data.status === 'uploading') {
-          toast({
-            title: "Uploading File",
-            description: `Uploading ${data.fileName}...`,
-          });
-        } else if (data.status === 'error') {
-          toast({
-            title: "Upload Error",
-            description: data.error || `Failed to upload ${data.fileName}`,
-            variant: "destructive",
-          });
-        }
-      } else if (data.type === 'COUNT_UPDATE') {
-        console.log('[DocumentUploadStep] Updating document count:', {
-          category: data.category,
-          countChange: data.count
+    const subscriptions: Array<() => void> = [];
+
+    const setupSubscriptions = async () => {
+      try {
+        // Subscribe to upload progress updates
+        const unsubUploadProgress = await wsService.subscribe('UPLOAD_PROGRESS', (data) => {
+          console.log('[DocumentUploadStep] Upload progress update:', data);
+
+          if (data.status === 'uploading') {
+            toast({
+              title: "Uploading File",
+              description: `Uploading ${data.fileName}...`,
+            });
+          } else if (data.status === 'error') {
+            toast({
+              title: "Upload Error",
+              description: data.error || `Failed to upload ${data.fileName}`,
+              variant: "destructive",
+            });
+          }
         });
-        updateDocumentCounts(data.category, data.count);
+        subscriptions.push(unsubUploadProgress);
+
+        // Subscribe to document count updates
+        const unsubCountUpdate = await wsService.subscribe('COUNT_UPDATE', (data) => {
+          console.log('[DocumentUploadStep] Document count update:', {
+            category: data.category,
+            count: data.count
+          });
+          updateDocumentCounts(data.category, data.count);
+        });
+        subscriptions.push(unsubCountUpdate);
+
+      } catch (error) {
+        console.error('[DocumentUploadStep] Error setting up WebSocket subscriptions:', error);
       }
     };
 
+    setupSubscriptions();
+
     return () => {
-      console.log('[DocumentUploadStep] Closing WebSocket connection');
-      socket.close();
+      console.log('[DocumentUploadStep] Cleaning up WebSocket subscriptions');
+      subscriptions.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('[DocumentUploadStep] Error unsubscribing:', error);
+        }
+      });
     };
-  }, [updateDocumentCounts, toast]);
+  }, [connected, updateDocumentCounts, toast]);
 
   return (
     <div className="space-y-6">

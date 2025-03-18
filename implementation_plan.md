@@ -33,7 +33,51 @@
 - [x] Maintain consistent state
 
 ### 3. Document Chunking Implementation 🔄 (Current Focus)
-#### A. Basic Chunking Implementation
+#### A. WebSocket Connection Management
+- [ ] Consolidate WebSocket connections
+  - Prevent duplicate connections during component lifecycle
+  - Implement proper connection cleanup
+  - Add connection state tracking
+  - Expected logs:
+    ```
+    [WebSocket] Connection initialized:
+    {connectionId, timestamp}
+
+    [WebSocket] Connection closed:
+    {connectionId, reason, timestamp}
+    ```
+
+#### B. Processing Loop Fixes
+- [ ] Prevent document reprocessing
+  - Add processing state locks
+  - Track processed file IDs
+  - Implement proper cleanup after processing
+  - Handle component unmount gracefully
+  - Expected logs:
+    ```
+    [Processing] File processing started:
+    {fileId, processingId, timestamp}
+
+    [Processing] File already processed:
+    {fileId, previousProcessingId, timestamp}
+    ```
+
+#### C. Progress Tracking Synchronization
+- [ ] Improve progress tracking
+  - Implement atomic progress updates
+  - Add progress validation
+  - Handle out-of-order updates
+  - Prevent progress resets
+  - Expected logs:
+    ```
+    [Progress] Update received:
+    {fileId, currentProgress, previousProgress, timestamp}
+
+    [Progress] Progress validation:
+    {fileId, isValid, details, timestamp}
+    ```
+
+#### D. PDF Text Extraction Issues
 - [ ] Fix PDF text extraction issues
   - Properly extract text content from PDFs
   - Add validation for extracted content
@@ -46,6 +90,8 @@
     [PDF Service] Content extracted:
     {contentLength, pageCount, timestamp}
     ```
+
+#### E. Chunk Processing Optimization
 - [ ] Implement file content chunking
   - Add chunk creation logic
   - Handle different file types (PDF, TXT)
@@ -67,7 +113,7 @@
   {fileId, chunkIndex, answersFound}
   ```
 
-#### B. Future Optimization
+#### F. Future Optimization
 - [ ] Implement sophisticated chunk size calculation
   - Consider OpenAI token limits
   - Respect natural document breaks
@@ -96,7 +142,10 @@
 8. Test answer aggregation
 
 ## Next Steps
-1. Fix PDF text extraction issues 🔄
-2. Implement proper chunk content validation
-3. Add error handling for chunk processing
-4. Implement answer aggregation across chunks
+1. Fix WebSocket connection management 🔄
+2. Implement processing state locks
+3. Improve progress tracking synchronization
+4. Fix PDF text extraction issues
+5. Implement proper chunk content validation
+6. Add error handling for chunk processing
+7. Implement answer aggregation across chunks
