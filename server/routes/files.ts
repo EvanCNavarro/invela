@@ -27,7 +27,8 @@ function detectDocumentCategory(filename: string): DocumentCategory {
   } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || lowerFilename.includes('iso-27001')) {
     category = DocumentCategory.ISO27001_CERT;
   } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || lowerFilename.includes('pen-test') ||
-             lowerFilename.includes('penetration test') || lowerFilename.includes('security test')) {
+             lowerFilename.includes('penetration test') || lowerFilename.includes('security test') || 
+             lowerFilename.includes('penetration-test') || lowerFilename.includes('penetration_test')) {
     category = DocumentCategory.PENTEST_REPORT;
   } else if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan') || 
              lowerFilename.includes('business-continuity') || lowerFilename.includes('disaster recovery') ||
