@@ -863,10 +863,12 @@ export function registerRoutes(app: Express): Express {
   });
 
   // Fix fintech invite endpoint task creation
-  app.post("/apifintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Startinginvitation process');console.log('[FinTech Invite] Request body:', req.body);
+  app.post("/api/fintech/invite", requireAuth, async (req, res) => {
+    console.log('[FinTech Invite] Starting invitation process');
+    console.log('[FinTech Invite] Request body:', req.body);
 
-    try {      const { email, company_name, full_name, sender_name } = req.body;
+    try {
+      const { email, company_name, full_name, sender_name } = req.body;
 
       // Input validation
       const invalidFields = [];
