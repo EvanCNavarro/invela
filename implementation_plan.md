@@ -70,20 +70,22 @@
   - Integrate OpenAI processing ✓
 
 #### F. Answer Processing 🔄 (Current Focus)
-- [ ] Implement answer aggregation and processing
-  - [x] Process chunks sequentially
-  - [x] Extract answers from chunks
-  - 🔄 Fix critical metadata issues
-    - [ ] Fix SQL errors in metadata updates
-    - [ ] Implement proper metadata tracking
-    - [ ] Add error handling for metadata updates
-  - [ ] Aggregate results across chunks
-    - [ ] Collect answers from all batches
-    - [ ] Track answer counts correctly
-    - [ ] Update progress accurately
-  - [ ] Field key validation and mapping
-  - [ ] Answer deduplication
-  - [ ] UI display updates
+- [x] Fix metadata update issues
+  - [x] Fix SQL errors in metadata updates
+  - [x] Implement proper metadata tracking
+  - [x] Add error handling for metadata updates
+- [ ] Implement field key mapping 🔄
+  - [ ] Update OpenAI prompt to use specific field keys
+  - [ ] Add field key validation
+  - [ ] Update answer processing for field mapping
+- [ ] Answer deduplication
+  - [ ] Implement similarity check for answers
+  - [ ] Filter duplicate answers within same field
+  - [ ] Maintain confidence scores
+- [ ] UI display updates
+  - [ ] Show answers by field
+  - [ ] Display confidence scores
+  - [ ] Add filtering options
 
 #### G. Future Optimization
 - [ ] Implement sophisticated chunk size calculation
@@ -106,8 +108,8 @@
 - PDF extraction accuracy 100% ✓
 - Answer aggregation accuracy TBD
   * Basic structure: 100% ✓
-  * Metadata updates: 0%
-  * Field mapping: 0%
+  * Metadata updates: 100% ✓
+  * Field mapping: 0% 🔄
   * Deduplication: 0%
   * UI updates: 0%
 
@@ -122,15 +124,15 @@
 8. Verify chunk processing accuracy ✓
 9. Test answer aggregation 🔄
    - [x] Basic structure implemented
-   - [ ] Fix metadata update errors
-   - [ ] Verify answer tracking
-   - [ ] Test UI updates
-   - [ ] Field mapping validation
+   - [x] Fix metadata update errors
+   - [x] Verify answer tracking
+   - [ ] Field mapping validation 🔄
    - [ ] Answer deduplication
+   - [ ] Test UI updates
 
 ## Next Steps
-1. Fix SQL metadata update errors 🔄
-2. Implement proper answer tracking
-3. Add UI progress updates
-4. Implement field key mapping
-5. Add answer deduplication
+1. Update OpenAI prompt for field-specific answers 🔄
+2. Add field key validation
+3. Update answer processing logic
+4. Implement answer deduplication
+5. Enhance UI with field-specific displays

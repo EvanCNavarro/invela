@@ -801,53 +801,54 @@ export async function analyzeDocument(
     });
 
     const prompt = `
-    As a compliance and security expert, analyze this document section and extract specific information for each compliance question.
-    Focus on identifying clear, factual evidence that directly answers each question.
+    As a compliance and security expert, analyze this document section and extract specific information for each field.
+    You must maintain strict field key mapping throughout your analysis.
 
     Document Text:
     ${documentText}
 
-    For each field below, search for direct evidence or statements that answer the question.
-    Provide answers even if the confidence is moderate, as long as there is relevant information.
+    Instructions:
+    1. For each field below, extract ONLY information that directly answers its specific question
+    2. You MUST use the exact field_key provided for each answer
+    3. Do not combine answers from different fields
+    4. If no relevant information is found for a field, skip it
+    5. Use high confidence scores (0.9+) only for exact matches
 
     Fields to analyze:
     ${fields.map(f => `
-    Field: ${f.field_key}
+    Field Key: "${f.field_key}"
     Question: ${f.question}
     Search Instructions: ${f.ai_search_instructions}
     Look for:
     - Direct statements or claims
     - Specific dates, numbers, or procedures
-    - Compliance-related terminology
     - Policy descriptions
-    - Related or indirect evidence that might be relevant
     `).join('\n')}
 
     Return a JSON object in this format:
     {
       "answers": [
         {
-          "field_key": "specific field_key from the questions above",
+          "field_key": "exact field_key from above",
           "answer": "exact quote or clear summary from document",
           "source_document": "relevant section from document that supports this answer",
-          "confidence": number between 0 and 1 (use 0.5+ for relevant but indirect matches)
+          "confidence": number between 0 and 1
         }
       ]
     }
 
     Important:
-    - Include answers where you find any relevant evidence
-    - Match the exact field_key from the questions above
-    - Quote directly from the document when possible
-    - Include the specific section that supports each answer
-    - Use confidence scores:
-      * 0.9+ for exact matches
-      * 0.7+ for strong indirect matches
-      * 0.5+ for relevant but indirect matches
+    - Each answer MUST use one of these exact field keys: ${fields.map(f => `"${f.field_key}"`).join(', ')}
+    - Do not create new field keys or combine multiple fields
+    - Confidence scoring:
+      * 0.9+ for exact matches with clear evidence
+      * 0.7-0.8 for strong indirect matches
+      * 0.5-0.6 for relevant but indirect matches
+      * Skip if confidence would be below 0.5
     `;
 
-    console.log('[OpenAI Service] Sending request:', { 
-      promptLength: prompt.length,
+    console.log('[OpenAI Service] Sending request with field keys:', { 
+      fieldKeys: fields.map(f => f.field_key),
       timestamp: new Date().toISOString() 
     });
 
@@ -875,26 +876,28 @@ export async function analyzeDocument(
 
     const result = JSON.parse(response.choices[0].message.content);
 
-    // Lower confidence threshold to capture more potential matches
-    const CONFIDENCE_THRESHOLD = 0.5;
-
-    // Log all answers before filtering
-    console.log('[OpenAI Service] Raw answers found:', {
-      total: result.answers.length,
-      answers: result.answers.map((a: DocumentAnswer) => ({
-        field: a.field_key,
-        confidence: a.confidence,
-        length: a.answer.length
-      })),
-      timestamp: new Date().toISOString()
+    // Validate field keys in response
+    const validFieldKeys = new Set(fields.map(f => f.field_key));
+    result.answers = result.answers.filter(answer => {
+      const isValidKey = validFieldKeys.has(answer.field_key);
+      if (!isValidKey) {
+        console.warn('[OpenAI Service] Invalid field key found:', {
+          invalidKey: answer.field_key,
+          validKeys: Array.from(validFieldKeys),
+          answer: answer.answer.substring(0, 100) + '...'
+        });
+      }
+      return isValidKey;
     });
 
-    result.answers = result.answers.filter((answer: DocumentAnswer) => answer.confidence >= CONFIDENCE_THRESHOLD);
-
-    console.log('[OpenAI Service] Analysis completed:', {
-      answersFound: result.answers.length,
-      duration,
-      fieldsAnswered: result.answers.map((a: DocumentAnswer) => a.field_key),
+    console.log('[OpenAI Service] Answers by field:', {
+      total: result.answers.length,
+      byField: Object.fromEntries(
+        Array.from(validFieldKeys).map(key => [
+          key,
+          result.answers.filter(a => a.field_key === key).length
+        ])
+      ),
       timestamp: new Date().toISOString()
     });
 
