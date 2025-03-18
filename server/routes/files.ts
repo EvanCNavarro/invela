@@ -59,7 +59,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         upload_time: new Date(),
         download_count: 0,
         version: 1,
-        document_metadata: {
+        metadata: {
           answers: [],
           chunks_processed: 0,
           chunks_total: 0,
@@ -150,7 +150,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
       await db.update(files)
         .set({ 
           status: 'processing',
-          document_metadata: processingMetadata
+          metadata: processingMetadata
         })
         .where(eq(files.id, fileId));
 
@@ -184,7 +184,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
                 .from(files)
                 .where(eq(files.id, fileId));
 
-              const currentMetadata = currentFile.document_metadata || {};
+              const currentMetadata = currentFile.metadata || {};
               const updatedMetadata = {
                 ...currentMetadata,
                 chunks_processed: processedChunks,
@@ -194,7 +194,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
               // Update metadata
               await db.update(files)
-                .set({ document_metadata: updatedMetadata })
+                .set({ metadata: updatedMetadata })
                 .where(eq(files.id, fileId));
             }
 
@@ -217,7 +217,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
           .where(eq(files.id, fileId));
 
         const finalMetadata = {
-          ...(finalFile.document_metadata || {}),
+          ...(finalFile.metadata || {}),
           processing_completed: new Date().toISOString(),
           chunks_processed: chunks.length,
           answers_found: answersFound
@@ -227,7 +227,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
         await db.update(files)
           .set({ 
             status: 'processed',
-            document_metadata: finalMetadata
+            metadata: finalMetadata
           })
           .where(eq(files.id, fileId));
 
@@ -267,7 +267,7 @@ router.get("/api/documents/:id/progress", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const metadata = fileRecord.document_metadata || {};
+    const metadata = fileRecord.metadata || {};
     const chunksTotal = metadata.chunks_total || 1;
     const chunksProcessed = metadata.chunks_processed || 0;
     const answersFound = metadata.answers_found || 0;
@@ -299,7 +299,7 @@ router.get("/api/documents/:id/results", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const metadata = fileRecord.document_metadata || {};
+    const metadata = fileRecord.metadata || {};
     const answers = metadata.answers || [];
 
     res.json({
