@@ -1,14 +1,10 @@
-import { Router } from 'express';
-import { db } from "@db";
-import { files } from "@db/schema";
-import { eq, sql } from "drizzle-orm";
-import path from 'path';
-import fs from 'fs';
-import { documentUpload } from '../middleware/upload';
-import multer from 'multer';
-import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate } from '../services/websocket';
-import { aggregateAnswers } from '../services/answerAggregation';
+// Ensure upload directory exists
+const router = Router();
+const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Process chunks in background
 async function processDocument(
@@ -178,13 +174,18 @@ router.post("/api/documents/:id/process", async (req, res) => {
   }
 });
 
-// Ensure upload directory exists
-const router = Router();
-const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
+import { Router } from 'express';
+import { db } from "@db";
+import { files } from "@db/schema";
+import { eq, sql } from "drizzle-orm";
+import path from 'path';
+import fs from 'fs';
+import { documentUpload } from '../middleware/upload';
+import multer from 'multer';
+import { createDocumentChunks, processChunk } from '../services/documentChunking';
+import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { aggregateAnswers } from '../services/answerAggregation';
 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
 
 function detectDocumentCategory(filename: string): DocumentCategory {
   const lowerFilename = filename.toLowerCase();
