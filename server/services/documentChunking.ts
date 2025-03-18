@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { extractTextFromFirstPages } from './pdf';
+import { analyzeDocument } from './openai';
 
 interface Chunk {
   content: string;
@@ -111,9 +112,22 @@ export async function processChunk(
       timestamp: new Date().toISOString()
     });
 
-    // Here we'll integrate with OpenAI processing
-    // This is a placeholder that will be implemented next
-    throw new Error('OpenAI processing not implemented yet');
+    // Process chunk with OpenAI
+    const result = await analyzeDocument(chunk.content, cardFields);
+
+    console.log('[DocumentChunking] Chunk processed:', {
+      chunkIndex: chunk.index,
+      answersFound: result.answers.length,
+      timestamp: new Date().toISOString()
+    });
+
+    return {
+      answers: result.answers.map(answer => ({
+        field: answer.field_key,
+        answer: answer.answer,
+        confidence: 0.9 // Default confidence for now
+      }))
+    };
 
   } catch (error) {
     console.error('[DocumentChunking] Error processing chunk:', {
