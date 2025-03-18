@@ -1,6 +1,5 @@
 import { apiRequest } from '@/lib/queryClient';
 import type { CardField } from './cardService';
-import { wsService } from '@/lib/websocket';
 
 interface ProcessingResult {
   answersFound: number;
@@ -10,13 +9,7 @@ interface ProcessingResult {
     chunksProcessed: number;
     totalChunks: number;
   };
-}
-
-interface DocumentAnswer {
-  field_key: string;
-  answer: string;
-  source_document: string;
-  chunk_index?: number;
+  fileId?: number;
 }
 
 class DocumentProcessingError extends Error {
@@ -47,25 +40,15 @@ class ProcessingQueueManager {
     this.onProgressCallback = callback;
   }
 
-  private emitProgress(fileId: number, status: ProcessingResult['status'], data: Partial<ProcessingResult> = {}) {
-    if (this.onProgressCallback) {
+  private emitProgress(status: ProcessingResult['status'], data: Partial<ProcessingResult> = {}) {
+    if (this.currentFileId && this.onProgressCallback) {
       this.onProgressCallback({
+        fileId: this.currentFileId,
         answersFound: data.answersFound || 0,
         status,
         ...data
       });
     }
-
-    // Also emit via WebSocket for real-time UI updates
-    wsService.emit('TASK_UPDATE', {
-      id: fileId,
-      status,
-      progress: data.progress || null,
-      metadata: {
-        answersFound: data.answersFound || 0,
-        ...data.progress
-      }
-    });
   }
 
   async addToQueue(fileId: number): Promise<void> {
@@ -129,7 +112,7 @@ class ProcessingQueueManager {
       const processData = await processResponse.json();
 
       // Initial progress update
-      this.emitProgress(this.currentFileId, 'processing', {
+      this.emitProgress('processing', {
         progress: {
           chunksProcessed: 0,
           totalChunks: processData.totalChunks
@@ -147,8 +130,7 @@ class ProcessingQueueManager {
 
         const progressData = await progressResponse.json();
 
-        // Emit progress update
-        this.emitProgress(this.currentFileId, 'processing', {
+        this.emitProgress('processing', {
           answersFound: progressData.answersFound || 0,
           progress: progressData.progress
         });
@@ -156,8 +138,7 @@ class ProcessingQueueManager {
         if (progressData.status === 'processed') {
           isProcessing = false;
           success = true;
-          // Emit final state
-          this.emitProgress(this.currentFileId, 'processed', {
+          this.emitProgress('processed', {
             answersFound: progressData.answersFound || 0,
             progress: {
               chunksProcessed: progressData.progress.totalChunks,
@@ -176,8 +157,7 @@ class ProcessingQueueManager {
         timestamp: new Date().toISOString()
       });
 
-      // Emit error state
-      this.emitProgress(this.currentFileId, 'error', {
+      this.emitProgress('error', {
         error: error instanceof Error ? error.message : 'Processing failed'
       });
     } finally {

@@ -6,8 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentRow } from './DocumentRow';
 import { UploadedFile, DocumentStatus } from './types';
-import { wsService } from '@/lib/websocket';
-import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface DocumentProcessingStepProps {
   companyName: string;
@@ -23,8 +21,6 @@ export function DocumentProcessingStep({
   const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [files, setFiles] = React.useState<UploadedFile[]>([]);
-  const subscriptionsRef = useRef<(() => void)[]>([]);
-  const { connected } = useWebSocket();
   const processingStartedRef = useRef(false);
 
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
@@ -48,7 +44,7 @@ export function DocumentProcessingStep({
 
     setFiles(validFiles.map(file => ({
       ...file,
-      status: 'waiting' as DocumentStatus // Set initial status to waiting
+      status: 'waiting' as DocumentStatus
     })));
 
     console.log('[DocumentProcessingStep] Files initialized:', {
@@ -61,69 +57,6 @@ export function DocumentProcessingStep({
       timestamp: new Date().toISOString()
     });
   }, [initialFiles]);
-
-  // Handle WebSocket events
-  React.useEffect(() => {
-    if (!connected) return;
-
-    const setupSubscriptions = async () => {
-      try {
-        const taskSub = await wsService.subscribe('TASK_UPDATE', (data) => {
-          const fileIndex = files.findIndex(f => f.id === data.id);
-          if (fileIndex === -1) return;
-
-          console.log('[DocumentProcessingStep] Task update received:', {
-            fileId: data.id,
-            status: data.status,
-            progress: data.progress,
-            metadata: data.metadata,
-            timestamp: new Date().toISOString()
-          });
-
-          setFiles(prevFiles => prevFiles.map((file, index) => 
-            index === fileIndex ? {
-              ...file,
-              status: data.status as DocumentStatus,
-              answersFound: data.metadata?.answersFound || 0
-            } : file
-          ));
-
-          if (data.status === 'error') {
-            toast({
-              variant: 'destructive',
-              title: 'Processing Error',
-              description: `Failed to process ${files[fileIndex].name}`
-            });
-          } else if (data.status === 'processed') {
-            toast({
-              title: 'Processing Complete',
-              description: `Successfully processed ${files[fileIndex].name}`
-            });
-          }
-        });
-
-        subscriptionsRef.current = [taskSub];
-      } catch (error) {
-        console.error('[DocumentProcessingStep] WebSocket subscription error:', {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        });
-      }
-    };
-
-    setupSubscriptions();
-
-    return () => {
-      subscriptionsRef.current.forEach(unsubscribe => {
-        try {
-          unsubscribe();
-        } catch (error) {
-          console.error('[DocumentProcessingStep] Unsubscribe error:', error);
-        }
-      });
-      subscriptionsRef.current = [];
-    };
-  }, [connected, files, toast]);
 
   // Start processing when ready
   React.useEffect(() => {
@@ -145,11 +78,34 @@ export function DocumentProcessingStep({
 
         const fileIds = files.map(f => f.id!);
         await processDocuments(fileIds, cardFields, (progress) => {
-          if (progress.fileId) {
-            const index = fileIds.indexOf(progress.fileId);
-            if (index !== -1) {
-              setCurrentProcessingIndex(index);
-            }
+          if (!progress.fileId) return;
+
+          const index = fileIds.indexOf(progress.fileId);
+          if (index === -1) return;
+
+          setCurrentProcessingIndex(index);
+
+          setFiles(prevFiles => prevFiles.map((file, fileIndex) => 
+            fileIndex === index ? {
+              ...file,
+              status: progress.status as DocumentStatus,
+              answersFound: progress.answersFound,
+              error: progress.error
+            } : file
+          ));
+
+          // Show toasts for important status changes
+          if (progress.status === 'error') {
+            toast({
+              variant: 'destructive',
+              title: 'Processing Error',
+              description: `Failed to process ${files[index].name}`
+            });
+          } else if (progress.status === 'processed') {
+            toast({
+              title: 'Processing Complete',
+              description: `Successfully processed ${files[index].name}`
+            });
           }
         });
 
