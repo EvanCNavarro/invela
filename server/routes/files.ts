@@ -353,11 +353,38 @@ router.post("/api/documents/:id/process", async (req, res) => {
     const fileId = parseInt(req.params.id);
     const { fields } = req.body;
 
+    // Validate fields structure
     if (!fields?.length) {
-      return res.status(400).json({
+      console.log('[Document Processing] No fields provided');
+      return res.status(400).json({ 
         error: "No fields provided for processing"
       });
     }
+
+    // Validate field structure
+    const invalidFields = fields.filter(field => 
+      !field.field_key || 
+      !field.question ||
+      typeof field.field_key !== 'string' ||
+      typeof field.question !== 'string'
+    );
+
+    if (invalidFields.length > 0) {
+      console.log('[Document Processing] Invalid field structure:', {
+        invalidFields,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(400).json({
+        error: "Invalid field structure",
+        detail: "Each field must have a field_key and question"
+      });
+    }
+
+    console.log('[Document Processing] Processing request:', {
+      fileId,
+      fieldKeys: fields.map(f => f.field_key),
+      timestamp: new Date().toISOString()
+    });
 
     const fileRecord = await db.query.files.findFirst({
       where: eq(files.id, fileId)
@@ -370,10 +397,13 @@ router.post("/api/documents/:id/process", async (req, res) => {
     const filePath = path.join(uploadDir, fileRecord.path);
     const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-    // Initialize metadata
+    // Initialize metadata with field information
     const initialMetadata = {
       status: 'processing',
-      fields,
+      fields: fields.map(f => ({
+        field_key: f.field_key,
+        question: f.question
+      })),
       chunks: {
         total: chunks.length,
         processed: 0
@@ -397,7 +427,8 @@ router.post("/api/documents/:id/process", async (req, res) => {
     // Send initial response
     res.json({
       status: 'processing',
-      totalChunks: chunks.length
+      totalChunks: chunks.length,
+      fields: fields.map(f => f.field_key)
     });
 
     // Start background processing
