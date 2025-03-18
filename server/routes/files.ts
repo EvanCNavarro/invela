@@ -1,15 +1,13 @@
-import { 
-  Router 
-} from 'express';
+import { Router } from 'express';
 import { db } from "@db";
-import { files } from "@db/schema";
+import { files, DocumentCategory } from "@db/schema";
 import { eq } from "drizzle-orm";
 import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { broadcastDocumentCountUpdate, broadcastUploadProgress, broadcastTaskUpdate } from '../services/websocket';
 
 // Ensure upload directory exists
 const router = Router();
@@ -17,6 +15,23 @@ const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+function detectDocumentCategory(filename: string): keyof typeof DocumentCategory | null {
+  const lowerFilename = filename.toLowerCase();
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2')) {
+    return 'SOC2_AUDIT';
+  }
+  if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001')) {
+    return 'ISO27001_CERT';
+  }
+  if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test')) {
+    return 'PENTEST_REPORT';
+  }
+  if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan')) {
+    return 'BUSINESS_CONTINUITY';
+  }
+  return 'OTHER';
 }
 
 // File upload endpoint
@@ -31,6 +46,15 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         detail: 'Request must include a file'
       });
     }
+
+    // Broadcast upload start
+    broadcastUploadProgress({
+      type: 'UPLOAD_PROGRESS',
+      fileId: null,
+      fileName: req.file.originalname,
+      status: 'uploading',
+      progress: 0
+    });
 
     console.log('[Files] File details:', {
       originalname: req.file.originalname,
@@ -47,6 +71,9 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
+    // Detect document category
+    const documentCategory = detectDocumentCategory(req.file.originalname);
+
     // Create file record in database with initial metadata
     const [fileRecord] = await db.insert(files)
       .values({
@@ -57,6 +84,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         user_id: req.user.id,
         company_id: req.user.company_id,
         status: 'uploaded',
+        document_category: documentCategory,
         created_at: new Date(),
         updated_at: new Date(),
         upload_time: new Date(),
@@ -74,15 +102,37 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     console.log('[Files] Created file record:', {
       id: fileRecord.id,
       name: fileRecord.name,
-      status: fileRecord.status
+      status: fileRecord.status,
+      category: documentCategory
+    });
+
+    // Broadcast upload complete
+    broadcastUploadProgress({
+      type: 'UPLOAD_PROGRESS',
+      fileId: fileRecord.id,
+      fileName: fileRecord.name,
+      status: 'uploaded',
+      progress: 100
     });
 
     // Broadcast document count update
     broadcastDocumentCountUpdate({
       type: 'COUNT_UPDATE',
-      category: fileRecord.document_category || 'other',
+      category: documentCategory,
       count: 1,
       companyId: req.user.company_id.toString()
+    });
+
+    // Broadcast task update for processing start
+    broadcastTaskUpdate({
+      id: fileRecord.id,
+      status: 'processing',
+      progress: 0,
+      metadata: {
+        fileName: fileRecord.name,
+        uploadTime: fileRecord.upload_time,
+        category: documentCategory
+      }
     });
 
     res.status(201).json(fileRecord);
@@ -95,6 +145,17 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
+    }
+
+    // Broadcast upload error
+    if (req.file) {
+      broadcastUploadProgress({
+        type: 'UPLOAD_PROGRESS',
+        fileId: null,
+        fileName: req.file.originalname,
+        status: 'error',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
 
     // Enhanced error handling
@@ -187,6 +248,18 @@ router.post("/api/documents/:id/process", async (req, res) => {
             const result = await processChunk(chunk, fields);
             processedChunks++;
 
+            // Broadcast progress update
+            broadcastTaskUpdate({
+              id: fileId,
+              status: 'processing',
+              progress: (processedChunks / chunks.length) * 100,
+              metadata: {
+                chunksProcessed: processedChunks,
+                totalChunks: chunks.length,
+                answersFound
+              }
+            });
+
             if (result.answers?.length) {
               answersFound += result.answers.length;
 
@@ -242,11 +315,34 @@ router.post("/api/documents/:id/process", async (req, res) => {
           })
           .where(eq(files.id, fileId));
 
+        // Broadcast completion
+        broadcastTaskUpdate({
+          id: fileId,
+          status: 'completed',
+          progress: 100,
+          metadata: {
+            chunksProcessed: chunks.length,
+            totalChunks: chunks.length,
+            answersFound,
+            completedAt: new Date().toISOString()
+          }
+        });
+
       })().catch(error => {
         console.error('[Document Processing] Background processing error:', {
           fileId,
           error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
+        });
+
+        // Broadcast error
+        broadcastTaskUpdate({
+          id: fileId,
+          status: 'error',
+          progress: 0,
+          metadata: {
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
         });
       });
 
