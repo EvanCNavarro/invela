@@ -417,26 +417,45 @@ router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res)
       hasResponse: !!response
     });
 
-    const [updatedResponse] = await db.insert(cardResponses)
-      .values({
-        task_id: parseInt(taskId),
-        field_id: parseInt(fieldId),
-        response_value: response,
-        status: response ? 'COMPLETE' : 'EMPTY',
-        version: 1,
-        created_at: new Date(),
-        updated_at: new Date()
-      })
-      .onConflictDoUpdate({
-        target: [cardResponses.task_id, cardResponses.field_id],
-        set: {
+    // First check if response exists
+    const existingResponse = await db.select()
+      .from(cardResponses)
+      .where(and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.field_id, parseInt(fieldId))
+      ))
+      .limit(1);
+
+    let updatedResponse;
+
+    if (existingResponse.length > 0) {
+      // Update existing response
+      [updatedResponse] = await db.update(cardResponses)
+        .set({
           response_value: response,
           status: response ? 'COMPLETE' : 'EMPTY',
           version: sql`${cardResponses.version} + 1`,
           updated_at: new Date()
-        }
-      })
-      .returning();
+        })
+        .where(and(
+          eq(cardResponses.task_id, parseInt(taskId)),
+          eq(cardResponses.field_id, parseInt(fieldId))
+        ))
+        .returning();
+    } else {
+      // Insert new response
+      [updatedResponse] = await db.insert(cardResponses)
+        .values({
+          task_id: parseInt(taskId),
+          field_id: parseInt(fieldId),
+          response_value: response,
+          status: response ? 'COMPLETE' : 'EMPTY',
+          version: 1,
+          created_at: new Date(),
+          updated_at: new Date()
+        })
+        .returning();
+    }
 
     // Calculate progress
     const totalFields = await db.select({ count: sql<number>`count(*)` })
