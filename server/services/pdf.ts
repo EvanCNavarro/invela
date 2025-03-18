@@ -11,6 +11,15 @@ const options = {
 // Each token is approximately 4 characters
 const MAX_TEXT_LENGTH = 16000 * 4; // Set max length to stay within GPT-3.5-turbo's limit
 const MIN_TEXT_LENGTH = 50; // Minimum text length to consider content valid
+const MIN_PAGE_TEXT_LENGTH = 10; // Minimum text length for a single page
+
+interface PageExtractionStats {
+  pageIndex: number;
+  contentLength: number;
+  validItemsCount: number;
+  invalidItemsCount: number;
+  emptyItemsCount: number;
+}
 
 export async function extractTextFromFirstPages(filePath: string, maxPages?: number): Promise<string> {
   console.log('[PDF Service] Starting text extraction from first pages:', {
@@ -54,6 +63,7 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
     });
 
     // Process each page and validate content
+    const pageStats: PageExtractionStats[] = [];
     const processedPages = data.pages.map((page, pageIndex) => {
       if (!page?.content?.length) {
         console.warn('[PDF Service] Empty page content found:', {
@@ -62,6 +72,10 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
         });
         return '';
       }
+
+      let validItems = 0;
+      let invalidItems = 0;
+      let emptyItems = 0;
 
       // Join content items with space and clean up whitespace
       const pageText = page.content
@@ -72,23 +86,41 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
               item,
               timestamp: new Date().toISOString()
             });
+            invalidItems++;
             return '';
           }
-          return item.str.trim();
+          const text = item.str.trim();
+          if (text.length === 0) {
+            emptyItems++;
+            return '';
+          }
+          validItems++;
+          return text;
         })
         .filter(Boolean)
         .join(' ')
         .replace(/\s+/g, ' ')
         .trim();
 
+      pageStats.push({
+        pageIndex,
+        contentLength: pageText.length,
+        validItemsCount: validItems,
+        invalidItemsCount: invalidItems,
+        emptyItemsCount: emptyItems
+      });
+
       console.log('[PDF Service] Page processed:', {
         pageIndex,
         contentLength: pageText.length,
-        hasContent: pageText.length > 0,
+        validItems,
+        invalidItems,
+        emptyItems,
+        hasContent: pageText.length > MIN_PAGE_TEXT_LENGTH,
         timestamp: new Date().toISOString()
       });
 
-      return pageText;
+      return pageText.length >= MIN_PAGE_TEXT_LENGTH ? pageText : '';
     });
 
     // Filter out empty pages and join with double newline
@@ -104,10 +136,11 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
       throw new Error(`Extracted text too short (${text.length} chars). Minimum required: ${MIN_TEXT_LENGTH}`);
     }
 
-    console.log('[PDF Service] Content extracted:', {
+    console.log('[PDF Service] Content extraction complete:', {
       contentLength: text.length,
       pageCount: data.pages.length,
       nonEmptyPages: processedPages.filter(p => p.length > 0).length,
+      pageStats,
       timestamp: new Date().toISOString()
     });
 
