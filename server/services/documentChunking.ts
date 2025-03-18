@@ -18,7 +18,8 @@ export class DocumentChunkingError extends Error {
 
 const MIN_CHUNK_SIZE = 100; // Minimum characters per chunk
 const OPTIMAL_CHUNK_SIZE = 4000; // Target size for chunks
-const MAX_OVERLAP = 200; // Maximum overlap between chunks
+const BATCH_SIZE = 5; // Number of chunks to process before logging
+const PROCESSING_INTERVAL = 1000; // Milliseconds between processing batches
 
 export async function createDocumentChunks(
   filePath: string,
@@ -26,13 +27,6 @@ export async function createDocumentChunks(
   chunkSize: number = OPTIMAL_CHUNK_SIZE
 ): Promise<Chunk[]> {
   try {
-    console.log('[DocumentChunking] Starting document chunking:', {
-      filePath,
-      mimeType,
-      chunkSize,
-      timestamp: new Date().toISOString()
-    });
-
     let content: string;
 
     // Handle different file types
@@ -46,25 +40,17 @@ export async function createDocumentChunks(
       throw new DocumentChunkingError('No content extracted from document');
     }
 
-    console.log('[DocumentChunking] Content extracted:', {
-      contentLength: content.length,
-      mimeType,
-      timestamp: new Date().toISOString()
-    });
-
     // Split content into chunks
     const chunks: Chunk[] = [];
     let currentPosition = 0;
+    let invalidContentCount = 0;
 
     while (currentPosition < content.length) {
-      // Find a good breaking point
       let endPosition = Math.min(currentPosition + chunkSize, content.length);
 
       // Try to break at a natural point if we're not at the end
       if (endPosition < content.length) {
         const searchWindow = content.slice(endPosition - 100, endPosition + 100);
-
-        // Look for sentence endings or paragraph breaks
         const periodMatch = searchWindow.match(/\.\s+/);
         const newlineMatch = searchWindow.match(/\n\s*\n/);
 
@@ -77,7 +63,6 @@ export async function createDocumentChunks(
 
       const chunkContent = content.slice(currentPosition, endPosition).trim();
 
-      // Validate chunk content
       if (chunkContent.length >= MIN_CHUNK_SIZE) {
         chunks.push({
           content: chunkContent,
@@ -85,20 +70,8 @@ export async function createDocumentChunks(
           startPosition: currentPosition,
           endPosition
         });
-
-        console.log('[DocumentChunking] Created chunk:', {
-          chunkIndex: chunks.length - 1,
-          chunkSize: chunkContent.length,
-          startsWithWord: chunkContent.slice(0, 20),
-          endsWithWord: chunkContent.slice(-20),
-          timestamp: new Date().toISOString()
-        });
       } else {
-        console.warn('[DocumentChunking] Skipping small chunk:', {
-          chunkSize: chunkContent.length,
-          minRequired: MIN_CHUNK_SIZE,
-          timestamp: new Date().toISOString()
-        });
+        invalidContentCount++;
       }
 
       currentPosition = endPosition;
@@ -108,26 +81,25 @@ export async function createDocumentChunks(
       throw new DocumentChunkingError('No valid chunks created from document');
     }
 
-    console.log('[DocumentChunking] Chunks created:', {
-      totalChunks: chunks.length,
-      averageChunkSize: chunks.reduce((acc, chunk) => 
-        acc + chunk.content.length, 0) / chunks.length,
+    // Log only final summary
+    console.log('[PDF Service] Extraction complete:', {
+      fileName: filePath.split('/').pop(),
+      totalPages: content.length > 0 ? Math.ceil(content.length / 3000) : 0,
+      extractedPages: chunks.length,
+      totalContent: content.length,
+      averageContentPerPage: Math.round(content.length / chunks.length),
+      invalidContentItems: invalidContentCount,
       timestamp: new Date().toISOString()
     });
 
     return chunks;
   } catch (error) {
-    console.error('[DocumentChunking] Error creating chunks:', {
+    console.error('[PDF Service] Extraction failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      filePath,
+      fileName: filePath.split('/').pop(),
       timestamp: new Date().toISOString()
     });
-
-    throw new DocumentChunkingError(
-      'Failed to create document chunks',
-      { originalError: error }
-    );
+    throw error;
   }
 }
 
@@ -135,17 +107,10 @@ export async function processChunk(
   chunk: Chunk,
   cardFields: string[]
 ): Promise<{
-  answers: Array<{ field: string; answer: string; confidence: number }>;
+  answers: Array<{ field_key: string; answer: string }>;
   error?: string;
 }> {
   try {
-    console.log('[DocumentChunking] Processing chunk:', {
-      chunkIndex: chunk.index,
-      contentLength: chunk.content.length,
-      fieldsCount: cardFields.length,
-      timestamp: new Date().toISOString()
-    });
-
     if (chunk.content.length < MIN_CHUNK_SIZE) {
       throw new Error(`Chunk content too small: ${chunk.content.length} chars`);
     }
@@ -160,24 +125,25 @@ export async function processChunk(
     // Process chunk with OpenAI
     const result = await analyzeDocument(chunk.content, formattedFields);
 
-    console.log('[DocumentChunking] Chunk processed:', {
-      chunkIndex: chunk.index,
-      answersFound: result.answers.length,
-      timestamp: new Date().toISOString()
-    });
+    // Only log when answers are found
+    if (result.answers.length > 0) {
+      console.log('[DocumentChunking] Answers found:', {
+        chunkIndex: chunk.index,
+        answerCount: result.answers.length,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     return {
       answers: result.answers.map(answer => ({
-        field: answer.field_key,
-        answer: answer.answer,
-        confidence: answer.confidence || 0.9 // Default confidence if not provided
+        field_key: answer.field_key,
+        answer: answer.answer
       }))
     };
 
   } catch (error) {
-    console.error('[DocumentChunking] Error processing chunk:', {
+    console.error('[DocumentChunking] Processing error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
       chunkIndex: chunk.index,
       timestamp: new Date().toISOString()
     });
