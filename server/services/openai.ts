@@ -800,7 +800,7 @@ export async function analyzeDocument(
     ${documentText}
 
     For each field below, search for direct evidence or statements that answer the question.
-    Only provide answers when you find explicit supporting text.
+    Provide answers even if the confidence is moderate, as long as there is relevant information.
 
     Fields to analyze:
     ${fields.map(f => `
@@ -812,6 +812,7 @@ export async function analyzeDocument(
     - Specific dates, numbers, or procedures
     - Compliance-related terminology
     - Policy descriptions
+    - Related or indirect evidence that might be relevant
     `).join('\n')}
 
     Return a JSON object in this format:
@@ -821,16 +822,19 @@ export async function analyzeDocument(
           "field_key": "string",
           "answer": "exact quote or clear summary from document",
           "source_document": "relevant section from document that supports this answer",
-          "confidence": number between 0 and 1
+          "confidence": number between 0 and 1 (use 0.5+ for relevant but indirect matches)
         }
       ]
     }
 
     Important:
-    - Only include answers where you find clear supporting evidence
+    - Include answers where you find any relevant evidence
     - Quote directly from the document when possible
     - Include the specific section that supports each answer
-    - Assign a confidence score based on how directly the evidence answers the question
+    - Use confidence scores:
+      * 0.9+ for exact matches
+      * 0.7+ for strong indirect matches
+      * 0.5+ for relevant but indirect matches
     `;
 
     console.log('[OpenAI Service] Sending request:', {
@@ -862,8 +866,20 @@ export async function analyzeDocument(
 
     const result = JSON.parse(response.choices[0].message.content);
 
-    // Filter answers by confidence threshold
-    const CONFIDENCE_THRESHOLD = 0.7;
+    // Lower confidence threshold to capture more potential matches
+    const CONFIDENCE_THRESHOLD = 0.5;
+
+    // Log all answers before filtering
+    console.log('[OpenAI Service] Raw answers found:', {
+      total: result.answers.length,
+      answers: result.answers.map(a => ({
+        field: a.field_key,
+        confidence: a.confidence,
+        length: a.answer.length
+      })),
+      timestamp: new Date().toISOString()
+    });
+
     result.answers = result.answers.filter(answer => answer.confidence >= CONFIDENCE_THRESHOLD);
 
     console.log('[OpenAI Service] Analysis completed:', {
@@ -871,26 +887,6 @@ export async function analyzeDocument(
       duration,
       fieldsAnswered: result.answers.map(a => a.field_key),
       timestamp: new Date().toISOString()
-    });
-
-    // Log analytics
-    await logSearchAnalytics({
-      searchType: 'document_analysis',
-      searchPrompt: prompt,
-      searchResults: result,
-      inputTokens: response.usage?.prompt_tokens || 0,
-      outputTokens: response.usage?.completion_tokens || 0,
-      estimatedCost: calculateOpenAICost(
-        response.usage?.prompt_tokens || 0,
-        response.usage?.completion_tokens || 0,
-        'gpt-3.5-turbo'
-      ),
-      model: 'gpt-3.5-turbo',
-      success: true,
-      duration,
-      searchDate: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     return result;
@@ -901,24 +897,6 @@ export async function analyzeDocument(
       duration,
       timestamp: new Date().toISOString()
     });
-
-    // Log failed attempt
-    await logSearchAnalytics({
-      searchType: 'document_analysis',
-      searchPrompt: '',
-      searchResults: {},
-      inputTokens: 0,
-      outputTokens: 0,
-      estimatedCost: 0,
-      model: 'gpt-3.5-turbo',
-      success: false,
-      errorMessage: error instanceof Error ? error.message : 'Unknown error',
-      duration,
-      searchDate: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
     throw error;
   }
 }
