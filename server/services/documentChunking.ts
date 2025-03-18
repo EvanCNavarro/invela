@@ -33,9 +33,14 @@ export async function createDocumentChunks(
 
     // Handle different file types
     if (mimeType === 'application/pdf') {
-      content = await extractTextFromFirstPages(filePath, 0); // 0 means all pages
+      // Pass undefined for maxPages to get all pages
+      content = await extractTextFromFirstPages(filePath);
     } else {
       content = fs.readFileSync(filePath, 'utf8');
+    }
+
+    if (!content?.length) {
+      throw new DocumentChunkingError('No content extracted from document');
     }
 
     // Split content into chunks
@@ -85,7 +90,7 @@ export async function createDocumentChunks(
     return chunks;
   } catch (error) {
     console.error('[DocumentChunking] Error creating chunks:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       filePath,
       timestamp: new Date().toISOString()
     });
@@ -138,7 +143,7 @@ export async function processChunk(
 
   } catch (error) {
     console.error('[DocumentChunking] Error processing chunk:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       chunkIndex: chunk.index,
       timestamp: new Date().toISOString()
     });

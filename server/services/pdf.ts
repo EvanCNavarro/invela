@@ -11,7 +11,7 @@ const options = {
 // Each token is approximately 4 characters
 const MAX_TEXT_LENGTH = 16000 * 4; // Set max length to stay within GPT-3.5-turbo's limit
 
-export async function extractTextFromFirstPages(filePath: string, maxPages: number = 3): Promise<string> {
+export async function extractTextFromFirstPages(filePath: string, maxPages?: number): Promise<string> {
   console.log('[PDF Service] Starting text extraction from first pages:', {
     filePath,
     maxPages,
@@ -25,11 +25,11 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
 
     console.log('[PDF Service] Reading PDF file');
 
-    // Extract with validation for maxPages (ensure at least one page)
-    const extractOptions = {
+    // Extract with page limit if specified
+    const extractOptions = maxPages !== undefined ? {
       ...options,
-      pageNumbers: Array.from({ length: Math.max(1, maxPages) }, (_, i) => i) // Ensure at least page 0
-    };
+      pageNumbers: Array.from({ length: Math.max(1, maxPages) }, (_, i) => i)
+    } : options;
 
     const data = await pdfExtract.extract(filePath, extractOptions);
 
@@ -39,7 +39,7 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
 
     console.log('[PDF Service] Extraction successful:', {
       totalPages: data.pages.length,
-      extractedPages: Math.min(maxPages, data.pages.length),
+      extractedPages: maxPages !== undefined ? Math.min(maxPages, data.pages.length) : data.pages.length,
       timestamp: new Date().toISOString()
     });
 
