@@ -19,16 +19,18 @@ if (!fs.existsSync(uploadDir)) {
 
 function detectDocumentCategory(filename: string): DocumentCategory {
   const lowerFilename = filename.toLowerCase();
-  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2')) {
+
+  // Improved detection patterns
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || lowerFilename.includes('soc-2')) {
     return DocumentCategory.SOC2_AUDIT;
   }
-  if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001')) {
+  if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || lowerFilename.includes('iso-27001')) {
     return DocumentCategory.ISO27001_CERT;
   }
-  if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test')) {
+  if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || lowerFilename.includes('pen-test')) {
     return DocumentCategory.PENTEST_REPORT;
   }
-  if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan')) {
+  if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan') || lowerFilename.includes('business-continuity')) {
     return DocumentCategory.BUSINESS_CONTINUITY;
   }
   return DocumentCategory.OTHER;
