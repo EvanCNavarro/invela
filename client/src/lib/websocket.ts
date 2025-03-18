@@ -1,4 +1,4 @@
-type MessageHandler = (data: any) => void;
+import type { MessageHandler } from './types';
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -274,6 +274,36 @@ class WebSocketService {
       this.socket.send(JSON.stringify({ type, data }));
     } else {
       throw new Error('[WebSocket] Connection not ready');
+    }
+  }
+
+  public async emit(type: string, data: any): Promise<void> {
+    try {
+      await this.connect();
+
+      console.log('[WebSocket] Emitting message:', {
+        type,
+        data,
+        connectionId: this.connectionId,
+        timestamp: new Date().toISOString()
+      });
+
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(JSON.stringify({
+          type: type.toLowerCase(),
+          payload: data
+        }));
+      } else {
+        throw new Error('WebSocket connection not ready');
+      }
+    } catch (error) {
+      console.error('[WebSocket] Error emitting message:', {
+        type,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        connectionId: this.connectionId,
+        timestamp: new Date().toISOString()
+      });
+      throw error;
     }
   }
 }
