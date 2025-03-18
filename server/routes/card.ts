@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, cardFields, cardResponses, files, TaskStatus } from '@db/schema';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, and, ilike, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
 import { updateCompanyRiskScore } from '../services/riskScore';
@@ -399,6 +399,154 @@ router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
     });
     res.status(500).json({
       message: "Failed to download assessment file",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+
+// Add new routes for saving and analyzing individual responses
+router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
+
+    logger.info('Saving card response', {
+      taskId,
+      fieldId,
+      hasResponse: !!response
+    });
+
+    const [updatedResponse] = await db.insert(cardResponses)
+      .values({
+        task_id: parseInt(taskId),
+        field_id: parseInt(fieldId),
+        response_value: response,
+        status: response ? 'COMPLETE' : 'EMPTY',
+        version: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .onConflictDoUpdate({
+        target: [cardResponses.task_id, cardResponses.field_id],
+        set: {
+          response_value: response,
+          status: response ? 'COMPLETE' : 'EMPTY',
+          version: sql`${cardResponses.version} + 1`,
+          updated_at: new Date()
+        }
+      })
+      .returning();
+
+    // Calculate progress
+    const totalFields = await db.select({ count: sql<number>`count(*)` })
+      .from(cardFields)
+      .then(result => result[0].count);
+
+    const completedFields = await db.select({ count: sql<number>`count(*)` })
+      .from(cardResponses)
+      .where(and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.status, 'COMPLETE')
+      ))
+      .then(result => result[0].count);
+
+    const progress = Math.round((completedFields / totalFields) * 100);
+
+    // Update task progress
+    await db.update(tasks)
+      .set({ 
+        progress,
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    logger.info('Response saved successfully', {
+      taskId,
+      fieldId,
+      responseId: updatedResponse.id,
+      progress
+    });
+
+    res.json({
+      id: updatedResponse.id,
+      status: updatedResponse.status,
+      progress
+    });
+
+  } catch (error) {
+    logger.error('Error saving response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: req.params.taskId,
+      fieldId: req.params.fieldId
+    });
+    res.status(500).json({
+      message: "Failed to save response",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
+
+    logger.info('Starting response analysis', {
+      taskId,
+      fieldId,
+      hasResponse: !!response
+    });
+
+    // Get the field details for AI instructions
+    const field = await db.query.cardFields.findFirst({
+      where: eq(cardFields.id, parseInt(fieldId))
+    });
+
+    if (!field) {
+      throw new Error('Field not found');
+    }
+
+    // Analyze the response using OpenAI
+    const analysis = await analyzeCardResponse(response, field);
+
+    // Update the response with AI analysis
+    const [updatedResponse] = await db.update(cardResponses)
+      .set({
+        ai_suspicion_level: analysis.suspicionLevel,
+        partial_risk_score: analysis.riskScore,
+        ai_reasoning: analysis.reasoning,
+        updated_at: new Date()
+      })
+      .where(and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.field_id, parseInt(fieldId))
+      ))
+      .returning();
+
+    logger.info('Analysis completed successfully', {
+      taskId,
+      fieldId,
+      responseId: updatedResponse.id,
+      suspicionLevel: analysis.suspicionLevel,
+      riskScore: analysis.riskScore
+    });
+
+    res.json({
+      field_id: parseInt(fieldId),
+      ai_suspicion_level: analysis.suspicionLevel,
+      partial_risk_score: analysis.riskScore,
+      reasoning: analysis.reasoning
+    });
+
+  } catch (error) {
+    logger.error('Error analyzing response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: req.params.taskId,
+      fieldId: req.params.fieldId
+    });
+    res.status(500).json({
+      message: "Failed to analyze response",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
