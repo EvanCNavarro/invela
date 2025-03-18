@@ -179,9 +179,10 @@ router.post("/api/documents/:id/process", async (req, res) => {
       });
     }
 
-    const [fileRecord] = await db.select()
-      .from(files)
-      .where(eq(files.id, fileId));
+    // Get file record
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
 
     if (!fileRecord) {
       return res.status(404).json({ error: "File not found" });
@@ -255,9 +256,13 @@ router.post("/api/documents/:id/process", async (req, res) => {
               answersFound += result.answers.length;
 
               // Get current metadata
-              const [currentFile] = await db.select()
-                .from(files)
-                .where(eq(files.id, fileId));
+              const currentFile = await db.query.files.findFirst({
+                where: eq(files.id, fileId)
+              });
+
+              if (!currentFile) {
+                throw new Error('File record not found');
+              }
 
               const currentMetadata = currentFile.metadata || {};
               const updatedMetadata = {
@@ -287,9 +292,13 @@ router.post("/api/documents/:id/process", async (req, res) => {
         }
 
         // Get final metadata state
-        const [finalFile] = await db.select()
-          .from(files)
-          .where(eq(files.id, fileId));
+        const finalFile = await db.query.files.findFirst({
+          where: eq(files.id, fileId)
+        });
+
+        if (!finalFile) {
+          throw new Error('File record not found');
+        }
 
         const finalMetadata = {
           ...(finalFile.metadata || {}),
@@ -357,9 +366,9 @@ router.get("/api/documents/:id/progress", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
 
-    const [fileRecord] = await db.select()
-      .from(files)
-      .where(eq(files.id, fileId));
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
 
     if (!fileRecord) {
       return res.status(404).json({ error: "File not found" });
@@ -389,9 +398,9 @@ router.get("/api/documents/:id/results", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
 
-    const [fileRecord] = await db.select()
-      .from(files)
-      .where(eq(files.id, fileId));
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
 
     if (!fileRecord) {
       return res.status(404).json({ error: "File not found" });
