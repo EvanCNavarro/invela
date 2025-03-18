@@ -439,6 +439,11 @@ router.post('/api/kyb/save', async (req, res) => {
       throw new Error('Task not found');
     }
 
+    // Check for required user and company IDs
+    if (!task.created_by || !task.company_id) {
+      throw new Error('Missing task user or company information');
+    }
+
     // Get all KYB fields with their groups
     const fields = await db.select()
       .from(kybFields)
@@ -449,15 +454,17 @@ router.post('/api/kyb/save', async (req, res) => {
 
     // Create file using FileCreationService
     const fileCreationResult = await FileCreationService.createFile({
-      name: fileName,
+      name: fileName || `kyb_form_${taskId}_${new Date().toISOString()}.csv`,
       content: csvData,
       type: 'text/csv',
       userId: task.created_by,
       companyId: task.company_id,
       metadata: {
         taskId,
+        taskType: 'kyb',
         formVersion: '1.0',
-        submissionDate: new Date().toISOString()
+        submissionDate: new Date().toISOString(),
+        fields: fields.map(f => f.field_key)
       },
       status: 'uploaded'
     });
@@ -593,7 +600,7 @@ router.post('/api/kyb/save', async (req, res) => {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to save KYB form data',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
