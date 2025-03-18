@@ -103,12 +103,10 @@ export function DocumentUploadStep({
         answersFound: result.answers_found || 0
       });
 
-      console.log('[DocumentUploadStep] Updated file metadata:', {
-        fileId: result.id,
-        status: 'uploaded',
-        fileName: file.name,
-        timestamp: new Date().toISOString()
-      });
+      // Update document counts directly after successful upload
+      if (result.document_category) {
+        updateDocumentCounts(result.document_category, 1);
+      }
 
       toast({
         title: "Upload Successful",
@@ -120,7 +118,7 @@ export function DocumentUploadStep({
       console.error('[DocumentUploadStep] Upload error:', error);
       throw error;
     }
-  }, [updateFileMetadata, toast]);
+  }, [updateFileMetadata, updateDocumentCounts, toast]);
 
   const handleFilesAccepted = async (files: File[]) => {
     console.log('[DocumentUploadStep] Files accepted:', {
@@ -187,7 +185,7 @@ export function DocumentUploadStep({
           category: data.category,
           countChange: data.count
         });
-        updateDocumentCounts(data.category, data.count, false);
+        updateDocumentCounts(data.category, data.count);
       }
     };
 
