@@ -430,7 +430,7 @@ router.post('/api/kyb/save', async (req, res) => {
       fileName
     });
 
-    // Get task details
+    // Get task details with full task data
     const [task] = await db.select()
       .from(tasks)
       .where(eq(tasks.id, taskId));
@@ -439,7 +439,19 @@ router.post('/api/kyb/save', async (req, res) => {
       throw new Error('Task not found');
     }
 
-    // Check for required user and company IDs
+    // If created_by is missing, use the current user's ID
+    if (!task.created_by && req.user?.id) {
+      await db.update(tasks)
+        .set({ 
+          created_by: req.user.id,
+          updated_at: new Date()
+        })
+        .where(eq(tasks.id, taskId));
+
+      task.created_by = req.user.id;
+    }
+
+    // Still check for required fields after potential update
     if (!task.created_by || !task.company_id) {
       throw new Error('Missing task user or company information');
     }
