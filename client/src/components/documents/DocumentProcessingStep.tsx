@@ -29,7 +29,7 @@ export function DocumentProcessingStep({
 
   // Validate files and set up the queue
   React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Initializing component:', {
+    console.log('[DocumentProcessingStep] Initializing processing:', {
       companyName,
       uploadedFilesCount: initialFiles.length,
       fileDetails: initialFiles.map(f => ({
@@ -48,7 +48,7 @@ export function DocumentProcessingStep({
       const isValid = file.id !== undefined && file.status === 'uploaded';
 
       if (!isValid) {
-        console.log('[DocumentProcessingStep] Invalid file found:', {
+        console.error('[DocumentProcessingStep] Invalid file found:', {
           id: file.id,
           name: file.name,
           status: file.status,
@@ -57,7 +57,6 @@ export function DocumentProcessingStep({
           timestamp: new Date().toISOString()
         });
       }
-
       return isValid;
     });
 
@@ -66,13 +65,14 @@ export function DocumentProcessingStep({
     const queue = validFiles.map((_, index) => index);
     setProcessingQueue(queue);
 
-    console.log('[DocumentProcessingStep] Queue initialized:', {
+    console.log('[DocumentProcessingStep] Processing queue initialized:', {
       validFiles: validFiles.length,
       queueLength: queue.length,
-      fileDetails: validFiles.map(f => ({
+      fileStatuses: validFiles.map(f => ({
         id: f.id,
         name: f.name,
-        status: f.status
+        status: f.status,
+        type: f.type
       })),
       timestamp: new Date().toISOString()
     });
@@ -96,10 +96,11 @@ export function DocumentProcessingStep({
       return;
     }
 
-    console.log('[DocumentProcessingStep] Starting to process file:', {
+    console.log('[DocumentProcessingStep] Starting file processing:', {
       index: nextIndex,
       fileId: fileToProcess.id,
       fileName: fileToProcess.name,
+      fileType: fileToProcess.type,
       remainingQueue: processingQueue.length,
       timestamp: new Date().toISOString()
     });
@@ -112,6 +113,12 @@ export function DocumentProcessingStep({
       setFiles(prevFiles => prevFiles.map((file, index) => 
         index === nextIndex ? { ...file, status: 'processing' as DocumentStatus } : file
       ));
+
+      // Show processing toast
+      toast({
+        title: 'Processing Document',
+        description: `Starting analysis of ${fileToProcess.name}...`,
+      });
 
       const result = await processDocuments([fileToProcess.id], cardFields, (progress) => {
         console.log('[DocumentProcessingStep] Processing progress:', {
@@ -137,10 +144,17 @@ export function DocumentProcessingStep({
         } : file
       ));
 
+      // Show success toast
+      toast({
+        title: 'Document Processed',
+        description: `Successfully analyzed ${fileToProcess.name} and found ${result.answersFound} matches.`,
+      });
+
     } catch (error: any) {
       console.error('[DocumentProcessingStep] Processing error:', {
         fileId: fileToProcess.id,
         error: error.message,
+        stack: error.stack,
         timestamp: new Date().toISOString()
       });
 
@@ -148,7 +162,7 @@ export function DocumentProcessingStep({
       toast({
         variant: 'destructive',
         title: 'Processing Error',
-        description: 'Failed to process document. Please try again.'
+        description: `Failed to process ${fileToProcess.name}. Please try again.`
       });
 
       // Update file status to error

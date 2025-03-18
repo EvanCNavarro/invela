@@ -16,10 +16,14 @@ export class DocumentChunkingError extends Error {
   }
 }
 
+const MIN_CHUNK_SIZE = 100; // Minimum characters per chunk
+const OPTIMAL_CHUNK_SIZE = 4000; // Target size for chunks
+const MAX_OVERLAP = 200; // Maximum overlap between chunks
+
 export async function createDocumentChunks(
   filePath: string,
   mimeType: string,
-  chunkSize: number = 4000
+  chunkSize: number = OPTIMAL_CHUNK_SIZE
 ): Promise<Chunk[]> {
   try {
     console.log('[DocumentChunking] Starting document chunking:', {
@@ -33,7 +37,6 @@ export async function createDocumentChunks(
 
     // Handle different file types
     if (mimeType === 'application/pdf') {
-      // Pass undefined for maxPages to get all pages
       content = await extractTextFromFirstPages(filePath);
     } else {
       content = fs.readFileSync(filePath, 'utf8');
@@ -42,6 +45,12 @@ export async function createDocumentChunks(
     if (!content?.length) {
       throw new DocumentChunkingError('No content extracted from document');
     }
+
+    console.log('[DocumentChunking] Content extracted:', {
+      contentLength: content.length,
+      mimeType,
+      timestamp: new Date().toISOString()
+    });
 
     // Split content into chunks
     const chunks: Chunk[] = [];
@@ -53,31 +62,50 @@ export async function createDocumentChunks(
 
       // Try to break at a natural point if we're not at the end
       if (endPosition < content.length) {
-        const nextPeriod = content.indexOf('.', endPosition - 100);
-        const nextNewline = content.indexOf('\n', endPosition - 100);
+        const searchWindow = content.slice(endPosition - 100, endPosition + 100);
 
-        if (nextPeriod !== -1 && nextPeriod < endPosition + 100) {
-          endPosition = nextPeriod + 1;
-        } else if (nextNewline !== -1 && nextNewline < endPosition + 100) {
-          endPosition = nextNewline + 1;
+        // Look for sentence endings or paragraph breaks
+        const periodMatch = searchWindow.match(/\.\s+/);
+        const newlineMatch = searchWindow.match(/\n\s*\n/);
+
+        if (newlineMatch && newlineMatch.index !== undefined) {
+          endPosition = endPosition - 100 + newlineMatch.index + newlineMatch[0].length;
+        } else if (periodMatch && periodMatch.index !== undefined) {
+          endPosition = endPosition - 100 + periodMatch.index + periodMatch[0].length;
         }
       }
 
-      chunks.push({
-        content: content.slice(currentPosition, endPosition),
-        index: chunks.length,
-        startPosition: currentPosition,
-        endPosition
-      });
+      const chunkContent = content.slice(currentPosition, endPosition).trim();
+
+      // Validate chunk content
+      if (chunkContent.length >= MIN_CHUNK_SIZE) {
+        chunks.push({
+          content: chunkContent,
+          index: chunks.length,
+          startPosition: currentPosition,
+          endPosition
+        });
+
+        console.log('[DocumentChunking] Created chunk:', {
+          chunkIndex: chunks.length - 1,
+          chunkSize: chunkContent.length,
+          startsWithWord: chunkContent.slice(0, 20),
+          endsWithWord: chunkContent.slice(-20),
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        console.warn('[DocumentChunking] Skipping small chunk:', {
+          chunkSize: chunkContent.length,
+          minRequired: MIN_CHUNK_SIZE,
+          timestamp: new Date().toISOString()
+        });
+      }
 
       currentPosition = endPosition;
+    }
 
-      console.log('[DocumentChunking] Created chunk:', {
-        chunkIndex: chunks.length - 1,
-        chunkSize: endPosition - currentPosition,
-        totalChunks: chunks.length,
-        timestamp: new Date().toISOString()
-      });
+    if (chunks.length === 0) {
+      throw new DocumentChunkingError('No valid chunks created from document');
     }
 
     console.log('[DocumentChunking] Chunks created:', {
@@ -91,6 +119,7 @@ export async function createDocumentChunks(
   } catch (error) {
     console.error('[DocumentChunking] Error creating chunks:', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       filePath,
       timestamp: new Date().toISOString()
     });
@@ -117,6 +146,10 @@ export async function processChunk(
       timestamp: new Date().toISOString()
     });
 
+    if (chunk.content.length < MIN_CHUNK_SIZE) {
+      throw new Error(`Chunk content too small: ${chunk.content.length} chars`);
+    }
+
     // Transform cardFields into the format expected by analyzeDocument
     const formattedFields = cardFields.map(field_key => ({
       field_key,
@@ -137,13 +170,14 @@ export async function processChunk(
       answers: result.answers.map(answer => ({
         field: answer.field_key,
         answer: answer.answer,
-        confidence: 0.9 // Default confidence for now
+        confidence: answer.confidence || 0.9 // Default confidence if not provided
       }))
     };
 
   } catch (error) {
     console.error('[DocumentChunking] Error processing chunk:', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       chunkIndex: chunk.index,
       timestamp: new Date().toISOString()
     });
