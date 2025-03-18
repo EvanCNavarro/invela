@@ -4,7 +4,6 @@ import fs from 'fs';
 const pdfExtract = new PDFExtract();
 const options = {
   firstPageOnly: false,
-  max: 3, // Extract first 3 pages only
   normalizeWhitespace: true,
   verbosity: 0 // Reduce console noise
 };
@@ -25,7 +24,18 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
     }
 
     console.log('[PDF Service] Reading PDF file');
-    const data = await pdfExtract.extract(filePath, { ...options, max: maxPages });
+
+    // Extract with validation for maxPages
+    const extractOptions = {
+      ...options,
+      pageNumbers: Array.from({ length: maxPages }, (_, i) => i) // Explicitly specify pages
+    };
+
+    const data = await pdfExtract.extract(filePath, extractOptions);
+
+    if (!data?.pages?.length) {
+      throw new Error('No pages extracted from PDF');
+    }
 
     console.log('[PDF Service] Extraction successful:', {
       totalPages: data.pages.length,
@@ -33,16 +43,31 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
       timestamp: new Date().toISOString()
     });
 
-    // Combine text from all extracted pages
+    // Combine text from all extracted pages with proper spacing
     let text = data.pages
-      .map(page => page.content.map(item => item.str).join(' '))
-      .join('\n');
+      .map(page => {
+        if (!page?.content?.length) {
+          console.warn('[PDF Service] Empty page content found');
+          return '';
+        }
+        return page.content
+          .map(item => item.str)
+          .join(' ')
+          .trim();
+      })
+      .filter(Boolean) // Remove empty pages
+      .join('\n\n');
+
+    if (!text.length) {
+      throw new Error('No text content extracted from PDF');
+    }
 
     // Truncate text if it exceeds the maximum length
     if (text.length > MAX_TEXT_LENGTH) {
       console.log('[PDF Service] Truncating text to stay within token limits:', {
         originalLength: text.length,
-        truncatedLength: MAX_TEXT_LENGTH
+        truncatedLength: MAX_TEXT_LENGTH,
+        timestamp: new Date().toISOString()
       });
       text = text.substring(0, MAX_TEXT_LENGTH);
     }
