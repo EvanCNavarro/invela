@@ -22,17 +22,26 @@ function detectDocumentCategory(filename: string): DocumentCategory {
   let category: DocumentCategory;
 
   // Improved detection patterns with comprehensive checks
-  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || lowerFilename.includes('soc-2')) {
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || 
+      lowerFilename.includes('soc-2')) {
     category = DocumentCategory.SOC2_AUDIT;
-  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || lowerFilename.includes('iso-27001')) {
+  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || 
+            lowerFilename.includes('iso-27001')) {
     category = DocumentCategory.ISO27001_CERT;
-  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || lowerFilename.includes('pen-test') ||
-             lowerFilename.includes('penetration test') || lowerFilename.includes('security test') || 
-             lowerFilename.includes('penetration-test') || lowerFilename.includes('penetration_test')) {
+  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || 
+            lowerFilename.includes('pen-test') ||
+            lowerFilename.includes('penetration test') || 
+            lowerFilename.includes('security test') || 
+            lowerFilename.includes('penetration-test') || 
+            lowerFilename.includes('penetration_test')) {
     category = DocumentCategory.PENTEST_REPORT;
-  } else if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan') || 
-             lowerFilename.includes('business-continuity') || lowerFilename.includes('disaster recovery') ||
-             lowerFilename.includes('bcp ')) {
+  } else if (lowerFilename.includes('business continuity') || 
+            lowerFilename.includes('continuity plan') || 
+            lowerFilename.includes('business-continuity') || 
+            lowerFilename.includes('disaster recovery') ||
+            lowerFilename.includes('bcp ') ||
+            lowerFilename.includes('business_continuity') ||
+            (lowerFilename.includes('business') && lowerFilename.includes('continuity'))) {
     category = DocumentCategory.BUSINESS_CONTINUITY;
   } else {
     category = DocumentCategory.OTHER;
