@@ -100,9 +100,13 @@ class ProcessingQueueManager {
     let success = false;
 
     try {
-      // Start processing
+      // Format fields properly for processing
       const processResponse = await apiRequest('POST', `/api/documents/${this.currentFileId}/process`, {
-        fields: ['all'] // This will be replaced with actual fields in the main function
+        fields: this.cardFields.map(field => ({
+          field_key: field.field_key,
+          question: field.question,
+          ai_search_instructions: field.ai_search_instructions
+        }))
       });
 
       if (!processResponse.ok) {
@@ -145,6 +149,8 @@ class ProcessingQueueManager {
               totalChunks: progressData.progress.totalChunks
             }
           });
+        } else if (progressData.status === 'error') {
+          throw new Error(progressData.error || 'Processing failed');
         } else {
           // Wait before next check
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -171,6 +177,12 @@ class ProcessingQueueManager {
       });
     }
   }
+
+  // Store card fields for processing
+  private cardFields: CardField[] = [];
+  setCardFields(fields: CardField[]) {
+    this.cardFields = fields;
+  }
 }
 
 export async function processDocuments(
@@ -187,9 +199,16 @@ export async function processDocuments(
       throw new DocumentProcessingError('No card fields provided');
     }
 
+    console.log('[DocumentProcessing] Starting processing:', {
+      fileIds,
+      fieldCount: cardFields.length,
+      fieldKeys: cardFields.map(f => f.field_key),
+      timestamp: new Date().toISOString()
+    });
+
     const queueManager = ProcessingQueueManager.getInstance();
     queueManager.setProgressCallback(onProgress);
-    let totalAnswersFound = 0;
+    queueManager.setCardFields(cardFields);
 
     // Add each file to the processing queue
     for (const fileId of fileIds) {
@@ -205,7 +224,13 @@ export async function processDocuments(
       )
     );
 
-    totalAnswersFound = results.reduce((sum, result) => sum + (result.answersFound || 0), 0);
+    const totalAnswersFound = results.reduce((sum, result) => sum + (result.answersFound || 0), 0);
+
+    console.log('[DocumentProcessing] Processing complete:', {
+      fileIds,
+      totalAnswersFound,
+      timestamp: new Date().toISOString()
+    });
 
     return {
       answersFound: totalAnswersFound,
@@ -213,7 +238,7 @@ export async function processDocuments(
     };
 
   } catch (error) {
-    console.error('[DocumentProcessingService] Processing error:', {
+    console.error('[DocumentProcessing] Processing error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString()
     });
