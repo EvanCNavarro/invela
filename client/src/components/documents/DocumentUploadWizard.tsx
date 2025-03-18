@@ -22,19 +22,25 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
+  const [processingComplete, setProcessingComplete] = useState(false);
 
   // Function to check if all files are processed (either success or error)
   const isAllFilesProcessed = () => {
-    return uploadedFiles.length > 0 && uploadedFiles.every(file =>
+    return uploadedFiles.length > 0 && (processingComplete || uploadedFiles.every(file =>
       file.status === 'processed' || file.status === 'error'
-    );
+    ));
   };
 
   // Function to check if any files are currently processing
   const isProcessing = () => {
-    return uploadedFiles.some(file =>
+    return !processingComplete && uploadedFiles.some(file =>
       file.status === 'processing' || file.status === 'waiting'
     );
+  };
+
+  const handleProcessingComplete = () => {
+    console.log('[DocumentUploadWizard] All files processed');
+    setProcessingComplete(true);
   };
 
   const handleNext = () => {
@@ -313,6 +319,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <DocumentProcessingStep
               companyName={companyName}
               uploadedFiles={uploadedFiles}
+              onProcessingComplete={handleProcessingComplete}
             />
           ) : (
             <div className="flex items-center justify-center text-muted-foreground">
