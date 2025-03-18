@@ -11,23 +11,18 @@ import { logoUpload } from './middleware/upload';
 import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
-import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import cardRouter from './routes/card';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
-import { analyzeDocument } from './services/openai';
-import { PDFExtract } from 'pdf.js-extract';
-
-// Create PDFExtract instance
-const pdfExtract = new PDFExtract();
 
 export function registerRoutes(app: Express): Express {
-  app.use(companySearchRouter);
-  app.use(kybRouter);
-  app.use(cardRouter);
-  app.use(filesRouter);
-  app.use(accessRouter);
+  // Ensure proper mounting of all routers
+  app.use("/", companySearchRouter);
+  app.use("/", kybRouter);
+  app.use("/", cardRouter); // Mount at root to preserve /api/card/* routes
+  app.use("/", filesRouter);
+  app.use("/", accessRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
