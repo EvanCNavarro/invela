@@ -25,10 +25,10 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
 
     console.log('[PDF Service] Reading PDF file');
 
-    // Extract with validation for maxPages
+    // Extract with validation for maxPages (ensure at least one page)
     const extractOptions = {
       ...options,
-      pageNumbers: Array.from({ length: maxPages }, (_, i) => i) // Explicitly specify pages
+      pageNumbers: Array.from({ length: Math.max(1, maxPages) }, (_, i) => i) // Ensure at least page 0
     };
 
     const data = await pdfExtract.extract(filePath, extractOptions);
@@ -50,9 +50,12 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
           console.warn('[PDF Service] Empty page content found');
           return '';
         }
+        // Join content items with space and clean up whitespace
         return page.content
-          .map(item => item.str)
+          .map(item => item.str.trim())
+          .filter(Boolean)
           .join(' ')
+          .replace(/\s+/g, ' ')
           .trim();
       })
       .filter(Boolean) // Remove empty pages
@@ -61,6 +64,12 @@ export async function extractTextFromFirstPages(filePath: string, maxPages: numb
     if (!text.length) {
       throw new Error('No text content extracted from PDF');
     }
+
+    console.log('[PDF Service] Content extracted:', {
+      contentLength: text.length,
+      pageCount: data.pages.length,
+      timestamp: new Date().toISOString()
+    });
 
     // Truncate text if it exceeds the maximum length
     if (text.length > MAX_TEXT_LENGTH) {
