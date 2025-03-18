@@ -827,7 +827,7 @@ export async function analyzeDocument(
     {
       "answers": [
         {
-          "field_key": "string",
+          "field_key": "specific field_key from the questions above",
           "answer": "exact quote or clear summary from document",
           "source_document": "relevant section from document that supports this answer",
           "confidence": number between 0 and 1 (use 0.5+ for relevant but indirect matches)
@@ -837,6 +837,7 @@ export async function analyzeDocument(
 
     Important:
     - Include answers where you find any relevant evidence
+    - Match the exact field_key from the questions above
     - Quote directly from the document when possible
     - Include the specific section that supports each answer
     - Use confidence scores:
@@ -845,9 +846,9 @@ export async function analyzeDocument(
       * 0.5+ for relevant but indirect matches
     `;
 
-    console.log('[OpenAI Service] Sending request:', {
+    console.log('[OpenAI Service] Sending request:', { 
       promptLength: prompt.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString() 
     });
 
     const response = await openai.chat.completions.create({
