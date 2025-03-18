@@ -421,4 +421,128 @@ router.get("/api/documents/:id/results", async (req, res) => {
   }
 });
 
+// Get all files for a company
+router.get('/api/files', async (req, res) => {
+  try {
+    console.log('[Files] Starting file fetch request');
+
+    const companyId = req.query.company_id;
+    const userId = req.user?.id;
+
+    console.log('[Files] Request parameters:', {
+      companyId,
+      userId,
+      query: req.query,
+      user: req.user
+    });
+
+    if (!companyId) {
+      console.log('[Files] Missing company_id parameter');
+      return res.status(400).json({ 
+        error: 'Company ID is required',
+        detail: 'The company_id query parameter must be provided'
+      });
+    }
+
+    if (typeof companyId !== 'string' && typeof companyId !== 'number') {
+      console.log('[Files] Invalid company_id type:', typeof companyId);
+      return res.status(400).json({ 
+        error: 'Invalid company ID format',
+        detail: `Expected string or number, got ${typeof companyId}`
+      });
+    }
+
+    const parsedCompanyId = parseInt(companyId.toString(), 10);
+    if (isNaN(parsedCompanyId)) {
+      console.log('[Files] Failed to parse company_id:', companyId);
+      return res.status(400).json({ 
+        error: 'Invalid company ID format',
+        detail: 'Company ID must be a valid number'
+      });
+    }
+
+    // Verify user has access to this company
+    if (req.user?.company_id !== parsedCompanyId) {
+      console.log('[Files] Company ID mismatch:', {
+        requestedCompanyId: parsedCompanyId,
+        userCompanyId: req.user?.company_id
+      });
+      return res.status(403).json({ 
+        error: 'Access denied',
+        detail: 'User does not have access to this company\'s files'
+      });
+    }
+
+    console.log('[Files] Executing database query for company:', parsedCompanyId);
+
+    // Query files for the company
+    const fileRecords = await db.query.files.findMany({
+      where: eq(files.company_id, parsedCompanyId),
+      orderBy: (files, { desc }) => [desc(files.created_at)]
+    });
+
+    console.log('[Files] Query results:', {
+      recordCount: fileRecords.length,
+      firstRecord: fileRecords[0],
+      lastRecord: fileRecords[fileRecords.length - 1]
+    });
+
+    res.json(fileRecords);
+  } catch (error) {
+    console.error('[Files] Error in file fetch endpoint:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      detail: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+  }
+});
+
+// Download endpoint
+router.get("/api/files/:id/download", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+    console.log('[Files] Download request for file:', fileId);
+
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
+
+    if (!fileRecord) {
+      console.log('[Files] File not found:', fileId);
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const filePath = path.join(uploadDir, fileRecord.path);
+    console.log('[Files] Physical file path:', filePath);
+
+    if (!fs.existsSync(filePath)) {
+      console.error('[Files] File missing from disk:', filePath);
+      return res.status(404).json({ error: "File not found on disk" });
+    }
+
+    // Update download count
+    await db.update(files)
+      .set({ download_count: (fileRecord.download_count || 0) + 1 })
+      .where(eq(files.id, fileId));
+
+    res.download(filePath, fileRecord.name, (err) => {
+      if (err) {
+        console.error("[Files] Error downloading file:", {
+          error: err,
+          fileId,
+          filePath
+        });
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Error downloading file" });
+        }
+      }
+    });
+  } catch (error) {
+    console.error("[Files] Error in download endpoint:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  }
+});
+
 export default router;
