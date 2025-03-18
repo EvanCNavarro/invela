@@ -23,6 +23,20 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [documentCounts, setDocumentCounts] = useState<Record<string, DocumentCount>>({});
 
+  // Function to check if all files are processed (either success or error)
+  const isAllFilesProcessed = () => {
+    return uploadedFiles.length > 0 && uploadedFiles.every(file =>
+      file.status === 'processed' || file.status === 'error'
+    );
+  };
+
+  // Function to check if any files are currently processing
+  const isProcessing = () => {
+    return uploadedFiles.some(file =>
+      file.status === 'processing' || file.status === 'waiting'
+    );
+  };
+
   const handleNext = () => {
     console.log('[DocumentUploadWizard] Moving to next step:', {
       currentStep,
@@ -149,11 +163,6 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
     });
   };
 
-  const isAllFilesProcessed = () => {
-    return uploadedFiles.every(file =>
-      file.status === 'processed' || file.status === 'error'
-    );
-  };
 
   const handleBack = () => {
     console.log('[DocumentUploadWizard] Moving to previous step:', {
@@ -317,7 +326,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <Button
               variant="ghost"
               onClick={handleBack}
-              disabled={currentStep === 0 || (currentStep === 1 && !isAllFilesProcessed())}
+              disabled={currentStep === 0 || (currentStep === 1 && isProcessing())}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
