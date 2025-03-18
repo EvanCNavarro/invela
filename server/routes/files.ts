@@ -35,12 +35,13 @@ function detectDocumentCategory(filename: string): DocumentCategory {
             lowerFilename.includes('penetration-test') || 
             lowerFilename.includes('penetration_test')) {
     category = DocumentCategory.PENTEST_REPORT;
-  } else if (lowerFilename.includes('business continuity') || 
+  } else if (lowerFilename.includes('spg-business-continuity-plan') || 
+            lowerFilename.includes('business continuity') || 
             lowerFilename.includes('continuity plan') || 
             lowerFilename.includes('business-continuity') || 
             lowerFilename.includes('disaster recovery') ||
-            lowerFilename.includes('bcp ') ||
             lowerFilename.includes('business_continuity') ||
+            lowerFilename.includes('bcp') ||
             (lowerFilename.includes('business') && lowerFilename.includes('continuity'))) {
     category = DocumentCategory.BUSINESS_CONTINUITY;
   } else {
@@ -52,7 +53,14 @@ function detectDocumentCategory(filename: string): DocumentCategory {
     filename: filename,
     lowerFilename: lowerFilename,
     detectedCategory: category,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    matches: {
+      isSoc2: lowerFilename.includes('soc2') || lowerFilename.includes('soc 2'),
+      isIso27001: lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001'),
+      isPentest: lowerFilename.includes('pentest') || lowerFilename.includes('pen test'),
+      isBusinessContinuity: lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan'),
+      exactMatch: lowerFilename
+    }
   });
 
   return category;
