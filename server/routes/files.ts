@@ -79,9 +79,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
-    // Broadcast upload start immediately
-    //Removed broadcastUploadProgress - as per intention to reduce progress updates
-    
 
     console.log('[Files] File details:', {
       originalname: req.file.originalname,
@@ -134,8 +131,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       category: documentCategory
     });
 
-    // Broadcast upload complete
-    //Removed broadcastUploadProgress - as per intention to reduce progress updates
 
     // Broadcast document count update
     broadcastDocumentCountUpdate({
@@ -156,9 +151,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         fs.unlinkSync(filePath);
       }
     }
-
-    // Broadcast upload error
-    //Removed broadcastUploadProgress - as per intention to reduce progress updates
 
     // Enhanced error handling
     if (error instanceof multer.MulterError) {
@@ -189,7 +181,6 @@ router.post("/api/documents/:id/process", async (req, res) => {
       });
     }
 
-    // Get file record
     const fileRecord = await db.query.files.findFirst({
       where: eq(files.id, fileId)
     });
@@ -198,35 +189,32 @@ router.post("/api/documents/:id/process", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // Get file content and create chunks
     const filePath = path.join(uploadDir, fileRecord.path);
-
-    console.log('[Document Processing] Creating chunks for file:', {
-      fileId,
-      fileName: fileRecord.name,
-      mimeType: fileRecord.type,
-      timestamp: new Date().toISOString()
-    });
 
     try {
       const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-      // Initialize processing metadata
-      const initialMetadata = {
+      // Initialize metadata with proper structure
+      const metadata = {
         status: 'processing',
-        processing_fields: fields,
-        chunks_total: chunks.length,
-        chunks_processed: 0,
+        fields,
+        chunks: {
+          total: chunks.length,
+          processed: 0
+        },
         answers: [],
-        processing_started: new Date().toISOString(),
-        last_update: new Date().toISOString()
+        answersFound: 0,
+        timestamps: {
+          started: new Date().toISOString(),
+          lastUpdate: new Date().toISOString()
+        }
       };
 
-      // Update file status and metadata
+      // Update initial state
       await db.update(files)
         .set({ 
           status: 'processing',
-          metadata: sql`${JSON.stringify(initialMetadata)}::jsonb`
+          metadata: sql`${JSON.stringify(metadata)}::jsonb`
         })
         .where(eq(files.id, fileId));
 
@@ -237,43 +225,49 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
       // Process chunks in background
       (async () => {
-        let answersFound = 0;
-        let processedChunks = 0;
+        let batchAnswers = [];
         const batchSize = 5;
-        let answerBatch = [];
 
         for (const chunk of chunks) {
           try {
             const result = await processChunk(chunk, fields);
-            processedChunks++;
 
             if (result.answers?.length) {
-              answersFound += result.answers.length;
-              answerBatch.push(...result.answers);
+              batchAnswers.push(...result.answers);
 
-              // Update metadata in batches
-              if (answerBatch.length >= batchSize || processedChunks === chunks.length) {
+              // Update in batches
+              if (batchAnswers.length >= batchSize || chunk.index === chunks.length - 1) {
+                const currentFile = await db.query.files.findFirst({
+                  where: eq(files.id, fileId)
+                });
+
+                if (!currentFile || !currentFile.metadata) continue;
+
+                const currentMetadata = currentFile.metadata;
                 const updatedMetadata = {
-                  status: 'processing',
-                  processing_fields: fields,
-                  chunks_total: chunks.length,
-                  chunks_processed: processedChunks,
-                  answers: answerBatch,
-                  answers_found: answersFound,
-                  last_update: new Date().toISOString()
+                  ...currentMetadata,
+                  chunks: {
+                    total: chunks.length,
+                    processed: chunk.index + 1
+                  },
+                  answers: [...(currentMetadata.answers || []), ...batchAnswers],
+                  answersFound: (currentMetadata.answersFound || 0) + batchAnswers.length,
+                  timestamps: {
+                    ...currentMetadata.timestamps,
+                    lastUpdate: new Date().toISOString()
+                  }
                 };
 
                 await db.update(files)
-                  .set({ 
+                  .set({
                     metadata: sql`${JSON.stringify(updatedMetadata)}::jsonb`
                   })
                   .where(eq(files.id, fileId));
 
-                answerBatch = [];
+                batchAnswers = [];
               }
             }
 
-            // Short delay between chunks
             await new Promise(resolve => setTimeout(resolve, 100));
 
           } catch (error) {
@@ -286,16 +280,21 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         }
 
-        // Final metadata update
+        // Final update
         const finalMetadata = {
-          status: 'processed',
-          processing_fields: fields,
-          chunks_total: chunks.length,
-          chunks_processed: chunks.length,
-          answers: answerBatch,
-          answers_found: answersFound,
-          processing_completed: new Date().toISOString(),
-          last_update: new Date().toISOString()
+          status: 'completed',
+          fields,
+          chunks: {
+            total: chunks.length,
+            processed: chunks.length
+          },
+          answers: batchAnswers,
+          answersFound: batchAnswers.length,
+          timestamps: {
+            started: metadata.timestamps.started,
+            completed: new Date().toISOString(),
+            lastUpdate: new Date().toISOString()
+          }
         };
 
         await db.update(files)
@@ -314,11 +313,6 @@ router.post("/api/documents/:id/process", async (req, res) => {
       });
 
     } catch (error) {
-      console.error('[Document Processing] Chunk creation error:', {
-        fileId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-        timestamp: new Date().toISOString()
-      });
       throw error;
     }
 
@@ -341,9 +335,9 @@ router.get("/api/documents/:id/progress", async (req, res) => {
     }
 
     const currentMetadata = fileRecord.metadata || {};
-    const chunksTotal = currentMetadata.chunks_total || 1;
-    const chunksProcessed = currentMetadata.chunks_processed || 0;
-    const answersFound = currentMetadata.answers_found || 0;
+    const chunksTotal = currentMetadata.chunks?.total || 1;
+    const chunksProcessed = currentMetadata.chunks?.processed || 0;
+    const answersFound = currentMetadata.answersFound || 0;
 
     res.json({
       status: fileRecord.status,
