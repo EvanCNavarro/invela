@@ -6,10 +6,6 @@ import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
-import { classifyDocument } from '../services/openai';
-import { broadcastDocumentCountUpdate, broadcastClassificationUpdate } from '../services/websocket';
-import { extractTextFromFirstPages } from '../services/pdf';
-import { analyzeDocument } from '../services/openai';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
 
 // Ensure upload directory exists
@@ -48,32 +44,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
-    // Read only first few pages for classification
-    const filePath = path.join(uploadDir, req.file.filename);
-    let fileContent: string;
-
-    try {
-      if (req.file.mimetype === 'application/pdf') {
-        console.log('[Files] Processing PDF file, extracting first pages');
-        fileContent = await extractTextFromFirstPages(filePath, 3);
-      } else {
-        console.log('[Files] Processing non-PDF file');
-        fileContent = fs.readFileSync(filePath, 'utf8');
-      }
-    } catch (error) {
-      console.error('[Files] Error reading file:', error);
-      throw new Error('Failed to read uploaded file');
-    }
-
-    console.log('[Files] Starting document classification');
-    const classification = await classifyDocument(fileContent);
-    console.log('[Files] Classification result:', {
-      category: classification.category,
-      confidence: classification.confidence,
-      reasoning: classification.reasoning
-    });
-
-    // Create file record in database
+    // Create file record in database with initial metadata
     const [fileRecord] = await db.insert(files)
       .values({
         name: req.file.originalname,
@@ -87,7 +58,13 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         updated_at: new Date(),
         upload_time: new Date(),
         download_count: 0,
-        version: 1
+        version: 1,
+        document_metadata: {
+          answers: [],
+          chunks_processed: 0,
+          chunks_total: 0,
+          processing_fields: []
+        }
       })
       .returning();
 
@@ -95,24 +72,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       id: fileRecord.id,
       name: fileRecord.name,
       status: fileRecord.status
-    });
-
-    // Broadcast document count update
-    if (classification.confidence >= 0.9) {
-      broadcastDocumentCountUpdate({
-        type: 'COUNT_UPDATE',
-        category: classification.category,
-        count: 1,
-        companyId: req.user.company_id.toString()
-      });
-    }
-
-    // Broadcast classification update
-    broadcastClassificationUpdate({
-      type: 'CLASSIFICATION_UPDATE',
-      fileId: fileRecord.id.toString(),
-      category: classification.category,
-      confidence: classification.confidence
     });
 
     res.status(201).json(fileRecord);
@@ -144,132 +103,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
   }
 });
 
-// Get all files for a company
-router.get('/api/files', async (req, res) => {
-  try {
-    console.log('[Files] Starting file fetch request');
-
-    const companyId = req.query.company_id;
-    const userId = req.user?.id;
-
-    console.log('[Files] Request parameters:', {
-      companyId,
-      userId,
-      query: req.query,
-      user: req.user
-    });
-
-    if (!companyId) {
-      console.log('[Files] Missing company_id parameter');
-      return res.status(400).json({ 
-        error: 'Company ID is required',
-        detail: 'The company_id query parameter must be provided'
-      });
-    }
-
-    if (typeof companyId !== 'string' && typeof companyId !== 'number') {
-      console.log('[Files] Invalid company_id type:', typeof companyId);
-      return res.status(400).json({ 
-        error: 'Invalid company ID format',
-        detail: `Expected string or number, got ${typeof companyId}`
-      });
-    }
-
-    const parsedCompanyId = parseInt(companyId.toString(), 10);
-    if (isNaN(parsedCompanyId)) {
-      console.log('[Files] Failed to parse company_id:', companyId);
-      return res.status(400).json({ 
-        error: 'Invalid company ID format',
-        detail: 'Company ID must be a valid number'
-      });
-    }
-
-    // Verify user has access to this company
-    if (req.user?.company_id !== parsedCompanyId) {
-      console.log('[Files] Company ID mismatch:', {
-        requestedCompanyId: parsedCompanyId,
-        userCompanyId: req.user?.company_id
-      });
-      return res.status(403).json({ 
-        error: 'Access denied',
-        detail: 'User does not have access to this company\'s files'
-      });
-    }
-
-    console.log('[Files] Executing database query for company:', parsedCompanyId);
-
-    // Remove any status filter to show all files including those created by KYB
-    const fileRecords = await db.query.files.findMany({
-      where: eq(files.company_id, parsedCompanyId),
-      orderBy: (files, { desc }) => [desc(files.created_at)]
-    });
-
-    console.log('[Files] Query results:', {
-      recordCount: fileRecords.length,
-      firstRecord: fileRecords[0],
-      lastRecord: fileRecords[fileRecords.length - 1]
-    });
-
-    res.json(fileRecords);
-  } catch (error) {
-    console.error('[Files] Error in file fetch endpoint:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      detail: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
-  }
-});
-
-// Download endpoint
-router.get("/api/files/:id/download", async (req, res) => {
-  try {
-    const fileId = parseInt(req.params.id);
-    console.log('[Files] Download request for file:', fileId);
-
-    const [fileRecord] = await db.select()
-      .from(files)
-      .where(eq(files.id, fileId));
-
-    if (!fileRecord) {
-      console.log('[Files] File not found:', fileId);
-      return res.status(404).json({ error: "File not found" });
-    }
-
-    const filePath = path.join(uploadDir, fileRecord.path);
-    console.log('[Files] Physical file path:', filePath);
-
-    if (!fs.existsSync(filePath)) {
-      console.error('[Files] File missing from disk:', filePath);
-      return res.status(404).json({ error: "File not found on disk" });
-    }
-
-    // Update download count
-    await db.update(files)
-      .set({ download_count: (fileRecord.download_count || 0) + 1 })
-      .where(eq(files.id, fileId));
-
-    res.download(filePath, fileRecord.name, (err) => {
-      if (err) {
-        console.error("[Files] Error downloading file:", {
-          error: err,
-          fileId,
-          filePath
-        });
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Error downloading file" });
-        }
-      }
-    });
-  } catch (error) {
-    console.error("[Files] Error in download endpoint:", error);
-    if (!res.headersSent) {
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-});
-
-
-// New endpoints for document processing
+// Process document endpoint
 router.post("/api/documents/:id/process", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
@@ -303,17 +137,20 @@ router.post("/api/documents/:id/process", async (req, res) => {
     try {
       const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-      // Store fields and chunk info in metadata
+      // Initialize processing metadata
+      const processingMetadata = {
+        processing_fields: fields,
+        chunks_total: chunks.length,
+        chunks_processed: 0,
+        answers: [],
+        processing_started: new Date().toISOString()
+      };
+
+      // Update file status and metadata
       await db.update(files)
         .set({ 
-          metadata: { 
-            ...fileRecord.metadata,
-            processing_fields: fields,
-            chunks_total: chunks.length,
-            chunks_processed: 0,
-            answers: []
-          },
-          status: 'processing'
+          status: 'processing',
+          document_metadata: processingMetadata
         })
         .where(eq(files.id, fileId));
 
@@ -342,16 +179,22 @@ router.post("/api/documents/:id/process", async (req, res) => {
             if (result.answers?.length) {
               answersFound += result.answers.length;
 
-              // Update metadata with new answers and progress
+              // Get current metadata
+              const [currentFile] = await db.select()
+                .from(files)
+                .where(eq(files.id, fileId));
+
+              const currentMetadata = currentFile.document_metadata || {};
+              const updatedMetadata = {
+                ...currentMetadata,
+                chunks_processed: processedChunks,
+                answers: [...(currentMetadata.answers || []), ...result.answers],
+                answers_found: answersFound
+              };
+
+              // Update metadata
               await db.update(files)
-                .set({ 
-                  metadata: {
-                    ...fileRecord.metadata,
-                    chunks_processed: processedChunks,
-                    answers: [...(fileRecord.metadata?.answers || []), ...result.answers],
-                    answers_found: answersFound
-                  }
-                })
+                .set({ document_metadata: updatedMetadata })
                 .where(eq(files.id, fileId));
             }
 
@@ -368,16 +211,23 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         }
 
+        // Get final metadata state
+        const [finalFile] = await db.select()
+          .from(files)
+          .where(eq(files.id, fileId));
+
+        const finalMetadata = {
+          ...(finalFile.document_metadata || {}),
+          processing_completed: new Date().toISOString(),
+          chunks_processed: chunks.length,
+          answers_found: answersFound
+        };
+
         // Mark processing as complete
         await db.update(files)
           .set({ 
             status: 'processed',
-            metadata: {
-              ...fileRecord.metadata,
-              processing_completed: new Date().toISOString(),
-              chunks_processed: chunks.length,
-              answers_found: answersFound
-            }
+            document_metadata: finalMetadata
           })
           .where(eq(files.id, fileId));
 
@@ -404,6 +254,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
   }
 });
 
+// Progress check endpoint
 router.get("/api/documents/:id/progress", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
@@ -416,8 +267,7 @@ router.get("/api/documents/:id/progress", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // For now, simulate progress
-    const metadata = fileRecord.metadata || {};
+    const metadata = fileRecord.document_metadata || {};
     const chunksTotal = metadata.chunks_total || 1;
     const chunksProcessed = metadata.chunks_processed || 0;
     const answersFound = metadata.answers_found || 0;
@@ -436,6 +286,7 @@ router.get("/api/documents/:id/progress", async (req, res) => {
   }
 });
 
+// Results endpoint
 router.get("/api/documents/:id/results", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
@@ -448,26 +299,14 @@ router.get("/api/documents/:id/results", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    // For now, return simulated results
-    const metadata = fileRecord.metadata || {};
+    const metadata = fileRecord.document_metadata || {};
     const answers = metadata.answers || [];
 
     res.json({
-      status: 'completed',
+      status: fileRecord.status,
       answers,
       answersFound: answers.length
     });
-
-    // Update file status to processed
-    await db.update(files)
-      .set({ 
-        status: 'processed',
-        metadata: {
-          ...metadata,
-          processing_completed: new Date().toISOString()
-        }
-      })
-      .where(eq(files.id, fileId));
 
   } catch (error) {
     console.error('[Document Processing] Results fetch error:', error);
