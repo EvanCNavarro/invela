@@ -112,8 +112,15 @@ export async function processChunk(
       timestamp: new Date().toISOString()
     });
 
+    // Transform cardFields into the format expected by analyzeDocument
+    const formattedFields = cardFields.map(field_key => ({
+      field_key,
+      question: `Find information about ${field_key}`,
+      ai_search_instructions: `Look for content related to ${field_key}`
+    }));
+
     // Process chunk with OpenAI
-    const result = await analyzeDocument(chunk.content, cardFields);
+    const result = await analyzeDocument(chunk.content, formattedFields);
 
     console.log('[DocumentChunking] Chunk processed:', {
       chunkIndex: chunk.index,
