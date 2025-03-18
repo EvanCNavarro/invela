@@ -8,6 +8,49 @@ import { DocumentStatus, UploadedFile } from './types';
 import { wsService } from '@/lib/websocket';
 import { useWebSocket } from '@/hooks/useWebSocket';
 
+// Memoize handlers outside component to prevent recreation
+const createUploadProgressHandler = (toast: any) => (data: any) => {
+  try {
+    console.log('[DocumentUploadStep] Upload progress update:', data);
+
+    if (data.status === 'uploading') {
+      toast({
+        title: "Uploading File",
+        description: `Uploading ${data.fileName}...`,
+      });
+    } else if (data.status === 'error') {
+      toast({
+        title: "Upload Error",
+        description: data.error || `Failed to upload ${data.fileName}`,
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    console.error('[DocumentUploadStep] Error handling upload progress:', {
+      error,
+      data,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+const createCountUpdateHandler = (updateDocumentCounts: any) => (data: any) => {
+  try {
+    console.log('[DocumentUploadStep] Document count update:', {
+      category: data.category,
+      count: data.count,
+      timestamp: new Date().toISOString()
+    });
+    updateDocumentCounts(data.category, data.count);
+  } catch (error) {
+    console.error('[DocumentUploadStep] Error handling count update:', {
+      error,
+      data,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
 interface DocumentCategory {
   id: string;
   name: string;
@@ -63,6 +106,9 @@ export function DocumentUploadStep({
   const { toast } = useToast();
   const { connected } = useWebSocket();
   const subscriptionsRef = useRef<(() => void)[]>([]);
+  const isInitialMount = useRef(true);
+  const uploadProgressHandler = useRef(createUploadProgressHandler(toast));
+  const countUpdateHandler = useRef(createCountUpdateHandler(updateDocumentCounts));
 
   const uploadFile = useCallback(async (file: File) => {
     console.log('[DocumentUploadStep] Starting file upload:', {
@@ -157,69 +203,25 @@ export function DocumentUploadStep({
     }
   };
 
-  const handleUploadProgress = useCallback((data: any) => {
-    try {
-      console.log('[DocumentUploadStep] Upload progress update:', data);
-
-      if (data.status === 'uploading') {
-        toast({
-          title: "Uploading File",
-          description: `Uploading ${data.fileName}...`,
-        });
-      } else if (data.status === 'error') {
-        toast({
-          title: "Upload Error",
-          description: data.error || `Failed to upload ${data.fileName}`,
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('[DocumentUploadStep] Error handling upload progress:', {
-        error,
-        data,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [toast]);
-
-  const handleCountUpdate = useCallback((data: any) => {
-    try {
-      console.log('[DocumentUploadStep] Document count update:', {
-        category: data.category,
-        count: data.count,
-        timestamp: new Date().toISOString()
-      });
-      updateDocumentCounts(data.category, data.count);
-    } catch (error) {
-      console.error('[DocumentUploadStep] Error handling count update:', {
-        error,
-        data,
-        timestamp: new Date().toISOString()
-      });
-    }
-  }, [updateDocumentCounts]);
 
   React.useEffect(() => {
-    let isMounted = true;
+    // Only run on initial mount
+    if (!isInitialMount.current || !connected) return;
+
+    console.log('[DocumentUploadStep] Setting up WebSocket subscriptions (initial mount)', {
+      timestamp: new Date().toISOString()
+    });
 
     const setupSubscriptions = async () => {
-      if (!connected || !isMounted) return;
-
       try {
-        console.log('[DocumentUploadStep] Setting up WebSocket subscriptions', {
+        const uploadSub = await wsService.subscribe('UPLOAD_PROGRESS', uploadProgressHandler.current);
+        const countSub = await wsService.subscribe('COUNT_UPDATE', countUpdateHandler.current);
+
+        subscriptionsRef.current = [uploadSub, countSub];
+
+        console.log('[DocumentUploadStep] WebSocket subscriptions established', {
           timestamp: new Date().toISOString()
         });
-
-        if (subscriptionsRef.current.length === 0) {
-          const uploadSub = await wsService.subscribe('UPLOAD_PROGRESS', handleUploadProgress);
-          const countSub = await wsService.subscribe('COUNT_UPDATE', handleCountUpdate);
-
-          subscriptionsRef.current = [uploadSub, countSub];
-
-          console.log('[DocumentUploadStep] WebSocket subscriptions established', {
-            timestamp: new Date().toISOString()
-          });
-        }
       } catch (error) {
         console.error('[DocumentUploadStep] Error setting up WebSocket subscriptions:', {
           error,
@@ -229,29 +231,26 @@ export function DocumentUploadStep({
     };
 
     setupSubscriptions();
+    isInitialMount.current = false;
 
     return () => {
-      isMounted = false;
+      console.log('[DocumentUploadStep] Component unmounting, cleaning up subscriptions', {
+        timestamp: new Date().toISOString()
+      });
 
-      if (subscriptionsRef.current.length > 0) {
-        console.log('[DocumentUploadStep] Cleaning up WebSocket subscriptions', {
-          timestamp: new Date().toISOString()
-        });
-
-        subscriptionsRef.current.forEach(unsubscribe => {
-          try {
-            unsubscribe();
-          } catch (error) {
-            console.error('[DocumentUploadStep] Error unsubscribing:', {
-              error,
-              timestamp: new Date().toISOString()
-            });
-          }
-        });
-        subscriptionsRef.current = [];
-      }
+      subscriptionsRef.current.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('[DocumentUploadStep] Error unsubscribing:', {
+            error,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      subscriptionsRef.current = [];
     };
-  }, [connected, handleUploadProgress, handleCountUpdate]);
+  }, [connected]); 
 
   return (
     <div className="space-y-6">
