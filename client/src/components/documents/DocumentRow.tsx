@@ -55,7 +55,7 @@ export function DocumentRow({ file, isActive = false }: DocumentRowProps) {
       case 'processed':
         return (
           <span className="text-green-600 font-medium">
-            {file.answersFound} Answers Found
+            {file.answersFound} Answer Fragments Found
           </span>
         );
       case 'processing':

@@ -115,8 +115,8 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
 
     setUploadedFiles(prev => {
       // Find file by name AND file ID
-      const fileToUpdate = prev.find(f => 
-        (metadata.name && f.name === metadata.name) || 
+      const fileToUpdate = prev.find(f =>
+        (metadata.name && f.name === metadata.name) ||
         (fileId && f.id === fileId)
       );
 
@@ -147,6 +147,12 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
           : file
       );
     });
+  };
+
+  const isAllFilesProcessed = () => {
+    return uploadedFiles.every(file =>
+      file.status === 'processed' || file.status === 'error'
+    );
   };
 
   const handleBack = () => {
@@ -311,7 +317,7 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <Button
               variant="ghost"
               onClick={handleBack}
-              disabled={currentStep === 0}
+              disabled={currentStep === 0 || (currentStep === 1 && !isAllFilesProcessed())}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -330,7 +336,10 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
             <Button
               onClick={handleNext}
               className="ml-auto"
-              disabled={currentStep === 0 && uploadedFiles.length === 0}
+              disabled={
+                (currentStep === 0 && uploadedFiles.length === 0) ||
+                (currentStep === 1 && !isAllFilesProcessed())
+              }
             >
               {isLastStep ? 'Continue to Form' : 'Next'}
               <ArrowRight className="h-4 w-4 ml-2" />
