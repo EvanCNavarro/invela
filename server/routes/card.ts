@@ -508,7 +508,12 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
     }
 
     // Analyze the response using OpenAI
-    const analysis = await analyzeCardResponse(response, field);
+    const analysis = await analyzeCardResponse(
+      response, 
+      field.question,
+      field.partial_risk_score_max || 100,
+      field.example_response
+    );
 
     // Update the response with AI analysis
     const [updatedResponse] = await db.update(cardResponses)
