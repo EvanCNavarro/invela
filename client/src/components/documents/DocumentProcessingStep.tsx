@@ -10,11 +10,13 @@ import { UploadedFile, DocumentStatus } from './types';
 interface DocumentProcessingStepProps {
   companyName: string;
   uploadedFiles: UploadedFile[];
+  onProcessingComplete?: () => void;
 }
 
 export function DocumentProcessingStep({ 
   companyName,
-  uploadedFiles: initialFiles 
+  uploadedFiles: initialFiles,
+  onProcessingComplete 
 }: DocumentProcessingStepProps) {
   const { toast } = useToast();
   const [processingError, setProcessingError] = React.useState<string | null>(null);
@@ -85,14 +87,27 @@ export function DocumentProcessingStep({
 
           setCurrentProcessingIndex(index);
 
-          setFiles(prevFiles => prevFiles.map((file, fileIndex) => 
-            fileIndex === index ? {
-              ...file,
-              status: progress.status as DocumentStatus,
-              answersFound: progress.answersFound,
-              error: progress.error
-            } : file
-          ));
+          setFiles(prevFiles => {
+            const updatedFiles = prevFiles.map((file, fileIndex) => 
+              fileIndex === index ? {
+                ...file,
+                status: progress.status as DocumentStatus,
+                answersFound: progress.answersFound,
+                error: progress.error
+              } : file
+            );
+
+            // Check if all files are processed
+            const allProcessed = updatedFiles.every(file => 
+              file.status === 'processed' || file.status === 'error'
+            );
+
+            if (allProcessed) {
+              onProcessingComplete?.();
+            }
+
+            return updatedFiles;
+          });
 
           // Show toasts for important status changes
           if (progress.status === 'error') {
@@ -120,11 +135,12 @@ export function DocumentProcessingStep({
       } finally {
         setIsProcessing(false);
         setCurrentProcessingIndex(-1);
+        onProcessingComplete?.();
       }
     };
 
     startProcessing();
-  }, [cardFields, files, isLoadingFields, isProcessing, toast]);
+  }, [cardFields, files, isLoadingFields, isProcessing, toast, onProcessingComplete]);
 
   if (isLoadingFields) {
     return (
