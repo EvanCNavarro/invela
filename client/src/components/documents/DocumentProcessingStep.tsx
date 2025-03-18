@@ -29,6 +29,17 @@ export function DocumentProcessingStep({
     queryKey: ['/api/card/fields']
   });
 
+  // Check for completion when files status changes
+  React.useEffect(() => {
+    const allProcessed = files.length > 0 && files.every(file => 
+      file.status === 'processed' || file.status === 'error'
+    );
+
+    if (allProcessed && !isProcessing) {
+      onProcessingComplete?.();
+    }
+  }, [files, isProcessing, onProcessingComplete]);
+
   // Validate files and set up initial state
   React.useEffect(() => {
     const validFiles = initialFiles.filter(file => {
@@ -87,27 +98,14 @@ export function DocumentProcessingStep({
 
           setCurrentProcessingIndex(index);
 
-          setFiles(prevFiles => {
-            const updatedFiles = prevFiles.map((file, fileIndex) => 
-              fileIndex === index ? {
-                ...file,
-                status: progress.status as DocumentStatus,
-                answersFound: progress.answersFound,
-                error: progress.error
-              } : file
-            );
-
-            // Check if all files are processed
-            const allProcessed = updatedFiles.every(file => 
-              file.status === 'processed' || file.status === 'error'
-            );
-
-            if (allProcessed) {
-              onProcessingComplete?.();
-            }
-
-            return updatedFiles;
-          });
+          setFiles(prevFiles => prevFiles.map((file, fileIndex) => 
+            fileIndex === index ? {
+              ...file,
+              status: progress.status as DocumentStatus,
+              answersFound: progress.answersFound,
+              error: progress.error
+            } : file
+          ));
 
           // Show toasts for important status changes
           if (progress.status === 'error') {
@@ -135,12 +133,11 @@ export function DocumentProcessingStep({
       } finally {
         setIsProcessing(false);
         setCurrentProcessingIndex(-1);
-        onProcessingComplete?.();
       }
     };
 
     startProcessing();
-  }, [cardFields, files, isLoadingFields, isProcessing, toast, onProcessingComplete]);
+  }, [cardFields, files, isLoadingFields, isProcessing, toast]);
 
   if (isLoadingFields) {
     return (
