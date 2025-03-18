@@ -8,39 +8,21 @@
   - File data structure unified and consistent
   - File metadata properly tracked
   - Files correctly transitioning between steps
-  - Expected logs confirmed:
-    ```
-    [DocumentUploadWizard] Moving to next step:
-    {files: [{id, name, status}], timestamp}
-
-    [DocumentProcessingStep] Received files:
-    {files: [{id, name, status}], timestamp}
-    ```
+  - Expected logs confirmed
 
 #### B. Queue Setup ✓
 - [x] Initialize processing queue with validated files
   - Queue initialization working correctly
   - File validation before queue setup implemented
   - Sequential processing established
-  - Expected logs confirmed:
-    ```
-    [DocumentProcessingStep] Queue initialized:
-    {validFiles, queueLength, fileDetails, timestamp}
-
-    [DocumentProcessingStep] Processing started:
-    {fileId, totalChunks, timestamp}
-    ```
+  - Expected logs confirmed
 
 #### C. Card Fields Integration ✓
 - [x] Card fields loaded before queue start
   - Loading state handled properly
   - Card fields structure validated
   - Processing starts only after fields are loaded
-  - Expected logs confirmed:
-    ```
-    [CardFields] Fields loaded
-    [ProcessingQueue] Queue ready
-    ```
+  - Expected logs confirmed
 
 ### 2. Processing State Management ✓ (Completed)
 - [x] Track file status changes
@@ -49,18 +31,26 @@
   - Show "processing" only for active file
 - [x] Handle sequential processing
 - [x] Maintain consistent state
-- Expected logs:
-  ```
-  [StateManager] File status update:
-  {fileId, oldStatus, newStatus, timestamp}
-  ```
 
 ### 3. Document Chunking Implementation 🔄 (Current Focus)
 #### A. Basic Chunking Implementation
+- [ ] Fix PDF text extraction issues
+  - Properly extract text content from PDFs
+  - Add validation for extracted content
+  - Ensure non-zero chunk sizes
+  - Expected logs:
+    ```
+    [PDF Service] Starting text extraction:
+    {filePath, pageCount, timestamp}
+
+    [PDF Service] Content extracted:
+    {contentLength, pageCount, timestamp}
+    ```
 - [ ] Implement file content chunking
   - Add chunk creation logic
   - Handle different file types (PDF, TXT)
   - Track chunk processing progress
+  - Validate chunk content before processing
 - [ ] Integrate OpenAI processing
   - Process chunks sequentially
   - Extract answers from chunks
@@ -93,6 +83,7 @@
 - Processing queue initialization 100% ✓
 - Queue state management 100% ✓
 - Chunk processing accuracy TBD
+- PDF extraction accuracy TBD
 
 ## Verification Process
 1. Check file object preservation during transitions ✓
@@ -100,11 +91,12 @@
 3. Monitor card fields loading ✓
 4. Track processing state changes ✓
 5. Validate error handling 🔄
-6. Verify chunk processing accuracy
-7. Test answer aggregation
+6. Verify PDF content extraction
+7. Verify chunk processing accuracy
+8. Test answer aggregation
 
 ## Next Steps
-1. Implement basic file chunking with OpenAI processing 🔄
-2. Add error handling for chunk processing
-3. Implement answer aggregation across chunks
-4. (Future) Optimize chunk size calculation and natural breaks
+1. Fix PDF text extraction issues 🔄
+2. Implement proper chunk content validation
+3. Add error handling for chunk processing
+4. Implement answer aggregation across chunks
