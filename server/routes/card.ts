@@ -90,159 +90,6 @@ router.get('/api/card/responses/:taskId', requireAuth, async (req, res) => {
   }
 });
 
-// Modified routes for saving and analyzing individual responses - removed '/api' prefix
-router.post('/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
-  try {
-    const { taskId, fieldId } = req.params;
-    const { response } = req.body;
-
-    logger.info('Saving card response', {
-      taskId,
-      fieldId,
-      hasResponse: !!response
-    });
-
-    const [updatedResponse] = await db.insert(cardResponses)
-      .values({
-        task_id: parseInt(taskId),
-        field_id: parseInt(fieldId),
-        response_value: response,
-        status: response ? 'COMPLETE' : 'EMPTY',
-        version: 1,
-        created_at: new Date(),
-        updated_at: new Date()
-      })
-      .onConflictDoUpdate({
-        target: [cardResponses.task_id, cardResponses.field_id],
-        set: {
-          response_value: response,
-          status: response ? 'COMPLETE' : 'EMPTY',
-          version: sql`${cardResponses.version} + 1`,
-          updated_at: new Date()
-        }
-      })
-      .returning();
-
-    // Calculate progress
-    const totalFields = await db.select({ count: sql<number>`count(*)` })
-      .from(cardFields)
-      .then(result => result[0].count);
-
-    const completedFields = await db.select({ count: sql<number>`count(*)` })
-      .from(cardResponses)
-      .where(and(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.status, 'COMPLETE')
-      ))
-      .then(result => result[0].count);
-
-    const progress = Math.round((completedFields / totalFields) * 100);
-
-    // Update task progress
-    await db.update(tasks)
-      .set({ 
-        progress,
-        updated_at: new Date()
-      })
-      .where(eq(tasks.id, parseInt(taskId)));
-
-    logger.info('Response saved successfully', {
-      taskId,
-      fieldId,
-      responseId: updatedResponse.id,
-      progress
-    });
-
-    res.json({
-      id: updatedResponse.id,
-      status: updatedResponse.status,
-      progress
-    });
-
-  } catch (error) {
-    logger.error('Error saving response', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      taskId: req.params.taskId,
-      fieldId: req.params.fieldId
-    });
-    res.status(500).json({
-      message: "Failed to save response",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
-// Modified analyze endpoint - removed '/api' prefix
-router.post('/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) => {
-  try {
-    const { taskId, fieldId } = req.params;
-    const { response } = req.body;
-
-    logger.info('Starting response analysis', {
-      taskId,
-      fieldId,
-      hasResponse: !!response
-    });
-
-    // Get the field details for AI instructions
-    const field = await db.query.cardFields.findFirst({
-      where: eq(cardFields.id, parseInt(fieldId))
-    });
-
-    if (!field) {
-      throw new Error('Field not found');
-    }
-
-    // Analyze the response using OpenAI
-    const analysis = await analyzeCardResponse(
-      response, 
-      field.question,
-      field.partial_risk_score_max || 100,
-      field.example_response
-    );
-
-    // Update the response with AI analysis
-    const [updatedResponse] = await db.update(cardResponses)
-      .set({
-        ai_suspicion_level: analysis.suspicionLevel,
-        partial_risk_score: analysis.riskScore,
-        ai_reasoning: analysis.reasoning,
-        updated_at: new Date()
-      })
-      .where(and(
-        eq(cardResponses.task_id, parseInt(taskId)),
-        eq(cardResponses.field_id, parseInt(fieldId))
-      ))
-      .returning();
-
-    logger.info('Analysis completed successfully', {
-      taskId,
-      fieldId,
-      responseId: updatedResponse.id,
-      suspicionLevel: analysis.suspicionLevel,
-      riskScore: analysis.riskScore
-    });
-
-    res.json({
-      field_id: parseInt(fieldId),
-      ai_suspicion_level: analysis.suspicionLevel,
-      partial_risk_score: analysis.riskScore,
-      reasoning: analysis.reasoning
-    });
-
-  } catch (error) {
-    logger.error('Error analyzing response', {
-      error: error instanceof Error ? error.message : 'Unknown error',
-      taskId: req.params.taskId,
-      fieldId: req.params.fieldId
-    });
-    res.status(500).json({
-      message: "Failed to analyze response",
-      error: error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-});
-
 // Submit CARD form
 router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   try {
@@ -464,6 +311,53 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
   }
 });
 
+// Helper function to process empty responses
+async function processEmptyResponses(
+  taskId: string,
+  fields: typeof cardFields.$inferSelect[],
+  existingResponses: typeof cardResponses.$inferSelect[],
+  timestamp: Date
+) {
+  // First, update all existing EMPTY responses
+  const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
+  for (const response of emptyResponses) {
+    const field = fields.find(f => f.id === response.field_id);
+    if (!field) continue;
+
+    await db.update(cardResponses)
+      .set({
+        response_value: "Unanswered.",
+        status: 'COMPLETE',
+        ai_suspicion_level: 100,
+        partial_risk_score: field.partial_risk_score_max,
+        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+        version: response.version + 1,
+        updated_at: timestamp
+      })
+      .where(eq(cardResponses.id, response.id));
+  }
+
+  // Create responses for fields that don't have any response
+  const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
+  const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
+
+  for (const field of missingFields) {
+    await db.insert(cardResponses)
+      .values({
+        task_id: parseInt(taskId),
+        field_id: field.id,
+        response_value: "Unanswered.",
+        status: 'COMPLETE',
+        ai_suspicion_level: 100,
+        partial_risk_score: field.partial_risk_score_max,
+        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+        version: 1,
+        created_at: timestamp,
+        updated_at: timestamp
+      });
+  }
+}
+
 // Download assessment file
 router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
   try {
@@ -511,51 +405,156 @@ router.get('/api/card/download/:fileName', requireAuth, async (req, res) => {
 });
 
 
-// Helper function to process empty responses
-async function processEmptyResponses(
-  taskId: string,
-  fields: typeof cardFields.$inferSelect[],
-  existingResponses: typeof cardResponses.$inferSelect[],
-  timestamp: Date
-) {
-  // First, update all existing EMPTY responses
-  const emptyResponses = existingResponses.filter(r => r.status === 'EMPTY');
-  for (const response of emptyResponses) {
-    const field = fields.find(f => f.id === response.field_id);
-    if (!field) continue;
+// Add new routes for saving and analyzing individual responses
+router.post('/api/card/response/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
 
-    await db.update(cardResponses)
-      .set({
-        response_value: "Unanswered.",
-        status: 'COMPLETE',
-        ai_suspicion_level: 100,
-        partial_risk_score: field.partial_risk_score_max,
-        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
-        version: response.version + 1,
-        updated_at: timestamp
-      })
-      .where(eq(cardResponses.id, response.id));
-  }
+    logger.info('Saving card response', {
+      taskId,
+      fieldId,
+      hasResponse: !!response
+    });
 
-  // Create responses for fields that don't have any response
-  const existingFieldIds = new Set(existingResponses.map(r => r.field_id));
-  const missingFields = fields.filter(f => !existingFieldIds.has(f.id));
-
-  for (const field of missingFields) {
-    await db.insert(cardResponses)
+    const [updatedResponse] = await db.insert(cardResponses)
       .values({
         task_id: parseInt(taskId),
-        field_id: field.id,
-        response_value: "Unanswered.",
-        status: 'COMPLETE',
-        ai_suspicion_level: 100,
-        partial_risk_score: field.partial_risk_score_max,
-        ai_reasoning: "System Reasoning: User did not answer; Maximum Partial Risk Score applied to this form field response.",
+        field_id: parseInt(fieldId),
+        response_value: response,
+        status: response ? 'COMPLETE' : 'EMPTY',
         version: 1,
-        created_at: timestamp,
-        updated_at: timestamp
-      });
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .onConflictDoUpdate({
+        target: [cardResponses.task_id, cardResponses.field_id],
+        set: {
+          response_value: response,
+          status: response ? 'COMPLETE' : 'EMPTY',
+          version: sql`${cardResponses.version} + 1`,
+          updated_at: new Date()
+        }
+      })
+      .returning();
+
+    // Calculate progress
+    const totalFields = await db.select({ count: sql<number>`count(*)` })
+      .from(cardFields)
+      .then(result => result[0].count);
+
+    const completedFields = await db.select({ count: sql<number>`count(*)` })
+      .from(cardResponses)
+      .where(and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.status, 'COMPLETE')
+      ))
+      .then(result => result[0].count);
+
+    const progress = Math.round((completedFields / totalFields) * 100);
+
+    // Update task progress
+    await db.update(tasks)
+      .set({ 
+        progress,
+        updated_at: new Date()
+      })
+      .where(eq(tasks.id, parseInt(taskId)));
+
+    logger.info('Response saved successfully', {
+      taskId,
+      fieldId,
+      responseId: updatedResponse.id,
+      progress
+    });
+
+    res.json({
+      id: updatedResponse.id,
+      status: updatedResponse.status,
+      progress
+    });
+
+  } catch (error) {
+    logger.error('Error saving response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: req.params.taskId,
+      fieldId: req.params.fieldId
+    });
+    res.status(500).json({
+      message: "Failed to save response",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
   }
-}
+});
+
+router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) => {
+  try {
+    const { taskId, fieldId } = req.params;
+    const { response } = req.body;
+
+    logger.info('Starting response analysis', {
+      taskId,
+      fieldId,
+      hasResponse: !!response
+    });
+
+    // Get the field details for AI instructions
+    const field = await db.query.cardFields.findFirst({
+      where: eq(cardFields.id, parseInt(fieldId))
+    });
+
+    if (!field) {
+      throw new Error('Field not found');
+    }
+
+    // Analyze the response using OpenAI
+    const analysis = await analyzeCardResponse(
+      response, 
+      field.question,
+      field.partial_risk_score_max || 100,
+      field.example_response
+    );
+
+    // Update the response with AI analysis
+    const [updatedResponse] = await db.update(cardResponses)
+      .set({
+        ai_suspicion_level: analysis.suspicionLevel,
+        partial_risk_score: analysis.riskScore,
+        ai_reasoning: analysis.reasoning,
+        updated_at: new Date()
+      })
+      .where(and(
+        eq(cardResponses.task_id, parseInt(taskId)),
+        eq(cardResponses.field_id, parseInt(fieldId))
+      ))
+      .returning();
+
+    logger.info('Analysis completed successfully', {
+      taskId,
+      fieldId,
+      responseId: updatedResponse.id,
+      suspicionLevel: analysis.suspicionLevel,
+      riskScore: analysis.riskScore
+    });
+
+    res.json({
+      field_id: parseInt(fieldId),
+      ai_suspicion_level: analysis.suspicionLevel,
+      partial_risk_score: analysis.riskScore,
+      reasoning: analysis.reasoning
+    });
+
+  } catch (error) {
+    logger.error('Error analyzing response', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      taskId: req.params.taskId,
+      fieldId: req.params.fieldId
+    });
+    res.status(500).json({
+      message: "Failed to analyze response",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
 
 export default router;
