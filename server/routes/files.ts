@@ -17,21 +17,21 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-function detectDocumentCategory(filename: string): keyof typeof DocumentCategory | null {
+function detectDocumentCategory(filename: string): DocumentCategory {
   const lowerFilename = filename.toLowerCase();
   if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2')) {
-    return 'SOC2_AUDIT';
+    return DocumentCategory.SOC2_AUDIT;
   }
   if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001')) {
-    return 'ISO27001_CERT';
+    return DocumentCategory.ISO27001_CERT;
   }
   if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test')) {
-    return 'PENTEST_REPORT';
+    return DocumentCategory.PENTEST_REPORT;
   }
   if (lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan')) {
-    return 'BUSINESS_CONTINUITY';
+    return DocumentCategory.BUSINESS_CONTINUITY;
   }
-  return 'OTHER';
+  return DocumentCategory.OTHER;
 }
 
 // File upload endpoint
@@ -47,7 +47,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
-    // Broadcast upload start
+    // Broadcast upload start immediately
     broadcastUploadProgress({
       type: 'UPLOAD_PROGRESS',
       fileId: null,
@@ -73,6 +73,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
 
     // Detect document category
     const documentCategory = detectDocumentCategory(req.file.originalname);
+    console.log('[Files] Detected category:', documentCategory);
 
     // Create file record in database with initial metadata
     const [fileRecord] = await db.insert(files)
@@ -121,18 +122,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       category: documentCategory,
       count: 1,
       companyId: req.user.company_id.toString()
-    });
-
-    // Broadcast task update for processing start
-    broadcastTaskUpdate({
-      id: fileRecord.id,
-      status: 'processing',
-      progress: 0,
-      metadata: {
-        fileName: fileRecord.name,
-        uploadTime: fileRecord.upload_time,
-        category: documentCategory
-      }
     });
 
     res.status(201).json(fileRecord);
