@@ -8,7 +8,7 @@ import { users, companies, files, companyLogos, relationships, tasks, invitation
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
-import { broadcastTaskUpdate, broadcastClassificationUpdate } from './services/websocket';
+import { broadcastTaskUpdate } from './services/websocket';
 import crypto from 'crypto';
 import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
@@ -1721,7 +1721,7 @@ export function registerRoutes(app: Express): Express {
             answers.push(...chunkAnswers);
 
             // Send progress update via WebSocket
-            broadcastClassificationUpdate({
+            broadcastTaskUpdate({
               type: 'CLASSIFICATION_UPDATE',
               fileId: file.id.toString(),
               category: file.category || 'unknown',
