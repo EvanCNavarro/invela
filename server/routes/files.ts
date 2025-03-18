@@ -1,7 +1,20 @@
-// Ensure upload directory exists
-const router = Router();
-const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
+import { Router } from 'express';
+import { db } from "@db";
+import { files } from "@db/schema";
+import { eq, sql } from "drizzle-orm";
+import path from 'path';
+import fs from 'fs';
+import { documentUpload } from '../middleware/upload';
+import multer from 'multer';
+import { createDocumentChunks, processChunk } from '../services/documentChunking';
+import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { aggregateAnswers } from '../services/answerAggregation';
 
+// Create router instance first
+const router = Router();
+
+// Ensure upload directory exists
+const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -106,6 +119,165 @@ async function processDocument(
   }
 }
 
+// Document category enum
+enum DocumentCategory {
+  SOC2_AUDIT = 'soc2_audit',
+  ISO27001_CERT = 'iso27001_cert',
+  PENTEST_REPORT = 'pentest_report',
+  BUSINESS_CONTINUITY = 'business_continuity',
+  OTHER = 'other'
+}
+
+function detectDocumentCategory(filename: string): DocumentCategory {
+  const lowerFilename = filename.toLowerCase();
+  let category: DocumentCategory;
+
+  // Improved detection patterns with comprehensive checks
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || 
+      lowerFilename.includes('soc-2')) {
+    category = DocumentCategory.SOC2_AUDIT;
+  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || 
+            lowerFilename.includes('iso-27001')) {
+    category = DocumentCategory.ISO27001_CERT;
+  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || 
+            lowerFilename.includes('pen-test') ||
+            lowerFilename.includes('penetration test') || 
+            lowerFilename.includes('security test') || 
+            lowerFilename.includes('penetration-test') || 
+            lowerFilename.includes('penetration_test')) {
+    category = DocumentCategory.PENTEST_REPORT;
+  } else if (lowerFilename.includes('spg-business-continuity-plan') || 
+            lowerFilename.includes('business continuity') || 
+            lowerFilename.includes('continuity plan') || 
+            lowerFilename.includes('business-continuity') || 
+            lowerFilename.includes('disaster recovery') ||
+            lowerFilename.includes('business_continuity') ||
+            lowerFilename.includes('bcp') ||
+            (lowerFilename.includes('business') && lowerFilename.includes('continuity'))) {
+    category = DocumentCategory.BUSINESS_CONTINUITY;
+  } else {
+    category = DocumentCategory.OTHER;
+  }
+
+  console.log('[Files] Document category detection:', {
+    filename: filename,
+    lowerFilename: lowerFilename,
+    detectedCategory: category,
+    timestamp: new Date().toISOString(),
+    matches: {
+      isSoc2: lowerFilename.includes('soc2') || lowerFilename.includes('soc 2'),
+      isIso27001: lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001'),
+      isPentest: lowerFilename.includes('pentest') || lowerFilename.includes('pen test'),
+      isBusinessContinuity: lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan'),
+      exactMatch: lowerFilename
+    }
+  });
+
+  return category;
+}
+
+// Route handlers
+router.post('/api/files', documentUpload.single('file'), async (req, res) => {
+  try {
+    console.log('[Files] Processing file upload request');
+
+    if (!req.file) {
+      console.log('[Files] No file received in request');
+      return res.status(400).json({ 
+        error: 'No file uploaded',
+        detail: 'Request must include a file'
+      });
+    }
+
+    console.log('[Files] File details:', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      filename: req.file.filename
+    });
+
+    if (!req.user?.id || !req.user?.company_id) {
+      console.log('[Files] Authentication required');
+      return res.status(401).json({ 
+        error: 'Authentication required',
+        detail: 'User must be logged in to upload files'
+      });
+    }
+
+    // Detect document category
+    const documentCategory = detectDocumentCategory(req.file.originalname);
+    console.log('[Files] Detected category:', documentCategory);
+
+    // Create file record in database with initial metadata
+    const [fileRecord] = await db.insert(files)
+      .values({
+        name: req.file.originalname,
+        path: req.file.filename,
+        type: req.file.mimetype,
+        size: req.file.size,
+        user_id: req.user.id,
+        company_id: req.user.company_id,
+        status: 'uploaded',
+        document_category: documentCategory,
+        created_at: new Date(),
+        updated_at: new Date(),
+        upload_time: new Date(),
+        download_count: 0,
+        version: 1,
+        metadata: {
+          answers: [],
+          aggregatedAnswers: [],
+          chunks_processed: 0,
+          chunks_total: 0,
+          processing_fields: []
+        }
+      })
+      .returning();
+
+    console.log('[Files] Created file record:', {
+      id: fileRecord.id,
+      name: fileRecord.name,
+      status: fileRecord.status,
+      category: documentCategory
+    });
+
+    // Broadcast document count update
+    broadcastDocumentCountUpdate({
+      type: 'COUNT_UPDATE',
+      category: documentCategory,
+      count: 1,
+      companyId: req.user.company_id.toString()
+    });
+
+    res.status(201).json(fileRecord);
+  } catch (error) {
+    console.error('[Files] Error processing upload:', error);
+
+    // Clean up uploaded file if operation fails
+    if (req.file) {
+      const filePath = path.join(uploadDir, req.file.filename);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    // Enhanced error handling
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: 'File too large',
+          detail: 'Maximum file size is 50MB'
+        });
+      }
+    }
+
+    res.status(500).json({ 
+      error: 'Upload failed',
+      detail: error instanceof Error ? error.message : 'Unknown error occurred'
+    });
+  }
+});
+
 // Update the process endpoint to use the new processing function
 router.post("/api/documents/:id/process", async (req, res) => {
   try {
@@ -173,172 +345,6 @@ router.post("/api/documents/:id/process", async (req, res) => {
     res.status(500).json({ error: "Failed to start processing" });
   }
 });
-
-import { Router } from 'express';
-import { db } from "@db";
-import { files } from "@db/schema";
-import { eq, sql } from "drizzle-orm";
-import path from 'path';
-import fs from 'fs';
-import { documentUpload } from '../middleware/upload';
-import multer from 'multer';
-import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate } from '../services/websocket';
-import { aggregateAnswers } from '../services/answerAggregation';
-
-
-function detectDocumentCategory(filename: string): DocumentCategory {
-  const lowerFilename = filename.toLowerCase();
-  let category: DocumentCategory;
-
-  // Improved detection patterns with comprehensive checks
-  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || 
-      lowerFilename.includes('soc-2')) {
-    category = DocumentCategory.SOC2_AUDIT;
-  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || 
-            lowerFilename.includes('iso-27001')) {
-    category = DocumentCategory.ISO27001_CERT;
-  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || 
-            lowerFilename.includes('pen-test') ||
-            lowerFilename.includes('penetration test') || 
-            lowerFilename.includes('security test') || 
-            lowerFilename.includes('penetration-test') || 
-            lowerFilename.includes('penetration_test')) {
-    category = DocumentCategory.PENTEST_REPORT;
-  } else if (lowerFilename.includes('spg-business-continuity-plan') || 
-            lowerFilename.includes('business continuity') || 
-            lowerFilename.includes('continuity plan') || 
-            lowerFilename.includes('business-continuity') || 
-            lowerFilename.includes('disaster recovery') ||
-            lowerFilename.includes('business_continuity') ||
-            lowerFilename.includes('bcp') ||
-            (lowerFilename.includes('business') && lowerFilename.includes('continuity'))) {
-    category = DocumentCategory.BUSINESS_CONTINUITY;
-  } else {
-    category = DocumentCategory.OTHER;
-  }
-
-  // Add detailed logging
-  console.log('[Files] Document category detection:', {
-    filename: filename,
-    lowerFilename: lowerFilename,
-    detectedCategory: category,
-    timestamp: new Date().toISOString(),
-    matches: {
-      isSoc2: lowerFilename.includes('soc2') || lowerFilename.includes('soc 2'),
-      isIso27001: lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001'),
-      isPentest: lowerFilename.includes('pentest') || lowerFilename.includes('pen test'),
-      isBusinessContinuity: lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan'),
-      exactMatch: lowerFilename
-    }
-  });
-
-  return category;
-}
-
-// File upload endpoint
-router.post('/api/files', documentUpload.single('file'), async (req, res) => {
-  try {
-    console.log('[Files] Processing file upload request');
-
-    if (!req.file) {
-      console.log('[Files] No file received in request');
-      return res.status(400).json({ 
-        error: 'No file uploaded',
-        detail: 'Request must include a file'
-      });
-    }
-
-    console.log('[Files] File details:', {
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      filename: req.file.filename
-    });
-
-    if (!req.user?.id || !req.user?.company_id) {
-      console.log('[Files] Authentication required');
-      return res.status(401).json({ 
-        error: 'Authentication required',
-        detail: 'User must be logged in to upload files'
-      });
-    }
-
-    // Detect document category
-    const documentCategory = detectDocumentCategory(req.file.originalname);
-    console.log('[Files] Detected category:', documentCategory);
-
-    // Create file record in database with initial metadata
-    const [fileRecord] = await db.insert(files)
-      .values({
-        name: req.file.originalname,
-        path: req.file.filename,
-        type: req.file.mimetype,
-        size: req.file.size,
-        user_id: req.user.id,
-        company_id: req.user.company_id,
-        status: 'uploaded',
-        document_category: documentCategory,
-        created_at: new Date(),
-        updated_at: new Date(),
-        upload_time: new Date(),
-        download_count: 0,
-        version: 1,
-        metadata: {
-          answers: [],
-          aggregatedAnswers: [],
-          chunks_processed: 0,
-          chunks_total: 0,
-          processing_fields: []
-        }
-      })
-      .returning();
-
-    console.log('[Files] Created file record:', {
-      id: fileRecord.id,
-      name: fileRecord.name,
-      status: fileRecord.status,
-      category: documentCategory
-    });
-
-
-    // Broadcast document count update
-    broadcastDocumentCountUpdate({
-      type: 'COUNT_UPDATE',
-      category: documentCategory,
-      count: 1,
-      companyId: req.user.company_id.toString()
-    });
-
-    res.status(201).json(fileRecord);
-  } catch (error) {
-    console.error('[Files] Error processing upload:', error);
-
-    // Clean up uploaded file if operation fails
-    if (req.file) {
-      const filePath = path.join(uploadDir, req.file.filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    }
-
-    // Enhanced error handling
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(413).json({
-          error: 'File too large',
-          detail: 'Maximum file size is 50MB'
-        });
-      }
-    }
-
-    res.status(500).json({ 
-      error: 'Upload failed',
-      detail: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
-  }
-});
-
 
 // Progress check endpoint
 router.get("/api/documents/:id/progress", async (req, res) => {
