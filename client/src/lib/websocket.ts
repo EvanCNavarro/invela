@@ -10,8 +10,14 @@ class WebSocketService {
   private connectionResolve: (() => void) | null = null;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private pongTimeout: NodeJS.Timeout | null = null;
+  private connectionId: string = '';
 
   constructor() {
+    this.connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('[WebSocket] Service initialized:', {
+      connectionId: this.connectionId,
+      timestamp: new Date().toISOString()
+    });
     this.connect();
   }
 
@@ -35,7 +41,10 @@ class WebSocketService {
 
         // Set a timeout for pong response
         this.pongTimeout = setTimeout(() => {
-          console.log('[WebSocket] No pong received, reconnecting...');
+          console.log('[WebSocket] No pong received, reconnecting...', {
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
           this.reconnect();
         }, 15000); // Wait 15s for pong before reconnecting
       }
@@ -50,14 +59,21 @@ class WebSocketService {
 
       try {
         const wsUrl = this.getWebSocketUrl();
-        console.log('[WebSocket] Connecting to:', wsUrl);
+        console.log('[WebSocket] Connecting to:', {
+          url: wsUrl,
+          connectionId: this.connectionId,
+          timestamp: new Date().toISOString()
+        });
 
         this.socket = new WebSocket(wsUrl);
 
         // Set a generous timeout for the initial connection
         const connectionTimeout = setTimeout(() => {
           if (this.socket?.readyState !== WebSocket.OPEN) {
-            console.log('[WebSocket] Connection timeout, attempting reconnect...');
+            console.log('[WebSocket] Connection timeout, attempting reconnect...', {
+              connectionId: this.connectionId,
+              timestamp: new Date().toISOString()
+            });
             this.socket?.close();
             this.cleanup();
             this.handleReconnect();
@@ -65,7 +81,10 @@ class WebSocketService {
         }, 20000); // 20 second timeout for initial connection
 
         this.socket.onopen = () => {
-          console.log('[WebSocket] Connected successfully');
+          console.log('[WebSocket] Connected successfully', {
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
           clearTimeout(connectionTimeout);
           this.reconnectAttempts = 0;
           this.reconnectTimeout = 1000;
@@ -89,30 +108,55 @@ class WebSocketService {
             }
 
             if (message.type === 'connection_established') {
-              console.log('[WebSocket] Connection established:', message.data);
+              console.log('[WebSocket] Connection established:', {
+                connectionId: this.connectionId,
+                data: message.data,
+                timestamp: new Date().toISOString()
+              });
               return;
             }
 
             this.handleMessage(message.type, message.data);
           } catch (error) {
-            console.error('[WebSocket] Error parsing message:', error);
+            console.error('[WebSocket] Error parsing message:', {
+              error,
+              connectionId: this.connectionId,
+              timestamp: new Date().toISOString()
+            });
           }
         };
 
         this.socket.onclose = (event) => {
-          console.log('[WebSocket] Connection closed:', event.code, event.reason);
+          console.log('[WebSocket] Connection closed:', {
+            code: event.code,
+            reason: event.reason,
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
           clearTimeout(connectionTimeout);
           this.cleanup();
-          this.handleReconnect();
+
+          // Only attempt reconnect for abnormal closures
+          if (event.code !== 1000 && event.code !== 1001) {
+            this.handleReconnect();
+          }
         };
 
         this.socket.onerror = (error) => {
-          console.error('[WebSocket] Error:', error);
+          console.error('[WebSocket] Error:', {
+            error,
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
           // Don't close the socket here, let the onclose handler deal with reconnection
         };
 
       } catch (error) {
-        console.error('[WebSocket] Error establishing connection:', error);
+        console.error('[WebSocket] Error establishing connection:', {
+          error,
+          connectionId: this.connectionId,
+          timestamp: new Date().toISOString()
+        });
         this.cleanup();
         this.handleReconnect();
       }
@@ -132,22 +176,38 @@ class WebSocketService {
     }
     this.socket = null;
     this.connectionPromise = null;
+    console.log('[WebSocket] Cleanup completed', {
+      connectionId: this.connectionId,
+      timestamp: new Date().toISOString()
+    });
   }
 
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[WebSocket] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+      console.log(`[WebSocket] Attempting to reconnect`, {
+        attempt: this.reconnectAttempts,
+        maxAttempts: this.maxReconnectAttempts,
+        connectionId: this.connectionId,
+        timestamp: new Date().toISOString()
+      });
 
       setTimeout(() => {
         this.connect().catch(error => {
-          console.error('[WebSocket] Reconnection attempt failed:', error);
+          console.error('[WebSocket] Reconnection attempt failed:', {
+            error,
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
         });
         // Exponential backoff with max of 30 seconds
         this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
       }, this.reconnectTimeout);
     } else {
-      console.error('[WebSocket] Max reconnection attempts reached');
+      console.error('[WebSocket] Max reconnection attempts reached', {
+        connectionId: this.connectionId,
+        timestamp: new Date().toISOString()
+      });
     }
   }
 
@@ -164,7 +224,11 @@ class WebSocketService {
         try {
           handler(data);
         } catch (error) {
-          console.error(`[WebSocket] Error in message handler for type "${type}":`, error);
+          console.error(`[WebSocket] Error in message handler for type "${type}":`, {
+            error,
+            connectionId: this.connectionId,
+            timestamp: new Date().toISOString()
+          });
         }
       });
     }
@@ -176,6 +240,14 @@ class WebSocketService {
     if (!this.messageHandlers.has(type)) {
       this.messageHandlers.set(type, new Set());
     }
+
+    console.log('[WebSocket] New subscription added:', {
+      type,
+      handlersCount: this.messageHandlers.get(type)!.size + 1,
+      connectionId: this.connectionId,
+      timestamp: new Date().toISOString()
+    });
+
     this.messageHandlers.get(type)!.add(handler);
 
     return () => {
@@ -185,6 +257,12 @@ class WebSocketService {
         if (handlers.size === 0) {
           this.messageHandlers.delete(type);
         }
+        console.log('[WebSocket] Subscription removed:', {
+          type,
+          remainingHandlers: handlers.size,
+          connectionId: this.connectionId,
+          timestamp: new Date().toISOString()
+        });
       }
     };
   }
