@@ -8,6 +8,7 @@ import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
 import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { aggregateAnswers } from '../services/answerAggregation';
 
 // Ensure upload directory exists
 const router = Router();
@@ -79,7 +80,6 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       });
     }
 
-
     console.log('[Files] File details:', {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
@@ -117,6 +117,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
         version: 1,
         metadata: {
           answers: [],
+          aggregatedAnswers: [],
           chunks_processed: 0,
           chunks_total: 0,
           processing_fields: []
@@ -203,6 +204,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
           processed: 0
         },
         answers: [],
+        aggregatedAnswers: [],
         answersFound: 0,
         timestamps: {
           started: new Date().toISOString(),
@@ -210,7 +212,6 @@ router.post("/api/documents/:id/process", async (req, res) => {
         }
       };
 
-      // Update initial state
       await db.update(files)
         .set({ 
           status: 'processing',
@@ -243,6 +244,9 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
                 if (!currentFile || !currentFile.metadata) continue;
 
+                // Aggregate answers before updating metadata
+                const aggregatedResults = await aggregateAnswers(batchAnswers);
+
                 const currentMetadata = currentFile.metadata;
                 const updatedMetadata = {
                   ...currentMetadata,
@@ -251,7 +255,8 @@ router.post("/api/documents/:id/process", async (req, res) => {
                     processed: chunk.index + 1
                   },
                   answers: [...(currentMetadata.answers || []), ...batchAnswers],
-                  answersFound: (currentMetadata.answersFound || 0) + batchAnswers.length,
+                  aggregatedAnswers: [...(currentMetadata.aggregatedAnswers || []), ...aggregatedResults],
+                  answersFound: (currentMetadata.answersFound || 0) + aggregatedResults.length,
                   timestamps: {
                     ...currentMetadata.timestamps,
                     lastUpdate: new Date().toISOString()
@@ -280,7 +285,9 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         }
 
-        // Final update
+        // Final update with all answers aggregated
+        const finalAggregatedResults = await aggregateAnswers(batchAnswers);
+
         const finalMetadata = {
           status: 'completed',
           fields,
@@ -289,7 +296,8 @@ router.post("/api/documents/:id/process", async (req, res) => {
             processed: chunks.length
           },
           answers: batchAnswers,
-          answersFound: batchAnswers.length,
+          aggregatedAnswers: finalAggregatedResults,
+          answersFound: finalAggregatedResults.length,
           timestamps: {
             started: metadata.timestamps.started,
             completed: new Date().toISOString(),
@@ -367,12 +375,12 @@ router.get("/api/documents/:id/results", async (req, res) => {
     }
 
     const metadata = fileRecord.metadata || {};
-    const answers = metadata.answers || [];
+    const aggregatedAnswers = metadata.aggregatedAnswers || [];
 
     res.json({
       status: fileRecord.status,
-      answers,
-      answersFound: answers.length
+      answers: aggregatedAnswers,
+      answersFound: aggregatedAnswers.length
     });
 
   } catch (error) {
