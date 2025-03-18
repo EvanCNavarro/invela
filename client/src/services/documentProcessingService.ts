@@ -1,5 +1,6 @@
 import { apiRequest } from '@/lib/queryClient';
 import type { CardField } from './cardService';
+import { wsService } from '@/lib/websocket';
 
 interface ProcessingResult {
   answersFound: number;
@@ -31,6 +32,7 @@ class ProcessingQueueManager {
   private isProcessing = false;
   private queue: number[] = [];
   private currentFileId: number | null = null;
+  private onProgressCallback: ((result: ProcessingResult) => void) | null = null;
 
   private constructor() {}
 
@@ -39,6 +41,31 @@ class ProcessingQueueManager {
       ProcessingQueueManager.instance = new ProcessingQueueManager();
     }
     return ProcessingQueueManager.instance;
+  }
+
+  setProgressCallback(callback: (result: ProcessingResult) => void) {
+    this.onProgressCallback = callback;
+  }
+
+  private emitProgress(fileId: number, status: ProcessingResult['status'], data: Partial<ProcessingResult> = {}) {
+    if (this.onProgressCallback) {
+      this.onProgressCallback({
+        answersFound: data.answersFound || 0,
+        status,
+        ...data
+      });
+    }
+
+    // Also emit via WebSocket for real-time UI updates
+    wsService.emit('TASK_UPDATE', {
+      id: fileId,
+      status,
+      progress: data.progress || null,
+      metadata: {
+        answersFound: data.answersFound || 0,
+        ...data.progress
+      }
+    });
   }
 
   async addToQueue(fileId: number): Promise<void> {
@@ -99,6 +126,16 @@ class ProcessingQueueManager {
         throw new Error(`Failed to start processing for file ${this.currentFileId}`);
       }
 
+      const processData = await processResponse.json();
+
+      // Initial progress update
+      this.emitProgress(this.currentFileId, 'processing', {
+        progress: {
+          chunksProcessed: 0,
+          totalChunks: processData.totalChunks
+        }
+      });
+
       // Poll for progress
       let isProcessing = true;
       while (isProcessing) {
@@ -110,9 +147,23 @@ class ProcessingQueueManager {
 
         const progressData = await progressResponse.json();
 
+        // Emit progress update
+        this.emitProgress(this.currentFileId, 'processing', {
+          answersFound: progressData.answersFound || 0,
+          progress: progressData.progress
+        });
+
         if (progressData.status === 'processed') {
           isProcessing = false;
           success = true;
+          // Emit final state
+          this.emitProgress(this.currentFileId, 'processed', {
+            answersFound: progressData.answersFound || 0,
+            progress: {
+              chunksProcessed: progressData.progress.totalChunks,
+              totalChunks: progressData.progress.totalChunks
+            }
+          });
         } else {
           // Wait before next check
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -123,6 +174,11 @@ class ProcessingQueueManager {
         fileId: this.currentFileId,
         error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
+      });
+
+      // Emit error state
+      this.emitProgress(this.currentFileId, 'error', {
+        error: error instanceof Error ? error.message : 'Processing failed'
       });
     } finally {
       const processingTime = Date.now() - startTime;
@@ -152,6 +208,7 @@ export async function processDocuments(
     }
 
     const queueManager = ProcessingQueueManager.getInstance();
+    queueManager.setProgressCallback(onProgress);
     let totalAnswersFound = 0;
 
     // Add each file to the processing queue

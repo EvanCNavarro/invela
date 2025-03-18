@@ -46,7 +46,11 @@ export function DocumentProcessingStep({
       return isValid;
     });
 
-    setFiles(validFiles);
+    setFiles(validFiles.map(file => ({
+      ...file,
+      status: 'waiting' as DocumentStatus // Set initial status to waiting
+    })));
+
     console.log('[DocumentProcessingStep] Files initialized:', {
       validFiles: validFiles.length,
       fileDetails: validFiles.map(f => ({
@@ -68,6 +72,14 @@ export function DocumentProcessingStep({
           const fileIndex = files.findIndex(f => f.id === data.id);
           if (fileIndex === -1) return;
 
+          console.log('[DocumentProcessingStep] Task update received:', {
+            fileId: data.id,
+            status: data.status,
+            progress: data.progress,
+            metadata: data.metadata,
+            timestamp: new Date().toISOString()
+          });
+
           setFiles(prevFiles => prevFiles.map((file, index) => 
             index === fileIndex ? {
               ...file,
@@ -81,6 +93,11 @@ export function DocumentProcessingStep({
               variant: 'destructive',
               title: 'Processing Error',
               description: `Failed to process ${files[fileIndex].name}`
+            });
+          } else if (data.status === 'processed') {
+            toast({
+              title: 'Processing Complete',
+              description: `Successfully processed ${files[fileIndex].name}`
             });
           }
         });
@@ -128,7 +145,12 @@ export function DocumentProcessingStep({
 
         const fileIds = files.map(f => f.id!);
         await processDocuments(fileIds, cardFields, (progress) => {
-          setCurrentProcessingIndex(fileIds.indexOf(progress.fileId));
+          if (progress.fileId) {
+            const index = fileIds.indexOf(progress.fileId);
+            if (index !== -1) {
+              setCurrentProcessingIndex(index);
+            }
+          }
         });
 
       } catch (error) {
