@@ -863,8 +863,8 @@ export function registerRoutes(app: Express): Express {
   });
 
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Starting invitation process');
-console.log('[FinTech Invite] Request body:', req.body);
+    console.log('[FinTechInvite] Starting invitation process');
+    console.log('[FinTech Invite] Request body:', req.body);
 
     try {
       const { email, company_name, full_name, sender_name, sender_company } = req.body;
@@ -956,11 +956,14 @@ console.log('[FinTech Invite] Request body:', req.body);
         console.log('[FinTech Invite] Created new company:', {
           id: newCompany.id,
           name: newCompany.name,
-          category: newCompany.category,
           metadata: newCompany.metadata
         });
 
-        // Create a new user record (unregistered)
+        // Generate temporary password for new user
+        const tempPassword = crypto.randomBytes(32).toString('hex');
+        const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+        // Create a new user record
         const [newUser] = await tx.insert(users)
           .values({
             email: email.toLowerCase().trim(),
@@ -968,6 +971,7 @@ console.log('[FinTech Invite] Request body:', req.body);
             company_id: newCompany.id,
             role: 'admin',
             status: 'pending',
+            password: hashedPassword, // Add the hashed password
             onboarding_user_completed: false,
             metadata: {
               invited_by: req.user!.id,
@@ -993,7 +997,6 @@ console.log('[FinTech Invite] Request body:', req.body);
             email: email.toLowerCase().trim(),
             company_id: newCompany.id,
             code: code,
-            type: 'fintech',
             status: 'pending',
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
             metadata: {
@@ -1009,8 +1012,7 @@ console.log('[FinTech Invite] Request body:', req.body);
 
         console.log('[FinTech Invite] Created invitation:', {
           id: invitation.id,
-          code: invitation.code,
-          type: invitation.type
+          code: invitation.code
         });
 
         // Send email invitation
