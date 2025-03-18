@@ -140,6 +140,7 @@ export const files = pgTable("files", {
   upload_time: timestamp("upload_time"),
   download_count: integer("download_count"),
   version: real("version").notNull().default(1.0),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({})
 });
 
 export const invitations = pgTable("invitations", {

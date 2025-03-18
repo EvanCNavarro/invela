@@ -70,13 +70,17 @@
   - Integrate OpenAI processing ✓
 
 #### F. Answer Processing 🔄 (Current Focus)
-- [ ] Implement answer aggregation
+- [ ] Implement answer aggregation and processing
   - [x] Process chunks sequentially
   - [x] Extract answers from chunks
-  - 🔄 Aggregate results across chunks
-    - [x] Basic aggregation structure
-    - [ ] Fix answer collection from batches
-    - [ ] Proper metadata updates
+  - 🔄 Fix critical metadata issues
+    - [ ] Fix SQL errors in metadata updates
+    - [ ] Implement proper metadata tracking
+    - [ ] Add error handling for metadata updates
+  - [ ] Aggregate results across chunks
+    - [ ] Collect answers from all batches
+    - [ ] Track answer counts correctly
+    - [ ] Update progress accurately
   - [ ] Field key validation and mapping
   - [ ] Answer deduplication
   - [ ] UI display updates
@@ -102,8 +106,10 @@
 - PDF extraction accuracy 100% ✓
 - Answer aggregation accuracy TBD
   * Basic structure: 100% ✓
+  * Metadata updates: 0%
   * Field mapping: 0%
   * Deduplication: 0%
+  * UI updates: 0%
 
 ## Verification Process
 1. Check file object preservation during transitions ✓
@@ -116,13 +122,15 @@
 8. Verify chunk processing accuracy ✓
 9. Test answer aggregation 🔄
    - [x] Basic structure implemented
+   - [ ] Fix metadata update errors
+   - [ ] Verify answer tracking
+   - [ ] Test UI updates
    - [ ] Field mapping validation
    - [ ] Answer deduplication
-   - [ ] UI updates
 
 ## Next Steps
-1. Complete answer batch collection ✓
-2. Implement field key validation and mapping
-3. Add answer deduplication
-4. Update UI to display aggregated answers
-5. Add error handling for answer processing
+1. Fix SQL metadata update errors 🔄
+2. Implement proper answer tracking
+3. Add UI progress updates
+4. Implement field key mapping
+5. Add answer deduplication
