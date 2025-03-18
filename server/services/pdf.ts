@@ -10,6 +10,7 @@ const options = {
 
 // Each token is approximately 4 characters
 const MAX_TEXT_LENGTH = 16000 * 4; // Set max length to stay within GPT-3.5-turbo's limit
+const MIN_TEXT_LENGTH = 50; // Minimum text length to consider content valid
 
 export async function extractTextFromFirstPages(filePath: string, maxPages?: number): Promise<string> {
   console.log('[PDF Service] Starting text extraction from first pages:', {
@@ -19,11 +20,20 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
   });
 
   try {
+    // Validate file exists and is accessible
     if (!fs.existsSync(filePath)) {
       throw new Error(`File not found at path: ${filePath}`);
     }
 
-    console.log('[PDF Service] Reading PDF file');
+    const stats = fs.statSync(filePath);
+    if (stats.size === 0) {
+      throw new Error('PDF file is empty');
+    }
+
+    console.log('[PDF Service] Reading PDF file:', {
+      fileSize: stats.size,
+      timestamp: new Date().toISOString()
+    });
 
     // Extract with page limit if specified
     const extractOptions = maxPages !== undefined ? {
@@ -43,31 +53,61 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
       timestamp: new Date().toISOString()
     });
 
-    // Combine text from all extracted pages with proper spacing
-    let text = data.pages
-      .map(page => {
-        if (!page?.content?.length) {
-          console.warn('[PDF Service] Empty page content found');
-          return '';
-        }
-        // Join content items with space and clean up whitespace
-        return page.content
-          .map(item => item.str.trim())
-          .filter(Boolean)
-          .join(' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-      })
-      .filter(Boolean) // Remove empty pages
+    // Process each page and validate content
+    const processedPages = data.pages.map((page, pageIndex) => {
+      if (!page?.content?.length) {
+        console.warn('[PDF Service] Empty page content found:', {
+          pageIndex,
+          timestamp: new Date().toISOString()
+        });
+        return '';
+      }
+
+      // Join content items with space and clean up whitespace
+      const pageText = page.content
+        .map(item => {
+          if (!item?.str) {
+            console.warn('[PDF Service] Invalid content item found:', {
+              pageIndex,
+              item,
+              timestamp: new Date().toISOString()
+            });
+            return '';
+          }
+          return item.str.trim();
+        })
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      console.log('[PDF Service] Page processed:', {
+        pageIndex,
+        contentLength: pageText.length,
+        hasContent: pageText.length > 0,
+        timestamp: new Date().toISOString()
+      });
+
+      return pageText;
+    });
+
+    // Filter out empty pages and join with double newline
+    let text = processedPages
+      .filter(pageText => pageText.length > 0)
       .join('\n\n');
 
     if (!text.length) {
       throw new Error('No text content extracted from PDF');
     }
 
+    if (text.length < MIN_TEXT_LENGTH) {
+      throw new Error(`Extracted text too short (${text.length} chars). Minimum required: ${MIN_TEXT_LENGTH}`);
+    }
+
     console.log('[PDF Service] Content extracted:', {
       contentLength: text.length,
       pageCount: data.pages.length,
+      nonEmptyPages: processedPages.filter(p => p.length > 0).length,
       timestamp: new Date().toISOString()
     });
 
@@ -85,6 +125,7 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
   } catch (error) {
     console.error('[PDF Service] Text extraction failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       filePath,
       timestamp: new Date().toISOString()
     });

@@ -33,10 +33,26 @@ export const DocumentUploadWizard = ({ companyName, onComplete }: DocumentUpload
         size: f.size,
         type: f.type,
         status: f.status,
-        answersFound: f.answersFound //Added this line from edited code
+        answersFound: f.answersFound
       })),
       timestamp: new Date().toISOString()
     });
+
+    // Validate files before moving to processing step
+    if (currentStep === 0) {
+      const invalidFiles = uploadedFiles.filter(file => !file.id || file.status !== 'uploaded');
+      if (invalidFiles.length > 0) {
+        console.error('[DocumentUploadWizard] Invalid files found:', {
+          invalidFiles: invalidFiles.map(f => ({
+            id: f.id,
+            name: f.name,
+            status: f.status
+          })),
+          timestamp: new Date().toISOString()
+        });
+        return;
+      }
+    }
 
     if (currentStep < WIZARD_STEPS.length - 1) {
       setCurrentStep(current => current + 1);
