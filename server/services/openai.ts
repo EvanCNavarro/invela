@@ -3,6 +3,21 @@ import { companies } from "@db/schema";
 import { db } from "@db";
 import { openaiSearchAnalytics } from "@db/schema";
 
+// Export the Answer interface to match our aggregation expectations
+export interface Answer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+  confidence: number;
+}
+
+export interface DocumentAnswer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+  confidence: number;
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -767,13 +782,6 @@ interface SearchAnalytics {
   updatedAt: Date;
 }
 
-interface DocumentAnswer {
-  field_key: string;
-  answer: string;
-  source_document: string;
-  confidence: number;
-}
-
 interface DocumentAnalysisResult {
   answers: DocumentAnswer[];
 }
@@ -872,7 +880,7 @@ export async function analyzeDocument(
     // Log all answers before filtering
     console.log('[OpenAI Service] Raw answers found:', {
       total: result.answers.length,
-      answers: result.answers.map(a => ({
+      answers: result.answers.map((a: DocumentAnswer) => ({
         field: a.field_key,
         confidence: a.confidence,
         length: a.answer.length
@@ -880,21 +888,20 @@ export async function analyzeDocument(
       timestamp: new Date().toISOString()
     });
 
-    result.answers = result.answers.filter(answer => answer.confidence >= CONFIDENCE_THRESHOLD);
+    result.answers = result.answers.filter((answer: DocumentAnswer) => answer.confidence >= CONFIDENCE_THRESHOLD);
 
     console.log('[OpenAI Service] Analysis completed:', {
       answersFound: result.answers.length,
       duration,
-      fieldsAnswered: result.answers.map(a => a.field_key),
+      fieldsAnswered: result.answers.map((a: DocumentAnswer) => a.field_key),
       timestamp: new Date().toISOString()
     });
 
     return result;
   } catch (error) {
-    const duration = Date.now() - startTime;
     console.error('[OpenAI Service] Document analysis error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      duration,
+      duration: Date.now() - startTime,
       timestamp: new Date().toISOString()
     });
     throw error;
