@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from "@db";
 import { files, DocumentCategory } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
@@ -231,20 +231,22 @@ router.post("/api/documents/:id/process", async (req, res) => {
     try {
       const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-      // Initialize processing metadata
+      // Initialize processing metadata with proper typing
       const processingMetadata = {
+        status: 'processing',
         processing_fields: fields,
         chunks_total: chunks.length,
         chunks_processed: 0,
         answers: [],
-        processing_started: new Date().toISOString()
+        processing_started: new Date().toISOString(),
+        last_update: new Date().toISOString()
       };
 
-      // Update file status and metadata
+      // Update file status and metadata using jsonb type
       await db.update(files)
         .set({ 
           status: 'processing',
-          metadata: processingMetadata
+          metadata: sql`${JSON.stringify(processingMetadata)}::jsonb`
         })
         .where(eq(files.id, fileId));
 
@@ -257,6 +259,8 @@ router.post("/api/documents/:id/process", async (req, res) => {
       (async () => {
         let answersFound = 0;
         let processedChunks = 0;
+        const batchSize = 5; // Process answers in batches
+        let answerBatch = [];
 
         for (const chunk of chunks) {
           try {
@@ -270,42 +274,39 @@ router.post("/api/documents/:id/process", async (req, res) => {
             const result = await processChunk(chunk, fields);
             processedChunks++;
 
-            // Broadcast progress update
-            broadcastTaskUpdate({
-              id: fileId,
-              status: 'processing',
-              progress: (processedChunks / chunks.length) * 100,
-              metadata: {
-                chunksProcessed: processedChunks,
-                totalChunks: chunks.length,
-                answersFound
-              }
-            });
-
             if (result.answers?.length) {
               answersFound += result.answers.length;
+              answerBatch.push(...result.answers);
 
-              // Get current metadata
-              const currentFile = await db.query.files.findFirst({
-                where: eq(files.id, fileId)
-              });
+              // Update metadata in batches
+              if (answerBatch.length >= batchSize || processedChunks === chunks.length) {
+                const currentFile = await db.query.files.findFirst({
+                  where: eq(files.id, fileId)
+                });
 
-              if (!currentFile) {
-                throw new Error('File record not found');
+                if (!currentFile) {
+                  throw new Error('File record not found');
+                }
+
+                const currentMetadata = currentFile.metadata || {};
+                const updatedMetadata = {
+                  ...currentMetadata,
+                  status: 'processing',
+                  chunks_processed: processedChunks,
+                  answers: [...(currentMetadata.answers || []), ...answerBatch],
+                  answers_found: answersFound,
+                  last_update: new Date().toISOString()
+                };
+
+                // Update using jsonb cast to ensure proper type handling
+                await db.update(files)
+                  .set({ 
+                    metadata: sql`${JSON.stringify(updatedMetadata)}::jsonb`
+                  })
+                  .where(eq(files.id, fileId));
+
+                answerBatch = []; // Clear the batch
               }
-
-              const currentMetadata = currentFile.metadata || {};
-              const updatedMetadata = {
-                ...currentMetadata,
-                chunks_processed: processedChunks,
-                answers: [...(currentMetadata.answers || []), ...result.answers],
-                answers_found: answersFound
-              };
-
-              // Update metadata
-              await db.update(files)
-                .set({ metadata: updatedMetadata })
-                .where(eq(files.id, fileId));
             }
 
             // Short delay between chunks to prevent overloading
@@ -321,58 +322,29 @@ router.post("/api/documents/:id/process", async (req, res) => {
           }
         }
 
-        // Get final metadata state
-        const finalFile = await db.query.files.findFirst({
-          where: eq(files.id, fileId)
-        });
-
-        if (!finalFile) {
-          throw new Error('File record not found');
-        }
-
+        // Final metadata update
         const finalMetadata = {
-          ...(finalFile.metadata || {}),
-          processing_completed: new Date().toISOString(),
+          status: 'processed',
           chunks_processed: chunks.length,
-          answers_found: answersFound
+          chunks_total: chunks.length,
+          answers_found: answersFound,
+          processing_completed: new Date().toISOString(),
+          last_update: new Date().toISOString()
         };
 
-        // Mark processing as complete
+        // Mark processing as complete with final metadata
         await db.update(files)
           .set({ 
             status: 'processed',
-            metadata: finalMetadata
+            metadata: sql`${JSON.stringify(finalMetadata)}::jsonb`
           })
           .where(eq(files.id, fileId));
-
-        // Broadcast completion
-        broadcastTaskUpdate({
-          id: fileId,
-          status: 'completed',
-          progress: 100,
-          metadata: {
-            chunksProcessed: chunks.length,
-            totalChunks: chunks.length,
-            answersFound,
-            completedAt: new Date().toISOString()
-          }
-        });
 
       })().catch(error => {
         console.error('[Document Processing] Background processing error:', {
           fileId,
           error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
-        });
-
-        // Broadcast error
-        broadcastTaskUpdate({
-          id: fileId,
-          status: 'error',
-          progress: 0,
-          metadata: {
-            error: error instanceof Error ? error.message : 'Unknown error'
-          }
         });
       });
 
