@@ -22,12 +22,6 @@ interface PageExtractionStats {
 }
 
 export async function extractTextFromFirstPages(filePath: string, maxPages?: number): Promise<string> {
-  console.log('[PDF Service] Starting text extraction from first pages:', {
-    filePath,
-    maxPages,
-    timestamp: new Date().toISOString()
-  });
-
   try {
     // Validate file exists and is accessible
     if (!fs.existsSync(filePath)) {
@@ -38,11 +32,6 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
     if (stats.size === 0) {
       throw new Error('PDF file is empty');
     }
-
-    console.log('[PDF Service] Reading PDF file:', {
-      fileSize: stats.size,
-      timestamp: new Date().toISOString()
-    });
 
     // Extract with page limit if specified
     const extractOptions = maxPages !== undefined ? {
@@ -56,22 +45,10 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
       throw new Error('No pages extracted from PDF');
     }
 
-    console.log('[PDF Service] Extraction successful:', {
-      totalPages: data.pages.length,
-      extractedPages: maxPages !== undefined ? Math.min(maxPages, data.pages.length) : data.pages.length,
-      timestamp: new Date().toISOString()
-    });
-
     // Process each page and validate content
     const pageStats: PageExtractionStats[] = [];
     const processedPages = data.pages.map((page, pageIndex) => {
-      if (!page?.content?.length) {
-        console.warn('[PDF Service] Empty page content found:', {
-          pageIndex,
-          timestamp: new Date().toISOString()
-        });
-        return '';
-      }
+      if (!page?.content?.length) return '';
 
       let validItems = 0;
       let invalidItems = 0;
@@ -81,11 +58,6 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
       const pageText = page.content
         .map(item => {
           if (!item?.str) {
-            console.warn('[PDF Service] Invalid content item found:', {
-              pageIndex,
-              item,
-              timestamp: new Date().toISOString()
-            });
             invalidItems++;
             return '';
           }
@@ -102,23 +74,16 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
         .replace(/\s+/g, ' ')
         .trim();
 
-      pageStats.push({
-        pageIndex,
-        contentLength: pageText.length,
-        validItemsCount: validItems,
-        invalidItemsCount: invalidItems,
-        emptyItemsCount: emptyItems
-      });
-
-      console.log('[PDF Service] Page processed:', {
-        pageIndex,
-        contentLength: pageText.length,
-        validItems,
-        invalidItems,
-        emptyItems,
-        hasContent: pageText.length > MIN_PAGE_TEXT_LENGTH,
-        timestamp: new Date().toISOString()
-      });
+      // Only store statistics for pages with actual content
+      if (pageText.length >= MIN_PAGE_TEXT_LENGTH) {
+        pageStats.push({
+          pageIndex,
+          contentLength: pageText.length,
+          validItemsCount: validItems,
+          invalidItemsCount: invalidItems,
+          emptyItemsCount: emptyItems
+        });
+      }
 
       return pageText.length >= MIN_PAGE_TEXT_LENGTH ? pageText : '';
     });
@@ -136,32 +101,29 @@ export async function extractTextFromFirstPages(filePath: string, maxPages?: num
       throw new Error(`Extracted text too short (${text.length} chars). Minimum required: ${MIN_TEXT_LENGTH}`);
     }
 
-    console.log('[PDF Service] Content extraction complete:', {
-      contentLength: text.length,
-      pageCount: data.pages.length,
-      nonEmptyPages: processedPages.filter(p => p.length > 0).length,
-      pageStats,
+    // Log only the final extraction summary
+    console.log('[PDF Service] Extraction complete:', {
+      fileName: filePath.split('/').pop(),
+      totalPages: data.pages.length,
+      extractedPages: pageStats.length,
+      totalContent: text.length,
+      averageContentPerPage: Math.round(text.length / pageStats.length),
+      invalidContentItems: pageStats.reduce((sum, stat) => sum + stat.invalidItemsCount, 0),
       timestamp: new Date().toISOString()
     });
 
     // Truncate text if it exceeds the maximum length
     if (text.length > MAX_TEXT_LENGTH) {
-      console.log('[PDF Service] Truncating text to stay within token limits:', {
-        originalLength: text.length,
-        truncatedLength: MAX_TEXT_LENGTH,
-        timestamp: new Date().toISOString()
-      });
       text = text.substring(0, MAX_TEXT_LENGTH);
     }
 
     return text;
   } catch (error) {
-    console.error('[PDF Service] Text extraction failed:', {
+    console.error('[PDF Service] Extraction failed:', {
       error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      filePath,
+      fileName: filePath.split('/').pop(),
       timestamp: new Date().toISOString()
     });
-    throw new Error(`Failed to extract text from PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw error;
   }
 }
