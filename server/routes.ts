@@ -925,11 +925,6 @@ export function registerRoutes(app: Express): Express {
           throw new Error("Your company information not found");
         }
 
-        console.log('[FinTech Invite] Found sender company:', {
-          id: userCompany.id,
-          name: userCompany.name
-        });
-
         // Create new company
         const [newCompany] = await tx.insert(companies)
           .values({
@@ -939,7 +934,7 @@ export function registerRoutes(app: Express): Express {
             status: 'active',
             accreditation_status: 'PENDING',
             onboarding_company_completed: false,
-            available_tabs: ['task-center'], // Only task-center initially
+            available_tabs: ['task-center'],
             metadata: {
               invited_by: req.user!.id,
               invited_at: new Date().toISOString(),
@@ -953,12 +948,6 @@ export function registerRoutes(app: Express): Express {
           throw new Error("Failed to create company");
         }
 
-        console.log('[FinTech Invite] Created new company:', {
-          id: newCompany.id,
-          name: newCompany.name,
-          metadata: newCompany.metadata
-        });
-
         // Generate temporary password for new user
         const tempPassword = crypto.randomBytes(32).toString('hex');
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
@@ -971,7 +960,7 @@ export function registerRoutes(app: Express): Express {
             company_id: newCompany.id,
             role: 'admin',
             status: 'pending',
-            password: hashedPassword, // Add the hashed password
+            password: hashedPassword,
             onboarding_user_completed: false,
             metadata: {
               invited_by: req.user!.id,
@@ -985,12 +974,6 @@ export function registerRoutes(app: Express): Express {
           throw new Error("Failed to create user");
         }
 
-        console.log('[FinTech Invite] Created new user:', {
-          id: newUser.id,
-          email: newUser.email,
-          company_id: newUser.company_id
-        });
-
         // Create invitation record
         const [invitation] = await tx.insert(invitations)
           .values({
@@ -998,10 +981,13 @@ export function registerRoutes(app: Express): Express {
             company_id: newCompany.id,
             code: code,
             status: 'pending',
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+            invitee_name: full_name.trim(), // Add required field
+            invitee_company: company_name.trim(), // Add required field
+            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             metadata: {
               sender_name: req.user!.full_name,
-              sender_company: userCompany.name
+              sender_company: userCompany.name,
+              invitation_type: 'fintech'
             }
           })
           .returning();
@@ -1009,11 +995,6 @@ export function registerRoutes(app: Express): Express {
         if (!invitation) {
           throw new Error("Failed to create invitation");
         }
-
-        console.log('[FinTech Invite] Created invitation:', {
-          id: invitation.id,
-          code: invitation.code
-        });
 
         // Send email invitation
         try {
@@ -1100,12 +1081,6 @@ export function registerRoutes(app: Express): Express {
             }
           })
           .returning();
-
-        console.log('[FinTech Invite] Created tasks:', {
-          kyb_task: kyb_task[0]?.id,
-          card_task: card_task[0]?.id,
-          onboarding_task: onboarding_task[0]?.id
-        });
 
         return {
           company: newCompany,
