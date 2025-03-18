@@ -11,7 +11,29 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 // Memoize handlers outside component to prevent recreation
 const createUploadProgressHandler = (toast: any) => (data: any) => {
   try {
-    console.log('[DocumentUploadStep] Upload progress update:', data);
+    // Validate data structure first
+    if (!data || typeof data !== 'object') {
+      console.warn('[DocumentUploadStep] Invalid upload progress data:', {
+        data,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    console.log('[DocumentUploadStep] Upload progress update:', {
+      status: data.status,
+      fileName: data.fileName,
+      timestamp: new Date().toISOString()
+    });
+
+    if (!data.status || !data.fileName) {
+      console.warn('[DocumentUploadStep] Missing required progress data:', {
+        status: data.status,
+        fileName: data.fileName,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
 
     if (data.status === 'uploading') {
       toast({
@@ -27,7 +49,7 @@ const createUploadProgressHandler = (toast: any) => (data: any) => {
     }
   } catch (error) {
     console.error('[DocumentUploadStep] Error handling upload progress:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       data,
       timestamp: new Date().toISOString()
     });
@@ -36,15 +58,35 @@ const createUploadProgressHandler = (toast: any) => (data: any) => {
 
 const createCountUpdateHandler = (updateDocumentCounts: any) => (data: any) => {
   try {
+    // Validate data structure first
+    if (!data || typeof data !== 'object') {
+      console.warn('[DocumentUploadStep] Invalid count update data:', {
+        data,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
+    // Check for required fields
+    if (typeof data.category !== 'string' || typeof data.count !== 'number') {
+      console.warn('[DocumentUploadStep] Missing or invalid count data:', {
+        category: data.category,
+        count: data.count,
+        timestamp: new Date().toISOString()
+      });
+      return;
+    }
+
     console.log('[DocumentUploadStep] Document count update:', {
       category: data.category,
       count: data.count,
       timestamp: new Date().toISOString()
     });
+
     updateDocumentCounts(data.category, data.count);
   } catch (error) {
     console.error('[DocumentUploadStep] Error handling count update:', {
-      error,
+      error: error instanceof Error ? error.message : 'Unknown error',
       data,
       timestamp: new Date().toISOString()
     });
