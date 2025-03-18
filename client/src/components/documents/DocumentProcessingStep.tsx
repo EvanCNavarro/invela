@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCardFields, type CardField } from '@/services/cardService';
 import { processDocuments } from '@/services/documentProcessingService';
@@ -6,6 +6,8 @@ import { useToast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { DocumentRow } from './DocumentRow';
 import { UploadedFile, DocumentStatus } from './types';
+import { wsService } from '@/lib/websocket';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface DocumentProcessingStepProps {
   companyName: string;
@@ -21,181 +23,130 @@ export function DocumentProcessingStep({
   const [currentProcessingIndex, setCurrentProcessingIndex] = React.useState<number>(-1);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [files, setFiles] = React.useState<UploadedFile[]>([]);
-  const [processingQueue, setProcessingQueue] = React.useState<number[]>([]);
+  const subscriptionsRef = useRef<(() => void)[]>([]);
+  const { connected } = useWebSocket();
+  const processingStartedRef = useRef(false);
 
   const { data: cardFields, isLoading: isLoadingFields } = useQuery<CardField[]>({
     queryKey: ['/api/card/fields']
   });
 
-  // Validate files and set up the queue
+  // Validate files and set up initial state
   React.useEffect(() => {
-    console.log('[DocumentProcessingStep] Initializing processing:', {
-      companyName,
-      uploadedFilesCount: initialFiles.length,
-      fileDetails: initialFiles.map(f => ({
-        id: f.id,
-        name: f.name,
-        size: f.size,
-        type: f.type,
-        status: f.status,
-        hasId: f.id !== undefined
-      })),
-      timestamp: new Date().toISOString()
-    });
-
-    // Validate and filter files
     const validFiles = initialFiles.filter(file => {
       const isValid = file.id !== undefined && file.status === 'uploaded';
-
       if (!isValid) {
-        console.error('[DocumentProcessingStep] Invalid file found:', {
+        console.warn('[DocumentProcessingStep] Invalid file found:', {
           id: file.id,
           name: file.name,
           status: file.status,
-          hasId: file.id !== undefined,
-          isUploaded: file.status === 'uploaded',
           timestamp: new Date().toISOString()
         });
       }
       return isValid;
     });
 
-    // Set up initial files and queue
     setFiles(validFiles);
-    const queue = validFiles.map((_, index) => index);
-    setProcessingQueue(queue);
-
-    console.log('[DocumentProcessingStep] Processing queue initialized:', {
+    console.log('[DocumentProcessingStep] Files initialized:', {
       validFiles: validFiles.length,
-      queueLength: queue.length,
-      fileStatuses: validFiles.map(f => ({
+      fileDetails: validFiles.map(f => ({
         id: f.id,
         name: f.name,
-        status: f.status,
-        type: f.type
+        status: f.status
       })),
       timestamp: new Date().toISOString()
     });
-  }, [initialFiles, companyName]);
+  }, [initialFiles]);
 
-  // Process the next file in queue
-  const processNextFile = React.useCallback(async () => {
-    if (!cardFields?.length || isProcessing || processingQueue.length === 0) {
-      return;
-    }
+  // Handle WebSocket events
+  React.useEffect(() => {
+    if (!connected) return;
 
-    const nextIndex = processingQueue[0];
-    const fileToProcess = files[nextIndex];
+    const setupSubscriptions = async () => {
+      try {
+        const taskSub = await wsService.subscribe('TASK_UPDATE', (data) => {
+          const fileIndex = files.findIndex(f => f.id === data.id);
+          if (fileIndex === -1) return;
 
-    if (!fileToProcess?.id) {
-      console.error('[DocumentProcessingStep] Invalid file to process:', {
-        index: nextIndex,
-        fileDetails: fileToProcess,
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
+          setFiles(prevFiles => prevFiles.map((file, index) => 
+            index === fileIndex ? {
+              ...file,
+              status: data.status as DocumentStatus,
+              answersFound: data.metadata?.answersFound || 0
+            } : file
+          ));
 
-    console.log('[DocumentProcessingStep] Starting file processing:', {
-      index: nextIndex,
-      fileId: fileToProcess.id,
-      fileName: fileToProcess.name,
-      fileType: fileToProcess.type,
-      remainingQueue: processingQueue.length,
-      timestamp: new Date().toISOString()
-    });
+          if (data.status === 'error') {
+            toast({
+              variant: 'destructive',
+              title: 'Processing Error',
+              description: `Failed to process ${files[fileIndex].name}`
+            });
+          }
+        });
 
-    setCurrentProcessingIndex(nextIndex);
-    setIsProcessing(true);
-
-    try {
-      // Update only current file to processing status
-      setFiles(prevFiles => prevFiles.map((file, index) => 
-        index === nextIndex ? { ...file, status: 'processing' as DocumentStatus } : file
-      ));
-
-      // Show processing toast
-      toast({
-        title: 'Processing Document',
-        description: `Starting analysis of ${fileToProcess.name}...`,
-      });
-
-      const result = await processDocuments([fileToProcess.id], cardFields, (progress) => {
-        console.log('[DocumentProcessingStep] Processing progress:', {
-          fileId: fileToProcess.id,
-          progress,
+        subscriptionsRef.current = [taskSub];
+      } catch (error) {
+        console.error('[DocumentProcessingStep] WebSocket subscription error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
           timestamp: new Date().toISOString()
         });
+      }
+    };
+
+    setupSubscriptions();
+
+    return () => {
+      subscriptionsRef.current.forEach(unsubscribe => {
+        try {
+          unsubscribe();
+        } catch (error) {
+          console.error('[DocumentProcessingStep] Unsubscribe error:', error);
+        }
       });
-
-      console.log('[DocumentProcessingStep] Processing complete:', {
-        fileId: fileToProcess.id,
-        result,
-        timestamp: new Date().toISOString()
-      });
-
-      // Update processed file with results
-      setFiles(prevFiles => prevFiles.map((file, index) => 
-        index === nextIndex ? {
-          ...file,
-          status: 'processed' as DocumentStatus,
-          answersFound: result.answersFound,
-          error: undefined
-        } : file
-      ));
-
-      // Show success toast
-      toast({
-        title: 'Document Processed',
-        description: `Successfully analyzed ${fileToProcess.name} and found ${result.answersFound} matches.`,
-      });
-
-    } catch (error: any) {
-      console.error('[DocumentProcessingStep] Processing error:', {
-        fileId: fileToProcess.id,
-        error: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
-      });
-
-      setProcessingError(error.message);
-      toast({
-        variant: 'destructive',
-        title: 'Processing Error',
-        description: `Failed to process ${fileToProcess.name}. Please try again.`
-      });
-
-      // Update file status to error
-      setFiles(prevFiles => prevFiles.map((file, index) => 
-        index === nextIndex ? {
-          ...file,
-          status: 'error' as DocumentStatus,
-          error: error.message
-        } : file
-      ));
-    } finally {
-      // Remove processed file from queue
-      setProcessingQueue(prevQueue => prevQueue.slice(1));
-      setIsProcessing(false);
-      setCurrentProcessingIndex(-1);
-
-      // Short delay before processing next file
-      setTimeout(() => {
-        processNextFile();
-      }, 500);
-    }
-  }, [cardFields, files, isProcessing, processingQueue, toast]);
+      subscriptionsRef.current = [];
+    };
+  }, [connected, files, toast]);
 
   // Start processing when ready
   React.useEffect(() => {
-    if (!cardFields?.length || isLoadingFields) {
+    if (isLoadingFields || !cardFields?.length || processingStartedRef.current || isProcessing) {
       return;
     }
 
-    if (!isProcessing && processingQueue.length > 0) {
-      processNextFile();
-    }
-  }, [cardFields, isProcessing, processingQueue.length, processNextFile, isLoadingFields]);
+    const startProcessing = async () => {
+      if (files.length === 0) return;
+
+      try {
+        setIsProcessing(true);
+        processingStartedRef.current = true;
+
+        console.log('[DocumentProcessingStep] Starting document processing:', {
+          fileCount: files.length,
+          timestamp: new Date().toISOString()
+        });
+
+        const fileIds = files.map(f => f.id!);
+        await processDocuments(fileIds, cardFields, (progress) => {
+          setCurrentProcessingIndex(fileIds.indexOf(progress.fileId));
+        });
+
+      } catch (error) {
+        console.error('[DocumentProcessingStep] Processing error:', error);
+        setProcessingError(error instanceof Error ? error.message : 'Processing failed');
+        toast({
+          variant: 'destructive',
+          title: 'Processing Error',
+          description: 'Failed to process documents. Please try again.'
+        });
+      } finally {
+        setIsProcessing(false);
+        setCurrentProcessingIndex(-1);
+      }
+    };
+
+    startProcessing();
+  }, [cardFields, files, isLoadingFields, isProcessing, toast]);
 
   if (isLoadingFields) {
     return (
