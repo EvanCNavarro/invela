@@ -771,6 +771,7 @@ interface DocumentAnswer {
   field_key: string;
   answer: string;
   source_document: string;
+  confidence: number;
 }
 
 interface DocumentAnalysisResult {
@@ -792,31 +793,44 @@ export async function analyzeDocument(
     });
 
     const prompt = `
-    As a compliance expert, analyze this document and extract answers to specific compliance questions.
-    Focus on accuracy and provide clear, factual responses based on the document content.
+    As a compliance and security expert, analyze this document section and extract specific information for each compliance question.
+    Focus on identifying clear, factual evidence that directly answers each question.
 
     Document Text:
     ${documentText}
 
-    For each of the following questions, provide an answer if found in the document:
+    For each field below, search for direct evidence or statements that answer the question.
+    Only provide answers when you find explicit supporting text.
+
+    Fields to analyze:
     ${fields.map(f => `
+    Field: ${f.field_key}
     Question: ${f.question}
-    Field Key: ${f.field_key}
     Search Instructions: ${f.ai_search_instructions}
+    Look for:
+    - Direct statements or claims
+    - Specific dates, numbers, or procedures
+    - Compliance-related terminology
+    - Policy descriptions
     `).join('\n')}
 
-    Respond with a JSON object containing:
+    Return a JSON object in this format:
     {
       "answers": [
         {
-          "field_key": "the field key",
-          "answer": "extracted answer from document",
-          "source_document": "relevant section from document that supports this answer"
+          "field_key": "string",
+          "answer": "exact quote or clear summary from document",
+          "source_document": "relevant section from document that supports this answer",
+          "confidence": number between 0 and 1
         }
       ]
     }
 
-    Only include answers that are clearly supported by the document content.
+    Important:
+    - Only include answers where you find clear supporting evidence
+    - Quote directly from the document when possible
+    - Include the specific section that supports each answer
+    - Assign a confidence score based on how directly the evidence answers the question
     `;
 
     console.log('[OpenAI Service] Sending request:', {
@@ -829,7 +843,7 @@ export async function analyzeDocument(
       messages: [
         {
           role: "system",
-          content: "You are a compliance document analysis expert."
+          content: "You are a compliance document analysis expert specializing in security and risk assessment."
         },
         {
           role: "user",
@@ -847,6 +861,10 @@ export async function analyzeDocument(
     }
 
     const result = JSON.parse(response.choices[0].message.content);
+
+    // Filter answers by confidence threshold
+    const CONFIDENCE_THRESHOLD = 0.7;
+    result.answers = result.answers.filter(answer => answer.confidence >= CONFIDENCE_THRESHOLD);
 
     console.log('[OpenAI Service] Analysis completed:', {
       answersFound: result.answers.length,
