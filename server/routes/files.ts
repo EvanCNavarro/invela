@@ -1,12 +1,15 @@
+import { 
+  Router 
+} from 'express';
 import { db } from "@db";
 import { files } from "@db/schema";
 import { eq } from "drizzle-orm";
-import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
+import { broadcastDocumentCountUpdate } from '../services/websocket';
 
 // Ensure upload directory exists
 const router = Router();
@@ -72,6 +75,14 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       id: fileRecord.id,
       name: fileRecord.name,
       status: fileRecord.status
+    });
+
+    // Broadcast document count update
+    broadcastDocumentCountUpdate({
+      type: 'COUNT_UPDATE',
+      category: fileRecord.document_category || 'other',
+      count: 1,
+      companyId: req.user.company_id.toString()
     });
 
     res.status(201).json(fileRecord);
