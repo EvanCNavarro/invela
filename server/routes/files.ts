@@ -26,61 +26,99 @@ async function processDocument(
   fields: any[],
   metadata: any
 ) {
-  let allAnswers = [];
-  let aggregatedAnswers = [];
+  let allAnswers: any[] = [];
+  let aggregatedAnswers: any[] = [];
 
   try {
+    console.log('[Document Processing] Starting document processing:', {
+      fileId,
+      totalChunks: chunks.length,
+      timestamp: new Date().toISOString()
+    });
+
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
-      const result = await processChunk(chunk, fields);
+      console.log('[Document Processing] Processing chunk:', {
+        fileId,
+        chunkIndex: i,
+        totalChunks: chunks.length,
+        timestamp: new Date().toISOString()
+      });
 
-      if (result.answers?.length) {
-        // Add new answers to collection
-        allAnswers.push(...result.answers);
+      try {
+        const result = await processChunk(chunk, fields);
 
-        // Update progress in database
-        const updatedMetadata = {
-          status: 'processing',
-          fields,
-          chunks: {
-            total: chunks.length,
-            processed: i + 1
-          },
-          answers: allAnswers,
-          aggregatedAnswers,
-          answersFound: aggregatedAnswers.length,
-          timestamps: {
-            started: metadata.timestamps.started,
-            lastUpdate: new Date().toISOString()
-          }
-        };
+        if (result.answers?.length) {
+          // Add new answers to collection
+          allAnswers.push(...result.answers);
 
-        await db.update(files)
-          .set({
-            metadata: sql`${JSON.stringify(updatedMetadata)}::jsonb`
-          })
-          .where(eq(files.id, fileId));
-
-        // Every 5 chunks or on last chunk, aggregate answers
-        if (i % 5 === 4 || i === chunks.length - 1) {
-          aggregatedAnswers = await aggregateAnswers(allAnswers);
-
-          const batchMetadata = {
-            ...updatedMetadata,
+          // Update progress in database
+          const updatedMetadata = {
+            status: 'processing',
+            fields,
+            chunks: {
+              total: chunks.length,
+              processed: i + 1
+            },
+            answers: allAnswers,
             aggregatedAnswers,
-            answersFound: aggregatedAnswers.length
+            answersFound: aggregatedAnswers.length,
+            timestamps: {
+              started: metadata.timestamps.started,
+              lastUpdate: new Date().toISOString()
+            }
           };
 
           await db.update(files)
             .set({
-              metadata: sql`${JSON.stringify(batchMetadata)}::jsonb`
+              metadata: updatedMetadata
             })
             .where(eq(files.id, fileId));
-        }
-      }
 
-      // Short delay between chunks
-      await new Promise(resolve => setTimeout(resolve, 100));
+          console.log('[Document Processing] Progress update:', {
+            fileId,
+            chunkIndex: i,
+            answersFound: allAnswers.length,
+            timestamp: new Date().toISOString()
+          });
+
+          // Every 5 chunks or on last chunk, aggregate answers
+          if (i % 5 === 4 || i === chunks.length - 1) {
+            aggregatedAnswers = await aggregateAnswers(allAnswers);
+
+            const batchMetadata = {
+              ...updatedMetadata,
+              aggregatedAnswers,
+              answersFound: aggregatedAnswers.length
+            };
+
+            await db.update(files)
+              .set({
+                metadata: batchMetadata
+              })
+              .where(eq(files.id, fileId));
+
+            console.log('[Document Processing] Batch aggregation:', {
+              fileId,
+              chunkIndex: i,
+              aggregatedAnswers: aggregatedAnswers.length,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+
+        // Short delay between chunks
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (chunkError) {
+        console.error('[Document Processing] Individual chunk processing error:', {
+          fileId,
+          chunkIndex: i,
+          error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        // Continue processing other chunks even if one fails
+        continue;
+      }
     }
 
     // Final aggregation and status update
@@ -105,16 +143,47 @@ async function processDocument(
     await db.update(files)
       .set({
         status: 'processed',
-        metadata: sql`${JSON.stringify(finalMetadata)}::jsonb`
+        metadata: finalMetadata
       })
       .where(eq(files.id, fileId));
+
+    console.log('[Document Processing] Processing completed:', {
+      fileId,
+      totalAnswers: allAnswers.length,
+      aggregatedAnswers: finalAnswers.length,
+      timestamp: new Date().toISOString()
+    });
 
   } catch (error) {
     console.error('[Document Processing] Processing error:', {
       fileId,
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
     });
+
+    // Update file status to error
+    try {
+      await db.update(files)
+        .set({
+          status: 'error',
+          metadata: {
+            ...metadata,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamps: {
+              ...metadata.timestamps,
+              error: new Date().toISOString()
+            }
+          }
+        })
+        .where(eq(files.id, fileId));
+    } catch (updateError) {
+      console.error('[Document Processing] Failed to update error status:', {
+        fileId,
+        error: updateError instanceof Error ? updateError.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
     throw error;
   }
 }
@@ -133,23 +202,23 @@ function detectDocumentCategory(filename: string): DocumentCategory {
   let category: DocumentCategory;
 
   // Improved detection patterns with comprehensive checks
-  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') || 
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') ||
       lowerFilename.includes('soc-2')) {
     category = DocumentCategory.SOC2_AUDIT;
-  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') || 
+  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') ||
             lowerFilename.includes('iso-27001')) {
     category = DocumentCategory.ISO27001_CERT;
-  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') || 
+  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') ||
             lowerFilename.includes('pen-test') ||
-            lowerFilename.includes('penetration test') || 
-            lowerFilename.includes('security test') || 
-            lowerFilename.includes('penetration-test') || 
+            lowerFilename.includes('penetration test') ||
+            lowerFilename.includes('security test') ||
+            lowerFilename.includes('penetration-test') ||
             lowerFilename.includes('penetration_test')) {
     category = DocumentCategory.PENTEST_REPORT;
-  } else if (lowerFilename.includes('spg-business-continuity-plan') || 
-            lowerFilename.includes('business continuity') || 
-            lowerFilename.includes('continuity plan') || 
-            lowerFilename.includes('business-continuity') || 
+  } else if (lowerFilename.includes('spg-business-continuity-plan') ||
+            lowerFilename.includes('business continuity') ||
+            lowerFilename.includes('continuity plan') ||
+            lowerFilename.includes('business-continuity') ||
             lowerFilename.includes('disaster recovery') ||
             lowerFilename.includes('business_continuity') ||
             lowerFilename.includes('bcp') ||
@@ -183,7 +252,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
 
     if (!req.file) {
       console.log('[Files] No file received in request');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'No file uploaded',
         detail: 'Request must include a file'
       });
@@ -198,7 +267,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
 
     if (!req.user?.id || !req.user?.company_id) {
       console.log('[Files] Authentication required');
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'Authentication required',
         detail: 'User must be logged in to upload files'
       });
@@ -271,7 +340,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
       }
     }
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Upload failed',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
@@ -285,7 +354,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
     const { fields } = req.body;
 
     if (!fields?.length) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "No fields provided for processing"
       });
     }
@@ -321,7 +390,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
     await db.update(files)
       .set({
         status: 'processing',
-        metadata: sql`${JSON.stringify(initialMetadata)}::jsonb`
+        metadata: initialMetadata
       })
       .where(eq(files.id, fileId));
 
@@ -422,7 +491,7 @@ router.get('/api/files', async (req, res) => {
 
     if (!companyId) {
       console.log('[Files] Missing company_id parameter');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Company ID is required',
         detail: 'The company_id query parameter must be provided'
       });
@@ -430,7 +499,7 @@ router.get('/api/files', async (req, res) => {
 
     if (typeof companyId !== 'string' && typeof companyId !== 'number') {
       console.log('[Files] Invalid company_id type:', typeof companyId);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid company ID format',
         detail: `Expected string or number, got ${typeof companyId}`
       });
@@ -439,7 +508,7 @@ router.get('/api/files', async (req, res) => {
     const parsedCompanyId = parseInt(companyId.toString(), 10);
     if (isNaN(parsedCompanyId)) {
       console.log('[Files] Failed to parse company_id:', companyId);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid company ID format',
         detail: 'Company ID must be a valid number'
       });
@@ -451,7 +520,7 @@ router.get('/api/files', async (req, res) => {
         requestedCompanyId: parsedCompanyId,
         userCompanyId: req.user?.company_id
       });
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Access denied',
         detail: 'User does not have access to this company\'s files'
       });
@@ -474,7 +543,7 @@ router.get('/api/files', async (req, res) => {
     res.json(fileRecords);
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
