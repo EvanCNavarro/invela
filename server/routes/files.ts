@@ -7,7 +7,7 @@ import fs from 'fs';
 import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
 import { createDocumentChunks, processChunk } from '../services/documentChunking';
-import { broadcastDocumentCountUpdate, broadcastUploadProgress, broadcastTaskUpdate } from '../services/websocket';
+import { broadcastDocumentCountUpdate } from '../services/websocket';
 
 // Ensure upload directory exists
 const router = Router();
@@ -80,13 +80,8 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     }
 
     // Broadcast upload start immediately
-    broadcastUploadProgress({
-      type: 'UPLOAD_PROGRESS',
-      fileId: null,
-      fileName: req.file.originalname,
-      status: 'uploading',
-      progress: 0
-    });
+    //Removed broadcastUploadProgress - as per intention to reduce progress updates
+    
 
     console.log('[Files] File details:', {
       originalname: req.file.originalname,
@@ -140,13 +135,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     });
 
     // Broadcast upload complete
-    broadcastUploadProgress({
-      type: 'UPLOAD_PROGRESS',
-      fileId: fileRecord.id,
-      fileName: fileRecord.name,
-      status: 'uploaded',
-      progress: 100
-    });
+    //Removed broadcastUploadProgress - as per intention to reduce progress updates
 
     // Broadcast document count update
     broadcastDocumentCountUpdate({
@@ -169,15 +158,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
     }
 
     // Broadcast upload error
-    if (req.file) {
-      broadcastUploadProgress({
-        type: 'UPLOAD_PROGRESS',
-        fileId: null,
-        fileName: req.file.originalname,
-        status: 'error',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
+    //Removed broadcastUploadProgress - as per intention to reduce progress updates
 
     // Enhanced error handling
     if (error instanceof multer.MulterError) {
@@ -196,7 +177,7 @@ router.post('/api/files', documentUpload.single('file'), async (req, res) => {
   }
 });
 
-// Process document endpoint
+// File processing endpoint
 router.post("/api/documents/:id/process", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
@@ -204,8 +185,7 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
     if (!fields?.length) {
       return res.status(400).json({ 
-        error: "No fields provided for processing",
-        detail: "Field list is required"
+        error: "No fields provided for processing"
       });
     }
 
@@ -231,8 +211,8 @@ router.post("/api/documents/:id/process", async (req, res) => {
     try {
       const chunks = await createDocumentChunks(filePath, fileRecord.type);
 
-      // Initialize processing metadata with proper typing
-      const processingMetadata = {
+      // Initialize processing metadata
+      const initialMetadata = {
         status: 'processing',
         processing_fields: fields,
         chunks_total: chunks.length,
@@ -242,11 +222,11 @@ router.post("/api/documents/:id/process", async (req, res) => {
         last_update: new Date().toISOString()
       };
 
-      // Update file status and metadata using jsonb type
+      // Update file status and metadata
       await db.update(files)
         .set({ 
           status: 'processing',
-          metadata: sql`${JSON.stringify(processingMetadata)}::jsonb`
+          metadata: sql`${JSON.stringify(initialMetadata)}::jsonb`
         })
         .where(eq(files.id, fileId));
 
@@ -255,22 +235,15 @@ router.post("/api/documents/:id/process", async (req, res) => {
         totalChunks: chunks.length
       });
 
-      // Start processing chunks in background
+      // Process chunks in background
       (async () => {
         let answersFound = 0;
         let processedChunks = 0;
-        const batchSize = 5; // Process answers in batches
+        const batchSize = 5;
         let answerBatch = [];
 
         for (const chunk of chunks) {
           try {
-            console.log('[Document Processing] Processing chunk:', {
-              fileId,
-              chunkIndex: chunk.index,
-              progress: `${processedChunks + 1}/${chunks.length}`,
-              timestamp: new Date().toISOString()
-            });
-
             const result = await processChunk(chunk, fields);
             processedChunks++;
 
@@ -280,36 +253,27 @@ router.post("/api/documents/:id/process", async (req, res) => {
 
               // Update metadata in batches
               if (answerBatch.length >= batchSize || processedChunks === chunks.length) {
-                const currentFile = await db.query.files.findFirst({
-                  where: eq(files.id, fileId)
-                });
-
-                if (!currentFile) {
-                  throw new Error('File record not found');
-                }
-
-                const currentMetadata = currentFile.metadata || {};
                 const updatedMetadata = {
-                  ...currentMetadata,
                   status: 'processing',
+                  processing_fields: fields,
+                  chunks_total: chunks.length,
                   chunks_processed: processedChunks,
-                  answers: [...(currentMetadata.answers || []), ...answerBatch],
+                  answers: answerBatch,
                   answers_found: answersFound,
                   last_update: new Date().toISOString()
                 };
 
-                // Update using jsonb cast to ensure proper type handling
                 await db.update(files)
                   .set({ 
                     metadata: sql`${JSON.stringify(updatedMetadata)}::jsonb`
                   })
                   .where(eq(files.id, fileId));
 
-                answerBatch = []; // Clear the batch
+                answerBatch = [];
               }
             }
 
-            // Short delay between chunks to prevent overloading
+            // Short delay between chunks
             await new Promise(resolve => setTimeout(resolve, 100));
 
           } catch (error) {
@@ -325,14 +289,15 @@ router.post("/api/documents/:id/process", async (req, res) => {
         // Final metadata update
         const finalMetadata = {
           status: 'processed',
-          chunks_processed: chunks.length,
+          processing_fields: fields,
           chunks_total: chunks.length,
+          chunks_processed: chunks.length,
+          answers: answerBatch,
           answers_found: answersFound,
           processing_completed: new Date().toISOString(),
           last_update: new Date().toISOString()
         };
 
-        // Mark processing as complete with final metadata
         await db.update(files)
           .set({ 
             status: 'processed',
@@ -367,7 +332,6 @@ router.post("/api/documents/:id/process", async (req, res) => {
 router.get("/api/documents/:id/progress", async (req, res) => {
   try {
     const fileId = parseInt(req.params.id);
-
     const fileRecord = await db.query.files.findFirst({
       where: eq(files.id, fileId)
     });
@@ -376,10 +340,10 @@ router.get("/api/documents/:id/progress", async (req, res) => {
       return res.status(404).json({ error: "File not found" });
     }
 
-    const metadata = fileRecord.metadata || {};
-    const chunksTotal = metadata.chunks_total || 1;
-    const chunksProcessed = metadata.chunks_processed || 0;
-    const answersFound = metadata.answers_found || 0;
+    const currentMetadata = fileRecord.metadata || {};
+    const chunksTotal = currentMetadata.chunks_total || 1;
+    const chunksProcessed = currentMetadata.chunks_processed || 0;
+    const answersFound = currentMetadata.answers_found || 0;
 
     res.json({
       status: fileRecord.status,
