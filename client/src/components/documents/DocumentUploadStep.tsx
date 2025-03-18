@@ -49,8 +49,8 @@ interface DocumentUploadStepProps {
   updateDocumentCounts: (category: string, count: number, isProcessing?: boolean) => void;
 }
 
-export function DocumentUploadStep({ 
-  onFilesUpdated, 
+export function DocumentUploadStep({
+  onFilesUpdated,
   companyName,
   uploadedFiles,
   updateFileMetadata,
@@ -129,6 +129,10 @@ export function DocumentUploadStep({
     });
 
     setIsUploading(true);
+    toast({
+      title: "Uploading Files",
+      description: `Starting upload of ${files.length} file${files.length > 1 ? 's' : ''}...`,
+    });
 
     try {
       // Add files to state first so UI updates immediately
@@ -165,7 +169,20 @@ export function DocumentUploadStep({
       const data = JSON.parse(event.data);
       console.log('[DocumentUploadStep] WebSocket message received:', data);
 
-      if (data.type === 'COUNT_UPDATE') {
+      if (data.type === 'UPLOAD_PROGRESS') {
+        if (data.status === 'uploading') {
+          toast({
+            title: "Uploading File",
+            description: `Uploading ${data.fileName}...`,
+          });
+        } else if (data.status === 'error') {
+          toast({
+            title: "Upload Error",
+            description: data.error || `Failed to upload ${data.fileName}`,
+            variant: "destructive",
+          });
+        }
+      } else if (data.type === 'COUNT_UPDATE') {
         console.log('[DocumentUploadStep] Updating document count:', {
           category: data.category,
           countChange: data.count
@@ -178,7 +195,7 @@ export function DocumentUploadStep({
       console.log('[DocumentUploadStep] Closing WebSocket connection');
       socket.close();
     };
-  }, [updateDocumentCounts]);
+  }, [updateDocumentCounts, toast]);
 
   return (
     <div className="space-y-6">
@@ -198,12 +215,12 @@ export function DocumentUploadStep({
           const countData = documentCounts[category.id] || { count: 0, isProcessing: false };
 
           return (
-            <div 
+            <div
               key={category.id}
               className={cn(
                 "p-4 rounded-lg border-2",
                 countData.count > 0
-                  ? "border-green-600/30 bg-green-50/50" 
+                  ? "border-green-600/30 bg-green-50/50"
                   : "border-gray-200 bg-gray-50/50"
               )}
             >
@@ -213,8 +230,8 @@ export function DocumentUploadStep({
                   {countData.isProcessing && (
                     <LoadingSpinner size="sm" className="text-blue-500" />
                   )}
-                  <Badge 
-                    variant={countData.count > 0 ? "default" : "secondary"} 
+                  <Badge
+                    variant={countData.count > 0 ? "default" : "secondary"}
                     className="text-xs"
                   >
                     {countData.count}
