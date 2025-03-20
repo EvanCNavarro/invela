@@ -41,8 +41,8 @@ export async function createCompany(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
-        assigned_to: createdById, // Assign to the creator
-        created_by: createdById,
+        assigned_to: createdById,
+        created_by: createdById, // Ensure created_by is set
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -52,7 +52,8 @@ export async function createCompany(
           company_id: newCompany.id,
           company_name: newCompany.name,
           created_via: data.metadata?.created_via || 'company_creation',
-          status_flow: [TaskStatus.PENDING]
+          status_flow: [TaskStatus.PENDING],
+          created_by_id: createdById // Add to metadata for tracking
         }
       })
       .returning();
@@ -69,7 +70,7 @@ export async function createCompany(
         progress: 0,
         company_id: newCompany.id,
         assigned_to: createdById,
-        created_by: createdById,
+        created_by: createdById, // Ensure created_by is set
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -85,7 +86,8 @@ export async function createCompany(
             timestamp: new Date().toISOString()
           }],
           created_at: new Date().toISOString(),
-          last_updated: new Date().toISOString()
+          last_updated: new Date().toISOString(),
+          created_by_id: createdById // Add to metadata for tracking
         }
       })
       .returning();
@@ -102,7 +104,8 @@ export async function createCompany(
           auto_created: true,
           creation_date: new Date().toISOString(),
           created_via: 'automatic_network_member',
-          company_name: newCompany.name
+          company_name: newCompany.name,
+          created_by_id: createdById // Add creator ID to relationship metadata
         }
       })
       .returning();
