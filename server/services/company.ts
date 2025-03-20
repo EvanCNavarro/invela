@@ -27,8 +27,13 @@ export async function createCompany(
       throw new Error("Failed to create company");
     }
 
-    // Get the creator's user ID for task assignment
-    const createdById = data.metadata?.invited_by || null;
+    // Get the creator's user ID - ensure it's never undefined
+    const createdById = data.metadata?.created_by_id || data.metadata?.invited_by;
+    if (!createdById) {
+      throw new Error("Creator ID is required for task creation");
+    }
+
+    console.log('[Company Service] Creating tasks with creator ID:', createdById);
 
     // Create KYB onboarding task
     const [kybTask] = await tx.insert(tasks)
@@ -53,7 +58,8 @@ export async function createCompany(
           company_name: newCompany.name,
           created_via: data.metadata?.created_via || 'company_creation',
           status_flow: [TaskStatus.PENDING],
-          created_by_id: createdById // Add to metadata for tracking
+          created_by_id: createdById,
+          created_at: new Date().toISOString()
         }
       })
       .returning();
@@ -87,7 +93,7 @@ export async function createCompany(
           }],
           created_at: new Date().toISOString(),
           last_updated: new Date().toISOString(),
-          created_by_id: createdById // Add to metadata for tracking
+          created_by_id: createdById
         }
       })
       .returning();
