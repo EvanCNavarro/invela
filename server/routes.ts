@@ -864,16 +864,29 @@ export function registerRoutes(app: Express): Express {
 
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
       try {
-const { email, company_name, full_name, sender_name, sender_company } = req.body;
+        console.log('[FinTech Invite] Starting invitation process with payload:', {
+          ...req.body,
+          email: req.body.email ? '***@***.***' : undefined // Mask email for privacy
+        });
+
+        const { email, company_name, full_name, sender_name, sender_company } = req.body;
 
         // Type check for authenticated user
         if (!req.user || !req.user.id) {
-          console.error('[FinTech Invite] No authenticated user found');
+          console.error('[FinTech Invite] Authentication check failed:', {
+            user: req.user ? 'exists' : 'missing',
+            userId: req.user?.id
+          });
           return res.status(401).json({
             message: "Authentication required",
             code: "AUTH_REQUIRED"
           });
         }
+
+        console.log('[FinTech Invite] Authentication validated for user:', {
+          userId: req.user.id,
+          companyId: req.user.company_id
+        });
 
         // Input validation
         const invalidFields = [];
@@ -884,7 +897,10 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
 
         if (invalidFields.length > 0) {
           console.log('[FinTech Invite] Validation failed:', {
-            receivedData: req.body,
+            receivedData: {
+              ...req.body,
+              email: '***@***.***' // Mask email
+            },
             invalidFields,
           });
 
@@ -896,13 +912,18 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
           });
         }
 
+        console.log('[FinTech Invite] Input validation passed');
+
         // Check for existing company
         const existingCompany = await db.query.companies.findFirst({
           where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
         });
 
         if (existingCompany) {
-          console.log('[FinTech Invite] Company already exists:', existingCompany.name);
+          console.log('[FinTech Invite] Company already exists:', {
+            name: existingCompany.name,
+            id: existingCompany.id
+          });
           return res.status(409).json({
             message: "A company with this name already exists",
             existingCompany: {
@@ -913,22 +934,31 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
           });
         }
 
+        console.log('[FinTech Invite] Company name check passed, starting transaction');
+
         // Single transaction for all database operations
         const result = await db.transaction(async (tx) => {
+          console.log('[FinTech Invite] Getting sender company details');
+
           // Get sender's company details
           const [userCompany] = await tx.select()
             .from(companies)
             .where(eq(companies.id, req.user.company_id));
 
           if (!userCompany) {
+            console.error('[FinTech Invite] User company not found:', req.user.company_id);
             throw new Error("Your company information not found");
           }
+
+          console.log('[FinTech Invite] Found sender company:', userCompany.name);
 
           // Generate invitation code
           const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
           const protocol = req.headers['x-forwarded-proto'] || req.protocol;
           const host = req.headers.host;
           const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(email)}`;
+
+          console.log('[FinTech Invite] Creating new company');
 
           // Create new company with proper metadata
           const [newCompany] = await tx.insert(companies)
@@ -951,9 +981,16 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
             })
             .returning();
 
+          console.log('[FinTech Invite] Company created:', {
+            id: newCompany.id,
+            name: newCompany.name
+          });
+
           // Generate temp password and hash it
           const tempPassword = crypto.randomBytes(16).toString('hex');
           const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+          console.log('[FinTech Invite] Creating user account');
 
           // Create user account
           const [newUser] = await tx.insert(users)
@@ -970,6 +1007,13 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
               }
             })
             .returning();
+
+          console.log('[FinTech Invite] User created:', {
+            id: newUser.id,
+            email: '***@***.***' // Mask email
+          });
+
+          console.log('[FinTech Invite] Creating invitation record');
 
           // Create invitation record
           const [invitation] = await tx.insert(invitations)
@@ -989,6 +1033,13 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
             })
             .returning();
 
+          console.log('[FinTech Invite] Invitation created:', {
+            id: invitation.id,
+            code: invitation.code
+          });
+
+          console.log('[FinTech Invite] Creating tasks using company service');
+
           // Create tasks using the service function that handles task creation
           const createdCompany = await createCompany({
             ...newCompany,
@@ -999,6 +1050,10 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
               created_by_company_id: req.user.company_id
             }
           });
+
+          console.log('[FinTech Invite] Tasks created for company:', createdCompany.id);
+
+          console.log('[FinTech Invite] Sending invitation email');
 
           // Send invitation email
           const emailResult = await emailService.sendTemplateEmail({
@@ -1016,6 +1071,11 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
             }
           });
 
+          console.log('[FinTech Invite] Email sending result:', {
+            success: emailResult.success,
+            error: emailResult.error
+          });
+
           if (!emailResult.success) {
             throw new Error(emailResult.error || 'Failed to send invitation email');
           }
@@ -1026,6 +1086,8 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
             invitation
           };
         });
+
+        console.log('[FinTech Invite] Transaction completed successfully');
 
         res.status(201).json({
           message: "FinTech company invited successfully",
@@ -1039,7 +1101,12 @@ const { email, company_name, full_name, sender_name, sender_company } = req.body
         });
 
       } catch (error) {
-        console.error("[FinTech Invite] Error:", error);
+        console.error("[FinTech Invite] Error details:", {
+          name: error instanceof Error ? error.name : 'Unknown',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+
         res.status(500).json({
           message: "Failed to process invitation",
           error: error instanceof Error ? error.message : "Unknown error"
