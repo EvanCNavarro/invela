@@ -27,10 +27,12 @@ export async function createCompany(
       throw new Error("Failed to create company");
     }
 
-    // Get the creator's user ID - ensure it's never undefined
-    const createdById = data.metadata?.created_by_id || data.metadata?.invited_by;
-    if (!createdById) {
-      throw new Error("Creator ID is required for task creation");
+    // Get the creator's user ID with proper validation
+    const metadata = data.metadata as Record<string, any> | undefined;
+    const createdById = metadata?.created_by_id ?? metadata?.invited_by;
+
+    if (!createdById || typeof createdById !== 'number') {
+      throw new Error("Valid creator ID is required for task creation");
     }
 
     console.log('[Company Service] Creating tasks with creator ID:', createdById);
@@ -47,7 +49,7 @@ export async function createCompany(
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
         assigned_to: createdById,
-        created_by: createdById, // Ensure created_by is set
+        created_by: createdById, // Explicitly set creator
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -56,7 +58,7 @@ export async function createCompany(
         metadata: {
           company_id: newCompany.id,
           company_name: newCompany.name,
-          created_via: data.metadata?.created_via || 'company_creation',
+          created_via: metadata?.created_via || 'company_creation',
           status_flow: [TaskStatus.PENDING],
           created_by_id: createdById,
           created_at: new Date().toISOString()
@@ -76,7 +78,7 @@ export async function createCompany(
         progress: 0,
         company_id: newCompany.id,
         assigned_to: createdById,
-        created_by: createdById, // Ensure created_by is set
+        created_by: createdById, // Explicitly set creator
         due_date: (() => {
           const date = new Date();
           date.setDate(date.getDate() + 14); // 14 days deadline
@@ -85,7 +87,7 @@ export async function createCompany(
         metadata: {
           company_id: newCompany.id,
           company_name: newCompany.name,
-          created_via: data.metadata?.created_via || 'company_creation',
+          created_via: metadata?.created_via || 'company_creation',
           statusFlow: [TaskStatus.NOT_STARTED],
           progressHistory: [{
             value: 0,
