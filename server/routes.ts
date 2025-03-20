@@ -69,11 +69,11 @@ export function registerRoutes(app: Express): Express {
         leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
         has_relationship: sql<boolean>`
           CASE 
-            WHEN ${companies.id} = ${req.user!.company_id} THEN true
+            WHEN ${companies.id} = ${req.user.company_id} THEN true
             WHEN EXISTS (
               SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
             ) THEN true
             ELSE false
           END
@@ -82,11 +82,11 @@ export function registerRoutes(app: Express): Express {
         .from(companies)
         .where(
           or(
-            eq(companies.id, req.user!.company_id),
+            eq(companies.id, req.user.company_id),
             sql`EXISTS (
             SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
           )`
           )
         )
@@ -144,16 +144,16 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       console.log('[Current Company] Fetching company for user:', {
-        userId: req.user!.id,
-        companyId: req.user!.company_id
+        userId: req.user.id,
+        companyId: req.user.company_id
       });
 
       const [company] = await db.select()
         .from(companies)
-        .where(eq(companies.id, req.user!.company_id));
+        .where(eq(companies.id, req.user.company_id));
 
       if (!company) {
-        console.error('[Current Company] Company not found:', req.user!.company_id);
+        console.error('[Current Company] Company not found:', req.user.company_id);
         return res.status(404).json({ message: "Company not found" });
       }
 
@@ -189,11 +189,11 @@ export function registerRoutes(app: Express): Express {
           and(
             eq(companies.id, companyId),
             or(
-              eq(companies.id, req.user!.company_id),
+              eq(companies.id, req.user.company_id),
               sql`EXISTS (
                 SELECT 1 FROM ${relationships} r 
-                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-                OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+                OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
               )`
             )
           )
@@ -231,16 +231,16 @@ export function registerRoutes(app: Express): Express {
     try {
       console.log('[Tasks] ====== Starting task fetch =====');
       console.log('[Tasks] User details:', {
-        id: req.user!.id,
-        company_id: req.user!.company_id,
-        email: req.user!.email
+        id: req.user.id,
+        company_id: req.user.company_id,
+        email: req.user.email
       });
 
       // First, let's check if there are any company-wide KYB tasks
       const kybTasks = await db.select()
         .from(tasks)
         .where(and(
-          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.company_id, req.user.company_id),
           eq(tasks.task_type, 'company_kyb'),
           eq(tasks.task_scope, 'company')
         ));
@@ -264,25 +264,25 @@ export function registerRoutes(app: Express): Express {
       // 4. KYB tasks for the user's company
       // 5. User onboarding tasks for the user's email
       const query = or(
-        eq(tasks.assigned_to, req.user!.id),
-        eq(tasks.created_by, req.user!.id),
+        eq(tasks.assigned_to, req.user.id),
+        eq(tasks.created_by, req.user.id),
         and(
-          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.company_id, req.user.company_id),
           isNull(tasks.assigned_to),
           eq(tasks.task_scope, 'company')
         ),
         and(
           eq(tasks.task_type, 'user_onboarding'),
-          sql`LOWER(${tasks.user_email}) = LOWER(${req.user!.email})`
+          sql`LOWER(${tasks.user_email}) = LOWER(${req.user.email})`
         )
       );
 
       console.log('[Tasks] Query conditions:', {
         conditions: {
-          condition1: `tasks.assigned_to = ${req.user!.id}`,
-          condition2: `tasks.created_by = ${req.user!.id}`,
-          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
-          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user!.email}')`
+          condition1: `tasks.assigned_to = ${req.user.id}`,
+          condition2: `tasks.created_by = ${req.user.id}`,
+          condition3: `tasks.company_id = ${req.user.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
+          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user.email}')`
         }
       });
 
@@ -324,7 +324,7 @@ export function registerRoutes(app: Express): Express {
   // Relationships endpoints
   app.get("/api/relationships", requireAuth, async (req, res) => {
     try {
-      console.log('[Relationships] Fetching network for company:', req.user!.company_id);
+      console.log('[Relationships] Fetching network for company:', req.user.company_id);
 
       // Get all relationships where the current company is either the creator or related company
       const networkRelationships = await db.select({
@@ -351,15 +351,15 @@ export function registerRoutes(app: Express): Express {
           eq(
             companies.id,
             sql`CASE 
-          WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
+          WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
           ELSE ${relationships.company_id}
         END`
           )
         )
         .where(
           or(
-            eq(relationships.company_id, req.user!.company_id),
-            eq(relationships.related_company_id, req.user!.company_id)
+            eq(relationships.company_id, req.user.company_id),
+            eq(relationships.related_company_id, req.user.company_id)
           )
         )
         .orderBy(companies.name);
@@ -491,14 +491,14 @@ export function registerRoutes(app: Express): Express {
   // Add new endpoint after account setup endpoint
   app.post("/api/user/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[User Onboarding] Completing onboarding for user:', req.user!.id);
+      console.log('[User Onboarding] Completing onboarding for user:', req.user.id);
 
       const [updatedUser] = await db.update(users)
         .set({
           onboarding_user_completed: true,
           updated_at: new Date()
         })
-        .where(eq(users.id, req.user!.id))
+        .where(eq(users.id, req.user.id))
         .returning();
 
       console.log('[User Onboarding] Updated user onboarding status:', {
@@ -527,7 +527,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.name, req.file.originalname),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (existingFile.length > 0) {
@@ -563,8 +563,8 @@ export function registerRoutes(app: Express): Express {
         type: req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
-        user_id: req.user!.id,
-        company_id: req.user!.company_id,
+        user_id: req.user.id,
+        company_id: req.user.company_id,
         download_count: 0,
         version: 1.0,
       };
@@ -596,7 +596,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (!file) {
@@ -629,7 +629,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (!file) {
@@ -869,6 +869,15 @@ export function registerRoutes(app: Express): Express {
     try {
       const { email, company_name, full_name, sender_name, sender_company } = req.body;
 
+      // Type check for authenticated user
+      if (!req.user || !req.user.id) {
+        console.error('[FinTech Invite] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
       // Input validation
       const invalidFields = [];
       if (!email) invalidFields.push('email');
@@ -877,18 +886,15 @@ export function registerRoutes(app: Express): Express {
       if (!sender_name) invalidFields.push('sender name');
 
       if (invalidFields.length > 0) {
-        const errorMessage = invalidFields.length === 1
-          ? `${invalidFields[0]} is required`
-          : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
-
         console.log('[FinTech Invite] Validation failed:', {
           receivedData: req.body,
           invalidFields,
-          errorMessage
         });
 
         return res.status(400).json({
-          message: errorMessage,
+          message: invalidFields.length === 1
+            ? `${invalidFields[0]} is required`
+            : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`,
           invalidFields
         });
       }
@@ -910,22 +916,18 @@ export function registerRoutes(app: Express): Express {
         });
       }
 
-      // Generate invitation code
-      const code = crypto.randomBytes(3).toString('hex').toUpperCase();
-      const inviteUrl = `${process.env.APP_URL}/register?type=fintech&code=${code}`;
-
       // Single transaction for all database operations
       const result = await db.transaction(async (tx) => {
         // Get sender's company details
         const [userCompany] = await tx.select()
           .from(companies)
-          .where(eq(companies.id, req.user!.company_id));
+          .where(eq(companies.id, req.user.company_id));
 
         if (!userCompany) {
           throw new Error("Your company information not found");
         }
 
-        // Create new company ensuring user ID is set for task creation
+        // Create new company ensuring user ID is properly set
         const [newCompany] = await tx.insert(companies)
           .values({
             name: company_name.trim(),
@@ -936,12 +938,12 @@ export function registerRoutes(app: Express): Express {
             onboarding_company_completed: false,
             available_tabs: ['task-center'],
             metadata: {
-              invited_by: req.user!.id,
+              invited_by: req.user.id, // Remove non-null assertion
               invited_at: new Date().toISOString(),
               invited_from: userCompany.name,
               created_via: 'fintech_invite',
-              created_by_company_id: req.user!.company_id,
-              created_by_id: req.user!.id
+              created_by_id: req.user.id, // Remove non-null assertion
+              created_by_company_id: req.user.company_id
             }
           })
           .returning();
@@ -965,7 +967,7 @@ export function registerRoutes(app: Express): Express {
             password: hashedPassword,
             onboarding_user_completed: false,
             metadata: {
-              invited_by: req.user!.id,
+              invited_by: req.user.id,
               invited_at: new Date().toISOString(),
               invited_from: userCompany.name
             }
@@ -987,7 +989,7 @@ export function registerRoutes(app: Express): Express {
             invitee_company: company_name.trim(),
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             metadata: {
-              sender_name: req.user!.full_name,
+              sender_name: req.user.full_name,
               sender_company: userCompany.name,
               invitation_type: 'fintech'
             }
@@ -1035,7 +1037,7 @@ export function registerRoutes(app: Express): Express {
             progress: 0,
             metadata: {
               created_via: 'fintech_invite',
-              created_by: req.user!.id,
+              created_by: req.user.id,
               created_at: new Date().toISOString(),
               statusFlow: [TaskStatus.NOT_STARTED]
             }
@@ -1055,7 +1057,7 @@ export function registerRoutes(app: Express): Express {
             progress: 0,
             metadata: {
               created_via: 'fintech_invite',
-              created_by: req.user!.id,
+              created_by: req.user.id,
               created_at: new Date().toISOString(),
               statusFlow: [TaskStatus.NOT_STARTED]
             }
@@ -1076,7 +1078,7 @@ export function registerRoutes(app: Express): Express {
             assigned_to: newUser.id,
             metadata: {
               created_via: 'fintech_invite',
-              created_by: req.user!.id,
+              created_by: req.user.id,
               created_at: new Date().toISOString(),
               email_sent_at: new Date().toISOString(),
               statusFlow: [TaskStatus.EMAIL_SENT]
@@ -1111,224 +1113,10 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add endpoint for companies to add other companies to their network
-  app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
-    try {
-      const targetCompanyId = parseInt(req.params.id);
-
-      // Verify the target company exists
-      const [targetCompany] = await db.select()
-        .from(companies)
-        .where(eq(companies.id, targetCompanyId));
-
-      if (!targetCompany) {
-        return res.status(404).json({ message: "Target company not found" });
-      }
-
-      // Check if relationship already exists
-      const [existingRelationship] = await db.select()
-        .from(relationships)
-        .where(and(
-          eq(relationships.company_id, req.user!.company_id),
-          eq(relationships.related_company_id, targetCompanyId)
-        ));
-
-      if (existingRelationship) {
-        return res.status(400).json({ message: "Company is already in your network" });
-      }
-
-      // Create the relationship
-      const [relationship] = await db.insert(relationships)
-        .values({
-          company_id: req.user!.company_id,
-          related_company_id: targetCompanyId,
-          relationship_type: 'network_member',
-          status: 'active',
-          metadata: {
-            added_at: new Date().toISOString(),
-            added_by: req.user!.id
-          }
-        })
-        .returning();
-
-      res.status(201).json(relationship);
-    } catch (error) {
-      console.error("Error adding company to network:", error);
-      res.status(500).json({ message: "Error adding company to network" });
-    }
-  });
-
-  // Update the user invite endpoint after the existing registration endpoint
-  app.post("/api/users/invite", requireAuth, async (req, res) => {
-    try {
-      console.log('[Invite] Starting invitation process');
-      console.log('[Invite] Request body:', req.body);
-
-      // Validate and normalize invite data
-      const inviteData = {
-        email: req.body.email.toLowerCase(),
-        full_name: req.body.full_name,
-        company_id: req.body.company_id,
-        company_name: req.body.company_name,
-        sender_name: req.body.sender_name,
-        sender_company: req.body.sender_company
-      };
-
-      console.log('[Invite] Validated invite data:', inviteData);
-
-      // Start a database transaction
-      console.log('[Invite] Starting database transaction');
-      const result = await db.transaction(async (tx) => {
-        try {
-          console.log('[Invite] Creating user account');
-          // Create new user account with explicit company_id
-          const [user] = await tx.insert(users)
-            .values({
-              email: inviteData.email,
-              full_name: inviteData.full_name,
-              company_id: inviteData.company_id,
-              password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
-              onboarding_user_completed: false
-            })
-            .returning();
-
-          if (!user) {
-            throw new Error('Failed to create user account');
-          }
-
-          // Create invitation record
-          const inviteCode = generateInviteCode();
-          const expiryDate = new Date();
-          expiryDate.setDate(expiryDate.getDate() + 7);
-
-          const [invitation] = await tx.insert(invitations)
-            .values({
-              email: inviteData.email,
-              status: 'pending',
-              code: inviteCode,
-              company_id: inviteData.company_id,
-              invitee_name: inviteData.full_name,
-              invitee_company: inviteData.company_name,
-              expires_at: expiryDate
-            })
-            .returning();
-
-          // Create task for tracking the invitation
-          const [task] = await tx.insert(tasks)
-            .values({
-              title: `New User Invitation: ${inviteData.email}`,
-              description: `Invitation sent to ${inviteData.full_name} (${inviteData.email}) to join ${inviteData.company_name}`,
-              task_type: 'user_onboarding',
-              task_scope: 'user',
-              status: TaskStatus.EMAIL_SENT,
-              progress: 100,
-              priority: 'high',
-              company_id: inviteData.company_id,
-              user_email: inviteData.email,
-              created_by: req.user!.id,
-              metadata: {
-                invitation_id: invitation.id,
-                invited_by: req.user!.id,
-                invited_at: new Date().toISOString(),
-                status_flow: [TaskStatus.EMAIL_SENT]
-              }
-            })
-            .returning();
-
-          // Update invitation with task reference
-          await tx.update(invitations)
-            .set({ task_id: task.id })
-            .where(eq(invitations.id, invitation.id));
-
-          // Send invitation email
-          await emailService.sendTemplateEmail({
-            to: inviteData.email,
-            from: 'noreply@example.com',
-            template: 'user_invite',
-            templateData: {
-              recipientEmail: inviteData.email,
-              recipientName: inviteData.full_name,
-              senderName: inviteData.sender_name,
-              senderCompany: inviteData.sender_company,
-              targetCompany: inviteData.company_name,
-              code: inviteCode,
-              inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
-            }
-          });
-
-          return { invitation, task, user };
-        } catch (error) {
-          console.error('[Invite] Error processing invitation:', error);
-          throw error;
-        }
-      });
-
-      res.status(201).json({
-        message: 'Invitation sent successfully',
-        invitation: result.invitation,
-        task: result.task
-      });
-
-    } catch (error) {
-      console.error('[Invite] Error processing invitation:', error);
-      res.status(500).json({
-        message: 'Error processing invitation request',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Add invitation validation endpoint
-  app.get("/api/invitations/:code/validate", async (req, res) => {
-    try {
-      console.log('[Invite Debug] Starting validation for code:', req.params.code);
-
-      // Get the invitation with case-insensitive code match and valid expiration
-      const [invitation] = await db.select()
-        .from(invitations)
-        .where(and(
-          eq(invitations.code, req.params.code.toUpperCase()),
-          eq(invitations.status, 'pending'),
-          sql`${invitations.expires_at} > NOW()`
-        ));
-
-      if (!invitation) {
-        console.log('[Invite Debug] No valid invitation found for code:', req.params.code);
-        return res.json({
-          valid: false,
-          message: "Invalid or expired invitation code"
-        });
-      }
-
-      console.log('[Invite Debug] Found valid invitation:', {
-        id: invitation.id,
-        email: invitation.email,
-        status: invitation.status,
-        expires_at: invitation.expires_at
-      });
-
-      res.json({
-        valid: true,
-        invitation: {
-          email: invitation.email,
-          invitee_name: invitation.invitee_name,
-          company_name: invitation.invitee_company
-        }
-      });
-
-    } catch (error) {
-      console.error('[Invite Debug] Validation error:', error);
-      res.status(500).json({
-        valid: false,
-        message: "Error validating invitation code"
-      });
-    }
-  });
-
   // Add this endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[Complete Onboarding] Processing request for user:', req.user!.id);
+      console.log('[Complete Onboarding] Processing request for user:', req.user.id);
 
       // Update user's onboarding status
       const [updatedUser] = await db.update(users)
@@ -1336,16 +1124,16 @@ export function registerRoutes(app: Express): Express {
           onboarding_user_completed: true,
           updated_at: new Date()
         })
-        .where(eq(users.id, req.user!.id))
+        .where(eq(users.id, req.user.id))
         .returning();
 
       if (!updatedUser) {
-        console.error('[Complete Onboarding] Failed to update user:', req.user!.id);
+        console.error('[Complete Onboarding] Failed to update user:', req.user.id);
         return res.status(500).json({ message: "Failed to update user" });
       }
 
       // Try to update the onboarding task status
-      const updatedTask = await updateOnboardingTaskStatus(req.user!.id);
+      const updatedTask = await updateOnboardingTaskStatus(req.user.id);
 
       console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
         userId: updatedUser.id,
@@ -1508,7 +1296,7 @@ export function registerRoutes(app: Express): Express {
         .where(
           and(
             sql`${files.id} = ANY(${fileIds})`,
-            eq(files.company_id, req.user!.company_id)
+            eq(files.company_id, req.user.company_id)
           )
         );
 
@@ -1711,6 +1499,220 @@ export function registerRoutes(app: Express): Express {
       res.status(500).json({
         message: "Error processing documents",
         code: "PROCESSING_ERROR"
+      });
+    }
+  });
+
+  //Add the new invitation validation endpoint here.
+  app.get("/api/invitations/:code/validate", async (req, res) => {
+    try {
+      console.log('[Invite Debug] Starting validation for code:', req.params.code);
+
+      // Get the invitation with case-insensitive code match and valid expiration
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, req.params.code.toUpperCase()),
+          eq(invitations.status, 'pending'),
+          sql`${invitations.expires_at} > NOW()`
+        ));
+
+      if (!invitation) {
+        console.log('[Invite Debug] No valid invitation found for code:', req.params.code);
+        return res.json({
+          valid: false,
+          message: "Invalid or expired invitation code"
+        });
+      }
+
+      console.log('[Invite Debug] Found valid invitation:', {
+        id: invitation.id,
+        email: invitation.email,
+        status: invitation.status,
+        expires_at: invitation.expires_at
+      });
+
+      res.json({
+        valid: true,
+        invitation: {
+          email: invitation.email,
+          invitee_name: invitation.invitee_name,
+          company_name: invitation.invitee_company
+        }
+      });
+
+    } catch (error) {
+      console.error('[Invite Debug] Validation error:', error);
+      res.status(500).json({
+        valid: false,
+        message: "Error validating invitation code"
+      });
+    }
+  });
+
+  //Add new endpoint for companies to add other companies to their network
+  app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
+    try {
+      const targetCompanyId = parseInt(req.params.id);
+
+      // Verify the target company exists
+      const [targetCompany] = await db.select()
+        .from(companies)
+        .where(eq(companies.id, targetCompanyId));
+
+      if (!targetCompany) {
+        return res.status(404).json({ message: "Target company not found" });
+      }
+
+      // Check if relationship already exists
+      const [existingRelationship] = await db.select()
+        .from(relationships)
+        .where(and(
+          eq(relationships.company_id, req.user.company_id),
+          eq(relationships.related_company_id, targetCompanyId)
+        ));
+
+      if (existingRelationship) {
+        return res.status(400).json({ message: "Company is already in your network" });
+      }
+
+      // Create the relationship
+      const [relationship] = await db.insert(relationships)
+        .values({
+          company_id: req.user.company_id,
+          related_company_id: targetCompanyId,
+          relationship_type: 'network_member',
+          status: 'active',
+          metadata: {
+            added_at: new Date().toISOString(),
+            added_by: req.user.id
+          }
+        })
+        .returning();
+
+      res.status(201).json(relationship);
+    } catch (error) {
+      console.error("Error adding company to network:", error);
+      res.status(500).json({ message: "Error adding company to network" });
+    }
+  });
+
+  // Update the user invite endpoint after the existing registration endpoint
+  app.post("/api/users/invite", requireAuth, async (req, res) => {
+    try {
+      console.log('[Invite] Starting invitation process');
+      console.log('[Invite] Request body:', req.body);
+
+      // Validate and normalize invite data
+      const inviteData = {
+        email: req.body.email.toLowerCase(),
+        full_name: req.body.full_name,
+        company_id: req.body.company_id,
+        company_name: req.body.company_name,
+        sender_name: req.body.sender_name,
+        sender_company: req.body.sender_company
+      };
+
+      console.log('[Invite] Validated invite data:', inviteData);
+
+      // Start a database transaction
+      console.log('[Invite] Starting database transaction');
+      const result = await db.transaction(async (tx) => {
+        try {
+          console.log('[Invite] Creating user account');
+          // Create new user account with explicit company_id
+          const [user] = await tx.insert(users)
+            .values({
+              email: inviteData.email,
+              full_name: inviteData.full_name,
+              company_id: inviteData.company_id,
+              password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
+              onboarding_user_completed: false
+            })
+            .returning();
+
+          if (!user) {
+            throw new Error('Failed to create user account');
+          }
+
+          // Create invitation record
+          const inviteCode = generateInviteCode();
+          const expiryDate = new Date();
+          expiryDate.setDate(expiryDate.getDate() + 7);
+
+          const [invitation] = await tx.insert(invitations)
+            .values({
+              email: inviteData.email,
+              status: 'pending',
+              code: inviteCode,
+              company_id: inviteData.company_id,
+              invitee_name: inviteData.full_name,
+              invitee_company: inviteData.company_name,
+              expires_at: expiryDate
+            })
+            .returning();
+
+          // Create task for tracking the invitation
+          const [task] = await tx.insert(tasks)
+            .values({
+              title: `New User Invitation: ${inviteData.email}`,
+              description: `Invitation sent to ${inviteData.full_name} (${inviteData.email}) to join ${inviteData.company_name}`,
+              task_type: 'user_onboarding',
+              task_scope: 'user',
+              status: TaskStatus.EMAIL_SENT,
+              progress: 100,
+              priority: 'high',
+              company_id: inviteData.company_id,
+              user_email: inviteData.email,
+              created_by: req.user.id,
+              metadata: {
+                invitation_id: invitation.id,
+                invited_by: req.user.id,
+                invited_at: new Date().toISOString(),
+                status_flow: [TaskStatus.EMAIL_SENT]
+              }
+            })
+            .returning();
+
+          // Update invitation with task reference
+          await tx.update(invitations)
+            .set({ task_id: task.id })
+            .where(eq(invitations.id, invitation.id));
+
+          // Send invitation email
+          await emailService.sendTemplateEmail({
+            to: inviteData.email,
+            from: 'noreply@example.com',
+            template: 'user_invite',
+            templateData: {
+              recipientEmail: inviteData.email,
+              recipientName: inviteData.full_name,
+              senderName: inviteData.sender_name,
+              senderCompany: inviteData.sender_company,
+              targetCompany: inviteData.company_name,
+              code: inviteCode,
+              inviteUrl: `${process.env.APP_URL}/auth?code=${inviteCode}`
+            }
+          });
+
+          return { invitation, task, user };
+        } catch (error) {
+          console.error('[Invite] Error processing invitation:', error);
+          throw error;
+        }
+      });
+
+      res.status(201).json({
+        message: 'Invitation sent successfully',
+        invitation: result.invitation,
+        task: result.task
+      });
+
+    } catch (error) {
+      console.error('[Invite] Error processing invitation:', error);
+      res.status(500).json({
+        message: 'Error processing invitation request',
+        error: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
