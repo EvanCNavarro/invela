@@ -863,255 +863,189 @@ export function registerRoutes(app: Express): Express {
   });
 
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTechInvite] Starting invitation process');
-    console.log('[FinTech Invite] Request body:', req.body);
+      try {
+const { email, company_name, full_name, sender_name, sender_company } = req.body;
 
-    try {
-      const { email, company_name, full_name, sender_name, sender_company } = req.body;
+        // Type check for authenticated user
+        if (!req.user || !req.user.id) {
+          console.error('[FinTech Invite] No authenticated user found');
+          return res.status(401).json({
+            message: "Authentication required",
+            code: "AUTH_REQUIRED"
+          });
+        }
 
-      // Type check for authenticated user
-      if (!req.user || !req.user.id) {
-        console.error('[FinTech Invite] No authenticated user found');
-        return res.status(401).json({
-          message: "Authentication required",
-          code: "AUTH_REQUIRED"
+        // Input validation
+        const invalidFields = [];
+        if (!email) invalidFields.push('email');
+        if (!company_name) invalidFields.push('company name');
+        if (!full_name) invalidFields.push('full name');
+        if (!sender_name) invalidFields.push('sender name');
+
+        if (invalidFields.length > 0) {
+          console.log('[FinTech Invite] Validation failed:', {
+            receivedData: req.body,
+            invalidFields,
+          });
+
+          return res.status(400).json({
+            message: invalidFields.length === 1
+              ? `${invalidFields[0]} is required`
+              : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`,
+            invalidFields
+          });
+        }
+
+        // Check for existing company
+        const existingCompany = await db.query.companies.findFirst({
+          where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
         });
-      }
 
-      // Input validation
-      const invalidFields = [];
-      if (!email) invalidFields.push('email');
-      if (!company_name) invalidFields.push('company name');
-      if (!full_name) invalidFields.push('full name');
-      if (!sender_name) invalidFields.push('sender name');
+        if (existingCompany) {
+          console.log('[FinTech Invite] Company already exists:', existingCompany.name);
+          return res.status(409).json({
+            message: "A company with this name already exists",
+            existingCompany: {
+              id: existingCompany.id,
+              name: existingCompany.name,
+              category: existingCompany.category
+            }
+          });
+        }
 
-      if (invalidFields.length > 0) {
-        console.log('[FinTech Invite] Validation failed:', {
-          receivedData: req.body,
-          invalidFields,
-        });
+        // Single transaction for all database operations
+        const result = await db.transaction(async (tx) => {
+          // Get sender's company details
+          const [userCompany] = await tx.select()
+            .from(companies)
+            .where(eq(companies.id, req.user.company_id));
 
-        return res.status(400).json({
-          message: invalidFields.length === 1
-            ? `${invalidFields[0]} is required`
-            : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`,
-          invalidFields
-        });
-      }
-
-      // Check for existing company before starting transaction
-      const existingCompany = await db.query.companies.findFirst({
-        where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
-      });
-
-      if (existingCompany) {
-        console.log('[FinTech Invite] Company already exists:', existingCompany.name);
-        return res.status(409).json({
-          message: "A company with this name already exists",
-          existingCompany: {
-            id: existingCompany.id,
-            name: existingCompany.name,
-            category: existingCompany.category
+          if (!userCompany) {
+            throw new Error("Your company information not found");
           }
-        });
-      }
 
-      // Single transaction for all database operations
-      const result = await db.transaction(async (tx) => {
-        // Get sender's company details
-        const [userCompany] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, req.user.company_id));
+          // Generate invitation code
+          const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+          const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+          const host = req.headers.host;
+          const inviteUrl = `${protocol}://${host}/register?code=${invitationCode}&email=${encodeURIComponent(email)}`;
 
-        if (!userCompany) {
-          throw new Error("Your company information not found");
-        }
+          // Create new company with proper metadata
+          const [newCompany] = await tx.insert(companies)
+            .values({
+              name: company_name.trim(),
+              description: `FinTech partner company ${company_name}`,
+              category: 'FinTech',
+              status: 'active',
+              accreditation_status: 'PENDING',
+              onboarding_company_completed: false,
+              available_tabs: ['task-center'],
+              metadata: {
+                invited_by: req.user.id,
+                invited_at: new Date().toISOString(),
+                invited_from: userCompany.name,
+                created_via: 'fintech_invite',
+                created_by_id: req.user.id,
+                created_by_company_id: req.user.company_id
+              }
+            })
+            .returning();
 
-        // Create new company ensuring user ID is properly set
-        const [newCompany] = await tx.insert(companies)
-          .values({
-            name: company_name.trim(),
-            description: `FinTech partner company ${company_name}`,
-            category: 'FinTech',
-            status: 'active',
-            accreditation_status: 'PENDING',
-            onboarding_company_completed: false,
-            available_tabs: ['task-center'],
+          // Generate temp password and hash it
+          const tempPassword = crypto.randomBytes(16).toString('hex');
+          const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+          // Create user account
+          const [newUser] = await tx.insert(users)
+            .values({
+              email: email.toLowerCase(),
+              full_name: full_name.trim(),
+              password: hashedPassword,
+              company_id: newCompany.id,
+              onboarding_user_completed: false,
+              metadata: {
+                invited_by: req.user.id,
+                invited_at: new Date().toISOString(),
+                invited_from: userCompany.name
+              }
+            })
+            .returning();
+
+          // Create invitation record
+          const [invitation] = await tx.insert(invitations)
+            .values({
+              email: email.toLowerCase(),
+              code: invitationCode,
+              status: 'pending',
+              company_id: newCompany.id,
+              invitee_name: full_name.trim(),
+              invitee_company: company_name.trim(),
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              metadata: {
+                sender_name: req.user.full_name,
+                sender_company: userCompany.name,
+                invitation_type: 'fintech'
+              }
+            })
+            .returning();
+
+          // Create tasks using the service function that handles task creation
+          const createdCompany = await createCompany({
+            ...newCompany,
             metadata: {
-              invited_by: req.user.id, // Remove non-null assertion
-              invited_at: new Date().toISOString(),
-              invited_from: userCompany.name,
-              created_via: 'fintech_invite',
-              created_by_id: req.user.id, // Remove non-null assertion
-              created_by_company_id: req.user.company_id
-            }
-          })
-          .returning();
-
-        if (!newCompany) {
-          throw new Error("Failed to create company");
-        }
-
-        // Generate temporary password for new user
-        const tempPassword = crypto.randomBytes(32).toString('hex');
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-        // Create a new user record
-        const [newUser] = await tx.insert(users)
-          .values({
-            email: email.toLowerCase().trim(),
-            full_name: full_name.trim(),
-            company_id: newCompany.id,
-            role: 'admin',
-            status: 'pending',
-            password: hashedPassword,
-            onboarding_user_completed: false,
-            metadata: {
+              created_by_id: req.user.id,
               invited_by: req.user.id,
-              invited_at: new Date().toISOString(),
-              invited_from: userCompany.name
-            }
-          })
-          .returning();
-
-        if (!newUser) {
-          throw new Error("Failed to create user");
-        }
-
-        // Create invitation record
-        const [invitation] = await tx.insert(invitations)
-          .values({
-            email: email.toLowerCase().trim(),
-            company_id: newCompany.id,
-            code: code,
-            status: 'pending',
-            invitee_name: full_name.trim(),
-            invitee_company: company_name.trim(),
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            metadata: {
-              sender_name: req.user.full_name,
-              sender_company: userCompany.name,
-              invitation_type: 'fintech'
-            }
-          })
-          .returning();
-
-        if (!invitation) {
-          throw new Error("Failed to create invitation");
-        }
-
-        // Send email invitation
-        try {
-          await emailService.sendTemplateEmail({
-            to: email,
-            from: process.env.GMAIL_USER!,
-            template: 'fintech_invite',
-            templateData: {
-              recipientEmail: email,
-              recipientName: full_name,
-              senderName: sender_name,
-              senderCompany: sender_company || userCompany.name,
-              targetCompany: company_name,
-              inviteUrl: inviteUrl,
-              code: code
+              created_via: 'fintech_invite',
+              created_by_company_id: req.user.company_id
             }
           });
 
-          console.log('[FinTech Invite] Email sent successfully to:', email);
-        } catch (error) {
-          console.error('[FinTech Invite] Failed to send email:', error);
-          // Don't throw error here, we still want to create the records
-        }
-
-        // Create initial tasks
-        const kyb_task = await tx.insert(tasks)
-          .values({
-            title: `Company KYB: ${company_name}`,
-            description: 'Complete KYB questionnaire and provide company documentation.',
-            company_id: newCompany.id,
-            user_email: email.toLowerCase(),
-            task_type: 'company_kyb',
-            task_scope: 'company',
-            status: TaskStatus.NOT_STARTED,
-            priority: 'high',
-            progress: 0,
-            metadata: {
-              created_via: 'fintech_invite',
-              created_by: req.user.id,
-              created_at: new Date().toISOString(),
-              statusFlow: [TaskStatus.NOT_STARTED]
+          // Send invitation email
+          const emailResult = await emailService.sendTemplateEmail({
+            to: email.toLowerCase(),
+            from: process.env.GMAIL_USER!,
+            template: 'fintech_invite',
+            templateData: {
+              recipientName: full_name,
+              recipientEmail: email.toLowerCase(),
+              senderName: sender_name,
+              senderCompany: userCompany.name,
+              targetCompany: company_name,
+              inviteUrl,
+              code: invitationCode
             }
-          })
-          .returning();
+          });
 
-        const card_task = await tx.insert(tasks)
-          .values({
-            title: `Company CARD: ${company_name}`,
-            description: 'Provide Compliance and Risk Documentation.',
-            company_id: newCompany.id,
-            user_email: email.toLowerCase(),
-            task_type: 'company_card',
-            task_scope: 'company',
-            status: TaskStatus.NOT_STARTED,
-            priority: 'high',
-            progress: 0,
-            metadata: {
-              created_via: 'fintech_invite',
-              created_by: req.user.id,
-              created_at: new Date().toISOString(),
-              statusFlow: [TaskStatus.NOT_STARTED]
-            }
-          })
-          .returning();
-
-        const onboarding_task = await tx.insert(tasks)
-          .values({
-            title: `New User Invitation: ${email}`,
-            description: 'Complete user registration and onboarding.',
-            company_id: newCompany.id,
-            user_email: email.toLowerCase(),
-            task_type: 'user_onboarding',
-            task_scope: 'user',
-            status: TaskStatus.EMAIL_SENT,
-            priority: 'high',
-            progress: 20,
-            assigned_to: newUser.id,
-            metadata: {
-              created_via: 'fintech_invite',
-              created_by: req.user.id,
-              created_at: new Date().toISOString(),
-              email_sent_at: new Date().toISOString(),
-              statusFlow: [TaskStatus.EMAIL_SENT]
-            }
-          })
-          .returning();
-
-        return {
-          company: newCompany,
-          user: newUser,
-          invitation,
-          tasks: {
-            kyb: kyb_task[0],
-            card: card_task[0],
-            onboarding: onboarding_task[0]
+          if (!emailResult.success) {
+            throw new Error(emailResult.error || 'Failed to send invitation email');
           }
-        };
-      });
 
-      res.status(201).json(result);
-    } catch (error) {
-      console.error("[FinTech Invite] Error:", error);
-      console.error("[FinTech Invite] Error details:", {
-        name: error instanceof Error ? error.name : 'Unknown',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      });
+          return {
+            company: createdCompany,
+            user: newUser,
+            invitation
+          };
+        });
 
-      res.status(500).json({
-        message: error instanceof Error ? error.message : "Error processing fintech invitation"
-      });
-    }
-  });
+        res.status(201).json({
+          message: "FinTech company invited successfully",
+          company: result.company,
+          invitation: {
+            id: result.invitation.id,
+            code: result.invitation.code,
+            email: result.invitation.email,
+            expires_at: result.invitation.expires_at
+          }
+        });
+
+      } catch (error) {
+        console.error("[FinTech Invite] Error:", error);
+        res.status(500).json({
+          message: "Failed to process invitation",
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
+      }
+    });
 
   // Add this endpoint to handle user onboarding completion
   app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
