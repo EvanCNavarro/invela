@@ -925,7 +925,7 @@ export function registerRoutes(app: Express): Express {
           throw new Error("Your company information not found");
         }
 
-        // Create new company with proper metadata including creator ID
+        // Create new company ensuring user ID is set for task creation
         const [newCompany] = await tx.insert(companies)
           .values({
             name: company_name.trim(),
@@ -936,11 +936,12 @@ export function registerRoutes(app: Express): Express {
             onboarding_company_completed: false,
             available_tabs: ['task-center'],
             metadata: {
-              invited_by: req.user!.id, // Ensure this is set for task creation
+              invited_by: req.user!.id,
               invited_at: new Date().toISOString(),
               invited_from: userCompany.name,
               created_via: 'fintech_invite',
-              created_by_company_id: req.user!.company_id
+              created_by_company_id: req.user!.company_id,
+              created_by_id: req.user!.id
             }
           })
           .returning();
@@ -982,8 +983,8 @@ export function registerRoutes(app: Express): Express {
             company_id: newCompany.id,
             code: code,
             status: 'pending',
-            invitee_name: full_name.trim(), // Add required field
-            invitee_company: company_name.trim(), // Add required field
+            invitee_name: full_name.trim(),
+            invitee_company: company_name.trim(),
             expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
             metadata: {
               sender_name: req.user!.full_name,
@@ -1185,7 +1186,7 @@ export function registerRoutes(app: Express): Express {
             .values({
               email: inviteData.email,
               full_name: inviteData.full_name,
-              company_id: inviteData.company_id, // Explicitly set company_id from invite data
+              company_id: inviteData.company_id,
               password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
               onboarding_user_completed: false
             })
@@ -1220,11 +1221,11 @@ export function registerRoutes(app: Express): Express {
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
-              progress: 100, // Set directly to 100 for completed status
+              progress: 100,
               priority: 'high',
               company_id: inviteData.company_id,
               user_email: inviteData.email,
-              created_by: req.user!.id, // Ensure created_by is set
+              created_by: req.user!.id,
               metadata: {
                 invitation_id: invitation.id,
                 invited_by: req.user!.id,
@@ -1714,7 +1715,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Utility functions
+  //Utility functions
   function generateInviteCode(): string {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
   }
