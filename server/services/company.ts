@@ -10,166 +10,210 @@ import { eq } from "drizzle-orm";
 export async function createCompany(
   data: typeof companies.$inferInsert
 ): Promise<typeof companies.$inferSelect> {
+  const startTime = Date.now();
   console.log('[Company Service] Creating new company:', data.name);
 
-  return await db.transaction(async (tx) => {
-    // Create the company
-    const [newCompany] = await tx.insert(companies)
-      .values({
-        ...data,
-        registry_date: new Date(),
-        created_at: new Date(),
-        updated_at: new Date()
-      })
-      .returning();
+  try {
+    return await db.transaction(async (tx) => {
+      // Create the company if it doesn't exist
+      let newCompany = data;
+      if (!data.id) {
+        const [created] = await tx.insert(companies)
+          .values({
+            ...data,
+            registry_date: new Date(),
+            created_at: new Date(),
+            updated_at: new Date()
+          })
+          .returning();
+        newCompany = created;
+      }
 
-    if (!newCompany) {
-      throw new Error("Failed to create company");
-    }
+      if (!newCompany) {
+        throw new Error("Failed to create company");
+      }
 
-    // Get the creator's user ID with proper validation
-    const metadata = data.metadata as Record<string, any> | undefined;
-    const createdById = metadata?.created_by_id ?? metadata?.invited_by;
+      // Get the creator's user ID with proper validation
+      const metadata = data.metadata as Record<string, any> | undefined;
+      const createdById = metadata?.created_by_id ?? metadata?.invited_by;
 
-    if (!createdById || typeof createdById !== 'number') {
-      throw new Error("Valid creator ID is required for task creation");
-    }
+      if (!createdById || typeof createdById !== 'number') {
+        console.error('[Company Service] Invalid creator ID:', {
+          metadata,
+          createdById,
+          duration: Date.now() - startTime
+        });
+        throw new Error("Valid creator ID is required for task creation");
+      }
 
-    console.log('[Company Service] Creating tasks with creator ID:', createdById);
+      console.log('[Company Service] Creating tasks with creator ID:', createdById);
 
-    // Create KYB onboarding task
-    const [kybTask] = await tx.insert(tasks)
-      .values({
-        title: `Company KYB: ${newCompany.name}`,
-        description: `Complete KYB verification for ${newCompany.name}`,
-        task_type: 'company_kyb',
-        task_scope: 'company',
-        status: TaskStatus.PENDING,
-        priority: 'high',
-        progress: taskStatusToProgress[TaskStatus.PENDING],
-        company_id: newCompany.id,
-        assigned_to: createdById,
-        created_by: createdById, // Explicitly set creator
-        due_date: (() => {
-          const date = new Date();
-          date.setDate(date.getDate() + 14); // 14 days deadline
-          return date;
-        })(),
-        metadata: {
-          company_id: newCompany.id,
-          company_name: newCompany.name,
-          created_via: metadata?.created_via || 'company_creation',
-          status_flow: [TaskStatus.PENDING],
-          created_by_id: createdById,
-          created_at: new Date().toISOString()
+      try {
+        // Create KYB onboarding task
+        const [kybTask] = await tx.insert(tasks)
+          .values({
+            title: `Company KYB: ${newCompany.name}`,
+            description: `Complete KYB verification for ${newCompany.name}`,
+            task_type: 'company_kyb',
+            task_scope: 'company',
+            status: TaskStatus.PENDING,
+            priority: 'high',
+            progress: taskStatusToProgress[TaskStatus.PENDING],
+            company_id: newCompany.id,
+            assigned_to: createdById,
+            created_by: createdById, // Explicitly set creator
+            due_date: (() => {
+              const date = new Date();
+              date.setDate(date.getDate() + 14); // 14 days deadline
+              return date;
+            })(),
+            metadata: {
+              company_id: newCompany.id,
+              company_name: newCompany.name,
+              created_via: metadata?.created_via || 'company_creation',
+              status_flow: [TaskStatus.PENDING],
+              created_by_id: createdById,
+              created_at: new Date().toISOString()
+            }
+          })
+          .returning();
+
+        console.log('[Company Service] Created KYB task:', {
+          taskId: kybTask.id,
+          companyId: newCompany.id,
+          duration: Date.now() - startTime
+        });
+
+        // Create CARD compliance task
+        const [cardTask] = await tx.insert(tasks)
+          .values({
+            title: `Company CARD: ${newCompany.name}`,
+            description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
+            task_type: 'company_card',
+            task_scope: 'company',
+            status: TaskStatus.NOT_STARTED,
+            priority: 'high',
+            progress: 0,
+            company_id: newCompany.id,
+            assigned_to: createdById,
+            created_by: createdById, // Explicitly set creator
+            due_date: (() => {
+              const date = new Date();
+              date.setDate(date.getDate() + 14); // 14 days deadline
+              return date;
+            })(),
+            metadata: {
+              company_id: newCompany.id,
+              company_name: newCompany.name,
+              created_via: metadata?.created_via || 'company_creation',
+              statusFlow: [TaskStatus.NOT_STARTED],
+              progressHistory: [{
+                value: 0,
+                timestamp: new Date().toISOString()
+              }],
+              created_at: new Date().toISOString(),
+              last_updated: new Date().toISOString(),
+              created_by_id: createdById
+            }
+          })
+          .returning();
+
+        console.log('[Company Service] Created CARD task:', {
+          taskId: cardTask.id,
+          companyId: newCompany.id,
+          duration: Date.now() - startTime
+        });
+
+        // Create automatic relationship with Invela (company_id: 1)
+        console.log('[Company Service] Creating relationship with Invela');
+        const [invelaRelationship] = await tx.insert(relationships)
+          .values({
+            company_id: 1, // Invela's company ID
+            related_company_id: newCompany.id,
+            relationship_type: 'network_member',
+            status: 'active',
+            metadata: {
+              auto_created: true,
+              creation_date: new Date().toISOString(),
+              created_via: 'automatic_network_member',
+              company_name: newCompany.name,
+              created_by_id: createdById // Add creator ID to relationship metadata
+            }
+          })
+          .returning();
+
+        // If company was created by another company, create relationship with creating company
+        if (metadata?.created_by_company_id) {
+          console.log('[Company Service] Creating relationship with creator company:', metadata.created_by_company_id);
+          const [creatorRelationship] = await tx.insert(relationships)
+            .values({
+              company_id: metadata.created_by_company_id,
+              related_company_id: newCompany.id,
+              relationship_type: 'network_member',
+              status: 'active',
+              metadata: {
+                auto_created: true,
+                creation_date: new Date().toISOString(),
+                created_via: metadata.created_via || 'company_creation',
+                created_by_company: true,
+                company_name: newCompany.name,
+                created_by_id: createdById
+              }
+            })
+            .returning();
+
+          console.log('[Company Service] Created relationships:', {
+            invelaRelationshipId: invelaRelationship.id,
+            creatorRelationshipId: creatorRelationship.id,
+            newCompanyId: newCompany.id,
+            duration: Date.now() - startTime
+          });
+        } else {
+          console.log('[Company Service] Created relationship with Invela:', {
+            relationshipId: invelaRelationship.id,
+            newCompanyId: newCompany.id,
+            duration: Date.now() - startTime
+          });
         }
-      })
-      .returning();
 
-    // Create CARD compliance task
-    const [cardTask] = await tx.insert(tasks)
-      .values({
-        title: `Company CARD: ${newCompany.name}`,
-        description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
-        task_type: 'company_card',
-        task_scope: 'company',
-        status: TaskStatus.NOT_STARTED,
-        priority: 'high',
-        progress: 0,
-        company_id: newCompany.id,
-        assigned_to: createdById,
-        created_by: createdById, // Explicitly set creator
-        due_date: (() => {
-          const date = new Date();
-          date.setDate(date.getDate() + 14); // 14 days deadline
-          return date;
-        })(),
-        metadata: {
-          company_id: newCompany.id,
-          company_name: newCompany.name,
-          created_via: metadata?.created_via || 'company_creation',
-          statusFlow: [TaskStatus.NOT_STARTED],
-          progressHistory: [{
-            value: 0,
-            timestamp: new Date().toISOString()
-          }],
-          created_at: new Date().toISOString(),
-          last_updated: new Date().toISOString(),
-          created_by_id: createdById
-        }
-      })
-      .returning();
+        // Broadcast task updates
+        broadcastTaskUpdate({
+          id: kybTask.id,
+          status: kybTask.status,
+          progress: kybTask.progress,
+          metadata: kybTask.metadata
+        });
 
-    // Create automatic relationship with Invela (company_id: 1)
-    console.log('[Company Service] Creating relationship with Invela');
-    const [invelaRelationship] = await tx.insert(relationships)
-      .values({
-        company_id: 1, // Invela's company ID
-        related_company_id: newCompany.id,
-        relationship_type: 'network_member',
-        status: 'active',
-        metadata: {
-          auto_created: true,
-          creation_date: new Date().toISOString(),
-          created_via: 'automatic_network_member',
-          company_name: newCompany.name,
-          created_by_id: createdById // Add creator ID to relationship metadata
-        }
-      })
-      .returning();
+        broadcastTaskUpdate({
+          id: cardTask.id,
+          status: cardTask.status,
+          progress: cardTask.progress,
+          metadata: cardTask.metadata
+        });
 
-    // If company was created by another company, create relationship with creating company
-    if (data.metadata?.created_by_company_id) {
-      console.log('[Company Service] Creating relationship with creator company:', data.metadata.created_by_company_id);
-      const [creatorRelationship] = await tx.insert(relationships)
-        .values({
-          company_id: data.metadata.created_by_company_id,
-          related_company_id: newCompany.id,
-          relationship_type: 'network_member',
-          status: 'active',
-          metadata: {
-            auto_created: true,
-            creation_date: new Date().toISOString(),
-            created_via: 'company_creation',
-            created_by_company: true,
-            company_name: newCompany.name
-          }
-        })
-        .returning();
+        return {
+          ...newCompany,
+          kyb_task_id: kybTask.id,
+          card_task_id: cardTask.id
+        };
 
-      console.log('[Company Service] Created relationships:', {
-        invelaRelationshipId: invelaRelationship.id,
-        creatorRelationshipId: creatorRelationship.id,
-        newCompanyId: newCompany.id
-      });
-    } else {
-      console.log('[Company Service] Created relationship with Invela:', {
-        relationshipId: invelaRelationship.id,
-        newCompanyId: newCompany.id
-      });
-    }
-
-    // Broadcast task updates
-    if (kybTask) {
-      broadcastTaskUpdate({
-        id: kybTask.id,
-        status: kybTask.status,
-        progress: kybTask.progress,
-        metadata: kybTask.metadata || undefined
-      });
-    }
-
-    if (cardTask) {
-      broadcastTaskUpdate({
-        id: cardTask.id,
-        status: cardTask.status,
-        progress: cardTask.progress,
-        metadata: cardTask.metadata || undefined
-      });
-    }
-
-    return newCompany;
-  });
+      } catch (taskError) {
+        console.error('[Company Service] Failed to create tasks:', {
+          error: taskError,
+          companyId: newCompany.id,
+          duration: Date.now() - startTime
+        });
+        throw taskError;
+      }
+    });
+  } catch (error) {
+    console.error('[Company Service] Transaction failed:', {
+      error,
+      companyName: data.name,
+      duration: Date.now() - startTime
+    });
+    throw error;
+  }
 }
 
 /**

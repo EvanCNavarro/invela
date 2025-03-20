@@ -872,7 +872,7 @@ export function registerRoutes(app: Express): Express {
 
       const { email, company_name, full_name, sender_name } = req.body;
 
-      // Auth check with error handling
+// Auth check with error handling
       if (!req.user?.id) {
         console.error('[FinTech Invite] Authentication failed:', { user: req.user });
         return res.status(401).json({
@@ -1031,8 +1031,13 @@ export function registerRoutes(app: Express): Express {
 
       // Non-critical operations outside transaction
       try {
-        // Create tasks
-        await createCompany({
+        console.log('[FinTech Invite] Starting task creation for company:', {
+          companyId: result.newCompany.id,
+          userId: req.user!.id
+        });
+
+        // Create tasks with error handling
+        const createdCompany = await createCompany({
           ...result.newCompany,
           metadata: {
             created_by_id: req.user!.id,
@@ -1042,12 +1047,25 @@ export function registerRoutes(app: Express): Express {
           }
         });
 
-        // Send email
+        if (!createdCompany) {
+          throw new Error('Task creation failed - no response from createCompany');
+        }
+
+        console.log('[FinTech Invite] Tasks created successfully:', {
+          companyId: createdCompany.id,
+          tasks: {
+            kyb: createdCompany.kyb_task_id,
+            card: createdCompany.card_task_id
+          }
+        });
+
+        // Send email with error handling
+        console.log('[FinTech Invite] Sending invitation email');
         const protocol = req.headers['x-forwarded-proto'] || req.protocol;
         const host = req.headers.host;
         const inviteUrl = `${protocol}://${host}/register?code=${result.invitation.code}&email=${encodeURIComponent(email)}`;
 
-        await emailService.sendTemplateEmail({
+        const emailResult = await emailService.sendTemplateEmail({
           to: email.toLowerCase(),
           from: process.env.GMAIL_USER!,
           template: 'fintech_invite',
@@ -1061,11 +1079,33 @@ export function registerRoutes(app: Express): Express {
             code: result.invitation.code
           }
         });
+
+        if (!emailResult.success) {
+          console.error('[FinTech Invite] Email sending failed:', emailResult.error);
+        } else {
+          console.log('[FinTech Invite] Invitation email sent successfully');
+        }
+
       } catch (postTxError) {
-        // Log but don't fail the request
+        // Log task creation failure but don't fail the request
         console.error('[FinTech Invite] Post-transaction operations failed:', {
-          error: postTxError,
+          error: postTxError instanceof Error ? postTxError.message : 'Unknown error',
+          stack: postTxError instanceof Error ? postTxError.stack : undefined,
           duration: Date.now() - startTime
+        });
+
+        // Still return success since core operations completed
+        return res.status(201).json({
+          message: "FinTech company created but task creation failed",
+          warning: "Task creation failed - please check the logs",
+          company: {
+            id: result.newCompany.id,
+            name: result.newCompany.name
+          },
+          invitation: {
+            id: result.invitation.id,
+            code: result.invitation.code
+          }
         });
       }
 
