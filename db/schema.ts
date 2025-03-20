@@ -15,14 +15,15 @@ import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const TaskStatus = {
+  PENDING: 'pending',
+  NOT_STARTED: 'not_started',
   EMAIL_SENT: 'email_sent',
   COMPLETED: 'completed',
-  NOT_STARTED: 'not_started',
+  FAILED: 'failed',
   IN_PROGRESS: 'in_progress',
-  READY_FOR_REVIEW: 'ready_for_review',
   READY_FOR_SUBMISSION: 'ready_for_submission',
   SUBMITTED: 'submitted',
-  APPROVED: 'approved',
+  APPROVED: 'approved'
 } as const;
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
@@ -42,7 +43,7 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   task_type: text("task_type").notNull(), 
   task_scope: text("task_scope").notNull(), 
-  status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.EMAIL_SENT),
+  status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.PENDING),
   priority: text("priority").notNull().default('medium'),
   progress: real("progress").notNull().default(0),
   assigned_to: integer("assigned_to").references(() => users.id), 
@@ -386,11 +387,12 @@ export const insertTaskSchema = z.object({
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   files_requested: z.array(z.string()).optional(),
   status: z.enum([
+    TaskStatus.PENDING,
+    TaskStatus.NOT_STARTED,
     TaskStatus.EMAIL_SENT,
     TaskStatus.COMPLETED,
-    TaskStatus.NOT_STARTED,
+    TaskStatus.FAILED,
     TaskStatus.IN_PROGRESS,
-    TaskStatus.READY_FOR_REVIEW,
     TaskStatus.READY_FOR_SUBMISSION,
     TaskStatus.SUBMITTED,
     TaskStatus.APPROVED,
