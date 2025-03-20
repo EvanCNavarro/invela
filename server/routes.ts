@@ -925,7 +925,7 @@ export function registerRoutes(app: Express): Express {
           throw new Error("Your company information not found");
         }
 
-        // Create new company
+        // Create new company with proper metadata including creator ID
         const [newCompany] = await tx.insert(companies)
           .values({
             name: company_name.trim(),
@@ -936,10 +936,11 @@ export function registerRoutes(app: Express): Express {
             onboarding_company_completed: false,
             available_tabs: ['task-center'],
             metadata: {
-              invited_by: req.user!.id,
+              invited_by: req.user!.id, // Ensure this is set for task creation
               invited_at: new Date().toISOString(),
               invited_from: userCompany.name,
-              created_via: 'fintech_invite'
+              created_via: 'fintech_invite',
+              created_by_company_id: req.user!.company_id
             }
           })
           .returning();
