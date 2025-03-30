@@ -149,6 +149,7 @@ export default function TaskCenterPage() {
   const forOthersCount = !isLoading && user?.id
     ? tasks.filter(task => 
         task.created_by === user.id && 
+        task.company_id === currentCompany?.id && 
         (!task.assigned_to || task.assigned_to !== user.id)
       ).length
     : 0;
@@ -170,7 +171,9 @@ export default function TaskCenterPage() {
                  (task.assigned_to === user?.id || 
                   (task.task_scope === "company" && task.company_id === currentCompany.id));
         } else if (activeTab === "for-others") {
-          return task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id);
+          return task.created_by === user?.id && 
+                 task.company_id === currentCompany.id && 
+                 (!task.assigned_to || task.assigned_to !== user?.id);
         }
 
         return false;
