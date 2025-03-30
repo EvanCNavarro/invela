@@ -104,9 +104,9 @@ async function createCompanyInternal(
         description: `Complete KYB verification for ${newCompany.name}`,
         task_type: 'company_kyb',
         task_scope: 'company',
-        status: TaskStatus.PENDING,
+        status: TaskStatus.NOT_STARTED,
         priority: 'high',
-        progress: taskStatusToProgress[TaskStatus.PENDING],
+        progress: taskStatusToProgress[TaskStatus.NOT_STARTED],
         company_id: newCompany.id,
         assigned_to: null, // Company tasks should not be assigned to specific users
         created_by: createdById, // Explicitly set creator
@@ -119,7 +119,7 @@ async function createCompanyInternal(
           company_id: newCompany.id,
           company_name: newCompany.name,
           created_via: metadata?.created_via || 'company_creation',
-          status_flow: [TaskStatus.PENDING],
+          status_flow: [TaskStatus.NOT_STARTED],
           created_by_id: createdById,
           created_at: new Date().toISOString()
         }
