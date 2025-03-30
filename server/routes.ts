@@ -1057,7 +1057,8 @@ export function registerRoutes(app: Express): Express {
             duration: Date.now() - txStartTime
           });
 
-          // Create company tasks last
+          // Create company tasks last, passing the existing transaction to avoid nested transactions
+          console.log('[FinTech Invite] Creating company tasks with existing transaction');
           const createdCompany = await createCompany({
             ...newCompany,
             metadata: {
@@ -1066,7 +1067,7 @@ export function registerRoutes(app: Express): Express {
               created_via: 'fintech_invite',
               created_by_company_id: req.user!.company_id
             }
-          });
+          }, tx); // Pass the existing tx to avoid nested transactions
 
           console.log('[FinTech Invite] Tasks created successfully:', {
             companyId: createdCompany.id,
