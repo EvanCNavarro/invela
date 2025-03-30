@@ -247,15 +247,7 @@ export function registerRoutes(app: Express): Express {
         ));
 
       console.log('[Tasks] KYB tasks found:', {
-        count: kybTasks.length,
-        tasks: kybTasks.map(t => ({
-          id: t.id,
-          company_id: t.company_id,
-          task_scope: t.task_scope,
-          task_type: t.task_type,
-          assigned_to: t.assigned_to,
-          status: t.status
-        }))
+        count: kybTasks.length
       });
 
       // Get all tasks that are either:
@@ -294,15 +286,7 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[Tasks] Tasks found:', {
         count: userTasks.length,
-        tasks: userTasks.map(task => ({
-          id: task.id,
-          title: task.title,
-          assigned_to: task.assigned_to,
-          company_id: task.company_id,
-          task_scope: task.task_scope,
-          task_type: task.task_type,
-          status: task.status
-        }))
+        // No longer showing the full task list for better console readability
       });
 
       res.json(userTasks);
@@ -367,12 +351,7 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
-        relationships: networkRelationships.map(r => ({
-          id: r.id,
-          companyName: r.relatedCompany.name,
-          status: r.status,
-          type: r.relationshipType
-        }))
+        // No longer showing the full relationship list for better console readability
       });
 
       res.json(networkRelationships);
