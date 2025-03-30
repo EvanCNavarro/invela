@@ -5,6 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
+import { taskStatusToProgress } from './types';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
