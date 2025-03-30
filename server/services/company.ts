@@ -108,11 +108,11 @@ async function createCompanyInternal(
         priority: 'high',
         progress: taskStatusToProgress[TaskStatus.PENDING],
         company_id: newCompany.id,
-        assigned_to: createdById,
+        assigned_to: null, // Company tasks should not be assigned to specific users
         created_by: createdById, // Explicitly set creator
         due_date: (() => {
           const date = new Date();
-          date.setDate(date.getDate() + 14); // 14 days deadline
+          date.setDate(date.getDate() + 30); // 30 days deadline
           return date;
         })(),
         metadata: {
@@ -144,11 +144,11 @@ async function createCompanyInternal(
         priority: 'high',
         progress: 0,
         company_id: newCompany.id,
-        assigned_to: createdById,
+        assigned_to: null, // Company tasks should not be assigned to specific users
         created_by: createdById, // Explicitly set creator
         due_date: (() => {
           const date = new Date();
-          date.setDate(date.getDate() + 14); // 14 days deadline
+          date.setDate(date.getDate() + 30); // 30 days deadline
           return date;
         })(),
         metadata: {

@@ -989,6 +989,11 @@ export function registerRoutes(app: Express): Express {
               user_email: email.toLowerCase(),
               assigned_to: newUser.id,
               created_by: req.user!.id,
+              due_date: (() => {
+                const date = new Date();
+                date.setDate(date.getDate() + 30); // 30 days deadline
+                return date;
+              })(),
               metadata: {
                 user_id: newUser.id,
                 company_id: newCompany.id,
