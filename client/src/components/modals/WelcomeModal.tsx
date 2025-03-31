@@ -16,7 +16,7 @@ const carouselContent = [
     subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
-    src: "/harmonized_modal_userOboarding_2.png", 
+    src: "/harmonized_modal_userOboarding_2.png",
     alt: "Easy Onboarding",
     title: "Easy Onboarding",
     subtitle: "A simple, goal-oriented setup."
@@ -149,37 +149,38 @@ export function WelcomeModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-5xl p-0 overflow-hidden rounded-xl">
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         <div className="flex flex-col w-full">
           {/* Content header with title and subtitle */}
           <div className="p-8 text-center">
-            <h2 className="text-2xl font-bold mb-2">{carouselContent[currentSlide].title}</h2>
-            <p className="text-lg text-muted-foreground">{carouselContent[currentSlide].subtitle}</p>
+            <h2 className="text-3xl font-bold mb-3">{carouselContent[currentSlide].title}</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
           </div>
           
-          {/* Image content */}
-          <div className="px-12 py-4 flex justify-center items-center">
-            <div className="w-full max-w-md aspect-square relative rounded-lg bg-primary/5 p-8 flex items-center justify-center">
+          {/* Image content - wider layout */}
+          <div className="px-10 py-6 flex justify-center items-center">
+            <div className="w-full max-w-3xl h-72 relative rounded-xl bg-primary/5 p-6 flex items-center justify-center shadow-sm">
               <img
                 src={carouselContent[currentSlide].src}
                 alt={carouselContent[currentSlide].alt}
-                className="max-h-full max-w-full object-contain h-48"
+                className="max-h-full max-w-full object-contain"
+                style={{ height: 'auto', maxHeight: '250px', width: 'auto' }}
               />
             </div>
           </div>
           
           {/* Step indicators */}
-          <div className="flex justify-center my-6 px-8">
+          <div className="flex justify-center mt-4 mb-6 px-8">
             <div className="flex gap-3">
               {carouselContent.map((_, index) => (
                 <div
                   key={index}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-2.5 rounded-full transition-all ${
                     index === currentSlide
-                      ? "bg-primary w-10"
-                      : "bg-primary/20 w-6"
+                      ? "bg-primary w-12"
+                      : "bg-primary/20 w-7"
                   }`}
                 />
               ))}
@@ -187,19 +188,19 @@ export function WelcomeModal() {
           </div>
           
           {/* Navigation buttons */}
-          <div className="flex justify-between p-6 bg-muted/20 border-t">
+          <div className="flex justify-between p-6 bg-muted/10 border-t">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentSlide === 0}
-              className="px-6"
+              className="px-8 py-6 h-auto text-lg"
             >
               Back
             </Button>
 
             <Button
               onClick={handleNext}
-              className="px-6 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="px-8 py-6 h-auto text-lg bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isLastSlide ? "Start" : "Next"}
             </Button>
