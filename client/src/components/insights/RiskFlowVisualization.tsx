@@ -43,6 +43,10 @@ const formatSankeyData = (data: SankeyData) => {
     value: node.count,
     color: node.color,
     category: node.category,
+    // Original data for reference
+    originalName: node.name,
+    originalCount: node.count,
+    originalId: node.id
   }));
 
   // Transform links replacing string IDs with indices
@@ -52,6 +56,9 @@ const formatSankeyData = (data: SankeyData) => {
     value: link.value,
     sourceColor: link.sourceColor,
     targetColor: link.targetColor,
+    // For debugging - store original source/target IDs
+    originalSource: link.source,
+    originalTarget: link.target
   }));
 
   return { nodes, links };
@@ -69,7 +76,8 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
       stroke: "#fff",
       strokeWidth: 2,
       rx: 4,
-      ry: 4
+      ry: 4,
+      strokeDasharray: ""
     };
     
     // Apply specific styling for different node categories
@@ -105,7 +113,8 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
         fillOpacity="1"
         stroke={nodeStyle.stroke}
         strokeWidth={nodeStyle.strokeWidth}
-        strokeDasharray={nodeStyle.strokeDasharray}
+        // Apply strokeDasharray as a string attribute directly
+        {...(nodeStyle.strokeDasharray ? { 'strokeDasharray': nodeStyle.strokeDasharray } : {})}
         rx={nodeStyle.rx}
         ry={nodeStyle.ry}
       />
@@ -141,10 +150,24 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
 
 // Custom link shape with gradient coloring
 const CustomLink = (props: any) => {
-  const { sourceX, targetX, sourceY, targetY, sourceControlX, targetControlX, linkWidth, index, payload } = props;
-  const { sourceColor, targetColor } = payload;
+  const { 
+    sourceX, 
+    targetX, 
+    sourceY, 
+    targetY, 
+    sourceControlX, 
+    targetControlX, 
+    linkWidth, 
+    index, 
+    payload 
+  } = props;
+  
+  // Default colors if payload colors are missing
+  const sourceColor = payload.sourceColor || '#4965EC';
+  const targetColor = payload.targetColor || '#82C091';
   const gradientId = `linkGradient${index}`;
-
+  
+  // Ensure paths are properly created with valid coordinates
   return (
     <g>
       <defs>
@@ -162,7 +185,9 @@ const CustomLink = (props: any) => {
           Z
         `}
         fill={`url(#${gradientId})`}
-        strokeWidth="0"
+        stroke={`url(#${gradientId})`}
+        strokeWidth="1"
+        opacity="0.9"
       />
     </g>
   );
@@ -298,6 +323,9 @@ export function RiskFlowVisualization() {
             nodeWidth={80}
             margin={{ top: 20, right: 250, bottom: 20, left: 250 }}
             iterations={64}
+            direction="horizontal"
+            width={800}
+            height={500}
           >
             <defs>
               {/* Gradients are created in the CustomLink component */}
