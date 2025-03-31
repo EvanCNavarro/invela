@@ -11,16 +11,8 @@ interface KYBSuccessModalProps {
 }
 
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
-  const [location, navigate] = useLocation();
+  const [, navigate] = useLocation();
   
-  // Auto navigate to task center when the modal opens
-  // This ensures the form is no longer visible in the background
-  useEffect(() => {
-    if (open && !location.startsWith('/task-center')) {
-      navigate('/task-center');
-    }
-  }, [open, navigate, location]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
