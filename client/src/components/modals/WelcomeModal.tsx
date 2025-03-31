@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState, useEffect, forwardRef } from "react";
+import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -7,6 +8,28 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { cn } from "@/lib/utils";
+
+// Create a custom dialog content without close button
+const CustomDialogContent = forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(
+        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      {/* No close button here */}
+    </DialogPrimitive.Content>
+  </DialogPortal>
+));
+CustomDialogContent.displayName = "CustomDialogContent";
 
 // New carousel content with the updated 5 steps
 const carouselContent = [
@@ -149,112 +172,81 @@ export function WelcomeModal() {
   }
 
   return (
-    <>
-      {/* Global styles for pulsating border and hiding the close button */}
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          /* Hide the close button in the dialog */
-          button[aria-label="Close"] {
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-          }
+    <Dialog 
+      open={showModal} 
+      onOpenChange={() => {}} // Disabled clicking outside to close
+      modal={true} // Force modal behavior
+    >
+      <CustomDialogContent className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none">
+        <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
+        <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
+        <div className="flex flex-col w-full">
+          {/* Content header with title and subtitle */}
+          <div className="p-10 text-center">
+            <h2 className="text-3xl font-bold mb-4">{carouselContent[currentSlide].title}</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
+          </div>
           
-          @keyframes pulse-border {
-            0% {
-              box-shadow: 0 0 0 0 rgba(73, 101, 236, 0.7);
-            }
-            70% {
-              box-shadow: 0 0 0 10px rgba(73, 101, 236, 0);
-            }
-            100% {
-              box-shadow: 0 0 0 0 rgba(73, 101, 236, 0);
-            }
-          }
-          
-          .pulse-border-animation {
-            animation: pulse-border 2s infinite;
-          }
-        `
-      }} />
-
-      <Dialog 
-        open={showModal} 
-        onOpenChange={() => {}} // Disabled clicking outside to close
-        modal={true} // Force modal behavior
-      >
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none" hideCloseButton={true}>
-          <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
-          <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
-          <div className="flex flex-col w-full">
-            {/* Content header with title and subtitle */}
-            <div className="p-10 text-center">
-              <h2 className="text-3xl font-bold mb-4">{carouselContent[currentSlide].title}</h2>
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
-            </div>
-            
-            {/* Image content - wider layout with more spacing */}
-            <div className="px-12 py-8 flex justify-center items-center">
-              <div className="relative flex items-center justify-center w-full">
-                {/* Log image path but don't display anything */}
-                {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
-                <img
-                  src={carouselContent[currentSlide].src}
-                  alt={carouselContent[currentSlide].alt}
-                  className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
-                  style={{ 
-                    maxWidth: '92%',
-                    height: 'auto'
-                  }}
-                  onError={(e) => {
-                    console.error('Failed to load image:', carouselContent[currentSlide].src, e);
-                  }}
-                  onLoad={() => {
-                    console.log('Successfully loaded image:', carouselContent[currentSlide].src);
-                  }}
-                />
-              </div>
-            </div>
-            
-            {/* Navigation buttons with step indicators in between - more spacing */}
-            <div className="flex items-center justify-between p-8 border-t mt-4">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={currentSlide === 0}
-                className="px-8 py-2 h-auto text-base"
-              >
-                Back
-              </Button>
-
-              {/* Step indicators in the middle */}
-              <div className="flex gap-3 mx-6">
-                {carouselContent.map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-2.5 rounded-full transition-all ${
-                      index === currentSlide
-                        ? "bg-primary w-10"
-                        : "bg-primary/20 w-5"
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <Button
-                onClick={handleNext}
-                className={cn(
-                  "px-8 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
-                  isLastSlide && "pulse-border-animation"
-                )}
-              >
-                {isLastSlide ? "Start" : "Next"}
-              </Button>
+          {/* Image content - wider layout with more spacing */}
+          <div className="px-12 py-8 flex justify-center items-center">
+            <div className="relative flex items-center justify-center w-full">
+              {/* Log image path but don't display anything */}
+              {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
+              <img
+                src={carouselContent[currentSlide].src}
+                alt={carouselContent[currentSlide].alt}
+                className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
+                style={{ 
+                  maxWidth: '92%',
+                  height: 'auto'
+                }}
+                onError={(e) => {
+                  console.error('Failed to load image:', carouselContent[currentSlide].src, e);
+                }}
+                onLoad={() => {
+                  console.log('Successfully loaded image:', carouselContent[currentSlide].src);
+                }}
+              />
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          
+          {/* Navigation buttons with step indicators in between - more spacing */}
+          <div className="flex items-center justify-between p-8 border-t mt-4">
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentSlide === 0}
+              className="px-8 py-2 h-auto text-base"
+            >
+              Back
+            </Button>
+
+            {/* Step indicators in the middle */}
+            <div className="flex gap-3 mx-6">
+              {carouselContent.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2.5 rounded-full transition-all ${
+                    index === currentSlide
+                      ? "bg-primary w-10"
+                      : "bg-primary/20 w-5"
+                  }`}
+                />
+              ))}
+            </div>
+
+            <Button
+              onClick={handleNext}
+              className={cn(
+                "px-8 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                isLastSlide && "pulse-border-animation"
+              )}
+            >
+              {isLastSlide ? "Start" : "Next"}
+            </Button>
+          </div>
+        </div>
+      </CustomDialogContent>
+    </Dialog>
   );
 }
