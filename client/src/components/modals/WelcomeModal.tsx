@@ -1,37 +1,43 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
 
-const carouselImages = [
+// New carousel content with the updated 5 steps
+const carouselContent = [
   {
-    src: "/welcome-1.svg",
+    src: "/modal_userOboarding_1.png",
     alt: "Welcome to Invela",
     title: "Welcome to Invela",
-    description: "Your intelligent platform for managing business relationships and compliance."
+    subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
-    src: "/welcome-2.svg",
-    alt: "Streamlined Onboarding",
-    title: "Streamlined Onboarding",
-    description: "Easy and secure onboarding process for your team and partners."
+    src: "/harmonized_modal_userOboarding_2.png", 
+    alt: "Easy Onboarding",
+    title: "Easy Onboarding",
+    subtitle: "A simple, goal-oriented setup."
   },
   {
-    src: "/welcome-3.svg",
-    alt: "Risk Management",
-    title: "Risk Management",
-    description: "Advanced risk assessment and monitoring tools at your fingertips."
+    src: "/harmonized_modal_userOboarding_3.png",
+    alt: "Built for Trust",
+    title: "Built for Trust",
+    subtitle: "Progress through KYB, Security, and Open Banking surveys — all in one secure flow."
   },
   {
-    src: "/welcome-4.svg",
-    alt: "Document Management",
-    title: "Document Management",
-    description: "Secure document storage and sharing with role-based access control."
+    src: "/harmonized_modal_userOboarding_4.png",
+    alt: "Your Data, Protected", 
+    title: "Your Data, Protected",
+    subtitle: "Best-in-class encryption and secure controls at every step."
+  },
+  {
+    src: "/harmonized_modal_userOboarding_5.png",
+    alt: "Start Your Process",
+    title: "Start Your Process",
+    subtitle: "Jump into your Task Center and start shaping your network."
   }
 ];
 
@@ -42,13 +48,15 @@ export function WelcomeModal() {
   const { toast } = useToast();
   const { socket, connected } = useWebSocket();
 
+  const isLastSlide = currentSlide === carouselContent.length - 1;
+
   // Only set modal visibility once when component mounts
   useEffect(() => {
     if (!user) return;
     setShowModal(!user.onboarding_user_completed);
-  }, [user]); // Added user dependency to properly track changes
+  }, [user]);
 
-  const { data: onboardingTask } = useQuery({
+  const { data: onboardingTask } = useQuery<{id: number}>({
     queryKey: ["/api/tasks", { type: "user_invitation", email: user?.email }],
     enabled: !!user?.email,
   });
@@ -77,7 +85,7 @@ export function WelcomeModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      if (connected && socket && onboardingTask) {
+      if (connected && socket && onboardingTask?.id) {
         try {
           socket.send(JSON.stringify({
             type: 'task_update',
@@ -113,7 +121,7 @@ export function WelcomeModal() {
   });
 
   const handleNext = () => {
-    if (currentSlide < carouselImages.length - 1) {
+    if (currentSlide < carouselContent.length - 1) {
       setCurrentSlide(prev => prev + 1);
     } else {
       completeOnboardingMutation.mutate();
@@ -141,49 +149,59 @@ export function WelcomeModal() {
 
   return (
     <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-xl">
-        <DialogTitle>{carouselImages[currentSlide].title}</DialogTitle>
-        <DialogDescription>
-          {carouselImages[currentSlide].description}
-        </DialogDescription>
-        <div className="relative px-4 pb-8 pt-6">
-          <div className="relative aspect-video overflow-hidden rounded-lg">
-            <img
-              src={carouselImages[currentSlide].src}
-              alt={carouselImages[currentSlide].alt}
-              className="absolute inset-0 h-full w-full object-cover"
-            />
+      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden">
+        <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
+        <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
+        <div className="flex flex-col w-full">
+          {/* Content header with title and subtitle */}
+          <div className="p-8 text-center">
+            <h2 className="text-2xl font-bold mb-2">{carouselContent[currentSlide].title}</h2>
+            <p className="text-lg text-muted-foreground">{carouselContent[currentSlide].subtitle}</p>
           </div>
-
-          <div className="mt-6 flex items-center justify-between gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handlePrevious}
-              disabled={currentSlide === 0}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <div className="flex gap-1">
-              {carouselImages.map((_, index) => (
+          
+          {/* Image content */}
+          <div className="px-12 py-4 flex justify-center items-center">
+            <div className="w-full max-w-md aspect-square relative rounded-lg bg-primary/5 p-8 flex items-center justify-center">
+              <img
+                src={carouselContent[currentSlide].src}
+                alt={carouselContent[currentSlide].alt}
+                className="max-h-full max-w-full object-contain h-48"
+              />
+            </div>
+          </div>
+          
+          {/* Step indicators */}
+          <div className="flex justify-center my-6 px-8">
+            <div className="flex gap-3">
+              {carouselContent.map((_, index) => (
                 <div
                   key={index}
-                  className={`h-1.5 w-1.5 rounded-full transition-all ${
+                  className={`h-2 rounded-full transition-all ${
                     index === currentSlide
-                      ? "bg-primary w-3"
-                      : "bg-primary/30"
+                      ? "bg-primary w-10"
+                      : "bg-primary/20 w-6"
                   }`}
                 />
               ))}
             </div>
-
+          </div>
+          
+          {/* Navigation buttons */}
+          <div className="flex justify-between p-6 bg-muted/20 border-t">
             <Button
               variant="outline"
-              size="icon"
-              onClick={handleNext}
+              onClick={handlePrevious}
+              disabled={currentSlide === 0}
+              className="px-6"
             >
-              <ChevronRight className="h-4 w-4" />
+              Back
+            </Button>
+
+            <Button
+              onClick={handleNext}
+              className="px-6 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {isLastSlide ? "Start" : "Next"}
             </Button>
           </div>
         </div>
