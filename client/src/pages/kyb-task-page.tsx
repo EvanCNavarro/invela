@@ -110,28 +110,23 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 return response.json();
               })
               .then(() => {
-                // First navigate to task center (using correct route)
-                navigate('/task-center');
+                // Show confetti effect immediately
+                confetti({
+                  particleCount: 150,
+                  spread: 80,
+                  origin: { y: 0.6 },
+                  colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                });
                 
-                // Then show success elements after a brief delay to ensure navigation completes
-                setTimeout(() => {
-                  // Show confetti effect
-                  confetti({
-                    particleCount: 150,
-                    spread: 80,
-                    origin: { y: 0.6 },
-                    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                  });
-                  
-                  // Show toast notification
-                  toast({
-                    title: "KYB Form Submitted",
-                    description: "Your KYB form has been saved and the task has been updated.",
-                  });
-                  
-                  // Show success modal
-                  setShowSuccessModal(true);
-                }, 500); // Increased timeout to ensure navigation completes fully
+                // Show toast notification
+                toast({
+                  title: "KYB Form Submitted",
+                  description: "Your KYB form has been saved and the task has been updated.",
+                });
+                
+                // Force a complete page change using window.location with success parameters
+                const companyNameEncoded = encodeURIComponent(task.metadata?.company_name || companyName);
+                window.location.href = `/task-center?success=kyb&company=${companyNameEncoded}`;
               })
               .catch(error => {
                 console.error('Failed to save KYB form:', error);
@@ -142,13 +137,6 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 });
               });
             }}
-            companyName={task.metadata?.company_name || companyName}
-          />
-          
-          {/* Success Modal */}
-          <KYBSuccessModal
-            open={showSuccessModal}
-            onOpenChange={setShowSuccessModal}
             companyName={task.metadata?.company_name || companyName}
           />
         </div>
