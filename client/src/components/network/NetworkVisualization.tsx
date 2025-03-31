@@ -28,7 +28,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
   // Fetch network data
   const { data, isLoading, error } = useQuery<NetworkVisualizationData>({
-    queryKey: ['/api/relationships/network'],
+    queryKey: ['/api/network/visualization'],
     enabled: true
   });
 
@@ -180,7 +180,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
   return (
     <Card className={className}>
-      <CardHeader className="flex items-center justify-end pb-2 space-y-0 border-b">
+      <CardHeader className="flex items-center justify-between pb-2 space-y-0 border-b">
+        <div></div>
         <NetworkFiltersComponent 
           filters={filters} 
           onFiltersChange={setFilters} 
