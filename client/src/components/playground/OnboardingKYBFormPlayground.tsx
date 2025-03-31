@@ -1150,7 +1150,7 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <div className="flex items-center justify-center mt-0 mb-2">
+          <div className="flex items-center justify-center mt-0 mb-4">
             <div className="w-full h-[2px] border-0 relative">
               {/* Custom dashed line with very wide spacing */}
               <div className="absolute inset-0 flex items-center justify-evenly">
@@ -1163,7 +1163,7 @@ export const OnboardingKYBFormPlayground = ({
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="space-y-4">
                 {currentStepData.map(renderField)}
               </div>
