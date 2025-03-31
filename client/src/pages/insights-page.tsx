@@ -42,12 +42,10 @@ export default function InsightsPage() {
     queryKey: ["/api/relationships"],
   });
 
-  // Company type distribution data based on actual database counts
-  const companyTypeData = [
-    { type: "Invela", count: 1 },
-    { type: "Bank", count: 1 },
-    { type: "FinTech", count: 44 }
-  ];
+  // Company type distribution from API
+  const { data: companyTypeData = [] } = useQuery<{type: string, count: number}[]>({
+    queryKey: ['/api/company-type-distribution'],
+  });
 
   const exportData = () => {
     // Implementation for PDF export would go here
