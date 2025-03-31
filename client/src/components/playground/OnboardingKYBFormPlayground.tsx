@@ -1056,9 +1056,13 @@ export const OnboardingKYBFormPlayground = ({
                   // Step should be clickable if:
                   // 1. It has any progress at all
                   // 2. It's the current step or any previous step
-                  // 3. It's the next available step
+                  // 3. It's the next available step AND the current step is valid
                   // 4. The form is 100% complete
-                  const isClickable = hasProgress || index <= currentStep + 1 || progress === 100;
+                  const isNextStep = index === currentStep + 1;
+                  const isClickable = hasProgress || 
+                                     index <= currentStep || 
+                                     (isNextStep && isCurrentStepValid) || 
+                                     progress === 100;
                   
                   // Color scheme
                   const squircleColor = isCompleted 
