@@ -246,6 +246,9 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
       value: String(value)
     }));
 
+  // Get company name from the form data
+  const companyName = formData.legalEntityName || "your company";
+
   return (
     <Card className="p-6">
       {/* Header Section - Match the main form header */}
@@ -265,22 +268,45 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         </div>
       </div>
       
+      {/* Custom dashed separator line with even spacing */}
+      <div className="flex items-center justify-center my-4">
+        <div className="w-full h-[2px] border-0 relative">
+          <div className="absolute inset-0 flex items-center justify-evenly">
+            {[...Array(15)].map((_, i) => (
+              <div key={i} className="w-8 h-[2px]" style={{ backgroundColor: "#E5E7EB" }}></div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
       <div className="space-y-6">
         {formEntries.map((entry, index) => (
           <div key={entry.fieldName} className="mb-6">
             <div className="flex flex-col">
               <p className="text-gray-500 mb-1">
-                Q: {entry.question}
+                <span className="font-medium text-gray-600 mr-1">{index + 1}.</span> Q: {entry.question}
               </p>
-              <p className="font-semibold text-black">
-                Answer: {entry.value}
+              <p className="font-semibold text-black flex items-center">
+                <Check className="h-4 w-4 mr-1 text-green-600" /> Answer: {entry.value}
               </p>
             </div>
           </div>
         ))}
       </div>
       
-      <div className="flex justify-between mt-8 pt-4 border-t">
+      {/* Terms and conditions acceptance section */}
+      <div className="mt-8 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">Submission Terms</h3>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          By submitting this form, I acknowledge that I am an authorized representative of {companyName} and certify 
+          that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
+          will use this information to assess accreditation status and calculate risk scores, which may impact business 
+          relationships. I grant Invela permission to securely store, process, and verify this data in accordance with 
+          applicable regulations. I accept full responsibility for any inaccuracies or omissions in the submitted data.
+        </p>
+      </div>
+      
+      <div className="flex justify-between pt-4 border-t">
         <Button
           variant="outline"
           onClick={onBack}
