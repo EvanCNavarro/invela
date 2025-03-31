@@ -6,6 +6,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { cn } from "@/lib/utils";
 
 // New carousel content with the updated 5 steps
 const carouselContent = [
@@ -25,7 +26,7 @@ const carouselContent = [
     src: "/assets/harmonized_modal_userOboarding_3.png",
     alt: "Built for Trust",
     title: "Built for Trust",
-    subtitle: "Progress through KYB, Security, and Open Banking surveys — all in one secure flow."
+    subtitle: "Progress through surveys, all in one secure flow."
   },
   {
     src: "/assets/harmonized_modal_userOboarding_4.png",
@@ -148,30 +149,33 @@ export function WelcomeModal() {
   }
 
   return (
-    <Dialog open={showModal} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-5xl p-0 overflow-hidden rounded-xl">
+    <Dialog 
+      open={showModal} 
+      onOpenChange={() => {}} // Disabled clicking outside to close
+      modal={true} // Force modal behavior
+    >
+      <DialogContent 
+        className="sm:max-w-md p-0 overflow-hidden rounded-xl backdrop-blur-xl" 
+        hideClose={true} // Remove close button
+      >
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         <div className="flex flex-col w-full">
           {/* Content header with title and subtitle */}
-          <div className="p-8 text-center">
-            <h2 className="text-3xl font-bold mb-3">{carouselContent[currentSlide].title}</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
+          <div className="p-6 text-center">
+            <h2 className="text-2xl font-bold mb-2">{carouselContent[currentSlide].title}</h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
           </div>
           
           {/* Image content - wider layout */}
-          <div className="px-10 py-6 flex justify-center items-center">
-            <div className="w-full max-w-3xl h-72 relative rounded-xl bg-primary/5 p-6 flex items-center justify-center shadow-sm">
-              {/* Debug information for image troubleshooting */}
-              <div className="absolute top-2 right-2 text-xs text-slate-500 z-10">
-                {/* Log image path but don't display anything */}
-                {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
-              </div>
+          <div className="px-8 py-4 flex justify-center items-center">
+            <div className="relative flex items-center justify-center">
+              {/* Log image path but don't display anything */}
+              {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
               <img
                 src={carouselContent[currentSlide].src}
                 alt={carouselContent[currentSlide].alt}
-                className="max-h-full max-w-full object-contain"
-                style={{ height: 'auto', maxHeight: '250px', width: 'auto' }}
+                className="rounded-xl max-h-[320px] max-w-full object-contain shadow-md"
                 onError={(e) => {
                   console.error('Failed to load image:', carouselContent[currentSlide].src, e);
                 }}
@@ -182,36 +186,37 @@ export function WelcomeModal() {
             </div>
           </div>
           
-          {/* Step indicators */}
-          <div className="flex justify-center mt-4 mb-6 px-8">
-            <div className="flex gap-3">
-              {carouselContent.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2.5 rounded-full transition-all ${
-                    index === currentSlide
-                      ? "bg-primary w-12"
-                      : "bg-primary/20 w-7"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-          
-          {/* Navigation buttons */}
-          <div className="flex justify-between p-6 bg-muted/10 border-t">
+          {/* Navigation buttons with step indicators in between */}
+          <div className="flex items-center justify-between p-4 border-t mt-4">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentSlide === 0}
-              className="px-8 py-6 h-auto text-lg"
+              className="px-6 py-2 h-auto text-base"
             >
               Back
             </Button>
 
+            {/* Step indicators in the middle */}
+            <div className="flex gap-2 mx-2">
+              {carouselContent.map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 rounded-full transition-all ${
+                    index === currentSlide
+                      ? "bg-primary w-8"
+                      : "bg-primary/20 w-4"
+                  }`}
+                />
+              ))}
+            </div>
+
             <Button
               onClick={handleNext}
-              className="px-8 py-6 h-auto text-lg bg-primary text-primary-foreground hover:bg-primary/90"
+              className={cn(
+                "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90",
+                isLastSlide && "animate-pulse"
+              )}
             >
               {isLastSlide ? "Start" : "Next"}
             </Button>
