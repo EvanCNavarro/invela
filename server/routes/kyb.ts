@@ -686,6 +686,13 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
   try {
     const { fileId } = req.params;
     const format = (req.query.format as string)?.toLowerCase() || 'csv';
+    
+    // Debug logging
+    logger.debug('Download request received', {
+      fileId,
+      format,
+      timestamp: new Date().toISOString()
+    });
 
     // Get file from database
     const [file] = await db.select()
@@ -693,55 +700,102 @@ router.get('/api/kyb/download/:fileId', async (req, res) => {
       .where(eq(files.id, parseInt(fileId)));
 
     if (!file) {
+      logger.error('File not found in database', { fileId });
       return res.status(404).json({ error: 'File not found' });
     }
+    
+    logger.debug('File found', {
+      fileId,
+      fileType: file.type,
+      fileName: file.name,
+      fileSize: file.size
+    });
+
+    // Process the file content directly from the path field (which contains the actual content)
+    const fileContent = file.path;
 
     // Set response headers based on format
     switch (format) {
       case 'csv':
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.csv`);
-        // If file is already CSV, send it directly
+        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.csv'}`);
+        
+        // If file is already CSV, send its content directly
         if (file.type === 'text/csv') {
-          return res.send(file.path);
+          return res.send(fileContent);
         }
+        
         // If file is JSON, convert it to CSV
-        const jsonData = JSON.parse(file.path);
-        // Convert JSON to CSV format
-        const csvRows = [['Group', 'Question', 'Answer', 'Type']];
-        Object.entries(jsonData.responses).forEach(([group, fields]: [string, any]) => {
-          Object.entries(fields).forEach(([key, data]: [string, any]) => {
-            csvRows.push([
-              group,
-              data.question,
-              data.answer || '',
-              data.type
-            ]);
+        try {
+          const jsonData = JSON.parse(fileContent);
+          // Convert JSON to CSV format
+          const csvRows = [['Group', 'Question', 'Answer', 'Type']];
+          Object.entries(jsonData.responses || {}).forEach(([group, fields]: [string, any]) => {
+            Object.entries(fields).forEach(([key, data]: [string, any]) => {
+              csvRows.push([
+                group,
+                data.question,
+                data.answer || '',
+                data.type || 'text'
+              ]);
+            });
           });
-        });
-        return res.send(csvRows.map(row => row.join(',')).join('\n'));
+          return res.send(csvRows.map(row => row.join(',')).join('\n'));
+        } catch (jsonError) {
+          logger.error('JSON parsing error', { error: jsonError });
+          return res.send(fileContent); // Fallback to sending the raw content
+        }
 
       case 'json':
         res.setHeader('Content-Type', 'application/json');
-        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.json`);
-        return res.send(file.type === 'application/json' ? file.path : JSON.stringify(JSON.parse(file.path), null, 2));
+        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.json'}`);
+        
+        // If already JSON, send directly; otherwise format it
+        try {
+          const parsedContent = file.type === 'application/json' 
+            ? fileContent 
+            : JSON.stringify(JSON.parse(fileContent), null, 2);
+          return res.send(parsedContent);
+        } catch (jsonError) {
+          logger.error('JSON processing error', { error: jsonError });
+          return res.send(fileContent); // Fallback to sending the raw content
+        }
 
       case 'txt':
         res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', `attachment; filename=kyb_form.txt`);
-        const data = file.type === 'application/json' ? JSON.parse(file.path) : { responses: {} };
-        const textContent = Object.entries(data.responses).map(([group, fields]: [string, any]) => {
-          return `\n${group}:\n${'='.repeat(group.length)}\n` +
-            Object.entries(fields).map(([key, data]: [string, any]) =>
-              `${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`
-            ).join('\n');
-        }).join('\n');
-        return res.send(textContent);
+        res.setHeader('Content-Disposition', `attachment; filename=${file.name || 'kyb_form.txt'}`);
+        
+        try {
+          // Handle different data formats
+          let data;
+          try {
+            data = file.type === 'application/json' ? JSON.parse(fileContent) : { responses: {} };
+          } catch (parseError) {
+            logger.warn('Text conversion parsing error, using raw content', { error: parseError });
+            return res.send(fileContent);
+          }
+          
+          const textContent = Object.entries(data.responses || {}).map(([group, fields]: [string, any]) => {
+            return `\n${group}:\n${'='.repeat(group.length)}\n` +
+              Object.entries(fields).map(([key, data]: [string, any]) =>
+                `${data.question}\nAnswer: ${data.answer || 'Not provided'}\n`
+              ).join('\n');
+          }).join('\n');
+          
+          return res.send(textContent || fileContent);
+        } catch (textError) {
+          logger.error('Text conversion error', { error: textError });
+          return res.send(fileContent); // Fallback to sending the raw content
+        }
 
       default:
         return res.status(400).json({ error: 'Invalid format specified' });
     }
   } catch (error) {
+    logger.error('Error processing download', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
     console.error('[KYB API Debug] Error processing download:', error);
     res.status(500).json({ error: 'Failed to process download' });
   }
