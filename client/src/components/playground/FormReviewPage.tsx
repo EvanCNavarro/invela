@@ -1,4 +1,4 @@
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,18 +23,24 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
   return (
     <Card className="p-6 max-w-3xl mx-auto mb-8">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Review Submission</h2>
-        <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">Ready for Submission</Badge>
+        <h2 className="text-2xl font-bold">KYB Survey</h2>
+        <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
       </div>
       
-      <div className="space-y-6">
+      <div className="space-y-3">
         {formEntries.map((entry, index) => (
-          <div key={entry.fieldName} className="border-b pb-4">
+          <div key={entry.fieldName} className="border-b pb-3 mb-3">
             <div className="flex gap-2">
               <span className="font-bold text-gray-500">{index + 1}.</span>
               <div className="w-full">
-                <p className="font-medium">{entry.question}</p>
-                <p className="mt-1 text-gray-700">{entry.value}</p>
+                <p className="text-gray-600 text-sm">Q: {entry.question}</p>
+                <div className="flex items-start mt-1">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div>
+                    <span className="font-normal text-gray-500">Answer: </span>
+                    <span className="font-bold">{entry.value}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
