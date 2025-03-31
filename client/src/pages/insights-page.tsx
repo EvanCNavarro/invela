@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
 } from "recharts";
 import {
   Select,
@@ -43,7 +44,7 @@ export default function InsightsPage() {
   });
 
   // Company type distribution from API
-  const { data: companyTypeData = [] } = useQuery<{type: string, count: number}[]>({
+  const { data: companyTypeData = [] } = useQuery<{type: string, count: number, color: string}[]>({
     queryKey: ['/api/company-type-distribution'],
   });
 
@@ -101,10 +102,11 @@ export default function InsightsPage() {
                 />
                 <YAxis />
                 <Tooltip />
-                <Bar
-                  dataKey="count"
-                  fill="hsl(var(--primary))"
-                />
+                <Bar dataKey="count">
+                  {companyTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color || 'hsl(var(--primary))'} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
