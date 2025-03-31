@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
-import { ArrowLeft, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -221,9 +221,9 @@ const FORM_STEPS: FormField[][] = [
 
 // Define step titles for better organization and user experience
 const STEP_TITLES = [
-  "Company Profile", 
+  "Company\nProfile", 
   "Governance & Leadership", 
-  "Financial Profile", 
+  "Financial\nProfile", 
   "Operations & Compliance"
 ];
 
@@ -1005,7 +1005,7 @@ export const OnboardingKYBFormPlayground = ({
         <Card className="p-6">
           {/* Header Section */}
           <div className="mb-8">
-            <div className="flex items-center mb-6">
+            <div className="flex items-center mb-4">
               <div className="flex-1">
                 <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
                   isSubmitted
@@ -1017,21 +1017,18 @@ export const OnboardingKYBFormPlayground = ({
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">KYB Survey</h2>
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Questionnaire | Task
-                </p>
               </div>
               {!isSubmitted && (
-                <div className="flex items-center gap-1 text-sm">
-                  <span className="font-medium">{progress}</span>
-                  <span className="text-[#6B7280]">% Complete</span>
+                <div className="flex items-center gap-1 text-base">
+                  <span className="font-medium text-lg">{progress}</span>
+                  <span className="text-[#6B7280] font-medium">% Complete</span>
                 </div>
               )}
             </div>
 
             {/* Progress bar */}
             {!isSubmitted && (
-              <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
+              <div className="h-[4px] bg-[#E5E7EB] rounded-full overflow-hidden mb-4">
                 <div
                   className="h-full transition-all duration-300 ease-in-out"
                   style={{ width: `${progress}%`, backgroundColor: '#4965EC' }}
@@ -1127,12 +1124,12 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <hr className="border-t border-gray-200 my-6" />
+          <hr className="border-t border-dashed border-gray-300 mt-2 mb-6" />
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-3">
-              <div className="space-y-3">
+            <div className="space-y-4">
+              <div className="space-y-4">
                 {currentStepData.map(renderField)}
               </div>
             </div>
@@ -1142,9 +1139,10 @@ export const OnboardingKYBFormPlayground = ({
           <div className="flex justify-between mt-8 pt-4 border-t">
             {!isSubmitted && (
               <Button
-                variant="ghost"
+                variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0}
+                className="rounded-full px-6 transition-all hover:bg-gray-100"
               >
                 {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
                 Back
@@ -1154,7 +1152,7 @@ export const OnboardingKYBFormPlayground = ({
               <div className="ml-auto">
                 <Button
                   disabled
-                  className="bg-green-600 hover:bg-green-600 text-white"
+                  className="bg-green-600 hover:bg-green-600 text-white rounded-full px-6"
                 >
                   Submitted
                 </Button>
@@ -1163,9 +1161,10 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`${isLastStep ? 'relative after:absolute after:inset-0after:rounded-md after:border-blue-500 after:animate[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+                className={`rounded-full px-6 hover:bg-blue-700 transition-all ${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-full after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
               >
                 {isLastStep ? 'Submit' : 'Next'}
+                {!isLastStep && <ArrowRight className="h-4 w-4 ml-2" />}
               </Button>
             )}
           </div>
