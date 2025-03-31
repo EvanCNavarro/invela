@@ -7,6 +7,7 @@ import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { TestImageModal } from "@/components/modals/TestImageModal";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -210,6 +211,8 @@ export default function App() {
         <ToastProvider>
           <Router />
           <Toaster />
+          {/* Add test image modal for debugging image loading */}
+          <TestImageModal />
         </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
