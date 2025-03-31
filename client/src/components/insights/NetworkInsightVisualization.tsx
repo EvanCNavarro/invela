@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useQuery } from '@tanstack/react-query';
 import { ConnectionDetails } from '@/components/network/ConnectionDetails';
@@ -8,7 +8,7 @@ import {
   centerNodeColor, 
   riskBucketColors 
 } from '@/components/network/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle } from 'lucide-react';
 
 interface NetworkInsightVisualizationProps {
   className?: string;
@@ -18,6 +18,12 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
   const [selectedNodePosition, setSelectedNodePosition] = useState<{x: number, y: number} | null>(null);
+  
+  // For accreditation stats
+  const [accreditationStats, setAccreditationStats] = useState<{
+    approved: number;
+    total: number;
+  }>({ approved: 0, total: 0 });
 
   // Fetch network data
   const { data, isLoading, error } = useQuery<NetworkVisualizationData>({
@@ -25,6 +31,17 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
     enabled: true
   });
 
+  // Calculate accreditation stats whenever data changes
+  useEffect(() => {
+    if (data && data.nodes) {
+      const approvedCount = data.nodes.filter(node => node.accreditationStatus === 'APPROVED').length;
+      setAccreditationStats({
+        approved: approvedCount,
+        total: data.nodes.length
+      });
+    }
+  }, [data]);
+  
   // D3 visualization - simplified from main component
   useEffect(() => {
     if (!svgRef.current || !data) return;
@@ -265,11 +282,11 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
   return (
     <div className={`relative ${className}`}>
       {isLoading ? (
-        <div className="flex items-center justify-center h-[500px]">
+        <div className="flex items-center justify-center h-[550px]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="flex flex-col items-center justify-center h-[500px] space-y-2">
+        <div className="flex flex-col items-center justify-center h-[550px] space-y-2">
           <div className="text-destructive font-medium">Failed to load network data</div>
           <div className="text-xs text-muted-foreground max-w-md">
             {error instanceof Error ? error.message : 'Check console for details'}
@@ -277,8 +294,25 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
         </div>
       ) : (
         <>
+          {/* Accreditation status summary at the top */}
+          <div className="flex items-center justify-between mb-3 px-2">
+            <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-1.5 rounded-md">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span className="text-sm font-medium">
+                {accreditationStats.approved} of {accreditationStats.total} companies accredited
+                ({Math.round((accreditationStats.approved / accreditationStats.total) * 100) || 0}%)
+              </span>
+            </div>
+          </div>
+          
+          {/* Network visualization with extra padding */}
           <div className="relative">
-            <svg ref={svgRef} width="100%" height="500" className="bg-muted/20 rounded-lg"></svg>
+            <svg 
+              ref={svgRef} 
+              width="100%" 
+              height="520" 
+              className="bg-muted/20 rounded-lg px-4 py-4"
+            ></svg>
             {selectedNode && data && (
               <ConnectionDetails 
                 node={selectedNode} 
@@ -322,8 +356,10 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
               />
             )}
           </div>
-          <div className="flex justify-center items-center p-2 border-t mt-4">
-            <div className="flex items-center space-x-8">
+          
+          {/* Risk level legend at the bottom */}
+          <div className="flex justify-center items-center p-2 border-t mt-3">
+            <div className="flex items-center gap-x-6">
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
                 <span className="text-xs">Low</span>
@@ -339,6 +375,12 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
               <div className="flex items-center space-x-2">
                 <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
                 <span className="text-xs">Critical</span>
+              </div>
+              <div className="flex items-center pl-4 border-l border-gray-200">
+                <span className="flex items-center space-x-1.5">
+                  <span className="w-3 h-3 rounded-full bg-muted border-2 border-[#22c55e]"></span>
+                  <span className="text-xs">Accredited</span>
+                </span>
               </div>
             </div>
           </div>
