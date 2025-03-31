@@ -27,7 +27,6 @@ import { NetworkInsightVisualization } from "@/components/insights/NetworkInsigh
 
 const visualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
-  { value: "risk_trends", label: "Risk Score Trends" },
   { value: "relationship_distribution", label: "Relationship Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
 ];
@@ -97,31 +96,9 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget title="Data Visualization" className="h-[600px]">
+        <Widget className="h-[600px]">
           {selectedVisualization === "network_visualization" && (
             <NetworkInsightVisualization />
-          )}
-          
-          {selectedVisualization === "risk_trends" && (
-            <ResponsiveContainer width="100%" height={500}>
-              <LineChart data={riskTrendsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
           )}
 
           {selectedVisualization === "relationship_distribution" && (
