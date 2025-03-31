@@ -113,7 +113,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
       const nodeColor = riskBucketColors[node.riskBucket];
-      const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : '#6b7280';
+      // Use a darker border for better contrast, especially for high vs critical nodes
+      const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : '#000000';
 
       // Capture the node element for click handling
       const nodeElement = g.append('circle')
@@ -122,23 +123,23 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('r', 15)
         .attr('fill', nodeColor)
         .attr('stroke', borderColor)
-        .attr('stroke-width', 2)
+        .attr('stroke-width', 2.5)
         .attr('cursor', 'pointer')
         .attr('data-node-id', node.id)
         .on('mouseover', function() {
-          d3.select(this).attr('stroke-width', 3);
+          d3.select(this).attr('stroke-width', 3.5);
         })
         .on('mouseout', function() {
           const isSelected = selectedNode && selectedNode.id === node.id;
-          d3.select(this).attr('stroke-width', isSelected ? 3 : 2);
+          d3.select(this).attr('stroke-width', isSelected ? 3.5 : 2.5);
         })
         .on('click', (event) => {
           // Highlight the connection
           g.selectAll('line').attr('stroke', '#e5e7eb').attr('stroke-width', 1);
-          g.selectAll('circle').attr('stroke-width', 2);
+          g.selectAll('circle').attr('stroke-width', 2.5);
           
           d3.select(event.currentTarget)
-            .attr('stroke-width', 3);
+            .attr('stroke-width', 3.5);
           
           // Highlight the line connecting to this node
           g.selectAll('line')
@@ -158,7 +159,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     svg.on('click', () => {
       // Reset all lines and nodes
       g.selectAll('line').attr('stroke', '#e5e7eb').attr('stroke-width', 1);
-      g.selectAll('circle').attr('stroke-width', 2);
+      g.selectAll('circle').attr('stroke-width', 2.5);
       setSelectedNode(null);
     });
 
@@ -214,19 +215,19 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             <div className="flex justify-center items-center p-2 border-t">
               <div className="flex items-center space-x-8">
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-[#C7CCD6]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
                   <span className="text-xs">Low</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-[#A1A6B4]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
                   <span className="text-xs">Medium</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-[#655D8A]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
                   <span className="text-xs">High</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <span className="w-3 h-3 rounded-full bg-[#3B1E3E]"></span>
+                  <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
                   <span className="text-xs">Critical</span>
                 </div>
               </div>
