@@ -64,19 +64,19 @@ const formatSankeyData = (data: SankeyData) => {
   return { nodes, links };
 };
 
-// Custom node shape with count and styling matching the reference design
+// Custom node shape with count and styling exactly matching the reference design
 const CustomNode = ({ x, y, width, height, index, payload }: any) => {
   const { color, name, category } = payload;
   const nodeWidth = Math.max(width, 30); // Ensure minimal width for readability
   
-  // Enhanced styling based on category to match reference design
+  // Enhanced styling based on category to match reference design precisely
   const getNodeStyle = () => {
-    // Base styling for each category
+    // Base styling for each category - exactly like reference
     if (category === 'companyType') {
       return {
         fill: color,
-        stroke: "#000", // Solid black border
-        strokeWidth: 2,
+        stroke: "#000", // Black border for company types
+        strokeWidth: 1.5,
         rx: 0,
         ry: 0,
         strokeDasharray: "" // Solid line
@@ -84,19 +84,19 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
     } else if (category === 'accreditationStatus') {
       return {
         fill: color,
-        stroke: "#fff", // White dashed border
+        stroke: "#fff", // White dashed border for accreditation
         strokeWidth: 1, 
         rx: 0,
         ry: 0,
-        strokeDasharray: "3,3" // Small dashed pattern
+        strokeDasharray: "3,3" // Dashed pattern
       };
     } else { // Risk buckets
       return {
         fill: color,
-        stroke: "none", // No border
-        strokeWidth: 0,
-        rx: 4, // Slightly rounded corners
-        ry: 4,
+        stroke: "#fff", // White border for risk buckets
+        strokeWidth: 0.5,
+        rx: 0, // Square corners in the reference
+        ry: 0,
         strokeDasharray: ""
       };
     }
@@ -160,7 +160,7 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
   );
 };
 
-// Custom link shape with gradient coloring
+// Custom link shape with gradient coloring - improved to match reference design
 const CustomLink = (props: any) => {
   const { 
     sourceX, 
@@ -179,29 +179,30 @@ const CustomLink = (props: any) => {
   const targetColor = payload.targetColor || '#82C091';
   const gradientId = `linkGradient${index}`;
   
-  // Ensure paths are properly created with valid coordinates
-  // Create a smooth curved path between source and target that resembles the reference image
-  // Enhanced visibility with slightly thicker links
+  // Create a more pronounced and smoother curve like in the reference image
+  // Calculate better control points for the curved path
+  const midX = (sourceX + targetX) / 2;
+  
   return (
     <g>
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} stopOpacity={0.9} />
-          <stop offset="100%" stopColor={targetColor} stopOpacity={0.9} />
+          <stop offset="0%" stopColor={sourceColor} stopOpacity={0.95} />
+          <stop offset="45%" stopColor={sourceColor} stopOpacity={0.9} />
+          <stop offset="55%" stopColor={targetColor} stopOpacity={0.9} />
+          <stop offset="100%" stopColor={targetColor} stopOpacity={0.95} />
         </linearGradient>
       </defs>
       <path
         d={`
           M${sourceX},${sourceY}
-          C${sourceControlX},${sourceY} ${targetControlX},${targetY} ${targetX},${targetY}
+          C${midX - (midX - sourceX) * 0.5},${sourceY} ${midX + (targetX - midX) * 0.5},${targetY} ${targetX},${targetY}
           L${targetX},${targetY + linkWidth}
-          C${targetControlX},${targetY + linkWidth} ${sourceControlX},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
+          C${midX + (targetX - midX) * 0.5},${targetY + linkWidth} ${midX - (midX - sourceX) * 0.5},${sourceY + linkWidth} ${sourceX},${sourceY + linkWidth}
           Z
         `}
         fill={`url(#${gradientId})`}
-        stroke={`url(#${gradientId})`}
-        strokeOpacity={0.3}
-        strokeWidth={1}
+        stroke="none"
         opacity={1}
       />
     </g>
@@ -334,13 +335,13 @@ export function RiskFlowVisualization() {
             data={formattedData}
             node={<CustomNode />}
             link={<CustomLink />}
-            nodePadding={25}
-            nodeWidth={20}
-            margin={{ top: 20, right: 100, bottom: 20, left: 100 }}
-            iterations={128}
+            nodePadding={40}
+            nodeWidth={35}
+            margin={{ top: 20, right: 80, bottom: 20, left: 80 }}
+            iterations={256}
             direction="horizontal"
-            width={1000}
-            height={500}
+            width={950}
+            height={550}
           >
             <defs>
               {/* Gradients are created in the CustomLink component */}
