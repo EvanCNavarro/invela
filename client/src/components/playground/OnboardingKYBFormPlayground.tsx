@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
-import { ArrowLeft, ArrowRight, HelpCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle, Check } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -1198,12 +1198,13 @@ export const OnboardingKYBFormPlayground = ({
                 disabled={!isCurrentStepValid}
                 className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${
                   isLastStep && isCurrentStepValid 
-                    ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' 
+                    ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-pulse' 
                     : ''
                 }`}
               >
                 {isLastStep ? 'Final Review' : 'Next'}
                 {!isLastStep && <ArrowRight className="h-4 w-4 ml-1" />}
+                {isLastStep && <Check className="h-4 w-4 ml-1 text-white" />}
               </Button>
             )}
           </div>
