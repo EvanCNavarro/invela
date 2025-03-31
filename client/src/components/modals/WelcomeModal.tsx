@@ -155,13 +155,29 @@ export function WelcomeModal() {
       modal={true} // Force modal behavior
     >
       <DialogContent 
-        className="sm:max-w-2xl p-0 overflow-hidden rounded-xl backdrop-blur-xl"
+        className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none"
       >
-        {/* Custom CSS to hide close button without using a prop */}
+        {/* Custom CSS to completely remove close button */}
         <style dangerouslySetInnerHTML={{
           __html: `
             [role="dialog"] button[aria-label="Close"] {
               display: none !important;
+            }
+            
+            @keyframes pulse-border {
+              0% {
+                box-shadow: 0 0 0 0 rgba(73, 101, 236, 0.7);
+              }
+              70% {
+                box-shadow: 0 0 0 10px rgba(73, 101, 236, 0);
+              }
+              100% {
+                box-shadow: 0 0 0 0 rgba(73, 101, 236, 0);
+              }
+            }
+            
+            .pulse-border-animation {
+              animation: pulse-border 2s infinite;
             }
           `
         }}></style>
@@ -169,22 +185,22 @@ export function WelcomeModal() {
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         <div className="flex flex-col w-full">
           {/* Content header with title and subtitle */}
-          <div className="p-8 text-center">
-            <h2 className="text-3xl font-bold mb-3">{carouselContent[currentSlide].title}</h2>
+          <div className="p-10 text-center">
+            <h2 className="text-3xl font-bold mb-4">{carouselContent[currentSlide].title}</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
           </div>
           
-          {/* Image content - wider layout */}
-          <div className="px-10 py-6 flex justify-center items-center">
+          {/* Image content - wider layout with more spacing */}
+          <div className="px-12 py-8 flex justify-center items-center">
             <div className="relative flex items-center justify-center w-full">
               {/* Log image path but don't display anything */}
               {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
               <img
                 src={carouselContent[currentSlide].src}
                 alt={carouselContent[currentSlide].alt}
-                className="rounded-xl max-h-[350px] w-auto object-contain shadow-md mx-auto"
+                className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
                 style={{ 
-                  maxWidth: '90%',
+                  maxWidth: '92%',
                   height: 'auto'
                 }}
                 onError={(e) => {
@@ -197,26 +213,26 @@ export function WelcomeModal() {
             </div>
           </div>
           
-          {/* Navigation buttons with step indicators in between */}
-          <div className="flex items-center justify-between p-6 border-t mt-2">
+          {/* Navigation buttons with step indicators in between - more spacing */}
+          <div className="flex items-center justify-between p-8 border-t mt-4">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentSlide === 0}
-              className="px-6 py-2 h-auto text-base"
+              className="px-8 py-2 h-auto text-base"
             >
               Back
             </Button>
 
             {/* Step indicators in the middle */}
-            <div className="flex gap-2 mx-4">
+            <div className="flex gap-3 mx-6">
               {carouselContent.map((_, index) => (
                 <div
                   key={index}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-2.5 rounded-full transition-all ${
                     index === currentSlide
-                      ? "bg-primary w-8"
-                      : "bg-primary/20 w-4"
+                      ? "bg-primary w-10"
+                      : "bg-primary/20 w-5"
                   }`}
                 />
               ))}
@@ -225,8 +241,8 @@ export function WelcomeModal() {
             <Button
               onClick={handleNext}
               className={cn(
-                "px-6 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90",
-                isLastSlide && "animate-pulse"
+                "px-8 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                isLastSlide && "pulse-border-animation"
               )}
             >
               {isLastSlide ? "Start" : "Next"}
