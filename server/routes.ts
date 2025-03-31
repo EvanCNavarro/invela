@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
-import { taskStatusToProgress } from './types';
+import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
@@ -358,6 +358,139 @@ export function registerRoutes(app: Express): Express {
     } catch (error) {
       console.error("[Relationships] Error fetching relationships:", error);
       res.status(500).json({ message: "Error fetching relationships" });
+    }
+  });
+  
+  // Network Visualization endpoint
+  app.get("/api/network/visualization", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Network Visualization] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Network Visualization] Fetching network data for company:', req.user.company_id);
+
+      // 1. Get current company info for the center node
+      const [currentCompany] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        riskScore: companies.risk_score,
+        accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`
+      })
+      .from(companies)
+      .where(eq(companies.id, req.user.company_id));
+
+      if (!currentCompany) {
+        console.error('[Network Visualization] Company not found:', req.user.company_id);
+        return res.status(404).json({ 
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      // 2. Get all relationships where current company is either the source or target
+      const networkRelationships = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
+        relationshipType: relationships.relationship_type,
+        status: relationships.status,
+        metadata: relationships.metadata,
+        // Join with companies to get related company details
+        relatedCompany: {
+          id: companies.id,
+          name: companies.name,
+          category: sql<string>`COALESCE(${companies.category}, '')`,
+          accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
+          riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`
+        }
+      })
+      .from(relationships)
+      .innerJoin(
+        companies,
+        eq(
+          companies.id,
+          sql`CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
+            ELSE ${relationships.company_id}
+          END`
+        )
+      )
+      .where(
+        or(
+          eq(relationships.company_id, req.user.company_id),
+          eq(relationships.related_company_id, req.user.company_id)
+        )
+      );
+
+      console.log('[Network Visualization] Found network relationships:', {
+        count: networkRelationships.length
+      });
+
+      // 3. Determine risk bucket for each company
+      const getRiskBucket = (score: number): RiskBucket => {
+        if (score <= 25) return 'low';
+        if (score <= 50) return 'medium';
+        if (score <= 75) return 'high';
+        return 'critical';
+      };
+
+      // 4. Transform into the expected format
+      const nodes = networkRelationships.map(rel => {
+        // Get revenue tier from metadata or use default
+        const revenueTier = (rel.metadata?.revenueTier as string) || 'Unknown';
+        
+        // Create node for the visualization
+        return {
+          id: rel.relatedCompany.id,
+          name: rel.relatedCompany.name,
+          relationshipId: rel.id,
+          relationshipType: rel.relationshipType || 'partner',
+          relationshipStatus: rel.status || 'active',
+          riskScore: rel.relatedCompany.riskScore || 0,
+          riskBucket: getRiskBucket(rel.relatedCompany.riskScore || 0),
+          accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
+          revenueTier,
+          category: rel.relatedCompany.category || 'Other'
+        };
+      });
+
+      // 5. Create the response object
+      const responseData: NetworkVisualizationData = {
+        center: {
+          id: currentCompany.id,
+          name: currentCompany.name,
+          riskScore: currentCompany.riskScore || 0,
+          riskBucket: getRiskBucket(currentCompany.riskScore || 0),
+          accreditationStatus: currentCompany.accreditationStatus || 'PENDING',
+          revenueTier: 'Enterprise', // Default for the logged-in company
+          category: currentCompany.category || 'FinTech'
+        },
+        nodes
+      };
+
+      console.log('[Network Visualization] Returning visualization data:', {
+        centerNode: responseData.center.name,
+        nodeCount: responseData.nodes.length
+      });
+
+      res.json(responseData);
+    } catch (error) {
+      console.error("[Network Visualization] Error details:", {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      res.status(500).json({
+        message: "Error fetching network visualization data",
+        code: "INTERNAL_ERROR"
+      });
     }
   });
 
