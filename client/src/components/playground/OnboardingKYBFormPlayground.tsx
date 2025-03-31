@@ -1057,11 +1057,17 @@ export const OnboardingKYBFormPlayground = ({
                   // 1. It has any progress at all
                   // 2. It's the current step or any previous step
                   // 3. It's the next available step AND the current step is valid
-                  // 4. The form is 100% complete
+                  // 4. The prior step is completed (for skipping to future steps)
+                  // 5. The form is 100% complete
                   const isNextStep = index === currentStep + 1;
+                  const isPriorStepCompleted = index > 0 && 
+                    FORM_STEPS[index-1].map(field => field.name)
+                      .every(fieldName => formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
+                  
                   const isClickable = hasProgress || 
                                      index <= currentStep || 
                                      (isNextStep && isCurrentStepValid) || 
+                                     isPriorStepCompleted ||
                                      progress === 100;
                   
                   // Color scheme
@@ -1084,10 +1090,11 @@ export const OnboardingKYBFormPlayground = ({
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
-                        // Only allow clicking if:
-                        // 1. The step is explicitly clickable (completed, current, or next)
-                        // 2. It's not the next step when the current step is not valid
-                        if (isClickable && !(index === currentStep + 1 && !isCurrentStepValid)) {
+                        // Allow clicking to navigate to a step if:
+                        // 1. It's a completed step or the current step
+                        // 2. It's the next step and the current step is valid
+                        // 3. Its prior step is fully completed
+                        if (isClickable) {
                           setCurrentStep(index);
                         }
                       }}
