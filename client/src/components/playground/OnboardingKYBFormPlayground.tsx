@@ -247,21 +247,34 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
     }));
 
   return (
-    <Card className="p-6 max-w-3xl mx-auto mb-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Review Submission</h2>
-        <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">Ready for Submission</Badge>
+    <Card className="p-6">
+      {/* Header Section - Match the main form header */}
+      <div className="mb-4">
+        <div className="flex items-center mb-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">KYB Survey</h2>
+              <div className="inline-flex px-1.5 py-0.5 text-xs font-medium rounded bg-blue-100 text-blue-600">
+                IN REVIEW
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-base">
+            <span className="text-[#6B7280] font-medium">Ready for Submission</span>
+          </div>
+        </div>
       </div>
       
       <div className="space-y-6">
         {formEntries.map((entry, index) => (
-          <div key={entry.fieldName} className="border-b pb-4">
-            <div className="flex gap-2">
-              <span className="font-bold text-gray-500">{index + 1}.</span>
-              <div className="w-full">
-                <p className="font-medium">{entry.question}</p>
-                <p className="mt-1 text-gray-700">{entry.value}</p>
-              </div>
+          <div key={entry.fieldName} className="mb-6">
+            <div className="flex flex-col">
+              <p className="text-gray-500 mb-1">
+                Q: {entry.question}
+              </p>
+              <p className="font-semibold text-black">
+                Answer: {entry.value}
+              </p>
             </div>
           </div>
         ))}
