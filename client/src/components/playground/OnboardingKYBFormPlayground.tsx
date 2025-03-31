@@ -1198,7 +1198,7 @@ export const OnboardingKYBFormPlayground = ({
                 disabled={!isCurrentStepValid}
                 className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${
                   isLastStep && isCurrentStepValid 
-                    ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-pulse' 
+                    ? 'animate-pulse-ring' 
                     : ''
                 }`}
               >
