@@ -23,31 +23,33 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
+import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
 
 const visualizationTypes = [
+  { value: "network_visualization", label: "Network Visualization" },
   { value: "risk_trends", label: "Risk Score Trends" },
   { value: "relationship_distribution", label: "Relationship Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("risk_trends");
+  const [selectedVisualization, setSelectedVisualization] = useState("network_visualization");
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<any[]>({
     queryKey: ["/api/companies"],
   });
 
-  const { data: relationships = [] } = useQuery({
+  const { data: relationships = [] } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
   });
 
   // Sample data transformation for visualizations
-  const riskTrendsData = companies.map((company: any) => ({
+  const riskTrendsData = companies.map((company) => ({
     name: company.name,
     score: company.riskScore || 0,
   })).slice(0, 10);
 
-  const relationshipData = relationships.reduce((acc: any, rel: any) => {
+  const relationshipData = relationships.reduce((acc: Record<string, number>, rel) => {
     const type = rel.relationshipType;
     acc[type] = (acc[type] || 0) + 1;
     return acc;
@@ -96,6 +98,10 @@ export default function InsightsPage() {
         </div>
 
         <Widget title="Data Visualization" className="h-[600px]">
+          {selectedVisualization === "network_visualization" && (
+            <NetworkInsightVisualization />
+          )}
+          
           {selectedVisualization === "risk_trends" && (
             <ResponsiveContainer width="100%" height={500}>
               <LineChart data={riskTrendsData}>
