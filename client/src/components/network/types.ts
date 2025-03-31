@@ -34,10 +34,10 @@ export interface NetworkFilters {
 }
 
 export const riskBucketColors: Record<RiskBucket, string> = {
-  low: '#C7CCD6',
-  medium: '#A1A6B4',
-  high: '#655D8A',
-  critical: '#3B1E3E'
+  low: '#DFE3EA',
+  medium: '#B3B8C6',
+  high: '#7B74A8',
+  critical: '#4C2F54'
 };
 
 export const centerNodeColor = '#1E3A8A';
