@@ -2245,6 +2245,197 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Risk Flow Visualization (Sankey Diagram) endpoint
+  app.get("/api/risk-flow-visualization", requireAuth, async (req, res) => {
+    try {
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      const currentCompanyId = req.user.company_id;
+      
+      console.log('[RiskFlow] Fetching risk flow visualization data for company:', currentCompanyId);
+      
+      // Get all companies in the network (current company and related companies)
+      const companiesResult = await db.execute(
+        sql`
+          SELECT 
+            c.id, 
+            c.name, 
+            c.category, 
+            c.accreditation_status, 
+            c.risk_score
+          FROM companies c 
+          WHERE c.id IN (
+            SELECT r.related_company_id 
+            FROM relationships r 
+            WHERE r.company_id = ${currentCompanyId}
+            UNION
+            SELECT r.company_id 
+            FROM relationships r 
+            WHERE r.related_company_id = ${currentCompanyId}
+            UNION
+            SELECT ${currentCompanyId}
+          )
+          ORDER BY c.name
+        `
+      );
+      
+      // Determine risk bucket for each company
+      const getRiskBucket = (score: number): RiskBucket => {
+        if (score < 300) return 'low';
+        if (score < 700) return 'medium';
+        if (score < 1000) return 'high';
+        return 'critical';
+      };
+      
+      // Define colors for each category
+      const colorMap = {
+        companyType: {
+          'Invela': '#4965EC', // Invela Blue
+          'Bank': '#0C195B',   // Dark Blue
+          'FinTech': '#C2C4EA', // Light Purple
+          'Other': '#CCCCCC'  // Gray
+        },
+        accreditationStatus: {
+          'APPROVED': '#209C5A',     // Green
+          'PENDING': '#FFC300',      // Amber
+          'AWAITING_INVITATION': '#8A8D9F', // Gray
+          'REVOKED': '#E15554'       // Red
+        },
+        riskBucket: {
+          'low': '#82C091',     // Light Green
+          'medium': '#F9CB9C',  // Light Orange
+          'high': '#F28C77',    // Orange-Red
+          'critical': '#DB4325' // Deep Red
+        }
+      };
+      
+      // Process and categorize the companies
+      const companyTypes = new Map<string, number>();
+      const accreditationStatuses = new Map<string, number>();
+      const riskBuckets = new Map<string, number>();
+      
+      // Maps to track relationships between categories
+      const typeToStatus = new Map<string, Map<string, number>>();
+      const statusToRisk = new Map<string, Map<string, number>>();
+      
+      // Process each company
+      companiesResult.rows.forEach((company: any) => {
+        const type = company.category || 'Other';
+        const status = company.accreditation_status || 'AWAITING_INVITATION';
+        const riskScore = company.risk_score || 0;
+        const riskBucket = getRiskBucket(riskScore);
+        
+        // Count by company type
+        companyTypes.set(type, (companyTypes.get(type) || 0) + 1);
+        
+        // Count by accreditation status
+        accreditationStatuses.set(status, (accreditationStatuses.get(status) || 0) + 1);
+        
+        // Count by risk bucket
+        riskBuckets.set(riskBucket, (riskBuckets.get(riskBucket) || 0) + 1);
+        
+        // Track company type to accreditation status flow
+        if (!typeToStatus.has(type)) {
+          typeToStatus.set(type, new Map<string, number>());
+        }
+        const statusMap = typeToStatus.get(type)!;
+        statusMap.set(status, (statusMap.get(status) || 0) + 1);
+        
+        // Track accreditation status to risk bucket flow
+        if (!statusToRisk.has(status)) {
+          statusToRisk.set(status, new Map<string, number>());
+        }
+        const riskMap = statusToRisk.get(status)!;
+        riskMap.set(riskBucket, (riskMap.get(riskBucket) || 0) + 1);
+      });
+      
+      // Create Sankey nodes and links
+      const nodes: SankeyNode[] = [];
+      const links: SankeyLink[] = [];
+      
+      // Add company type nodes
+      Array.from(companyTypes.entries()).forEach(([type, count]) => {
+        nodes.push({
+          id: `type-${type}`,
+          name: type,
+          category: 'companyType',
+          count,
+          color: colorMap.companyType[type as keyof typeof colorMap.companyType] || colorMap.companyType.Other
+        });
+      });
+      
+      // Add accreditation status nodes
+      Array.from(accreditationStatuses.entries()).forEach(([status, count]) => {
+        nodes.push({
+          id: `status-${status}`,
+          name: status.replace(/_/g, ' ').replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()),
+          category: 'accreditationStatus',
+          count,
+          color: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION
+        });
+      });
+      
+      // Add risk bucket nodes
+      Array.from(riskBuckets.entries()).forEach(([bucket, count]) => {
+        nodes.push({
+          id: `risk-${bucket}`,
+          name: bucket.charAt(0).toUpperCase() + bucket.slice(1) + ' Risk',
+          category: 'riskBucket',
+          count,
+          color: colorMap.riskBucket[bucket as keyof typeof colorMap.riskBucket]
+        });
+      });
+      
+      // Add links from company types to accreditation statuses
+      typeToStatus.forEach((statusMap, type) => {
+        statusMap.forEach((value, status) => {
+          links.push({
+            source: `type-${type}`,
+            target: `status-${status}`,
+            value,
+            sourceColor: colorMap.companyType[type as keyof typeof colorMap.companyType] || colorMap.companyType.Other,
+            targetColor: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION
+          });
+        });
+      });
+      
+      // Add links from accreditation statuses to risk buckets
+      statusToRisk.forEach((riskMap, status) => {
+        riskMap.forEach((value, riskBucket) => {
+          links.push({
+            source: `status-${status}`,
+            target: `risk-${riskBucket}`,
+            value,
+            sourceColor: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION,
+            targetColor: colorMap.riskBucket[riskBucket as keyof typeof colorMap.riskBucket]
+          });
+        });
+      });
+      
+      // Prepare the final response
+      const sankeyData: SankeyData = {
+        nodes,
+        links
+      };
+      
+      console.log('[RiskFlow] Generated Sankey data with:', {
+        nodeCount: nodes.length,
+        linkCount: links.length
+      });
+      
+      res.json(sankeyData);
+    } catch (error) {
+      console.error("[RiskFlow] Error generating risk flow visualization:", error);
+      res.status(500).json({ 
+        message: "Error generating risk flow visualization",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   console.log('[Routes] Routes setup completed');  
   return app;
 }
