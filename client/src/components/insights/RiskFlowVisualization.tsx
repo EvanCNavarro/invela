@@ -64,29 +64,41 @@ const formatSankeyData = (data: SankeyData) => {
   return { nodes, links };
 };
 
-// Custom node shape with count and better styling
+// Custom node shape with count and styling matching the reference design
 const CustomNode = ({ x, y, width, height, index, payload }: any) => {
   const { color, name, category } = payload;
-  const nodeWidth = Math.max(width, 50); // Ensure minimal width for readability
+  const nodeWidth = Math.max(width, 30); // Ensure minimal width for readability
   
-  // Enhanced styling based on category
+  // Enhanced styling based on category to match reference design
   const getNodeStyle = () => {
-    const baseStyle = {
-      fill: color,
-      stroke: "#fff",
-      strokeWidth: 2,
-      rx: 4,
-      ry: 4,
-      strokeDasharray: ""
-    };
-    
-    // Apply specific styling for different node categories
+    // Base styling for each category
     if (category === 'companyType') {
-      return {...baseStyle, strokeWidth: 3, stroke: "#0A0A1B"};
+      return {
+        fill: color,
+        stroke: "#000", // Solid black border
+        strokeWidth: 2,
+        rx: 0,
+        ry: 0,
+        strokeDasharray: "" // Solid line
+      };
     } else if (category === 'accreditationStatus') {
-      return {...baseStyle, strokeDasharray: "5,2"};
-    } else {
-      return baseStyle;
+      return {
+        fill: color,
+        stroke: "#fff", // White dashed border
+        strokeWidth: 1, 
+        rx: 0,
+        ry: 0,
+        strokeDasharray: "3,3" // Small dashed pattern
+      };
+    } else { // Risk buckets
+      return {
+        fill: color,
+        stroke: "none", // No border
+        strokeWidth: 0,
+        rx: 4, // Slightly rounded corners
+        ry: 4,
+        strokeDasharray: ""
+      };
     }
   };
   
@@ -168,12 +180,14 @@ const CustomLink = (props: any) => {
   const gradientId = `linkGradient${index}`;
   
   // Ensure paths are properly created with valid coordinates
+  // Create a smooth curved path between source and target that resembles the reference image
+  // Enhanced visibility with slightly thicker links
   return (
     <g>
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={sourceColor} stopOpacity={0.8} />
-          <stop offset="100%" stopColor={targetColor} stopOpacity={0.8} />
+          <stop offset="0%" stopColor={sourceColor} stopOpacity={0.9} />
+          <stop offset="100%" stopColor={targetColor} stopOpacity={0.9} />
         </linearGradient>
       </defs>
       <path
@@ -186,8 +200,9 @@ const CustomLink = (props: any) => {
         `}
         fill={`url(#${gradientId})`}
         stroke={`url(#${gradientId})`}
-        strokeWidth="1"
-        opacity="0.9"
+        strokeOpacity={0.3}
+        strokeWidth={1}
+        opacity={1}
       />
     </g>
   );
@@ -319,12 +334,12 @@ export function RiskFlowVisualization() {
             data={formattedData}
             node={<CustomNode />}
             link={<CustomLink />}
-            nodePadding={50}
-            nodeWidth={80}
-            margin={{ top: 20, right: 250, bottom: 20, left: 250 }}
-            iterations={64}
+            nodePadding={25}
+            nodeWidth={20}
+            margin={{ top: 20, right: 100, bottom: 20, left: 100 }}
+            iterations={128}
             direction="horizontal"
-            width={800}
+            width={1000}
             height={500}
           >
             <defs>
