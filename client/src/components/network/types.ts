@@ -36,8 +36,8 @@ export interface NetworkFilters {
 export const riskBucketColors: Record<RiskBucket, string> = {
   low: '#DFE3EA',
   medium: '#B3B8C6',
-  high: '#1A365D', // Changed from plum to darker blue
-  critical: '#0F172A'  // Darker blue for critical
+  high: '#7B74A8', // Reverted to match legacy key colors in legend
+  critical: '#4C2F54' // Reverted to match legacy key colors in legend
 };
 
-export const centerNodeColor = '#1E3A8A';
+export const centerNodeColor = '#4965EC';
