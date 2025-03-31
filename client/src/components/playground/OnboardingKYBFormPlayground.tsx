@@ -907,8 +907,8 @@ export const OnboardingKYBFormPlayground = ({
     if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
       const isSelected = !isEmptyValue(value);
       return (
-        <div key={field.name} className="space-y-3 py-2">
-          <div className="flex flex-col gap-2 mb-2">
+        <div key={field.name} className="space-y-2 py-1">
+          <div className="flex flex-col gap-0.5 mb-1">
             <label className="text-sm font-semibold text-foreground">
               {field.label}
             </label>
@@ -951,8 +951,8 @@ export const OnboardingKYBFormPlayground = ({
 
     // Original input field rendering for text fields
     return (
-      <div key={field.name} className="space-y-3 py-2">
-        <div className="flex flex-col gap-2 mb-2">
+      <div key={field.name} className="space-y-2 py-1">
+        <div className="flex flex-col gap-0.5 mb-1">
           <label className="text-sm font-semibold text-foreground">
             {field.label}
           </label>
@@ -1007,15 +1007,15 @@ export const OnboardingKYBFormPlayground = ({
           <div className="mb-8">
             <div className="flex items-center mb-4">
               <div className="flex-1">
-                <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                  isSubmitted
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
-                </div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-semibold">KYB Survey</h2>
+                  <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
+                    isSubmitted
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+                  </div>
                 </div>
               </div>
               {!isSubmitted && (
@@ -1080,7 +1080,10 @@ export const OnboardingKYBFormPlayground = ({
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
-                        if (isClickable) {
+                        // Only allow clicking if:
+                        // 1. The step is explicitly clickable (completed, current, or next)
+                        // 2. It's not the next step when the current step is not valid
+                        if (isClickable && !(index === currentStep + 1 && !isCurrentStepValid)) {
                           setCurrentStep(index);
                         }
                       }}
@@ -1134,7 +1137,7 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <div className="flex items-center justify-center mt-0 mb-4">
+          <div className="flex items-center justify-center mt-0 mb-2">
             <div className="w-full h-[2px] border-0 relative">
               {/* Custom dashed line with very wide spacing */}
               <div className="absolute inset-0 flex items-center justify-evenly">
@@ -1147,8 +1150,8 @@ export const OnboardingKYBFormPlayground = ({
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-6">
-              <div className="space-y-8">
+            <div className="space-y-3">
+              <div className="space-y-4">
                 {currentStepData.map(renderField)}
               </div>
             </div>
@@ -1180,9 +1183,13 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+                className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${
+                  isLastStep && isCurrentStepValid 
+                    ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' 
+                    : ''
+                }`}
               >
-                {isLastStep ? 'Submit' : 'Next'}
+                {isLastStep ? 'Final Review' : 'Next'}
                 {!isLastStep && <ArrowRight className="h-4 w-4 ml-1" />}
               </Button>
             )}
