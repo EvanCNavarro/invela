@@ -82,8 +82,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('y1', 0)
         .attr('x2', x2)
         .attr('y2', y2)
-        .attr('stroke', '#e5e7eb')
-        .attr('stroke-width', 1);
+        .attr('stroke', '#94a3b8') // Darkened from #e5e7eb to #94a3b8
+        .attr('stroke-width', 1.5);
     });
 
     // Draw center node
@@ -113,8 +113,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
       const nodeColor = riskBucketColors[node.riskBucket];
-      // Use a darker border for better contrast, especially for high vs critical nodes
-      const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : '#000000';
+      // Add border only for accredited companies
+      const borderColor = node.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
 
       // Capture the node element for click handling
       const nodeElement = g.append('circle')
@@ -134,8 +134,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           d3.select(this).attr('stroke-width', isSelected ? 3.5 : 2.5);
         })
         .on('click', (event) => {
-          // Highlight the connection
-          g.selectAll('line').attr('stroke', '#e5e7eb').attr('stroke-width', 1);
+          // Reset all connections
+          g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
           g.selectAll('circle').attr('stroke-width', 2.5);
           
           d3.select(event.currentTarget)
@@ -158,7 +158,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     // Clear selection when clicking on background
     svg.on('click', () => {
       // Reset all lines and nodes
-      g.selectAll('line').attr('stroke', '#e5e7eb').attr('stroke-width', 1);
+      g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
       g.selectAll('circle').attr('stroke-width', 2.5);
       setSelectedNode(null);
     });
@@ -181,12 +181,12 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
   return (
     <Card className={className}>
-      <CardHeader className="flex items-center justify-between pb-2 space-y-0 border-b">
-        <div></div>
+      <CardHeader className="flex items-start pb-2 space-y-0 border-b">
         <NetworkFiltersComponent 
           filters={filters} 
           onFiltersChange={setFilters} 
         />
+        <div></div>
       </CardHeader>
       <CardContent className="p-0 relative overflow-hidden">
         {isLoading ? (
