@@ -2112,13 +2112,13 @@ export function registerRoutes(app: Express): Express {
           SELECT c.category, COUNT(*) as count 
           FROM companies c
           WHERE c.id IN (
-            SELECT r.target_company_id 
+            SELECT r.related_company_id 
             FROM relationships r 
-            WHERE r.source_company_id = ${currentCompanyId}
+            WHERE r.company_id = ${currentCompanyId}
             UNION
-            SELECT r.source_company_id 
+            SELECT r.company_id 
             FROM relationships r 
-            WHERE r.target_company_id = ${currentCompanyId}
+            WHERE r.related_company_id = ${currentCompanyId}
           )
           GROUP BY c.category
         `
@@ -2177,13 +2177,13 @@ export function registerRoutes(app: Express): Express {
           FROM companies c 
           WHERE c.id != ${currentCompanyId}
           AND c.id IN (
-            SELECT r.target_company_id 
+            SELECT r.related_company_id 
             FROM relationships r 
-            WHERE r.source_company_id = ${currentCompanyId}
+            WHERE r.company_id = ${currentCompanyId}
             UNION
-            SELECT r.source_company_id 
+            SELECT r.company_id 
             FROM relationships r 
-            WHERE r.target_company_id = ${currentCompanyId}
+            WHERE r.related_company_id = ${currentCompanyId}
           )
           ORDER BY c.name
         `
