@@ -907,20 +907,20 @@ export const OnboardingKYBFormPlayground = ({
     if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
       const isSelected = !isEmptyValue(value);
       return (
-        <div key={field.name} className="space-y-3">
-          <div className="flex flex-col gap-1.5 mb-2">
+        <div key={field.name} className="space-y-2">
+          <div className="flex flex-col gap-1 mb-1">
             <label className="text-sm font-semibold text-foreground">
               {field.label}
             </label>
             <div className="flex items-center gap-1">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {mainText}
               </span>
               {field.tooltip && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                      <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p className="text-sm">{field.tooltip}</p>
@@ -951,20 +951,20 @@ export const OnboardingKYBFormPlayground = ({
 
     // Original input field rendering for text fields
     return (
-      <div key={field.name} className="space-y-3">
-        <div className="flex flex-col gap-1.5 mb-2">
+      <div key={field.name} className="space-y-2">
+        <div className="flex flex-col gap-1 mb-1">
           <label className="text-sm font-semibold text-foreground">
             {field.label}
           </label>
           <div className="flex items-center gap-1">
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               {mainText}
             </span>
             {field.tooltip && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-sm">{field.tooltip}</p>
@@ -987,7 +987,7 @@ export const OnboardingKYBFormPlayground = ({
               handleSuggestionClick(field.name, suggestion);
             }
           }}
-          className="mb-4"
+          className="mb-0"
         />
       </div>
     );
@@ -1043,10 +1043,25 @@ export const OnboardingKYBFormPlayground = ({
             {!isSubmitted && (
               <div className="flex justify-between px-2 mb-4 mx-auto max-w-[700px]">
                 {FORM_STEPS.map((step, index) => {
-                  // Determine colors based on completion status
-                  const isCompleted = index < currentStep || (progress === 100 && index !== currentStep);
+                  // Check if ALL fields in this step are completed
+                  const stepFields = step.map(field => field.name);
+                  const stepCompleted = stepFields.every(fieldName => 
+                    formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
+                  
+                  // Check if ANY fields in this step have values
+                  const hasProgress = stepFields.some(fieldName => 
+                    formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
+                  
+                  // Determine colors and status
+                  const isCompleted = stepCompleted;
                   const isCurrent = index === currentStep;
-                  const isClickable = progress === 100 || index <= currentStep;
+                  
+                  // Step should be clickable if:
+                  // 1. It has any progress at all
+                  // 2. It's the current step or any previous step
+                  // 3. It's the next available step
+                  // 4. The form is 100% complete
+                  const isClickable = hasProgress || index <= currentStep + 1 || progress === 100;
                   
                   // Color scheme
                   const squircleColor = isCompleted 
@@ -1087,9 +1102,15 @@ export const OnboardingKYBFormPlayground = ({
                           color: isCurrent ? 'white' : squircleColor
                         }}
                       >
-                        <span className="text-sm font-bold leading-none">
-                          {String(index + 1).padStart(2, '0')}
-                        </span>
+                        {isCompleted ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        ) : (
+                          <span className="text-sm font-bold leading-none">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                        )}
                       </div>
 
                       {/* Step label with better wrapping */}
@@ -1110,13 +1131,8 @@ export const OnboardingKYBFormPlayground = ({
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-8">
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-2">{STEP_TITLES[currentStep]}</h3>
-                <p className="text-sm text-muted-foreground">{`Step ${currentStep + 1} of ${FORM_STEPS.length}`}</p>
-              </div>
-
-              <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="space-y-3">
                 {currentStepData.map(renderField)}
               </div>
             </div>
