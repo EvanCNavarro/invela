@@ -42,13 +42,11 @@ export default function InsightsPage() {
     queryKey: ["/api/relationships"],
   });
 
-  // Company type distribution data
-  // Since we have 45 total companies as per the network visualization
+  // Company type distribution data based on actual database counts
   const companyTypeData = [
     { type: "Invela", count: 1 },
-    { type: "Banks", count: 12 },
-    { type: "FinTechs", count: 27 },
-    { type: "Other", count: 5 }
+    { type: "Bank", count: 1 },
+    { type: "FinTech", count: 44 }
   ];
 
   const exportData = () => {
