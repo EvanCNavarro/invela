@@ -1004,7 +1004,7 @@ export const OnboardingKYBFormPlayground = ({
       ) : (
         <Card className="p-6">
           {/* Header Section */}
-          <div className="mb-8">
+          <div className="mb-4">
             <div className="flex items-center mb-4">
               <div className="flex-1">
                 <div className="flex items-center gap-2">
@@ -1062,7 +1062,9 @@ export const OnboardingKYBFormPlayground = ({
                   const isNextStep = index === currentStep + 1;
                   const isPriorStepCompleted = index > 0 && 
                     FORM_STEPS[index-1].map(field => field.name)
-                      .every(fieldName => formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
+                      .every(fieldName => formData && formData[fieldName] && 
+                        (formData[fieldName].toString?.().trim() !== '' || 
+                         typeof formData[fieldName] === 'boolean'));
                   
                   const isClickable = hasProgress || 
                                      index <= currentStep || 
