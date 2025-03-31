@@ -290,7 +290,7 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         </div>
         
         {formEntries.map((entry, index) => (
-          <div key={entry.fieldName} className="mb-6 bg-white p-3 border border-gray-100 rounded-md shadow-sm">
+          <div key={entry.fieldName} className="mb-3 bg-white p-3 border border-gray-100 rounded-md shadow-sm">
             <div className="flex flex-col">
               <p className="text-gray-500 mb-1">
                 <span className="font-medium text-gray-600 mr-1">{index + 1}.</span> Q: {entry.question}
@@ -531,6 +531,7 @@ interface OnboardingKYBFormPlaygroundProps {
   companyName: string;
   companyData?: any;
   savedFormData?: Record<string, any>;
+  initialReviewMode?: boolean;
 }
 
 // Enhanced debug logging for form data
@@ -567,7 +568,8 @@ export const OnboardingKYBFormPlayground = ({
   onSubmit,
   companyName,
   companyData: initialCompanyData,
-  savedFormData: initialSavedFormData
+  savedFormData: initialSavedFormData,
+  initialReviewMode = false
 }: OnboardingKYBFormPlaygroundProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
@@ -575,7 +577,7 @@ export const OnboardingKYBFormPlayground = ({
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -612,6 +614,18 @@ export const OnboardingKYBFormPlayground = ({
     return null;
   };
 
+  // Check if we should show the review page directly
+  useEffect(() => {
+    // Parse URL query parameters to check for review=true
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldShowReview = urlParams.get('review') === 'true';
+    
+    if (shouldShowReview) {
+      console.log('[KYB Form Debug] Review mode triggered from URL parameter');
+      setIsReviewMode(true);
+    }
+  }, []);
+
   // Effect to initialize form data
   useEffect(() => {
     let mounted = true;
@@ -625,11 +639,12 @@ export const OnboardingKYBFormPlayground = ({
           const response = await fetch(`/api/kyb/progress/${taskId}`);
           if (!response.ok) throw new Error('Failed to fetch task data');
 
-          const { formData: savedData, progress: savedProgress } = await response.json();
+          const { formData: savedData, progress: savedProgress, status } = await response.json();
           console.log('[KYB Form Debug] Loaded task data:', {
             taskId,
             hasData: !!savedData,
             fields: savedData ? Object.keys(savedData) : [],
+            status,
             timestamp: new Date().toISOString()
           });
 
@@ -643,6 +658,12 @@ export const OnboardingKYBFormPlayground = ({
 
             setProgress(savedProgress);
             lastProgressRef.current = savedProgress;
+            
+            // Auto-set review mode if task is ready for submission
+            if (status && status.toUpperCase() === 'READY_FOR_SUBMISSION') {
+              console.log('[KYB Form Debug] Setting review mode due to task status:', status);
+              setIsReviewMode(true);
+            }
           }
         } else if (initialSavedFormData) {
           initialData = Object.entries(initialSavedFormData).reduce((acc, [key, value]) => {
