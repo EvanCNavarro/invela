@@ -297,10 +297,9 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
           {/* Accreditation status summary at the top */}
           <div className="flex items-center justify-between mb-3 px-2">
             <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-1.5 rounded-md">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium">
-                {accreditationStats.approved} of {accreditationStats.total} companies accredited
-                ({Math.round((accreditationStats.approved / accreditationStats.total) * 100) || 0}%)
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <span className="text-base font-medium">
+                {accreditationStats.approved} of {accreditationStats.total} companies accredited ({Math.round((accreditationStats.approved / accreditationStats.total) * 100) || 0}%)
               </span>
             </div>
           </div>
@@ -358,29 +357,32 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
           </div>
           
           {/* Risk level legend at the bottom */}
-          <div className="flex justify-center items-center p-2 border-t mt-3">
-            <div className="flex items-center gap-x-6">
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
-                <span className="text-xs">Low</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
-                <span className="text-xs">Medium</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
-                <span className="text-xs">High</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
-                <span className="text-xs">Critical</span>
-              </div>
-              <div className="flex items-center pl-4 border-l border-gray-200">
-                <span className="flex items-center space-x-1.5">
-                  <span className="w-3 h-3 rounded-full bg-muted border-2 border-[#22c55e]"></span>
-                  <span className="text-xs">Accredited</span>
-                </span>
+          <div className="border-t mt-3">
+            {/* Risk level indicators */}
+            <div className="flex justify-center items-center p-2">
+              <div className="flex items-center gap-x-6">
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
+                  <span className="text-xs">Low</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-[#B3B8C6] border border-black"></span>
+                  <span className="text-xs">Medium</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-[#7B74A8] border border-black"></span>
+                  <span className="text-xs">High</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="w-3 h-3 rounded-full bg-[#4C2F54] border border-black"></span>
+                  <span className="text-xs">Critical</span>
+                </div>
+                <div className="flex items-center pl-4 border-l border-gray-200">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-3 h-3 rounded-full bg-muted border-2 border-[#22c55e]"></span>
+                    <span className="text-xs">Accredited</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>

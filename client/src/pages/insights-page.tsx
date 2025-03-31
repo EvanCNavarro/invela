@@ -96,7 +96,7 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget className="h-[600px]">
+        <Widget title="" className="h-[600px]">
           {selectedVisualization === "network_visualization" && (
             <NetworkInsightVisualization />
           )}
