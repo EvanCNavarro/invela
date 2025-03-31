@@ -149,107 +149,109 @@ export function WelcomeModal() {
   }
 
   return (
-    <Dialog 
-      open={showModal} 
-      onOpenChange={() => {}} // Disabled clicking outside to close
-      modal={true} // Force modal behavior
-    >
-      <DialogContent 
-        className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none"
+    <>
+      {/* Global styles for pulsating border and hiding the close button */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          /* Hide the close button in the dialog */
+          [role="dialog"] button[aria-label="Close"] {
+            display: none !important;
+          }
+          
+          @keyframes pulse-border {
+            0% {
+              box-shadow: 0 0 0 0 rgba(73, 101, 236, 0.7);
+            }
+            70% {
+              box-shadow: 0 0 0 10px rgba(73, 101, 236, 0);
+            }
+            100% {
+              box-shadow: 0 0 0 0 rgba(73, 101, 236, 0);
+            }
+          }
+          
+          .pulse-border-animation {
+            animation: pulse-border 2s infinite;
+          }
+        `
+      }} />
+
+      <Dialog 
+        open={showModal} 
+        onOpenChange={() => {}} // Disabled clicking outside to close
+        modal={true} // Force modal behavior
       >
-        {/* Custom CSS to completely remove close button */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            [role="dialog"] button[aria-label="Close"] {
-              display: none !important;
-            }
-            
-            @keyframes pulse-border {
-              0% {
-                box-shadow: 0 0 0 0 rgba(73, 101, 236, 0.7);
-              }
-              70% {
-                box-shadow: 0 0 0 10px rgba(73, 101, 236, 0);
-              }
-              100% {
-                box-shadow: 0 0 0 0 rgba(73, 101, 236, 0);
-              }
-            }
-            
-            .pulse-border-animation {
-              animation: pulse-border 2s infinite;
-            }
-          `
-        }}></style>
-        <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
-        <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
-        <div className="flex flex-col w-full">
-          {/* Content header with title and subtitle */}
-          <div className="p-10 text-center">
-            <h2 className="text-3xl font-bold mb-4">{carouselContent[currentSlide].title}</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
-          </div>
-          
-          {/* Image content - wider layout with more spacing */}
-          <div className="px-12 py-8 flex justify-center items-center">
-            <div className="relative flex items-center justify-center w-full">
-              {/* Log image path but don't display anything */}
-              {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
-              <img
-                src={carouselContent[currentSlide].src}
-                alt={carouselContent[currentSlide].alt}
-                className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
-                style={{ 
-                  maxWidth: '92%',
-                  height: 'auto'
-                }}
-                onError={(e) => {
-                  console.error('Failed to load image:', carouselContent[currentSlide].src, e);
-                }}
-                onLoad={() => {
-                  console.log('Successfully loaded image:', carouselContent[currentSlide].src);
-                }}
-              />
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none">
+          <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
+          <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
+          <div className="flex flex-col w-full">
+            {/* Content header with title and subtitle */}
+            <div className="p-10 text-center">
+              <h2 className="text-3xl font-bold mb-4">{carouselContent[currentSlide].title}</h2>
+              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
             </div>
-          </div>
-          
-          {/* Navigation buttons with step indicators in between - more spacing */}
-          <div className="flex items-center justify-between p-8 border-t mt-4">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentSlide === 0}
-              className="px-8 py-2 h-auto text-base"
-            >
-              Back
-            </Button>
-
-            {/* Step indicators in the middle */}
-            <div className="flex gap-3 mx-6">
-              {carouselContent.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2.5 rounded-full transition-all ${
-                    index === currentSlide
-                      ? "bg-primary w-10"
-                      : "bg-primary/20 w-5"
-                  }`}
+            
+            {/* Image content - wider layout with more spacing */}
+            <div className="px-12 py-8 flex justify-center items-center">
+              <div className="relative flex items-center justify-center w-full">
+                {/* Log image path but don't display anything */}
+                {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
+                <img
+                  src={carouselContent[currentSlide].src}
+                  alt={carouselContent[currentSlide].alt}
+                  className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
+                  style={{ 
+                    maxWidth: '92%',
+                    height: 'auto'
+                  }}
+                  onError={(e) => {
+                    console.error('Failed to load image:', carouselContent[currentSlide].src, e);
+                  }}
+                  onLoad={() => {
+                    console.log('Successfully loaded image:', carouselContent[currentSlide].src);
+                  }}
                 />
-              ))}
+              </div>
             </div>
+            
+            {/* Navigation buttons with step indicators in between - more spacing */}
+            <div className="flex items-center justify-between p-8 border-t mt-4">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentSlide === 0}
+                className="px-8 py-2 h-auto text-base"
+              >
+                Back
+              </Button>
 
-            <Button
-              onClick={handleNext}
-              className={cn(
-                "px-8 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
-                isLastSlide && "pulse-border-animation"
-              )}
-            >
-              {isLastSlide ? "Start" : "Next"}
-            </Button>
+              {/* Step indicators in the middle */}
+              <div className="flex gap-3 mx-6">
+                {carouselContent.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2.5 rounded-full transition-all ${
+                      index === currentSlide
+                        ? "bg-primary w-10"
+                        : "bg-primary/20 w-5"
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <Button
+                onClick={handleNext}
+                className={cn(
+                  "px-8 py-2 h-auto text-base bg-primary text-primary-foreground hover:bg-primary/90 rounded-md",
+                  isLastSlide && "pulse-border-animation"
+                )}
+              >
+                {isLastSlide ? "Start" : "Next"}
+              </Button>
+            </div>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
