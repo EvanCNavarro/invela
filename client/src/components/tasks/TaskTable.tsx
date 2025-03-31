@@ -100,7 +100,14 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
 
       // Build the URL based on task type
       const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
-      const formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
+      
+      // For ready_for_submission tasks, navigate directly to the review page
+      let formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
+      
+      // If the task is ready for submission, append the review parameter
+      if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
+        formUrl += '?review=true';
+      }
 
       console.log('[TaskTable] Navigation preparation:', {
         taskType: task.task_type,
@@ -110,6 +117,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
         constructedUrl: formUrl,
         metadata: task.metadata,
         statusBeforeNavigation: task.status,
+        isReadyForSubmission: task.status.toUpperCase() === 'READY_FOR_SUBMISSION',
         timestamp: new Date().toISOString()
       });
 

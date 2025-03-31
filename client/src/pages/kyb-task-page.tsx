@@ -29,9 +29,13 @@ interface Task {
 }
 
 export default function KYBTaskPage({ params }: KYBTaskPageProps) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const { toast } = useToast();
   const companyName = params.slug.replace('kyb-', '');
+  
+  // Parse URL query parameters to check for review=true
+  const searchParams = new URLSearchParams(location.split('?')[1] || '');
+  const isReviewMode = searchParams.get('review') === 'true';
 
   // Fetch task details by company name
   const { data: task, isLoading, error } = useQuery<Task>({
@@ -86,6 +90,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
         <div className="container max-w-7xl mx-auto">
           <OnboardingKYBFormPlayground 
             taskId={task.id}
+            initialReviewMode={isReviewMode} // Set initial review mode from URL parameter
             onSubmit={(formData) => {
               // Handle form submission
               fetch('/api/kyb/save', {
@@ -117,7 +122,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 });
               });
             }}
-            companyName={task.metadata?.company_name}
+            companyName={task.metadata?.company_name || companyName}
           />
         </div>
       </div>
