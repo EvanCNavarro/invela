@@ -13,6 +13,14 @@ export function TestImageModal() {
     "/assets/harmonized_modal_userOboarding_2.png",
     "/modal_userOboarding_1.png",
     "/harmonized_modal_userOboarding_2.png",
+    "assets/modal_userOboarding_1.png",
+    "assets/harmonized_modal_userOboarding_2.png",
+    "modal_userOboarding_1.png",
+    "harmonized_modal_userOboarding_2.png",
+    "./assets/modal_userOboarding_1.png",
+    "./assets/harmonized_modal_userOboarding_2.png",
+    "./modal_userOboarding_1.png",
+    "./harmonized_modal_userOboarding_2.png",
   ];
 
   // Check if each image exists by attempting to load it
