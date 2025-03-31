@@ -30,6 +30,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { cn } from "@/lib/utils";
+import { NetworkVisualization } from "@/components/network";
 
 const DEFAULT_WIDGETS = {
   updates: true,
@@ -254,7 +255,7 @@ export default function DashboardPage() {
                         )}
                         <span className="text-sm font-medium">{companyData?.name}</span>
                       </div>
-                      <RiskMeter score={companyData?.risk_score || 0} /> {/* Using risk_score instead of riskScore */}
+                      <RiskMeter score={companyData?.riskScore || 0} />
                     </div>
                   )}
                 </Widget>
@@ -268,11 +269,7 @@ export default function DashboardPage() {
                   onVisibilityToggle={() => toggleWidget('networkVisualization')}
                   isVisible={visibleWidgets.networkVisualization}
                 >
-                  <div className="flex items-center justify-center min-h-[200px]">
-                    <p className="text-sm text-muted-foreground">
-                      Network visualization coming soon
-                    </p>
-                  </div>
+                  <NetworkVisualization className="shadow-none border-none" />
                 </Widget>
               )}
             </div>

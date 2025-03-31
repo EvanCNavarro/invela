@@ -31,3 +31,34 @@ export interface TaskUpdate {
   progress: number;
   metadata?: Record<string, any>;
 }
+
+// Network Visualization types
+export type RiskBucket = 'low' | 'medium' | 'high' | 'critical';
+
+export interface NetworkNode {
+  id: number;
+  name: string;
+  relationshipId: number;
+  relationshipType: string;
+  relationshipStatus: string;
+  riskScore: number;
+  riskBucket: RiskBucket;
+  accreditationStatus: string;
+  revenueTier: string;
+  category: string;
+}
+
+export interface NetworkCenter {
+  id: number;
+  name: string;
+  riskScore: number;
+  riskBucket: RiskBucket;
+  accreditationStatus: string;
+  revenueTier: string;
+  category: string;
+}
+
+export interface NetworkVisualizationData {
+  center: NetworkCenter;
+  nodes: NetworkNode[];
+}

@@ -1786,6 +1786,146 @@ export function registerRoutes(app: Express): Express {
     }
   }
 
+  // Network visualization endpoint
+  app.get("/api/relationships/network", requireAuth, async (req, res) => {
+    try {
+      console.log('[Network] Fetching network visualization data for company:', req.user.company_id);
+
+      // Get the current company details
+      const [currentCompany] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        risk_score: companies.risk_score,
+        accreditation_status: companies.accreditation_status,
+        revenue_tier: companies.revenue_tier,
+        category: companies.category
+      })
+      .from(companies)
+      .where(eq(companies.id, req.user.company_id));
+
+      if (!currentCompany) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      // Get all related companies with their relationship details
+      const networkData = await db.select({
+        relationshipId: relationships.id,
+        relationshipType: relationships.relationship_type,
+        relationshipStatus: relationships.status,
+        relationshipMetadata: relationships.metadata,
+        companyId: sql<number>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
+            ELSE ${relationships.company_id}
+          END
+        `,
+        companyName: sql<string>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
+              SELECT name FROM ${companies} WHERE id = ${relationships.related_company_id}
+            )
+            ELSE (
+              SELECT name FROM ${companies} WHERE id = ${relationships.company_id}
+            )
+          END
+        `,
+        riskScore: sql<number>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
+              SELECT risk_score FROM ${companies} WHERE id = ${relationships.related_company_id}
+            )
+            ELSE (
+              SELECT risk_score FROM ${companies} WHERE id = ${relationships.company_id}
+            )
+          END
+        `,
+        accreditationStatus: sql<string>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
+              SELECT accreditation_status FROM ${companies} WHERE id = ${relationships.related_company_id}
+            )
+            ELSE (
+              SELECT accreditation_status FROM ${companies} WHERE id = ${relationships.company_id}
+            )
+          END
+        `,
+        revenueTier: sql<string>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
+              SELECT revenue_tier FROM ${companies} WHERE id = ${relationships.related_company_id}
+            )
+            ELSE (
+              SELECT revenue_tier FROM ${companies} WHERE id = ${relationships.company_id}
+            )
+          END
+        `,
+        category: sql<string>`
+          CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
+              SELECT category FROM ${companies} WHERE id = ${relationships.related_company_id}
+            )
+            ELSE (
+              SELECT category FROM ${companies} WHERE id = ${relationships.company_id}
+            )
+          END
+        `
+      })
+      .from(relationships)
+      .where(
+        or(
+          eq(relationships.company_id, req.user.company_id),
+          eq(relationships.related_company_id, req.user.company_id)
+        )
+      );
+
+      // Map risk scores to risk buckets
+      const getRiskBucket = (score: number) => {
+        if (score < 200) return 'low';
+        if (score < 400) return 'medium';
+        if (score < 700) return 'high';
+        return 'critical';
+      };
+
+      // Transform the data into visualization-friendly format
+      const result = {
+        center: {
+          id: currentCompany.id,
+          name: currentCompany.name,
+          riskScore: currentCompany.risk_score,
+          riskBucket: getRiskBucket(currentCompany.risk_score),
+          accreditationStatus: currentCompany.accreditation_status,
+          revenueTier: currentCompany.revenue_tier,
+          category: currentCompany.category
+        },
+        nodes: networkData.map(relation => ({
+          id: relation.companyId,
+          name: relation.companyName,
+          relationshipId: relation.relationshipId,
+          relationshipType: relation.relationshipType,
+          relationshipStatus: relation.relationshipStatus,
+          riskScore: relation.riskScore,
+          riskBucket: getRiskBucket(relation.riskScore),
+          accreditationStatus: relation.accreditationStatus,
+          revenueTier: relation.revenueTier,
+          category: relation.category
+        }))
+      };
+
+      console.log('[Network] Found network data:', {
+        centerNode: result.center.name,
+        nodesCount: result.nodes.length
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("[Network] Error fetching network data:", error);
+      res.status(500).json({ 
+        message: "Error fetching network visualization data",
+        error: error.message
+      });
+    }
+  });
+
   console.log('[Routes] Routes setup completed');  return app;
 }
 
