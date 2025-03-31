@@ -26,11 +26,13 @@ import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
 import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
+import { RiskFlowVisualization } from "@/components/insights/RiskFlowVisualization";
 
 const visualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
   { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
+  { value: "risk_flow", label: "Risk Flow Visualization" },
 ];
 
 export default function InsightsPage() {
@@ -114,6 +116,10 @@ export default function InsightsPage() {
 
           {selectedVisualization === "accreditation_status" && (
             <AccreditationDotMatrix />
+          )}
+          
+          {selectedVisualization === "risk_flow" && (
+            <RiskFlowVisualization />
           )}
         </Widget>
       </div>

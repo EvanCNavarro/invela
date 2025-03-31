@@ -62,3 +62,25 @@ export interface NetworkVisualizationData {
   center: NetworkCenter;
   nodes: NetworkNode[];
 }
+
+// Sankey Flow Visualization types
+export interface SankeyNode {
+  id: string;
+  name: string;
+  category: string;
+  count: number;
+  color: string;
+}
+
+export interface SankeyLink {
+  source: string;
+  target: string;
+  value: number;
+  sourceColor: string;
+  targetColor: string;
+}
+
+export interface SankeyData {
+  nodes: SankeyNode[];
+  links: SankeyLink[];
+}
