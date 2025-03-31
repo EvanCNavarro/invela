@@ -126,6 +126,8 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 
                 // Force a complete page change using window.location with success parameters
                 const companyNameEncoded = encodeURIComponent(task.metadata?.company_name || companyName);
+                
+                // Use window.location.href to force a full page navigation to task center with success parameters
                 window.location.href = `/task-center?success=kyb&company=${companyNameEncoded}`;
               })
               .catch(error => {
