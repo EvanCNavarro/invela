@@ -155,27 +155,38 @@ export function WelcomeModal() {
       modal={true} // Force modal behavior
     >
       <DialogContent 
-        className="sm:max-w-md p-0 overflow-hidden rounded-xl backdrop-blur-xl" 
-        hideClose={true} // Remove close button
+        className="sm:max-w-2xl p-0 overflow-hidden rounded-xl backdrop-blur-xl"
       >
+        {/* Custom CSS to hide close button without using a prop */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            [role="dialog"] button[aria-label="Close"] {
+              display: none !important;
+            }
+          `
+        }}></style>
         <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         <div className="flex flex-col w-full">
           {/* Content header with title and subtitle */}
-          <div className="p-6 text-center">
-            <h2 className="text-2xl font-bold mb-2">{carouselContent[currentSlide].title}</h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
+          <div className="p-8 text-center">
+            <h2 className="text-3xl font-bold mb-3">{carouselContent[currentSlide].title}</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
           </div>
           
           {/* Image content - wider layout */}
-          <div className="px-8 py-4 flex justify-center items-center">
-            <div className="relative flex items-center justify-center">
+          <div className="px-10 py-6 flex justify-center items-center">
+            <div className="relative flex items-center justify-center w-full">
               {/* Log image path but don't display anything */}
               {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
               <img
                 src={carouselContent[currentSlide].src}
                 alt={carouselContent[currentSlide].alt}
-                className="rounded-xl max-h-[320px] max-w-full object-contain shadow-md"
+                className="rounded-xl max-h-[350px] w-auto object-contain shadow-md mx-auto"
+                style={{ 
+                  maxWidth: '90%',
+                  height: 'auto'
+                }}
                 onError={(e) => {
                   console.error('Failed to load image:', carouselContent[currentSlide].src, e);
                 }}
@@ -187,7 +198,7 @@ export function WelcomeModal() {
           </div>
           
           {/* Navigation buttons with step indicators in between */}
-          <div className="flex items-center justify-between p-4 border-t mt-4">
+          <div className="flex items-center justify-between p-6 border-t mt-2">
             <Button
               variant="outline"
               onClick={handlePrevious}
@@ -198,7 +209,7 @@ export function WelcomeModal() {
             </Button>
 
             {/* Step indicators in the middle */}
-            <div className="flex gap-2 mx-2">
+            <div className="flex gap-2 mx-4">
               {carouselContent.map((_, index) => (
                 <div
                   key={index}
