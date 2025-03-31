@@ -603,20 +603,49 @@ router.get("/api/files/:id/download", async (req, res) => {
       size: fileRecord.size
     });
 
-    // The path field contains the actual file content, not a disk path
-    const fileContent = fileRecord.path;
-
     // Update download count
     await db.update(files)
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    // Set appropriate headers
-    res.setHeader('Content-Type', fileRecord.type || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
+    // Check if this is a KYB form CSV file (stored directly in the database)
+    const isKybForm = fileRecord.name.startsWith('kyb_') && fileRecord.type === 'text/csv';
     
-    // Send the file content directly
-    return res.send(fileContent);
+    if (isKybForm) {
+      console.log('[Files] Serving KYB form directly from database');
+      // KYB forms have their content stored directly in the path field
+      const fileContent = fileRecord.path;
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', fileRecord.type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
+      
+      // Send the file content directly
+      return res.send(fileContent);
+    } else {
+      // Regular files are stored on disk
+      const filePath = path.join(uploadDir, fileRecord.path);
+      console.log('[Files] Physical file path:', filePath);
+
+      if (!fs.existsSync(filePath)) {
+        console.error('[Files] File missing from disk:', filePath);
+        return res.status(404).json({ error: "File not found on disk" });
+      }
+
+      // Use res.download for regular files
+      res.download(filePath, fileRecord.name, (err) => {
+        if (err) {
+          console.error("[Files] Error downloading file:", {
+            error: err,
+            fileId,
+            filePath
+          });
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Error downloading file" });
+          }
+        }
+      });
+    }
   } catch (error) {
     console.error("[Files] Error in download endpoint:", error);
     if (!res.headersSent) {
