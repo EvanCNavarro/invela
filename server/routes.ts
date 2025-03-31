@@ -2092,7 +2092,38 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  console.log('[Routes] Routes setup completed');  return app;
+  // Company type distribution endpoint
+  app.get("/api/company-type-distribution", requireAuth, async (req, res) => {
+    try {
+      // Execute a query that counts companies by category
+      console.log('[CompanyTypes] Fetching company type distribution');
+      
+      const result = await db.execute(
+        sql`SELECT category, COUNT(*) as count FROM companies GROUP BY category`
+      );
+      
+      console.log('[CompanyTypes] Results:', result.rows);
+      
+      // Transform into the format needed by the chart
+      const formattedData = result.rows.map((row: any) => ({
+        type: row.category || 'Unknown',
+        count: parseInt(row.count, 10)
+      }));
+      
+      console.log('[CompanyTypes] Formatted data:', formattedData);
+      
+      res.json(formattedData);
+    } catch (error) {
+      console.error("[CompanyTypes] Error fetching company type distribution:", error);
+      res.status(500).json({ 
+        message: "Error fetching company type distribution data",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  console.log('[Routes] Routes setup completed');  
+  return app;
 }
 
 // Export both the named and default function for backward compatibility
