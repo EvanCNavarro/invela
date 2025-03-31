@@ -8,11 +8,18 @@ interface ConnectionDetailsProps {
   node: NetworkNode;
   centerNode: NetworkCenter;
   onClose: () => void;
+  position?: { x: number, y: number };
 }
 
-export function ConnectionDetails({ node, centerNode, onClose }: ConnectionDetailsProps) {
+export function ConnectionDetails({ node, centerNode, onClose, position }: ConnectionDetailsProps) {
+  // Determine position based on the x-coordinate
+  // If the node is on the right side, position the panel on the left, and vice versa
+  const positioning = position && position.x > 200 
+    ? "left-4" // Node is on the right side, so place panel on the left
+    : "right-4"; // Node is on the left or center, so place panel on the right
+    
   return (
-    <Card className="absolute top-4 right-4 w-[320px] shadow-lg z-10">
+    <Card className={`absolute top-4 ${positioning} w-[320px] shadow-lg z-10`}>
       <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
         <CardTitle className="text-base">Connection Details</CardTitle>
         <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
