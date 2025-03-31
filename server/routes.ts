@@ -2133,6 +2133,78 @@ export function registerRoutes(app: Express): Express {
       });
     }
   });
+  
+  // Accreditation status distribution endpoint
+  app.get("/api/accreditation-status-distribution", requireAuth, async (req, res) => {
+    try {
+      console.log('[AccreditationStatus] Fetching accreditation status distribution');
+      
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Query the companies along with their accreditation status
+      const companiesResult = await db.execute(
+        sql`SELECT c.id, c.name, c.category, c.accreditation_status FROM companies c 
+            WHERE c.id != ${req.user.company_id} ORDER BY c.name`
+      );
+      
+      // Define status types and colors
+      const statusMap: Record<string, { color: string; label: string }> = {
+        'APPROVED': { color: '#3B82F6', label: 'Approved' }, // Blue
+        'PENDING': { color: '#A855F7', label: 'Pending' },   // Light Purple
+        'AWAITING_INVITATION': { color: '#9CA3AF', label: 'Awaiting Invitation' }, // Pale Gray
+        'REVOKED': { color: '#EF4444', label: 'Revoked' }    // Red
+      };
+      
+      // Transform the data for the dot matrix visualization
+      const companies = companiesResult.rows.map((row: any) => {
+        // Default to AWAITING_INVITATION if status is null or not recognized
+        const status = row.accreditation_status || 'AWAITING_INVITATION';
+        const statusInfo = statusMap[status] || statusMap['AWAITING_INVITATION'];
+        
+        return {
+          id: row.id,
+          name: row.name,
+          category: row.category || 'Unknown',
+          status: status,
+          color: statusInfo.color,
+          label: statusInfo.label
+        };
+      });
+      
+      // Count companies by status
+      const statusCounts = Object.keys(statusMap).reduce((acc, status) => {
+        acc[status] = companies.filter(c => c.status === status).length;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Format the response
+      const response = {
+        companies,
+        statusCounts,
+        statusMap: Object.entries(statusMap).map(([key, value]) => ({
+          id: key,
+          ...value,
+          count: statusCounts[key] || 0
+        }))
+      };
+      
+      console.log('[AccreditationStatus] Results summary:', {
+        totalCompanies: companies.length,
+        statusCounts
+      });
+      
+      res.json(response);
+    } catch (error) {
+      console.error("[AccreditationStatus] Error fetching accreditation status distribution:", error);
+      res.status(500).json({ 
+        message: "Error fetching accreditation status data",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
 
   console.log('[Routes] Routes setup completed');  
   return app;
