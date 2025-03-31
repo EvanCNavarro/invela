@@ -1135,11 +1135,11 @@ export const OnboardingKYBFormPlayground = ({
           </div>
 
           <div className="flex items-center justify-center mt-0 mb-4">
-            <div className="w-full h-[1px] border-0 relative">
+            <div className="w-full h-[2px] border-0 relative">
               {/* Custom dashed line with very wide spacing */}
               <div className="absolute inset-0 flex items-center justify-evenly">
                 {[...Array(15)].map((_, i) => (
-                  <div key={i} className="w-8 h-[1px] bg-gray-200/70"></div>
+                  <div key={i} className="w-8 h-[2px]" style={{ backgroundColor: "#E5E7EB" }}></div>
                 ))}
               </div>
             </div>
