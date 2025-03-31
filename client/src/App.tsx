@@ -19,7 +19,6 @@ import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
-import KYBTaskPage from "@/pages/kyb-task-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -102,15 +101,6 @@ function Router() {
         component={({ params }) => (
           <ProtectedLayout>
             <TaskPage params={params} />
-          </ProtectedLayout>
-        )}
-      />
-
-      <ProtectedRoute 
-        path="/task-center/task/kyb-:slug"
-        component={({ params }) => (
-          <ProtectedLayout>
-            <KYBTaskPage params={params} />
           </ProtectedLayout>
         )}
       />

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -6,8 +6,6 @@ import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingK
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
-import confetti from 'canvas-confetti';
 
 interface KYBTaskPageProps {
   params: {
@@ -34,7 +32,6 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const companyName = params.slug.replace('kyb-', '');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   
   // Parse URL query parameters to check for review=true
   const searchParams = new URLSearchParams(location.split('?')[1] || '');
@@ -110,25 +107,11 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 return response.json();
               })
               .then(() => {
-                // Show confetti effect immediately
-                confetti({
-                  particleCount: 150,
-                  spread: 80,
-                  origin: { y: 0.6 },
-                  colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                });
-                
-                // Show toast notification
                 toast({
                   title: "KYB Form Submitted",
                   description: "Your KYB form has been saved and the task has been updated.",
                 });
-                
-                // Force a complete page change using window.location with success parameters
-                const companyNameEncoded = encodeURIComponent(task.metadata?.company_name || companyName);
-                
-                // Use window.location.href to force a full page navigation to task center with success parameters
-                window.location.href = `/task-center?success=kyb&company=${companyNameEncoded}`;
+                navigate('/task-center');
               })
               .catch(error => {
                 console.error('Failed to save KYB form:', error);
