@@ -154,8 +154,11 @@ export function WelcomeModal() {
       <style dangerouslySetInnerHTML={{
         __html: `
           /* Hide the close button in the dialog */
-          [role="dialog"] button[aria-label="Close"] {
+          button[aria-label="Close"] {
             display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
           }
           
           @keyframes pulse-border {
@@ -181,7 +184,7 @@ export function WelcomeModal() {
         onOpenChange={() => {}} // Disabled clicking outside to close
         modal={true} // Force modal behavior
       >
-        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none">
+        <DialogContent className="sm:max-w-3xl p-0 overflow-hidden rounded-xl backdrop-blur-xl border-none" hideCloseButton={true}>
           <DialogTitle className="sr-only">{carouselContent[currentSlide].title}</DialogTitle>
           <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
           <div className="flex flex-col w-full">
