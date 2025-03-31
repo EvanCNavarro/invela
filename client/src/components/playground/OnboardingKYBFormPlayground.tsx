@@ -221,9 +221,9 @@ const FORM_STEPS: FormField[][] = [
 
 // Define step titles for better organization and user experience
 const STEP_TITLES = [
-  "Company\nProfile", 
+  "Company Profile", 
   "Governance & Leadership", 
-  "Financial\nProfile", 
+  "Financial Profile", 
   "Operations & Compliance"
 ];
 
@@ -1076,7 +1076,7 @@ export const OnboardingKYBFormPlayground = ({
                   return (
                     <div 
                       key={step[0].name} 
-                      className={`flex flex-col items-center justify-center relative py-3 px-4 w-1/4 ${
+                      className={`flex flex-col items-center justify-center relative py-2 px-3 w-1/4 ${
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
@@ -1085,9 +1085,14 @@ export const OnboardingKYBFormPlayground = ({
                         }
                       }}
                     >
-                      {/* Button-like hover effect with more padding */}
-                      {isClickable && (
-                        <div className="absolute inset-0 rounded-xl bg-gray-100/0 group-hover:bg-gray-100/80 transition-all duration-200" />
+                      {/* Current step background */}
+                      {isCurrent && (
+                        <div className="absolute inset-0 rounded-lg bg-gray-100/80" />
+                      )}
+                      
+                      {/* Button-like hover effect */}
+                      {isClickable && !isCurrent && (
+                        <div className="absolute inset-0 rounded-lg bg-gray-100/0 group-hover:bg-gray-100/60 transition-all duration-200" />
                       )}
                       
                       {/* Step indicator squircle */}
@@ -1111,12 +1116,17 @@ export const OnboardingKYBFormPlayground = ({
                       </div>
 
                       {/* Step label with better wrapping */}
-                      <span 
-                        className="text-xs mt-3 text-center w-full mx-auto min-h-[36px] line-clamp-2 font-bold transition-colors duration-200 z-10"
+                      <div 
+                        className="text-xs mt-3 text-center w-full mx-auto min-h-[36px] whitespace-pre-line font-bold transition-colors duration-200 z-10"
                         style={{ color: textColor }}
                       >
-                        {STEP_TITLES[index]}
-                      </span>
+                        {STEP_TITLES[index].includes(' ') 
+                          ? STEP_TITLES[index].split(' ').length > 2 
+                            ? STEP_TITLES[index] 
+                            : STEP_TITLES[index].replace(' ', '\n')
+                          : STEP_TITLES[index]
+                        }
+                      </div>
                     </div>
                   );
                 })}
@@ -1124,7 +1134,7 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <hr className="border-t border-dashed border-gray-300 mt-2 mb-6" />
+          <hr className="border-t-2 border-dashed border-spacing-x-4 border-gray-300 mt-1 mb-5" style={{ borderWidth: '2px', borderSpacing: '1rem' }} />
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
@@ -1142,9 +1152,9 @@ export const OnboardingKYBFormPlayground = ({
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0}
-                className="rounded-full px-6 transition-all hover:bg-gray-100"
+                className="rounded-lg px-4 transition-all hover:bg-gray-100"
               >
-                {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
+                {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-1" />}
                 Back
               </Button>
             )}
@@ -1152,7 +1162,7 @@ export const OnboardingKYBFormPlayground = ({
               <div className="ml-auto">
                 <Button
                   disabled
-                  className="bg-green-600 hover:bg-green-600 text-white rounded-full px-6"
+                  className="bg-green-600 hover:bg-green-600 text-white rounded-lg px-4"
                 >
                   Submitted
                 </Button>
@@ -1161,10 +1171,10 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`rounded-full px-6 hover:bg-blue-700 transition-all ${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-full after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+                className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${isLastStep ? 'relative after:absolute after:inset-0 after:rounded-lg after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
               >
                 {isLastStep ? 'Submit' : 'Next'}
-                {!isLastStep && <ArrowRight className="h-4 w-4 ml-2" />}
+                {!isLastStep && <ArrowRight className="h-4 w-4 ml-1" />}
               </Button>
             )}
           </div>
