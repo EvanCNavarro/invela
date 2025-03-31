@@ -449,6 +449,14 @@ export default function TaskCenterPage() {
           </Tabs>
         </div>
       </div>
+      
+      {/* KYB Success Modal */}
+      <KYBSuccessModal 
+        companyName={kybCompanyName} 
+        open={showSuccessModal} 
+        onOpenChange={setShowSuccessModal} 
+      />
+      
     </DashboardLayout>
   );
 }
