@@ -110,27 +110,28 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 return response.json();
               })
               .then(() => {
-                // Show confetti effect
-                confetti({
-                  particleCount: 150,
-                  spread: 80,
-                  origin: { y: 0.6 },
-                  colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                });
-                
-                // Show toast notification
-                toast({
-                  title: "KYB Form Submitted",
-                  description: "Your KYB form has been saved and the task has been updated.",
-                });
-                
-                // Navigate to task center first, then show modal
+                // First navigate to task center
                 navigate('/task-center');
                 
-                // Use a small timeout to ensure navigation completes before showing modal
+                // Then show success elements after a brief delay to ensure navigation completes
                 setTimeout(() => {
+                  // Show confetti effect
+                  confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                  });
+                  
+                  // Show toast notification
+                  toast({
+                    title: "KYB Form Submitted",
+                    description: "Your KYB form has been saved and the task has been updated.",
+                  });
+                  
+                  // Show success modal
                   setShowSuccessModal(true);
-                }, 100);
+                }, 200); // Increased timeout to ensure navigation completes first
               })
               .catch(error => {
                 console.error('Failed to save KYB form:', error);
