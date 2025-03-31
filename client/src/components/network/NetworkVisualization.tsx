@@ -95,6 +95,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       .attr('fill', centerNodeColor)
       .attr('stroke', '#000')
       .attr('stroke-width', 2)
+      .attr('class', 'center-node')
+      .attr('data-node-id', data.center.id)
       .append('title')
       .text(data.center.name);
 
@@ -176,12 +178,12 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           // Remove tooltip
           g.selectAll('.node-tooltip').remove();
         })
-        .on('click', (event) => {
-          // Reset all connections
+        .on('click', function(event) {
+          // Reset all connections to default
           g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
           
           // Reset all node borders to their original state
-          g.selectAll('circle:not(:first-of-type)').each(function() {
+          g.selectAll('circle:not(.center-node)').each(function() {
             const circle = d3.select(this);
             const nodeId = circle.attr('data-node-id');
             const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
@@ -191,10 +193,10 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
               .attr('stroke-width', 2.5);
           });
           
-          // Set black border on the selected node immediately
-          d3.select(event.currentTarget)
-            .attr('stroke', '#000')
-            .attr('stroke-width', 3.5);
+          // Set black border on the selected node immediately using direct DOM reference
+          const selectedNode = d3.select(this);
+          selectedNode.attr('stroke', '#000')
+                     .attr('stroke-width', 3.5);
           
           // Highlight the line connecting to this node with black
           g.selectAll('line')
@@ -209,6 +211,8 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           // Update state after visual changes to ensure UI is consistent
           setSelectedNodePosition({ x: nodeX, y: 0 });
           setSelectedNode(node);
+          
+          // Stop propagation to prevent background click
           event.stopPropagation();
         });
     });
@@ -219,12 +223,12 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
       g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
       
       // Reset center node to default style
-      g.select('circle:first-of-type')
+      g.select('.center-node')
         .attr('stroke', '#000')
         .attr('stroke-width', 2);
       
       // Reset all other nodes to their original accreditation borders
-      g.selectAll('circle:not(:first-of-type)').each(function() {
+      g.selectAll('circle:not(.center-node)').each(function() {
         const circle = d3.select(this);
         const nodeId = circle.attr('data-node-id');
         const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
@@ -254,12 +258,12 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
             
             // Reset center node to default style
-            g.select('circle:first-of-type')
+            g.select('.center-node')
               .attr('stroke', '#000')
               .attr('stroke-width', 2);
             
             // Reset all other nodes to their original accreditation borders
-            g.selectAll('circle:not(:first-of-type)').each(function() {
+            g.selectAll('circle:not(.center-node)').each(function() {
               const circle = d3.select(this);
               const nodeId = circle.attr('data-node-id');
               const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
@@ -324,13 +328,13 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
                       
                       // Reset node styles safely
                       // Center node gets its standard style
-                      g.select('circle:first-of-type')
+                      g.select('.center-node')
                         .attr('stroke', '#000')
                         .attr('stroke-width', 2);
                       
                       // Company nodes get their accreditation styles from their current stored styles
                       // This is safer than trying to access datum() which might be null
-                      g.selectAll('circle:not(:first-of-type)').each(function() {
+                      g.selectAll('circle:not(.center-node)').each(function() {
                         const circle = d3.select(this);
                         const currentStroke = circle.attr('stroke');
                         // If it was explicitly set to black (selected), reset it to original color
