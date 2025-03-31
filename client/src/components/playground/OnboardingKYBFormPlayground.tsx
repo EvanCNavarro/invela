@@ -1041,62 +1041,83 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Step Wizard */}
             {!isSubmitted && (
-              <div className="flex items-center justify-between px-4 mb-12 overflow-x-auto min-w-full sm:px-8">
-                {FORM_STEPS.map((step, index) => (
-                  <div 
-                    key={step[0].name} 
-                    className={`flex flex-col items-center relative min-w-[120px] ${
-                      // Allow navigation to any step if progress is 100% or to steps up to current step
-                      (progress === 100 || index <= currentStep) ? 'cursor-pointer group' : 'cursor-not-allowed'
-                    }`}
-                    onClick={() => {
-                      // Allow navigation to any step if progress is 100% or to steps up to current step
-                      if (progress === 100 || index <= currentStep) {
-                        setCurrentStep(index);
-                      }
-                    }}
-                  >
-                    {/* Button-like hover effect for clickable steps */}
-                    {(progress === 100 || index <= currentStep) && (
-                      <div className="absolute inset-0 rounded-xl bg-gray-100/0 group-hover:bg-gray-100/80 -m-2 p-2 transition-all duration-200" />
-                    )}
-                    
-                    {/* Step indicator squircle */}
-                    <div
-                      className={`flex items-center justify-center h-8 w-8 rounded-lg border-2 transition-all duration-200 z-10
-                        ${index === currentStep
-                        ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
-                        : index < currentStep || progress === 100
-                        ? 'border-[#4F46E5] text-[#4F46E5] bg-white'
-                        : 'border-[#D1D5DB] text-[#6B7280] bg-white'
-                        }`}
+              <div className="flex justify-between px-2 mb-8 space-x-2 mx-auto max-w-[700px]">
+                {FORM_STEPS.map((step, index) => {
+                  // Determine colors based on completion status
+                  const isCompleted = index < currentStep || (progress === 100 && index !== currentStep);
+                  const isCurrent = index === currentStep;
+                  const isClickable = progress === 100 || index <= currentStep;
+                  
+                  // Color scheme
+                  const squircleColor = isCompleted 
+                    ? '#209C5A' // Green for completed
+                    : isCurrent 
+                      ? '#4965EC' // Blue for current step
+                      : '#6B7280'; // Dark grey for incomplete
+                  
+                  const textColor = isCompleted 
+                    ? '#209C5A' 
+                    : isCurrent 
+                      ? '#4965EC' 
+                      : '#6B7280';
+                  
+                  return (
+                    <div 
+                      key={step[0].name} 
+                      className={`flex flex-col items-center relative py-4 ${
+                        isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
+                      }`}
+                      onClick={() => {
+                        if (isClickable) {
+                          setCurrentStep(index);
+                        }
+                      }}
                     >
-                      <span className="text-xs font-bold leading-none">
-                        {String(index + 1).padStart(2, '0')}
+                      {/* Button-like hover effect with more padding */}
+                      {isClickable && (
+                        <div className="absolute inset-0 rounded-xl bg-gray-100/0 group-hover:bg-gray-100/80 transition-all duration-200" />
+                      )}
+                      
+                      {/* Step indicator squircle */}
+                      <div
+                        className={`flex items-center justify-center h-9 w-9 rounded-lg border-2 transition-all duration-200 z-10
+                          ${isCurrent
+                            ? `border-[${squircleColor}] bg-[${squircleColor}] text-white shadow-sm`
+                            : `border-[${squircleColor}] text-[${squircleColor}] bg-white`
+                          }`}
+                        style={{
+                          borderColor: squircleColor,
+                          backgroundColor: isCurrent ? squircleColor : 'white',
+                          color: isCurrent ? 'white' : squircleColor
+                        }}
+                      >
+                        <span className="text-sm font-bold leading-none">
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      {/* Connecting line */}
+                      {index < FORM_STEPS.length - 1 && (
+                        <div
+                          className="absolute top-[25px] h-[2px] z-0"
+                          style={{ 
+                            left: '60%', 
+                            width: '80%', 
+                            backgroundColor: isCompleted ? '#209C5A' : '#E5E7EB'
+                          }}
+                        />
+                      )}
+
+                      {/* Step label with better wrapping */}
+                      <span 
+                        className="text-xs mt-3 text-center w-[70px] mx-auto min-h-[36px] line-clamp-2 font-bold transition-colors duration-200 z-10"
+                        style={{ color: textColor }}
+                      >
+                        {STEP_TITLES[index]}
                       </span>
                     </div>
-
-                    {/* Connecting line */}
-                    {index < FORM_STEPS.length - 1 && (
-                      <div
-                        className={`absolute top-4 left-[calc(50%+16px)] h-[2px] transition-all duration-200 z-0
-                          ${index < currentStep || progress === 100 ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
-                        style={{ width:`calc(100% -24px)` }}
-                      />
-                    )}
-
-                    {/* Step label - Improved wrapping for wider titles */}
-                    <span className={`text-[11px] mt-3 text-center w-[80px] mx-auto min-h-[36px] line-clamp-2 font-bold transition-colors duration-200 z-10 ${
-                      index === currentStep 
-                        ? 'text-[#4F46E5]' 
-                        : (index < currentStep || progress === 100)
-                          ? 'text-[#6B7280] group-hover:text-[#4F46E5]' 
-                          : 'text-[#9CA3AF]'
-                    }`}>
-                      {STEP_TITLES[index]}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
