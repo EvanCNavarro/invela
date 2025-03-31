@@ -110,7 +110,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 return response.json();
               })
               .then(() => {
-                // First navigate to task center
+                // First navigate to task center (using correct route)
                 navigate('/task-center');
                 
                 // Then show success elements after a brief delay to ensure navigation completes
@@ -131,7 +131,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   
                   // Show success modal
                   setShowSuccessModal(true);
-                }, 200); // Increased timeout to ensure navigation completes first
+                }, 500); // Increased timeout to ensure navigation completes fully
               })
               .catch(error => {
                 console.error('Failed to save KYB form:', error);
