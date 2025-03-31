@@ -8,7 +8,7 @@ interface ConnectionDetailsProps {
   node: NetworkNode;
   centerNode: NetworkCenter;
   onClose: () => void;
-  position?: { x: number, y: number };
+  position?: { x: number, y: number } | null;
 }
 
 export function ConnectionDetails({ node, centerNode, onClose, position }: ConnectionDetailsProps) {

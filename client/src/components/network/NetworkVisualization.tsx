@@ -263,12 +263,32 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
                     if (svgRef.current) {
                       const svg = d3.select(svgRef.current);
                       const g = svg.select('g');
+                      // Reset connection lines
                       g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
-                      g.selectAll('circle').attr('stroke', node => {
-                        // Restore accreditation border color
-                        const d = d3.select(node as any).datum() as any;
-                        return d && d.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
-                      }).attr('stroke-width', 2.5);
+                      
+                      // Reset node styles safely
+                      // Center node gets its standard style
+                      g.select('circle:first-of-type')
+                        .attr('stroke', '#000')
+                        .attr('stroke-width', 2);
+                      
+                      // Company nodes get their accreditation styles from their current stored styles
+                      // This is safer than trying to access datum() which might be null
+                      g.selectAll('circle:not(:first-of-type)').each(function() {
+                        const circle = d3.select(this);
+                        const currentStroke = circle.attr('stroke');
+                        // If it was explicitly set to black (selected), reset it to original color
+                        if (currentStroke === '#000') {
+                          // Check for the original data-node-id attribute we added
+                          const nodeId = circle.attr('data-node-id');
+                          // Find the node data
+                          const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
+                          // Set the correct border based on accreditation
+                          circle.attr('stroke', nodeData?.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent');
+                        }
+                        // Reset stroke width for all nodes
+                        circle.attr('stroke-width', 2.5);
+                      });
                     }
                   }} 
                 />
