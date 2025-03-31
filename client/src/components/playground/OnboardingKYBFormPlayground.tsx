@@ -1031,17 +1031,17 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Progress bar */}
             {!isSubmitted && (
-              <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-12">
+              <div className="h-[2px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
                 <div
-                  className="h-full bg-[#4F46E5] transition-all duration-300 ease-in-out"
-                  style={{ width: `${progress}%` }}
+                  className="h-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${progress}%`, backgroundColor: '#4965EC' }}
                 />
               </div>
             )}
 
             {/* Step Wizard */}
             {!isSubmitted && (
-              <div className="flex justify-between px-2 mb-8 space-x-2 mx-auto max-w-[700px]">
+              <div className="flex justify-between px-2 mb-4 mx-auto max-w-[700px]">
                 {FORM_STEPS.map((step, index) => {
                   // Determine colors based on completion status
                   const isCompleted = index < currentStep || (progress === 100 && index !== currentStep);
@@ -1064,7 +1064,7 @@ export const OnboardingKYBFormPlayground = ({
                   return (
                     <div 
                       key={step[0].name} 
-                      className={`flex flex-col items-center relative py-4 ${
+                      className={`flex flex-col items-center justify-center relative py-3 px-4 w-1/4 ${
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
@@ -1080,11 +1080,7 @@ export const OnboardingKYBFormPlayground = ({
                       
                       {/* Step indicator squircle */}
                       <div
-                        className={`flex items-center justify-center h-9 w-9 rounded-lg border-2 transition-all duration-200 z-10
-                          ${isCurrent
-                            ? `border-[${squircleColor}] bg-[${squircleColor}] text-white shadow-sm`
-                            : `border-[${squircleColor}] text-[${squircleColor}] bg-white`
-                          }`}
+                        className="flex items-center justify-center h-9 w-9 rounded-lg border-2 transition-all duration-200 z-10"
                         style={{
                           borderColor: squircleColor,
                           backgroundColor: isCurrent ? squircleColor : 'white',
@@ -1096,21 +1092,9 @@ export const OnboardingKYBFormPlayground = ({
                         </span>
                       </div>
 
-                      {/* Connecting line */}
-                      {index < FORM_STEPS.length - 1 && (
-                        <div
-                          className="absolute top-[25px] h-[2px] z-0"
-                          style={{ 
-                            left: '60%', 
-                            width: '80%', 
-                            backgroundColor: isCompleted ? '#209C5A' : '#E5E7EB'
-                          }}
-                        />
-                      )}
-
                       {/* Step label with better wrapping */}
                       <span 
-                        className="text-xs mt-3 text-center w-[70px] mx-auto min-h-[36px] line-clamp-2 font-bold transition-colors duration-200 z-10"
+                        className="text-xs mt-3 text-center w-full mx-auto min-h-[36px] line-clamp-2 font-bold transition-colors duration-200 z-10"
                         style={{ color: textColor }}
                       >
                         {STEP_TITLES[index]}
