@@ -294,23 +294,13 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
         </div>
       ) : (
         <>
-          {/* Accreditation status summary at the top */}
-          <div className="flex items-center justify-between mb-3 px-2">
-            <div className="flex items-center gap-1.5 bg-muted/30 px-3 py-1.5 rounded-md">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <span className="text-base font-medium">
-                {accreditationStats.approved} of {accreditationStats.total} companies accredited ({Math.round((accreditationStats.approved / accreditationStats.total) * 100) || 0}%)
-              </span>
-            </div>
-          </div>
-          
-          {/* Network visualization with extra padding */}
+          {/* Network visualization with proper spacing */}
           <div className="relative">
             <svg 
               ref={svgRef} 
               width="100%" 
-              height="520" 
-              className="bg-muted/20 rounded-lg px-4 py-4"
+              height="500" 
+              className="bg-muted/20 rounded-lg"
             ></svg>
             {selectedNode && data && (
               <ConnectionDetails 
@@ -359,7 +349,7 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
           {/* Risk level legend at the bottom */}
           <div className="border-t mt-3">
             {/* Risk level indicators */}
-            <div className="flex justify-center items-center p-2">
+            <div className="flex justify-center items-center pt-2 pb-1">
               <div className="flex items-center gap-x-6">
                 <div className="flex items-center space-x-2">
                   <span className="w-3 h-3 rounded-full bg-[#DFE3EA] border border-black"></span>
@@ -383,6 +373,16 @@ export function NetworkInsightVisualization({ className }: NetworkInsightVisuali
                     <span className="text-xs">Accredited</span>
                   </span>
                 </div>
+              </div>
+            </div>
+            
+            {/* Accreditation stats below the legend */}
+            <div className="flex justify-center items-center pb-2">
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">
+                  {accreditationStats.approved} of {accreditationStats.total} companies accredited ({Math.round((accreditationStats.approved / accreditationStats.total) * 100) || 0}%)
+                </span>
               </div>
             </div>
           </div>
