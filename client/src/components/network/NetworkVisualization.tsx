@@ -179,14 +179,24 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .on('click', (event) => {
           // Reset all connections
           g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
-          g.selectAll('circle').attr('stroke-width', 2.5);
           
-          // Set selected node styles
+          // Reset all node borders to their original state
+          g.selectAll('circle:not(:first-of-type)').each(function() {
+            const circle = d3.select(this);
+            const nodeId = circle.attr('data-node-id');
+            const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
+            
+            // Set back to original border (accreditation status)
+            circle.attr('stroke', nodeData?.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent')
+              .attr('stroke-width', 2.5);
+          });
+          
+          // Set black border on the selected node immediately
           d3.select(event.currentTarget)
             .attr('stroke', '#000')
             .attr('stroke-width', 3.5);
           
-          // Highlight the line connecting to this node
+          // Highlight the line connecting to this node with black
           g.selectAll('line')
             .filter((_, i) => i === index)
             .attr('stroke', '#000')
@@ -196,6 +206,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
           const rect = svgRef.current?.getBoundingClientRect();
           const nodeX = rect ? centerX + x : 0;
           
+          // Update state after visual changes to ensure UI is consistent
           setSelectedNodePosition({ x: nodeX, y: 0 });
           setSelectedNode(node);
           event.stopPropagation();
@@ -204,10 +215,27 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
     // Clear selection when clicking on background
     svg.on('click', () => {
-      // Reset all lines and nodes
+      // Reset all lines to default
       g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
-      g.selectAll('circle').attr('stroke-width', 2.5);
+      
+      // Reset center node to default style
+      g.select('circle:first-of-type')
+        .attr('stroke', '#000')
+        .attr('stroke-width', 2);
+      
+      // Reset all other nodes to their original accreditation borders
+      g.selectAll('circle:not(:first-of-type)').each(function() {
+        const circle = d3.select(this);
+        const nodeId = circle.attr('data-node-id');
+        const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
+        
+        circle
+          .attr('stroke', nodeData?.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent')
+          .attr('stroke-width', 2.5);
+      });
+      
       setSelectedNode(null);
+      setSelectedNodePosition(null);
     });
 
   }, [data, filteredNodes, selectedNode]);
@@ -216,7 +244,35 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (svgRef.current && !svgRef.current.contains(e.target as Node)) {
+        // Reset the visualization when clicking outside
+        if (svgRef.current) {
+          const svg = d3.select(svgRef.current);
+          const g = svg.select('g');
+          
+          if (g.node()) {
+            // Reset connection lines
+            g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
+            
+            // Reset center node to default style
+            g.select('circle:first-of-type')
+              .attr('stroke', '#000')
+              .attr('stroke-width', 2);
+            
+            // Reset all other nodes to their original accreditation borders
+            g.selectAll('circle:not(:first-of-type)').each(function() {
+              const circle = d3.select(this);
+              const nodeId = circle.attr('data-node-id');
+              const nodeData = data?.nodes.find(n => n.id.toString() === nodeId);
+              
+              circle
+                .attr('stroke', nodeData?.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent')
+                .attr('stroke-width', 2.5);
+            });
+          }
+        }
+        
         setSelectedNode(null);
+        setSelectedNodePosition(null);
       }
     };
 
@@ -224,7 +280,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
+  }, [data]);
 
   return (
     <Card className={className}>
