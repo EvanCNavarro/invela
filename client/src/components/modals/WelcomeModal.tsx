@@ -10,31 +10,31 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 // New carousel content with the updated 5 steps
 const carouselContent = [
   {
-    src: "/modal_userOboarding_1.png",
+    src: "/assets/modal_userOboarding_1.png",
     alt: "Welcome to Invela",
     title: "Welcome to Invela",
     subtitle: "Your intelligent platform for managing Risk and Accreditation."
   },
   {
-    src: "/harmonized_modal_userOboarding_2.png",
+    src: "/assets/harmonized_modal_userOboarding_2.png",
     alt: "Easy Onboarding",
     title: "Easy Onboarding",
     subtitle: "A simple, goal-oriented setup."
   },
   {
-    src: "/harmonized_modal_userOboarding_3.png",
+    src: "/assets/harmonized_modal_userOboarding_3.png",
     alt: "Built for Trust",
     title: "Built for Trust",
     subtitle: "Progress through KYB, Security, and Open Banking surveys — all in one secure flow."
   },
   {
-    src: "/harmonized_modal_userOboarding_4.png",
+    src: "/assets/harmonized_modal_userOboarding_4.png",
     alt: "Your Data, Protected", 
     title: "Your Data, Protected",
     subtitle: "Best-in-class encryption and secure controls at every step."
   },
   {
-    src: "/harmonized_modal_userOboarding_5.png",
+    src: "/assets/harmonized_modal_userOboarding_5.png",
     alt: "Start Your Process",
     title: "Start Your Process",
     subtitle: "Jump into your Task Center and start shaping your network."
@@ -162,11 +162,22 @@ export function WelcomeModal() {
           {/* Image content - wider layout */}
           <div className="px-10 py-6 flex justify-center items-center">
             <div className="w-full max-w-3xl h-72 relative rounded-xl bg-primary/5 p-6 flex items-center justify-center shadow-sm">
+              {/* Debug information for image troubleshooting */}
+              <div className="absolute top-2 right-2 text-xs text-slate-500 z-10">
+                {/* Log image path but don't display anything */}
+                {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
+              </div>
               <img
                 src={carouselContent[currentSlide].src}
                 alt={carouselContent[currentSlide].alt}
                 className="max-h-full max-w-full object-contain"
                 style={{ height: 'auto', maxHeight: '250px', width: 'auto' }}
+                onError={(e) => {
+                  console.error('Failed to load image:', carouselContent[currentSlide].src, e);
+                }}
+                onLoad={() => {
+                  console.log('Successfully loaded image:', carouselContent[currentSlide].src);
+                }}
               />
             </div>
           </div>
