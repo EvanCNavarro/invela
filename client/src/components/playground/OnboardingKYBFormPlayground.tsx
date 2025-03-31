@@ -313,8 +313,49 @@ const processSuggestion = (fieldName: string, suggestion: string | undefined, co
     return undefined;
   }
 
+  // Get the raw value from company data
   const value = companyData[suggestion];
-  const processedValue = Array.isArray(value) ? value.join(', ') : String(value);
+  
+  // Format the value based on its type
+  let processedValue = '';
+  
+  if (Array.isArray(value)) {
+    // If it's an array, join it with commas
+    processedValue = value.join(', ');
+  } else if (typeof value === 'string') {
+    // If it's a string that looks like a JSON array, clean it up
+    if (value.startsWith('{') && value.includes('","')) {
+      try {
+        // Try to parse as array-like string: {"item1","item2"}
+        const cleanedJson = value
+          .replace(/^\{/, '[')  // Replace opening {
+          .replace(/\}$/, ']')  // Replace closing }
+          .replace(/\\"/g, '"'); // Replace escaped quotes
+        
+        // Parse the modified JSON
+        const parsed = JSON.parse(cleanedJson);
+        
+        // Join the array with commas
+        if (Array.isArray(parsed)) {
+          processedValue = parsed.join(', ');
+        } else {
+          processedValue = String(value);
+        }
+      } catch (e) {
+        // If parsing fails, just clean up the JSON-like format
+        processedValue = value
+          .replace(/^\{"|"\}$/g, '')  // Remove {"..."} wrapping
+          .replace(/\\"/g, '"')        // Replace escaped quotes
+          .replace(/","/, ', ');       // Replace "," with comma and space
+      }
+    } else {
+      // Regular string
+      processedValue = String(value);
+    }
+  } else {
+    // Other types (number, boolean, etc.)
+    processedValue = String(value);
+  }
 
   console.log('[KYB Form Debug] Processed suggestion value:', {
     fieldName,
