@@ -21,6 +21,7 @@ interface NetworkVisualizationProps {
 export function NetworkVisualization({ className }: NetworkVisualizationProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
+  const [selectedNodePosition, setSelectedNodePosition] = useState<{x: number, y: number} | null>(null);
   const [filters, setFilters] = useState<NetworkFilters>({
     riskBuckets: [],
     accreditationStatus: []
@@ -127,18 +128,62 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
         .attr('cursor', 'pointer')
         .attr('data-node-id', node.id)
         .on('mouseover', function() {
+          // Create a more visible tooltip
           d3.select(this).attr('stroke-width', 3.5);
+          
+          // Highlight the connection on hover
+          g.selectAll('line')
+            .filter((_, i) => i === index)
+            .attr('stroke', '#4b5563')
+            .attr('stroke-width', 1.8);
+            
+          // Enhanced tooltip
+          const tooltip = g.append('g')
+            .attr('class', 'node-tooltip')
+            .attr('transform', `translate(${x}, ${y - 30})`);
+          
+          tooltip.append('rect')
+            .attr('rx', 4)
+            .attr('ry', 4)
+            .attr('x', -node.name.length * 3 - 8)
+            .attr('y', -20)
+            .attr('width', node.name.length * 6 + 16)
+            .attr('height', 26)
+            .attr('fill', 'white')
+            .attr('stroke', '#e2e8f0')
+            .attr('stroke-width', 1);
+            
+          tooltip.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', -4)
+            .attr('fill', '#1e293b')
+            .style('font-size', '12px')
+            .style('font-weight', 'bold')
+            .text(node.name);
         })
         .on('mouseout', function() {
           const isSelected = selectedNode && selectedNode.id === node.id;
           d3.select(this).attr('stroke-width', isSelected ? 3.5 : 2.5);
+          
+          // Only reset the line if not selected
+          if (!isSelected) {
+            g.selectAll('line')
+              .filter((_, i) => i === index)
+              .attr('stroke', '#94a3b8')
+              .attr('stroke-width', 1.5);
+          }
+          
+          // Remove tooltip
+          g.selectAll('.node-tooltip').remove();
         })
         .on('click', (event) => {
           // Reset all connections
           g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
           g.selectAll('circle').attr('stroke-width', 2.5);
           
+          // Set selected node styles
           d3.select(event.currentTarget)
+            .attr('stroke', '#000')
             .attr('stroke-width', 3.5);
           
           // Highlight the line connecting to this node
@@ -147,12 +192,14 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             .attr('stroke', '#000')
             .attr('stroke-width', 2);
           
+          // Store the node's position for connection details panel positioning
+          const rect = svgRef.current?.getBoundingClientRect();
+          const nodeX = rect ? centerX + x : 0;
+          
+          setSelectedNodePosition({ x: nodeX, y: 0 });
           setSelectedNode(node);
           event.stopPropagation();
         });
-
-      nodeElement.append('title')
-        .text(node.name);
     });
 
     // Clear selection when clicking on background
@@ -208,7 +255,22 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
                 <ConnectionDetails 
                   node={selectedNode} 
                   centerNode={data.center} 
-                  onClose={() => setSelectedNode(null)} 
+                  position={selectedNodePosition}
+                  onClose={() => {
+                    setSelectedNode(null);
+                    setSelectedNodePosition(null);
+                    // Reset all lines and nodes when closing details
+                    if (svgRef.current) {
+                      const svg = d3.select(svgRef.current);
+                      const g = svg.select('g');
+                      g.selectAll('line').attr('stroke', '#94a3b8').attr('stroke-width', 1.5);
+                      g.selectAll('circle').attr('stroke', node => {
+                        // Restore accreditation border color
+                        const d = d3.select(node as any).datum() as any;
+                        return d && d.accreditationStatus === 'APPROVED' ? '#22c55e' : 'transparent';
+                      }).attr('stroke-width', 2.5);
+                    }
+                  }} 
                 />
               )}
             </div>
