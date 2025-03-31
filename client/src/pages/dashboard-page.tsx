@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
+import { InviteButton } from "@/components/ui/invite-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PageTemplate } from "@/components/ui/page-template";
 import { PageSideDrawer } from "@/components/ui/page-side-drawer";
@@ -198,13 +199,12 @@ export default function DashboardPage() {
                   isVisible={visibleWidgets.quickActions}
                 >
                   <div className="grid grid-cols-2 gap-2">
-                    <Button
-                      variant="default"
+                    <InviteButton
+                      variant="fintech"
+                      pulse={true}
                       className="w-full font-medium"
                       onClick={() => setOpenFinTechModal(true)}
-                    >
-                      Invite a New FinTech
-                    </Button>
+                    />
                     <Button variant="outline" className="w-full font-medium">
                       Add User
                     </Button>
