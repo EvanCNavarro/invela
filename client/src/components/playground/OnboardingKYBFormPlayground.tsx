@@ -283,11 +283,16 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         </div>
       </div>
       
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="mb-2 flex items-center">
+          <div className="bg-blue-600 h-4 w-1 mr-2 rounded"></div>
+          <h3 className="text-sm font-semibold text-gray-800">SUBMITTED ANSWERS FOR REVIEW</h3>
+        </div>
+        
         {formEntries.map((entry, index) => (
-          <div key={entry.fieldName} className="mb-6">
+          <div key={entry.fieldName} className="mb-6 bg-white p-3 border border-gray-100 rounded-md shadow-sm">
             <div className="flex flex-col">
-              <p className="text-gray-500 mb-1">
+              <p className="text-gray-500 mb-1 font-mono text-sm">
                 <span className="font-medium text-gray-600 mr-1">{index + 1}.</span> Q: {entry.question}
               </p>
               <p className="font-semibold text-black flex items-center">
@@ -309,19 +314,20 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
       >
         <div className="flex items-start gap-3">
           <div 
-            className={`flex items-center justify-center w-5 h-5 rounded border mt-0.5 transition-colors ${
+            className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded border mt-0.5 transition-colors ${
               termsAccepted 
                 ? "bg-blue-600 border-blue-600" 
                 : "bg-white border-gray-300"
             }`}
+            style={{ minWidth: '20px', minHeight: '20px' }}
           >
             {termsAccepted && <Check className="h-3 w-3 text-white" />}
           </div>
           
-          <div>
+          <div className="flex-grow">
             <h3 className="text-sm font-medium text-gray-700 mb-2">Submission Terms</h3>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              I, <span className="font-semibold">{userName}</span>, acknowledge that I am an authorized representative of <span className="font-semibold">{companyName}</span> and certify 
+            <p className="text-sm font-semibold text-black leading-relaxed">
+              I, <span className="font-bold">{userName}</span>, acknowledge that I am an authorized representative of <span className="font-bold">{companyName}</span> and certify 
               that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
               will use this information to assess accreditation status and calculate risk scores. I grant Invela permission 
               to securely store, process, and verify this data in accordance with industry regulations. I accept full 
