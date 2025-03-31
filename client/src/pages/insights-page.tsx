@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -25,6 +25,7 @@ import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
 import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
+import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
 
 const visualizationTypes = [
   { value: "network_visualization", label: "Network Visualization" },
@@ -85,7 +86,7 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget title="" className="h-[600px]">
+        <Widget title="" className="h-[700px]">
           {selectedVisualization === "network_visualization" && (
             <NetworkInsightVisualization />
           )}
@@ -101,7 +102,7 @@ export default function InsightsPage() {
                   height={80}
                 />
                 <YAxis />
-                <Tooltip />
+                <RechartsTooltip />
                 <Bar dataKey="count">
                   {companyTypeData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color || 'hsl(var(--primary))'} />
@@ -112,11 +113,7 @@ export default function InsightsPage() {
           )}
 
           {selectedVisualization === "accreditation_status" && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">
-                Select a different visualization type to view data
-              </p>
-            </div>
+            <AccreditationDotMatrix />
           )}
         </Widget>
       </div>
