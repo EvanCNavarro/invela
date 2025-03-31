@@ -1043,10 +1043,26 @@ export const OnboardingKYBFormPlayground = ({
             {!isSubmitted && (
               <div className="flex items-center justify-between px-4 mb-12 overflow-x-auto min-w-full sm:px-8">
                 {FORM_STEPS.map((step, index) => (
-                  <div key={step[0].name} className="flex flex-col items-center relative min-w-[120px]">
-                    {/* Step indicator circle */}
+                  <div 
+                    key={step[0].name} 
+                    className={`flex flex-col items-center relative min-w-[120px] ${
+                      index <= currentStep ? 'cursor-pointer group' : 'cursor-not-allowed'
+                    }`}
+                    onClick={() => {
+                      // Only allow navigating to completed steps or current step
+                      if (index <= currentStep) {
+                        setCurrentStep(index);
+                      }
+                    }}
+                  >
+                    {/* Hover effect for clickable steps */}
+                    {index <= currentStep && (
+                      <div className="absolute inset-0 rounded-lg border-2 border-transparent group-hover:border-gray-200 opacity-0 group-hover:opacity-100 transition-all duration-200" />
+                    )}
+                    
+                    {/* Step indicator squircle */}
                     <div
-                      className={`flex items-center justify-center h-7 w-7 rounded-full border-2 transition-all duration-200
+                      className={`flex items-center justify-center h-8 w-8 rounded-lg border-2 transition-all duration-200
                         ${index === currentStep
                         ? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-sm'
                         : index < currentStep
@@ -1062,14 +1078,20 @@ export const OnboardingKYBFormPlayground = ({
                     {/* Connecting line */}
                     {index < FORM_STEPS.length - 1 && (
                       <div
-                        className={`absolute top-3.5 left-[calc(50%+16px)] h-[2px] transition-all duration-200
+                        className={`absolute top-4 left-[calc(50%+16px)] h-[2px] transition-all duration-200
                           ${index < currentStep ? 'bg-[#4F46E5]' : 'bg-[#E5E7EB]'}`}
                         style={{ width:`calc(100% -24px)` }}
                       />
                     )}
 
                     {/* Step label */}
-                    <span className="text-[11px] text-[#6B7280] mt-3 text-center w-[100px] min-h-[32px] line-clamp-2 font-medium">
+                    <span className={`text-[11px] mt-3 text-center w-[100px] min-h-[32px] line-clamp-2 font-medium transition-colors duration-200 ${
+                      index === currentStep 
+                        ? 'text-[#4F46E5]' 
+                        : index < currentStep 
+                          ? 'text-[#6B7280] group-hover:text-[#4F46E5]' 
+                          : 'text-[#9CA3AF]'
+                    }`}>
                       {STEP_TITLES[index]}
                     </span>
                   </div>
