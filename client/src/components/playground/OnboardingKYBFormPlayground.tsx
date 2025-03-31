@@ -248,6 +248,10 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
 
   // Get company name from the form data
   const companyName = formData.legalEntityName || "your company";
+  const [termsAccepted, setTermsAccepted] = useState(true);
+  
+  // Get the current user name (using email if full name not available)
+  const userName = "John Doe"; // Replace with actual user name when available
 
   return (
     <Card className="p-6">
@@ -295,15 +299,36 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
       </div>
       
       {/* Terms and conditions acceptance section */}
-      <div className="mt-8 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">Submission Terms</h3>
-        <p className="text-sm text-gray-600 leading-relaxed">
-          By submitting this form, I acknowledge that I am an authorized representative of {companyName} and certify 
-          that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
-          will use this information to assess accreditation status and calculate risk scores, which may impact business 
-          relationships. I grant Invela permission to securely store, process, and verify this data in accordance with 
-          applicable regulations. I accept full responsibility for any inaccuracies or omissions in the submitted data.
-        </p>
+      <div 
+        className={`mt-8 mb-6 p-4 rounded-lg border transition-colors ${
+          termsAccepted 
+            ? "bg-blue-50 border-blue-200" 
+            : "bg-gray-50 border-gray-200"
+        } cursor-pointer`}
+        onClick={() => setTermsAccepted(!termsAccepted)}
+      >
+        <div className="flex items-start gap-3">
+          <div 
+            className={`flex items-center justify-center w-5 h-5 rounded border mt-0.5 transition-colors ${
+              termsAccepted 
+                ? "bg-blue-600 border-blue-600" 
+                : "bg-white border-gray-300"
+            }`}
+          >
+            {termsAccepted && <Check className="h-3 w-3 text-white" />}
+          </div>
+          
+          <div>
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Submission Terms</h3>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              I, <span className="font-semibold">{userName}</span>, acknowledge that I am an authorized representative of <span className="font-semibold">{companyName}</span> and certify 
+              that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
+              will use this information to assess accreditation status and calculate risk scores. I grant Invela permission 
+              to securely store, process, and verify this data in accordance with industry regulations. I accept full 
+              responsibility for any inaccuracies or omissions in the submitted data.
+            </p>
+          </div>
+        </div>
       </div>
       
       <div className="flex justify-between pt-4 border-t">
@@ -318,7 +343,12 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         
         <Button
           onClick={onSubmit}
-          className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
+          disabled={!termsAccepted}
+          className={`rounded-lg px-4 transition-all ${
+            termsAccepted 
+              ? "hover:bg-blue-700 animate-pulse-ring" 
+              : "opacity-50 cursor-not-allowed"
+          }`}
         >
           Submit
           <Check className="h-4 w-4 ml-1 text-white" />
