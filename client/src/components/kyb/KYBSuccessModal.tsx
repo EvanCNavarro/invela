@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -10,7 +11,15 @@ interface KYBSuccessModalProps {
 }
 
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
+  
+  // Auto navigate to task center when the modal opens
+  // This ensures the form is no longer visible in the background
+  useEffect(() => {
+    if (open && !location.startsWith('/task-center')) {
+      navigate('/task-center');
+    }
+  }, [open, navigate, location]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

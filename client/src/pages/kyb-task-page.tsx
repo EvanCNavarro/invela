@@ -124,8 +124,13 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   description: "Your KYB form has been saved and the task has been updated.",
                 });
                 
-                // Show success modal instead of navigating immediately
-                setShowSuccessModal(true);
+                // Navigate to task center first, then show modal
+                navigate('/task-center');
+                
+                // Use a small timeout to ensure navigation completes before showing modal
+                setTimeout(() => {
+                  setShowSuccessModal(true);
+                }, 100);
               })
               .catch(error => {
                 console.error('Failed to save KYB form:', error);
