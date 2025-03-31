@@ -2095,11 +2095,33 @@ export function registerRoutes(app: Express): Express {
   // Company type distribution endpoint
   app.get("/api/company-type-distribution", requireAuth, async (req, res) => {
     try {
-      // Execute a query that counts companies by category
-      console.log('[CompanyTypes] Fetching company type distribution');
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Get the current company ID
+      const currentCompanyId = req.user.company_id;
+      
+      // Execute a query that counts companies by category, but only including companies
+      // that have a relationship with the current company
+      console.log('[CompanyTypes] Fetching company type distribution for company:', currentCompanyId);
       
       const result = await db.execute(
-        sql`SELECT category, COUNT(*) as count FROM companies GROUP BY category`
+        sql`
+          SELECT c.category, COUNT(*) as count 
+          FROM companies c
+          WHERE c.id IN (
+            SELECT r.target_company_id 
+            FROM relationships r 
+            WHERE r.source_company_id = ${currentCompanyId}
+            UNION
+            SELECT r.source_company_id 
+            FROM relationships r 
+            WHERE r.target_company_id = ${currentCompanyId}
+          )
+          GROUP BY c.category
+        `
       );
       
       console.log('[CompanyTypes] Results:', result.rows);
@@ -2137,17 +2159,34 @@ export function registerRoutes(app: Express): Express {
   // Accreditation status distribution endpoint
   app.get("/api/accreditation-status-distribution", requireAuth, async (req, res) => {
     try {
-      console.log('[AccreditationStatus] Fetching accreditation status distribution');
-      
       // Ensure user is authenticated
       if (!req.user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
       
+      // Get the current company ID
+      const currentCompanyId = req.user.company_id;
+      
+      console.log('[AccreditationStatus] Fetching accreditation status distribution for company:', currentCompanyId);
+      
       // Query the companies along with their accreditation status
+      // Only include companies that have a relationship with the current company
       const companiesResult = await db.execute(
-        sql`SELECT c.id, c.name, c.category, c.accreditation_status FROM companies c 
-            WHERE c.id != ${req.user.company_id} ORDER BY c.name`
+        sql`
+          SELECT c.id, c.name, c.category, c.accreditation_status 
+          FROM companies c 
+          WHERE c.id != ${currentCompanyId}
+          AND c.id IN (
+            SELECT r.target_company_id 
+            FROM relationships r 
+            WHERE r.source_company_id = ${currentCompanyId}
+            UNION
+            SELECT r.source_company_id 
+            FROM relationships r 
+            WHERE r.target_company_id = ${currentCompanyId}
+          )
+          ORDER BY c.name
+        `
       );
       
       // Define status types and colors
