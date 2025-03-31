@@ -1886,29 +1886,40 @@ export function registerRoutes(app: Express): Express {
         return 'critical';
       };
 
+      // Add debug logging
+      console.log('[Network] Current company:', currentCompany);
+      console.log('[Network] Sample network node:', networkData.length > 0 ? networkData[0] : 'No network data');
+      
+      // Ensure values are not null/undefined with defaults
+      const safeRiskScore = currentCompany.risk_score || 0;
+      
       // Transform the data into visualization-friendly format
       const result = {
         center: {
           id: currentCompany.id,
-          name: currentCompany.name,
-          riskScore: currentCompany.risk_score,
-          riskBucket: getRiskBucket(currentCompany.risk_score),
-          accreditationStatus: currentCompany.accreditation_status,
-          revenueTier: currentCompany.revenue_tier,
-          category: currentCompany.category
+          name: currentCompany.name || 'Unknown',
+          riskScore: safeRiskScore,
+          riskBucket: getRiskBucket(safeRiskScore),
+          accreditationStatus: currentCompany.accreditation_status || 'Unknown',
+          revenueTier: currentCompany.revenue_tier || 'Unknown',
+          category: currentCompany.category || 'Unknown'
         },
-        nodes: networkData.map(relation => ({
-          id: relation.companyId,
-          name: relation.companyName,
-          relationshipId: relation.relationshipId,
-          relationshipType: relation.relationshipType,
-          relationshipStatus: relation.relationshipStatus,
-          riskScore: relation.riskScore,
-          riskBucket: getRiskBucket(relation.riskScore),
-          accreditationStatus: relation.accreditationStatus,
-          revenueTier: relation.revenueTier,
-          category: relation.category
-        }))
+        nodes: networkData.map(relation => {
+          // Ensure all values have defaults if null/undefined
+          const nodeRiskScore = relation.riskScore || 0;
+          return {
+            id: relation.companyId,
+            name: relation.companyName || 'Unknown Company',
+            relationshipId: relation.relationshipId,
+            relationshipType: relation.relationshipType || 'Unknown',
+            relationshipStatus: relation.relationshipStatus || 'Unknown',
+            riskScore: nodeRiskScore,
+            riskBucket: getRiskBucket(nodeRiskScore),
+            accreditationStatus: relation.accreditationStatus || 'Unknown',
+            revenueTier: relation.revenueTier || 'Unknown',
+            category: relation.category || 'Unknown'
+          };
+        })
       };
 
       console.log('[Network] Found network data:', {
@@ -1919,9 +1930,23 @@ export function registerRoutes(app: Express): Express {
       res.json(result);
     } catch (error) {
       console.error("[Network] Error fetching network data:", error);
+      
+      // Detailed error logging for debugging
+      if (error instanceof Error) {
+        console.error("[Network] Error name:", error.name);
+        console.error("[Network] Error message:", error.message);
+        console.error("[Network] Error stack:", error.stack);
+      }
+      
+      // Check for specific error types and provide better error messages
+      let errorMessage = "Error fetching network visualization data";
+      if (error instanceof TypeError && error.message.includes("Cannot convert undefined or null to object")) {
+        errorMessage = "Data structure error: Null value where object expected";
+      }
+      
       res.status(500).json({ 
-        message: "Error fetching network visualization data",
-        error: error.message
+        message: errorMessage,
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
