@@ -1,0 +1,64 @@
+[Router] Current location: /task-center/task/kyb-TestDelete5
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(1), isLoadingCompany: false}
+[WebSocket] Subscription removed: 
+Object {type: "task_updated", remainingHandlers: 1, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.757Z"}
+[WebSocket] Subscription removed: 
+Object {type: "task_created", remainingHandlers: 0, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.757Z"}
+[WebSocket] Subscription removed: 
+Object {type: "task_deleted", remainingHandlers: 0, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.757Z"}
+[WebSocket] Subscription removed: 
+Object {type: "task_updated", remainingHandlers: 0, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.757Z"}
+[WebSocket] Component unmounting: 
+Object {remainingSubscribers: 0, timestamp: "2025-03-31T14:27:21.758Z"}
+[WebSocket] Closing global connection - no active subscribers
+[WebSocket] Creating new connection: 
+Object {url: "wss://9606074c-a9ad-4fe1-8fe5-3d9c3eed0606-00-33ar2rv36ligj.picard.replit.dev/ws", activeSubscribers: 1, timestamp: "2025-03-31T14:27:21.758Z"}
+e.set is not a function
+[WebSocket] New subscription added: 
+Object {type: "task_created", handlersCount: 1, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.762Z"}
+[WebSocket] New subscription added: 
+Object {type: "task_deleted", handlersCount: 1, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.762Z"}
+[WebSocket] New subscription added: 
+Object {type: "task_updated", handlersCount: 1, connectionId: "ws_1743431238537_jjewsg4dy", timestamp: "2025-03-31T14:27:21.762Z"}
+[DashboardLayout] Checking route access: 
+Object {currentTab: "task-center", availableTabs: Array(1), isLoadingCompany: false}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: false}
+[KYB Form Debug] Review mode triggered from URL parameter
+[Form Debug] Component mounted: 
+Object {taskId: 266, hasInitialData: true, timestamp: "2025-03-31T14:27:22.001Z"}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: false}
+[WebSocket] Connected successfully
+[WebSocket] Received message: 
+Object {type: "connection_established", data: {…}}
+[WebSocket] Received message: 
+Object {type: "pong"}
+[WebSocket] Received pong
+[KYB Form Debug] Loaded task data: 
+Object {taskId: 266, hasData: true, fields: Array(24), status: undefined, timestamp: "2025-03-31T14:27:22.218Z"}
+[KYB Form Debug] Form data initialized: 
+Object {dataKeys: Array(24), values: Array(24), timestamp: "2025-03-31T14:27:22.219Z"}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+formData: Object
+isValid: true
+step: Array(6)
+[[Prototype]]: Object
+[KYB Form Debug] Starting company search: 
+Object {companyName: "TestDelete5", timestamp: "2025-03-31T14:27:22.222Z"}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}
+[KYB Form Debug] Company data received: 
+Object {dataFields: Array(29), timestamp: "2025-03-31T14:27:25.706Z"}
+Current step validation: 
+Object {step: Array(6), formData: {…}, isValid: true}

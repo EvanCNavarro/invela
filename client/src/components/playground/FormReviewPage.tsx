@@ -50,7 +50,7 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         </div>
       </div>
       
-      <div className="space-y-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+      <div className="space-y-3 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <div className="mb-2 flex items-center">
           <div className="bg-blue-600 h-4 w-1 mr-2 rounded"></div>
           <h3 className="text-sm font-semibold text-gray-800">SURVEY ANSWERS FOR REVIEW</h3>
@@ -59,7 +59,7 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         {/* Form entries with reduced spacing - 12px instead of 24px */}
         <div className="space-y-3">
           {formEntries.map((entry, index) => (
-            <div key={entry.fieldName} className="border-b border-gray-200 pb-3 mt-3">
+            <div key={entry.fieldName} className="border-b border-gray-200 pb-3" style={{marginTop: index === 0 ? '0' : '12px'}}>
               <div className="flex gap-2">
                 <span className="font-bold text-gray-500">{index + 1}.</span>
                 <div className="w-full">
