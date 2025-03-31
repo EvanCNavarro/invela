@@ -1134,7 +1134,16 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <hr className="border-t-2 border-dashed border-spacing-x-4 border-gray-300 mt-1 mb-5" style={{ borderWidth: '2px', borderSpacing: '1rem' }} />
+          <div className="flex items-center justify-center mt-0 mb-4">
+            <div className="w-full h-[1px] border-0 relative">
+              {/* Custom dashed line with very wide spacing */}
+              <div className="absolute inset-0 flex items-center justify-evenly">
+                {[...Array(15)].map((_, i) => (
+                  <div key={i} className="w-8 h-[1px] bg-gray-200/70"></div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
