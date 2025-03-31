@@ -907,8 +907,8 @@ export const OnboardingKYBFormPlayground = ({
     if (field.field_type === 'MULTIPLE_CHOICE' && field.options) {
       const isSelected = !isEmptyValue(value);
       return (
-        <div key={field.name} className="space-y-2">
-          <div className="flex flex-col gap-1 mb-1">
+        <div key={field.name} className="space-y-3 py-2">
+          <div className="flex flex-col gap-2 mb-2">
             <label className="text-sm font-semibold text-foreground">
               {field.label}
             </label>
@@ -951,8 +951,8 @@ export const OnboardingKYBFormPlayground = ({
 
     // Original input field rendering for text fields
     return (
-      <div key={field.name} className="space-y-2">
-        <div className="flex flex-col gap-1 mb-1">
+      <div key={field.name} className="space-y-3 py-2">
+        <div className="flex flex-col gap-2 mb-2">
           <label className="text-sm font-semibold text-foreground">
             {field.label}
           </label>
@@ -1147,8 +1147,8 @@ export const OnboardingKYBFormPlayground = ({
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-4">
-              <div className="space-y-4">
+            <div className="space-y-6">
+              <div className="space-y-8">
                 {currentStepData.map(renderField)}
               </div>
             </div>
