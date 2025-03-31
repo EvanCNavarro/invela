@@ -180,9 +180,6 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <span>{task.title}</span>
-                            {task.task_type === 'company_kyb' && (
-                              <Badge variant="outline" className="ml-2">KYB</Badge>
-                            )}
                             {isLocked && (
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
                             )}
