@@ -13,10 +13,11 @@ interface ConnectionDetailsProps {
 
 export function ConnectionDetails({ node, centerNode, onClose, position }: ConnectionDetailsProps) {
   // Determine position based on the x-coordinate
-  // If the node is on the left side, position the panel on the right, and vice versa
-  const positioning = position && position.x < 200 
-    ? "right-4" // Node is on the left side, so place panel on the right
-    : "left-4"; // Node is on the right or center, so place panel on the left
+  // If the node is on the left side (x < 250), position the panel on the right
+  // If the node is on the right side (x >= 250), position the panel on the left
+  const positioning = position?.x && position.x < 250 
+    ? "right-4" // Node is on the left side, position panel on the right
+    : "left-4"; // Node is on the right side, position panel on the left
     
   return (
     <Card className={`absolute top-4 ${positioning} w-[320px] shadow-lg z-10`}>
