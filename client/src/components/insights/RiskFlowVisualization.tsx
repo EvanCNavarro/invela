@@ -59,8 +59,40 @@ const formatSankeyData = (data: SankeyData) => {
 
 // Custom node shape with count and better styling
 const CustomNode = ({ x, y, width, height, index, payload }: any) => {
-  const { color, name } = payload;
+  const { color, name, category } = payload;
   const nodeWidth = Math.max(width, 50); // Ensure minimal width for readability
+  
+  // Enhanced styling based on category
+  const getNodeStyle = () => {
+    const baseStyle = {
+      fill: color,
+      stroke: "#fff",
+      strokeWidth: 2,
+      rx: 4,
+      ry: 4
+    };
+    
+    // Apply specific styling for different node categories
+    if (category === 'companyType') {
+      return {...baseStyle, strokeWidth: 3, stroke: "#0A0A1B"};
+    } else if (category === 'accreditationStatus') {
+      return {...baseStyle, strokeDasharray: "5,2"};
+    } else {
+      return baseStyle;
+    }
+  };
+  
+  // Split name by parentheses to show count on a separate line
+  let displayName = name;
+  let countText = "";
+  
+  if (name && name.includes('(')) {
+    const parts = name.split(/[()]/);
+    displayName = parts[0].trim();
+    countText = parts.length > 1 ? parts[1] : "";
+  }
+  
+  const nodeStyle = getNodeStyle();
   
   return (
     <g>
@@ -71,14 +103,15 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
         height={height}
         fill={color}
         fillOpacity="1"
-        stroke="#fff"
-        strokeWidth={2}
-        rx={4}
-        ry={4}
+        stroke={nodeStyle.stroke}
+        strokeWidth={nodeStyle.strokeWidth}
+        strokeDasharray={nodeStyle.strokeDasharray}
+        rx={nodeStyle.rx}
+        ry={nodeStyle.ry}
       />
       <text
         x={x + nodeWidth / 2}
-        y={y + height / 2}
+        y={y + height / 2 - (countText ? 8 : 0)}
         textAnchor="middle"
         dominantBaseline="middle"
         fill="#fff"
@@ -88,8 +121,20 @@ const CustomNode = ({ x, y, width, height, index, payload }: any) => {
         strokeWidth={0.5}
         paintOrder="stroke"
       >
-        {name}
+        {displayName}
       </text>
+      {countText && (
+        <text
+          x={x + nodeWidth / 2}
+          y={y + height / 2 + 12}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#fff"
+          fontSize={10}
+        >
+          {countText}
+        </text>
+      )}
     </g>
   );
 };
@@ -146,18 +191,39 @@ const CustomTooltip = ({ active, payload }: any) => {
   }
   
   // For link tooltips
-  const sourceNode = payload[0].payload.source;
-  const targetNode = payload[0].payload.target;
-  const value = payload[0].value;
-  
-  return (
-    <div className="bg-white p-3 rounded-md shadow-md border border-gray-200">
-      <p className="font-semibold">Connection Details</p>
-      <p className="text-sm">From: {sourceNode.name}</p>
-      <p className="text-sm">To: {targetNode.name}</p>
-      <p className="text-sm">Count: {value}</p>
-    </div>
-  );
+  try {
+    // Check if source and target exist and have name property
+    const sourceNode = payload[0].payload.source;
+    const targetNode = payload[0].payload.target;
+    const value = payload[0].value;
+    
+    // Ensure both source and target nodes are defined and have a name property
+    if (!sourceNode || !targetNode || typeof sourceNode.name === 'undefined' || typeof targetNode.name === 'undefined') {
+      return (
+        <div className="bg-white p-3 rounded-md shadow-md border border-gray-200">
+          <p className="font-semibold">Connection Details</p>
+          <p className="text-sm">Count: {value}</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="bg-white p-3 rounded-md shadow-md border border-gray-200">
+        <p className="font-semibold">Connection Details</p>
+        <p className="text-sm">From: {sourceNode.name}</p>
+        <p className="text-sm">To: {targetNode.name}</p>
+        <p className="text-sm">Count: {value}</p>
+      </div>
+    );
+  } catch (error) {
+    // Fallback if there's any error in parsing the tooltip data
+    return (
+      <div className="bg-white p-3 rounded-md shadow-md border border-gray-200">
+        <p className="font-semibold">Connection Details</p>
+        <p className="text-sm">Value: {payload[0].value || 'N/A'}</p>
+      </div>
+    );
+  }
 };
 
 export function RiskFlowVisualization() {
@@ -229,8 +295,9 @@ export function RiskFlowVisualization() {
             node={<CustomNode />}
             link={<CustomLink />}
             nodePadding={50}
-            nodeWidth={100}
-            margin={{ top: 20, right: 160, bottom: 20, left: 160 }}
+            nodeWidth={80}
+            margin={{ top: 20, right: 250, bottom: 20, left: 250 }}
+            iterations={64}
           >
             <defs>
               {/* Gradients are created in the CustomLink component */}
