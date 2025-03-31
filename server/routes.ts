@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { eq, and, gt, sql, or, isNull } from 'drizzle-orm';
+import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
@@ -1807,68 +1807,15 @@ export function registerRoutes(app: Express): Express {
         return res.status(404).json({ message: "Company not found" });
       }
 
-      // Get all related companies with their relationship details
-      const networkData = await db.select({
-        relationshipId: relationships.id,
+      // Create a simpler query structure to avoid null/undefined issues
+      // First, get basic relationship info
+      const relationshipsData = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
         relationshipType: relationships.relationship_type,
         relationshipStatus: relationships.status,
-        relationshipMetadata: relationships.metadata,
-        companyId: sql<number>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
-            ELSE ${relationships.company_id}
-          END
-        `,
-        companyName: sql<string>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
-              SELECT name FROM ${companies} WHERE id = ${relationships.related_company_id}
-            )
-            ELSE (
-              SELECT name FROM ${companies} WHERE id = ${relationships.company_id}
-            )
-          END
-        `,
-        riskScore: sql<number>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
-              SELECT risk_score FROM ${companies} WHERE id = ${relationships.related_company_id}
-            )
-            ELSE (
-              SELECT risk_score FROM ${companies} WHERE id = ${relationships.company_id}
-            )
-          END
-        `,
-        accreditationStatus: sql<string>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
-              SELECT accreditation_status FROM ${companies} WHERE id = ${relationships.related_company_id}
-            )
-            ELSE (
-              SELECT accreditation_status FROM ${companies} WHERE id = ${relationships.company_id}
-            )
-          END
-        `,
-        revenueTier: sql<string>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
-              SELECT revenue_tier FROM ${companies} WHERE id = ${relationships.related_company_id}
-            )
-            ELSE (
-              SELECT revenue_tier FROM ${companies} WHERE id = ${relationships.company_id}
-            )
-          END
-        `,
-        category: sql<string>`
-          CASE 
-            WHEN ${relationships.company_id} = ${req.user.company_id} THEN (
-              SELECT category FROM ${companies} WHERE id = ${relationships.related_company_id}
-            )
-            ELSE (
-              SELECT category FROM ${companies} WHERE id = ${relationships.company_id}
-            )
-          END
-        `
+        metadata: relationships.metadata,
       })
       .from(relationships)
       .where(
@@ -1877,6 +1824,67 @@ export function registerRoutes(app: Express): Express {
           eq(relationships.related_company_id, req.user.company_id)
         )
       );
+
+      console.log('[Network] Found relationships:', relationshipsData.length);
+      
+      // Process relationships to determine which company IDs we need to fetch
+      const relatedCompanyIds = new Set<number>();
+      relationshipsData.forEach(rel => {
+        // If this company is the current company, we need the related company
+        if (rel.companyId === req.user.company_id) {
+          relatedCompanyIds.add(rel.relatedCompanyId);
+        } else {
+          // Otherwise, we need this company
+          relatedCompanyIds.add(rel.companyId);
+        }
+      });
+      
+      // Now fetch all the needed companies in one query
+      // Convert the Set to a string for SQL IN operation
+      const companyIdsArray = [...relatedCompanyIds, req.user.company_id];
+      const companyIds = companyIdsArray.join(',');
+      
+      const allCompaniesData = await db.select({
+        id: companies.id,
+        name: companies.name,
+        riskScore: companies.risk_score,
+        accreditationStatus: companies.accreditation_status,
+        revenueTier: companies.revenue_tier,
+        category: companies.category
+      })
+      .from(companies)
+      .where(sql`${companies.id} IN (${companyIds})`);
+      
+      console.log('[Network] Found companies:', allCompaniesData.length);
+      
+      // Create a lookup for companies
+      const companiesMap = new Map();
+      allCompaniesData.forEach(company => {
+        companiesMap.set(company.id, company);
+      });
+      
+      // Now construct the network data by joining the information
+      const networkData = relationshipsData.map(rel => {
+        // Determine which is the related company
+        const targetCompanyId = rel.companyId === req.user.company_id 
+          ? rel.relatedCompanyId
+          : rel.companyId;
+        
+        const company = companiesMap.get(targetCompanyId);
+        
+        return {
+          relationshipId: rel.id,
+          relationshipType: rel.relationshipType || 'Unknown',
+          relationshipStatus: rel.relationshipStatus || 'Unknown',
+          relationshipMetadata: rel.metadata || {},
+          companyId: targetCompanyId,
+          companyName: company?.name || 'Unknown Company',
+          riskScore: company?.riskScore || 0,
+          accreditationStatus: company?.accreditationStatus || 'Unknown',
+          revenueTier: company?.revenueTier || 'Unknown',
+          category: company?.category || 'Unknown'
+        };
+      });
 
       // Map risk scores to risk buckets
       const getRiskBucket = (score: number) => {
