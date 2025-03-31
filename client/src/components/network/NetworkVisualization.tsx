@@ -180,27 +180,7 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
 
   return (
     <Card className={className}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <div>
-          <CardTitle className="text-xl flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-network">
-              <circle cx="12" cy="12" r="2"/>
-              <path d="M4.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-              <path d="M4.5 17a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-              <path d="M19.5 17a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-              <path d="M19.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-              <path d="M12 14a2 2 0 0 1-2-2"/>
-              <path d="M7.43 12.97 5.5 11.5"/>
-              <path d="M16.57 11.03 18.5 9.5"/>
-              <path d="M7.43 11.03 5.5 12.5"/>
-              <path d="M16.57 12.97 18.5 14.5"/>
-            </svg>
-            Network Visualization
-          </CardTitle>
-          <CardDescription>
-            Visualize your vendor relationships and network risk.
-          </CardDescription>
-        </div>
+      <CardHeader className="flex items-center justify-end pb-2 space-y-0 border-b">
         <NetworkFiltersComponent 
           filters={filters} 
           onFiltersChange={setFilters} 
@@ -212,8 +192,11 @@ export function NetworkVisualization({ className }: NetworkVisualizationProps) {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : error ? (
-          <div className="flex items-center justify-center h-[400px] text-destructive">
-            Failed to load network data
+          <div className="flex flex-col items-center justify-center h-[400px] space-y-2">
+            <div className="text-destructive font-medium">Failed to load network data</div>
+            <div className="text-xs text-muted-foreground max-w-md">
+              {error instanceof Error ? error.message : 'Check console for details'}
+            </div>
           </div>
         ) : (
           <>
