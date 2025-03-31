@@ -24,7 +24,6 @@ import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import {
   Tooltip,
   TooltipContent,
@@ -64,8 +63,6 @@ export default function TaskCenterPage() {
   const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [kybCompanyName, setKybCompanyName] = useState("");
   const [sortConfig, setSortConfig] = useState({ key: 'due_date', direction: 'asc' });
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
@@ -86,30 +83,12 @@ export default function TaskCenterPage() {
 
   const isLoading = isTasksLoading || isCompanyLoading;
 
-  // Check for success parameter in URL when component mounts
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const success = url.searchParams.get("success");
-    const companyName = url.searchParams.get("company");
-    
-    if (success === "kyb" && companyName) {
-      setKybCompanyName(decodeURIComponent(companyName));
-      setShowSuccessModal(true);
-      
-      // Clean up the URL without refreshing the page
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete("success");
-      newUrl.searchParams.delete("company");
-      window.history.replaceState({}, "", newUrl.toString());
-    }
-  }, []);
-
   useEffect(() => {
     const subscriptions: Array<() => void> = [];
 
     const setupSubscriptions = async () => {
       try {
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: any) => {
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
           console.log('[TaskCenter] WebSocket Update Received:', {
             taskId: data.taskId,
             newStatus: data.status,
@@ -250,11 +229,6 @@ export default function TaskCenterPage() {
 
   return (
     <DashboardLayout>
-      <KYBSuccessModal
-        companyName={kybCompanyName}
-        open={showSuccessModal}
-        onOpenChange={(open) => setShowSuccessModal(open)}
-      />
       <div className="space-y-8">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
@@ -449,14 +423,6 @@ export default function TaskCenterPage() {
           </Tabs>
         </div>
       </div>
-      
-      {/* KYB Success Modal */}
-      <KYBSuccessModal 
-        companyName={kybCompanyName} 
-        open={showSuccessModal} 
-        onOpenChange={setShowSuccessModal} 
-      />
-      
     </DashboardLayout>
   );
 }
