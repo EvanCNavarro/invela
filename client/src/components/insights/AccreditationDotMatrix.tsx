@@ -120,15 +120,7 @@ export function AccreditationDotMatrix() {
     : data.companies;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="mb-6">
-        <div className="text-2xl font-semibold mb-1">Accreditation Coverage Map</div>
-        <p className="text-muted-foreground text-sm">
-          Visualization of accreditation status across your network. 
-          Each dot represents one company.
-        </p>
-      </div>
-
+    <div className="flex flex-col h-full py-2">
       {/* Legend */}
       <div className="flex flex-wrap gap-4 mb-4">
         {data.statusMap.map((status) => (
@@ -159,9 +151,9 @@ export function AccreditationDotMatrix() {
         className="flex-1 border rounded-lg p-6 bg-background overflow-hidden"
       >
         <div className="grid grid-cols-1 gap-4 h-full">
-          <div className="flex flex-wrap gap-2 content-start justify-center">
+          <div className="flex flex-wrap gap-2 content-center justify-center">
             {filteredCompanies.map((company) => (
-              <TooltipProvider key={company.id}>
+              <TooltipProvider key={company.id} delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div

@@ -2152,8 +2152,8 @@ export function registerRoutes(app: Express): Express {
       
       // Define status types and colors
       const statusMap: Record<string, { color: string; label: string }> = {
-        'APPROVED': { color: '#3B82F6', label: 'Approved' }, // Blue
-        'PENDING': { color: '#A855F7', label: 'Pending' },   // Light Purple
+        'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
+        'PENDING': { color: '#FFC300', label: 'Pending' },   // Yellow
         'AWAITING_INVITATION': { color: '#9CA3AF', label: 'Awaiting Invitation' }, // Pale Gray
         'REVOKED': { color: '#EF4444', label: 'Revoked' }    // Red
       };
