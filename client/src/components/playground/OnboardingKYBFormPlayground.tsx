@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
-import { ArrowLeft, ArrowRight, HelpCircle, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, HelpCircle, Check, Eye } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -227,6 +228,67 @@ const STEP_TITLES = [
   "Operations & Compliance"
 ];
 
+// FormReviewPage component for showing the review page
+interface FormReviewPageProps {
+  formData: Record<string, any>;
+  fieldConfigs: Record<string, any>;
+  onBack: () => void;
+  onSubmit: () => void;
+}
+
+const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReviewPageProps) => {
+  // Filter out empty fields and create entries with their corresponding question
+  const formEntries = Object.entries(formData)
+    .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+    .map(([key, value]) => ({
+      fieldName: key,
+      question: fieldConfigs[key]?.question || key,
+      value: String(value)
+    }));
+
+  return (
+    <Card className="p-6 max-w-3xl mx-auto mb-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Review Submission</h2>
+        <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">Ready for Submission</Badge>
+      </div>
+      
+      <div className="space-y-6">
+        {formEntries.map((entry, index) => (
+          <div key={entry.fieldName} className="border-b pb-4">
+            <div className="flex gap-2">
+              <span className="font-bold text-gray-500">{index + 1}.</span>
+              <div className="w-full">
+                <p className="font-medium">{entry.question}</p>
+                <p className="mt-1 text-gray-700">{entry.value}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex justify-between mt-8 pt-4 border-t">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          className="rounded-lg px-4 transition-all hover:bg-gray-100"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        
+        <Button
+          onClick={onSubmit}
+          className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
+        >
+          Submit
+          <Check className="h-4 w-4 ml-1 text-white" />
+        </Button>
+      </div>
+    </Card>
+  );
+};
+
 // Calculate total fields across all steps
 const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.length, 0);
 
@@ -438,6 +500,7 @@ export const OnboardingKYBFormPlayground = ({
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [isReviewMode, setIsReviewMode] = useState(false);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -665,6 +728,12 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   const handleBack = () => {
+    if (isReviewMode) {
+      // Exit review mode and go back to form
+      setIsReviewMode(false);
+      return;
+    }
+    
     if (currentStep > 0) {
       setCurrentStep(current => current - 1);
     }
@@ -672,15 +741,31 @@ export const OnboardingKYBFormPlayground = ({
 
   const handleNext = () => {
     console.log('[KYB Form Debug] Navigation Event: Next button clicked');
-    if (currentStep < FORM_STEPS.length - 1) {
-      setCurrentStep(current => current + 1);
-    } else {
-      console.log('Form submitted:', formData);
+    
+    if (isReviewMode) {
+      // From review mode, submit the form
+      console.log('Form submitted from review page:', formData);
       if (onSubmit) {
         onSubmit(formData);
       }
       setIsSubmitted(true);
+      return;
     }
+    
+    if (currentStep < FORM_STEPS.length - 1) {
+      setCurrentStep(current => current + 1);
+    } else {
+      // Last step completed, go to review mode instead of submitting
+      setIsReviewMode(true);
+    }
+  };
+  
+  const handleSubmit = () => {
+    console.log('Form submitted after review:', formData);
+    if (onSubmit) {
+      onSubmit(formData);
+    }
+    setIsSubmitted(true);
   };
 
   const currentStepData = FORM_STEPS[currentStep];
@@ -1001,6 +1086,16 @@ export const OnboardingKYBFormPlayground = ({
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
           </div>
         </Card>
+      ) : isReviewMode ? (
+        <FormReviewPage
+          formData={formData}
+          fieldConfigs={FORM_STEPS.flat().reduce((acc, field) => {
+            acc[field.name] = field;
+            return acc;
+          }, {} as Record<string, FormField>)}
+          onBack={handleBack}
+          onSubmit={handleSubmit}
+        />
       ) : (
         <Card className="p-6">
           {/* Header Section */}
@@ -1204,7 +1299,7 @@ export const OnboardingKYBFormPlayground = ({
               >
                 {isLastStep ? 'Final Review' : 'Next'}
                 {!isLastStep && <ArrowRight className="h-4 w-4 ml-1" />}
-                {isLastStep && <Check className="h-4 w-4 ml-1 text-white" />}
+                {isLastStep && <Eye className="h-4 w-4 ml-1 text-white" />}
               </Button>
             )}
           </div>
