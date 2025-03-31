@@ -1116,8 +1116,8 @@ export function registerRoutes(app: Express): Express {
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
-              priority: 'high',
-              progress: taskStatusToProgress[TaskStatus.EMAIL_SENT],
+              priority: 'medium',  // Changed from 'high' to 'medium'
+              progress: 25,  // Fixed progress value for EMAIL_SENT status
               company_id: newCompany.id,
               user_email: email.toLowerCase(),
               assigned_to: newUser.id,
