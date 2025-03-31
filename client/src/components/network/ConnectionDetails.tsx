@@ -43,7 +43,7 @@ export function ConnectionDetails({ node, centerNode, onClose }: ConnectionDetai
                 className="w-3 h-3 rounded-full" 
                 style={{ backgroundColor: riskBucketColors[node.riskBucket] }}
               />
-              <p className="font-medium">{node.riskScore}/100</p>
+              <p className="font-medium">{node.riskScore}/1500</p>
             </div>
           </div>
           <div>

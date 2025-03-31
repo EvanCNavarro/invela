@@ -432,11 +432,11 @@ export function registerRoutes(app: Express): Express {
         count: networkRelationships.length
       });
 
-      // 3. Determine risk bucket for each company
+      // 3. Determine risk bucket for each company on 0-1500 scale
       const getRiskBucket = (score: number): RiskBucket => {
-        if (score <= 25) return 'low';
-        if (score <= 50) return 'medium';
-        if (score <= 75) return 'high';
+        if (score <= 500) return 'low';
+        if (score <= 900) return 'medium';  // Changed from 700 to 900
+        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
         return 'critical';
       };
 
@@ -2019,11 +2019,11 @@ export function registerRoutes(app: Express): Express {
         };
       });
 
-      // Map risk scores to risk buckets
+      // Map risk scores to risk buckets (0-1500 scale)
       const getRiskBucket = (score: number) => {
-        if (score < 200) return 'low';
-        if (score < 400) return 'medium';
-        if (score < 700) return 'high';
+        if (score <= 500) return 'low';
+        if (score <= 900) return 'medium';  // Changed from 700 to 900
+        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
         return 'critical';
       };
 
