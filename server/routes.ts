@@ -2107,12 +2107,24 @@ export function registerRoutes(app: Express): Express {
       // Transform into the format needed by the chart
       const formattedData = result.rows.map((row: any) => ({
         type: row.category || 'Unknown',
-        count: parseInt(row.count, 10)
+        count: parseInt(row.count, 10),
+        color: row.category === 'Invela' ? '#4965EC' : 
+               row.category === 'Bank' ? '#081E59' : 
+               row.category === 'FinTech' ? '#C2C4EA' : '#CCCCCC'
       }));
       
-      console.log('[CompanyTypes] Formatted data:', formattedData);
+      // Sort data to have the specific order: Invela, Bank, FinTech, then others
+      const sortOrder = { 'Invela': 1, 'Bank': 2, 'FinTech': 3 };
       
-      res.json(formattedData);
+      const sortedData = formattedData.sort((a, b) => {
+        const orderA = sortOrder[a.type] || 999;
+        const orderB = sortOrder[b.type] || 999;
+        return orderA - orderB;
+      });
+      
+      console.log('[CompanyTypes] Formatted and sorted data:', sortedData);
+      
+      res.json(sortedData);
     } catch (error) {
       console.error("[CompanyTypes] Error fetching company type distribution:", error);
       res.status(500).json({ 
