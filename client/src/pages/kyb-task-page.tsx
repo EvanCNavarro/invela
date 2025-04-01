@@ -95,16 +95,39 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
               // Handle form submission
               fetch('/api/kyb/save', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json' 
+                },
                 body: JSON.stringify({
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
                   taskId: task.id
                 })
               })
-              .then(response => {
-                if (!response.ok) throw new Error('Failed to save KYB form');
-                return response.json();
+              .then(async response => {
+                // First check if response is ok
+                if (!response.ok) {
+                  // Try to get error details if available in JSON format
+                  try {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to save KYB form');
+                  } catch (jsonError) {
+                    // If can't parse as JSON, get text and log it
+                    const textResponse = await response.text();
+                    console.error('Server returned non-JSON response:', textResponse);
+                    throw new Error('Server returned invalid response. Please try again.');
+                  }
+                }
+                
+                // If response is ok, parse JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                  return response.json();
+                } else {
+                  // If not JSON but response is OK, we still proceed
+                  return { success: true };
+                }
               })
               .then(() => {
                 toast({
@@ -114,10 +137,10 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 navigate('/task-center');
               })
               .catch(error => {
-                console.error('Failed to save KYB form:', error);
+                console.error('[TaskPage] Form submission failed:', error);
                 toast({
                   title: "Error",
-                  description: "Failed to save KYB form. Please try again.",
+                  description: error.message || "Failed to save KYB form. Please try again.",
                   variant: "destructive",
                 });
               });
