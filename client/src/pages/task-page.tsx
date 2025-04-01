@@ -485,13 +485,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-semibold mb-4">Security Assessment: {displayName}</h2>
-              <p className="text-muted-foreground mb-6">
-                Complete the security assessment for {displayName}. This assessment evaluates security protocols, 
-                data handling practices, and compliance measures. This is a required step before proceeding to the CARD assessment.
-              </p>
-              
-              {/* Security Form Implementation */}
+              {/* Security Form Implementation - Header is now part of SecurityFormPlayground */}
               <SecurityFormPlayground
                 taskId={task.id}
                 companyName={derivedCompanyName}

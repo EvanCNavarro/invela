@@ -338,9 +338,9 @@ export function SecurityFormPlayground({
   // Normal edit mode with step navigation
   return (
     <div className="w-full">
-      <div className="flex items-center justify-between mb-1">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1 pr-10">
+          <div className="flex items-center gap-2 mb-1">
             <h2 className="text-2xl font-bold">Security Assessment: {companyData.name}</h2>
             <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 uppercase font-medium text-xs">
               In Progress
@@ -352,12 +352,12 @@ export function SecurityFormPlayground({
             CARD assessment.
           </p>
         </div>
-        <div className="text-right">
-          <span className="text-lg font-medium">{completionPercentage}% Complete</span>
+        <div className="min-w-[150px] text-right">
+          <span className="text-lg font-medium whitespace-nowrap">{completionPercentage}% Complete</span>
         </div>
       </div>
       
-      <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6 mt-4">
+      <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
         <div
           className="h-full bg-[#4965EC] transition-all duration-300 ease-in-out"
           style={{ width: `${completionPercentage}%` }}
