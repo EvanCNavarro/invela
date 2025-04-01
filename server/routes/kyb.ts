@@ -422,12 +422,28 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 // Save KYB form data
 router.post('/api/kyb/save', async (req, res) => {
   try {
+    // Check if user is authenticated
+    if (!req.isAuthenticated() || !req.user) {
+      console.error('[KYB API Debug] Unauthorized access attempt', {
+        path: '/api/kyb/save',
+        authenticated: req.isAuthenticated(),
+        hasUser: !!req.user,
+        sessionID: req.sessionID,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'You must be logged in to save KYB data' 
+      });
+    }
+
     const { fileName, formData, taskId } = req.body;
 
     logger.debug('Save request received', {
       taskId,
       formDataKeys: Object.keys(formData),
-      fileName
+      fileName,
+      userId: req.user.id
     });
 
     // Get task details with full task data
