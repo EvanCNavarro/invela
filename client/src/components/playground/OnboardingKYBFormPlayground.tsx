@@ -1195,10 +1195,10 @@ export const OnboardingKYBFormPlayground = ({
       ) : (
         <div>
           {/* Header Section - Outside Card */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
+          <div className="mb-10">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex-grow mr-4">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-2">
                   <h2 className="text-xl font-semibold">KYB Form: {companyName}</h2>
                   <div className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${
                     isSubmitted
@@ -1213,7 +1213,7 @@ export const OnboardingKYBFormPlayground = ({
                 </p>
               </div>
               {!isSubmitted && (
-                <div className="flex items-center gap-1 text-base bg-gray-50 px-4 py-2 rounded-md shadow-sm min-w-[110px] justify-center">
+                <div className="flex items-center gap-1 text-base bg-gray-50 px-4 py-2 rounded-md shadow-sm min-w-[130px] justify-center">
                   <span className="font-medium text-lg">{progress}</span>
                   <span className="text-[#6B7280] font-medium">% Complete</span>
                 </div>
@@ -1222,7 +1222,7 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Progress bar */}
             {!isSubmitted && (
-              <div className="h-[8px] bg-[#E5E7EB] rounded-full overflow-hidden mb-8">
+              <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden mb-8">
                 <div
                   className="h-full transition-all duration-300 ease-in-out"
                   style={{ width: `${progress}%`, backgroundColor: '#4965EC' }}
@@ -1282,7 +1282,7 @@ export const OnboardingKYBFormPlayground = ({
                   return (
                     <div 
                       key={step[0].name} 
-                      className={`flex flex-col items-center justify-center relative py-2 px-3 w-auto ${
+                      className={`flex flex-col items-center justify-center relative py-2 px-3 w-[250px] ${
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
@@ -1327,15 +1327,10 @@ export const OnboardingKYBFormPlayground = ({
 
                       {/* Step label with better wrapping */}
                       <div 
-                        className="text-xs mt-3 text-center w-full mx-auto min-h-[36px] whitespace-pre-line font-bold transition-colors duration-200 z-10"
+                        className="text-sm mt-3 text-center w-full mx-auto min-h-[40px] whitespace-pre-line font-bold transition-colors duration-200 z-10 px-4"
                         style={{ color: textColor }}
                       >
-                        {STEP_TITLES[index].includes(' ') 
-                          ? STEP_TITLES[index].split(' ').length > 2 
-                            ? STEP_TITLES[index] 
-                            : STEP_TITLES[index].replace(' ', '\n')
-                          : STEP_TITLES[index]
-                        }
+                        {STEP_TITLES[index]}
                       </div>
                     </div>
                   );
