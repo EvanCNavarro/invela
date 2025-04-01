@@ -63,7 +63,7 @@ export default function TaskCenterPage() {
   const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
-  const [sortConfig, setSortConfig] = useState({ key: 'due_date', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'title', direction: 'asc' }); // Changed default sort to title
   const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -88,7 +88,7 @@ export default function TaskCenterPage() {
 
     const setupSubscriptions = async () => {
       try {
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: any) => {
           console.log('[TaskCenter] WebSocket Update Received:', {
             taskId: data.taskId,
             newStatus: data.status,
@@ -179,7 +179,23 @@ export default function TaskCenterPage() {
     : [];
 
   const sortedAndFilteredTasks = [...filteredTasks].sort((a, b) => {
-    if (sortConfig.key === 'due_date') {
+    if (sortConfig.key === 'title') {
+      // Extract number prefix if present (for sequential tasks 1., 2., 3., etc.)
+      const aNumMatch = a.title.match(/^(\d+)\./);
+      const bNumMatch = b.title.match(/^(\d+)\./);
+      
+      // If both have number prefixes, sort by number
+      if (aNumMatch && bNumMatch) {
+        const aNum = parseInt(aNumMatch[1], 10);
+        const bNum = parseInt(bNumMatch[1], 10);
+        return sortConfig.direction === 'asc' ? aNum - bNum : bNum - aNum;
+      }
+      
+      // Otherwise sort alphabetically by title
+      return sortConfig.direction === 'asc' ?
+        a.title.localeCompare(b.title) :
+        b.title.localeCompare(a.title);
+    } else if (sortConfig.key === 'due_date') {
       const aDate = a.due_date ? new Date(a.due_date).getTime() : Infinity;
       const bDate = b.due_date ? new Date(b.due_date).getTime() : Infinity;
       return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
@@ -314,7 +330,7 @@ export default function TaskCenterPage() {
                   contextualType="tasks"
                   data={tasks}
                   keys={['title', 'description']}
-                  onResults={(results) => {
+                  onResults={(results: any[]) => {
                     setSearchResults(results.map(result => result.item) as Task[]);
                   }}
                   onSearch={(value) => setSearchQuery(value)}

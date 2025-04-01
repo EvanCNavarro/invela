@@ -61,7 +61,10 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
   }
 };
 
-export function TaskTable({ tasks }: { tasks: Task[] }) {
+export function TaskTable({ tasks, companyOnboardingCompleted }: { 
+  tasks: Task[],
+  companyOnboardingCompleted?: boolean 
+}) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [, navigate] = useLocation();
