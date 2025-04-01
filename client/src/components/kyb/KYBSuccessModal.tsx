@@ -16,7 +16,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <div className="flex flex-col items-center text-center gap-3">
+          <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">
               <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
@@ -28,7 +28,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
             </DialogDescription>
           </div>
         </DialogHeader>
-        <div className="py-5 space-y-5">
+        <div className="py-5 space-y-6">
           <p className="text-center text-gray-500">
             Good job! You have successfully submitted the 'Know Your Business Form' for <span className="font-semibold text-gray-700">{companyName}</span>
           </p>
@@ -57,7 +57,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
               <div>
                 <p className="font-medium text-gray-900">Next Step: Security Assessment</p>
                 <p className="text-gray-600">
-                  <span className="font-medium text-blue-600">Recommended:</span> The Security Assessment task has been unlocked in your Task Center. This is the next required step in your compliance process.
+                  <span className="font-medium text-blue-600">Recommended:</span> The Security Assessment task has been unlocked in your Task Center. This is the next required step in your Accreditation process.
                 </p>
               </div>
             </div>
@@ -82,6 +82,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
             className="flex-1"
           >
             Go to Task Center
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </DialogContent>
