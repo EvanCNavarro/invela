@@ -15,13 +15,23 @@ router.get("/api/tasks/card/:companyName", async (req, res) => {
       companyName: req.params.companyName,
     });
 
-    // Try to find with the new numbered format first, then fall back to the old format
+    // First try a more flexible pattern match
     let task = await db.query.tasks.findFirst({
       where: and(
         eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `3. Open Banking (1033) Survey: ${req.params.companyName}`)
+        ilike(tasks.title, `%${req.params.companyName}%`)
       )
     });
+    
+    // Try to find with the new numbered format, then fall back to the old format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'company_card'),
+          ilike(tasks.title, `3. Open Banking (1033) Survey: ${req.params.companyName}`)
+        )
+      });
+    }
     
     // If not found, try the old format
     if (!task) {
@@ -62,11 +72,24 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
           eq(tasks.task_type, 'company_kyb'),
           eq(tasks.task_type, 'company_onboarding_KYB')
         ),
-        ilike(tasks.title, `1. KYB Form: ${req.params.companyName}`)
+        ilike(tasks.title, `%KYB%${req.params.companyName}%`)
       )
     });
     
-    // If not found, try the old format
+    // If not found, try a more specific search with exact format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          or(
+            eq(tasks.task_type, 'company_kyb'),
+            eq(tasks.task_type, 'company_onboarding_KYB')
+          ),
+          ilike(tasks.title, `1. KYB Form: ${req.params.companyName}`)
+        )
+      });
+    }
+    
+    // If still not found, try the old format
     if (!task) {
       task = await db.query.tasks.findFirst({
         where: and(
@@ -91,6 +114,56 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
   } catch (error) {
     console.error('[Tasks Routes] Error fetching KYB task:', error);
     res.status(500).json({ message: "Failed to fetch KYB task" });
+  }
+});
+
+// Get task by company name for Security tasks
+router.get("/api/tasks/security/:companyName", async (req, res) => {
+  try {
+    console.log('[Tasks Routes] Fetching Security task:', {
+      companyName: req.params.companyName,
+    });
+
+    // First try a more flexible pattern match
+    let task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'security_assessment'),
+        ilike(tasks.title, `%${req.params.companyName}%`)
+      )
+    });
+    
+    // Try to find with the new numbered format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'security_assessment'),
+          ilike(tasks.title, `2. Security Assessment: ${req.params.companyName}`)
+        )
+      });
+    }
+    
+    // If not found, try the old format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'security_assessment'),
+          ilike(tasks.title, `Security Assessment: ${req.params.companyName}`)
+        )
+      });
+    }
+
+    console.log('[Tasks Routes] Security task found:', task);
+
+    if (!task) {
+      return res.status(404).json({ 
+        message: `Could not find Security Assessment task for company: ${req.params.companyName}` 
+      });
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching Security task:', error);
+    res.status(500).json({ message: "Failed to fetch Security Assessment task" });
   }
 });
 
