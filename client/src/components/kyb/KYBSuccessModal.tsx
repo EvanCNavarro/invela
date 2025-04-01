@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { CheckCircle, FileText, ArrowRight, Archive } from "lucide-react";
@@ -23,6 +23,9 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
             <DialogTitle className="text-xl font-semibold">
               KYB Assessment Complete
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              KYB assessment completion notification with next steps
+            </DialogDescription>
           </div>
         </DialogHeader>
         <div className="py-5 space-y-5">
