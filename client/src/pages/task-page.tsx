@@ -117,16 +117,16 @@ export default function TaskPage({ params }: TaskPageProps) {
       try {
         let response;
         
-        // If we have a task ID, use direct ID lookup
+        // If we have a task ID, use direct ID lookup with special endpoint
         if (taskId) {
           console.log('[TaskPage] Fetching task data by ID:', { 
             taskId,
-            fullUrl: `${apiEndpoint}/${taskId}`,
+            fullUrl: `/api/tasks.json/${taskId}`, // Use .json extension to avoid Vite interference
             timestamp: new Date().toISOString()
           });
           
-          // Use the direct task ID endpoint
-          response = await fetch(`${apiEndpoint}/${taskId}`);
+          // Use the special non-Vite task ID endpoint with .json extension
+          response = await fetch(`/api/tasks.json/${taskId}`);
         } 
         // Otherwise try to parse the slug for name-based lookup
         else {
@@ -661,7 +661,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           {showSuccessModal && (
             <KYBSuccessModal
               open={showSuccessModal}
-              onClose={() => setShowSuccessModal(false)}
+              onOpenChange={(open) => setShowSuccessModal(open)}
               companyName={displayName}
             />
           )}
