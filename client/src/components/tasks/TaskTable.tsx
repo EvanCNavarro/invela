@@ -114,17 +114,35 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       return; // Prevent navigation
     }
 
-    // Navigate to form pages for KYB and CARD tasks if not in submitted status
-    if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
-      // Get company name from metadata or task title
+    // Navigate to form pages for KYB, Security and CARD tasks if not in submitted status
+    if ((task.task_type === 'company_kyb' || 
+         task.task_type === 'company_onboarding_KYB' || 
+         task.task_type === 'company_card' ||
+         task.task_type === 'security_assessment') && 
+        task.status !== 'submitted') {
+      // Get company name from metadata or task title, handling numbered task format
       const companyName = task.metadata?.company_name || 
-                      task.title.replace(/Company (KYB|CARD): /, '');
+                      task.title.replace(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?:\s*/, '');
 
       // Build the URL based on task type
-      const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
+      let taskTypePrefix;
+      if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+        taskTypePrefix = 'kyb';
+      } else if (task.task_type === 'company_card') {
+        taskTypePrefix = 'card';
+      } else if (task.task_type === 'security_assessment') {
+        taskTypePrefix = 'security';
+      }
+      
+      // For numbered tasks format (e.g., "1. KYB Form: XYZ"), extract the number for the URL
+      let taskNumber = '';
+      const numberMatch = task.title.match(/^(\d+)\./);
+      if (numberMatch && numberMatch[1]) {
+        taskNumber = numberMatch[1] + '-';
+      }
       
       // For ready_for_submission tasks, navigate directly to the review page
-      let formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
+      let formUrl = `/task-center/task/${taskNumber}${taskTypePrefix}-${companyName}`;
       
       // If the task is ready for submission, append the review parameter
       if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
@@ -147,7 +165,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       console.log('[TaskTable] Task validation:', {
         hasMetadata: !!task.metadata,
         hasCompanyName: !!task.metadata?.company_name,
-        titleMatchResult: task.title.match(/Company (KYB|CARD): (.*)/),
+        titleMatchResult: task.title.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD)(\s*Form)?:\s*(.*)/),
         formattedCompanyName: companyName,
         timestamp: new Date().toISOString()
       });
