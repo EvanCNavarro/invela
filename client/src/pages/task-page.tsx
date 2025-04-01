@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
@@ -46,14 +46,20 @@ interface Task {
     };
     kybFormFile?: number;
     cardFormFile?: number;
+    securityFormFile?: number;
     [key: string]: any;
   } | null;
   savedFormData?: Record<string, any>;
 }
 
+// Define task type as a valid type
+type TaskContentType = 'kyb' | 'card' | 'security' | 'unknown';
+
 export default function TaskPage({ params }: TaskPageProps) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  
+  // All state variables defined at the top level
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [fileId, setFileId] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -61,58 +67,72 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [showForm, setShowForm] = useState(false);
   const [derivedCompanyName, setDerivedCompanyName] = useState('');
   const [displayName, setDisplayName] = useState('');
-
-  // Parse taskSlug - it could be either a direct ID or a formatted string like "kyb-CompanyName"
-  let taskId: number | null = null;
-  let taskType = ''; // Will be determined after we get task data
+  const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   
-  // First, try to parse as a direct numeric ID
+  // Parse taskSlug into a numeric ID if possible
   const parsedId = parseInt(params.taskSlug);
+  const taskId = !isNaN(parsedId) ? parsedId : null;
   
-  // Check if the slug is simply a numeric ID
-  if (!isNaN(parsedId)) {
-    taskId = parsedId;
-    console.log('[TaskPage] Using direct task ID:', { 
-      taskId,
-      timestamp: new Date().toISOString()
-    });
-  } else {
-    // If taskSlug is not a simple ID, it might be in the format "taskType-companyName"
-    // For now, we'll still need to fetch the task by ID, so we'll fall back to direct endpoint
-    console.log('[TaskPage] Using fallback lookup for task slug:', {
-      taskSlug: params.taskSlug,
-      timestamp: new Date().toISOString()
-    });
-    
-    // We'll implement smarter lookup later if needed
-    const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
-    if (match) {
-      const [, type, companyName] = match;
-      console.log('[TaskPage] Parsed task slug format:', { type, companyName });
-      // For now, we still need an ID, which we'll get from API response
-    }
-  }
+  // The url for fetching tasks
+  const apiEndpoint = taskId ? `/api/tasks.json/${taskId}` : '/api/tasks';
   
-  // API endpoint for task fetching
-  const apiEndpoint = '/api/tasks';
-  
-  console.log('[TaskPage] Task initialization:', { 
-    taskSlug: params.taskSlug,
-    parsedId,
-    taskId,
-    apiEndpoint: taskId ? `${apiEndpoint}/${taskId}` : apiEndpoint,
-    timestamp: new Date().toISOString()
-  });
-
-  // Function to extract company name from task title when needed
-  const extractCompanyNameFromTitle = (title: string): string => {
+  // Function to extract company name from task title
+  const extractCompanyNameFromTitle = useCallback((title: string): string => {
     const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/);
     if (match && match[6]) {
       return match[6].trim();
     }
     return 'Unknown Company';
-  };
-
+  }, []);
+  
+  // Log task initialization for debugging
+  useEffect(() => {
+    console.log('[TaskPage] Task initialization:', { 
+      taskSlug: params.taskSlug,
+      parsedId,
+      taskId,
+      apiEndpoint: taskId ? apiEndpoint : '/api/tasks',
+      timestamp: new Date().toISOString()
+    });
+  }, [params.taskSlug, parsedId, taskId, apiEndpoint]);
+  
+  // Handle back button click
+  const handleBackClick = useCallback(() => {
+    navigate('/task-center');
+  }, [navigate]);
+  
+  // Handle file downloads
+  const handleDownload = useCallback(async (format: 'json' | 'csv' | 'txt') => {
+    if (!fileId) return;
+    
+    try {
+      const response = await fetch(`/api/files/${fileId}/download?format=${format}`);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+      
+      // Handle file download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `compliance_data_${taskContentType}_${new Date().toISOString().split('T')[0]}.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('[TaskPage] Download error:', err);
+      toast({
+        title: "Download Failed",
+        description: "Could not download the file. Please try again later.",
+        variant: "destructive",
+      });
+    }
+  }, [fileId, taskContentType, toast]);
+  
+  // Fetch task data
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, taskId, params.taskSlug],
     queryFn: async () => {
@@ -123,12 +143,11 @@ export default function TaskPage({ params }: TaskPageProps) {
         if (taskId) {
           console.log('[TaskPage] Fetching task data by ID:', { 
             taskId,
-            fullUrl: `/api/tasks.json/${taskId}`, // Use .json extension to avoid Vite interference
+            fullUrl: apiEndpoint,
             timestamp: new Date().toISOString()
           });
           
-          // Use the special non-Vite task ID endpoint with .json extension
-          response = await fetch(`/api/tasks.json/${taskId}`);
+          response = await fetch(apiEndpoint);
         } 
         // Otherwise try to parse the slug for name-based lookup
         else {
@@ -144,48 +163,36 @@ export default function TaskPage({ params }: TaskPageProps) {
             });
             
             // Determine the endpoint based on task type
-            let lookupEndpoint;
+            let lookupEndpoint = '';
             if (type.toLowerCase() === 'kyb') {
-              lookupEndpoint = `${apiEndpoint}/kyb/${encodeURIComponent(companyName)}`;
+              lookupEndpoint = `/api/tasks/kyb/${encodeURIComponent(companyName)}`;
             } else if (type.toLowerCase() === 'card') {
-              lookupEndpoint = `${apiEndpoint}/card/${encodeURIComponent(companyName)}`;
+              lookupEndpoint = `/api/tasks/card/${encodeURIComponent(companyName)}`;
             } else if (type.toLowerCase() === 'security') {
-              lookupEndpoint = `${apiEndpoint}/security/${encodeURIComponent(companyName)}`;
+              lookupEndpoint = `/api/tasks/security/${encodeURIComponent(companyName)}`;
             }
             
-            // Fetch the task using the appropriate endpoint
             if (lookupEndpoint) {
               response = await fetch(lookupEndpoint);
             } else {
-              throw new Error(`Invalid task type: ${type}`);
+              throw new Error(`Unsupported task type: ${type}`);
             }
           } else {
             throw new Error(`Invalid task slug format: ${params.taskSlug}`);
           }
         }
         
-        console.log('[TaskPage] API response:', { 
-          status: response.status, 
-          ok: response.ok,
-          statusText: response.statusText,
-          timestamp: new Date().toISOString()
-        });
-        
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('[TaskPage] Failed to fetch task:', {
-            taskSlug: params.taskSlug,
-            taskId,
-            status: response.status,
-            statusText: response.statusText,
-            errorText,
+          console.error('[TaskPage] Failed to fetch task:', { 
+            status: response.status, 
+            url: response.url,
             timestamp: new Date().toISOString()
           });
-          throw new Error(`Failed to fetch task: ${errorText}`);
+          throw new Error(`Failed to fetch task: ${response.statusText}`);
         }
         
-        // Parse the response data
         const data = await response.json();
+        
         console.log('[TaskPage] Task data received:', { 
           taskId: data.id,
           taskType: data.task_type,
@@ -194,147 +201,117 @@ export default function TaskPage({ params }: TaskPageProps) {
           timestamp: new Date().toISOString()
         });
         
-        // Determine the task type based on the task_type field
-        if (data.task_type === 'company_kyb' || data.task_type === 'company_onboarding_KYB') {
-          taskType = 'kyb';
-        } else if (data.task_type === 'company_card') {
-          taskType = 'card';
-        } else if (data.task_type === 'security_assessment') {
-          taskType = 'security';
-        } else {
-          taskType = 'unknown';
-        }
-        
-        // Check if the task has a form file for rendering submitted content
-        const formFileKey = `${taskType}FormFile`;
-        if (data.metadata?.[formFileKey]) {
-          setFileId(data.metadata[formFileKey]);
-          setIsSubmitted(true);
-        }
-        
         return data;
-      } catch (error) {
-        console.error('[TaskPage] Error in queryFn:', {
-          error,
-          message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined,
-          timestamp: new Date().toISOString()
-        });
-        throw error;
+      } catch (err) {
+        console.error('[TaskPage] Error fetching task:', err);
+        throw err;
       }
     },
-    enabled: true, // Always enabled to fetch the task
-    staleTime: 0,
+    staleTime: 300000 // 5 minutes
   });
-
-  useEffect(() => {
-    if (error) {
-      console.error('[TaskPage] Error loading task:', {
-        error,
-        errorMessage: error instanceof Error ? error.message : String(error),
-        taskType: taskType || 'unknown',
-        taskId,
-        apiEndpoint,
-        timestamp: new Date().toISOString()
-      });
-      
-      toast({
-        title: "Error",
-        description: `Failed to load task #${taskId}. Please try again.`,
-        variant: "destructive",
-      });
-      
-      console.log('[TaskPage] Redirecting to task-center due to error');
-      navigate('/task-center');
-    }
-  }, [error, navigate, toast, taskType, taskId, apiEndpoint]);
-
-  const handleBackClick = () => {
-    navigate('/task-center');
-  };
-
-  const handleDownload = async (format: 'json' | 'csv' | 'txt') => {
-    if (!fileId) return;
-
-    try {
-      const downloadEndpoint = taskType === 'kyb' ? '/api/kyb/download' : '/api/card/download';
-      const response = await fetch(`${downloadEndpoint}/${fileId}?format=${format}`);
-      if (!response.ok) throw new Error('Failed to download file');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${taskType}_form.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: "Download Failed",
-        description: "Failed to download the file. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleMethodSelect = (method: 'upload' | 'manual') => {
-    setSelectedMethod(method);
-  };
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <LoadingSpinner size="lg" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!task) {
-    return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
-            <p className="text-muted-foreground">
-              Could not find the task #{taskId}. Please try again.
-            </p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  // This useEffect will handle navigation outside of the render cycle
-  // to avoid React errors about setState during render
-  useEffect(() => {
-    if (task && taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
-      console.log('[TaskPage] Unknown task type, redirecting to task center:', taskType);
-      navigate('/task-center');
-    }
-  }, [task, taskType, navigate]);
   
-  if (task && taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
-    return <LoadingSpinner size="lg" />;
-  }
-  
-  // Update company name values from task data (we use the state variables declared at the top of the component)
+  // Process task data once loaded
   useEffect(() => {
-    if (task) {
-      const extractedName = extractCompanyNameFromTitle(task.title);
-      setDerivedCompanyName(extractedName || '');
-      
-      const displayNameValue = task?.metadata?.company?.name || task?.metadata?.companyName || extractedName || '';
-      setDisplayName(displayNameValue);
+    if (!task) return;
+    
+    // Determine task type for rendering
+    let type: TaskContentType = 'unknown';
+    
+    if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+      type = 'kyb';
+    } else if (task.task_type === 'company_card') {
+      type = 'card';
+    } else if (task.task_type === 'security_assessment') {
+      type = 'security';
+    }
+    
+    // Update state variables
+    setTaskContentType(type);
+    
+    // Set redirect if task type is unknown
+    if (type === 'unknown') {
+      console.log('[TaskPage] Unknown task type, redirecting to task center:', task.task_type);
+      setShouldRedirect(true);
+    }
+    
+    // Extract company information
+    const extractedName = extractCompanyNameFromTitle(task.title);
+    setDerivedCompanyName(extractedName);
+    
+    // Set display name from metadata or fallback to extracted name
+    const displayNameValue = task?.metadata?.company?.name || 
+                            task?.metadata?.companyName || 
+                            extractedName || 
+                            'Unknown Company';
+    setDisplayName(displayNameValue);
+    
+    // Check for form files to set submission status
+    if (type === 'kyb' && task.metadata?.kybFormFile) {
+      setFileId(task.metadata.kybFormFile);
+      setIsSubmitted(true);
+    } else if (type === 'card' && task.metadata?.cardFormFile) {
+      setFileId(task.metadata.cardFormFile);
+      setIsSubmitted(true);
+    } else if (type === 'security' && task.metadata?.securityFormFile) {
+      setFileId(task.metadata.securityFormFile);
+      setIsSubmitted(true);
     }
   }, [task, extractCompanyNameFromTitle]);
   
+  // Handle error states
+  useEffect(() => {
+    if (error) {
+      console.error('[TaskPage] Task fetch error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load task details. Please try again or contact support.",
+        variant: "destructive",
+      });
+      
+      // Redirect back to task center after short delay
+      const timer = setTimeout(() => {
+        navigate('/task-center');
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [error, navigate, toast]);
+  
+  // Handle redirection for unknown task types
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate('/task-center');
+    }
+  }, [shouldRedirect, navigate]);
+  
+  // Show loading spinner while fetching data
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="container">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
+  // Show loading spinner for unknown task types while redirecting
+  if (shouldRedirect) {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="container">
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingSpinner size="lg" />
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
   // KYB Task Form Rendering
-  if (taskType === 'kyb') {
+  if (taskContentType === 'kyb' && task) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
@@ -457,9 +434,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  // We already defined these variables earlier
-
-  if (taskType === 'security') {
+  // Security Assessment Form Rendering
+  if (taskContentType === 'security' && task) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
@@ -476,7 +452,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {(isSubmitted || task?.metadata?.securityFormFile) && (
+              {isSubmitted && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -567,7 +543,8 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
   
-  if (taskType === 'card') {
+  // CARD (1033) Assessment Form Rendering
+  if (taskContentType === 'card' && task) {
     return (
       <DashboardLayout>
         <PageTemplate className="space-y-6">
@@ -584,7 +561,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 Back to Task Center
               </Button>
 
-              {(isSubmitted || task?.metadata?.cardFormFile) && (
+              {isSubmitted && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -621,11 +598,11 @@ export default function TaskPage({ params }: TaskPageProps) {
               />
             ) : (selectedMethod === 'manual' || showForm) ? (
               <CardFormPlayground
-                taskId={task?.id || 0}
+                taskId={task.id}
                 companyName={derivedCompanyName}
                 companyData={{
                   name: displayName,
-                  description: task?.metadata?.company?.description || undefined
+                  description: task.metadata?.company?.description || undefined
                 }}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
@@ -634,7 +611,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     body: JSON.stringify({
                       fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                       formData,
-                      taskId: task?.id
+                      taskId: task.id
                     })
                   })
                     .then(async response => {
@@ -665,25 +642,34 @@ export default function TaskPage({ params }: TaskPageProps) {
                       });
 
                       if (result.warnings?.length) {
-                        console.log('[TaskPage] Save completed with warnings:', result.warnings);
+                        result.warnings.forEach((warning: string) => {
+                          console.warn('[Card Form] Warning:', warning);
+                        });
                       }
                     })
                     .catch(error => {
                       console.error('[TaskPage] Form submission failed:', error);
                       toast({
                         title: "Error",
-                        description: error.message || "Failed to save compliance form. Please try again.",
+                        description: error.message || "Failed to submit compliance form. Please try again.",
                         variant: "destructive",
                       });
                     });
                 }}
               />
             ) : (
-              <CardMethodChoice
-                taskId={task?.id || 0}
-                companyName={derivedCompanyName}
-                onMethodSelect={handleMethodSelect}
-              />
+              // Method selection screen
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <h2 className="text-2xl font-semibold mb-4">Open Banking (1033) Survey: {displayName}</h2>
+                <p className="text-muted-foreground mb-6">
+                  Please select how you would like to provide the Section 1033 compliance information for {displayName}.
+                </p>
+                
+                <CardMethodChoice 
+                  onSelectMethod={(method) => setSelectedMethod(method)} 
+                  companyName={displayName}
+                />
+              </div>
             )}
           </div>
         </PageTemplate>
@@ -691,122 +677,20 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
+  // Fallback handling - this should ideally never happen but provides graceful degradation
   return (
     <DashboardLayout>
-      <PageTemplate className="space-y-6">
-        <div className="space-y-4">
-          <BreadcrumbNav forceFallback={true} />
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-sm font-medium bg-white border-muted-foreground/20"
-              onClick={handleBackClick}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+      <PageTemplate className="container">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-semibold mb-4">Task Not Available</h2>
+            <p className="text-muted-foreground mb-6">
+              This task is no longer available or cannot be displayed.
+            </p>
+            <Button onClick={handleBackClick}>
               Back to Task Center
             </Button>
-
-            {(isSubmitted || task.metadata?.[`${taskType}FormFile`]) && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleDownload('json')}>
-                    <FileJson className="mr-2 h-4 w-4" />
-                    Download as JSON
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('csv')}>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Download as CSV
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleDownload('txt')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Download as Text
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
           </div>
-        </div>
-
-        <div className="container max-w-7xl mx-auto">
-          {taskType === 'kyb' ? (
-            <OnboardingKYBFormPlayground
-              taskId={task.id}
-              companyName={derivedCompanyName}
-              companyData={{
-                name: displayName,
-                description: task.metadata?.company?.description || undefined
-              }}
-              savedFormData={task.savedFormData}
-              onSubmit={(formData) => {
-                const submitData = {
-                  fileName: `kyb_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                  formData,
-                  taskId: task.id
-                };
-
-                toast({
-                  title: "Saving KYB form",
-                  description: "Please wait while we process your submission...",
-                });
-
-                fetch('/api/kyb/save', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(submitData)
-                })
-                  .then(async response => {
-                    const data = await response.json();
-                    if (!response.ok) {
-                      throw new Error(data.details || data.error || 'Failed to save KYB form');
-                    }
-                    return data;
-                  })
-                  .then((result) => {
-                    confetti({
-                      particleCount: 150,
-                      spread: 80,
-                      origin: { y: 0.6 },
-                      colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
-                    });
-
-                    setFileId(result.fileId);
-                    setIsSubmitted(true);
-                    setShowSuccessModal(true);
-
-                    toast({
-                      title: "Success",
-                      description: "KYB form has been saved successfully.",
-                      variant: "default",
-                    });
-                  })
-                  .catch(error => {
-                    console.error('[TaskPage] Form submission failed:', error);
-                    toast({
-                      title: "Error",
-                      description: error.message || "Failed to save KYB form. Please try again.",
-                      variant: "destructive",
-                    });
-                  });
-              }}
-            />
-          ) : null}
-
-          {showSuccessModal && (
-            <KYBSuccessModal
-              open={showSuccessModal}
-              onOpenChange={(open) => setShowSuccessModal(open)}
-              companyName={displayName}
-            />
-          )}
         </div>
       </PageTemplate>
     </DashboardLayout>
