@@ -101,6 +101,59 @@ export function SecurityFormPlayground({
     }
   }, [fields, currentSection]);
   
+  // Load saved responses when the form is first opened
+  useEffect(() => {
+    const loadSavedResponses = async () => {
+      if (!taskId) return;
+      
+      try {
+        // First, fetch the task data to get the company_id
+        const taskResponse = await fetch(`/api/tasks.json/${taskId}`);
+        if (!taskResponse.ok) {
+          throw new Error(`Failed to fetch task data: ${taskResponse.statusText}`);
+        }
+        
+        const taskData = await taskResponse.json();
+        const companyId = taskData.company_id;
+        
+        if (!companyId) {
+          throw new Error('Task does not have a company ID associated with it');
+        }
+        
+        // Now fetch all responses for this company
+        const responsesResponse = await fetch(`/api/security/responses/${companyId}`);
+        if (!responsesResponse.ok) {
+          throw new Error(`Failed to fetch responses: ${responsesResponse.statusText}`);
+        }
+        
+        const responses = await responsesResponse.json();
+        
+        // Process responses and update form data
+        if (responses && responses.length > 0) {
+          const newFormData = { ...formData };
+          
+          responses.forEach((response) => {
+            // Explicit type check and property access
+            if (typeof response === 'object' && response !== null && 
+                'field_id' in response && 'response' in response) {
+              newFormData[`field_${response.field_id}`] = response.response;
+            }
+          });
+          
+          setFormData(newFormData);
+        }
+      } catch (error) {
+        console.error('Error loading saved responses:', error);
+      }
+    };
+    
+    // Only run if we have a task ID and savedFormData is empty
+    if (Object.keys(formData).length === 0) {
+      loadSavedResponses();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskId]); // Removed formData dependency to avoid infinite loop
+  
   // Update current section when step changes
   useEffect(() => {
     if (sections.length > 0 && currentStep >= 0 && currentStep < sections.length) {
@@ -148,7 +201,22 @@ export function SecurityFormPlayground({
     
     // Save response to the server
     try {
-      const response = await fetch(`/api/security/response/${companyData.name}/${fieldId}`, {
+      // Check for "Security Assessment:" prefix in companyName and extract the company ID from the task
+      // First, fetch the task data to get the company_id
+      const taskResponse = await fetch(`/api/tasks.json/${taskId}`);
+      if (!taskResponse.ok) {
+        throw new Error(`Failed to fetch task data: ${taskResponse.statusText}`);
+      }
+      
+      const taskData = await taskResponse.json();
+      const companyId = taskData.company_id;
+      
+      if (!companyId) {
+        throw new Error('Task does not have a company ID associated with it');
+      }
+      
+      // Now save the response using the company ID
+      const response = await fetch(`/api/security/response/${companyId}/${fieldId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -432,7 +500,7 @@ export function SecurityFormPlayground({
                 {field.label}
               </label>
               
-              <p className="text-black text-sm mb-2 font-bold">Q{index + 1}. {field.description}</p>
+              <p className="text-black text-sm mb-2 font-bold">{index + 1}. {field.description}</p>
               
               {renderField(field)}
             </div>
