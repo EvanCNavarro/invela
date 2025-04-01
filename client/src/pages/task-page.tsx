@@ -495,6 +495,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task.metadata?.company?.description || undefined
                 }}
                 savedFormData={task.savedFormData}
+                taskStatus={task.status}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
