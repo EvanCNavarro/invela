@@ -96,6 +96,7 @@ function Router() {
         </ProtectedLayout>
       )} />
 
+      {/* Main nested task route - will handle both task types and IDs */}
       <ProtectedRoute 
         path="/task-center/task/:taskSlug"
         component={({ params }) => (
@@ -103,6 +104,17 @@ function Router() {
             <TaskPage params={params} />
           </ProtectedLayout>
         )}
+      />
+      
+      {/* Direct task ID route - redirects to task-center for consistency */}
+      <ProtectedRoute 
+        path="/task/:taskId"
+        component={({ params }) => {
+          console.log('[Router] Redirecting from direct task route to nested task route');
+          // Simply redirect to the nested path with the same ID
+          // The TaskPage component will handle both formats
+          return <Redirect to={`/task-center/task/${params.taskId}`} />;
+        }}
       />
 
       <ProtectedRoute 

@@ -134,13 +134,34 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         formType = 'security';
       }
       
-      // Build direct task URL with ID
-      let formUrl = `/task/${taskId}`;
+      // Get company name from task title or metadata
+      let companyName = '';
+      if (task.metadata?.companyName) {
+        companyName = task.metadata.companyName;
+      } else if (task.metadata?.company?.name) {
+        companyName = task.metadata.company.name;
+      } else {
+        // Try to extract from title as fallback
+        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
+        if (match && match[2]) {
+          companyName = match[2].trim();
+        }
+      }
+      
+      // Build task URL with both ID and semantic path structure
+      let formUrl = `/task-center/task/${taskId}`;
       
       // If the task is ready for submission, append the review parameter
       if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
         formUrl += '?review=true';
       }
+      
+      console.log('[TaskTable] Generated task URL:', { 
+        taskId, 
+        companyName, 
+        formUrl,
+        timestamp: new Date().toISOString()
+      });
 
       console.log('[TaskTable] Direct task navigation preparation:', {
         taskId,

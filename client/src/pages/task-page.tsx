@@ -60,20 +60,45 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Direct task ID navigation
-  // Get task ID from the taskSlug parameter (which is now a task ID)
-  const taskId = parseInt(params.taskSlug);
+  // Parse taskSlug - it could be either a direct ID or a formatted string like "kyb-CompanyName"
+  let taskId: number | null = null;
+  let taskType = ''; // Will be determined after we get task data
   
-  // We'll determine taskType after we get the task data
-  // Initialize with an empty string to avoid TypeScript errors
-  let taskType = '';
+  // First, try to parse as a direct numeric ID
+  const parsedId = parseInt(params.taskSlug);
   
-  // New direct task endpoint
+  // Check if the slug is simply a numeric ID
+  if (!isNaN(parsedId)) {
+    taskId = parsedId;
+    console.log('[TaskPage] Using direct task ID:', { 
+      taskId,
+      timestamp: new Date().toISOString()
+    });
+  } else {
+    // If taskSlug is not a simple ID, it might be in the format "taskType-companyName"
+    // For now, we'll still need to fetch the task by ID, so we'll fall back to direct endpoint
+    console.log('[TaskPage] Using fallback lookup for task slug:', {
+      taskSlug: params.taskSlug,
+      timestamp: new Date().toISOString()
+    });
+    
+    // We'll implement smarter lookup later if needed
+    const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
+    if (match) {
+      const [, type, companyName] = match;
+      console.log('[TaskPage] Parsed task slug format:', { type, companyName });
+      // For now, we still need an ID, which we'll get from API response
+    }
+  }
+  
+  // API endpoint for task fetching
   const apiEndpoint = '/api/tasks';
   
-  console.log('[TaskPage] Using direct task ID:', { 
+  console.log('[TaskPage] Task initialization:', { 
+    taskSlug: params.taskSlug,
+    parsedId,
     taskId,
-    apiEndpoint: `${apiEndpoint}/${taskId}`,
+    apiEndpoint: taskId ? `${apiEndpoint}/${taskId}` : apiEndpoint,
     timestamp: new Date().toISOString()
   });
 
@@ -87,17 +112,56 @@ export default function TaskPage({ params }: TaskPageProps) {
   };
 
   const { data: task, isLoading, error } = useQuery<Task>({
-    queryKey: [apiEndpoint, taskId],
+    queryKey: [apiEndpoint, taskId, params.taskSlug],
     queryFn: async () => {
       try {
-        console.log('[TaskPage] Fetching task data by ID:', { 
-          taskId,
-          fullUrl: `${apiEndpoint}/${taskId}`,
-          timestamp: new Date().toISOString()
-        });
+        let response;
         
-        // Use the direct task ID endpoint
-        const response = await fetch(`${apiEndpoint}/${taskId}`);
+        // If we have a task ID, use direct ID lookup
+        if (taskId) {
+          console.log('[TaskPage] Fetching task data by ID:', { 
+            taskId,
+            fullUrl: `${apiEndpoint}/${taskId}`,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Use the direct task ID endpoint
+          response = await fetch(`${apiEndpoint}/${taskId}`);
+        } 
+        // Otherwise try to parse the slug for name-based lookup
+        else {
+          // Parse the slug format: "{taskType}-{companyName}"
+          const match = params.taskSlug.match(/^(kyb|card|security)-(.+)$/i);
+          
+          if (match) {
+            const [, type, companyName] = match;
+            console.log('[TaskPage] Fetching task by type and company name:', { 
+              type, 
+              companyName,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Determine the endpoint based on task type
+            let lookupEndpoint;
+            if (type.toLowerCase() === 'kyb') {
+              lookupEndpoint = `${apiEndpoint}/kyb/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'card') {
+              lookupEndpoint = `${apiEndpoint}/card/${encodeURIComponent(companyName)}`;
+            } else if (type.toLowerCase() === 'security') {
+              lookupEndpoint = `${apiEndpoint}/security/${encodeURIComponent(companyName)}`;
+            }
+            
+            // Fetch the task using the appropriate endpoint
+            if (lookupEndpoint) {
+              response = await fetch(lookupEndpoint);
+            } else {
+              throw new Error(`Invalid task type: ${type}`);
+            }
+          } else {
+            throw new Error(`Invalid task slug format: ${params.taskSlug}`);
+          }
+        }
+        
         console.log('[TaskPage] API response:', { 
           status: response.status, 
           ok: response.ok,
@@ -107,14 +171,15 @@ export default function TaskPage({ params }: TaskPageProps) {
         
         if (!response.ok) {
           const errorText = await response.text();
-          console.error('[TaskPage] Failed to fetch task by ID:', {
+          console.error('[TaskPage] Failed to fetch task:', {
+            taskSlug: params.taskSlug,
             taskId,
             status: response.status,
             statusText: response.statusText,
             errorText,
             timestamp: new Date().toISOString()
           });
-          throw new Error(`Failed to fetch task #${taskId}: ${errorText}`);
+          throw new Error(`Failed to fetch task: ${errorText}`);
         }
         
         // Parse the response data
