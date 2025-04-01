@@ -425,15 +425,14 @@ export function SecurityFormPlayground({
       
       {/* Current step content */}
       <Card className="border border-gray-200 rounded-md p-6 mb-6 bg-white">
-        <div className="space-y-6">
+        <div className="space-y-3">
           {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => (
-            <div key={field.id} className="space-y-2 py-4 border-b border-gray-100 last:border-0">
-              <label htmlFor={`field_${field.id}`} className="font-medium block text-sm">
+            <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
+              <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
                 {field.label}
-                {field.is_required && <span className="text-red-500 ml-1">*</span>}
               </label>
               
-              <p className="text-gray-600 text-sm mb-3">{field.description}</p>
+              <p className="text-black text-sm mb-2">{field.description}</p>
               
               {renderField(field)}
             </div>
@@ -451,7 +450,7 @@ export function SecurityFormPlayground({
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Previous Section
+          Previous
         </Button>
         
         {currentStep < sections.length - 1 ? (
@@ -461,7 +460,7 @@ export function SecurityFormPlayground({
             disabled={!isStepCompleted(currentStep)}
             className="flex items-center gap-2"
           >
-            Next Section
+            Next
             <ArrowRight className="h-4 w-4" />
           </Button>
         ) : (
