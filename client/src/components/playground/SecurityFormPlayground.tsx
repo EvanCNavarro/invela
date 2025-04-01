@@ -386,6 +386,11 @@ export function SecurityFormPlayground({
                   <div className="absolute inset-0 rounded-lg bg-gray-100/0 group-hover:bg-gray-100/60 transition-all duration-200" />
                 )}
                 
+                {/* Current step highlight effect */}
+                {isCurrent && (
+                  <div className="absolute inset-0 rounded-lg bg-gray-100 transition-all duration-200" />
+                )}
+                
                 {/* Step indicator squircle */}
                 <div
                   className="flex items-center justify-center h-10 w-10 rounded-lg border-2 shadow-sm transition-all duration-200 z-10"
