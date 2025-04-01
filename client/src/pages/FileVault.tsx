@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileUploadZone } from "@/components/files/FileUploadZone";
 import { DragDropProvider } from "@/components/files/DragDropProvider";
+import Fuse from 'fuse.js';
 import {
   FileIcon,
   UploadIcon,
@@ -186,14 +187,37 @@ export const FileVault: React.FC = () => {
     });
 
     let result = [...allFiles];
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(file =>
-        file.name.toLowerCase().includes(query)
-      );
-    }
+    
+    // Apply status filtering
     if (statusFilter !== 'all') {
       result = result.filter(file => file.status === statusFilter);
+    }
+    
+    // Apply search query filtering using Fuse.js for fuzzy matching
+    if (searchQuery) {
+      // Configure Fuse.js with search options
+      const fuseOptions = {
+        includeScore: true,
+        threshold: 0.4, // Lower threshold means stricter matching
+        keys: ['name'] // Search in the name field
+      };
+      
+      // Initialize Fuse with our files
+      const fuse = new Fuse(result, fuseOptions);
+      
+      // Perform the fuzzy search
+      const searchResults = fuse.search(searchQuery);
+      console.log('[FileVault Debug] Fuse.js search results:', {
+        query: searchQuery,
+        resultCount: searchResults.length,
+        results: searchResults.map(r => ({ 
+          name: r.item.name, 
+          score: r.score 
+        }))
+      });
+      
+      // Extract the items from the Fuse.js results
+      result = searchResults.map(result => result.item);
     }
 
     result = result.sort((a, b) => {
@@ -226,20 +250,21 @@ export const FileVault: React.FC = () => {
   // If we have server pagination, use the direct response from the server
   // Otherwise, use client-side pagination for uploading files etc.
   const paginatedFiles = useMemo(() => {
-    // In all cases, apply the pagination at the client side
-    // to ensure we show the correct number of items per page
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      // When using server data, we still need to apply client-side slicing
-      // for consistent display until we fetch the next page
-      const slicedFiles = files.slice(0, itemsPerPage);
+      // When using server data with pagination, apply proper slicing based on current page
+      const startIdx = (currentPage - 1) * itemsPerPage;
+      const endIdx = Math.min(startIdx + itemsPerPage, files.length);
+      const slicedFiles = files.slice(startIdx, endIdx);
       
       console.log('[FileVault Debug] Using server pagination with client-side slicing:', {
         page: currentPage,
         totalItems: serverPagination?.totalItems || 0,
         itemsPerPage,
+        startIdx,
+        endIdx,
         availableFiles: files.length,
         displayedFiles: slicedFiles.length
       });
