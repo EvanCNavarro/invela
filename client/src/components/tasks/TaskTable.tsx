@@ -120,58 +120,41 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
          task.task_type === 'company_card' ||
          task.task_type === 'security_assessment') && 
         task.status !== 'submitted') {
-      // Get company name from metadata or task title, handling numbered task format
-      const companyName = task.metadata?.company_name || 
-                      task.title.replace(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*/, '');
-
-      // Build the URL based on task type
-      let taskTypePrefix;
+      
+      // Get task ID for direct navigation
+      const taskId = task.id;
+      
+      // Get task type for form type determination
+      let formType;
       if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
-        taskTypePrefix = 'kyb';
+        formType = 'kyb';
       } else if (task.task_type === 'company_card') {
-        taskTypePrefix = 'card';
+        formType = 'card';
       } else if (task.task_type === 'security_assessment') {
-        taskTypePrefix = 'security';
+        formType = 'security';
       }
       
-      // For numbered tasks format (e.g., "1. KYB Form: XYZ"), extract the number for the URL
-      let taskNumber = '';
-      const numberMatch = task.title.match(/^(\d+)\./);
-      if (numberMatch && numberMatch[1]) {
-        taskNumber = numberMatch[1] + '-';
-      }
-      
-      // For ready_for_submission tasks, navigate directly to the review page
-      let formUrl = `/task-center/task/${taskNumber}${taskTypePrefix}-${companyName}`;
+      // Build direct task URL with ID
+      let formUrl = `/task/${taskId}`;
       
       // If the task is ready for submission, append the review parameter
       if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
         formUrl += '?review=true';
       }
 
-      console.log('[TaskTable] Navigation preparation:', {
+      console.log('[TaskTable] Direct task navigation preparation:', {
+        taskId,
         taskType: task.task_type,
-        originalTitle: task.title,
-        extractedCompanyName: companyName,
-        taskTypePrefix,
+        formType,
+        title: task.title,
         constructedUrl: formUrl,
-        metadata: task.metadata,
-        statusBeforeNavigation: task.status,
+        status: task.status,
         isReadyForSubmission: task.status.toUpperCase() === 'READY_FOR_SUBMISSION',
         timestamp: new Date().toISOString()
       });
 
-      // Additional validation logging
-      console.log('[TaskTable] Task validation:', {
-        hasMetadata: !!task.metadata,
-        hasCompanyName: !!task.metadata?.company_name,
-        titleMatchResult: task.title.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/),
-        formattedCompanyName: companyName,
-        timestamp: new Date().toISOString()
-      });
-
-      // Navigate to form page
-      console.log('[TaskTable] Initiating navigation to:', formUrl);
+      // Navigate to task page
+      console.log('[TaskTable] Initiating direct ID-based navigation to:', formUrl);
       navigate(formUrl);
     } else {
       console.log('[TaskTable] Opening modal for task:', {
@@ -201,6 +184,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>ID</TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
@@ -234,6 +218,9 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                         )}
                         onClick={() => !isLocked && handleTaskClick(task)}
                       >
+                        <TableCell className="font-mono text-xs">
+                          {task.id}
+                        </TableCell>
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             {task.searchMatches ? (
