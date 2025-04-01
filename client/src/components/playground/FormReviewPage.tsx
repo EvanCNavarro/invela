@@ -21,7 +21,7 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
     }));
 
   return (
-    <Card className="p-6 max-w-3xl mx-auto mb-8">
+    <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">KYB Survey</h2>
         <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
@@ -60,6 +60,7 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
         <Button
           onClick={onSubmit}
           className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
+          style={{ animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', transform: 'none' }}
         >
           Submit
           <Check className="h-4 w-4 ml-1 text-white" />
