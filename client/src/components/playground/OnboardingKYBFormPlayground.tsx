@@ -1375,11 +1375,8 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`rounded-lg px-5 py-2 hover:bg-blue-700 transition-all shadow-sm ${
-                  isLastStep && isCurrentStepValid 
-                    ? 'animate-pulse-subtle' 
-                    : ''
-                }`}
+                className="rounded-lg px-5 py-2 hover:bg-blue-700 transition-all shadow-sm"
+                style={{ transform: 'none' }}
               >
                 {isLastStep ? 'Final Review' : 'Next'}
                 {!isLastStep && <ArrowRight className="h-4 w-4 ml-2" />}
