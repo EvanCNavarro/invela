@@ -122,7 +122,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         task.status !== 'submitted') {
       // Get company name from metadata or task title, handling numbered task format
       const companyName = task.metadata?.company_name || 
-                      task.title.replace(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?:\s*/, '');
+                      task.title.replace(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*/, '');
 
       // Build the URL based on task type
       let taskTypePrefix;
@@ -165,7 +165,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       console.log('[TaskTable] Task validation:', {
         hasMetadata: !!task.metadata,
         hasCompanyName: !!task.metadata?.company_name,
-        titleMatchResult: task.title.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD)(\s*Form)?:\s*(.*)/),
+        titleMatchResult: task.title.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/),
         formattedCompanyName: companyName,
         timestamp: new Date().toISOString()
       });
