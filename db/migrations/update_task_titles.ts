@@ -36,7 +36,7 @@ export async function updateTaskTitles() {
       }
       else if (task.title.startsWith('Company CARD:')) {
         const companyName = task.title.replace('Company CARD:', '').trim();
-        newTitle = `3. 1033 Open Banking Survey: ${companyName}`;
+        newTitle = `3. Open Banking (1033) Survey: ${companyName}`;
         cardCount++;
       }
       
