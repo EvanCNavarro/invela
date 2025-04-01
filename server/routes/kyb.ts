@@ -32,6 +32,76 @@ function convertResponsesToCSV(fields: any[], formData: any) {
   ).join('\n');
 }
 
+// Utility function to unlock security tasks after KYB is completed
+const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?: number) => {
+  try {
+    logger.info('Looking for dependent security assessment tasks to unlock', {
+      kybTaskId,
+      companyId
+    });
+    
+    // Find security tasks for this company
+    const securityTasks = await db.select()
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.company_id, companyId),
+          eq(tasks.task_type, 'security_assessment')
+        )
+      );
+      
+    logger.info('Found potential security tasks to unlock', {
+      count: securityTasks.length,
+      taskIds: securityTasks.map(t => t.id)
+    });
+    
+    // Unlock each security task that was dependent on this KYB task
+    for (const securityTask of securityTasks) {
+      // Check if the task is locked and if the KYB task is a prerequisite
+      if (securityTask.metadata?.locked === true || 
+          securityTask.metadata?.prerequisite_task_id === kybTaskId ||
+          securityTask.metadata?.prerequisite_task_type === 'company_onboarding_KYB') {
+        
+        logger.info('Unlocking security task', {
+          securityTaskId: securityTask.id,
+          previousMetadata: {
+            locked: securityTask.metadata?.locked,
+            prerequisiteTaskId: securityTask.metadata?.prerequisite_task_id
+          }
+        });
+        
+        // Update the security task to unlock it
+        await db.update(tasks)
+          .set({
+            metadata: {
+              ...securityTask.metadata,
+              locked: false, // Explicitly unlock the task
+              prerequisite_completed: true,
+              prerequisite_completed_at: new Date().toISOString(),
+              prerequisite_completed_by: userId
+            },
+            updated_at: new Date()
+          })
+          .where(eq(tasks.id, securityTask.id));
+          
+        logger.info('Security task unlocked successfully', {
+          securityTaskId: securityTask.id
+        });
+      }
+    }
+    
+    return { success: true, count: securityTasks.length };
+  } catch (error) {
+    logger.error('Error unlocking security tasks', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      kybTaskId,
+      companyId
+    });
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
+
 const router = Router();
 
 // Debug utility for logging task data
@@ -965,10 +1035,22 @@ router.post('/api/kyb/submit/:taskId', async (req, res) => {
       warningCount: warnings.length
     });
 
+    // After KYB is completed, unlock any security assessment tasks
+    const unlockResult = await unlockSecurityTasks(task.company_id, taskId, req.user?.id);
+    
+    logger.info('Security task unlock operation completed', {
+      result: unlockResult,
+      success: unlockResult.success,
+      count: unlockResult.count,
+      companyId: task.company_id,
+      kybTaskId: taskId
+    });
+
     res.json({
       success: true,
       fileId: fileCreationResult.fileId,
-      warnings: warnings.length ? warnings : undefined
+      warnings: warnings.length ? warnings : undefined,
+      securityTasksUnlocked: unlockResult.success ? unlockResult.count : 0
     });
   } catch (error) {
     // Enhanced detailed error logging
