@@ -126,18 +126,14 @@ export function SecurityFormPlayground({
           throw new Error(`Failed to fetch responses: ${responsesResponse.statusText}`);
         }
         
-        const responses = await responsesResponse.json();
+        const responses = await responsesResponse.json() as SecurityFormResponse[];
         
         // Process responses and update form data
         if (responses && responses.length > 0) {
           const newFormData = { ...formData };
           
-          responses.forEach((response) => {
-            // Explicit type check and property access
-            if (typeof response === 'object' && response !== null && 
-                'field_id' in response && 'response' in response) {
-              newFormData[`field_${response.field_id}`] = response.response;
-            }
+          responses.forEach((response: SecurityFormResponse) => {
+            newFormData[`field_${response.field_id}`] = response.response;
           });
           
           setFormData(newFormData);
@@ -241,72 +237,100 @@ export function SecurityFormPlayground({
   // Render a form field based on its type
   const renderField = (field: SecurityFormField) => {
     const fieldValue = formData[`field_${field.id}`] || '';
+    const isValid = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
+    
+    // Common validation UI elements
+    const ValidationIcon = () => (
+      isValid ? (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+          <CheckCircle2 className="h-4 w-4" />
+        </div>
+      ) : null
+    );
     
     switch (field.field_type) {
       case 'text':
         return (
-          <Input
-            id={`field_${field.id}`}
-            value={fieldValue}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder=""
-            className="w-full"
-          />
+          <div className="relative w-full">
+            <Input
+              id={`field_${field.id}`}
+              value={fieldValue}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder=""
+              className={`w-full pr-10 ${isValid ? 'border-green-500 focus-visible:ring-green-300' : ''}`}
+            />
+            <ValidationIcon />
+          </div>
         );
         
       case 'textarea':
         return (
-          <Textarea
-            id={`field_${field.id}`}
-            value={fieldValue}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder=""
-            className="w-full min-h-[100px]"
-          />
+          <div className="relative w-full">
+            <Textarea
+              id={`field_${field.id}`}
+              value={fieldValue}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder=""
+              className={`w-full min-h-[100px] pr-10 ${isValid ? 'border-green-500 focus-visible:ring-green-300' : ''}`}
+            />
+            {isValid && (
+              <div className="absolute right-3 top-3 text-green-600">
+                <CheckCircle2 className="h-4 w-4" />
+              </div>
+            )}
+          </div>
         );
         
       case 'select':
         return (
-          <Select 
-            value={fieldValue} 
-            onValueChange={(value) => handleFieldChange(field.id, value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select an option" />
-            </SelectTrigger>
-            <SelectContent>
-              {field.options?.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative w-full">
+            <Select 
+              value={fieldValue} 
+              onValueChange={(value) => handleFieldChange(field.id, value)}
+            >
+              <SelectTrigger className={`w-full ${isValid ? 'border-green-500 focus-visible:ring-green-300' : ''}`}>
+                <SelectValue placeholder="Select an option" />
+                {isValid && <CheckCircle2 className="h-4 w-4 ml-2 text-green-600" />}
+              </SelectTrigger>
+              <SelectContent>
+                {field.options?.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         );
         
       case 'boolean':
         return (
-          <div className="flex items-center space-x-2">
+          <div className={`flex items-center space-x-2 p-2 rounded ${isValid ? 'bg-green-50 border border-green-100' : ''}`}>
             <Switch
               id={`field_${field.id}`}
               checked={fieldValue === true || fieldValue === 'true'}
               onCheckedChange={(checked) => handleFieldChange(field.id, checked)}
+              className={isValid ? 'data-[state=checked]:bg-green-500' : ''}
             />
-            <Label htmlFor={`field_${field.id}`}>
+            <Label htmlFor={`field_${field.id}`} className="flex items-center">
               {fieldValue === true || fieldValue === 'true' ? 'Yes' : 'No'}
+              {isValid && <CheckCircle2 className="h-4 w-4 ml-2 text-green-600" />}
             </Label>
           </div>
         );
         
       default:
         return (
-          <Input
-            id={`field_${field.id}`}
-            value={fieldValue}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder=""
-            className="w-full"
-          />
+          <div className="relative w-full">
+            <Input
+              id={`field_${field.id}`}
+              value={fieldValue}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              placeholder=""
+              className={`w-full pr-10 ${isValid ? 'border-green-500 focus-visible:ring-green-300' : ''}`}
+            />
+            <ValidationIcon />
+          </div>
         );
     }
   };
