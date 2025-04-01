@@ -451,6 +451,55 @@ router.get("/api/tasks/:id", async (req, res) => {
   }
 });
 
+// Special JSON endpoint with .json extension to prevent Vite conflicts 
+router.get("/api/tasks.json/:id", async (req, res) => {
+  try {
+    // Force JSON response
+    res.setHeader('Content-Type', 'application/json');
+    
+    const taskId = parseInt(req.params.id);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: "Invalid task ID" });
+    }
+    
+    console.log('[Tasks Routes] Fetching task by ID (special .json endpoint):', {
+      taskId,
+      timestamp: new Date().toISOString()
+    });
+    
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      console.warn('[Tasks Routes] Task not found (special .json endpoint):', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ error: "Task not found" });
+    }
+    
+    console.log('[Tasks Routes] Task found by ID (special .json endpoint):', {
+      taskId: task.id,
+      title: task.title,
+      type: task.task_type,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching task by ID (special .json endpoint):', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch task" });
+  }
+});
+
 // Helper function to get task counts
 async function getTaskCount() {
   const allTasks = await db.select().from(tasks);
