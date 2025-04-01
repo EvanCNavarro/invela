@@ -50,20 +50,27 @@ export const FileVault: React.FC = () => {
       totalPages: number
     }
   }>({
-    queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage }],
+    queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }],
     enabled: !!user?.company_id,
-    queryFn: async () => {
+    queryFn: async ({ queryKey }) => {
+      // Extract params from query key for consistency
+      const params = queryKey[1] as { company_id?: number, page: number, pageSize: number };
+      
       console.log('[FileVault Debug] Starting API request:', {
         userId: user?.id,
-        companyId: user?.company_id,
-        page: currentPage,
+        companyId: params.company_id,
+        page: params.page,
+        pageSize: params.pageSize,
         timestamp: new Date().toISOString()
       });
 
       const url = new URL('/api/files', window.location.origin);
-      url.searchParams.append('company_id', user!.company_id.toString());
-      url.searchParams.append('page', currentPage.toString());
-      url.searchParams.append('pageSize', itemsPerPage.toString());
+      if (params.company_id) {
+        url.searchParams.append('company_id', params.company_id.toString());
+      }
+      url.searchParams.append('page', params.page.toString());
+      url.searchParams.append('pageSize', params.pageSize.toString());
+      
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -76,6 +83,7 @@ export const FileVault: React.FC = () => {
 
       const responseData = await response.json();
       console.log('[FileVault Debug] API Response received:', {
+        responseData: responseData,
         responseStructure: Object.keys(responseData),
         fileCount: responseData.data?.length || 0,
         firstFile: responseData.data?.[0],
@@ -83,8 +91,49 @@ export const FileVault: React.FC = () => {
         timestamp: new Date().toISOString()
       });
 
+      // Check if the response has the expected structure with data and pagination
+      if (!responseData.data || !Array.isArray(responseData.data)) {
+        console.log('[FileVault Debug] Legacy response structure detected');
+        
+        // Handle if the response is an array directly (older API format)
+        if (Array.isArray(responseData)) {
+          console.log('[FileVault Debug] Processing array response');
+          const fileArray = responseData;
+          
+          return {
+            data: fileArray.map((file: any) => ({
+              id: file.id.toString(),
+              name: file.name,
+              size: file.size || 0,
+              status: file.status || 'uploaded',
+              createdAt: file.created_at || file.createdAt || new Date().toISOString(),
+              type: file.type || 'application/octet-stream'
+            })),
+            pagination: {
+              page: 1,
+              pageSize: itemsPerPage,
+              totalItems: fileArray.length,
+              totalPages: Math.ceil(fileArray.length / itemsPerPage)
+            }
+          };
+        }
+        
+        // Handle any other unexpected response format
+        console.error('[FileVault Debug] Unknown response format:', responseData);
+        return {
+          data: [],
+          pagination: {
+            page: 1,
+            pageSize: itemsPerPage,
+            totalItems: 0,
+            totalPages: 0
+          }
+        };
+      }
+
+      // Normal response handling for paginated data
       return {
-        data: (responseData.data || []).map((file: any) => ({
+        data: responseData.data.map((file: any) => ({
           id: file.id.toString(),
           name: file.name,
           size: file.size || 0,
@@ -95,8 +144,8 @@ export const FileVault: React.FC = () => {
         pagination: responseData.pagination || {
           page: 1,
           pageSize: itemsPerPage,
-          totalItems: responseData.data?.length || 0,
-          totalPages: Math.ceil((responseData.data?.length || 0) / itemsPerPage)
+          totalItems: responseData.data.length,
+          totalPages: Math.ceil(responseData.data.length / itemsPerPage)
         }
       };
     }
@@ -218,6 +267,17 @@ export const FileVault: React.FC = () => {
     }
   }, [filteredFiles.length, itemsPerPage, searchQuery, statusFilter, uploadingFiles.length, serverPagination]);
 
+  // Refetch when page changes to get new data from server
+  useEffect(() => {
+    // Only refetch from server if we're using server-side pagination
+    if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
+      // Invalidate the query to trigger a refetch with the new page
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+      });
+    }
+  }, [currentPage, queryClient, searchQuery, statusFilter, uploadingFiles.length, user?.company_id, itemsPerPage]);
+
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
       setCurrentPage(1);
@@ -296,7 +356,10 @@ export const FileVault: React.FC = () => {
     try {
       await uploadMutation.mutateAsync(formData);
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
-      queryClient.invalidateQueries({ queryKey: ['/api/files'] });
+      // Invalidate with the complete query key structure to match our fetch
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
+      });
 
       toast({
         title: "Success",
