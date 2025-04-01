@@ -362,12 +362,26 @@ export default function TaskCenterPage() {
                 <SearchBar
                   contextualType="tasks"
                   data={tasks}
-                  keys={['title', 'description']}
+                  keys={[
+                    'title', 
+                    'description',
+                    'task_type',
+                    'status',
+                    'user_email'
+                  ]}
                   onResults={(results: any[]) => {
-                    setSearchResults(results.map(result => result.item) as Task[]);
+                    console.log('[TaskCenter] Search results:', { 
+                      query: searchQuery, 
+                      count: results.length,
+                      results: results.slice(0, 3) // Log just the first few for debugging
+                    });
+                    setSearchResults(results.map(result => ({
+                      ...result.item,
+                      searchMatches: result.matches // Store match data for highlighting
+                    })) as Task[]);
                   }}
                   onSearch={(value) => setSearchQuery(value)}
-                  placeholder="Search for tasks"
+                  placeholder="Search task titles, descriptions, types..."
                   containerClassName="w-full"
                 />
               </div>
