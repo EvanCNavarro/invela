@@ -347,9 +347,7 @@ export function SecurityFormPlayground({
             </Badge>
           </div>
           <p className="text-gray-500 text-base">
-            Complete the security assessment for {companyData.name}. This assessment evaluates security protocols, 
-            data handling practices, and compliance measures. This is a required step before proceeding to the 
-            CARD assessment.
+            Complete this assessment to evaluate your organization's security protocols and data handling practices.
           </p>
         </div>
         <div className="min-w-[150px] text-right">
@@ -365,7 +363,7 @@ export function SecurityFormPlayground({
       </div>
       
       {/* Step indicators */}
-      <div className="flex justify-center mb-8 overflow-x-auto pb-4">
+      <div className="flex justify-center mb-8 overflow-x-auto pb-4 pt-2">
         <div className="flex space-x-3 md:space-x-6">
           {sections.map((section, index) => {
             const isCurrent = index === currentStep;
@@ -381,7 +379,7 @@ export function SecurityFormPlayground({
             return (
               <div 
                 key={index} 
-                className={`flex flex-col items-center relative group ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                className={`flex flex-col items-center relative group ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'} pt-3`}
                 onClick={() => isClickable && setCurrentStep(index)}
               >
                 {/* Button-like hover effect */}
@@ -426,54 +424,16 @@ export function SecurityFormPlayground({
       </div>
       
       {/* Current step content */}
-      <Card className="border border-gray-200 rounded-md p-6 mb-6">
+      <Card className="border border-gray-200 rounded-md p-6 mb-6 bg-white">
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium flex items-center">
-              <ShieldCheck className="mr-2 h-5 w-5 text-primary" />
-              {sections[currentStep] || 'Security Assessment'}
-            </h3>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <HelpCircle className="h-5 w-5 text-gray-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                  <p className="max-w-xs">
-                    Complete all fields in this section before moving to the next.
-                    All fields with a red asterisk (*) are required.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          
-          <Separator />
-          
           {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => (
-            <div key={field.id} className="space-y-3 py-4 border-b border-gray-100 last:border-0">
-              <div className="flex justify-between">
-                <label htmlFor={`field_${field.id}`} className="font-medium block mb-2">
-                  {field.label}
-                  {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                </label>
-                
-                {formData[`field_${field.id}`] ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    Completed
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                    Pending
-                  </Badge>
-                )}
-              </div>
+            <div key={field.id} className="space-y-2 py-4 border-b border-gray-100 last:border-0">
+              <label htmlFor={`field_${field.id}`} className="font-medium block text-sm">
+                {field.label}
+                {field.is_required && <span className="text-red-500 ml-1">*</span>}
+              </label>
               
-              <div className="bg-slate-50 p-3 rounded-md border border-slate-100 mb-3">
-                <p className="text-slate-700">{field.description}</p>
-              </div>
+              <p className="text-gray-600 text-sm mb-3">{field.description}</p>
               
               {renderField(field)}
             </div>
