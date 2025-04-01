@@ -338,21 +338,23 @@ export function SecurityFormPlayground({
   // Normal edit mode with step navigation
   return (
     <div className="w-full">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-3">Security Assessment: {companyData.name}</h2>
-        <p className="text-gray-500 mb-8 text-base">
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-2xl font-bold">Security Assessment: {companyData.name}</h2>
+          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 uppercase font-medium text-xs">
+            In Progress
+          </Badge>
+        </div>
+        <p className="text-gray-500 mb-5 text-base">
           Complete the security assessment for {companyData.name}. This assessment evaluates security protocols, 
           data handling practices, and compliance measures. This is a required step before proceeding to the 
           CARD assessment.
         </p>
         
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-sm font-medium">Completion: {completionPercentage}%</span>
-          <Badge variant={completionPercentage === 100 ? "default" : "outline"} className={completionPercentage === 100 ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}>
-            {completionPercentage === 100 ? "Ready to submit" : "In progress"}
-          </Badge>
+        <div className="flex justify-end mb-2">
+          <span className="text-lg font-medium">{completionPercentage}% Complete</span>
         </div>
-        <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
+        <div className="h-[10px] rounded-full overflow-hidden mb-6">
           <div
             className="h-full bg-[#4965EC] transition-all duration-300 ease-in-out"
             style={{ width: `${completionPercentage}%` }}
