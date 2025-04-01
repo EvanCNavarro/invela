@@ -357,12 +357,7 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-semibold mb-4">KYB Form: {displayName}</h2>
-              <p className="text-muted-foreground mb-6">
-                Please complete the Know Your Business (KYB) form for {displayName}. 
-                This information helps us understand your business and ensure compliance with regulations.
-              </p>
-              
+              {/* Header is now in the OnboardingKYBFormPlayground component */}
               <OnboardingKYBFormPlayground
                 taskId={task.id}
                 companyName={derivedCompanyName}
