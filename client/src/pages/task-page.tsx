@@ -60,50 +60,44 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  // Handle both legacy and new slugs
-  // Legacy format: "kyb-companyname" or "card-companyname"
-  // New format might include task numbers: "1-kyb-companyname" or "3-card-companyname"
-  let taskType, companyName;
+  // Direct task ID navigation
+  // Get task ID from the taskSlug parameter (which is now a task ID)
+  const taskId = parseInt(params.taskSlug);
   
-  const slugParts = params.taskSlug.split('-');
+  // We'll determine taskType after we get the task data
+  // Initialize with an empty string to avoid TypeScript errors
+  let taskType = '';
   
-  // Check if the first part is a number (new format)
-  if (/^\d+$/.test(slugParts[0])) {
-    // New format with number prefix
-    taskType = slugParts[1].toLowerCase();
-    companyName = slugParts.slice(2).join('-');
-  } else {
-    // Legacy format
-    taskType = slugParts[0].toLowerCase();
-    companyName = slugParts.slice(1).join('-');
-  }
+  // New direct task endpoint
+  const apiEndpoint = '/api/tasks';
+  
+  console.log('[TaskPage] Using direct task ID:', { 
+    taskId,
+    apiEndpoint: `${apiEndpoint}/${taskId}`,
+    timestamp: new Date().toISOString()
+  });
 
-  console.log('[TaskPage] Parsed task slug:', { taskType, companyName });
-  // Determine API endpoint based on task type
-  let apiEndpoint;
-  if (taskType === 'kyb') {
-    apiEndpoint = '/api/tasks/kyb';
-  } else if (taskType === 'card') {
-    apiEndpoint = '/api/tasks/card';
-  } else if (taskType === 'security') {
-    apiEndpoint = '/api/tasks/security';
-  } else {
-    apiEndpoint = '/api/tasks/kyb'; // Default fallback
-  }
+  // Function to extract company name from task title when needed
+  const extractCompanyNameFromTitle = (title: string): string => {
+    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/);
+    if (match && match[6]) {
+      return match[6].trim();
+    }
+    return 'Unknown Company';
+  };
 
   const { data: task, isLoading, error } = useQuery<Task>({
-    queryKey: [apiEndpoint, companyName],
+    queryKey: [apiEndpoint, taskId],
     queryFn: async () => {
       try {
-        console.log('[TaskPage] Fetching task data:', { 
-          apiEndpoint, 
-          companyName, 
-          fullUrl: `${apiEndpoint}/${companyName}`,
+        console.log('[TaskPage] Fetching task data by ID:', { 
+          taskId,
+          fullUrl: `${apiEndpoint}/${taskId}`,
           timestamp: new Date().toISOString()
         });
         
-        // First try the specific endpoint
-        const response = await fetch(`${apiEndpoint}/${companyName}`);
+        // Use the direct task ID endpoint
+        const response = await fetch(`${apiEndpoint}/${taskId}`);
         console.log('[TaskPage] API response:', { 
           status: response.status, 
           ok: response.ok,
@@ -111,85 +105,19 @@ export default function TaskPage({ params }: TaskPageProps) {
           timestamp: new Date().toISOString()
         });
         
-        // If the specific endpoint fails, try the generic one
         if (!response.ok) {
           const errorText = await response.text();
-          console.warn('[TaskPage] API error response, trying generic endpoint:', {
+          console.error('[TaskPage] Failed to fetch task by ID:', {
+            taskId,
             status: response.status,
             statusText: response.statusText,
             errorText,
             timestamp: new Date().toISOString()
           });
-          
-          // Try the generic company tasks endpoint as a backup
-          const genericEndpoint = '/api/company-tasks';
-          console.log('[TaskPage] Trying generic company tasks endpoint:', {
-            genericEndpoint,
-            companyName,
-            timestamp: new Date().toISOString()
-          });
-          
-          const companyTasksResponse = await fetch(`${genericEndpoint}/${companyName}`);
-          
-          if (!companyTasksResponse.ok) {
-            console.error('[TaskPage] Generic endpoint also failed:', {
-              status: companyTasksResponse.status,
-              statusText: companyTasksResponse.statusText,
-              timestamp: new Date().toISOString()
-            });
-            throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
-          }
-          
-          // If the generic endpoint succeeds, find the matching task
-          const companyTasksData = await companyTasksResponse.json();
-          console.log('[TaskPage] Company tasks data received:', {
-            companyId: companyTasksData.company?.id,
-            companyName: companyTasksData.company?.name,
-            taskCount: companyTasksData.tasks?.length,
-            timestamp: new Date().toISOString()
-          });
-          
-          // Find the matching task based on task type
-          let matchingTask;
-          if (taskType === 'kyb') {
-            matchingTask = companyTasksData.tasks.find((t: any) => 
-              t.task_type === 'company_kyb' || t.task_type === 'company_onboarding_KYB'
-            );
-          } else if (taskType === 'card') {
-            matchingTask = companyTasksData.tasks.find((t: any) => 
-              t.task_type === 'company_card'
-            );
-          } else if (taskType === 'security') {
-            matchingTask = companyTasksData.tasks.find((t: any) => 
-              t.task_type === 'security_assessment'
-            );
-          }
-          
-          if (!matchingTask) {
-            console.error('[TaskPage] No matching task found in company tasks:', {
-              taskType,
-              availableTypes: companyTasksData.tasks.map((t: any) => t.task_type),
-              timestamp: new Date().toISOString()
-            });
-            throw new Error(`No ${taskType.toUpperCase()} task found for company: ${companyName}`);
-          }
-          
-          console.log('[TaskPage] Found matching task from company tasks:', {
-            taskId: matchingTask.id,
-            taskType: matchingTask.task_type,
-            title: matchingTask.title,
-            timestamp: new Date().toISOString()
-          });
-          
-          if (matchingTask.metadata?.[`${taskType}FormFile`]) {
-            setFileId(matchingTask.metadata[`${taskType}FormFile`]);
-            setIsSubmitted(true);
-          }
-          
-          return matchingTask;
+          throw new Error(`Failed to fetch task #${taskId}: ${errorText}`);
         }
         
-        // If the specific endpoint succeeds, use that data
+        // Parse the response data
         const data = await response.json();
         console.log('[TaskPage] Task data received:', { 
           taskId: data.id,
@@ -199,10 +127,24 @@ export default function TaskPage({ params }: TaskPageProps) {
           timestamp: new Date().toISOString()
         });
         
-        if (data.metadata?.[`${taskType}FormFile`]) {
-          setFileId(data.metadata[`${taskType}FormFile`]);
+        // Determine the task type based on the task_type field
+        if (data.task_type === 'company_kyb' || data.task_type === 'company_onboarding_KYB') {
+          taskType = 'kyb';
+        } else if (data.task_type === 'company_card') {
+          taskType = 'card';
+        } else if (data.task_type === 'security_assessment') {
+          taskType = 'security';
+        } else {
+          taskType = 'unknown';
+        }
+        
+        // Check if the task has a form file for rendering submitted content
+        const formFileKey = `${taskType}FormFile`;
+        if (data.metadata?.[formFileKey]) {
+          setFileId(data.metadata[formFileKey]);
           setIsSubmitted(true);
         }
+        
         return data;
       } catch (error) {
         console.error('[TaskPage] Error in queryFn:', {
@@ -214,7 +156,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         throw error;
       }
     },
-    enabled: taskType === 'kyb' || taskType === 'card' || taskType === 'security',
+    enabled: true, // Always enabled to fetch the task
     staleTime: 0,
   });
 
@@ -223,22 +165,22 @@ export default function TaskPage({ params }: TaskPageProps) {
       console.error('[TaskPage] Error loading task:', {
         error,
         errorMessage: error instanceof Error ? error.message : String(error),
-        taskType,
-        companyName,
+        taskType: taskType || 'unknown',
+        taskId,
         apiEndpoint,
         timestamp: new Date().toISOString()
       });
       
       toast({
         title: "Error",
-        description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
+        description: `Failed to load task #${taskId}. Please try again.`,
         variant: "destructive",
       });
       
       console.log('[TaskPage] Redirecting to task-center due to error');
       navigate('/task-center');
     }
-  }, [error, navigate, toast, taskType, companyName, apiEndpoint]);
+  }, [error, navigate, toast, taskType, taskId, apiEndpoint]);
 
   const handleBackClick = () => {
     navigate('/task-center');
@@ -292,7 +234,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2">Task Not Found</h2>
             <p className="text-muted-foreground">
-              Could not find the {taskType.toUpperCase()} task for {companyName}. Please try again.
+              Could not find the task #{taskId}. Please try again.
             </p>
           </div>
         </div>
@@ -306,7 +248,9 @@ export default function TaskPage({ params }: TaskPageProps) {
     return null;
   }
 
-  const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
+  // Get the company name from task metadata or title
+  const derivedCompanyName = extractCompanyNameFromTitle(task.title);
+  const displayName = task.metadata?.company?.name || task.metadata?.companyName || derivedCompanyName;
 
   if (taskType === 'security') {
     return (
@@ -353,10 +297,9 @@ export default function TaskPage({ params }: TaskPageProps) {
               </p>
               
               {/* Security Form Implementation */}
-              {/* This would be replaced with a proper SecurityFormPlayground component once implemented */}
               <SecurityFormPlayground
                 taskId={task.id}
-                companyName={companyName}
+                companyName={derivedCompanyName}
                 companyData={{
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
@@ -464,7 +407,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           <div className="container max-w-7xl mx-auto">
             {selectedMethod === 'upload' && !showForm ? (
               <DocumentUploadWizard
-                companyName={companyName}
+                companyName={derivedCompanyName}
                 onComplete={() => {
                   setShowForm(true);
                 }}
@@ -472,9 +415,9 @@ export default function TaskPage({ params }: TaskPageProps) {
             ) : (selectedMethod === 'manual' || showForm) ? (
               <CardFormPlayground
                 taskId={task?.id || 0}
-                companyName={companyName}
+                companyName={derivedCompanyName}
                 companyData={{
-                  name: task?.metadata?.company?.name || companyName,
+                  name: displayName,
                   description: task?.metadata?.company?.description || undefined
                 }}
                 onSubmit={(formData) => {
@@ -482,7 +425,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      fileName: `compliance_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                      fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                       formData,
                       taskId: task?.id
                     })
@@ -531,7 +474,7 @@ export default function TaskPage({ params }: TaskPageProps) {
             ) : (
               <CardMethodChoice
                 taskId={task?.id || 0}
-                companyName={companyName}
+                companyName={derivedCompanyName}
                 onMethodSelect={handleMethodSelect}
               />
             )}
@@ -588,7 +531,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           {taskType === 'kyb' ? (
             <OnboardingKYBFormPlayground
               taskId={task.id}
-              companyName={companyName}
+              companyName={derivedCompanyName}
               companyData={{
                 name: displayName,
                 description: task.metadata?.company?.description || undefined
@@ -596,7 +539,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               savedFormData={task.savedFormData}
               onSubmit={(formData) => {
                 const submitData = {
-                  fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                  fileName: `kyb_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
                   taskId: task.id
                 };
@@ -634,15 +577,9 @@ export default function TaskPage({ params }: TaskPageProps) {
 
                     toast({
                       title: "Success",
-                      description: result.warnings?.length
-                        ? "KYB form has been saved successfully with some updates to existing data."
-                        : "KYB form has been saved successfully.",
+                      description: "KYB form has been saved successfully.",
                       variant: "default",
                     });
-
-                    if (result.warnings?.length) {
-                      console.log('[TaskPage] Save completed with warnings:', result.warnings);
-                    }
                   })
                   .catch(error => {
                     console.error('[TaskPage] Form submission failed:', error);
@@ -654,16 +591,16 @@ export default function TaskPage({ params }: TaskPageProps) {
                   });
               }}
             />
-          ) : (
-            <></>
+          ) : null}
+
+          {showSuccessModal && (
+            <KYBSuccessModal
+              open={showSuccessModal}
+              onClose={() => setShowSuccessModal(false)}
+              companyName={displayName}
+            />
           )}
         </div>
-
-        <KYBSuccessModal
-          open={showSuccessModal}
-          onOpenChange={setShowSuccessModal}
-          companyName={displayName}
-        />
       </PageTemplate>
     </DashboardLayout>
   );
