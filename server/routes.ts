@@ -18,6 +18,7 @@ import cardRouter from './routes/card';
 import securityRouter from './routes/security';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
+import adminRouter from './routes/admin';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -31,6 +32,7 @@ export function registerRoutes(app: Express): Express {
   app.use(securityRouter);
   app.use(filesRouter);
   app.use(accessRouter);
+  app.use('/api/admin', adminRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
