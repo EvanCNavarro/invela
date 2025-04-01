@@ -346,85 +346,68 @@ export function SecurityFormPlayground({
 
   // Review mode shows all sections in a summary view
   if (isReviewMode) {
+    // Build a list of all fields with responses
+    const formEntries = [];
+    
+    fields?.forEach(field => {
+      const fieldValue = formData[`field_${field.id}`];
+      if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+        formEntries.push({
+          fieldName: `field_${field.id}`,
+          question: field.description,
+          section: field.section,
+          value: String(fieldValue)
+        });
+      }
+    });
+    
     return (
-      <div className="w-full">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Security Assessment Review</h2>
-          <p className="text-muted-foreground mb-4">
-            Please review your security assessment for {companyData.name} before submitting.
-          </p>
-          
-          <Alert className="mb-6 bg-green-50 border-green-200">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <AlertTitle className="text-green-600">Security Assessment Complete</AlertTitle>
-            <AlertDescription className="text-green-700">
-              All required security information has been provided. Please review and submit.
-            </AlertDescription>
-          </Alert>
-          
-          <div className="mb-6">
-            <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#4965EC] transition-all duration-300 ease-in-out"
-                style={{ width: '100%' }}
-              />
-            </div>
-          </div>
+      <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Security Assessment</h2>
+          <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
         </div>
         
-        <Card className="border border-gray-200 rounded-md p-6 mb-6">
-          <div className="space-y-8">
-            {sections.map((section, index) => (
-              <div key={section} className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-white">
-                    <span className="text-sm font-bold">{index + 1}</span>
+        <div className="space-y-3">
+          {formEntries.map((entry, index) => (
+            <div key={entry.fieldName} className="border-b pb-3 mb-3">
+              <div className="flex gap-2">
+                <span className="font-bold text-gray-500">{index + 1}.</span>
+                <div className="w-full">
+                  <p className="text-gray-600 text-sm">Q: {entry.question}</p>
+                  <div className="flex items-start mt-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-normal text-gray-500">Answer: </span>
+                      <span className="font-bold">{entry.value}</span>
+                    </div>
                   </div>
-                  <h3 className="text-lg font-medium">{section}</h3>
                 </div>
-                <Separator />
-                
-                {fields?.filter(field => field.section === section).map((field) => (
-                  <div key={field.id} className="pl-10 border-l-2 border-gray-100 py-2">
-                    <div className="flex justify-between mb-1">
-                      <label className="font-medium text-sm">
-                        {field.label}
-                      </label>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        Completed
-                      </Badge>
-                    </div>
-                    <div className="bg-gray-50 p-3 rounded mb-2 text-gray-700 text-sm">
-                      {formData[`field_${field.id}`]?.toString() || ''}
-                    </div>
-                  </div>
-                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex justify-between mt-8 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setIsReviewMode(false)}
+            className="rounded-lg px-4 transition-all hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
           
-          <div className="flex justify-between mt-8">
-            <Button 
-              type="button"
-              variant="outline"
-              onClick={() => setIsReviewMode(false)}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Edit
-            </Button>
-            
-            <Button 
-              type="button" 
-              onClick={handleSubmitForm}
-              className="min-w-[150px] animate-pulse-ring"
-            >
-              Submit Security Assessment
-              <Check className="h-4 w-4 ml-1 text-white" />
-            </Button>
-          </div>
-        </Card>
-      </div>
+          <Button
+            onClick={handleSubmitForm}
+            className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
+            style={{ animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', transform: 'none' }}
+          >
+            Submit
+            <Check className="h-4 w-4 ml-1 text-white" />
+          </Button>
+        </div>
+      </Card>
     );
   }
 
@@ -461,13 +444,33 @@ export function SecurityFormPlayground({
           {sections.map((section, index) => {
             const isCurrent = index === currentStep;
             const isCompleted = isStepCompleted(index);
-            const isClickable = isCompleted || index <= currentStep;
+            const isNextStep = index === currentStep + 1;
+            const isPriorStepCompleted = index > 0 && isStepCompleted(index - 1);
+            const isCurrentStepValid = isStepCompleted(currentStep);
+            
+            // Step should be clickable if:
+            // 1. It is completed
+            // 2. It's the current step or any previous step
+            // 3. It's the next available step AND the current step is valid
+            // 4. The prior step is completed (for skipping to future steps)
+            // 5. Based on completion percentage
+            const isClickable = isCompleted || 
+                               index <= currentStep || 
+                               (isNextStep && isCurrentStepValid) || 
+                               isPriorStepCompleted || 
+                               completionPercentage === 100;
             
             // Colors
-            const squircleColor = isCurrent ? '#4965EC' : 
-                              isCompleted ? '#4965EC' : '#9CA3AF';
-            const textColor = isCurrent ? '#4965EC' : 
-                           isCompleted ? '#4965EC' : '#6B7280';
+            const squircleColor = isCompleted 
+                ? '#209C5A' // Green for completed
+                : isCurrent 
+                  ? '#4965EC' // Blue for current step
+                  : '#9CA3AF'; // Gray for incomplete
+            const textColor = isCompleted 
+                ? '#209C5A' // Green for completed
+                : isCurrent 
+                  ? '#4965EC' // Blue for current step
+                  : '#6B7280'; // Gray for incomplete
             
             return (
               <div 
