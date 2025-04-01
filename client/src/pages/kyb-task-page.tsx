@@ -99,6 +99,7 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                   'Content-Type': 'application/json',
                   'Accept': 'application/json' 
                 },
+                credentials: 'include', // Important: Include credentials (cookies) with the request
                 body: JSON.stringify({
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
                   formData,
