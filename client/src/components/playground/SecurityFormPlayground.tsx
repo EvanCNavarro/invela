@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, Check, HelpCircle } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -20,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SecurityFormField {
   id: number;
@@ -60,9 +65,11 @@ export function SecurityFormPlayground({
   onSubmit,
 }: SecurityFormPlaygroundProps) {
   const [formData, setFormData] = useState<Record<string, any>>(savedFormData || {});
-  const [currentSection, setCurrentSection] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
+  const [currentSection, setCurrentSection] = useState<string>('');
   
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({
@@ -82,17 +89,57 @@ export function SecurityFormPlayground({
     }
   }, [fields, formData]);
 
-  // Extract unique sections
+  // Extract unique sections and group fields by section
   useEffect(() => {
     if (fields) {
       const uniqueSections = [...new Set(fields.map(field => field.section))];
       setSections(uniqueSections);
       
-      if (!currentSection && uniqueSections.length > 0) {
+      if (uniqueSections.length > 0 && !currentSection) {
         setCurrentSection(uniqueSections[0]);
       }
     }
   }, [fields, currentSection]);
+  
+  // Update current section when step changes
+  useEffect(() => {
+    if (sections.length > 0 && currentStep >= 0 && currentStep < sections.length) {
+      setCurrentSection(sections[currentStep]);
+    }
+  }, [currentStep, sections]);
+  
+  // Define step navigation functions
+  const handleNext = () => {
+    if (currentStep < sections.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      // If on last step, go to review mode
+      setIsReviewMode(true);
+    }
+  };
+  
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+  
+  const handleSubmitForm = () => {
+    onSubmit(formData);
+  };
+  
+  // Check if step is completed
+  const isStepCompleted = (stepIndex: number) => {
+    if (!fields) return false;
+    
+    const sectionName = sections[stepIndex];
+    const sectionFields = fields.filter(field => field.section === sectionName);
+    
+    return sectionFields.every(field => {
+      const fieldValue = formData[`field_${field.id}`];
+      return fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
+    });
+  };
 
   // Handle field change
   const handleFieldChange = async (fieldId: number, value: string | boolean) => {
@@ -205,6 +252,90 @@ export function SecurityFormPlayground({
     );
   }
 
+  // Review mode shows all sections in a summary view
+  if (isReviewMode) {
+    return (
+      <div className="w-full">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Security Assessment Review</h2>
+          <p className="text-muted-foreground mb-4">
+            Please review your security assessment for {companyData.name} before submitting.
+          </p>
+          
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <AlertTitle className="text-green-600">Security Assessment Complete</AlertTitle>
+            <AlertDescription className="text-green-700">
+              All required security information has been provided. Please review and submit.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="mb-6">
+            <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[#4965EC] transition-all duration-300 ease-in-out"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        <Card className="border border-gray-200 rounded-md p-6 mb-6">
+          <div className="space-y-8">
+            {sections.map((section, index) => (
+              <div key={section} className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-primary text-white">
+                    <span className="text-sm font-bold">{index + 1}</span>
+                  </div>
+                  <h3 className="text-lg font-medium">{section}</h3>
+                </div>
+                <Separator />
+                
+                {fields?.filter(field => field.section === section).map((field) => (
+                  <div key={field.id} className="pl-10 border-l-2 border-gray-100 py-2">
+                    <div className="flex justify-between mb-1">
+                      <label className="font-medium text-sm">
+                        {field.label}
+                      </label>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Completed
+                      </Badge>
+                    </div>
+                    <div className="bg-gray-50 p-3 rounded mb-2 text-gray-700 text-sm">
+                      {formData[`field_${field.id}`]?.toString() || ''}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          
+          <div className="flex justify-between mt-8">
+            <Button 
+              type="button"
+              variant="outline"
+              onClick={() => setIsReviewMode(false)}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Edit
+            </Button>
+            
+            <Button 
+              type="button" 
+              onClick={handleSubmitForm}
+              className="min-w-[150px]"
+            >
+              Submit Security Assessment
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Normal edit mode with step navigation
   return (
     <div className="w-full">
       <div className="mb-6">
@@ -221,78 +352,162 @@ export function SecurityFormPlayground({
               {completionPercentage === 100 ? "Ready to submit" : "In progress"}
             </Badge>
           </div>
-          <Progress value={completionPercentage} className="h-2" />
+          <div className="h-[10px] bg-[#E5E7EB] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#4965EC] transition-all duration-300 ease-in-out"
+              style={{ width: `${completionPercentage}%` }}
+            />
+          </div>
         </div>
-        
-        {completionPercentage === 100 && (
-          <Alert className="mb-6 bg-green-50 border-green-200">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <AlertTitle className="text-green-600">Security Assessment Complete</AlertTitle>
-            <AlertDescription className="text-green-700">
-              All required security information has been provided. You can now submit the assessment.
-            </AlertDescription>
-          </Alert>
-        )}
       </div>
       
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <Tabs defaultValue={sections[0]} value={currentSection} onValueChange={setCurrentSection}>
-          <TabsList className="mb-4 flex flex-wrap gap-2">
-            {sections.map((section) => (
-              <TabsTrigger key={section} value={section} className="text-sm">
-                {section}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {sections.map((section) => (
-            <TabsContent key={section} value={section} className="space-y-6">
-              <h3 className="text-lg font-medium flex items-center">
-                <ShieldCheck className="mr-2 h-5 w-5 text-primary" />
-                {section}
-              </h3>
-              <Separator className="my-4" />
-              
-              {fields?.filter(field => field.section === section).map((field) => (
-                <div key={field.id} className="space-y-3 py-4 border-b border-gray-100 last:border-0">
-                  <div className="flex justify-between">
-                    <label htmlFor={`field_${field.id}`} className="font-medium block mb-2">
-                      {field.label}
-                      {field.is_required && <span className="text-red-500 ml-1">*</span>}
-                    </label>
-                    
-                    {formData[`field_${field.id}`] ? (
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        Completed
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                        Pending
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="bg-slate-50 p-3 rounded-md border border-slate-100 mb-3">
-                    <p className="text-slate-700">{field.description}</p>
-                  </div>
-                  
-                  {renderField(field)}
+      {/* Step indicators */}
+      <div className="flex justify-center mb-8 overflow-x-auto pb-4">
+        <div className="flex space-x-3 md:space-x-6">
+          {sections.map((section, index) => {
+            const isCurrent = index === currentStep;
+            const isCompleted = isStepCompleted(index);
+            const isClickable = isCompleted || index <= currentStep;
+            
+            // Colors
+            const squircleColor = isCurrent ? '#4965EC' : 
+                              isCompleted ? '#4965EC' : '#9CA3AF';
+            const textColor = isCurrent ? '#4965EC' : 
+                           isCompleted ? '#4965EC' : '#6B7280';
+            
+            return (
+              <div 
+                key={index} 
+                className={`flex flex-col items-center relative group ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                onClick={() => isClickable && setCurrentStep(index)}
+              >
+                {/* Button-like hover effect */}
+                {isClickable && !isCurrent && (
+                  <div className="absolute inset-0 rounded-lg bg-gray-100/0 group-hover:bg-gray-100/60 transition-all duration-200" />
+                )}
+                
+                {/* Step indicator squircle */}
+                <div
+                  className="flex items-center justify-center h-10 w-10 rounded-lg border-2 shadow-sm transition-all duration-200 z-10"
+                  style={{
+                    borderColor: squircleColor,
+                    backgroundColor: isCompleted || isCurrent ? squircleColor : 'white',
+                    color: isCompleted || isCurrent ? 'white' : squircleColor
+                  }}
+                >
+                  {isCompleted ? (
+                    <Check className="h-5 w-5" />
+                  ) : (
+                    <span className="text-sm font-bold leading-none">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </TabsContent>
-          ))}
-        </Tabs>
-        
-        <div className="flex justify-end mt-8">
-          <Button 
-            type="submit" 
-            disabled={completionPercentage < 100}
-            className="min-w-[150px]"
-          >
-            {completionPercentage < 100 ? 'Complete all fields to submit' : 'Submit Security Assessment'}
-          </Button>
+
+                {/* Step label with better wrapping */}
+                <div 
+                  className="text-sm mt-3 text-center w-full mx-auto min-h-[40px] whitespace-pre-line font-bold transition-colors duration-200 z-10 px-4"
+                  style={{ color: textColor }}
+                >
+                  {section}
+                </div>
+              </div>
+            );
+          })}
         </div>
-      </form>
+      </div>
+      
+      {/* Current step content */}
+      <Card className="border border-gray-200 rounded-md p-6 mb-6">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-medium flex items-center">
+              <ShieldCheck className="mr-2 h-5 w-5 text-primary" />
+              {sections[currentStep] || 'Security Assessment'}
+            </h3>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <HelpCircle className="h-5 w-5 text-gray-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p className="max-w-xs">
+                    Complete all fields in this section before moving to the next.
+                    All fields with a red asterisk (*) are required.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          
+          <Separator />
+          
+          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => (
+            <div key={field.id} className="space-y-3 py-4 border-b border-gray-100 last:border-0">
+              <div className="flex justify-between">
+                <label htmlFor={`field_${field.id}`} className="font-medium block mb-2">
+                  {field.label}
+                  {field.is_required && <span className="text-red-500 ml-1">*</span>}
+                </label>
+                
+                {formData[`field_${field.id}`] ? (
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Completed
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    Pending
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="bg-slate-50 p-3 rounded-md border border-slate-100 mb-3">
+                <p className="text-slate-700">{field.description}</p>
+              </div>
+              
+              {renderField(field)}
+            </div>
+          ))}
+        </div>
+      </Card>
+      
+      {/* Navigation buttons */}
+      <div className="flex justify-between mt-8 gap-4">
+        <Button 
+          type="button"
+          variant="outline"
+          onClick={handleBack}
+          disabled={currentStep === 0}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Previous Section
+        </Button>
+        
+        {currentStep < sections.length - 1 ? (
+          <Button 
+            type="button"
+            onClick={handleNext}
+            disabled={!isStepCompleted(currentStep)}
+            className="flex items-center gap-2"
+          >
+            Next Section
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button 
+            type="button"
+            onClick={handleNext}
+            disabled={!isStepCompleted(currentStep)}
+            className="flex items-center gap-2"
+          >
+            Review & Submit
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
