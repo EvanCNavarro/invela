@@ -243,7 +243,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                           {task.id}
                         </TableCell>
                         <TableCell className="font-medium">
-                          <div className="flex items-center space-x-2">
+                          <span className="flex items-center space-x-2">
                             {task.searchMatches ? (
                               <span 
                                 dangerouslySetInnerHTML={{ 
@@ -259,7 +259,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                             {isLocked && (
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
                             )}
-                          </div>
+                          </span>
                         </TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(task.status)}>
@@ -267,14 +267,16 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="w-full bg-secondary h-2 rounded-full">
-                            <div
-                              className="bg-primary h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${task.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground mt-1">
-                            {task.progress}%
+                          <span className="w-full block">
+                            <span className="block w-full bg-secondary h-2 rounded-full">
+                              <span
+                                className="block bg-primary h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${task.progress}%` }}
+                              />
+                            </span>
+                            <span className="block text-xs text-muted-foreground mt-1">
+                              {task.progress}%
+                            </span>
                           </span>
                         </TableCell>
                         <TableCell>
