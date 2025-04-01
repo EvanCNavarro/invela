@@ -55,7 +55,7 @@ export default function KYBForm({ params }: KYBFormProps) {
       const timestamp = new Date().toISOString().replace(/[:]/g, '').split('.')[0];
       const fileName = `kyb_${task?.title.toLowerCase().replace(/\s+/g, '-')}_${timestamp}`;
 
-      const response = await fetch('/api/kyb/save', {
+      const response = await fetch(`/api/kyb/submit/${taskId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
