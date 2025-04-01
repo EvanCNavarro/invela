@@ -1196,16 +1196,21 @@ export const OnboardingKYBFormPlayground = ({
         <div>
           {/* Header Section - Outside Card */}
           <div className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">KYB Survey</h2>
-                <div className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${
-                  isSubmitted
-                    ? 'bg-green-100 text-green-600'
-                    : 'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-xl font-semibold">KYB Form: {companyName}</h2>
+                  <div className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${
+                    isSubmitted
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
+                  </div>
                 </div>
+                <p className="text-sm text-gray-500">
+                  Please complete the Know Your Business (KYB) form for {companyName}. This information helps us understand your business and ensure compliance with regulations.
+                </p>
               </div>
               {!isSubmitted && (
                 <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-1 rounded-md shadow-sm">
