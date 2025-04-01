@@ -15,6 +15,7 @@ import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import cardRouter from './routes/card';
+import securityRouter from './routes/security';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 import { analyzeDocument } from './services/openai';
@@ -27,6 +28,7 @@ export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
   app.use(cardRouter);
+  app.use(securityRouter);
   app.use(filesRouter);
   app.use(accessRouter);
 
@@ -1190,6 +1192,7 @@ export function registerRoutes(app: Express): Express {
             companyId: createdCompany.id,
             tasks: {
               kyb: createdCompany.kyb_task_id,
+              security: createdCompany.security_task_id,
               card: createdCompany.card_task_id,
               onboarding: onboardingTask.id
             },

@@ -79,6 +79,9 @@ if (process.env.NODE_ENV === 'development') {
 // Create the drizzle db instance with the configured pool
 export const db = drizzle({ client: pool, schema });
 
+// Import migrations
+import { runMigrations } from './migrations';
+
 // Graceful shutdown handler with improved error handling
 async function handleShutdown(signal: string) {
   console.log(`Received ${signal}. Closing pool...`);
@@ -100,3 +103,14 @@ process.on('SIGINT', () => handleShutdown('SIGINT'));
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
+
+// Run migrations on startup
+(async () => {
+  try {
+    console.log('Running database migrations...');
+    await runMigrations();
+    console.log('Database migrations completed successfully');
+  } catch (error) {
+    console.error('Failed to run migrations:', error);
+  }
+})();
