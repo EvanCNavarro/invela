@@ -754,6 +754,260 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
   }
 });
 
+// Add the /api/kyb/submit/:taskId endpoint that the client is expecting to use
+router.post('/api/kyb/submit/:taskId', async (req, res) => {
+  try {
+    console.log('[KYB API Debug] KYB submit endpoint triggered:', {
+      endpoint: '/api/kyb/submit/:taskId',
+      taskId: req.params.taskId,
+      method: 'POST',
+      url: req.url,
+      headers: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookie: !!req.headers.cookie
+      },
+      timestamp: new Date().toISOString()
+    });
+    
+    // Check if user is authenticated
+    if (!req.isAuthenticated() || !req.user) {
+      console.error('[KYB API Debug] Unauthorized access attempt', {
+        path: `/api/kyb/submit/${req.params.taskId}`,
+        authenticated: req.isAuthenticated(),
+        hasUser: !!req.user,
+        hasSession: !!req.session,
+        sessionID: req.sessionID,
+        cookiePresent: !!req.headers.cookie,
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(401).json({ 
+        error: 'Unauthorized', 
+        message: 'You must be logged in to submit KYB data',
+        details: {
+          authenticated: req.isAuthenticated(),
+          hasUser: !!req.user,
+          hasSession: !!req.session,
+          timestamp: new Date().toISOString()
+        }
+      });
+    }
+    
+    // Extract taskId from params and data from the request body
+    const taskId = parseInt(req.params.taskId);
+    const { fileName, formData } = req.body;
+    
+    console.log('[KYB API Debug] Submit request received:', {
+      taskId,
+      formDataKeys: Object.keys(formData || {}),
+      fileName,
+      userId: req.user.id
+    });
+
+    // Get task details
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, taskId));
+
+    if (!task) {
+      throw new Error('Task not found');
+    }
+
+    // Check for required fields
+    if (!task.created_by || !task.company_id) {
+      throw new Error('Missing task user or company information');
+    }
+
+    // Get all KYB fields with their groups
+    const fields = await db.select()
+      .from(kybFields)
+      .orderBy(kybFields.order);
+
+    // Convert form data to CSV
+    const csvData = convertResponsesToCSV(fields, formData);
+
+    // Create file using FileCreationService
+    const fileCreationResult = await FileCreationService.createFile({
+      name: fileName || `kyb_form_${taskId}_${new Date().toISOString()}.csv`,
+      content: csvData,
+      type: 'text/csv',
+      userId: task.created_by,
+      companyId: task.company_id,
+      metadata: {
+        taskId,
+        taskType: 'kyb',
+        formVersion: '1.0',
+        submissionDate: new Date().toISOString(),
+        fields: fields.map(f => f.field_key)
+      },
+      status: 'uploaded'
+    });
+
+    if (!fileCreationResult.success) {
+      logger.error('File creation failed', {
+        error: fileCreationResult.error,
+        taskId,
+        fileName
+      });
+      throw new Error(fileCreationResult.error);
+    }
+
+    // Get company record to update available tabs
+    const [company] = await db.select()
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
+
+    if (company) {
+      // Add file-vault to available tabs if not already present
+      const currentTabs = company.available_tabs || ['task-center'];
+      if (!currentTabs.includes('file-vault')) {
+        await db.update(companies)
+          .set({
+            available_tabs: [...currentTabs, 'file-vault'],
+            updated_at: new Date()
+          })
+          .where(eq(companies.id, task.company_id));
+      }
+    }
+
+    // Handle revenue tier update if present
+    if (formData.annualRecurringRevenue) {
+      const [revenueTierField] = await db.select()
+        .from(kybFields)
+        .where(eq(kybFields.field_key, 'annualRecurringRevenue'))
+        .limit(1);
+
+      if (revenueTierField?.validation_rules?.options) {
+        // Map ARR ranges to revenue tiers
+        const tierMapping = {
+          'Less than $1 million': 'small',
+          '$1 million - $10 million': 'medium',
+          '$10 million - $50 million': 'large',
+          'Greater than $50 million': 'xlarge'
+        };
+
+        const selectedTier = tierMapping[formData.annualRecurringRevenue as keyof typeof tierMapping];
+        if (selectedTier && company) {
+          await db.update(companies)
+            .set({
+              revenue_tier: selectedTier,
+              updated_at: new Date()
+            })
+            .where(eq(companies.id, task.company_id));
+        }
+      }
+    }
+
+    // Update task status and metadata
+    await db.update(tasks)
+      .set({
+        status: TaskStatus.SUBMITTED,
+        progress: 100,
+        updated_at: new Date(),
+        metadata: {
+          ...task.metadata,
+          kybFormFile: fileCreationResult.fileId,
+          submissionDate: new Date().toISOString(),
+          formVersion: '1.0',
+          statusFlow: [...(task.metadata?.statusFlow || []), TaskStatus.SUBMITTED]
+            .filter((v, i, a) => a.indexOf(v) === i)
+        }
+      })
+      .where(eq(tasks.id, taskId));
+
+    let warnings = [];
+    // Save responses to database
+    for (const field of fields) {
+      const value = formData[field.field_key];
+      const status = value ? 'COMPLETE' : 'EMPTY';
+
+      try {
+        // First try to insert
+        await db.insert(kybResponses)
+          .values({
+            task_id: taskId,
+            field_id: field.id,
+            response_value: value || null,
+            status,
+            version: 1,
+            created_at: new Date(),
+            updated_at: new Date()
+          });
+      } catch (err) {
+        const error = err as Error;
+        if (error.message.includes('duplicate key value violates unique constraint')) {
+          // If duplicate, update instead
+          await db.update(kybResponses)
+            .set({
+              response_value: value || null,
+              status,
+              version: sql`${kybResponses.version} + 1`,
+              updated_at: new Date()
+            })
+            .where(
+              and(
+                eq(kybResponses.task_id, taskId),
+                eq(kybResponses.field_id, field.id)
+              )
+            );
+          warnings.push(`Updated existing response for field: ${field.field_key}`);
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    logger.info('Submit completed successfully', {
+      taskId,
+      fileId: fileCreationResult.fileId,
+      responseCount: fields.length,
+      warningCount: warnings.length
+    });
+
+    res.json({
+      success: true,
+      fileId: fileCreationResult.fileId,
+      warnings: warnings.length ? warnings : undefined
+    });
+  } catch (error) {
+    // Enhanced detailed error logging
+    console.error('[KYB API Debug] Error submitting KYB form', {
+      errorType: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      requestHeaders: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookiePresent: !!req.headers.cookie
+      },
+      sessionID: req.sessionID,
+      authenticatedStatus: req.isAuthenticated(),
+      userPresent: !!req.user,
+      timestamp: new Date().toISOString()
+    });
+    
+    logger.error('Error submitting KYB form', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    
+    // Set appropriate status code based on error type
+    const statusCode = 
+      error instanceof Error && error.message.includes('Unauthorized') ? 401 :
+      error instanceof Error && error.message.includes('not found') ? 404 : 
+      error instanceof Error && error.message.includes('duplicate key') ? 409 : 500;
+    
+    // Send more detailed error response
+    res.status(statusCode).json({
+      error: 'Failed to submit KYB form data',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      statusCode,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Add download endpoint after the existing routes
 router.get('/api/kyb/download/:fileId', async (req, res) => {
   try {
