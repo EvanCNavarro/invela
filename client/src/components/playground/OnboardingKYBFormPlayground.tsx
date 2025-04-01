@@ -222,10 +222,10 @@ const FORM_STEPS: FormField[][] = [
 
 // Define step titles for better organization and user experience
 const STEP_TITLES = [
-  "Company Profile", 
-  "Governance & Leadership", 
-  "Financial Profile", 
-  "Operations & Compliance"
+  "Company\nProfile", 
+  "Governance &\nLeadership", 
+  "Financial\nProfile", 
+  "Operations &\nCompliance"
 ];
 
 // FormReviewPage component for showing the review page
@@ -1090,11 +1090,11 @@ export const OnboardingKYBFormPlayground = ({
       return (
         <div key={field.name} className="space-y-2 py-1">
           <div className="flex flex-col gap-0.5 mb-1">
-            <label className="text-sm font-semibold text-foreground">
+            <label className="text-sm font-medium text-gray-500">
               {field.label}
             </label>
             <div className="flex items-center gap-1">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-sm text-black">
                 {mainText}
               </span>
               {field.tooltip && (
@@ -1134,11 +1134,11 @@ export const OnboardingKYBFormPlayground = ({
     return (
       <div key={field.name} className="space-y-2 py-1">
         <div className="flex flex-col gap-0.5 mb-1">
-          <label className="text-sm font-semibold text-foreground">
+          <label className="text-sm font-medium text-gray-500">
             {field.label}
           </label>
           <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-black">
               {mainText}
             </span>
             {field.tooltip && (
@@ -1213,9 +1213,9 @@ export const OnboardingKYBFormPlayground = ({
                 </p>
               </div>
               {!isSubmitted && (
-                <div className="flex items-center gap-1 text-base bg-gray-50 px-4 py-2 rounded-md shadow-sm min-w-[130px] justify-center">
-                  <span className="font-medium text-lg">{progress}</span>
-                  <span className="text-[#6B7280] font-medium">% Complete</span>
+                <div className="flex items-center text-base bg-gray-50 px-4 py-2 rounded-md shadow-sm min-w-[160px] justify-center whitespace-nowrap">
+                  <span className="font-medium text-lg mr-1">{progress}%</span>
+                  <span className="text-[#6B7280] font-medium">Complete</span>
                 </div>
               )}
             </div>
@@ -1342,9 +1342,6 @@ export const OnboardingKYBFormPlayground = ({
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
             <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
-              <h3 className="text-lg font-semibold mb-4 text-gray-800">
-                {STEP_TITLES[currentStep]}
-              </h3>
               <div className="space-y-5">
                 {currentStepData.map(renderField)}
               </div>
