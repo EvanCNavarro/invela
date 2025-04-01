@@ -67,7 +67,7 @@ export default function TaskCenterPage() {
   const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
-  const [sortConfig, setSortConfig] = useState({ key: 'title', direction: 'asc' }); // Changed default sort to title
+  const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'asc' }); // Sort by ID by default
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -221,14 +221,37 @@ export default function TaskCenterPage() {
       return sortConfig.direction === 'asc' ?
         a.title.localeCompare(b.title) :
         b.title.localeCompare(a.title);
+    } else if (sortConfig.key === 'id') {
+      // Sort numerically by ID
+      return sortConfig.direction === 'asc' ? 
+        a.id - b.id : 
+        b.id - a.id;
     } else if (sortConfig.key === 'due_date') {
       const aDate = a.due_date ? new Date(a.due_date).getTime() : Infinity;
       const bDate = b.due_date ? new Date(b.due_date).getTime() : Infinity;
       return sortConfig.direction === 'asc' ? aDate - bDate : bDate - aDate;
     } else if (sortConfig.key === 'status') {
+      // Define the order for statuses in specific descending priority
+      const statusOrder: Record<string, number> = {
+        'not_started': 1,
+        'in_progress': 2,
+        'ready_for_submission': 3,
+        'submitted': 4,
+        'approved': 5,
+        'completed': 6,
+        'email_sent': 7
+      };
+      
+      // Get the order value for each status (defaulting to the highest number if not found)
+      const aStatus = a.status.toLowerCase();
+      const bStatus = b.status.toLowerCase();
+      const aValue = statusOrder[aStatus as keyof typeof statusOrder] || 999;
+      const bValue = statusOrder[bStatus as keyof typeof statusOrder] || 999;
+      
+      // Sort by the status order
       return sortConfig.direction === 'asc' ?
-        (a.status || '').localeCompare(b.status || '') :
-        (b.status || '').localeCompare(a.status || '');
+        aValue - bValue :  // ascending: not_started first
+        bValue - aValue;   // descending: completed first
     } else if (sortConfig.key === 'progress') {
       return sortConfig.direction === 'asc' ? 
         (a.progress || 0) - (b.progress || 0) : 
@@ -373,16 +396,24 @@ export default function TaskCenterPage() {
                             variant="outline"
                             size="default"
                             className="flex items-center gap-1.5 h-10"
-                            onClick={() => setSortConfig(prev => ({ 
-                              key: prev.key, 
-                              direction: prev.direction === 'asc' ? 'desc' : 'asc' 
-                            }))}
+                            onClick={() => {
+                              // Toggle between ID sorting and Status sorting
+                              if (sortConfig.key === 'id') {
+                                // Switch to status sorting (descending by default)
+                                setSortConfig({ key: 'status', direction: 'desc' });
+                              } else {
+                                // Switch back to ID sorting (ascending by default)
+                                setSortConfig({ key: 'id', direction: 'asc' });
+                              }
+                            }}
                           >
-                            {sortConfig.direction === 'asc' 
+                            {sortConfig.key === 'id' 
                               ? <ArrowUpDown className="h-4 w-4" /> 
                               : <ArrowDownUp className="h-4 w-4" />
                             }
-                            <span className="hidden sm:inline-block">Sort</span>
+                            <span className="hidden sm:inline-block">
+                              {sortConfig.key === 'id' ? 'Sort By ID' : 'Sort By Status'}
+                            </span>
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
