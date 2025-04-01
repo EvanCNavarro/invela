@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
+import { highlightSearchMatch } from "@/components/ui/search-bar";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +33,7 @@ interface Task {
   files_requested: string[] | null;
   files_uploaded: string[] | null;
   metadata: Record<string, any> | null;
+  searchMatches?: any[]; // For storing search match data
 }
 
 const taskStatusMap = {
@@ -209,13 +211,25 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                         className={classNames(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
                           task.task_type === 'company_onboarding_KYB' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
                           isLocked && "opacity-50 cursor-not-allowed"
                         )}
                         onClick={() => !isLocked && handleTaskClick(task)}
                       >
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
-                            <span>{task.title}</span>
+                            {task.searchMatches ? (
+                              <span 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: highlightSearchMatch(
+                                    task.title, 
+                                    task.searchMatches.filter(match => match.key === 'title')
+                                  ) 
+                                }} 
+                              />
+                            ) : (
+                              <span>{task.title}</span>
+                            )}
                             {isLocked && (
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
                             )}
