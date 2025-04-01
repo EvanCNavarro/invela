@@ -2,12 +2,14 @@ import { runMigrations } from "./db/migrations";
 import { addSecurityFormTables } from "./db/migrations/add_security_form_tables";
 import { populateSecurityFields } from "./db/migrations/populate_security_fields";
 import { updateTaskTitles } from "./db/migrations/update_task_titles";
+import { updateSecurityFields } from "./db/migrations/update_security_fields";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
   'add_security_tables': addSecurityFormTables,
   'populate_security_fields': populateSecurityFields,
   'update_task_titles': updateTaskTitles,
+  'update_security_fields': updateSecurityFields,
   'all': runMigrations
 };
 
