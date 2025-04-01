@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
+import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -59,10 +60,36 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const [taskType, ...companyNameParts] = params.taskSlug.split('-');
-  const companyName = companyNameParts.join('-');
+  // Handle both legacy and new slugs
+  // Legacy format: "kyb-companyname" or "card-companyname"
+  // New format might include task numbers: "1-kyb-companyname" or "3-card-companyname"
+  let taskType, companyName;
+  
+  const slugParts = params.taskSlug.split('-');
+  
+  // Check if the first part is a number (new format)
+  if (/^\d+$/.test(slugParts[0])) {
+    // New format with number prefix
+    taskType = slugParts[1].toLowerCase();
+    companyName = slugParts.slice(2).join('-');
+  } else {
+    // Legacy format
+    taskType = slugParts[0].toLowerCase();
+    companyName = slugParts.slice(1).join('-');
+  }
 
-  const apiEndpoint = taskType === 'kyb' ? '/api/tasks/kyb' : '/api/tasks/card';
+  console.log('[TaskPage] Parsed task slug:', { taskType, companyName });
+  // Determine API endpoint based on task type
+  let apiEndpoint;
+  if (taskType === 'kyb') {
+    apiEndpoint = '/api/tasks/kyb';
+  } else if (taskType === 'card') {
+    apiEndpoint = '/api/tasks/card';
+  } else if (taskType === 'security') {
+    apiEndpoint = '/api/tasks/security';
+  } else {
+    apiEndpoint = '/api/tasks/kyb'; // Default fallback
+  }
 
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, companyName],
@@ -83,7 +110,7 @@ export default function TaskPage({ params }: TaskPageProps) {
         throw error;
       }
     },
-    enabled: taskType === 'kyb' || taskType === 'card',
+    enabled: taskType === 'kyb' || taskType === 'card' || taskType === 'security',
     staleTime: 0,
   });
 
@@ -158,13 +185,123 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  if (taskType !== 'kyb' && taskType !== 'card') {
+  if (taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
+    console.log('[TaskPage] Unknown task type, redirecting to task center:', taskType);
     navigate('/task-center');
     return null;
   }
 
   const displayName = task.metadata?.company?.name || task.metadata?.companyName || companyName;
 
+  if (taskType === 'security') {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {(isSubmitted || task?.metadata?.securityFormFile) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <h2 className="text-2xl font-semibold mb-4">Security Assessment: {displayName}</h2>
+              <p className="text-muted-foreground mb-6">
+                Complete the security assessment for {displayName}. This assessment evaluates security protocols, 
+                data handling practices, and compliance measures. This is a required step before proceeding to the CARD assessment.
+              </p>
+              
+              {/* Security Form Implementation */}
+              {/* This would be replaced with a proper SecurityFormPlayground component once implemented */}
+              <SecurityFormPlayground
+                taskId={task.id}
+                companyName={companyName}
+                companyData={{
+                  name: displayName,
+                  description: task.metadata?.company?.description || undefined
+                }}
+                savedFormData={task.savedFormData}
+                onSubmit={(formData) => {
+                  toast({
+                    title: "Submitting Security Assessment",
+                    description: "Please wait while we process your submission...",
+                  });
+
+                  // Submit the security assessment
+                  fetch(`/api/security/submit/${task.id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                      }
+                      return data;
+                    })
+                    .then(() => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: "Security assessment has been submitted successfully.",
+                        variant: "default",
+                      });
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Security assessment submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to submit security assessment. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            </div>
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
+  }
+  
   if (taskType === 'card') {
     return (
       <DashboardLayout>
@@ -225,9 +362,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   name: task?.metadata?.company?.name || companyName,
                   description: task?.metadata?.company?.description || undefined
                 }}
-                savedFormData={task?.savedFormData}
-                title={`Compliance Form: ${task.metadata?.company?.name || companyName}`}
-                description="Complete the Compliance and Risk Disclosure form"
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
                     method: 'POST',
@@ -345,8 +479,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                 description: task.metadata?.company?.description || undefined
               }}
               savedFormData={task.savedFormData}
-              title={`${taskType === 'kyb' ? 'KYB' : 'Compliance'} Form: ${displayName}`}
-              description={`${taskType === 'kyb' ? 'Complete the Know Your Business (KYB) form' : 'Complete the Compliance and Risk Disclosure form'}`}
               onSubmit={(formData) => {
                 const submitData = {
                   fileName: `kyb_${companyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,

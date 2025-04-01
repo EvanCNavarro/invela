@@ -1,12 +1,74 @@
 import { Router } from 'express';
 import { db } from '@db';
 import { tasks, securityFields, securityResponses, TaskStatus } from '@db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
 
 const router = Router();
 const logger = new Logger('SecurityRoutes');
+
+// Get security task by company name
+router.get('/api/tasks/security/:companyName', async (req, res) => {
+  try {
+    logger.info('Fetching security task:', {
+      companyName: req.params.companyName,
+    });
+
+    // Try to find with the new numbered format first, then fall back to the old format
+    let task = await db.query.tasks.findFirst({
+      where: and(
+        eq(tasks.task_type, 'security_assessment'),
+        ilike(tasks.title, `2. Security Assessment: ${req.params.companyName}`)
+      )
+    });
+    
+    // If not found, try the old format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'security_assessment'),
+          ilike(tasks.title, `Security Assessment: ${req.params.companyName}`)
+        )
+      });
+    }
+
+    logger.info('Security task found:', task);
+
+    if (!task) {
+      return res.status(404).json({ 
+        message: `Could not find Security task for company: ${req.params.companyName}` 
+      });
+    }
+
+    // Get the security form data if any exists
+    if (task.company_id) {
+      const responses = await db.select()
+        .from(securityResponses)
+        .where(eq(securityResponses.company_id, task.company_id));
+
+      if (responses.length > 0) {
+        const formData: Record<string, any> = {};
+        responses.forEach(response => {
+          formData[`field_${response.field_id}`] = response.response;
+        });
+        
+        // Create a new task object with savedFormData
+        // We're using a type assertion here since we're manually adding savedFormData
+        // which isn't part of the formal task schema
+        task = {
+          ...task,
+          savedFormData: formData
+        } as typeof task & { savedFormData: Record<string, any> };
+      }
+    }
+
+    res.json(task);
+  } catch (error) {
+    console.error('[Security Routes] Error fetching security task:', error);
+    res.status(500).json({ message: "Failed to fetch security task" });
+  }
+});
 
 // Get security fields
 router.get('/api/security/fields', requireAuth, async (req, res) => {

@@ -15,12 +15,23 @@ router.get("/api/tasks/card/:companyName", async (req, res) => {
       companyName: req.params.companyName,
     });
 
-    const task = await db.query.tasks.findFirst({
+    // Try to find with the new numbered format first, then fall back to the old format
+    let task = await db.query.tasks.findFirst({
       where: and(
         eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `Company CARD: ${req.params.companyName}`)
+        ilike(tasks.title, `3. Open Banking (1033) Survey: ${req.params.companyName}`)
       )
     });
+    
+    // If not found, try the old format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'company_card'),
+          ilike(tasks.title, `Company CARD: ${req.params.companyName}`)
+        )
+      });
+    }
 
     console.log('[Tasks Routes] CARD task found:', task);
 
@@ -44,12 +55,29 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
       companyName: req.params.companyName,
     });
 
-    const task = await db.query.tasks.findFirst({
+    // Try to find with the new numbered format first, then fall back to the old format
+    let task = await db.query.tasks.findFirst({
       where: and(
-        eq(tasks.task_type, 'company_kyb'),
-        ilike(tasks.title, `Company KYB: ${req.params.companyName}`)
+        or(
+          eq(tasks.task_type, 'company_kyb'),
+          eq(tasks.task_type, 'company_onboarding_KYB')
+        ),
+        ilike(tasks.title, `1. KYB Form: ${req.params.companyName}`)
       )
     });
+    
+    // If not found, try the old format
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          or(
+            eq(tasks.task_type, 'company_kyb'),
+            eq(tasks.task_type, 'company_onboarding_KYB')
+          ),
+          ilike(tasks.title, `Company KYB: ${req.params.companyName}`)
+        )
+      });
+    }
 
     console.log('[Tasks Routes] KYB task found:', task);
 
