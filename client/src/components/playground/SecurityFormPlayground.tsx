@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, Check, HelpCircle } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, Check, HelpCircle, Eye } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -417,9 +417,10 @@ export function SecurityFormPlayground({
             <Button 
               type="button" 
               onClick={handleSubmitForm}
-              className="min-w-[150px]"
+              className="min-w-[150px] animate-pulse-ring"
             >
               Submit Security Assessment
+              <Check className="h-4 w-4 ml-1 text-white" />
             </Button>
           </div>
         </Card>
@@ -560,10 +561,10 @@ export function SecurityFormPlayground({
             type="button"
             onClick={handleNext}
             disabled={!isStepCompleted(currentStep)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 animate-pulse-ring"
           >
-            Review & Submit
-            <ArrowRight className="h-4 w-4" />
+            Final Review
+            <Eye className="h-4 w-4 ml-1" />
           </Button>
         )}
       </div>
