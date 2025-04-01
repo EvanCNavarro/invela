@@ -1193,24 +1193,22 @@ export const OnboardingKYBFormPlayground = ({
           onSubmit={handleSubmit}
         />
       ) : (
-        <Card className="p-6">
-          {/* Header Section */}
-          <div className="mb-4">
-            <div className="flex items-center mb-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold">KYB Survey</h2>
-                  <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                    isSubmitted
-                      ? 'bg-green-100 text-green-600'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
-                  </div>
+        <div>
+          {/* Header Section - Outside Card */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold">KYB Survey</h2>
+                <div className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${
+                  isSubmitted
+                    ? 'bg-green-100 text-green-600'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {isSubmitted ? 'COMPLETED' : 'IN PROGRESS'}
                 </div>
               </div>
               {!isSubmitted && (
-                <div className="flex items-center gap-1 text-base">
+                <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-1 rounded-md shadow-sm">
                   <span className="font-medium text-lg">{progress}</span>
                   <span className="text-[#6B7280] font-medium">% Complete</span>
                 </div>
@@ -1219,7 +1217,7 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Progress bar */}
             {!isSubmitted && (
-              <div className="h-[4px] bg-[#E5E7EB] rounded-full overflow-hidden mb-4">
+              <div className="h-[6px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
                 <div
                   className="h-full transition-all duration-300 ease-in-out"
                   style={{ width: `${progress}%`, backgroundColor: '#4965EC' }}
@@ -1304,15 +1302,15 @@ export const OnboardingKYBFormPlayground = ({
                       
                       {/* Step indicator squircle */}
                       <div
-                        className="flex items-center justify-center h-9 w-9 rounded-lg border-2 transition-all duration-200 z-10"
+                        className="flex items-center justify-center h-10 w-10 rounded-lg border-2 shadow-sm transition-all duration-200 z-10"
                         style={{
                           borderColor: squircleColor,
-                          backgroundColor: isCurrent ? squircleColor : 'white',
-                          color: isCurrent ? 'white' : squircleColor
+                          backgroundColor: isCompleted || isCurrent ? squircleColor : 'white',
+                          color: isCompleted || isCurrent ? 'white' : squircleColor
                         }}
                       >
                         {isCompleted ? (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12"></polyline>
                           </svg>
                         ) : (
@@ -1341,36 +1339,34 @@ export const OnboardingKYBFormPlayground = ({
             )}
           </div>
 
-          <div className="flex items-center justify-center mt-0 mb-4">
-            <div className="w-full h-[2px] border-0 relative">
-              {/* Custom dashed line with very wide spacing */}
-              <div className="absolute inset-0 flex items-center justify-evenly">
-                {[...Array(15)].map((_, i) => (
-                  <div key={i} className="w-8 h-[2px]" style={{ backgroundColor: "#E5E7EB" }}></div>
-                ))}
-              </div>
+          {/* Separator line with shadow for depth */}
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-full h-[1px] border-0 bg-gray-200 shadow-sm relative">
             </div>
           </div>
 
           {/* Form Fields Section - Only show when not submitted */}
           {!isSubmitted && (
-            <div className="space-y-4">
-              <div className="space-y-4">
+            <div className="bg-white p-6 rounded-lg border border-gray-100 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                {STEP_TITLES[currentStep]}
+              </h3>
+              <div className="space-y-5">
                 {currentStepData.map(renderField)}
               </div>
             </div>
           )}
 
           {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8 pt-4 border-t">
+          <div className="flex justify-between mt-8 pt-4 border-t border-gray-100">
             {!isSubmitted && (
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={currentStep === 0}
-                className="rounded-lg px-4 transition-all hover:bg-gray-100"
+                className="rounded-lg px-5 py-2 transition-all hover:bg-gray-50 text-gray-700 border-gray-200"
               >
-                {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-1" />}
+                {currentStep > 0 && <ArrowLeft className="h-4 w-4 mr-2" />}
                 Back
               </Button>
             )}
@@ -1378,8 +1374,9 @@ export const OnboardingKYBFormPlayground = ({
               <div className="ml-auto">
                 <Button
                   disabled
-                  className="bg-green-600 hover:bg-green-600 text-white rounded-lg px-4"
+                  className="bg-green-600 hover:bg-green-600 text-white rounded-lg px-5 py-2 shadow-sm"
                 >
+                  <Check className="h-4 w-4 mr-2" />
                   Submitted
                 </Button>
               </div>
@@ -1387,19 +1384,19 @@ export const OnboardingKYBFormPlayground = ({
               <Button
                 onClick={handleNext}
                 disabled={!isCurrentStepValid}
-                className={`rounded-lg px-4 hover:bg-blue-700 transition-all ${
+                className={`rounded-lg px-5 py-2 hover:bg-blue-700 transition-all shadow-sm ${
                   isLastStep && isCurrentStepValid 
-                    ? 'animate-pulse-ring' 
+                    ? 'animate-pulse-subtle' 
                     : ''
                 }`}
               >
                 {isLastStep ? 'Final Review' : 'Next'}
-                {!isLastStep && <ArrowRight className="h-4 w-4 ml-1" />}
-                {isLastStep && <Eye className="h-4 w-4 ml-1 text-white" />}
+                {!isLastStep && <ArrowRight className="h-4 w-4 ml-2" />}
+                {isLastStep && <Eye className="h-4 w-4 ml-2" />}
               </Button>
             )}
           </div>
-        </Card>
+        </div>
       )}
     </div>
   );
