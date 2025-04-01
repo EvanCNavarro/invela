@@ -307,15 +307,148 @@ export default function TaskPage({ params }: TaskPageProps) {
     );
   }
 
-  if (taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
-    console.log('[TaskPage] Unknown task type, redirecting to task center:', taskType);
-    navigate('/task-center');
-    return null;
+  // This useEffect will handle navigation outside of the render cycle
+  // to avoid React errors about setState during render
+  useEffect(() => {
+    if (task && taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
+      console.log('[TaskPage] Unknown task type, redirecting to task center:', taskType);
+      navigate('/task-center');
+    }
+  }, [task, taskType, navigate]);
+  
+  if (task && taskType !== 'kyb' && taskType !== 'card' && taskType !== 'security') {
+    return <LoadingSpinner size="lg" />;
+  }
+  
+  // Get the company name from task metadata or title 
+  const derivedCompanyName = task ? extractCompanyNameFromTitle(task.title) : '';
+  const displayName = task?.metadata?.company?.name || task?.metadata?.companyName || derivedCompanyName;
+  
+  // KYB Task Form Rendering
+  if (taskType === 'kyb') {
+    return (
+      <DashboardLayout>
+        <PageTemplate className="space-y-6">
+          <div className="space-y-4">
+            <BreadcrumbNav forceFallback={true} />
+            <div className="flex justify-between items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-sm font-medium bg-white border-muted-foreground/20"
+                onClick={handleBackClick}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Task Center
+              </Button>
+
+              {isSubmitted && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleDownload('json')}>
+                      <FileJson className="mr-2 h-4 w-4" />
+                      Download as JSON
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('csv')}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Download as CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleDownload('txt')}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Download as TXT
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </div>
+
+          <div className="container max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <h2 className="text-2xl font-semibold mb-4">KYB Form: {displayName}</h2>
+              <p className="text-muted-foreground mb-6">
+                Please complete the Know Your Business (KYB) form for {displayName}. 
+                This information helps us understand your business and ensure compliance with regulations.
+              </p>
+              
+              <OnboardingKYBFormPlayground
+                taskId={task.id}
+                companyName={derivedCompanyName}
+                companyData={{
+                  name: displayName,
+                  description: task.metadata?.company?.description || undefined
+                }}
+                savedFormData={task.savedFormData}
+                onSubmit={(formData) => {
+                  toast({
+                    title: "Submitting KYB Form",
+                    description: "Please wait while we process your submission...",
+                  });
+
+                  fetch(`/api/kyb/submit/${task.id}`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ formData })
+                  })
+                    .then(async response => {
+                      const data = await response.json();
+                      if (!response.ok) {
+                        throw new Error(data.details || data.error || 'Failed to save KYB form');
+                      }
+                      return data;
+                    })
+                    .then((result) => {
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
+
+                      setFileId(result.fileId);
+                      setIsSubmitted(true);
+                      setShowSuccessModal(true);
+
+                      toast({
+                        title: "Success",
+                        description: "KYB form has been saved successfully.",
+                        variant: "default",
+                      });
+                    })
+                    .catch(error => {
+                      console.error('[TaskPage] Form submission failed:', error);
+                      toast({
+                        title: "Error",
+                        description: error.message || "Failed to save KYB form. Please try again.",
+                        variant: "destructive",
+                      });
+                    });
+                }}
+              />
+            </div>
+
+            {showSuccessModal && (
+              <KYBSuccessModal
+                open={showSuccessModal}
+                onOpenChange={(open) => setShowSuccessModal(open)}
+                companyName={displayName}
+              />
+            )}
+          </div>
+        </PageTemplate>
+      </DashboardLayout>
+    );
   }
 
-  // Get the company name from task metadata or title
-  const derivedCompanyName = extractCompanyNameFromTitle(task.title);
-  const displayName = task.metadata?.company?.name || task.metadata?.companyName || derivedCompanyName;
+  // We already defined these variables earlier
 
   if (taskType === 'security') {
     return (
