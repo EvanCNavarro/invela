@@ -111,7 +111,8 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 timestamp: new Date().toISOString()
               });
               
-              fetch('/api/kyb/save', {
+              // Using the correct endpoint URL that's working on the server
+              fetch(`/api/kyb/submit/${task.id}`, {
                 method: 'POST',
                 headers: { 
                   'Content-Type': 'application/json',
