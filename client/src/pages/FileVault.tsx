@@ -226,18 +226,27 @@ export const FileVault: React.FC = () => {
   // If we have server pagination, use the direct response from the server
   // Otherwise, use client-side pagination for uploading files etc.
   const paginatedFiles = useMemo(() => {
+    // In all cases, apply the pagination at the client side
+    // to ensure we show the correct number of items per page
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
     if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
-      // Use direct server data when no filtering is being done
-      console.log('[FileVault Debug] Using server pagination:', {
+      // When using server data, we still need to apply client-side slicing
+      // for consistent display until we fetch the next page
+      const slicedFiles = files.slice(0, itemsPerPage);
+      
+      console.log('[FileVault Debug] Using server pagination with client-side slicing:', {
         page: currentPage,
         totalItems: serverPagination?.totalItems || 0,
-        pageItems: files.length
+        itemsPerPage,
+        availableFiles: files.length,
+        displayedFiles: slicedFiles.length
       });
-      return files;
+      
+      return slicedFiles;
     } else {
       // Use client-side filtering and pagination when filters are applied
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
       const result = filteredFiles.slice(startIndex, endIndex);
 
       console.log('[FileVault Debug] Using client-side pagination:', {
