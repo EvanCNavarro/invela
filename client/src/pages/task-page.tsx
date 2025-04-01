@@ -18,6 +18,7 @@ import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
+import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
@@ -544,6 +545,14 @@ export default function TaskPage({ params }: TaskPageProps) {
               />
             </div>
           </div>
+          
+          {showSuccessModal && (
+            <SecuritySuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => setShowSuccessModal(open)}
+              companyName={displayName}
+            />
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
