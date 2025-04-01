@@ -100,7 +100,7 @@ async function createCompanyInternal(
     console.log('[Company Service] Creating KYB task for company:', newCompany.id);
     const [kybTask] = await tx.insert(tasks)
       .values({
-        title: `Company KYB: ${newCompany.name}`,
+        title: `1. KYB Form: ${newCompany.name}`,
         description: `Complete KYB verification for ${newCompany.name}`,
         task_type: 'company_onboarding_KYB',
         task_scope: 'company',
@@ -137,7 +137,7 @@ async function createCompanyInternal(
     console.log('[Company Service] Creating Security Assessment task for company:', newCompany.id);
     const [securityTask] = await tx.insert(tasks)
       .values({
-        title: `Security Assessment: ${newCompany.name}`,
+        title: `2. Security Assessment: ${newCompany.name}`,
         description: `Complete Security Assessment for ${newCompany.name}`,
         task_type: 'security_assessment',
         task_scope: 'company',
@@ -182,7 +182,7 @@ async function createCompanyInternal(
     console.log('[Company Service] Creating CARD task for company:', newCompany.id);
     const [cardTask] = await tx.insert(tasks)
       .values({
-        title: `Company CARD: ${newCompany.name}`,
+        title: `3. 1033 Open Banking Survey: ${newCompany.name}`,
         description: `Provide Compliance and Risk Data (CARD) for ${newCompany.name}`,
         task_type: 'company_card',
         task_scope: 'company',
