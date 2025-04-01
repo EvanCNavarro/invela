@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { SearchBar } from "@/components/ui/search-bar";
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -62,14 +62,12 @@ interface Task {
 }
 
 export default function TaskCenterPage() {
-  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [typeFilter, setTypeFilter] = useState("All Task Types");
   const [scopeFilter, setScopeFilter] = useState("All Assignee Types");
   const [currentPage, setCurrentPage] = useState(1);
   const [activeTab, setActiveTab] = useState("my-tasks");
   const [sortConfig, setSortConfig] = useState({ key: 'title', direction: 'asc' }); // Changed default sort to title
-  const [searchResults, setSearchResults] = useState<Task[]>([]);
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -184,11 +182,6 @@ export default function TaskCenterPage() {
       return false;
     }
     
-    // Search query filter
-    if (searchQuery.trim() !== "" && searchResults.length > 0) {
-      return searchResults.some(result => result.id === task.id);
-    }
-    
     return true;
   };
 
@@ -251,17 +244,15 @@ export default function TaskCenterPage() {
     currentPage * itemsPerPage
   );
 
-  const hasActiveFilters = searchQuery !== "" ||
+  const hasActiveFilters =
     statusFilter !== "All Statuses" ||
     typeFilter !== "All Task Types" ||
     scopeFilter !== "All Assignee Types";
 
   const clearFilters = () => {
-    setSearchQuery("");
     setStatusFilter("All Statuses");
     setTypeFilter("All Task Types");
     setScopeFilter("All Assignee Types");
-    setSearchResults([]);
   };
 
   if (isLoading) {
@@ -358,33 +349,6 @@ export default function TaskCenterPage() {
                   </Tooltip>
                 </TooltipProvider>
               </TabsList>
-              <div className="w-full sm:w-[250px]">
-                <SearchBar
-                  contextualType="tasks"
-                  data={tasks}
-                  keys={[
-                    'title', 
-                    'description',
-                    'task_type',
-                    'status',
-                    'user_email'
-                  ]}
-                  onResults={(results: any[]) => {
-                    console.log('[TaskCenter] Search results:', { 
-                      query: searchQuery, 
-                      count: results.length,
-                      results: results.slice(0, 3) // Log just the first few for debugging
-                    });
-                    setSearchResults(results.map(result => ({
-                      ...result.item,
-                      searchMatches: result.matches // Store match data for highlighting
-                    })) as Task[]);
-                  }}
-                  onSearch={(value) => setSearchQuery(value)}
-                  placeholder="Search task titles, descriptions, types..."
-                  containerClassName="w-full"
-                />
-              </div>
             </div>
 
             <Card className="w-full">
