@@ -8,7 +8,8 @@ import {
   jsonb,
   real,
   uuid,
-  pgEnum
+  pgEnum,
+  varchar
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
@@ -256,6 +257,34 @@ export const documentAnswers = pgTable("document_answers", {
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
+// Define the Security survey tables 
+export const securityFields = pgTable("security_fields", {
+  id: serial("id").primaryKey(),
+  section: varchar("section", { length: 255 }).notNull(),
+  field_key: varchar("field_key", { length: 255 }).notNull().unique(),
+  label: text("label").notNull(),
+  description: text("description"),
+  field_type: varchar("field_type", { length: 50 }).notNull(),
+  is_required: boolean("is_required").notNull().default(false),
+  options: jsonb("options"),
+  validation_rules: jsonb("validation_rules"),
+  metadata: jsonb("metadata"),
+  status: varchar("status", { length: 50 }).notNull().default("ACTIVE"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at"),
+});
+
+export const securityResponses = pgTable("security_responses", {
+  id: serial("id").primaryKey(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  field_id: integer("field_id").references(() => securityFields.id).notNull(),
+  response: text("response"),
+  metadata: jsonb("metadata"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at"),
+});
+
 export const usersRelations = relations(users, ({ one, many }) => ({
   company: one(companies, {
     fields: [users.company_id],
@@ -337,6 +366,21 @@ export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
   })
 }));
 
+export const securityFieldsRelations = relations(securityFields, ({ many }) => ({
+  responses: many(securityResponses)
+}));
+
+export const securityResponsesRelations = relations(securityResponses, ({ one }) => ({
+  field: one(securityFields, {
+    fields: [securityResponses.field_id],
+    references: [securityFields.id]
+  }),
+  company: one(companies, {
+    fields: [securityResponses.company_id],
+    references: [companies.id]
+  })
+}));
+
 export const filesRelations = relations(files, ({ one, many }) => ({
   user: one(users, {
     fields: [files.user_id],
@@ -376,7 +420,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "company_card", "compliance_and_risk"]),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "security_assessment", "company_card", "compliance_and_risk"]),
   task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -437,15 +481,17 @@ export const insertTaskSchema = z.object({
         path: ["company_id"],
       });
     }
-  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
+  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "security_assessment" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
     if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: data.task_type === "company_onboarding_KYB" 
           ? "Company is required for KYB tasks"
+          : data.task_type === "security_assessment"
+          ? "Company is required for Security Assessment tasks"
           : data.task_type === "company_card"
           ? "Company is required for CARD tasks"
-          : "Company is required for CARD tasks",
+          : "Company is required for compliance tasks",
         path: ["company_id"],
       });
     }
@@ -455,6 +501,14 @@ export const insertTaskSchema = z.object({
         const twoWeeksFromNow = new Date();
         twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
         data.due_date = twoWeeksFromNow;
+      }
+    }
+    if (data.task_type === "security_assessment") {
+      data.priority = "medium";
+      if (!data.due_date) {
+        const threeWeeksFromNow = new Date();
+        threeWeeksFromNow.setDate(threeWeeksFromNow.getDate() + 21);
+        data.due_date = threeWeeksFromNow;
       }
     }
     data.task_scope = "company";
@@ -498,5 +552,14 @@ export const selectCardResponseSchema = createSelectSchema(cardResponses);
 export const insertDocumentAnswerSchema = createInsertSchema(documentAnswers);
 export const selectDocumentAnswerSchema = createSelectSchema(documentAnswers);
 
+export const insertSecurityFieldSchema = createInsertSchema(securityFields);
+export const selectSecurityFieldSchema = createSelectSchema(securityFields);
+export const insertSecurityResponseSchema = createInsertSchema(securityResponses);
+export const selectSecurityResponseSchema = createSelectSchema(securityResponses);
+
 export type InsertDocumentAnswer = typeof documentAnswers.$inferInsert;
 export type SelectDocumentAnswer = typeof documentAnswers.$inferSelect;
+export type InsertSecurityField = typeof securityFields.$inferInsert;
+export type SelectSecurityField = typeof securityFields.$inferSelect;
+export type InsertSecurityResponse = typeof securityResponses.$inferInsert;
+export type SelectSecurityResponse = typeof securityResponses.$inferSelect;
