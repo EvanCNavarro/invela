@@ -4,11 +4,18 @@ import { PageHeader } from "@/components/ui/page-header";
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
-import { SearchBar } from "@/components/playground/SearchBar";
+import { SearchBar } from "@/components/ui/search-bar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { User, Users2, Lock } from "lucide-react";
+import { 
+  User, 
+  Users2, 
+  Lock, 
+  ArrowUpDown, 
+  ArrowDownUp, 
+  FilterX 
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -17,9 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { FilterX } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { TaskStatus } from "@db/schema";
 import { wsService } from "@/lib/websocket";
 import { TaskTable } from "@/components/tasks/TaskTable";
@@ -153,28 +158,56 @@ export default function TaskCenterPage() {
       ).length
     : 0;
 
+  // Apply filters to tasks
+  const applyFilters = (task: Task): boolean => {
+    // Status filter
+    if (statusFilter !== "All Statuses" && task.status !== statusFilter) {
+      return false;
+    }
+    
+    // Task type filter
+    if (typeFilter !== "All Task Types") {
+      // Handle special case for KYB tasks (both company_kyb and company_onboarding_KYB are KYB tasks)
+      if (typeFilter === "company_kyb" && 
+          task.task_type !== "company_kyb" && 
+          task.task_type !== "company_onboarding_KYB") {
+        return false;
+      } 
+      // For all other task types, exact match required
+      else if (typeFilter !== "company_kyb" && task.task_type !== typeFilter) {
+        return false;
+      }
+    }
+    
+    // Assignee type filter
+    if (scopeFilter !== "All Assignee Types" && task.task_scope !== scopeFilter) {
+      return false;
+    }
+    
+    // Search query filter
+    if (searchQuery.trim() !== "" && searchResults.length > 0) {
+      return searchResults.some(result => result.id === task.id);
+    }
+    
+    return true;
+  };
+
   const filteredTasks = (!isLoading && currentCompany?.id)
     ? tasks.filter((task) => {
-        console.log('[TaskCenter] Filtering task:', {
-          taskId: task.id,
-          status: task.status,
-          scope: task.task_scope,
-          activeTab,
-          userId: user?.id,
-          companyId: currentCompany.id,
-          progress: task.progress
-        });
-
+        // First filter by tab
+        let passesTabFilter = false;
+        
         if (activeTab === "my-tasks") {
-          return task.company_id === currentCompany.id && 
-                 (task.assigned_to === user?.id || 
-                  (task.task_scope === "company" && task.company_id === currentCompany.id));
+          passesTabFilter = task.company_id === currentCompany.id && 
+            (task.assigned_to === user?.id || 
+             (task.task_scope === "company" && task.company_id === currentCompany.id));
         } else if (activeTab === "for-others") {
-          return task.created_by === user?.id && 
-                 (!task.assigned_to || task.assigned_to !== user?.id);
+          passesTabFilter = task.created_by === user?.id && 
+            (!task.assigned_to || task.assigned_to !== user?.id);
         }
-
-        return false;
+        
+        // Then apply all other filters
+        return passesTabFilter && applyFilters(task);
       })
     : [];
 
@@ -334,7 +367,6 @@ export default function TaskCenterPage() {
                     setSearchResults(results.map(result => result.item) as Task[]);
                   }}
                   onSearch={(value) => setSearchQuery(value)}
-                  isLoading={isLoading}
                   placeholder="Search for tasks"
                   containerClassName="w-full"
                 />
@@ -344,16 +376,46 @@ export default function TaskCenterPage() {
             <Card className="w-full">
               <CardContent className="p-6">
                 <div className="flex flex-wrap gap-4 mb-6">
-                  <Button
-                    variant={hasActiveFilters ? "default" : "outline"}
-                    size="default"
-                    className="flex items-center w-10 h-10 shrink-0"
-                    onClick={clearFilters}
-                    disabled={!hasActiveFilters}
-                  >
-                    <FilterX className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant={hasActiveFilters ? "default" : "outline"}
+                      size="default"
+                      className="flex items-center w-10 h-10 shrink-0"
+                      onClick={clearFilters}
+                      disabled={!hasActiveFilters}
+                      title="Clear all filters"
+                    >
+                      <FilterX className="h-4 w-4" />
+                    </Button>
 
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button 
+                            variant="outline"
+                            size="default"
+                            className="flex items-center gap-1.5 h-10"
+                            onClick={() => setSortConfig(prev => ({ 
+                              key: prev.key, 
+                              direction: prev.direction === 'asc' ? 'desc' : 'asc' 
+                            }))}
+                          >
+                            {sortConfig.direction === 'asc' 
+                              ? <ArrowUpDown className="h-4 w-4" /> 
+                              : <ArrowDownUp className="h-4 w-4" />
+                            }
+                            <span className="hidden sm:inline-block">Sort</span>
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Currently sorting by: {sortConfig.key.charAt(0).toUpperCase() + sortConfig.key.slice(1)} ({sortConfig.direction === 'asc' ? 'Ascending' : 'Descending'})
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                  
                   <div className="flex flex-wrap gap-4 flex-1">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="w-[180px]">
@@ -379,7 +441,9 @@ export default function TaskCenterPage() {
                         <SelectItem value="All Task Types">All Task Types</SelectItem>
                         <SelectItem value="user_onboarding">User Onboarding</SelectItem>
                         <SelectItem value="file_request">File Request</SelectItem>
-                        <SelectItem value="company_kyb">Company KYB</SelectItem>
+                        <SelectItem value="company_kyb">KYB Assessment</SelectItem>
+                        <SelectItem value="security_assessment">Security Assessment</SelectItem>
+                        <SelectItem value="company_card">CARD (1033) Survey</SelectItem>
                       </SelectContent>
                     </Select>
 
