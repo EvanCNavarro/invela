@@ -181,7 +181,7 @@ export function SecurityFormPlayground({
             id={`field_${field.id}`}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder="Type your answer here"
+            placeholder=""
             className="w-full"
           />
         );
@@ -192,7 +192,7 @@ export function SecurityFormPlayground({
             id={`field_${field.id}`}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder="Type your answer here"
+            placeholder=""
             className="w-full min-h-[100px]"
           />
         );
@@ -236,7 +236,7 @@ export function SecurityFormPlayground({
             id={`field_${field.id}`}
             value={fieldValue}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder="Type your answer here"
+            placeholder=""
             className="w-full"
           />
         );
@@ -426,13 +426,13 @@ export function SecurityFormPlayground({
       {/* Current step content */}
       <Card className="border border-gray-200 rounded-md p-6 mb-6 bg-white">
         <div className="space-y-3">
-          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => (
+          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field, index) => (
             <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
               <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
                 {field.label}
               </label>
               
-              <p className="text-black text-sm mb-2">{field.description}</p>
+              <p className="text-black text-sm mb-2 font-bold">Q{index + 1}. {field.description}</p>
               
               {renderField(field)}
             </div>
