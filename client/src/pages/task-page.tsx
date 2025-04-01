@@ -210,53 +210,70 @@ export default function TaskPage({ params }: TaskPageProps) {
     staleTime: 300000 // 5 minutes
   });
   
-  // Process task data once loaded
-  useEffect(() => {
-    if (!task) return;
+  // Define the task processing logic outside the render cycle
+  const processTaskData = useCallback((taskData: Task) => {
+    if (!taskData) return;
     
     // Determine task type for rendering
     let type: TaskContentType = 'unknown';
     
-    if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+    if (taskData.task_type === 'company_kyb' || taskData.task_type === 'company_onboarding_KYB') {
       type = 'kyb';
-    } else if (task.task_type === 'company_card') {
+    } else if (taskData.task_type === 'company_card') {
       type = 'card';
-    } else if (task.task_type === 'security_assessment') {
+    } else if (taskData.task_type === 'security_assessment') {
       type = 'security';
     }
     
-    // Update state variables
-    setTaskContentType(type);
-    
-    // Set redirect if task type is unknown
-    if (type === 'unknown') {
-      console.log('[TaskPage] Unknown task type, redirecting to task center:', task.task_type);
-      setShouldRedirect(true);
-    }
-    
     // Extract company information
-    const extractedName = extractCompanyNameFromTitle(task.title);
-    setDerivedCompanyName(extractedName);
+    const extractedName = extractCompanyNameFromTitle(taskData.title);
     
     // Set display name from metadata or fallback to extracted name
-    const displayNameValue = task?.metadata?.company?.name || 
-                            task?.metadata?.companyName || 
+    const displayNameValue = taskData?.metadata?.company?.name || 
+                            taskData?.metadata?.companyName || 
                             extractedName || 
                             'Unknown Company';
-    setDisplayName(displayNameValue);
     
-    // Check for form files to set submission status
-    if (type === 'kyb' && task.metadata?.kybFormFile) {
-      setFileId(task.metadata.kybFormFile);
-      setIsSubmitted(true);
-    } else if (type === 'card' && task.metadata?.cardFormFile) {
-      setFileId(task.metadata.cardFormFile);
-      setIsSubmitted(true);
-    } else if (type === 'security' && task.metadata?.securityFormFile) {
-      setFileId(task.metadata.securityFormFile);
-      setIsSubmitted(true);
+    // Return the processed values
+    return {
+      type,
+      extractedName,
+      displayNameValue,
+      shouldRedirect: type === 'unknown',
+      isSubmitted: !!(
+        (type === 'kyb' && taskData.metadata?.kybFormFile) ||
+        (type === 'card' && taskData.metadata?.cardFormFile) ||
+        (type === 'security' && taskData.metadata?.securityFormFile)
+      ),
+      fileId: type === 'kyb' ? taskData.metadata?.kybFormFile :
+              type === 'card' ? taskData.metadata?.cardFormFile :
+              type === 'security' ? taskData.metadata?.securityFormFile : null
+    };
+  }, [extractCompanyNameFromTitle]);
+  
+  // Process task data once loaded - using useEffect properly
+  useEffect(() => {
+    if (!task) return;
+    
+    const processedData = processTaskData(task);
+    if (!processedData) return;
+    
+    // Update state variables safely in useEffect
+    setTaskContentType(processedData.type);
+    setDerivedCompanyName(processedData.extractedName);
+    setDisplayName(processedData.displayNameValue);
+    setShouldRedirect(processedData.shouldRedirect);
+    setIsSubmitted(processedData.isSubmitted);
+    
+    if (processedData.fileId) {
+      setFileId(processedData.fileId);
     }
-  }, [task, extractCompanyNameFromTitle]);
+    
+    // Log for debugging
+    if (processedData.shouldRedirect) {
+      console.log('[TaskPage] Unknown task type, redirecting to task center:', task.task_type);
+    }
+  }, [task, processTaskData]);
   
   // Handle error states
   useEffect(() => {
@@ -661,7 +678,8 @@ export default function TaskPage({ params }: TaskPageProps) {
                 </p>
                 
                 <CardMethodChoice 
-                  onSelectMethod={(method) => setSelectedMethod(method)} 
+                  taskId={task.id}
+                  onMethodSelect={(method) => setSelectedMethod(method)} 
                   companyName={displayName}
                 />
               </div>
