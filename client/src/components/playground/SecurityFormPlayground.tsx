@@ -55,6 +55,7 @@ interface SecurityFormPlaygroundProps {
   };
   savedFormData?: Record<string, any>;
   onSubmit: (formData: Record<string, any>) => void;
+  taskStatus?: string;
 }
 
 export function SecurityFormPlayground({
@@ -63,12 +64,14 @@ export function SecurityFormPlayground({
   companyData,
   savedFormData = {},
   onSubmit,
+  taskStatus,
 }: SecurityFormPlaygroundProps) {
   const [formData, setFormData] = useState<Record<string, any>>(savedFormData || {});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  const [isReviewMode, setIsReviewMode] = useState<boolean>(false);
+  // Set review mode to true by default if task status is "ready_for_submission"
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
   const [currentSection, setCurrentSection] = useState<string>('');
   
   // Fetch security fields
@@ -347,7 +350,14 @@ export function SecurityFormPlayground({
   // Review mode shows all sections in a summary view
   if (isReviewMode) {
     // Build a list of all fields with responses
-    const formEntries = [];
+    interface FormEntry {
+      fieldName: string;
+      question: string;
+      section: string;
+      value: string;
+    }
+    
+    const formEntries: FormEntry[] = [];
     
     fields?.forEach(field => {
       const fieldValue = formData[`field_${field.id}`];
