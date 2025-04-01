@@ -90,23 +90,129 @@ export default function TaskPage({ params }: TaskPageProps) {
   } else {
     apiEndpoint = '/api/tasks/kyb'; // Default fallback
   }
+  
+  // A backup generic endpoint that will fetch all tasks for this company
+  const companyTasksEndpoint = `/api/company-tasks`;
 
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, companyName],
     queryFn: async () => {
       try {
+        console.log('[TaskPage] Fetching task data:', { 
+          apiEndpoint, 
+          companyName, 
+          fullUrl: `${apiEndpoint}/${companyName}`,
+          timestamp: new Date().toISOString()
+        });
+        
+        // First try the specific endpoint
         const response = await fetch(`${apiEndpoint}/${companyName}`);
+        console.log('[TaskPage] API response:', { 
+          status: response.status, 
+          ok: response.ok,
+          statusText: response.statusText,
+          timestamp: new Date().toISOString()
+        });
+        
+        // If the specific endpoint fails, try the generic one
         if (!response.ok) {
           const errorText = await response.text();
-          throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
+          console.warn('[TaskPage] API error response, trying generic endpoint:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Try the generic company tasks endpoint as a backup
+          console.log('[TaskPage] Trying generic company tasks endpoint:', {
+            companyTasksEndpoint,
+            companyName,
+            timestamp: new Date().toISOString()
+          });
+          
+          const companyTasksResponse = await fetch(`${companyTasksEndpoint}/${companyName}`);
+          
+          if (!companyTasksResponse.ok) {
+            console.error('[TaskPage] Generic endpoint also failed:', {
+              status: companyTasksResponse.status,
+              statusText: companyTasksResponse.statusText,
+              timestamp: new Date().toISOString()
+            });
+            throw new Error(`Failed to fetch ${taskType.toUpperCase()} task: ${errorText}`);
+          }
+          
+          // If the generic endpoint succeeds, find the matching task
+          const companyTasksData = await companyTasksResponse.json();
+          console.log('[TaskPage] Company tasks data received:', {
+            companyId: companyTasksData.company?.id,
+            companyName: companyTasksData.company?.name,
+            taskCount: companyTasksData.tasks?.length,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Find the matching task based on task type
+          let matchingTask;
+          if (taskType === 'kyb') {
+            matchingTask = companyTasksData.tasks.find((t: any) => 
+              t.task_type === 'company_kyb' || t.task_type === 'company_onboarding_KYB'
+            );
+          } else if (taskType === 'card') {
+            matchingTask = companyTasksData.tasks.find((t: any) => 
+              t.task_type === 'company_card'
+            );
+          } else if (taskType === 'security') {
+            matchingTask = companyTasksData.tasks.find((t: any) => 
+              t.task_type === 'security_assessment'
+            );
+          }
+          
+          if (!matchingTask) {
+            console.error('[TaskPage] No matching task found in company tasks:', {
+              taskType,
+              availableTypes: companyTasksData.tasks.map((t: any) => t.task_type),
+              timestamp: new Date().toISOString()
+            });
+            throw new Error(`No ${taskType.toUpperCase()} task found for company: ${companyName}`);
+          }
+          
+          console.log('[TaskPage] Found matching task from company tasks:', {
+            taskId: matchingTask.id,
+            taskType: matchingTask.task_type,
+            title: matchingTask.title,
+            timestamp: new Date().toISOString()
+          });
+          
+          if (matchingTask.metadata?.[`${taskType}FormFile`]) {
+            setFileId(matchingTask.metadata[`${taskType}FormFile`]);
+            setIsSubmitted(true);
+          }
+          
+          return matchingTask;
         }
+        
+        // If the specific endpoint succeeds, use that data
         const data = await response.json();
+        console.log('[TaskPage] Task data received:', { 
+          taskId: data.id,
+          taskType: data.task_type,
+          title: data.title,
+          status: data.status,
+          timestamp: new Date().toISOString()
+        });
+        
         if (data.metadata?.[`${taskType}FormFile`]) {
           setFileId(data.metadata[`${taskType}FormFile`]);
           setIsSubmitted(true);
         }
         return data;
       } catch (error) {
+        console.error('[TaskPage] Error in queryFn:', {
+          error,
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          timestamp: new Date().toISOString()
+        });
         throw error;
       }
     },
@@ -116,14 +222,25 @@ export default function TaskPage({ params }: TaskPageProps) {
 
   useEffect(() => {
     if (error) {
+      console.error('[TaskPage] Error loading task:', {
+        error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        taskType,
+        companyName,
+        apiEndpoint,
+        timestamp: new Date().toISOString()
+      });
+      
       toast({
         title: "Error",
         description: `Failed to load ${taskType.toUpperCase()} task. Please try again.`,
         variant: "destructive",
       });
+      
+      console.log('[TaskPage] Redirecting to task-center due to error');
       navigate('/task-center');
     }
-  }, [error, navigate, toast, taskType]);
+  }, [error, navigate, toast, taskType, companyName, apiEndpoint]);
 
   const handleBackClick = () => {
     navigate('/task-center');

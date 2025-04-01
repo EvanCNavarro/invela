@@ -1,10 +1,10 @@
 import { Router } from "express";
 import { db } from "@db";
-import { tasks, TaskStatus } from "@db/schema";
+import { tasks, TaskStatus, companies } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../websocket";
-import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
+import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 
 const router = Router();
 
@@ -63,9 +63,24 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
   try {
     console.log('[Tasks Routes] Fetching KYB task:', {
       companyName: req.params.companyName,
+      timestamp: new Date().toISOString()
     });
 
-    // Try to find with the new numbered format first, then fall back to the old format
+    // First, let's find all KYB tasks for debugging
+    const allKybTasks = await db.query.tasks.findMany({
+      where: or(
+        eq(tasks.task_type, 'company_kyb'),
+        eq(tasks.task_type, 'company_onboarding_KYB')
+      )
+    });
+    
+    console.log('[Tasks Routes] All KYB tasks in database:', {
+      count: allKybTasks.length,
+      tasks: allKybTasks.map(t => ({ id: t.id, title: t.title, type: t.task_type })),
+      timestamp: new Date().toISOString()
+    });
+
+    // Try to find with the new numbered format first with a flexible pattern
     let task = await db.query.tasks.findFirst({
       where: and(
         or(
@@ -76,8 +91,19 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
       )
     });
     
+    console.log('[Tasks Routes] First query result:', {
+      found: !!task,
+      query: `%KYB%${req.params.companyName}%`,
+      timestamp: new Date().toISOString()
+    });
+    
     // If not found, try a more specific search with exact format
     if (!task) {
+      console.log('[Tasks Routes] Trying exact format query', {
+        format: `1. KYB Form: ${req.params.companyName}`,
+        timestamp: new Date().toISOString()
+      });
+      
       task = await db.query.tasks.findFirst({
         where: and(
           or(
@@ -87,10 +113,20 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
           ilike(tasks.title, `1. KYB Form: ${req.params.companyName}`)
         )
       });
+      
+      console.log('[Tasks Routes] Exact format query result:', {
+        found: !!task,
+        timestamp: new Date().toISOString()
+      });
     }
     
     // If still not found, try the old format
     if (!task) {
+      console.log('[Tasks Routes] Trying old format query', {
+        format: `Company KYB: ${req.params.companyName}`,
+        timestamp: new Date().toISOString()
+      });
+      
       task = await db.query.tasks.findFirst({
         where: and(
           or(
@@ -100,11 +136,63 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
           ilike(tasks.title, `Company KYB: ${req.params.companyName}`)
         )
       });
+      
+      console.log('[Tasks Routes] Old format query result:', {
+        found: !!task,
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+    // Try a last fallback - just look by company name and task type
+    if (!task) {
+      console.log('[Tasks Routes] Trying company_id query', {
+        companyName: req.params.companyName,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Find a company ID by name first
+      const company = await db.query.companies.findFirst({
+        where: ilike(companies.name, req.params.companyName)
+      });
+      
+      if (company) {
+        console.log('[Tasks Routes] Found company by name:', {
+          companyId: company.id,
+          companyName: company.name,
+          timestamp: new Date().toISOString()
+        });
+        
+        task = await db.query.tasks.findFirst({
+          where: and(
+            or(
+              eq(tasks.task_type, 'company_kyb'),
+              eq(tasks.task_type, 'company_onboarding_KYB')
+            ),
+            eq(tasks.company_id, company.id)
+          )
+        });
+        
+        console.log('[Tasks Routes] Company ID query result:', {
+          found: !!task,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
-    console.log('[Tasks Routes] KYB task found:', task);
+    console.log('[Tasks Routes] KYB task search final result:', {
+      found: !!task,
+      taskId: task?.id,
+      taskTitle: task?.title,
+      taskType: task?.task_type,
+      timestamp: new Date().toISOString()
+    });
 
     if (!task) {
+      console.warn('[Tasks Routes] No KYB task found for company:', {
+        companyName: req.params.companyName,
+        timestamp: new Date().toISOString()
+      });
+      
       return res.status(404).json({ 
         message: `Could not find KYB task for company: ${req.params.companyName}` 
       });
@@ -112,7 +200,13 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
 
     res.json(task);
   } catch (error) {
-    console.error('[Tasks Routes] Error fetching KYB task:', error);
+    console.error('[Tasks Routes] Error fetching KYB task:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
     res.status(500).json({ message: "Failed to fetch KYB task" });
   }
 });
@@ -243,7 +337,7 @@ router.delete("/api/tasks/:id", async (req, res) => {
 });
 
 // Update task status and progress
-router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTransition, async (req, res) => {
+router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTransition, async (req: TaskRequest, res) => {
   try {
     const taskId = parseInt(req.params.id);
     const { status, progress } = updateTaskStatusSchema.parse(req.body);
@@ -340,5 +434,64 @@ async function getTaskCount() {
     approved: allTasks.filter(t => t.status === TaskStatus.APPROVED).length
   };
 }
+
+// Get task by company name (generic endpoint)
+router.get("/api/company-tasks/:companyName", async (req, res) => {
+  try {
+    console.log('[Tasks Routes] Fetching all tasks for company:', {
+      companyName: req.params.companyName,
+      timestamp: new Date().toISOString()
+    });
+    
+    // First try to find the company ID
+    const company = await db.query.companies.findFirst({
+      where: ilike(companies.name, req.params.companyName)
+    });
+    
+    if (!company) {
+      console.warn('[Tasks Routes] Company not found:', {
+        companyName: req.params.companyName, 
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ 
+        message: `Company not found: ${req.params.companyName}` 
+      });
+    }
+    
+    console.log('[Tasks Routes] Found company:', {
+      id: company.id,
+      name: company.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Find all tasks for this company
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, company.id)
+    });
+    
+    console.log('[Tasks Routes] Found company tasks:', {
+      count: companyTasks.length,
+      tasks: companyTasks.map(t => ({ id: t.id, title: t.title, type: t.task_type })),
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      company: {
+        id: company.id,
+        name: company.name
+      },
+      tasks: companyTasks
+    });
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching company tasks:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.status(500).json({ message: "Failed to fetch company tasks" });
+  }
+});
 
 export default router;
