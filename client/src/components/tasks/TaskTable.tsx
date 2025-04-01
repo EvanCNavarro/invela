@@ -71,7 +71,17 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'company_kyb' && 
+      task.task_type === 'company_onboarding_KYB' && 
+      ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
+    );
+  };
+
+  // Find Security Assessment task completion status for the company
+  const isSecurityCompleted = (companyId: number | null): boolean => {
+    if (!companyId) return false;
+    return tasks.some(task => 
+      task.company_id === companyId && 
+      task.task_type === 'security_assessment' && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -86,9 +96,16 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
       timestamp: new Date().toISOString()
     });
 
-    // Check if CARD task is locked
-    if (task.task_type === 'company_card' && !isKybCompleted(task.company_id)) {
-      console.log('[TaskTable] CARD task locked - KYB not completed');
+    // Check if Security Assessment task is locked (needs KYB to be completed)
+    if (task.task_type === 'security_assessment' && !isKybCompleted(task.company_id)) {
+      console.log('[TaskTable] Security Assessment task locked - KYB not completed');
+      return; // Prevent navigation
+    }
+
+    // Check if CARD task is locked (needs both KYB and Security Assessment to be completed)
+    if (task.task_type === 'company_card' && 
+        (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
+      console.log('[TaskTable] CARD task locked - prerequisite tasks not completed');
       return; // Prevent navigation
     }
 
@@ -170,8 +187,16 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
           </TableHeader>
           <TableBody>
             {tasks.map((task) => {
+              // Determine if the task is locked based on its type and prerequisites
               const isCardTask = task.task_type === 'company_card';
-              const isLocked = isCardTask && !isKybCompleted(task.company_id);
+              const isSecurityTask = task.task_type === 'security_assessment';
+              
+              // Check locked status based on task type and prerequisites
+              const isLocked = 
+                (isSecurityTask && !isKybCompleted(task.company_id)) || 
+                (isCardTask && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
+                // Also consider the locked flag in metadata if it exists
+                (task.metadata?.locked === true);
 
               return (
                 <TooltipProvider key={task.id}>
@@ -180,7 +205,7 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                       <TableRow 
                         className={classNames(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
-                          task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          task.task_type === 'company_onboarding_KYB' && task.status !== 'submitted' && "hover:bg-blue-50/50",
                           isLocked && "opacity-50 cursor-not-allowed"
                         )}
                         onClick={() => !isLocked && handleTaskClick(task)}
@@ -243,7 +268,15 @@ export function TaskTable({ tasks }: { tasks: Task[] }) {
                     </TooltipTrigger>
                     {isLocked && (
                       <TooltipContent>
-                        <p>Complete the KYB form to unlock CARD tasks</p>
+                        {isSecurityTask && (
+                          <p>Complete the KYB form to unlock this Security Assessment task</p>
+                        )}
+                        {isCardTask && (
+                          <p>Complete both KYB and Security Assessment tasks to unlock this CARD task</p>
+                        )}
+                        {!isCardTask && !isSecurityTask && task.metadata?.locked && (
+                          <p>This task is locked due to dependencies</p>
+                        )}
                       </TooltipContent>
                     )}
                   </Tooltip>
