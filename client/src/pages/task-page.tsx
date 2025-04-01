@@ -59,6 +59,8 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [derivedCompanyName, setDerivedCompanyName] = useState('');
+  const [displayName, setDisplayName] = useState('');
 
   // Parse taskSlug - it could be either a direct ID or a formatted string like "kyb-CompanyName"
   let taskId: number | null = null;
@@ -320,9 +322,16 @@ export default function TaskPage({ params }: TaskPageProps) {
     return <LoadingSpinner size="lg" />;
   }
   
-  // Get the company name from task metadata or title 
-  const derivedCompanyName = task ? extractCompanyNameFromTitle(task.title) : '';
-  const displayName = task?.metadata?.company?.name || task?.metadata?.companyName || derivedCompanyName;
+  // Update company name values from task data (we use the state variables declared at the top of the component)
+  useEffect(() => {
+    if (task) {
+      const extractedName = extractCompanyNameFromTitle(task.title);
+      setDerivedCompanyName(extractedName || '');
+      
+      const displayNameValue = task?.metadata?.company?.name || task?.metadata?.companyName || extractedName || '';
+      setDisplayName(displayNameValue);
+    }
+  }, [task, extractCompanyNameFromTitle]);
   
   // KYB Task Form Rendering
   if (taskType === 'kyb') {
