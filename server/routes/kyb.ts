@@ -422,20 +422,51 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 // Save KYB form data
 router.post('/api/kyb/save', async (req, res) => {
   try {
+    // Enhanced detailed DEBUG entry point logging
+    console.log('[KYB API Debug] KYB save endpoint triggered:', {
+      endpoint: '/api/kyb/save',
+      method: 'POST',
+      url: req.url,
+      headers: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookie: !!req.headers.cookie // Just log if cookie is present without exposing its value
+      },
+      timestamp: new Date().toISOString()
+    });
+    
     // Check if user is authenticated
     if (!req.isAuthenticated() || !req.user) {
       console.error('[KYB API Debug] Unauthorized access attempt', {
         path: '/api/kyb/save',
         authenticated: req.isAuthenticated(),
         hasUser: !!req.user,
+        hasSession: !!req.session,
         sessionID: req.sessionID,
+        cookiePresent: !!req.headers.cookie,
         timestamp: new Date().toISOString()
       });
+      
+      // Send a more detailed 401 response
       return res.status(401).json({ 
         error: 'Unauthorized', 
-        message: 'You must be logged in to save KYB data' 
+        message: 'You must be logged in to save KYB data',
+        details: {
+          authenticated: req.isAuthenticated(),
+          hasUser: !!req.user,
+          hasSession: !!req.session,
+          timestamp: new Date().toISOString()
+        }
       });
     }
+    
+    // If authenticated, log user details
+    console.log('[KYB API Debug] User authenticated:', {
+      userId: req.user.id,
+      userEmail: req.user.email,
+      companyId: req.user.company_id,
+      timestamp: new Date().toISOString()
+    });
 
     const { fileName, formData, taskId } = req.body;
 
@@ -624,13 +655,39 @@ router.post('/api/kyb/save', async (req, res) => {
       warnings: warnings.length ? warnings : undefined
     });
   } catch (error) {
+    // Enhanced detailed error logging
+    console.error('[KYB API Debug] Error saving KYB form', {
+      errorType: error?.constructor?.name,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      errorStack: error instanceof Error ? error.stack : undefined,
+      requestHeaders: {
+        contentType: req.headers['content-type'],
+        accept: req.headers.accept,
+        cookiePresent: !!req.headers.cookie
+      },
+      sessionID: req.sessionID,
+      authenticatedStatus: req.isAuthenticated(),
+      userPresent: !!req.user,
+      timestamp: new Date().toISOString()
+    });
+    
     logger.error('Error saving KYB form', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
-    res.status(500).json({
+    
+    // Set appropriate status code based on error type
+    const statusCode = 
+      error instanceof Error && error.message.includes('Unauthorized') ? 401 :
+      error instanceof Error && error.message.includes('not found') ? 404 : 
+      error instanceof Error && error.message.includes('duplicate key') ? 409 : 500;
+    
+    // Send more detailed error response
+    res.status(statusCode).json({
       error: 'Failed to save KYB form data',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      statusCode,
+      timestamp: new Date().toISOString()
     });
   }
 });
