@@ -149,7 +149,7 @@ async function createCompanyInternal(
         created_by: createdById, // Explicitly set creator
         due_date: (() => {
           const date = new Date();
-          date.setDate(date.getDate() + 21); // 21 days deadline
+          date.setDate(date.getDate() + 30); // 30 days deadline (consistent with other tasks)
           return date;
         })(),
         metadata: {
