@@ -41,18 +41,29 @@ export const FileVault: React.FC = () => {
   const [uploadingFiles, setUploadingFiles] = useState<FileItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const { data: files = [], isLoading } = useQuery<FileItem[]>({
-    queryKey: ['/api/files', { company_id: user?.company_id }],
+  const { data: filesResponse, isLoading, refetch } = useQuery<{
+    data: FileItem[],
+    pagination: {
+      page: number,
+      pageSize: number,
+      totalItems: number,
+      totalPages: number
+    }
+  }>({
+    queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage }],
     enabled: !!user?.company_id,
     queryFn: async () => {
       console.log('[FileVault Debug] Starting API request:', {
         userId: user?.id,
         companyId: user?.company_id,
+        page: currentPage,
         timestamp: new Date().toISOString()
       });
 
       const url = new URL('/api/files', window.location.origin);
       url.searchParams.append('company_id', user!.company_id.toString());
+      url.searchParams.append('page', currentPage.toString());
+      url.searchParams.append('pageSize', itemsPerPage.toString());
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -63,36 +74,50 @@ export const FileVault: React.FC = () => {
         throw new Error('Failed to fetch files');
       }
 
-      const data = await response.json();
+      const responseData = await response.json();
       console.log('[FileVault Debug] API Response received:', {
-        fileCount: data.length,
-        firstFile: data[0],
-        dataShape: data.length > 0 ? Object.keys(data[0]) : 'No data',
+        responseStructure: Object.keys(responseData),
+        fileCount: responseData.data?.length || 0,
+        firstFile: responseData.data?.[0],
+        pagination: responseData.pagination,
         timestamp: new Date().toISOString()
       });
 
-      return data.map((file: any) => ({
-        id: file.id.toString(),
-        name: file.name,
-        size: file.size || 0,
-        status: file.status || 'uploaded',
-        createdAt: file.created_at || file.createdAt || new Date().toISOString(),
-        type: file.type || 'application/octet-stream'
-      }));
+      return {
+        data: (responseData.data || []).map((file: any) => ({
+          id: file.id.toString(),
+          name: file.name,
+          size: file.size || 0,
+          status: file.status || 'uploaded',
+          createdAt: file.created_at || file.createdAt || new Date().toISOString(),
+          type: file.type || 'application/octet-stream'
+        })),
+        pagination: responseData.pagination || {
+          page: 1,
+          pageSize: itemsPerPage,
+          totalItems: responseData.data?.length || 0,
+          totalPages: Math.ceil((responseData.data?.length || 0) / itemsPerPage)
+        }
+      };
     }
   });
 
+  // Extract files from the response
+  const files = filesResponse?.data || [];
+  const serverPagination = filesResponse?.pagination;
+  
   useEffect(() => {
     console.log('[FileVault Debug] Component state updated:', {
       hasFiles: files.length > 0,
       isLoading,
+      serverPagination,
       userContext: {
         isAuthenticated: !!user,
         companyId: user?.company_id
       },
       timestamp: new Date().toISOString()
     });
-  }, [files, isLoading, user]);
+  }, [files, isLoading, user, serverPagination]);
 
   const allFiles = useMemo(() => {
     const combined = [...uploadingFiles, ...files];
@@ -149,27 +174,49 @@ export const FileVault: React.FC = () => {
     setCurrentPage(1);
   }, [searchQuery, statusFilter, sortConfig]);
 
+  // If we have server pagination, use the direct response from the server
+  // Otherwise, use client-side pagination for uploading files etc.
   const paginatedFiles = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const result = filteredFiles.slice(startIndex, endIndex);
+    if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
+      // Use direct server data when no filtering is being done
+      console.log('[FileVault Debug] Using server pagination:', {
+        page: currentPage,
+        totalItems: serverPagination?.totalItems || 0,
+        pageItems: files.length
+      });
+      return files;
+    } else {
+      // Use client-side filtering and pagination when filters are applied
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      const result = filteredFiles.slice(startIndex, endIndex);
 
-    console.log('[FileVault Debug] Pagination calculated:', {
-      page: currentPage,
-      startIndex,
-      endIndex,
-      totalItems: filteredFiles.length,
-      pageItems: result.length
-    });
+      console.log('[FileVault Debug] Using client-side pagination:', {
+        page: currentPage,
+        startIndex,
+        endIndex,
+        totalItems: filteredFiles.length,
+        pageItems: result.length
+      });
 
-    return result;
-  }, [filteredFiles, currentPage, itemsPerPage]);
+      return result;
+    }
+  }, [files, filteredFiles, currentPage, itemsPerPage, searchQuery, statusFilter, uploadingFiles.length, serverPagination]);
 
   useEffect(() => {
     setSelectedFiles(new Set());
   }, [currentPage]);
 
-  const totalPages = Math.ceil(filteredFiles.length / itemsPerPage);
+  // If no filtering, use server pagination, otherwise calculate on client
+  const totalPages = useMemo(() => {
+    if (!searchQuery && statusFilter === 'all' && !uploadingFiles.length) {
+      // Server-side pagination
+      return serverPagination?.totalPages || 1;
+    } else {
+      // Client-side pagination
+      return Math.ceil(filteredFiles.length / itemsPerPage);
+    }
+  }, [filteredFiles.length, itemsPerPage, searchQuery, statusFilter, uploadingFiles.length, serverPagination]);
 
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) {
@@ -436,10 +483,26 @@ export const FileVault: React.FC = () => {
 
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground">
-                {filteredFiles.length > 0 ? (
-                  `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(currentPage * itemsPerPage, filteredFiles.length)} of ${filteredFiles.length} files`
+                {(!searchQuery && statusFilter === 'all' && !uploadingFiles.length) ? (
+                  // Server pagination display
+                  files.length > 0 ? (
+                    `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                      currentPage * itemsPerPage, 
+                      serverPagination?.totalItems || 0
+                    )} of ${serverPagination?.totalItems || 0} files`
+                  ) : (
+                    'No files to display'
+                  )
                 ) : (
-                  'No files to display'
+                  // Client-side pagination display
+                  filteredFiles.length > 0 ? (
+                    `Showing ${(currentPage - 1) * itemsPerPage + 1} - ${Math.min(
+                      currentPage * itemsPerPage, 
+                      filteredFiles.length
+                    )} of ${filteredFiles.length} files`
+                  ) : (
+                    'No files to display'
+                  )
                 )}
               </div>
 
