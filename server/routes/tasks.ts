@@ -3,7 +3,7 @@ import { db } from "@db";
 import { tasks, TaskStatus, companies } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastMessage } from "../websocket";
+import { broadcastMessage } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
 
 const router = Router();
@@ -438,6 +438,9 @@ async function getTaskCount() {
 // Get task by company name (generic endpoint)
 router.get("/api/company-tasks/:companyName", async (req, res) => {
   try {
+    // Make sure we're setting the content-type explicitly to avoid HTML responses
+    res.setHeader('Content-Type', 'application/json');
+    
     console.log('[Tasks Routes] Fetching all tasks for company:', {
       companyName: req.params.companyName,
       timestamp: new Date().toISOString()
@@ -454,7 +457,7 @@ router.get("/api/company-tasks/:companyName", async (req, res) => {
         timestamp: new Date().toISOString()
       });
       return res.status(404).json({ 
-        message: `Company not found: ${req.params.companyName}` 
+        error: `Company not found: ${req.params.companyName}` 
       });
     }
     
@@ -475,7 +478,7 @@ router.get("/api/company-tasks/:companyName", async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    res.json({
+    return res.status(200).json({
       company: {
         id: company.id,
         name: company.name
@@ -490,7 +493,7 @@ router.get("/api/company-tasks/:companyName", async (req, res) => {
       timestamp: new Date().toISOString()
     });
     
-    res.status(500).json({ message: "Failed to fetch company tasks" });
+    return res.status(500).json({ error: "Failed to fetch company tasks" });
   }
 });
 

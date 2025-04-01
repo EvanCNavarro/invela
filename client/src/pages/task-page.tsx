@@ -90,9 +90,6 @@ export default function TaskPage({ params }: TaskPageProps) {
   } else {
     apiEndpoint = '/api/tasks/kyb'; // Default fallback
   }
-  
-  // A backup generic endpoint that will fetch all tasks for this company
-  const companyTasksEndpoint = `/api/company-tasks`;
 
   const { data: task, isLoading, error } = useQuery<Task>({
     queryKey: [apiEndpoint, companyName],
@@ -125,13 +122,14 @@ export default function TaskPage({ params }: TaskPageProps) {
           });
           
           // Try the generic company tasks endpoint as a backup
+          const genericEndpoint = '/api/company-tasks';
           console.log('[TaskPage] Trying generic company tasks endpoint:', {
-            companyTasksEndpoint,
+            genericEndpoint,
             companyName,
             timestamp: new Date().toISOString()
           });
           
-          const companyTasksResponse = await fetch(`${companyTasksEndpoint}/${companyName}`);
+          const companyTasksResponse = await fetch(`${genericEndpoint}/${companyName}`);
           
           if (!companyTasksResponse.ok) {
             console.error('[TaskPage] Generic endpoint also failed:', {
