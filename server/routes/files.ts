@@ -559,19 +559,44 @@ router.get('/api/files', async (req, res) => {
 
     console.log('[Files] Executing database query for company:', parsedCompanyId);
 
-    // Query files for the company
+    // Get pagination parameters with defaults
+    const page = parseInt(req.query.page?.toString() || '1', 10) || 1;
+    const pageSize = parseInt(req.query.pageSize?.toString() || '10', 10) || 10;
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count first (optimized query)
+    const countResult = await db.select({ count: sql`count(*)` })
+      .from(files)
+      .where(eq(files.company_id, parsedCompanyId));
+    
+    const totalFiles = Number(countResult[0]?.count || 0);
+    
+    // Query files for the company with pagination
     const fileRecords = await db.query.files.findMany({
       where: eq(files.company_id, parsedCompanyId),
-      orderBy: (files, { desc }) => [desc(files.created_at)]
+      orderBy: (files, { desc }) => [desc(files.created_at)],
+      limit: pageSize,
+      offset: offset
     });
 
     console.log('[Files] Query results:', {
       recordCount: fileRecords.length,
+      totalFiles,
+      page,
+      pageSize,
       firstRecord: fileRecords[0],
       lastRecord: fileRecords[fileRecords.length - 1]
     });
 
-    res.json(fileRecords);
+    res.json({
+      data: fileRecords,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: totalFiles,
+        totalPages: Math.ceil(totalFiles / pageSize)
+      }
+    });
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
     res.status(500).json({
