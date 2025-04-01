@@ -1195,9 +1195,9 @@ export const OnboardingKYBFormPlayground = ({
       ) : (
         <div>
           {/* Header Section - Outside Card */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <div>
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-grow mr-4">
                 <div className="flex items-center gap-2 mb-1">
                   <h2 className="text-xl font-semibold">KYB Form: {companyName}</h2>
                   <div className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-md ${
@@ -1209,11 +1209,11 @@ export const OnboardingKYBFormPlayground = ({
                   </div>
                 </div>
                 <p className="text-sm text-gray-500">
-                  Please complete the Know Your Business (KYB) form for {companyName}. This information helps us understand your business and ensure compliance with regulations.
+                  Complete the Know Your Business (KYB) form to establish your business profile. This information is required for regulatory compliance and risk assessment.
                 </p>
               </div>
               {!isSubmitted && (
-                <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-1 rounded-md shadow-sm">
+                <div className="flex items-center gap-1 text-base bg-gray-50 px-4 py-2 rounded-md shadow-sm min-w-[110px] justify-center">
                   <span className="font-medium text-lg">{progress}</span>
                   <span className="text-[#6B7280] font-medium">% Complete</span>
                 </div>
@@ -1222,7 +1222,7 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Progress bar */}
             {!isSubmitted && (
-              <div className="h-[6px] bg-[#E5E7EB] rounded-full overflow-hidden mb-6">
+              <div className="h-[8px] bg-[#E5E7EB] rounded-full overflow-hidden mb-8">
                 <div
                   className="h-full transition-all duration-300 ease-in-out"
                   style={{ width: `${progress}%`, backgroundColor: '#4965EC' }}
@@ -1232,7 +1232,7 @@ export const OnboardingKYBFormPlayground = ({
 
             {/* Step Wizard */}
             {!isSubmitted && (
-              <div className="flex justify-between px-2 mb-4 mx-auto max-w-[700px]">
+              <div className="flex justify-start px-0 mb-4 gap-6">
                 {FORM_STEPS.map((step, index) => {
                   // Check if ALL fields in this step are completed
                   const stepFields = step.map(field => field.name);
@@ -1282,7 +1282,7 @@ export const OnboardingKYBFormPlayground = ({
                   return (
                     <div 
                       key={step[0].name} 
-                      className={`flex flex-col items-center justify-center relative py-2 px-3 w-1/4 ${
+                      className={`flex flex-col items-center justify-center relative py-2 px-3 w-auto ${
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
                       onClick={() => {
@@ -1342,12 +1342,6 @@ export const OnboardingKYBFormPlayground = ({
                 })}
               </div>
             )}
-          </div>
-
-          {/* Separator line with shadow for depth */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-full h-[1px] border-0 bg-gray-200 shadow-sm relative">
-            </div>
           </div>
 
           {/* Form Fields Section - Only show when not submitted */}
