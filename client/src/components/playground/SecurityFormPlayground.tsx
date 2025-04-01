@@ -25,11 +25,11 @@ interface SecurityFormField {
   id: number;
   section: string;
   field_key: string;
-  question: string;
+  label: string;
+  description: string;
   field_type: string;
   options?: string[];
-  description?: string;
-  required: boolean;
+  is_required: boolean;
 }
 
 interface SecurityFormResponse {
@@ -256,9 +256,9 @@ export function SecurityFormPlayground({
               {fields?.filter(field => field.section === section).map((field) => (
                 <div key={field.id} className="space-y-3 py-4 border-b border-gray-100 last:border-0">
                   <div className="flex justify-between">
-                    <label htmlFor={`field_${field.id}`} className="text-sm font-medium block mb-2">
-                      {field.question}
-                      {field.required && <span className="text-red-500 ml-1">*</span>}
+                    <label htmlFor={`field_${field.id}`} className="font-medium block mb-2">
+                      {field.label}
+                      {field.is_required && <span className="text-red-500 ml-1">*</span>}
                     </label>
                     
                     {formData[`field_${field.id}`] ? (
@@ -272,9 +272,9 @@ export function SecurityFormPlayground({
                     )}
                   </div>
                   
-                  {field.description && (
-                    <p className="text-muted-foreground text-sm mb-2">{field.description}</p>
-                  )}
+                  <div className="bg-slate-50 p-3 rounded-md border border-slate-100 mb-3">
+                    <p className="text-slate-700">{field.description}</p>
+                  </div>
                   
                   {renderField(field)}
                 </div>
