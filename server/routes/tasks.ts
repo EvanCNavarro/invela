@@ -8,6 +8,23 @@ import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from ".
 
 const router = Router();
 
+// Utility function to get a company by name
+const getCompanyByName = async (companyName: string) => {
+  return await db.query.companies.findFirst({
+    where: ilike(companies.name, companyName)
+  });
+};
+
+// Utility function to find a task by company ID and task type
+const getTaskByCompanyAndType = async (companyId: number, taskType: string) => {
+  return await db.query.tasks.findFirst({
+    where: and(
+      eq(tasks.company_id, companyId),
+      eq(tasks.task_type, taskType)
+    )
+  });
+};
+
 // Get task by company name for CARD tasks
 router.get("/api/tasks/card/:companyName", async (req, res) => {
   try {
