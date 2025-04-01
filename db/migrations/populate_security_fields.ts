@@ -1,16 +1,18 @@
 import { db } from "@db";
 import { cardFields, securityFields } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql, inArray, or } from "drizzle-orm";
 
 /**
  * Security-related wizard sections from CARD form to copy to security form
  */
 const SECURITY_SECTIONS = [
-  'operational_policies', 
-  'security_policies', 
-  'information_security',
-  'data_protection',
-  'incident_response'
+  'Security',
+  'Security Testing',
+  'Data Security Controls',
+  'API Access Control',
+  'Business Continuity Planning',
+  'Governance',
+  'Data Privacy Compliance'
 ];
 
 /**
@@ -21,9 +23,12 @@ export async function populateSecurityFields() {
   
   try {
     // Check if we already have security fields
-    const existingCount = await db.select({ count: db.fn.count() })
-      .from(securityFields)
-      .then(result => Number(result[0].count));
+    const existingResult = await db.select({
+        count: sql`COUNT(*)`
+      })
+      .from(securityFields);
+    
+    const existingCount = Number(existingResult[0]?.count || 0);
     
     if (existingCount > 0) {
       console.log(`[DB Migration] Security fields already populated (${existingCount} fields exist)`);
@@ -31,19 +36,10 @@ export async function populateSecurityFields() {
     }
     
     // Get security-related fields from CARD form
-    const securityCardFields = await db.select()
-      .from(cardFields)
-      .where(and(
-        eq(cardFields.status, 'ACTIVE'),
-        // Fields that belong to security-related sections
-        db.fn.jsonPathExists(cardFields.metadata, '$.section').eq(true),
-        db.or(
-          ...SECURITY_SECTIONS.map(section => 
-            db.fn.jsonPathQuery(cardFields.metadata, '$.section')
-              .cast('text')
-              .like(`%${section}%`))
-        )
-      ));
+    // Find all fields where wizard_section is one of our security sections
+    const securityCardFields = await db.select().from(cardFields).where(
+      inArray(cardFields.wizard_section, SECURITY_SECTIONS)
+    );
     
     console.log(`[DB Migration] Found ${securityCardFields.length} security-related fields in CARD form`);
     
@@ -53,29 +49,33 @@ export async function populateSecurityFields() {
     }
     
     // Convert fields to security format
-    const securityFieldsToInsert = securityCardFields.map(field => {
-      // Extract section from metadata or use default
-      let section = 'security_assessment';
-      if (field.metadata && typeof field.metadata === 'object' && 'section' in field.metadata) {
-        section = field.metadata.section as string;
-      }
+    const securityFieldsToInsert = securityCardFields.map((field: any) => {
+      // Map wizard_section to security section
+      const section = field.wizard_section || 'security_assessment';
       
+      // For field_key, check if it already starts with 'security_' to avoid duplicate prefixes
+      const fieldKey = field.field_key.startsWith('security_') 
+        ? field.field_key 
+        : `security_${field.field_key}`;
+        
       return {
         section,
-        field_key: `security_${field.field_key}`,
-        label: field.label,
-        description: field.description,
-        field_type: field.field_type,
-        is_required: field.is_required,
-        options: field.options,
-        validation_rules: field.validation_rules,
+        field_key: fieldKey,
+        label: field.question_label || field.question,
+        description: field.question,
+        field_type: 'text', // Default to text field type
+        is_required: true,  // Set as required by default
+        options: null,      // No options for text fields
+        validation_rules: null, // No validation rules
         metadata: {
-          ...field.metadata,
           source_card_field_id: field.id,
           copied_from_card: true,
-          migration_date: new Date().toISOString()
+          migration_date: new Date().toISOString(),
+          example_response: field.example_response,
+          ai_search_instructions: field.ai_search_instructions,
+          partial_risk_score_max: field.partial_risk_score_max
         },
-        status: field.status,
+        status: 'ACTIVE',
         created_at: new Date(),
         updated_at: new Date()
       };
