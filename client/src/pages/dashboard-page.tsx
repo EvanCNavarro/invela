@@ -199,12 +199,15 @@ export default function DashboardPage() {
                   isVisible={visibleWidgets.quickActions}
                 >
                   <div className="grid grid-cols-2 gap-2">
-                    <InviteButton
-                      variant="fintech"
-                      pulse={true}
-                      className="w-full font-medium"
-                      onClick={() => setOpenFinTechModal(true)}
-                    />
+                    {/* Only show Invite FinTech button if user is not a FinTech company */}
+                    {companyData?.category !== 'FinTech' && (
+                      <InviteButton
+                        variant="fintech"
+                        pulse={true}
+                        className="w-full font-medium"
+                        onClick={() => setOpenFinTechModal(true)}
+                      />
+                    )}
                     <Button variant="outline" className="w-full font-medium">
                       Add User
                     </Button>
@@ -218,6 +221,12 @@ export default function DashboardPage() {
                     >
                       {drawerOpen ? "Hide Side Drawer" : "Show Side Drawer"}
                     </Button>
+                    {/* Show this button only when we're hiding the Invite FinTech button */}
+                    {companyData?.category === 'FinTech' && (
+                      <Button variant="outline" className="w-full font-medium">
+                        View Documentation
+                      </Button>
+                    )}
                   </div>
                 </Widget>
               )}
