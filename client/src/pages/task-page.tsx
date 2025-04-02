@@ -19,6 +19,7 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
+import { CardSuccessModal } from "@/components/card/CardSuccessModal";
 import { fireEnhancedConfetti, fireSuperConfetti } from '@/utils/confetti';
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
@@ -558,7 +559,12 @@ export default function TaskPage({ params }: TaskPageProps) {
           {showSuccessModal && (
             <SecuritySuccessModal
               open={showSuccessModal}
-              onOpenChange={(open) => setShowSuccessModal(open)}
+              onOpenChange={(open) => {
+                console.log('[TaskPage] Security modal state change:', { open });
+                setShowSuccessModal(open);
+                // Always ensure the form stays in submitted state
+                setIsSubmitted(true);
+              }}
               companyName={displayName}
             />
           )}
@@ -624,7 +630,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               <CardFormPlayground
                 taskId={task.id}
                 companyName={derivedCompanyName}
-
                 companyData={{
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
@@ -698,6 +703,18 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
           </div>
+          
+          {showSuccessModal && (
+            <CardSuccessModal
+              open={showSuccessModal}
+              onOpenChange={(open) => {
+                setShowSuccessModal(open);
+                if (!open) setIsSubmitted(true);
+              }}
+              companyName={displayName}
+              fileId={fileId}
+            />
+          )}
         </PageTemplate>
       </DashboardLayout>
     );
