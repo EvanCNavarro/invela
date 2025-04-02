@@ -152,6 +152,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       let formUrl = `/task-center/task/${taskId}`;
       
       // If the task is ready for submission, append the review parameter
+      // Only direct to review page if status is READY_FOR_SUBMISSION
       if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
         formUrl += '?review=true';
       }

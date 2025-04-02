@@ -72,9 +72,13 @@ export function SecurityFormPlayground({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Set review mode to true by default if task is submitted or ready for submission
+  // Check if the URL contains a review parameter to determine review mode
+  const urlParams = new URLSearchParams(window.location.search);
+  const reviewParam = urlParams.get('review');
+  
+  // Set review mode to true if explicitly requested via URL param or if task is submitted or completed
   const [isReviewMode, setIsReviewMode] = useState<boolean>(
-    taskStatus === 'ready_for_submission' || 
+    (reviewParam === 'true') || 
     taskStatus === 'completed' || 
     isSubmitted === true
   );
