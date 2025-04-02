@@ -826,7 +826,7 @@ export function CardFormPlayground({
             </Button>
             <Button
               onClick={() => {
-                navigate('/dashboard');
+                navigate('/');
                 setIsSuccessModalOpen(false);
               }}
               className="flex-1"
