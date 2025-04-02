@@ -754,15 +754,15 @@ export function CardFormPlayground({
               </DialogDescription>
             </div>
           </DialogHeader>
-          <div className="py-5 space-y-4">
-            <p className="text-center text-gray-500">
+          <div className="py-5 space-y-2">
+            <p className="text-center text-gray-500 mb-3">
               Good job! You have successfully submitted the Open Banking (1033) Survey for <span className="font-semibold text-gray-700">{companyData?.name || companyName || 'your company'}</span>
             </p>
             
             <div className="space-y-3 text-sm">
               {/* Row 1: Dashboard Tab Block */}
-              <div className="flex items-start gap-3 border rounded-md p-3 bg-blue-50 border-blue-200">
-                <LayoutDashboard className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <LayoutDashboard className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-gray-900">New Dashboard Access</p>
                   <p className="text-gray-600">Your company dashboard is now available with compliance metrics and risk monitoring tools.</p>
@@ -770,8 +770,8 @@ export function CardFormPlayground({
               </div>
               
               {/* Row 2: Insights Tab Block */}
-              <div className="flex items-start gap-3 border rounded-md p-3 bg-purple-50 border-purple-200">
-                <LineChart className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <LineChart className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-gray-900">Insights Unlocked</p>
                   <p className="text-gray-600">Access detailed analytics and data visualizations in the Insights tab to better understand your compliance posture.</p>
@@ -779,8 +779,8 @@ export function CardFormPlayground({
               </div>
               
               {/* Row 3: Download Available Block */}
-              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50">
-                <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <FileText className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-medium text-gray-900">New Download Available</p>
                   <p className="text-gray-600">A complete record of your Open Banking (1033) Survey has been generated and can be downloaded from the File Vault.</p>
@@ -797,7 +797,6 @@ export function CardFormPlayground({
                     <p className="text-gray-600">
                       Status: <span className="font-medium text-green-600">APPROVED</span>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Accreditation valid for 12 months</p>
                   </div>
                 </div>
                 
@@ -809,7 +808,6 @@ export function CardFormPlayground({
                     <p className="text-gray-600">
                       Score: <span className="font-medium text-amber-600">{successData?.riskScore || '0'}</span>
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">Based on compliance responses</p>
                   </div>
                 </div>
               </div>
