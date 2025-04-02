@@ -57,6 +57,7 @@ interface SecurityFormPlaygroundProps {
   savedFormData?: Record<string, any>;
   onSubmit: (formData: Record<string, any>) => void;
   taskStatus?: string;
+  isSubmitted?: boolean; // Added this prop to control submission state
 }
 
 export function SecurityFormPlayground({
@@ -66,6 +67,7 @@ export function SecurityFormPlayground({
   savedFormData = {},
   onSubmit,
   taskStatus,
+  isSubmitted: isSubmittedProp,
 }: SecurityFormPlaygroundProps) {
   const [formData, setFormData] = useState<Record<string, any>>(savedFormData || {});
   const [currentStep, setCurrentStep] = useState<number>(0);
@@ -73,8 +75,10 @@ export function SecurityFormPlayground({
   const [sections, setSections] = useState<string[]>([]);
   // Set review mode to true by default if task status is "ready_for_submission"
   const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
-  // Initialize isSubmitted based on taskStatus - if 'submitted' then it's already submitted
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(taskStatus === 'submitted');
+  // Initialize isSubmitted based on prop or taskStatus - prop takes precedence if provided
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(
+    isSubmittedProp !== undefined ? isSubmittedProp : taskStatus === 'submitted'
+  );
   const [currentSection, setCurrentSection] = useState<string>('');
   
   // Fetch security fields
@@ -162,6 +166,18 @@ export function SecurityFormPlayground({
       setCurrentSection(sections[currentStep]);
     }
   }, [currentStep, sections]);
+  
+  // Update isSubmitted state when the prop changes
+  useEffect(() => {
+    if (isSubmittedProp !== undefined) {
+      setIsSubmitted(isSubmittedProp);
+      
+      // If task is submitted, also set to review mode
+      if (isSubmittedProp) {
+        setIsReviewMode(true);
+      }
+    }
+  }, [isSubmittedProp]);
   
   // Define step navigation functions
   const handleNext = () => {
