@@ -380,40 +380,73 @@ export function SecurityFormPlayground({
     return (
       <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Survey Answers</h2>
-          {(taskStatus === 'completed' || isSubmitted === true) ? (
-            <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">SUBMITTED</Badge>
-          ) : (
-            <Badge className="bg-amber-500 hover:bg-amber-500 px-3 py-1">IN REVIEW</Badge>
-          )}
+          <h2 className="text-2xl font-bold">Security Survey</h2>
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 px-3 py-1">IN REVIEW</Badge>
+          <span className="text-gray-500">Ready for Submission</span>
         </div>
         
-        <div className="space-y-3">
+        <div className="flex items-center mb-6">
+          <div className="w-1 h-6 bg-blue-600 mr-2"></div>
+          <h3 className="font-semibold text-sm uppercase text-gray-700">SURVEY ANSWERS FOR REVIEW</h3>
+        </div>
+        
+        <div className="space-y-6">
           {formEntries.map((entry, index) => (
-            <div key={entry.fieldName} className="border-b pb-3 mb-3">
-              <div className="flex gap-2">
-                <span className="font-bold text-gray-500">{index + 1}.</span>
-                <div className="w-full">
-                  <p className="text-gray-600 text-sm">{entry.question}</p>
-                  <div className="flex items-start mt-1">
-                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
-                    <div>
-                      <span className="font-bold">{entry.value}</span>
-                    </div>
-                  </div>
-                </div>
+            <div key={entry.fieldName} className="bg-gray-50 rounded-lg p-6">
+              <div className="mb-2">
+                <p className="text-gray-700">
+                  <span className="font-bold text-gray-800">{index + 1}. </span>
+                  <span className="font-medium">Q: </span>
+                  {entry.question}
+                </p>
+              </div>
+              <div className="flex items-start">
+                <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                <p className="font-medium">
+                  <span className="font-bold">Answer: </span>
+                  {entry.value}
+                </p>
               </div>
             </div>
           ))}
         </div>
         
-        <div className="flex justify-center mt-8 pt-4 border-t">
+        <div className="mt-8 mb-6">
+          <div className="mb-3">
+            <span className="font-semibold text-gray-800">Submission Terms</span>
+          </div>
+          <div className="p-6 bg-blue-50 rounded-lg border border-blue-100">
+            <div className="flex gap-2">
+              <div className="flex-shrink-0 mt-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-gray-700">
+                  <span className="font-bold">I, {companyData.name} representative</span>, acknowledge that I am an authorized representative of <span className="font-bold">{companyData.name}</span> and certify that all information provided is accurate and complete to the best of my knowledge. I understand that Invela will use this information to assess security posture and calculate risk scores. I grant Invela permission to securely store, process, and verify this data in accordance with industry regulations. I accept full responsibility for any inaccuracies or omissions in the submitted data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setIsReviewMode(false)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          
           <Button
             onClick={handleSubmitForm}
             className="rounded-lg px-4 hover:bg-blue-700 transition-all"
           >
-            Back to Top
-            <ArrowUp className="h-4 w-4 ml-1 text-white" />
+            Submit
+            <Check className="h-4 w-4 ml-1 text-white" />
           </Button>
         </div>
       </Card>
