@@ -724,7 +724,7 @@ export function CardFormPlayground({
       </TooltipProvider>
 
       <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] dialog-content-above-confetti">
           <DialogHeader>
             <div className="flex flex-col items-center text-center gap-4">
               <div className="rounded-full bg-green-100 p-3">
