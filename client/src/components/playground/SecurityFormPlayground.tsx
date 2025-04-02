@@ -242,7 +242,11 @@ export function SecurityFormPlayground({
   
   const handleSubmitForm = () => {
     onSubmit(formData);
+    // Directly update state after submission without relying on any callbacks
     setIsSubmitted(true);
+    // Also store in localStorage for persistence
+    localStorage.setItem(`task_${taskId}_submitted`, 'true');
+    console.log('[SecurityFormPlayground] Form submitted and state updated');
   };
   
   // Check if step is completed
@@ -300,7 +304,12 @@ export function SecurityFormPlayground({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
+    // Directly update state when the form is submitted
     setIsSubmitted(true);
+    setIsReviewMode(true);
+    // Also store in localStorage for persistence
+    localStorage.setItem(`task_${taskId}_submitted`, 'true');
+    console.log('[SecurityFormPlayground] Form submitted and state updated');
   };
 
   // Render a form field based on its type

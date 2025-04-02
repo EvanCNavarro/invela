@@ -526,17 +526,15 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then(() => {
-                      // First update the isSubmitted state to trigger form re-render
+                      // Directly update state when form is submitted
                       setIsSubmitted(true);
                       
                       // Update the task status in local storage to ensure it persists
                       localStorage.setItem(`task_${task.id}_submitted`, 'true');
                       
-                      // Small delay to ensure the state update is processed before showing the modal
-                      setTimeout(() => {
-                        fireSuperConfetti();
-                        setShowSuccessModal(true);
-                      }, 100);
+                      // Show success feedback immediately
+                      fireSuperConfetti();
+                      setShowSuccessModal(true);
 
                       toast({
                         title: "Success",
@@ -562,11 +560,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               open={showSuccessModal}
               onOpenChange={(open) => setShowSuccessModal(open)}
               companyName={displayName}
-              onAfterClose={() => {
-                // Force update to the state to ensure UI reflects the submitted state
-                setIsSubmitted(true);
-                console.log('[TaskPage] Modal closed - forcibly updated isSubmitted state');
-              }}
             />
           )}
         </PageTemplate>
@@ -654,18 +647,16 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      // First update the isSubmitted state to trigger form re-render
+                      // Directly update state when form is submitted
                       setIsSubmitted(true);
                       
                       // Update the task status in local storage to ensure it persists
                       localStorage.setItem(`task_${task.id}_submitted`, 'true');
                       
-                      // Small delay to ensure the state update is processed before showing the modal
-                      setTimeout(() => {
-                        fireSuperConfetti();
-                        setFileId(result.fileId);
-                        setShowSuccessModal(true);
-                      }, 100);
+                      // Show confetti and modal immediately
+                      fireSuperConfetti();
+                      setFileId(result.fileId);
+                      setShowSuccessModal(true);
 
                       toast({
                         title: "Success",

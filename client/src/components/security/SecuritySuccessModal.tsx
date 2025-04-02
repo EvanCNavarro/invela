@@ -14,26 +14,14 @@ interface SecuritySuccessModalProps {
 export function SecuritySuccessModal({ open, onOpenChange, companyName, onAfterClose }: SecuritySuccessModalProps) {
   const [, navigate] = useLocation();
 
-  // Close modal without navigating
+  // Simple close handler - form state is already updated during submission
   const handleCloseModal = () => {
-    console.log('[SecuritySuccessModal] Closing modal - ensuring submitted state persists');
-    
-    // Ensure localStorage is set
-    const taskId = window.location.pathname.split('/').pop();
-    localStorage.setItem(`task_${taskId}_submitted`, 'true');
-    
-    // Force a custom event to notify any listeners that form is submitted
-    const submittedEvent = new CustomEvent('security-form-submitted', { 
-      detail: { taskId }
-    });
-    window.dispatchEvent(submittedEvent);
-    
-    // Close the modal first
+    console.log('[SecuritySuccessModal] Closing modal');
     onOpenChange(false);
     
-    // Then trigger the parent callback if provided
+    // Optional callback if needed
     if (onAfterClose) {
-      setTimeout(onAfterClose, 10);
+      onAfterClose();
     }
   };
   
