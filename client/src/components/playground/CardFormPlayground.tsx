@@ -565,18 +565,18 @@ export function CardFormPlayground({
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center mb-6">
-        <div className="space-y-1">
+        <div className="space-y-1 max-w-[70%]">
           <h1 className="text-2xl font-semibold">
             Open Banking (1033) Survey: {companyData?.name || companyName}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements.
           </p>
         </div>
         <Button
           onClick={handleSubmit}
           disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
-          className="px-8 min-w-[180px]"
+          className="px-8 min-w-[220px] whitespace-nowrap"
         >
           {submitAssessment.isPending ? (
             <>
@@ -615,11 +615,11 @@ export function CardFormPlayground({
 
       <TooltipProvider>
         {currentSection && sections[currentSection] && (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {sections[currentSection].map((field: CardField) => (
               <Card
                 key={field.id}
-                className={`p-5 space-y-3 relative border-2 bg-white ${
+                className={`p-4 space-y-2 relative border-2 bg-white ${
                   loadingFields[field.id]
                     ? 'border-gray-300'
                     : formResponses[field.field_key]
@@ -627,7 +627,7 @@ export function CardFormPlayground({
                     : 'border-transparent'
                 }`}
               >
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-3 right-3">
                   {loadingFields[field.id] ? (
                     <LoadingSpinner size="sm" className="w-5 h-5" />
                   ) : formResponses[field.field_key] && (
@@ -714,7 +714,7 @@ export function CardFormPlayground({
                   onChange={(e) => handleResponseChange(field, e.target.value)}
                   onBlur={(e) => handleBlur(field, e.target.value)}
                   placeholder="Enter your response..."
-                  className="min-h-[100px]"
+                  className="min-h-[90px]"
                   disabled={loadingFields[field.id]}
                 />
               </Card>
