@@ -84,6 +84,13 @@ export function SecurityFormPlayground({
   
   // Update isSubmitted when the prop changes, and also update isReviewMode accordingly
   useEffect(() => {
+    console.log('[SecurityFormPlayground] Submission state change:', { 
+      isSubmittedProp, 
+      currentIsSubmitted: isSubmitted,
+      taskStatus,
+      timestamp: new Date().toISOString()
+    });
+    
     if (isSubmittedProp !== undefined) {
       setIsSubmitted(isSubmittedProp);
       // If the form is submitted, always show review mode
@@ -97,7 +104,15 @@ export function SecurityFormPlayground({
       setIsSubmitted(true);
       setIsReviewMode(true);
     }
-  }, [isSubmittedProp, taskStatus]);
+    
+    // Check localStorage as a failsafe
+    const isStoredAsSubmitted = localStorage.getItem(`task_${taskId}_submitted`) === 'true';
+    if (isStoredAsSubmitted) {
+      console.log('[SecurityFormPlayground] Found submitted state in localStorage');
+      setIsSubmitted(true);
+      setIsReviewMode(true);
+    }
+  }, [isSubmittedProp, taskStatus, taskId, isSubmitted]);
   
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({

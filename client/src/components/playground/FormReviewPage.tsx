@@ -24,6 +24,11 @@ export const FormReviewPage = ({
   
   // Update internal state when prop changes
   useEffect(() => {
+    console.log('[FormReviewPage] isSubmitted prop changed:', { 
+      prevState: internalIsSubmitted, 
+      newProp: isSubmitted,
+      timestamp: new Date().toISOString()
+    });
     setInternalIsSubmitted(isSubmitted);
   }, [isSubmitted]);
   // Filter out empty fields and create entries with their corresponding question

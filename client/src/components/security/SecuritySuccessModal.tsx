@@ -14,6 +14,15 @@ export function SecuritySuccessModal({ open, onOpenChange, companyName }: Securi
 
   // Close modal without navigating
   const handleCloseModal = () => {
+    // Set a flag in window to ensure consistent state after modal close
+    console.log('[SecuritySuccessModal] Handling close - making sure the form stays in submitted state');
+    
+    // Add a small delay to ensure the state can be processed
+    setTimeout(() => {
+      // Force reload the current page to ensure form state is refreshed properly
+      window.location.reload();
+    }, 100);
+    
     onOpenChange(false);
   };
   
