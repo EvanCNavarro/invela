@@ -570,13 +570,13 @@ export function CardFormPlayground({
             Open Banking (1033) Survey: {companyData?.name || companyName}
           </h1>
           <p className="text-muted-foreground">
-            Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements
+            Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements.
           </p>
         </div>
         <Button
           onClick={handleSubmit}
           disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
-          className="px-8"
+          className="px-8 min-w-[180px]"
         >
           {submitAssessment.isPending ? (
             <>
@@ -619,7 +619,7 @@ export function CardFormPlayground({
             {sections[currentSection].map((field: CardField) => (
               <Card
                 key={field.id}
-                className={`p-6 space-y-4 relative border-2 ${
+                className={`p-5 space-y-3 relative border-2 bg-white ${
                   loadingFields[field.id]
                     ? 'border-gray-300'
                     : formResponses[field.field_key]
@@ -681,7 +681,7 @@ export function CardFormPlayground({
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1">
                   <h3 className="text-base text-muted-foreground font-medium">
                     {field.question_label}
                   </h3>
