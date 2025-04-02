@@ -222,6 +222,36 @@ router.post('/api/security/response/:companyId/:fieldId', requireAuth, async (re
   }
 });
 
+// Helper function to convert security responses to CSV
+function convertSecurityResponsesToCSV(fields: any[], responses: any[]) {
+  // CSV headers
+  const headers = ['Group', 'Question', 'Answer', 'Type'];
+  const rows = [headers];
+
+  // Create a map of responses by field_id for easy lookup
+  const responseMap = new Map();
+  responses.forEach(response => {
+    responseMap.set(response.field_id, response.response);
+  });
+
+  // Add data rows
+  for (const field of fields) {
+    rows.push([
+      field.domain || 'Uncategorized',
+      field.question,
+      responseMap.get(field.id) || 'Not provided',
+      field.field_type || 'TEXT'
+    ]);
+  }
+
+  // Convert to CSV string
+  return rows.map(row =>
+    row.map(cell =>
+      typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
+    ).join(',')
+  ).join('\n');
+}
+
 // Submit security assessment form
 router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
   try {
@@ -276,6 +306,49 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
       }
     }
 
+    // Get all responses including any we just added
+    const allResponses = await db.select()
+      .from(securityResponses)
+      .where(eq(securityResponses.company_id, task.company_id));
+
+    // Convert responses to CSV format
+    const csvData = convertSecurityResponsesToCSV(fields, allResponses);
+    
+    // Import the FileCreationService
+    const { FileCreationService } = await import('../services/file-creation');
+    
+    // Create file in the file vault
+    const fileName = `security_assessment_${taskId}_${new Date().toISOString()}.csv`;
+    const fileCreationResult = await FileCreationService.createFile({
+      name: fileName,
+      content: csvData,
+      type: 'text/csv',
+      userId: task.created_by || req.user.id,
+      companyId: task.company_id,
+      metadata: {
+        taskId,
+        taskType: 'security_assessment',
+        formVersion: '1.0',
+        submissionDate: new Date().toISOString(),
+        fields: fields.map(f => f.field_key)
+      },
+      status: 'uploaded'
+    });
+
+    if (!fileCreationResult.success) {
+      logger.error('Security assessment file creation failed', {
+        error: fileCreationResult.error,
+        taskId,
+        fileName
+      });
+      // Continue with task updates even if file creation fails
+    } else {
+      logger.info('Security assessment file created successfully', {
+        fileId: fileCreationResult.fileId,
+        taskId
+      });
+    }
+
     // Update task status to SUBMITTED
     await db.update(tasks)
       .set({
@@ -319,7 +392,27 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
       }
     }
 
-    res.json({ message: 'Security assessment submitted successfully' });
+    // Add file-vault to available tabs if not already present
+    const [company] = await db.select()
+      .from(db.table('companies'))
+      .where(eq(sql`id`, task.company_id));
+
+    if (company && company.available_tabs) {
+      const currentTabs = company.available_tabs || ['task-center'];
+      if (!currentTabs.includes('file-vault')) {
+        await db.update(db.table('companies'))
+          .set({
+            available_tabs: [...currentTabs, 'file-vault'],
+            updated_at: new Date()
+          })
+          .where(eq(sql`id`, task.company_id));
+      }
+    }
+
+    res.json({ 
+      message: 'Security assessment submitted successfully',
+      fileId: fileCreationResult.success ? fileCreationResult.fileId : undefined
+    });
   } catch (error) {
     logger.error('Error submitting security assessment', {
       error: error instanceof Error ? error.message : 'Unknown error',
