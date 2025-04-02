@@ -232,13 +232,13 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      const fieldMap = new Map(cardFields.map(f => [f.id, f.field_key]));
+      const fieldMap = new Map(cardFields.map((f: CardField) => [f.id, f.field_key]));
       const responses: Record<string, string> = {};
 
-      existingResponses.forEach(response => {
+      existingResponses.forEach((response: CardResponse) => {
         const fieldKey = fieldMap.get(response.field_id);
         if (fieldKey && response.response_value) {
-          responses[fieldKey] = response.response_value;
+          responses[fieldKey as keyof typeof responses] = response.response_value;
         }
       });
 
@@ -248,7 +248,7 @@ export function CardFormPlayground({
   }, [existingResponses, cardFields]);
 
 
-  const sections = cardFields.reduce((acc, field) => {
+  const sections = cardFields.reduce((acc: Record<string, CardField[]>, field: CardField) => {
     if (!acc[field.wizard_section]) {
       acc[field.wizard_section] = [];
     }
@@ -567,10 +567,10 @@ export function CardFormPlayground({
       <div className="flex justify-between items-center mb-6">
         <div className="space-y-1">
           <h1 className="text-2xl font-semibold">
-            Compliance Form: {companyData?.name || companyName}
+            Open Banking (1033) Survey: {companyData?.name || companyName}
           </h1>
           <p className="text-muted-foreground">
-            Complete the Compliance and Risk Disclosure form
+            Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements
           </p>
         </div>
         <Button
@@ -616,7 +616,7 @@ export function CardFormPlayground({
       <TooltipProvider>
         {currentSection && sections[currentSection] && (
           <div className="space-y-6">
-            {sections[currentSection].map((field) => (
+            {sections[currentSection].map((field: CardField) => (
               <Card
                 key={field.id}
                 className={`p-6 space-y-4 relative border-2 ${
@@ -737,10 +737,10 @@ export function CardFormPlayground({
           </DialogHeader>
           <div className="py-6 text-center space-y-4">
             <p className="text-base">
-              You successfully submitted the CARD Survey on behalf of <span className="font-semibold">{companyName}</span>.
+              You successfully submitted the Open Banking (1033) Survey on behalf of <span className="font-semibold">{companyName}</span>.
             </p>
             <p className="text-sm text-muted-foreground">
-              🔓 <span className="font-medium">Achievement Unlocked:</span> You've gained access to new insights! Explore your company's risk analysis and data in the Insights tab.
+              🔓 <span className="font-medium">Achievement Unlocked:</span> You've completed the final step in the accreditation process! Explore your company's risk analysis and open banking compliance data in the Insights tab.
             </p>
           </div>
           <div className="flex justify-between gap-4 mt-4">
