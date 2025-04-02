@@ -580,6 +580,24 @@ export const OnboardingKYBFormPlayground = ({
   const [isSubmitted, setIsSubmitted] = useState(initialReviewMode || false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
+  
+  // Update states when initialReviewMode prop changes
+  useEffect(() => {
+    setIsSubmitted(initialReviewMode || false);
+    setIsReviewMode(initialReviewMode);
+  }, [initialReviewMode]);
+  
+  // Additional effect to set states when the form has been submitted (based on local storage)
+  useEffect(() => {
+    if (taskId) {
+      const isStoredAsSubmitted = localStorage.getItem(`task_${taskId}_submitted`) === 'true';
+      if (isStoredAsSubmitted) {
+        console.log('[KYB Form Debug] Setting submitted/review mode based on localStorage');
+        setIsSubmitted(true);
+        setIsReviewMode(true);
+      }
+    }
+  }, [taskId]);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);

@@ -73,20 +73,31 @@ export function SecurityFormPlayground({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Set review mode to true by default if task status is "ready_for_submission"
-  const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
-  // Initialize isSubmitted based on prop or taskStatus - prop takes precedence if provided
+  // Set review mode to true by default if task status is "ready_for_submission" OR if isSubmitted is true
   const [isSubmitted, setIsSubmitted] = useState<boolean>(
     isSubmittedProp !== undefined ? isSubmittedProp : taskStatus === 'submitted'
   );
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(
+    taskStatus === 'ready_for_submission' || isSubmitted
+  );
   const [currentSection, setCurrentSection] = useState<string>('');
   
-  // Update isSubmitted when the prop changes
+  // Update isSubmitted when the prop changes, and also update isReviewMode accordingly
   useEffect(() => {
     if (isSubmittedProp !== undefined) {
       setIsSubmitted(isSubmittedProp);
+      // If the form is submitted, always show review mode
+      if (isSubmittedProp) {
+        setIsReviewMode(true);
+      }
     }
-  }, [isSubmittedProp]);
+    
+    // Also check if task status is 'submitted' to ensure consistent state
+    if (taskStatus === 'submitted') {
+      setIsSubmitted(true);
+      setIsReviewMode(true);
+    }
+  }, [isSubmittedProp, taskStatus]);
   
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({

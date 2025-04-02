@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,13 @@ export const FormReviewPage = ({
   onSubmit,
   isSubmitted = false
 }: FormReviewPageProps) => {
+  // If the component re-renders due to parent state changes, we need to ensure the submission state is respected
+  const [internalIsSubmitted, setInternalIsSubmitted] = useState(isSubmitted);
+  
+  // Update internal state when prop changes
+  useEffect(() => {
+    setInternalIsSubmitted(isSubmitted);
+  }, [isSubmitted]);
   // Filter out empty fields and create entries with their corresponding question
   const formEntries = Object.entries(formData)
     .filter(([_, value]) => value !== null && value !== undefined && value !== '')
@@ -47,20 +54,20 @@ export const FormReviewPage = ({
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold">
-                {isSubmitted ? "Submission Complete" : "Review Your Responses"}
+                {internalIsSubmitted ? "Submission Complete" : "Review Your Responses"}
               </h2>
               <div className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded ${
-                isSubmitted 
+                internalIsSubmitted 
                   ? "bg-green-100 text-green-600" 
                   : "bg-blue-100 text-blue-600"
               }`}>
-                {isSubmitted ? "SUBMITTED" : "IN REVIEW"}
+                {internalIsSubmitted ? "SUBMITTED" : "IN REVIEW"}
               </div>
             </div>
           </div>
           <div className="flex items-center gap-1 text-base">
             <span className="text-[#6B7280] font-medium">
-              {isSubmitted ? "Thank you for your submission" : "Ready for Submission"}
+              {internalIsSubmitted ? "Thank you for your submission" : "Ready for Submission"}
             </span>
           </div>
         </div>
@@ -79,9 +86,9 @@ export const FormReviewPage = ({
       
       <div className="space-y-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
         <div className="mb-2 flex items-center">
-          <div className="bg-blue-600 h-4 w-1 mr-2 rounded"></div>
+          <div className={`${internalIsSubmitted ? 'bg-green-600' : 'bg-blue-600'} h-4 w-1 mr-2 rounded`}></div>
           <h3 className="text-sm font-semibold text-gray-800">
-            {isSubmitted ? "SUBMITTED RESPONSES" : "SURVEY ANSWERS FOR REVIEW"}
+            {internalIsSubmitted ? "SUBMITTED RESPONSES" : "SURVEY ANSWERS FOR REVIEW"}
           </h3>
         </div>
         
@@ -100,7 +107,7 @@ export const FormReviewPage = ({
       </div>
       
       {/* Terms and conditions acceptance section - only show if not submitted */}
-      {!isSubmitted && (
+      {!internalIsSubmitted && (
         <div 
           className={`mt-8 mb-6 p-4 rounded-lg border transition-colors ${
             termsAccepted 
@@ -136,7 +143,7 @@ export const FormReviewPage = ({
       )}
       
       <div className="flex justify-between pt-4 border-t">
-        {isSubmitted ? (
+        {internalIsSubmitted ? (
           <>
             <div /> {/* Empty div for spacing */}
             <Button
