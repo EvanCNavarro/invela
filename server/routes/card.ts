@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, cardFields, cardResponses, files, TaskStatus } from '@db/schema';
+import { tasks, cardFields, cardResponses, files, companies, TaskStatus } from '@db/schema';
 import { eq, and, ilike, sql } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { analyzeCardResponse } from '../services/openai';
@@ -55,6 +55,54 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
           taskId: task.id,
           companyId: req.user.company_id
         });
+      }
+    }
+    
+    // Add company information to task metadata if not already present
+    if (task && (!task.metadata?.company || !task.metadata?.companyName)) {
+      try {
+        // Get actual company information
+        const company = await db.query.companies.findFirst({
+          where: eq(companies.id, task.company_id || 0)
+        });
+        
+        if (company) {
+          logger.info('Updating task with company information', {
+            taskId: task.id,
+            companyId: company.id,
+            companyName: company.name
+          });
+          
+          // Extract company name from the title
+          const companyName = task.title.includes('Open Banking (1033) Survey:') 
+            ? task.title.replace('3. Open Banking (1033) Survey: ', '') 
+            : task.title.includes('Company CARD:')
+              ? task.title.replace('Company CARD: ', '')
+              : company.name;
+          
+          // Update task with company information in metadata
+          const [updatedTask] = await db.update(tasks)
+            .set({
+              metadata: {
+                ...task.metadata,
+                companyName: companyName,
+                company: {
+                  name: company.name,
+                  description: company.description
+                }
+              }
+            })
+            .where(eq(tasks.id, task.id))
+            .returning();
+          
+          task = updatedTask;
+        }
+      } catch (error) {
+        logger.error('Error updating task with company information', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          taskId: task.id
+        });
+        // Continue with original task even if update fails
       }
     }
 
