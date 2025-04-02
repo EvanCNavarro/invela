@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, Check, HelpCircle, Eye } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, ArrowLeft, ArrowRight, ArrowUp, Check, HelpCircle, Eye } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -56,6 +56,7 @@ interface SecurityFormPlaygroundProps {
   savedFormData?: Record<string, any>;
   onSubmit: (formData: Record<string, any>) => void;
   taskStatus?: string;
+  isSubmitted?: boolean;
 }
 
 export function SecurityFormPlayground({
@@ -65,13 +66,18 @@ export function SecurityFormPlayground({
   savedFormData = {},
   onSubmit,
   taskStatus,
+  isSubmitted,
 }: SecurityFormPlaygroundProps) {
   const [formData, setFormData] = useState<Record<string, any>>(savedFormData || {});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Set review mode to true by default if task status is "ready_for_submission"
-  const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
+  // Set review mode to true by default if task is submitted or ready for submission
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(
+    taskStatus === 'ready_for_submission' || 
+    taskStatus === 'completed' || 
+    isSubmitted === true
+  );
   const [currentSection, setCurrentSection] = useState<string>('');
   
   // Fetch security fields
@@ -374,8 +380,12 @@ export function SecurityFormPlayground({
     return (
       <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">2. Security Assessment</h2>
-          <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
+          <h2 className="text-2xl font-bold">Survey Answers</h2>
+          {(taskStatus === 'completed' || isSubmitted === true) ? (
+            <Badge className="bg-green-600 hover:bg-green-600 px-3 py-1">SUBMITTED</Badge>
+          ) : (
+            <Badge className="bg-amber-500 hover:bg-amber-500 px-3 py-1">IN REVIEW</Badge>
+          )}
         </div>
         
         <div className="space-y-3">
@@ -384,11 +394,10 @@ export function SecurityFormPlayground({
               <div className="flex gap-2">
                 <span className="font-bold text-gray-500">{index + 1}.</span>
                 <div className="w-full">
-                  <p className="text-gray-600 text-sm">Q: {entry.question}</p>
+                  <p className="text-gray-600 text-sm">{entry.question}</p>
                   <div className="flex items-start mt-1">
                     <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
                     <div>
-                      <span className="font-normal text-gray-500">Answer: </span>
                       <span className="font-bold">{entry.value}</span>
                     </div>
                   </div>
@@ -398,23 +407,13 @@ export function SecurityFormPlayground({
           ))}
         </div>
         
-        <div className="flex justify-between mt-8 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => setIsReviewMode(false)}
-            className="rounded-lg px-4 transition-all hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-          
+        <div className="flex justify-center mt-8 pt-4 border-t">
           <Button
             onClick={handleSubmitForm}
-            className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
-            style={{ animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', transform: 'none' }}
+            className="rounded-lg px-4 hover:bg-blue-700 transition-all"
           >
-            Submit
-            <Check className="h-4 w-4 ml-1 text-white" />
+            Back to Top
+            <ArrowUp className="h-4 w-4 ml-1 text-white" />
           </Button>
         </div>
       </Card>
