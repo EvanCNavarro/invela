@@ -433,13 +433,20 @@ export function SecurityFormPlayground({
           <div className="mt-8">
             <h3 className="text-sm font-bold text-gray-800 mb-2">Submission Terms</h3>
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-              <p className="text-sm text-gray-700 leading-relaxed">
-                I, <span className="font-bold text-black">{companyData.name} representative</span>, acknowledge that I am an authorized representative of <span className="font-bold text-black">{companyData.name}</span> and certify 
-                that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
-                will use this information to assess security posture and calculate risk scores. I grant Invela permission 
-                to securely store, process, and verify this data in accordance with industry regulations. I accept full 
-                responsibility for any inaccuracies or omissions in the submitted data.
-              </p>
+              <div className="flex gap-2">
+                <div className="flex-shrink-0 mt-0.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  I, <span className="font-bold text-black">{companyData.name} representative</span>, acknowledge that I am an authorized representative of <span className="font-bold text-black">{companyData.name}</span> and certify 
+                  that all information provided is accurate and complete to the best of my knowledge. I understand that Invela 
+                  will use this information to assess security posture and calculate risk scores. I grant Invela permission 
+                  to securely store, process, and verify this data in accordance with industry regulations. I accept full 
+                  responsibility for any inaccuracies or omissions in the submitted data.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -456,7 +463,7 @@ export function SecurityFormPlayground({
           
           <Button
             onClick={handleSubmitForm}
-            className="rounded-lg px-4 hover:bg-blue-700 transition-all"
+            className="rounded-lg px-4 transition-all hover:bg-blue-700 animate-pulse-ring"
           >
             Submit
             <Check className="h-4 w-4 ml-1 text-white" />
