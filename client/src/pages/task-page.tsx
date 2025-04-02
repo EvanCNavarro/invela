@@ -68,6 +68,16 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
+  
+  // Debug state changes
+  useEffect(() => {
+    console.log('[TaskPage] State change detected:', {
+      isSubmitted,
+      showSuccessModal,
+      fileId: fileId !== null ? 'present' : 'null',
+      timestamp: new Date().toISOString()
+    });
+  }, [isSubmitted, showSuccessModal, fileId]);
   const [derivedCompanyName, setDerivedCompanyName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
@@ -726,20 +736,39 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
           
-          {/* Custom modal that prevents page reloads */}
+          {/* Custom modal with enhanced event handling */}
           {showSuccessModal && (
             <CardSuccessModal
               open={showSuccessModal}
               onOpenChange={(open) => {
-                console.log('[TaskPage] Setting modal visibility:', open);
+                console.log('[TaskPage] Modal visibility change detected:', { 
+                  currentVisibility: showSuccessModal,
+                  newVisibility: open,
+                  isSubmitted,
+                  timestamp: new Date().toISOString()
+                });
                 
-                // Update modal visibility
-                setShowSuccessModal(open);
+                // CRITICAL FIX: Always ensure isSubmitted is true BEFORE modal state changes
+                // This is vital to prevent visual glitches and page refreshes
                 
-                // Ensure form stays in submitted state when modal closes
-                if (!open) {
+                if (!open && showSuccessModal) {
+                  console.log('[TaskPage] Modal closing sequence initiated');
+                  
+                  // IMPORTANT: First set the submission state to true
+                  // This ensures the form displays as submitted before any other state changes
                   setIsSubmitted(true);
-                  console.log('[TaskPage] Card modal closed, ensuring isSubmitted=true');
+                  
+                  // Store submission in localStorage as a fallback
+                  localStorage.setItem(`task_${task.id}_submitted`, 'true');
+                  
+                  // Use setTimeout to ensure the isSubmitted state is processed first
+                  setTimeout(() => {
+                    console.log('[TaskPage] Safely closing modal after ensuring submitted state');
+                    setShowSuccessModal(false);
+                  }, 10);
+                } else {
+                  console.log('[TaskPage] Standard modal visibility update:', open);
+                  setShowSuccessModal(open);
                 }
               }}
               companyName={displayName}
