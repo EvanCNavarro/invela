@@ -576,7 +576,8 @@ export const OnboardingKYBFormPlayground = ({
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  // Initialize isSubmitted based on initialReviewMode
+  const [isSubmitted, setIsSubmitted] = useState(initialReviewMode || false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
   const [companyData, setCompanyData] = useState<any>(null);
