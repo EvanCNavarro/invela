@@ -81,10 +81,18 @@ export default function TaskPage({ params }: TaskPageProps) {
   
   // Function to extract company name from task title
   const extractCompanyNameFromTitle = useCallback((title: string): string => {
-    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/);
+    // Enhanced regex pattern to better match all task formats including 1033 Open Banking Survey
+    const match = title?.match(/(\d+\.\s*)?(Company\s*)?(KYB|CARD|1033 Open Banking Survey|Open Banking \(1033\) Survey|Security Assessment)(\s*Form)?(\s*Assessment)?:\s*(.*)/i);
     if (match && match[6]) {
       return match[6].trim();
     }
+    
+    // Secondary pattern matching specifically for 1033 tasks
+    const openBankingMatch = title?.match(/(\d+\.\s*)?(1033|Open Banking)(\s*\(1033\))?(\s*Survey)?:\s*(.*)/i);
+    if (openBankingMatch && openBankingMatch[5]) {
+      return openBankingMatch[5].trim();
+    }
+    
     return 'Unknown Company';
   }, []);
   
@@ -221,7 +229,11 @@ export default function TaskPage({ params }: TaskPageProps) {
     
     if (taskData.task_type === 'company_kyb' || taskData.task_type === 'company_onboarding_KYB') {
       type = 'kyb';
-    } else if (taskData.task_type === 'company_card') {
+    } else if (taskData.task_type === 'company_card' || 
+              (taskData.task_type === 'company_task' && 
+               taskData.title && 
+               taskData.title.toLowerCase().includes('1033') || 
+               taskData.title.toLowerCase().includes('open banking'))) {
       type = 'card';
     } else if (taskData.task_type === 'security_assessment') {
       type = 'security';
@@ -235,6 +247,16 @@ export default function TaskPage({ params }: TaskPageProps) {
                             taskData?.metadata?.companyName || 
                             extractedName || 
                             'Unknown Company';
+    
+    // Log company name extraction for debugging
+    console.log('[TaskPage] Company name extraction:', { 
+      title: taskData.title,
+      extractedName,
+      displayNameValue,
+      metadataCompanyName: taskData?.metadata?.company?.name,
+      metadataDirectCompanyName: taskData?.metadata?.companyName,
+      timestamp: new Date().toISOString()
+    });
     
     // Return the processed values
     return {
