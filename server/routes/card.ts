@@ -21,13 +21,42 @@ router.get('/api/tasks/card/:companyName', requireAuth, async (req, res) => {
       companyId: req.user?.company_id
     });
 
-    const task = await db.query.tasks.findFirst({
+    // Try multiple title formats for backward compatibility
+    let task = await db.query.tasks.findFirst({
       where: and(
         eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
+        ilike(tasks.title, `3. Open Banking (1033) Survey: ${req.params.companyName}`),
         eq(tasks.company_id, req.user!.company_id)
       )
     });
+    
+    // Fallback to old title format if not found
+    if (!task) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'company_card'),
+          ilike(tasks.title, `Company CARD: ${req.params.companyName}`),
+          eq(tasks.company_id, req.user!.company_id)
+        )
+      });
+    }
+    
+    // Additional fallback with just the company name (for "Unknown Company" cases)
+    if (!task && req.params.companyName === 'Unknown Company' && req.user?.company_id) {
+      task = await db.query.tasks.findFirst({
+        where: and(
+          eq(tasks.task_type, 'company_card'),
+          eq(tasks.company_id, req.user.company_id)
+        )
+      });
+      
+      if (task) {
+        logger.info('Found CARD task using company ID fallback', {
+          taskId: task.id,
+          companyId: req.user.company_id
+        });
+      }
+    }
 
     logger.info('Task lookup result', {
       found: !!task,
@@ -160,9 +189,14 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         .from(cardResponses)
         .where(eq(cardResponses.task_id, parseInt(taskId)));
 
+      // Extract company name from the title considering both formats
+      const companyName = task.title.includes('Open Banking (1033) Survey:') 
+        ? task.title.replace('3. Open Banking (1033) Survey: ', '') 
+        : task.title.replace('Company CARD: ', '');
+      
       const assessmentData = {
         taskId: parseInt(taskId),
-        companyName: task.title.replace('Company CARD: ', ''),
+        companyName: companyName,
         completionDate: timestamp.toISOString(),
         responses: await Promise.all(allResponses.map(async (response) => {
           const field = fields.find(f => f.id === response.field_id);
@@ -191,7 +225,12 @@ router.post('/api/card/submit/:taskId', requireAuth, async (req, res) => {
         throw new Error('Failed to create valid JSON content');
       }
 
-      const fileName = `card_assessment_${task.title.replace('Company CARD: ', '').toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
+      // Extract company name from the title considering both formats
+      const companyNameForFile = task.title.includes('Open Banking (1033) Survey:') 
+        ? task.title.replace('3. Open Banking (1033) Survey: ', '') 
+        : task.title.replace('Company CARD: ', '');
+        
+      const fileName = `card_assessment_${companyNameForFile.toLowerCase()}_${timestamp.toISOString().replace(/[:.]/g, '')}.json`;
 
       logger.info('Creating assessment file', {
         fileName,
@@ -529,9 +568,9 @@ router.post('/api/card/analyze/:taskId/:fieldId', requireAuth, async (req, res) 
     // Analyze the response using OpenAI
     const analysis = await analyzeCardResponse(
       response, 
-      field.question,
+      field.question || "",
       field.partial_risk_score_max || 100,
-      field.example_response
+      field.example_response as string | undefined
     );
 
     // Update the response with AI analysis
