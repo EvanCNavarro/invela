@@ -1,6 +1,6 @@
 import confetti from 'canvas-confetti';
 
-// Enhanced confetti effect with larger explosion and more colors
+// Enhanced confetti effect with larger explosion and blue colors
 export const fireEnhancedConfetti = () => {
   confetti({
     particleCount: 300,
@@ -9,7 +9,7 @@ export const fireEnhancedConfetti = () => {
     startVelocity: 45,
     gravity: 1.2,
     ticks: 400,
-    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#5CFF5C', '#FFC300']
+    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#003399', '#1E3A8A']
   });
 };
 
@@ -23,7 +23,7 @@ export const fireSuperConfetti = () => {
     startVelocity: 55,
     gravity: 1.0,
     ticks: 500,
-    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#5CFF5C', '#FFC300', '#FF5C5C', '#FFEC49']
+    colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF', '#4965EC', '#003399', '#1E3A8A', '#101D42', '#172554']
   });
   
   // Second burst - from sides with delay
@@ -33,7 +33,7 @@ export const fireSuperConfetti = () => {
       angle: 60,
       spread: 80,
       origin: { x: 0, y: 0.7 },
-      colors: ['#00A3FF', '#4965EC', '#5CFF5C', '#FFC300']
+      colors: ['#00A3FF', '#4965EC', '#0040FF', '#1E3A8A']
     });
     
     confetti({
@@ -41,7 +41,7 @@ export const fireSuperConfetti = () => {
       angle: 120,
       spread: 80,
       origin: { x: 1, y: 0.7 },
-      colors: ['#0068FF', '#4965EC', '#FF5C5C', '#FFEC49']
+      colors: ['#0068FF', '#4965EC', '#003399', '#0059FF']
     });
   }, 200);
 };
