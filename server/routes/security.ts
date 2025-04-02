@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, securityFields, securityResponses, TaskStatus } from '@db/schema';
+import { tasks, securityFields, securityResponses, TaskStatus, companies } from '@db/schema';
 import { eq, and, sql, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
@@ -323,7 +323,7 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
       name: fileName,
       content: csvData,
       type: 'text/csv',
-      userId: task.created_by || req.user.id,
+      userId: task.created_by || (req.user ? req.user.id : 0),
       companyId: task.company_id,
       metadata: {
         taskId,
@@ -394,18 +394,18 @@ router.post('/api/security/submit/:taskId', requireAuth, async (req, res) => {
 
     // Add file-vault to available tabs if not already present
     const [company] = await db.select()
-      .from(db.table('companies'))
-      .where(eq(sql`id`, task.company_id));
+      .from(companies)
+      .where(eq(companies.id, task.company_id));
 
     if (company && company.available_tabs) {
       const currentTabs = company.available_tabs || ['task-center'];
       if (!currentTabs.includes('file-vault')) {
-        await db.update(db.table('companies'))
+        await db.update(companies)
           .set({
             available_tabs: [...currentTabs, 'file-vault'],
             updated_at: new Date()
           })
-          .where(eq(sql`id`, task.company_id));
+          .where(eq(companies.id, task.company_id));
       }
     }
 
