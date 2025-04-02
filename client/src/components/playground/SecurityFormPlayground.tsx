@@ -72,9 +72,11 @@ export function SecurityFormPlayground({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Initialize review mode, but we'll check for incomplete fields before confirming it
+  // Set review mode to true by default if task is submitted or ready for submission
   const [isReviewMode, setIsReviewMode] = useState<boolean>(
-    taskStatus === 'completed' || isSubmitted === true
+    taskStatus === 'ready_for_submission' || 
+    taskStatus === 'completed' || 
+    isSubmitted === true
   );
   const [currentSection, setCurrentSection] = useState<string>('');
   const [termsAccepted, setTermsAccepted] = useState<boolean>(true);
@@ -87,35 +89,17 @@ export function SecurityFormPlayground({
     enabled: true,
   });
 
-  // Calculate form completion percentage and check for incomplete fields
+  // Calculate form completion percentage
   useEffect(() => {
     if (fields && fields.length > 0) {
       const totalFields = fields.length;
-      let completedCount = 0;
-      let hasIncompleteFields = false;
-      
-      // More accurate field checking - only count actual form fields
-      fields.forEach(field => {
-        const fieldKey = `field_${field.id}`;
-        const fieldValue = formData[fieldKey];
-        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
-          completedCount++;
-        } else {
-          hasIncompleteFields = true;
-        }
-      });
-      
-      const percentage = Math.round((completedCount / totalFields) * 100);
+      const completedFields = Object.keys(formData).filter(key => 
+        formData[key] !== undefined && formData[key] !== null && formData[key] !== ''
+      ).length;
+      const percentage = Math.round((completedFields / totalFields) * 100);
       setCompletionPercentage(percentage);
-      
-      // If we're in review mode but have incomplete fields and not submitted yet, 
-      // we should exit review mode
-      if (isReviewMode && hasIncompleteFields && taskStatus !== 'submitted' && taskStatus !== 'completed') {
-        console.log("[SecurityForm] Detected incomplete fields, exiting review mode");
-        setIsReviewMode(false);
-      }
     }
-  }, [fields, formData, isReviewMode, taskStatus]);
+  }, [fields, formData]);
 
   // Extract unique sections and group fields by section
   useEffect(() => {
@@ -177,76 +161,6 @@ export function SecurityFormPlayground({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]); // Removed formData dependency to avoid infinite loop
-  
-  // Find the first incomplete field and navigate to its section
-  useEffect(() => {
-    // Only run this navigation logic when:
-    // 1. We have fields and sections loaded
-    // 2. The task is not already submitted
-    // 3. We're not in review mode (let users stay in review mode if they choose to be there)
-    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'submitted' && !isReviewMode) {
-      console.log("[SecurityForm] Running field navigation logic");
-      
-      // Create mapping of expected field IDs - this helps us identify truly missing fields
-      const expectedFieldKeyMap = new Map();
-      fields.forEach(field => {
-        expectedFieldKeyMap.set(`field_${field.id}`, field);
-      });
-      
-      // Calculate completion based on required fields in the form
-      let allFieldsCompleted = true;
-      let firstIncompleteSectionIndex = -1;
-      
-      // Go through each section and check fields
-      for (let i = 0; i < sections.length; i++) {
-        const sectionName = sections[i];
-        const sectionFields = fields.filter(field => field.section === sectionName);
-        
-        let isSectionComplete = true;
-        
-        for (const field of sectionFields) {
-          const fieldKey = `field_${field.id}`;
-          const fieldValue = formData[fieldKey];
-          const isFieldComplete = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
-          
-          if (!isFieldComplete) {
-            isSectionComplete = false;
-            allFieldsCompleted = false;
-            
-            // Record the first incomplete section
-            if (firstIncompleteSectionIndex === -1) {
-              firstIncompleteSectionIndex = i;
-            }
-            
-            break;
-          }
-        }
-        
-        // If we found an incomplete section, we can stop checking
-        if (!isSectionComplete && firstIncompleteSectionIndex !== -1) {
-          break;
-        }
-      }
-      
-      // If all fields are complete and we have the right number of fields, go to review
-      // Only do this if we're not forcing edit mode
-      if (allFieldsCompleted) {
-        console.log("[SecurityForm] All fields completed, going to review mode");
-        setIsReviewMode(true);
-      } 
-      // Otherwise navigate to the first incomplete section
-      else if (firstIncompleteSectionIndex !== -1) {
-        console.log("[SecurityForm] Found incomplete section:", firstIncompleteSectionIndex);
-        setCurrentStep(firstIncompleteSectionIndex);
-      }
-      // Fallback: if all calculations show complete but review mode isn't active,
-      // stay in edit mode but go to first section
-      else if (currentStep === -1) {
-        console.log("[SecurityForm] Fallback to first section");
-        setCurrentStep(0);
-      }
-    }
-  }, [fields, sections, formData, currentStep, taskStatus, isReviewMode]);
   
   // Update current section when step changes
   useEffect(() => {
@@ -502,27 +416,22 @@ export function SecurityFormPlayground({
             <h3 className="text-sm font-semibold text-gray-800">SURVEY ANSWERS FOR REVIEW</h3>
           </div>
           
-          {fields?.map((field, globalIndex) => {
-            const entry = formEntries.find(e => e.fieldName === `field_${field.id}`);
-            if (!entry) return null;
-            
-            return (
-              <div key={field.id} className="bg-white rounded-lg p-4 shadow-sm mb-3 last:mb-0">
-                <p className="text-gray-700">
-                  <span className="font-bold text-gray-800">{globalIndex + 1}. </span>
-                  <span className="font-medium">Q: </span>
-                  {field.description}
+          {formEntries.map((entry, index) => (
+            <div key={entry.fieldName} className="bg-white rounded-lg p-4 shadow-sm mb-3 last:mb-0">
+              <p className="text-gray-700">
+                <span className="font-bold text-gray-800">{index + 1}. </span>
+                <span className="font-medium">Q: </span>
+                {entry.question}
+              </p>
+              <div className="flex items-start mt-1.5">
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                <p className="font-medium">
+                  <span className="font-bold">Answer: </span>
+                  {entry.value}
                 </p>
-                <div className="flex items-start mt-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
-                  <p className="font-medium">
-                    <span className="font-bold">Answer: </span>
-                    {entry.value}
-                  </p>
-                </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
       
           <div className="mt-8">
             <h3 className="text-sm font-bold text-gray-800 mb-2">Submission Terms</h3>
@@ -555,38 +464,11 @@ export function SecurityFormPlayground({
         <div className="flex justify-between pt-4 mt-4 border-t">
           <Button
             variant="outline"
-            onClick={() => {
-              setIsReviewMode(false);
-              // Find the first section with an incomplete field
-              if (fields && sections.length > 0) {
-                let foundIncompleteSection = false;
-                
-                for (let i = 0; i < sections.length; i++) {
-                  const sectionName = sections[i];
-                  const sectionFields = fields.filter(field => field.section === sectionName);
-                  
-                  const hasIncompleteField = sectionFields.some(field => {
-                    const fieldValue = formData[`field_${field.id}`];
-                    return fieldValue === undefined || fieldValue === null || fieldValue === '';
-                  });
-                  
-                  if (hasIncompleteField) {
-                    setCurrentStep(i);
-                    foundIncompleteSection = true;
-                    break;
-                  }
-                }
-                
-                // If all fields are complete, go to the first section
-                if (!foundIncompleteSection) {
-                  setCurrentStep(0);
-                }
-              }
-            }}
+            onClick={() => setIsReviewMode(false)}
             className="rounded-lg px-4 transition-all hover:bg-gray-100"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Form
+            Back
           </Button>
           
           <Button
@@ -713,27 +595,17 @@ export function SecurityFormPlayground({
       {/* Current step content */}
       <Card className="border border-gray-200 rounded-md p-6 mb-6 bg-white">
         <div className="space-y-3">
-          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => {
-            // Calculate global question number across all sections
-            const allFieldsBeforeCurrentSection = sections
-              .slice(0, currentStep)
-              .flatMap(section => fields.filter(f => f.section === section));
+          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field, index) => (
+            <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
+              <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
+                {field.label}
+              </label>
               
-            const globalQuestionNumber = allFieldsBeforeCurrentSection.length + 
-              fields.filter(f => f.section === sections[currentStep]).findIndex(f => f.id === field.id) + 1;
+              <p className="text-black text-sm mb-2 font-bold">{index + 1}. {field.description}</p>
               
-            return (
-              <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
-                <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
-                  {field.label}
-                </label>
-                
-                <p className="text-black text-sm mb-2 font-bold">{globalQuestionNumber}. {field.description}</p>
-                
-                {renderField(field)}
-              </div>
-            );
-          })}
+              {renderField(field)}
+            </div>
+          ))}
         </div>
       </Card>
       
