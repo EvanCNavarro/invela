@@ -562,6 +562,11 @@ export default function TaskPage({ params }: TaskPageProps) {
               open={showSuccessModal}
               onOpenChange={(open) => setShowSuccessModal(open)}
               companyName={displayName}
+              onAfterClose={() => {
+                // Force update to the state to ensure UI reflects the submitted state
+                setIsSubmitted(true);
+                console.log('[TaskPage] Modal closed - forcibly updated isSubmitted state');
+              }}
             />
           )}
         </PageTemplate>
