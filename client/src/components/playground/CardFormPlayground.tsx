@@ -555,6 +555,11 @@ export function CardFormPlayground({
     }
   }, [sections]);
 
+  // Set document title with company name
+  useEffect(() => {
+    document.title = `Open Banking (1033) Survey: ${companyData?.name || companyName || 'Company'} | Invela`;
+  }, [companyData, companyName]);
+
   if (isLoadingFields || isLoadingResponses) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -568,7 +573,7 @@ export function CardFormPlayground({
       <div className="flex justify-between items-center mb-6">
         <div className="space-y-1 max-w-[70%]">
           <h1 className="text-2xl font-semibold">
-            Open Banking (1033) Survey: {companyData?.name || companyName}
+            Open Banking (1033) Survey: {companyData?.name || companyName || 'Company'}
           </h1>
           <p className="text-muted-foreground text-sm">
             Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements.
@@ -741,7 +746,7 @@ export function CardFormPlayground({
           </DialogHeader>
           <div className="py-5 space-y-6">
             <p className="text-center text-gray-500">
-              Good job! You have successfully submitted the Open Banking (1033) Survey for <span className="font-semibold text-gray-700">{companyName}</span>
+              Good job! You have successfully submitted the Open Banking (1033) Survey for <span className="font-semibold text-gray-700">{companyData?.name || companyName || 'your company'}</span>
             </p>
             
             <div className="space-y-3 text-sm">
