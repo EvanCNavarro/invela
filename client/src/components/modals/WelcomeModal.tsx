@@ -74,10 +74,21 @@ export function WelcomeModal() {
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
 
-  // Only set modal visibility once when component mounts
+  // Only set modal visibility once when user data is fully available
   useEffect(() => {
     if (!user) return;
-    setShowModal(!user.onboarding_user_completed);
+    
+    // A small delay to ensure all auth processes are complete
+    const timer = setTimeout(() => {
+      console.log('[WelcomeModal] Setting modal state:', { 
+        userId: user.id,
+        onboardingCompleted: user.onboarding_user_completed,
+        showModal: !user.onboarding_user_completed
+      });
+      setShowModal(!user.onboarding_user_completed);
+    }, 300);
+    
+    return () => clearTimeout(timer);
   }, [user]);
 
   const { data: onboardingTask } = useQuery<{id: number}>({
@@ -166,8 +177,8 @@ export function WelcomeModal() {
     setShowModal(open);
   };
 
-  // Don't render anything if user has completed onboarding
-  if (!user || user.onboarding_user_completed) {
+  // Don't render anything if user has completed onboarding or modal isn't ready to show
+  if (!user || user.onboarding_user_completed || !showModal) {
     return null;
   }
 
