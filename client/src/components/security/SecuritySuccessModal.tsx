@@ -7,42 +7,14 @@ interface SecuritySuccessModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyName: string;
-  // Add a callback to explicitly update parent state when modal closes
-  onAfterClose?: () => void;
 }
 
-export function SecuritySuccessModal({ open, onOpenChange, companyName, onAfterClose }: SecuritySuccessModalProps) {
+export function SecuritySuccessModal({ open, onOpenChange, companyName }: SecuritySuccessModalProps) {
   const [, navigate] = useLocation();
 
-  // Simple close handler - prevent default browser behavior to avoid refresh
-  const handleCloseModal = () => {
-    console.log('[SecuritySuccessModal] Closing modal');
-    onOpenChange(false);
-    
-    // Optional callback if needed - but don't use it anymore
-    // if (onAfterClose) {
-    //   onAfterClose();
-    // }
-  };
-  
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={handleCloseModal}
-      modal={true} // Ensure it's modal to prevent background interactions
-    >
-      <DialogContent 
-        className="sm:max-w-[525px] dialog-content-above-confetti"
-        onEscapeKeyDown={(e) => {
-          // Prevent default esc key behavior to avoid refreshes
-          e.preventDefault();
-          handleCloseModal();
-        }}
-        onPointerDownOutside={(e) => {
-          // Prevent closing on outside click which might trigger refresh
-          e.preventDefault();
-        }}
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">
@@ -86,6 +58,7 @@ export function SecuritySuccessModal({ open, onOpenChange, companyName, onAfterC
             variant="outline"
             onClick={() => {
               navigate('/file-vault');
+              onOpenChange(false);
             }}
             className="flex-1"
           >
@@ -94,6 +67,7 @@ export function SecuritySuccessModal({ open, onOpenChange, companyName, onAfterC
           <Button
             onClick={() => {
               navigate('/task-center');
+              onOpenChange(false);
             }}
             className="flex-1"
           >

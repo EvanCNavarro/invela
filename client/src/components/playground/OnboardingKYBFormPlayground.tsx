@@ -234,10 +234,9 @@ interface FormReviewPageProps {
   fieldConfigs: Record<string, any>;
   onBack: () => void;
   onSubmit: () => void;
-  isSubmitted?: boolean;
 }
 
-const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit, isSubmitted = false }: FormReviewPageProps) => {
+const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReviewPageProps) => {
   // Filter out empty fields and create entries with their corresponding question
   const formEntries = Object.entries(formData)
     .filter(([_, value]) => value !== null && value !== undefined && value !== '')
@@ -576,28 +575,9 @@ export const OnboardingKYBFormPlayground = ({
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  // Initialize isSubmitted based on initialReviewMode
-  const [isSubmitted, setIsSubmitted] = useState(initialReviewMode || false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isReviewMode, setIsReviewMode] = useState(initialReviewMode);
-  
-  // Update states when initialReviewMode prop changes
-  useEffect(() => {
-    setIsSubmitted(initialReviewMode || false);
-    setIsReviewMode(initialReviewMode);
-  }, [initialReviewMode]);
-  
-  // Additional effect to set states when the form has been submitted (based on local storage)
-  useEffect(() => {
-    if (taskId) {
-      const isStoredAsSubmitted = localStorage.getItem(`task_${taskId}_submitted`) === 'true';
-      if (isStoredAsSubmitted) {
-        console.log('[KYB Form Debug] Setting submitted/review mode based on localStorage');
-        setIsSubmitted(true);
-        setIsReviewMode(true);
-      }
-    }
-  }, [taskId]);
   const [companyData, setCompanyData] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -1211,7 +1191,6 @@ export const OnboardingKYBFormPlayground = ({
           }, {} as Record<string, FormField>)}
           onBack={handleBack}
           onSubmit={handleSubmit}
-          isSubmitted={isSubmitted}
         />
       ) : (
         <div>

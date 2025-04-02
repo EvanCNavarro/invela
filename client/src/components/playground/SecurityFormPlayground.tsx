@@ -25,7 +25,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import FormReviewPage from './FormReviewPage';
 
 interface SecurityFormField {
   id: number;
@@ -57,7 +56,6 @@ interface SecurityFormPlaygroundProps {
   savedFormData?: Record<string, any>;
   onSubmit: (formData: Record<string, any>) => void;
   taskStatus?: string;
-  isSubmitted?: boolean; // Added this prop to control submission state
 }
 
 export function SecurityFormPlayground({
@@ -67,74 +65,14 @@ export function SecurityFormPlayground({
   savedFormData = {},
   onSubmit,
   taskStatus,
-  isSubmitted: isSubmittedProp,
 }: SecurityFormPlaygroundProps) {
   const [formData, setFormData] = useState<Record<string, any>>(savedFormData || {});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Set review mode to true by default if task status is "ready_for_submission" OR if isSubmitted is true
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(
-    isSubmittedProp !== undefined ? isSubmittedProp : taskStatus === 'submitted'
-  );
-  const [isReviewMode, setIsReviewMode] = useState<boolean>(
-    taskStatus === 'ready_for_submission' || isSubmitted
-  );
+  // Set review mode to true by default if task status is "ready_for_submission"
+  const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
   const [currentSection, setCurrentSection] = useState<string>('');
-  
-  // Update isSubmitted when the prop changes, and also update isReviewMode accordingly
-  useEffect(() => {
-    console.log('[SecurityFormPlayground] Submission state change:', { 
-      isSubmittedProp, 
-      currentIsSubmitted: isSubmitted,
-      taskStatus,
-      timestamp: new Date().toISOString()
-    });
-    
-    if (isSubmittedProp !== undefined) {
-      setIsSubmitted(isSubmittedProp);
-      // If the form is submitted, always show review mode
-      if (isSubmittedProp) {
-        setIsReviewMode(true);
-      }
-    }
-    
-    // Also check if task status is 'submitted' to ensure consistent state
-    if (taskStatus === 'submitted') {
-      setIsSubmitted(true);
-      setIsReviewMode(true);
-    }
-    
-    // Check localStorage as a failsafe
-    const isStoredAsSubmitted = localStorage.getItem(`task_${taskId}_submitted`) === 'true';
-    if (isStoredAsSubmitted) {
-      console.log('[SecurityFormPlayground] Found submitted state in localStorage');
-      setIsSubmitted(true);
-      setIsReviewMode(true);
-    }
-  }, [isSubmittedProp, taskStatus, taskId, isSubmitted]);
-  
-  // Listen for custom submit events
-  useEffect(() => {
-    // Handler for the custom submit event
-    const handleSubmitEvent = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      console.log('[SecurityFormPlayground] Received custom submit event:', customEvent.detail);
-      if (customEvent.detail?.taskId === taskId.toString()) {
-        console.log('[SecurityFormPlayground] Updating states based on event');
-        setIsSubmitted(true);
-        setIsReviewMode(true);
-      }
-    };
-    
-    // Add event listener for our custom event
-    window.addEventListener('security-form-submitted', handleSubmitEvent);
-    
-    // Cleanup function
-    return () => {
-      window.removeEventListener('security-form-submitted', handleSubmitEvent);
-    };
-  }, [taskId]);
   
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({
@@ -222,8 +160,6 @@ export function SecurityFormPlayground({
     }
   }, [currentStep, sections]);
   
-
-  
   // Define step navigation functions
   const handleNext = () => {
     if (currentStep < sections.length - 1) {
@@ -242,11 +178,6 @@ export function SecurityFormPlayground({
   
   const handleSubmitForm = () => {
     onSubmit(formData);
-    // Directly update state after submission without relying on any callbacks
-    setIsSubmitted(true);
-    // Also store in localStorage for persistence
-    localStorage.setItem(`task_${taskId}_submitted`, 'true');
-    console.log('[SecurityFormPlayground] Form submitted and state updated');
   };
   
   // Check if step is completed
@@ -304,12 +235,6 @@ export function SecurityFormPlayground({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(formData);
-    // Directly update state when the form is submitted
-    setIsSubmitted(true);
-    setIsReviewMode(true);
-    // Also store in localStorage for persistence
-    localStorage.setItem(`task_${taskId}_submitted`, 'true');
-    console.log('[SecurityFormPlayground] Form submitted and state updated');
   };
 
   // Render a form field based on its type
@@ -424,25 +349,75 @@ export function SecurityFormPlayground({
 
   // Review mode shows all sections in a summary view
   if (isReviewMode) {
-    // Create field configs for FormReviewPage
-    const fieldConfigs: Record<string, any> = {};
+    // Build a list of all fields with responses
+    interface FormEntry {
+      fieldName: string;
+      question: string;
+      section: string;
+      value: string;
+    }
+    
+    const formEntries: FormEntry[] = [];
     
     fields?.forEach(field => {
-      fieldConfigs[`field_${field.id}`] = {
-        question: field.description,
-        section: field.section,
-        label: field.label
-      };
+      const fieldValue = formData[`field_${field.id}`];
+      if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+        formEntries.push({
+          fieldName: `field_${field.id}`,
+          question: field.description,
+          section: field.section,
+          value: String(fieldValue)
+        });
+      }
     });
     
     return (
-      <FormReviewPage
-        formData={formData}
-        fieldConfigs={fieldConfigs}
-        onBack={() => setIsReviewMode(false)}
-        onSubmit={handleSubmitForm}
-        isSubmitted={isSubmitted}
-      />
+      <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">2. Security Assessment</h2>
+          <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
+        </div>
+        
+        <div className="space-y-3">
+          {formEntries.map((entry, index) => (
+            <div key={entry.fieldName} className="border-b pb-3 mb-3">
+              <div className="flex gap-2">
+                <span className="font-bold text-gray-500">{index + 1}.</span>
+                <div className="w-full">
+                  <p className="text-gray-600 text-sm">Q: {entry.question}</p>
+                  <div className="flex items-start mt-1">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                    <div>
+                      <span className="font-normal text-gray-500">Answer: </span>
+                      <span className="font-bold">{entry.value}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex justify-between mt-8 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setIsReviewMode(false)}
+            className="rounded-lg px-4 transition-all hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          
+          <Button
+            onClick={handleSubmitForm}
+            className="rounded-lg px-4 hover:bg-blue-700 transition-all animate-pulse-ring"
+            style={{ animation: 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', transform: 'none' }}
+          >
+            Submit
+            <Check className="h-4 w-4 ml-1 text-white" />
+          </Button>
+        </div>
+      </Card>
     );
   }
 

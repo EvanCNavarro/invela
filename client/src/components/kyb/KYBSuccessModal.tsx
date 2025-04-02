@@ -12,21 +12,8 @@ interface KYBSuccessModalProps {
 export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessModalProps) {
   const [, navigate] = useLocation();
 
-  // Handle modal close with reload to ensure state consistency
-  const handleCloseModal = () => {
-    console.log('[KYBSuccessModal] Handling close - making sure the form stays in submitted state');
-    
-    // Add a small delay to ensure the state can be processed
-    setTimeout(() => {
-      // Force reload the current page to ensure form state is refreshed properly
-      window.location.reload();
-    }, 100);
-    
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleCloseModal}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
@@ -81,6 +68,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
             variant="outline"
             onClick={() => {
               navigate('/file-vault');
+              onOpenChange(false);
             }}
             className="flex-1"
           >
@@ -89,6 +77,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
           <Button
             onClick={() => {
               navigate('/task-center');
+              onOpenChange(false);
             }}
             className="flex-1"
           >
