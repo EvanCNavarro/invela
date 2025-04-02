@@ -155,6 +155,7 @@ export function registerRoutes(app: Express): Express {
         companyId: req.user.company_id
       });
 
+      // Use a direct query to get the most updated company data including the risk_score
       const [company] = await db.select()
         .from(companies)
         .where(eq(companies.id, req.user.company_id));
@@ -164,12 +165,15 @@ export function registerRoutes(app: Express): Express {
         return res.status(404).json({ message: "Company not found" });
       }
 
+      // Make sure the company data includes risk score in the logged info
       console.log('[Current Company] Found company:', {
         id: company.id,
         name: company.name,
-        onboardingCompleted: company.onboarding_company_completed
+        onboardingCompleted: company.onboarding_company_completed,
+        riskScore: company.risk_score
       });
 
+      // Ensure we're returning the most up-to-date data
       res.json(company);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
