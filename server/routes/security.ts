@@ -9,10 +9,12 @@ const router = Router();
 const logger = new Logger('SecurityRoutes');
 
 // Get security task by company name
-router.get('/api/tasks/security/:companyName', async (req, res) => {
+router.get('/api/tasks/security/:companyName', requireAuth, async (req, res) => {
   try {
     logger.info('Fetching security task:', {
       companyName: req.params.companyName,
+      userId: req.user?.id,
+      companyId: req.user?.company_id
     });
 
     // Try to find with the new numbered format first, then fall back to the old format

@@ -478,9 +478,9 @@ export function SecurityFormPlayground({
           <Button
             onClick={handleSubmitForm}
             disabled={!termsAccepted}
-            className={`rounded-lg px-4 transition-all hover:bg-blue-700 ${termsAccepted ? 'animate-pulse-ring' : 'opacity-50'}`}
+            className={`rounded-lg px-4 transition-all hover:bg-blue-700 ${termsAccepted ? 'animate-pulse-subtle animate-pulse-ring' : 'opacity-50'}`}
           >
-            Submit
+            <span className="font-bold">Submit Survey</span>
             <Check className="h-4 w-4 ml-1 text-white" />
           </Button>
         </div>
