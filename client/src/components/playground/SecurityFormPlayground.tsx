@@ -79,7 +79,7 @@ export function SecurityFormPlayground({
     isSubmitted === true
   );
   const [currentSection, setCurrentSection] = useState<string>('');
-  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(true);
   // User name for the terms - in a real implementation this would come from user profile
   const userName = "John Doe"; // Replace with actual user name when available
   
