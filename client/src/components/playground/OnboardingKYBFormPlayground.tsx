@@ -1058,6 +1058,7 @@ export const OnboardingKYBFormPlayground = ({
           }, {} as Record<string, FormField>)}
           onBack={handleBack}
           onSubmit={handleSubmit}
+          isSubmitted={isSubmitted}
         />
       ) : (
         <div>

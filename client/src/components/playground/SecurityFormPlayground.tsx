@@ -360,12 +360,16 @@ export function SecurityFormPlayground({
       };
     });
     
+    // Check if the form has already been submitted
+    const isSubmitted = taskStatus === 'submitted' || taskStatus === 'completed';
+    
     return (
       <FormReviewPage
         formData={formData}
         fieldConfigs={fieldConfigs}
         onBack={() => setIsReviewMode(false)}
         onSubmit={handleSubmitForm}
+        isSubmitted={isSubmitted}
       />
     );
   }
