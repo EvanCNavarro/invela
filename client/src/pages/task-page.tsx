@@ -726,18 +726,20 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
           
+          {/* Custom modal that prevents page reloads */}
           {showSuccessModal && (
             <CardSuccessModal
               open={showSuccessModal}
               onOpenChange={(open) => {
-                // Prevent page reload by only updating state when needed
-                if (showSuccessModal !== open) {
-                  setShowSuccessModal(open);
-                  // Always ensure form stays in submitted state when modal closes
-                  if (!open) {
-                    setIsSubmitted(true);
-                    console.log('[TaskPage] Card modal closed, isSubmitted set to true');
-                  }
+                console.log('[TaskPage] Setting modal visibility:', open);
+                
+                // Update modal visibility
+                setShowSuccessModal(open);
+                
+                // Ensure form stays in submitted state when modal closes
+                if (!open) {
+                  setIsSubmitted(true);
+                  console.log('[TaskPage] Card modal closed, ensuring isSubmitted=true');
                 }
               }}
               companyName={displayName}
