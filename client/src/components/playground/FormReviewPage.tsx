@@ -22,15 +22,58 @@ export const FormReviewPage = ({
   // If the component re-renders due to parent state changes, we need to ensure the submission state is respected
   const [internalIsSubmitted, setInternalIsSubmitted] = useState(isSubmitted);
   
-  // Update internal state when prop changes
+  // Track when this component renders with detailed logging
   useEffect(() => {
-    console.log('[FormReviewPage] isSubmitted prop changed:', { 
-      prevState: internalIsSubmitted, 
-      newProp: isSubmitted,
+    console.log('[FormReviewPage] Component rendered:', { 
+      internalIsSubmitted,
+      receivedIsSubmittedProp: isSubmitted,
       timestamp: new Date().toISOString()
     });
-    setInternalIsSubmitted(isSubmitted);
-  }, [isSubmitted]);
+    
+    // Once the form is submitted (either internal or external state), store it in localStorage as a backup
+    if (internalIsSubmitted || isSubmitted) {
+      const formId = JSON.stringify(formData).slice(0, 40); // Create a pseudo-id from form data
+      try {
+        localStorage.setItem(`form_${formId}_submitted`, 'true');
+        console.log('[FormReviewPage] Submission state preserved in localStorage');
+      } catch (e) {
+        console.warn('[FormReviewPage] Could not store submission state in localStorage');
+      }
+    }
+  }, [internalIsSubmitted, isSubmitted, formData]);
+  
+  // Enhanced state synchronization with parent
+  useEffect(() => {
+    console.log('[FormReviewPage] Checking submission state:', { 
+      internalState: internalIsSubmitted, 
+      propState: isSubmitted,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Prioritize the submitted state - always use true if either is true
+    const shouldBeSubmitted = isSubmitted || internalIsSubmitted;
+    
+    if (shouldBeSubmitted !== internalIsSubmitted) {
+      console.log('[FormReviewPage] Updating submission state to:', shouldBeSubmitted);
+      
+      // Store submission state in multiple ways for redundancy
+      try {
+        // 1. Store in localStorage with task/form specific key
+        const formId = JSON.stringify(formData).slice(0, 40);
+        localStorage.setItem(`form_${formId}_submitted`, 'true');
+        
+        // 2. Store in sessionStorage as well
+        sessionStorage.setItem('last_form_submitted', 'true');
+        
+        // 3. Set component state
+        setInternalIsSubmitted(true);
+        
+        console.log('[FormReviewPage] Successfully persisted submission state');
+      } catch (e) {
+        console.warn('[FormReviewPage] Error persisting state:', e);
+      }
+    }
+  }, [isSubmitted, internalIsSubmitted, formData]);
   // Filter out empty fields and create entries with their corresponding question
   const formEntries = Object.entries(formData)
     .filter(([_, value]) => value !== null && value !== undefined && value !== '')
