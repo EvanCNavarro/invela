@@ -184,11 +184,21 @@ router.post('/api/security/response/:companyId/:fieldId', requireAuth, async (re
 
       const progress = Math.round((completedFields / totalFields) * 100);
 
+      // Determine task status based on progress
+      let newStatus;
+      if (progress === 0) {
+        newStatus = TaskStatus.NOT_STARTED;
+      } else if (progress === 100) {
+        newStatus = TaskStatus.READY_FOR_SUBMISSION;
+      } else {
+        newStatus = TaskStatus.IN_PROGRESS;
+      }
+
       // Update task progress
       await db.update(tasks)
         .set({
           progress: progress,
-          status: progress === 100 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS,
+          status: newStatus,
           updated_at: new Date()
         })
         .where(eq(tasks.id, securityTask.id));
@@ -196,7 +206,7 @@ router.post('/api/security/response/:companyId/:fieldId', requireAuth, async (re
       logger.info('Updated task progress', {
         taskId: securityTask.id,
         progress,
-        status: progress === 100 ? TaskStatus.READY_FOR_SUBMISSION : TaskStatus.IN_PROGRESS
+        status: newStatus
       });
     }
 
