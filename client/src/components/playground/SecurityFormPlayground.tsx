@@ -81,6 +81,13 @@ export function SecurityFormPlayground({
   );
   const [currentSection, setCurrentSection] = useState<string>('');
   
+  // Update isSubmitted when the prop changes
+  useEffect(() => {
+    if (isSubmittedProp !== undefined) {
+      setIsSubmitted(isSubmittedProp);
+    }
+  }, [isSubmittedProp]);
+  
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({
     queryKey: ['/api/security/fields'],
@@ -167,17 +174,7 @@ export function SecurityFormPlayground({
     }
   }, [currentStep, sections]);
   
-  // Update isSubmitted state when the prop changes
-  useEffect(() => {
-    if (isSubmittedProp !== undefined) {
-      setIsSubmitted(isSubmittedProp);
-      
-      // If task is submitted, also set to review mode
-      if (isSubmittedProp) {
-        setIsReviewMode(true);
-      }
-    }
-  }, [isSubmittedProp]);
+
   
   // Define step navigation functions
   const handleNext = () => {

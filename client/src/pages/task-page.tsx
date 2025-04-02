@@ -236,13 +236,16 @@ export default function TaskPage({ params }: TaskPageProps) {
                             extractedName || 
                             'Unknown Company';
     
+    // Check localStorage for submission status
+    const isStoredAsSubmitted = localStorage.getItem(`task_${taskData.id}_submitted`) === 'true';
+    
     // Return the processed values
     return {
       type,
       extractedName,
       displayNameValue,
       shouldRedirect: type === 'unknown',
-      isSubmitted: !!(
+      isSubmitted: isStoredAsSubmitted || !!(
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
         (type === 'security' && taskData.metadata?.securityFormFile)
@@ -410,6 +413,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                       // First update the isSubmitted state so the form renders properly
                       setIsSubmitted(true);
                       
+                      // Update the task status in local storage to ensure it persists
+                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
+                      
                       // Small delay to ensure the state update is processed before showing the modal
                       setTimeout(() => {
                         fireEnhancedConfetti();
@@ -522,6 +528,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                     .then(() => {
                       // First update the isSubmitted state to trigger form re-render
                       setIsSubmitted(true);
+                      
+                      // Update the task status in local storage to ensure it persists
+                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
                       
                       // Small delay to ensure the state update is processed before showing the modal
                       setTimeout(() => {
@@ -642,6 +651,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                     .then((result) => {
                       // First update the isSubmitted state to trigger form re-render
                       setIsSubmitted(true);
+                      
+                      // Update the task status in local storage to ensure it persists
+                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
                       
                       // Small delay to ensure the state update is processed before showing the modal
                       setTimeout(() => {

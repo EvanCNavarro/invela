@@ -12,8 +12,13 @@ interface SecuritySuccessModalProps {
 export function SecuritySuccessModal({ open, onOpenChange, companyName }: SecuritySuccessModalProps) {
   const [, navigate] = useLocation();
 
+  // Close modal without navigating
+  const handleCloseModal = () => {
+    onOpenChange(false);
+  };
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleCloseModal}>
       <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
@@ -58,7 +63,6 @@ export function SecuritySuccessModal({ open, onOpenChange, companyName }: Securi
             variant="outline"
             onClick={() => {
               navigate('/file-vault');
-              onOpenChange(false);
             }}
             className="flex-1"
           >
@@ -67,7 +71,6 @@ export function SecuritySuccessModal({ open, onOpenChange, companyName }: Securi
           <Button
             onClick={() => {
               navigate('/task-center');
-              onOpenChange(false);
             }}
             className="flex-1"
           >
