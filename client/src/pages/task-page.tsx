@@ -407,11 +407,15 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      fireEnhancedConfetti();
-
-                      setFileId(result.fileId);
+                      // First update the isSubmitted state so the form renders properly
                       setIsSubmitted(true);
-                      setShowSuccessModal(true);
+                      
+                      // Small delay to ensure the state update is processed before showing the modal
+                      setTimeout(() => {
+                        fireEnhancedConfetti();
+                        setFileId(result.fileId);
+                        setShowSuccessModal(true);
+                      }, 100);
 
                       toast({
                         title: "Success",
@@ -515,10 +519,14 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then(() => {
-                      fireSuperConfetti();
-
+                      // First update the isSubmitted state to trigger form re-render
                       setIsSubmitted(true);
-                      setShowSuccessModal(true);
+                      
+                      // Small delay to ensure the state update is processed before showing the modal
+                      setTimeout(() => {
+                        fireSuperConfetti();
+                        setShowSuccessModal(true);
+                      }, 100);
 
                       toast({
                         title: "Success",
@@ -608,7 +616,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               <CardFormPlayground
                 taskId={task.id}
                 companyName={derivedCompanyName}
-                isSubmitted={isSubmitted}
+
                 companyData={{
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
@@ -631,11 +639,15 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      fireSuperConfetti();
-
-                      setFileId(result.fileId);
+                      // First update the isSubmitted state to trigger form re-render
                       setIsSubmitted(true);
-                      setShowSuccessModal(true);
+                      
+                      // Small delay to ensure the state update is processed before showing the modal
+                      setTimeout(() => {
+                        fireSuperConfetti();
+                        setFileId(result.fileId);
+                        setShowSuccessModal(true);
+                      }, 100);
 
                       toast({
                         title: "Success",
