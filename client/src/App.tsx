@@ -64,6 +64,17 @@ function Router() {
           )} 
         />
       </Route>
+      
+      <ProtectedRoute 
+        path="/dashboard" 
+        component={() => (
+          <ProtectedLayout>
+            <OnboardingWrapper>
+              <DashboardPage />
+            </OnboardingWrapper>
+          </ProtectedLayout>
+        )} 
+      />
 
       {/* Other protected routes */}
       <ProtectedRoute 
