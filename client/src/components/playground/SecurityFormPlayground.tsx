@@ -114,6 +114,28 @@ export function SecurityFormPlayground({
     }
   }, [isSubmittedProp, taskStatus, taskId, isSubmitted]);
   
+  // Listen for custom submit events
+  useEffect(() => {
+    // Handler for the custom submit event
+    const handleSubmitEvent = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log('[SecurityFormPlayground] Received custom submit event:', customEvent.detail);
+      if (customEvent.detail?.taskId === taskId.toString()) {
+        console.log('[SecurityFormPlayground] Updating states based on event');
+        setIsSubmitted(true);
+        setIsReviewMode(true);
+      }
+    };
+    
+    // Add event listener for our custom event
+    window.addEventListener('security-form-submitted', handleSubmitEvent);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('security-form-submitted', handleSubmitEvent);
+    };
+  }, [taskId]);
+  
   // Fetch security fields
   const { data: fields, isLoading: isFieldsLoading } = useQuery<SecurityFormField[]>({
     queryKey: ['/api/security/fields'],
