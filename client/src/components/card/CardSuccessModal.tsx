@@ -21,9 +21,12 @@ export function CardSuccessModal({ open, onOpenChange, companyName, fileId }: Ca
   const [, navigate] = useLocation();
 
   // Prevent default browser behavior to avoid refresh
-  const handleCloseModal = () => {
+  const handleCloseModal = (openState: boolean) => {
     console.log('[CardSuccessModal] Closing modal');
-    onOpenChange(false);
+    // Only call onOpenChange if the state is actually changing to avoid unnecessary re-renders
+    if (open !== openState) {
+      onOpenChange(openState);
+    }
   };
   
   return (
@@ -37,7 +40,7 @@ export function CardSuccessModal({ open, onOpenChange, companyName, fileId }: Ca
         onEscapeKeyDown={(e) => {
           // Prevent default esc key behavior to avoid refreshes
           e.preventDefault();
-          handleCloseModal();
+          handleCloseModal(false);
         }}
         onPointerDownOutside={(e) => {
           // Prevent closing on outside click which might trigger refresh

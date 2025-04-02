@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, CheckCircle, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
@@ -619,7 +619,29 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            {selectedMethod === 'upload' && !showForm ? (
+            {/* Render different content based on submission state */}
+            {isSubmitted ? (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="rounded-full bg-green-50 p-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <h2 className="text-xl font-semibold">Open Banking Assessment: {displayName}</h2>
+                </div>
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-muted-foreground mb-6">
+                    Thank you for completing the Open Banking (1033) Survey for {displayName}. 
+                    Your submission has been received and is under review.
+                  </p>
+                  <Button 
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    variant="outline"
+                  >
+                    Back to Top
+                  </Button>
+                </div>
+              </div>
+            ) : selectedMethod === 'upload' && !showForm ? (
               <DocumentUploadWizard
                 companyName={derivedCompanyName}
                 onComplete={() => {
@@ -708,11 +730,18 @@ export default function TaskPage({ params }: TaskPageProps) {
             <CardSuccessModal
               open={showSuccessModal}
               onOpenChange={(open) => {
-                setShowSuccessModal(open);
-                if (!open) setIsSubmitted(true);
+                // Prevent page reload by only updating state when needed
+                if (showSuccessModal !== open) {
+                  setShowSuccessModal(open);
+                  // Always ensure form stays in submitted state when modal closes
+                  if (!open) {
+                    setIsSubmitted(true);
+                    console.log('[TaskPage] Card modal closed, isSubmitted set to true');
+                  }
+                }
               }}
               companyName={displayName}
-              fileId={fileId}
+              fileId={fileId !== null ? fileId : undefined}
             />
           )}
         </PageTemplate>
