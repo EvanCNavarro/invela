@@ -173,8 +173,15 @@ export function registerRoutes(app: Express): Express {
         riskScore: company.risk_score
       });
 
+      // Transform response to include both risk_score and riskScore consistently
+      const transformedCompany = {
+        ...company,
+        risk_score: company.risk_score, // Keep the original property
+        riskScore: company.risk_score   // Add the frontend expected property name
+      };
+
       // Ensure we're returning the most up-to-date data
-      res.json(company);
+      res.json(transformedCompany);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
       res.status(500).json({ message: "Error fetching company details" });
@@ -218,12 +225,14 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Transform response to match frontend expectations
+      // Ensure we transform the response to include both risk_score and riskScore consistently
       const transformedCompany = {
         ...company,
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
         incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
-        riskScore: company.risk_score
+        risk_score: company.risk_score, // Keep the original property
+        riskScore: company.risk_score   // Add the frontend expected property name
       };
 
       res.json(transformedCompany);

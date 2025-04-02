@@ -255,7 +255,7 @@ export default function DashboardPage() {
                         )}
                         <span className="text-sm font-medium">{companyData?.name}</span>
                       </div>
-                      <RiskMeter score={companyData?.riskScore || 0} />
+                      <RiskMeter score={companyData?.riskScore || companyData?.risk_score || 0} />
                     </div>
                   )}
                 </Widget>

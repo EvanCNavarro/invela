@@ -58,7 +58,8 @@ export const companySchema = z.object({
   keyClientsPartners: z.string().nullable(),
   foundersAndLeadership: z.string().nullable(),
   certificationsCompliance: z.string().nullable(),
-  riskScore: z.number().optional(),
+  risk_score: z.number().optional(), // Database column name
+  riskScore: z.number().optional(), // Frontend property name
   accreditationStatus: z.enum([
     'AWAITING_INVITATION',
     'PENDING',
