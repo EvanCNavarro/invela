@@ -72,11 +72,9 @@ export function SecurityFormPlayground({
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [completionPercentage, setCompletionPercentage] = useState<number>(0);
   const [sections, setSections] = useState<string[]>([]);
-  // Set review mode to true by default if task is submitted or ready for submission
+  // Initialize review mode, but we'll check for incomplete fields before confirming it
   const [isReviewMode, setIsReviewMode] = useState<boolean>(
-    taskStatus === 'ready_for_submission' || 
-    taskStatus === 'completed' || 
-    isSubmitted === true
+    taskStatus === 'completed' || isSubmitted === true
   );
   const [currentSection, setCurrentSection] = useState<string>('');
   const [termsAccepted, setTermsAccepted] = useState<boolean>(true);
@@ -164,7 +162,7 @@ export function SecurityFormPlayground({
   
   // Find the first incomplete field and navigate to its section
   useEffect(() => {
-    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'ready_for_submission' && taskStatus !== 'submitted') {
+    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'submitted') {
       // Don't run this logic if we're in review mode
       if (isReviewMode) return;
       
@@ -174,33 +172,42 @@ export function SecurityFormPlayground({
         formData[key] !== undefined && formData[key] !== null && formData[key] !== ''
       ).length;
       
-      // If all fields are completed but not submitted, go to review mode
+      // Only go to review mode if user is 100% complete
       if (completedFields === totalFields) {
         setIsReviewMode(true);
         return;
       }
       
-      // Find the first incomplete field
+      // Always check for incomplete fields and navigate to the first one
+      let foundIncompleteField = false;
+      
       for (let i = 0; i < sections.length; i++) {
         const sectionName = sections[i];
         const sectionFields = fields.filter(field => field.section === sectionName);
         
-        let allFieldsCompleted = true;
         for (const field of sectionFields) {
           const fieldValue = formData[`field_${field.id}`];
           if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
-            allFieldsCompleted = false;
+            foundIncompleteField = true;
+            
             // Navigate to this section if we're not already there
             if (currentStep !== i) {
               setCurrentStep(i);
             }
+            
             break;
           }
         }
         
-        if (!allFieldsCompleted) {
+        if (foundIncompleteField) {
           break;
         }
+      }
+      
+      // If we found no incomplete fields but we're not at 100%, something is wrong
+      // Make sure we're not in review mode
+      if (!foundIncompleteField && completedFields < totalFields) {
+        setIsReviewMode(false);
       }
     }
   }, [fields, sections, formData, currentStep, taskStatus, isReviewMode]);
@@ -512,11 +519,38 @@ export function SecurityFormPlayground({
         <div className="flex justify-between pt-4 mt-4 border-t">
           <Button
             variant="outline"
-            onClick={() => setIsReviewMode(false)}
+            onClick={() => {
+              setIsReviewMode(false);
+              // Find the first section with an incomplete field
+              if (fields && sections.length > 0) {
+                let foundIncompleteSection = false;
+                
+                for (let i = 0; i < sections.length; i++) {
+                  const sectionName = sections[i];
+                  const sectionFields = fields.filter(field => field.section === sectionName);
+                  
+                  const hasIncompleteField = sectionFields.some(field => {
+                    const fieldValue = formData[`field_${field.id}`];
+                    return fieldValue === undefined || fieldValue === null || fieldValue === '';
+                  });
+                  
+                  if (hasIncompleteField) {
+                    setCurrentStep(i);
+                    foundIncompleteSection = true;
+                    break;
+                  }
+                }
+                
+                // If all fields are complete, go to the first section
+                if (!foundIncompleteSection) {
+                  setCurrentStep(0);
+                }
+              }
+            }}
             className="rounded-lg px-4 transition-all hover:bg-gray-100"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
+            Back to Form
           </Button>
           
           <Button
