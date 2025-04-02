@@ -234,9 +234,10 @@ interface FormReviewPageProps {
   fieldConfigs: Record<string, any>;
   onBack: () => void;
   onSubmit: () => void;
+  isSubmitted?: boolean;
 }
 
-const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReviewPageProps) => {
+const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit, isSubmitted = false }: FormReviewPageProps) => {
   // Filter out empty fields and create entries with their corresponding question
   const formEntries = Object.entries(formData)
     .filter(([_, value]) => value !== null && value !== undefined && value !== '')
@@ -1191,6 +1192,7 @@ export const OnboardingKYBFormPlayground = ({
           }, {} as Record<string, FormField>)}
           onBack={handleBack}
           onSubmit={handleSubmit}
+          isSubmitted={isSubmitted}
         />
       ) : (
         <div>
