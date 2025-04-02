@@ -14,12 +14,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, CheckCircle, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, Download, FileJson, FileText, FileSpreadsheet } from "lucide-react";
 import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
-import { CardSuccessModal } from "@/components/card/CardSuccessModal";
 import { fireEnhancedConfetti, fireSuperConfetti } from '@/utils/confetti';
 import confetti from 'canvas-confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
@@ -68,16 +67,6 @@ export default function TaskPage({ params }: TaskPageProps) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'upload' | 'manual' | null>(null);
   const [showForm, setShowForm] = useState(false);
-  
-  // Debug state changes
-  useEffect(() => {
-    console.log('[TaskPage] State change detected:', {
-      isSubmitted,
-      showSuccessModal,
-      fileId: fileId !== null ? 'present' : 'null',
-      timestamp: new Date().toISOString()
-    });
-  }, [isSubmitted, showSuccessModal, fileId]);
   const [derivedCompanyName, setDerivedCompanyName] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [taskContentType, setTaskContentType] = useState<TaskContentType>('unknown');
@@ -247,16 +236,13 @@ export default function TaskPage({ params }: TaskPageProps) {
                             extractedName || 
                             'Unknown Company';
     
-    // Check localStorage for submission status
-    const isStoredAsSubmitted = localStorage.getItem(`task_${taskData.id}_submitted`) === 'true';
-    
     // Return the processed values
     return {
       type,
       extractedName,
       displayNameValue,
       shouldRedirect: type === 'unknown',
-      isSubmitted: isStoredAsSubmitted || !!(
+      isSubmitted: !!(
         (type === 'kyb' && taskData.metadata?.kybFormFile) ||
         (type === 'card' && taskData.metadata?.cardFormFile) ||
         (type === 'security' && taskData.metadata?.securityFormFile)
@@ -399,7 +385,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task.metadata?.company?.description || undefined
                 }}
                 savedFormData={task.savedFormData}
-                initialReviewMode={isSubmitted}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting KYB Form",
@@ -421,18 +406,11 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      // First update the isSubmitted state so the form renders properly
+                      fireEnhancedConfetti();
+
+                      setFileId(result.fileId);
                       setIsSubmitted(true);
-                      
-                      // Update the task status in local storage to ensure it persists
-                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
-                      
-                      // Small delay to ensure the state update is processed before showing the modal
-                      setTimeout(() => {
-                        fireEnhancedConfetti();
-                        setFileId(result.fileId);
-                        setShowSuccessModal(true);
-                      }, 100);
+                      setShowSuccessModal(true);
 
                       toast({
                         title: "Success",
@@ -514,7 +492,6 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
                 savedFormData={task.savedFormData}
                 taskStatus={task.status}
-                isSubmitted={isSubmitted}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
@@ -537,14 +514,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then(() => {
-                      // Directly update state when form is submitted
-                      setIsSubmitted(true);
-                      
-                      // Update the task status in local storage to ensure it persists
-                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
-                      
-                      // Show success feedback immediately
                       fireSuperConfetti();
+
+                      setIsSubmitted(true);
                       setShowSuccessModal(true);
 
                       toast({
@@ -569,12 +541,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           {showSuccessModal && (
             <SecuritySuccessModal
               open={showSuccessModal}
-              onOpenChange={(open) => {
-                console.log('[TaskPage] Security modal state change:', { open });
-                setShowSuccessModal(open);
-                // Always ensure the form stays in submitted state
-                setIsSubmitted(true);
-              }}
+              onOpenChange={(open) => setShowSuccessModal(open)}
               companyName={displayName}
             />
           )}
@@ -629,29 +596,7 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            {/* Render different content based on submission state */}
-            {isSubmitted ? (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="rounded-full bg-green-50 p-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </div>
-                  <h2 className="text-xl font-semibold">Open Banking Assessment: {displayName}</h2>
-                </div>
-                <div className="border-t pt-4 mt-4">
-                  <p className="text-muted-foreground mb-6">
-                    Thank you for completing the Open Banking (1033) Survey for {displayName}. 
-                    Your submission has been received and is under review.
-                  </p>
-                  <Button 
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                    variant="outline"
-                  >
-                    Back to Top
-                  </Button>
-                </div>
-              </div>
-            ) : selectedMethod === 'upload' && !showForm ? (
+            {selectedMethod === 'upload' && !showForm ? (
               <DocumentUploadWizard
                 companyName={derivedCompanyName}
                 onComplete={() => {
@@ -684,15 +629,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      // Directly update state when form is submitted
-                      setIsSubmitted(true);
-                      
-                      // Update the task status in local storage to ensure it persists
-                      localStorage.setItem(`task_${task.id}_submitted`, 'true');
-                      
-                      // Show confetti and modal immediately
                       fireSuperConfetti();
+
                       setFileId(result.fileId);
+                      setIsSubmitted(true);
                       setShowSuccessModal(true);
 
                       toast({
@@ -735,46 +675,6 @@ export default function TaskPage({ params }: TaskPageProps) {
               </div>
             )}
           </div>
-          
-          {/* Custom modal with enhanced event handling */}
-          {showSuccessModal && (
-            <CardSuccessModal
-              open={showSuccessModal}
-              onOpenChange={(open) => {
-                console.log('[TaskPage] Modal visibility change detected:', { 
-                  currentVisibility: showSuccessModal,
-                  newVisibility: open,
-                  isSubmitted,
-                  timestamp: new Date().toISOString()
-                });
-                
-                // CRITICAL FIX: Always ensure isSubmitted is true BEFORE modal state changes
-                // This is vital to prevent visual glitches and page refreshes
-                
-                if (!open && showSuccessModal) {
-                  console.log('[TaskPage] Modal closing sequence initiated');
-                  
-                  // IMPORTANT: First set the submission state to true
-                  // This ensures the form displays as submitted before any other state changes
-                  setIsSubmitted(true);
-                  
-                  // Store submission in localStorage as a fallback
-                  localStorage.setItem(`task_${task.id}_submitted`, 'true');
-                  
-                  // Use setTimeout to ensure the isSubmitted state is processed first
-                  setTimeout(() => {
-                    console.log('[TaskPage] Safely closing modal after ensuring submitted state');
-                    setShowSuccessModal(false);
-                  }, 10);
-                } else {
-                  console.log('[TaskPage] Standard modal visibility update:', open);
-                  setShowSuccessModal(open);
-                }
-              }}
-              companyName={displayName}
-              fileId={fileId !== null ? fileId : undefined}
-            />
-          )}
         </PageTemplate>
       </DashboardLayout>
     );
