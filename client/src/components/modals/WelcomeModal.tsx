@@ -65,6 +65,16 @@ const carouselContent = [
   }
 ];
 
+// Preload all images to ensure fast display
+const preloadImages = () => {
+  carouselContent.forEach(item => {
+    const img = new Image();
+    img.src = item.src;
+    img.onload = () => console.log(`Preloaded image: ${item.src}`);
+    img.onerror = (e) => console.error(`Failed to preload image: ${item.src}`, e);
+  });
+};
+
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -77,6 +87,9 @@ export function WelcomeModal() {
   // Only set modal visibility once when user data is fully available
   useEffect(() => {
     if (!user) return;
+    
+    // Preload all images immediately to ensure fast display when modal shows
+    preloadImages();
     
     // A small delay to ensure all auth processes are complete
     const timer = setTimeout(() => {
@@ -223,14 +236,18 @@ export function WelcomeModal() {
           
           {/* Navigation buttons with step indicators in between - more spacing */}
           <div className="flex items-center justify-between p-8 border-t mt-4">
-            <Button
-              variant="outline"
-              onClick={handlePrevious}
-              disabled={currentSlide === 0}
-              className="px-8 py-2 h-auto text-base"
-            >
-              Back
-            </Button>
+            {/* Back button - hidden on first slide */}
+            <div className="min-w-[100px]">
+              {currentSlide > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={handlePrevious}
+                  className="px-8 py-2 h-auto text-base"
+                >
+                  Back
+                </Button>
+              )}
+            </div>
 
             {/* Step indicators in the middle */}
             <div className="flex gap-3 mx-6">
