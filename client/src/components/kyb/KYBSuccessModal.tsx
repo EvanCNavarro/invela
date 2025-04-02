@@ -14,7 +14,7 @@ export function KYBSuccessModal({ open, onOpenChange, companyName }: KYBSuccessM
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[525px]">
+      <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
         <DialogHeader>
           <div className="flex flex-col items-center text-center gap-2">
             <div className="rounded-full bg-green-50 p-3">
