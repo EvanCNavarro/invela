@@ -87,17 +87,35 @@ export function SecurityFormPlayground({
     enabled: true,
   });
 
-  // Calculate form completion percentage
+  // Calculate form completion percentage and check for incomplete fields
   useEffect(() => {
     if (fields && fields.length > 0) {
       const totalFields = fields.length;
-      const completedFields = Object.keys(formData).filter(key => 
-        formData[key] !== undefined && formData[key] !== null && formData[key] !== ''
-      ).length;
-      const percentage = Math.round((completedFields / totalFields) * 100);
+      let completedCount = 0;
+      let hasIncompleteFields = false;
+      
+      // More accurate field checking - only count actual form fields
+      fields.forEach(field => {
+        const fieldKey = `field_${field.id}`;
+        const fieldValue = formData[fieldKey];
+        if (fieldValue !== undefined && fieldValue !== null && fieldValue !== '') {
+          completedCount++;
+        } else {
+          hasIncompleteFields = true;
+        }
+      });
+      
+      const percentage = Math.round((completedCount / totalFields) * 100);
       setCompletionPercentage(percentage);
+      
+      // If we're in review mode but have incomplete fields and not submitted yet, 
+      // we should exit review mode
+      if (isReviewMode && hasIncompleteFields && taskStatus !== 'submitted' && taskStatus !== 'completed') {
+        console.log("[SecurityForm] Detected incomplete fields, exiting review mode");
+        setIsReviewMode(false);
+      }
     }
-  }, [fields, formData]);
+  }, [fields, formData, isReviewMode, taskStatus]);
 
   // Extract unique sections and group fields by section
   useEffect(() => {
@@ -162,52 +180,70 @@ export function SecurityFormPlayground({
   
   // Find the first incomplete field and navigate to its section
   useEffect(() => {
-    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'submitted') {
-      // Don't run this logic if we're in review mode
-      if (isReviewMode) return;
+    // Only run this navigation logic when:
+    // 1. We have fields and sections loaded
+    // 2. The task is not already submitted
+    // 3. We're not in review mode (let users stay in review mode if they choose to be there)
+    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'submitted' && !isReviewMode) {
+      console.log("[SecurityForm] Running field navigation logic");
       
-      // Calculate total completion
-      const totalFields = fields.length;
-      const completedFields = Object.keys(formData).filter(key => 
-        formData[key] !== undefined && formData[key] !== null && formData[key] !== ''
-      ).length;
+      // Create mapping of expected field IDs - this helps us identify truly missing fields
+      const expectedFieldKeyMap = new Map();
+      fields.forEach(field => {
+        expectedFieldKeyMap.set(`field_${field.id}`, field);
+      });
       
-      // Only go to review mode if user is 100% complete
-      if (completedFields === totalFields) {
-        setIsReviewMode(true);
-        return;
-      }
+      // Calculate completion based on required fields in the form
+      let allFieldsCompleted = true;
+      let firstIncompleteSectionIndex = -1;
       
-      // Always check for incomplete fields and navigate to the first one
-      let foundIncompleteField = false;
-      
+      // Go through each section and check fields
       for (let i = 0; i < sections.length; i++) {
         const sectionName = sections[i];
         const sectionFields = fields.filter(field => field.section === sectionName);
         
+        let isSectionComplete = true;
+        
         for (const field of sectionFields) {
-          const fieldValue = formData[`field_${field.id}`];
-          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
-            foundIncompleteField = true;
+          const fieldKey = `field_${field.id}`;
+          const fieldValue = formData[fieldKey];
+          const isFieldComplete = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
+          
+          if (!isFieldComplete) {
+            isSectionComplete = false;
+            allFieldsCompleted = false;
             
-            // Navigate to this section if we're not already there
-            if (currentStep !== i) {
-              setCurrentStep(i);
+            // Record the first incomplete section
+            if (firstIncompleteSectionIndex === -1) {
+              firstIncompleteSectionIndex = i;
             }
             
             break;
           }
         }
         
-        if (foundIncompleteField) {
+        // If we found an incomplete section, we can stop checking
+        if (!isSectionComplete && firstIncompleteSectionIndex !== -1) {
           break;
         }
       }
       
-      // If we found no incomplete fields but we're not at 100%, something is wrong
-      // Make sure we're not in review mode
-      if (!foundIncompleteField && completedFields < totalFields) {
-        setIsReviewMode(false);
+      // If all fields are complete and we have the right number of fields, go to review
+      // Only do this if we're not forcing edit mode
+      if (allFieldsCompleted) {
+        console.log("[SecurityForm] All fields completed, going to review mode");
+        setIsReviewMode(true);
+      } 
+      // Otherwise navigate to the first incomplete section
+      else if (firstIncompleteSectionIndex !== -1) {
+        console.log("[SecurityForm] Found incomplete section:", firstIncompleteSectionIndex);
+        setCurrentStep(firstIncompleteSectionIndex);
+      }
+      // Fallback: if all calculations show complete but review mode isn't active,
+      // stay in edit mode but go to first section
+      else if (currentStep === -1) {
+        console.log("[SecurityForm] Fallback to first section");
+        setCurrentStep(0);
       }
     }
   }, [fields, sections, formData, currentStep, taskStatus, isReviewMode]);
