@@ -577,7 +577,7 @@ export function CardFormPlayground({
         <Button
           onClick={handleSubmit}
           disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
-          className={`px-8 min-w-[220px] whitespace-nowrap ${!submitAssessment.isPending ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
+          className={`px-8 min-w-[220px] whitespace-nowrap font-semibold ${!submitAssessment.isPending ? 'relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-blue-400 after:animate-[pulse_2s_ease-in-out_infinite]' : ''}`}
         >
           {submitAssessment.isPending ? (
             <>

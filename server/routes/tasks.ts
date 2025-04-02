@@ -5,6 +5,7 @@ import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { broadcastMessage } from "../services/websocket"; // Use the correct import path
 import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -26,24 +27,45 @@ const getTaskByCompanyAndType = async (companyId: number, taskType: string) => {
 };
 
 // Get task by company name for CARD tasks
-router.get("/api/tasks/card/:companyName", async (req, res) => {
+router.get("/api/tasks/card/:companyName", requireAuth, async (req, res) => {
   try {
     // IMPORTANT: Force content type to ensure it's JSON not HTML
     res.setHeader('Content-Type', 'application/json');
     
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Tasks Routes] Fetching CARD task:', {
-      companyName: req.params.companyName,
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
       timestamp: new Date().toISOString()
     });
 
     // Direct DB approach - get company first
     const company = await db.query.companies.findFirst({
-      where: ilike(companies.name, req.params.companyName)
+      where: ilike(companies.name, companyNameToUse)
     });
     
     if (!company) {
-      console.warn('[Tasks Routes] Company not found:', req.params.companyName);
-      return res.status(404).json({ error: `Company not found: ${req.params.companyName}` });
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
     }
     
     console.log('[Tasks Routes] Company found:', {
@@ -61,23 +83,23 @@ router.get("/api/tasks/card/:companyName", async (req, res) => {
       types: companyTasks.map(t => t.task_type)
     });
     
-    // Find CARD task
+    // Find CARD task (Open Banking 1033 Survey)
     const cardTask = companyTasks.find(task => 
       task.task_type === 'company_card'
     );
     
     if (!cardTask) {
-      console.warn('[Tasks Routes] No CARD task found for company:', {
-        companyName: req.params.companyName,
+      console.warn('[Tasks Routes] No Open Banking (1033) Survey task found for company:', {
+        companyName: companyNameToUse,
         timestamp: new Date().toISOString()
       });
       
       return res.status(404).json({ 
-        error: `Could not find CARD (1033) task for company: ${req.params.companyName}` 
+        error: `Could not find Open Banking (1033) Survey task for company: ${companyNameToUse}` 
       });
     }
     
-    console.log('[Tasks Routes] CARD task found:', {
+    console.log('[Tasks Routes] Open Banking (1033) Survey task found:', {
       taskId: cardTask.id,
       taskTitle: cardTask.title,
       taskType: cardTask.task_type
@@ -98,24 +120,45 @@ router.get("/api/tasks/card/:companyName", async (req, res) => {
 });
 
 // Get task by company name for KYB tasks
-router.get("/api/tasks/kyb/:companyName", async (req, res) => {
+router.get("/api/tasks/kyb/:companyName", requireAuth, async (req, res) => {
   try {
     // IMPORTANT: Force content type to ensure it's JSON not HTML
     res.setHeader('Content-Type', 'application/json');
     
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Tasks Routes] Fetching KYB task:', {
-      companyName: req.params.companyName,
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
       timestamp: new Date().toISOString()
     });
 
     // Direct DB approach - get company first
     const company = await db.query.companies.findFirst({
-      where: ilike(companies.name, req.params.companyName)
+      where: ilike(companies.name, companyNameToUse)
     });
     
     if (!company) {
-      console.warn('[Tasks Routes] Company not found:', req.params.companyName);
-      return res.status(404).json({ error: `Company not found: ${req.params.companyName}` });
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
     }
     
     console.log('[Tasks Routes] Company found:', {
@@ -141,12 +184,12 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
     
     if (!kybTask) {
       console.warn('[Tasks Routes] No KYB task found for company:', {
-        companyName: req.params.companyName,
+        companyName: companyNameToUse,
         timestamp: new Date().toISOString()
       });
       
       return res.status(404).json({ 
-        error: `Could not find KYB task for company: ${req.params.companyName}` 
+        error: `Could not find KYB task for company: ${companyNameToUse}` 
       });
     }
     
@@ -171,24 +214,45 @@ router.get("/api/tasks/kyb/:companyName", async (req, res) => {
 });
 
 // Get task by company name for Security tasks
-router.get("/api/tasks/security/:companyName", async (req, res) => {
+router.get("/api/tasks/security/:companyName", requireAuth, async (req, res) => {
   try {
     // IMPORTANT: Force content type to ensure it's JSON not HTML
     res.setHeader('Content-Type', 'application/json');
     
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Tasks Routes] Fetching Security task:', {
-      companyName: req.params.companyName,
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
       timestamp: new Date().toISOString()
     });
 
     // Direct DB approach - get company first
     const company = await db.query.companies.findFirst({
-      where: ilike(companies.name, req.params.companyName)
+      where: ilike(companies.name, companyNameToUse)
     });
     
     if (!company) {
-      console.warn('[Tasks Routes] Company not found:', req.params.companyName);
-      return res.status(404).json({ error: `Company not found: ${req.params.companyName}` });
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
     }
     
     console.log('[Tasks Routes] Company found:', {
@@ -213,12 +277,12 @@ router.get("/api/tasks/security/:companyName", async (req, res) => {
     
     if (!securityTask) {
       console.warn('[Tasks Routes] No Security task found for company:', {
-        companyName: req.params.companyName,
+        companyName: companyNameToUse,
         timestamp: new Date().toISOString()
       });
       
       return res.status(404).json({ 
-        error: `Could not find Security Assessment task for company: ${req.params.companyName}` 
+        error: `Could not find Security Assessment task for company: ${companyNameToUse}` 
       });
     }
     
@@ -243,7 +307,7 @@ router.get("/api/tasks/security/:companyName", async (req, res) => {
 });
 
 // Create new task - add progress to response
-router.post("/api/tasks", async (req, res) => {
+router.post("/api/tasks", requireAuth, async (req, res) => {
   try {
     const [newTask] = await db
       .insert(tasks)
@@ -289,7 +353,7 @@ router.post("/api/tasks", async (req, res) => {
 });
 
 // Delete task
-router.delete("/api/tasks/:id", async (req, res) => {
+router.delete("/api/tasks/:id", requireAuth, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
 
@@ -403,7 +467,7 @@ const updateTaskStatusSchema = z.object({
 });
 
 // Get a task by ID (direct lookup endpoint for task-page.tsx)
-router.get("/api/tasks/:id", async (req, res) => {
+router.get("/api/tasks/:id", requireAuth, async (req, res) => {
   try {
     // Explicitly set header for JSON (crucial to avoid Vite interference)
     res.setHeader('Content-Type', 'application/json');
@@ -452,7 +516,7 @@ router.get("/api/tasks/:id", async (req, res) => {
 });
 
 // Special JSON endpoint with .json extension to prevent Vite conflicts 
-router.get("/api/tasks.json/:id", async (req, res) => {
+router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
   try {
     // Force JSON response
     res.setHeader('Content-Type', 'application/json');
@@ -515,13 +579,13 @@ async function getTaskCount() {
 }
 
 // SPECIAL API for fixing the task navigation issue - completely different URL structure
-router.post("/__special_non_vite_route__/unique_task_lookup_system", async (req, res) => {
+router.post("/__special_non_vite_route__/unique_task_lookup_system", requireAuth, async (req, res) => {
   try {
     // Force JSON response
     res.setHeader('Content-Type', 'application/json');
     
     // Get company name from request body
-    const { companyName, taskType } = req.body;
+    let { companyName, taskType } = req.body;
     
     if (!companyName) {
       return res.status(400).json({ 
@@ -529,7 +593,26 @@ router.post("/__special_non_vite_route__/unique_task_lookup_system", async (req,
       });
     }
     
+    // If "Unknown Company" is passed, use the current user's company if available
+    if (companyName === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyName = currentCompany.name;
+        console.log('[Task Lookup API] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Task Lookup API] Request received:', {
+      originalCompanyName: req.body.companyName,
       companyName,
       taskType,
       timestamp: new Date().toISOString()
