@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { Widget } from "@/components/dashboard/Widget";
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ export default function DashboardPage() {
   };
 
   // If company is a FinTech, hide the network visualization widget
-  React.useEffect(() => {
+  useEffect(() => {
     if (companyData?.category === 'FinTech') {
       setVisibleWidgets(prev => ({
         ...prev,
