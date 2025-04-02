@@ -19,8 +19,7 @@ import { PageTemplate } from "@/components/ui/page-template";
 import { BreadcrumbNav } from "@/components/dashboard/BreadcrumbNav";
 import { KYBSuccessModal } from "@/components/kyb/KYBSuccessModal";
 import { SecuritySuccessModal } from "@/components/security/SecuritySuccessModal";
-import { fireEnhancedConfetti, fireSuperConfetti } from '@/utils/confetti';
-import confetti from 'canvas-confetti';
+import { fireEnhancedConfetti } from '@/utils/confetti';
 import { CardMethodChoice } from "@/components/card/CardMethodChoice";
 import { DocumentUploadWizard } from "@/components/documents/DocumentUploadWizard";
 
@@ -407,6 +406,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                     })
                     .then((result) => {
                       fireEnhancedConfetti();
+                      });
 
                       setFileId(result.fileId);
                       setIsSubmitted(true);
@@ -514,7 +514,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then(() => {
-                      fireSuperConfetti();
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
 
                       setIsSubmitted(true);
                       setShowSuccessModal(true);
@@ -629,7 +634,12 @@ export default function TaskPage({ params }: TaskPageProps) {
                       return data;
                     })
                     .then((result) => {
-                      fireSuperConfetti();
+                      confetti({
+                        particleCount: 150,
+                        spread: 80,
+                        origin: { y: 0.6 },
+                        colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
+                      });
 
                       setFileId(result.fileId);
                       setIsSubmitted(true);
