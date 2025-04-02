@@ -162,6 +162,49 @@ export function SecurityFormPlayground({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]); // Removed formData dependency to avoid infinite loop
   
+  // Find the first incomplete field and navigate to its section
+  useEffect(() => {
+    if (fields && fields.length > 0 && sections.length > 0 && taskStatus !== 'ready_for_submission' && taskStatus !== 'submitted') {
+      // Don't run this logic if we're in review mode
+      if (isReviewMode) return;
+      
+      // Calculate total completion
+      const totalFields = fields.length;
+      const completedFields = Object.keys(formData).filter(key => 
+        formData[key] !== undefined && formData[key] !== null && formData[key] !== ''
+      ).length;
+      
+      // If all fields are completed but not submitted, go to review mode
+      if (completedFields === totalFields) {
+        setIsReviewMode(true);
+        return;
+      }
+      
+      // Find the first incomplete field
+      for (let i = 0; i < sections.length; i++) {
+        const sectionName = sections[i];
+        const sectionFields = fields.filter(field => field.section === sectionName);
+        
+        let allFieldsCompleted = true;
+        for (const field of sectionFields) {
+          const fieldValue = formData[`field_${field.id}`];
+          if (fieldValue === undefined || fieldValue === null || fieldValue === '') {
+            allFieldsCompleted = false;
+            // Navigate to this section if we're not already there
+            if (currentStep !== i) {
+              setCurrentStep(i);
+            }
+            break;
+          }
+        }
+        
+        if (!allFieldsCompleted) {
+          break;
+        }
+      }
+    }
+  }, [fields, sections, formData, currentStep, taskStatus, isReviewMode]);
+  
   // Update current section when step changes
   useEffect(() => {
     if (sections.length > 0 && currentStep >= 0 && currentStep < sections.length) {
@@ -416,22 +459,27 @@ export function SecurityFormPlayground({
             <h3 className="text-sm font-semibold text-gray-800">SURVEY ANSWERS FOR REVIEW</h3>
           </div>
           
-          {formEntries.map((entry, index) => (
-            <div key={entry.fieldName} className="bg-white rounded-lg p-4 shadow-sm mb-3 last:mb-0">
-              <p className="text-gray-700">
-                <span className="font-bold text-gray-800">{index + 1}. </span>
-                <span className="font-medium">Q: </span>
-                {entry.question}
-              </p>
-              <div className="flex items-start mt-1.5">
-                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
-                <p className="font-medium">
-                  <span className="font-bold">Answer: </span>
-                  {entry.value}
+          {fields?.map((field, globalIndex) => {
+            const entry = formEntries.find(e => e.fieldName === `field_${field.id}`);
+            if (!entry) return null;
+            
+            return (
+              <div key={field.id} className="bg-white rounded-lg p-4 shadow-sm mb-3 last:mb-0">
+                <p className="text-gray-700">
+                  <span className="font-bold text-gray-800">{globalIndex + 1}. </span>
+                  <span className="font-medium">Q: </span>
+                  {field.description}
                 </p>
+                <div className="flex items-start mt-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <p className="font-medium">
+                    <span className="font-bold">Answer: </span>
+                    {entry.value}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
       
           <div className="mt-8">
             <h3 className="text-sm font-bold text-gray-800 mb-2">Submission Terms</h3>
@@ -595,17 +643,27 @@ export function SecurityFormPlayground({
       {/* Current step content */}
       <Card className="border border-gray-200 rounded-md p-6 mb-6 bg-white">
         <div className="space-y-3">
-          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field, index) => (
-            <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
-              <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
-                {field.label}
-              </label>
+          {sections[currentStep] && fields?.filter(field => field.section === sections[currentStep]).map((field) => {
+            // Calculate global question number across all sections
+            const allFieldsBeforeCurrentSection = sections
+              .slice(0, currentStep)
+              .flatMap(section => fields.filter(f => f.section === section));
               
-              <p className="text-black text-sm mb-2 font-bold">{index + 1}. {field.description}</p>
+            const globalQuestionNumber = allFieldsBeforeCurrentSection.length + 
+              fields.filter(f => f.section === sections[currentStep]).findIndex(f => f.id === field.id) + 1;
               
-              {renderField(field)}
-            </div>
-          ))}
+            return (
+              <div key={field.id} className="space-y-1 py-2 border-b border-gray-100 last:border-0">
+                <label htmlFor={`field_${field.id}`} className="text-gray-500 block text-sm">
+                  {field.label}
+                </label>
+                
+                <p className="text-black text-sm mb-2 font-bold">{globalQuestionNumber}. {field.description}</p>
+                
+                {renderField(field)}
+              </div>
+            );
+          })}
         </div>
       </Card>
       
