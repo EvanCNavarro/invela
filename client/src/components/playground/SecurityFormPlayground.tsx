@@ -374,7 +374,7 @@ export function SecurityFormPlayground({
     return (
       <Card className="p-6 max-w-3xl mx-auto mb-8" style={{ transform: 'none' }}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Security Assessment</h2>
+          <h2 className="text-2xl font-bold">2. Security Assessment</h2>
           <Badge className="bg-blue-600 hover:bg-blue-600 px-3 py-1">IN REVIEW</Badge>
         </div>
         
@@ -427,7 +427,7 @@ export function SecurityFormPlayground({
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 pr-10">
           <div className="flex items-center gap-2 mb-1">
-            <h2 className="text-2xl font-bold">Security Assessment: {companyData.name}</h2>
+            <h2 className="text-2xl font-bold">2. Security Assessment: {companyData.name}</h2>
             <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 uppercase font-medium text-xs">
               In Progress
             </Badge>
