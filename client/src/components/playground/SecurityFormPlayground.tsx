@@ -73,7 +73,8 @@ export function SecurityFormPlayground({
   const [sections, setSections] = useState<string[]>([]);
   // Set review mode to true by default if task status is "ready_for_submission"
   const [isReviewMode, setIsReviewMode] = useState<boolean>(taskStatus === 'ready_for_submission');
-  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  // Initialize isSubmitted based on taskStatus - if 'submitted' then it's already submitted
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(taskStatus === 'submitted');
   const [currentSection, setCurrentSection] = useState<string>('');
   
   // Fetch security fields

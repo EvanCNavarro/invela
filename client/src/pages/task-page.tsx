@@ -385,6 +385,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task.metadata?.company?.description || undefined
                 }}
                 savedFormData={task.savedFormData}
+                initialReviewMode={isSubmitted}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting KYB Form",
@@ -491,7 +492,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                   description: task.metadata?.company?.description || undefined
                 }}
                 savedFormData={task.savedFormData}
-                taskStatus={task.status}
+                taskStatus={task.status && isSubmitted ? 'submitted' : task.status}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
@@ -607,6 +608,7 @@ export default function TaskPage({ params }: TaskPageProps) {
               <CardFormPlayground
                 taskId={task.id}
                 companyName={derivedCompanyName}
+                isSubmitted={isSubmitted}
                 companyData={{
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
