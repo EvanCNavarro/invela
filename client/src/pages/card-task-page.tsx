@@ -129,8 +129,8 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
     <DashboardLayout>
       <div className="space-y-8">
         <PageHeader
-          title={`CARD Form: ${task.metadata?.company_name || companyName}`}
-          description="Complete the Compliance and Risk Disclosure (CARD) form"
+          title={`Open Banking (1033) Survey: ${task.metadata?.company_name || companyName}`}
+          description="Complete the Open Banking (1033) Survey to share information about your compliance with Section 1033 requirements"
         />
 
         <div className="container max-w-7xl mx-auto">
@@ -143,8 +143,8 @@ export default function CardTaskPage({ params }: CardTaskPageProps) {
             }}
             onSubmit={() => {
               toast({
-                title: "CARD Form Submitted",
-                description: "Your CARD form has been submitted successfully.",
+                title: "Open Banking (1033) Survey Submitted",
+                description: "Your Open Banking (1033) Survey has been submitted successfully.",
               });
               navigate('/task-center');
             }}

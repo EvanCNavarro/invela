@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -18,7 +19,7 @@ import {
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
-import { CheckCircle2, Info, Download } from "lucide-react";
+import { CheckCircle2, Info, Download, CheckCircle, ArrowRight, FileText } from "lucide-react";
 import confetti from 'canvas-confetti';
 import { Trophy } from "lucide-react";
 import { useLocation } from "wouter";
@@ -576,7 +577,7 @@ export function CardFormPlayground({
         <Button
           onClick={handleSubmit}
           disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
-          className="px-8 min-w-[220px] whitespace-nowrap"
+          className={`px-8 min-w-[220px] whitespace-nowrap ${!submitAssessment.isPending ? 'relative after:absolute after:inset-0 after:rounded-md after:border-3 after:border-blue-500 after:animate-[ripple_1.5s_ease-in-out_infinite]' : ''}`}
         >
           {submitAssessment.isPending ? (
             <>
@@ -584,7 +585,7 @@ export function CardFormPlayground({
               Submitting...
             </>
           ) : (
-            'Submit Assessment'
+            'Submit Survey'
           )}
         </Button>
       </div>
@@ -724,42 +725,67 @@ export function CardFormPlayground({
       </TooltipProvider>
 
       <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent className="sm:max-w-[425px] dialog-content-above-confetti">
+        <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
           <DialogHeader>
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="rounded-full bg-green-100 p-3">
-                <Trophy className="h-6 w-6 text-green-600" />
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="rounded-full bg-green-50 p-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
               <DialogTitle className="text-xl font-semibold">
-                Success! 🎉
+                Open Banking (1033) Survey Complete
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                Open Banking (1033) Survey completion notification with next steps
+              </DialogDescription>
             </div>
           </DialogHeader>
-          <div className="py-6 text-center space-y-4">
-            <p className="text-base">
-              You successfully submitted the Open Banking (1033) Survey on behalf of <span className="font-semibold">{companyName}</span>.
+          <div className="py-5 space-y-6">
+            <p className="text-center text-gray-500">
+              Good job! You have successfully submitted the Open Banking (1033) Survey for <span className="font-semibold text-gray-700">{companyName}</span>
             </p>
-            <p className="text-sm text-muted-foreground">
-              🔓 <span className="font-medium">Achievement Unlocked:</span> You've completed the final step in the accreditation process! Explore your company's risk analysis and open banking compliance data in the Insights tab.
-            </p>
+            
+            <div className="space-y-3 text-sm">
+              <div className="flex gap-3">
+                <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                  <FileText className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">New Download Available</p>
+                    <p className="text-gray-600">A complete record of your Open Banking (1033) Survey has been generated and can be downloaded from the File Vault.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200 flex-1">
+                  <Trophy className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Risk Score: {successData?.riskScore || '0'}</p>
+                    <p className="text-gray-600">
+                      Accreditation Status: <span className="font-medium text-green-600">APPROVED</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between gap-4 mt-4">
+          <div className="flex justify-between gap-4 mt-2">
             <Button
               variant="outline"
               onClick={() => {
+                navigate('/file-vault');
                 setIsSuccessModalOpen(false);
-                navigate('/insights');
               }}
+              className="flex-1"
             >
-              Go to Insights
+              View File Vault
             </Button>
             <Button
               onClick={() => {
+                navigate('/insights');
                 setIsSuccessModalOpen(false);
-                navigate('/');
               }}
+              className="flex-1"
             >
-              Go to Dashboard
+              Go to Insights
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </DialogContent>
