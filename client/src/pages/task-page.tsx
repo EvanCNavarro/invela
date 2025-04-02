@@ -492,6 +492,7 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
                 savedFormData={task.savedFormData}
                 taskStatus={task.status}
+                isSubmitted={isSubmitted}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
