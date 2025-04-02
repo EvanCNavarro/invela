@@ -69,6 +69,16 @@ export default function DashboardPage() {
     setDrawerOpen(prev => !prev);
   };
 
+  // If company is a FinTech, hide the network visualization widget
+  React.useEffect(() => {
+    if (companyData?.category === 'FinTech') {
+      setVisibleWidgets(prev => ({
+        ...prev,
+        networkVisualization: false
+      }));
+    }
+  }, [companyData?.category]);
+
   const allWidgetsHidden = Object.values(visibleWidgets).every(v => !v);
 
   return (
