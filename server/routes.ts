@@ -1,10 +1,11 @@
 import { Express } from 'express';
-import { eq, and, gt, sql, or, isNull } from 'drizzle-orm';
+import { eq, and, gt, sql, or, isNull, inArray } from 'drizzle-orm';
 import * as bcrypt from 'bcrypt';
 import path from 'path';
 import fs from 'fs';
 import { db } from '@db';
 import { users, companies, files, companyLogos, relationships, tasks, invitations, TaskStatus } from '@db/schema';
+import { taskStatusToProgress, NetworkVisualizationData, RiskBucket } from './types';
 import { emailService } from './services/email';
 import { requireAuth } from './middleware/auth';
 import { logoUpload } from './middleware/upload';
@@ -14,15 +15,26 @@ import companySearchRouter from "./routes/company-search";
 import { createCompany } from "./services/company";
 import kybRouter from './routes/kyb';
 import cardRouter from './routes/card';
+import securityRouter from './routes/security';
 import filesRouter from './routes/files';
 import accessRouter from './routes/access';
+import adminRouter from './routes/admin';
+import tasksRouter from './routes/tasks';
+import { analyzeDocument } from './services/openai';
+import { PDFExtract } from 'pdf.js-extract';
+
+// Create PDFExtract instance
+const pdfExtract = new PDFExtract();
 
 export function registerRoutes(app: Express): Express {
   app.use(companySearchRouter);
   app.use(kybRouter);
   app.use(cardRouter);
+  app.use(securityRouter);
   app.use(filesRouter);
   app.use(accessRouter);
+  app.use('/api/admin', adminRouter);
+  app.use(tasksRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
@@ -64,11 +76,11 @@ export function registerRoutes(app: Express): Express {
         leadership_team: sql<string>`COALESCE(${companies.leadership_team}, '')`,
         has_relationship: sql<boolean>`
           CASE 
-            WHEN ${companies.id} = ${req.user!.company_id} THEN true
+            WHEN ${companies.id} = ${req.user.company_id} THEN true
             WHEN EXISTS (
               SELECT 1 FROM ${relationships} r 
-              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-              OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+              WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+              OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
             ) THEN true
             ELSE false
           END
@@ -77,11 +89,11 @@ export function registerRoutes(app: Express): Express {
         .from(companies)
         .where(
           or(
-            eq(companies.id, req.user!.company_id),
+            eq(companies.id, req.user.company_id),
             sql`EXISTS (
             SELECT 1 FROM ${relationships} r 
-            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-            OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+            WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+            OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
           )`
           )
         )
@@ -139,26 +151,37 @@ export function registerRoutes(app: Express): Express {
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
       console.log('[Current Company] Fetching company for user:', {
-        userId: req.user!.id,
-        companyId: req.user!.company_id
+        userId: req.user.id,
+        companyId: req.user.company_id
       });
 
+      // Use a direct query to get the most updated company data including the risk_score
       const [company] = await db.select()
         .from(companies)
-        .where(eq(companies.id, req.user!.company_id));
+        .where(eq(companies.id, req.user.company_id));
 
       if (!company) {
-        console.error('[Current Company] Company not found:', req.user!.company_id);
+        console.error('[Current Company] Company not found:', req.user.company_id);
         return res.status(404).json({ message: "Company not found" });
       }
 
+      // Make sure the company data includes risk score in the logged info
       console.log('[Current Company] Found company:', {
         id: company.id,
         name: company.name,
-        onboardingCompleted: company.onboarding_company_completed
+        onboardingCompleted: company.onboarding_company_completed,
+        riskScore: company.risk_score
       });
 
-      res.json(company);
+      // Transform response to include both risk_score and riskScore consistently
+      const transformedCompany = {
+        ...company,
+        risk_score: company.risk_score, // Keep the original property
+        riskScore: company.risk_score   // Add the frontend expected property name
+      };
+
+      // Ensure we're returning the most up-to-date data
+      res.json(transformedCompany);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
       res.status(500).json({ message: "Error fetching company details" });
@@ -184,11 +207,11 @@ export function registerRoutes(app: Express): Express {
           and(
             eq(companies.id, companyId),
             or(
-              eq(companies.id, req.user!.company_id),
+              eq(companies.id, req.user.company_id),
               sql`EXISTS (
                 SELECT 1 FROM ${relationships} r 
-                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user!.company_id})
-                OR (r.company_id = ${req.user!.company_id} AND r.related_company_id = ${companies.id})
+                WHERE (r.company_id = ${companies.id} AND r.related_company_id = ${req.user.company_id})
+                OR (r.company_id = ${req.user.company_id} AND r.related_company_id = ${companies.id})
               )`
             )
           )
@@ -202,12 +225,14 @@ export function registerRoutes(app: Express): Express {
       }
 
       // Transform response to match frontend expectations
+      // Ensure we transform the response to include both risk_score and riskScore consistently
       const transformedCompany = {
         ...company,
         websiteUrl: company.website_url,
         numEmployees: company.employee_count,
         incorporationYear: company.incorporation_year ? parseInt(company.incorporation_year) : null,
-        riskScore: company.risk_score
+        risk_score: company.risk_score, // Keep the original property
+        riskScore: company.risk_score   // Add the frontend expected property name
       };
 
       res.json(transformedCompany);
@@ -222,66 +247,26 @@ export function registerRoutes(app: Express): Express {
 
 
   // Tasks endpoints
-  app.get("/api/tasks/card/:companyName", requireAuth, async (req, res) => {
-    try {
-      const { companyName } = req.params;
-
-      // Find the company by name
-      const company = await db.query.companies.findFirst({
-        where: eq(companies.name, companyName)
-      });
-
-      if (!company) {
-        return res.status(404).json({ error: 'Company not found' });
-      }
-
-      // Find card task for this company
-      const task = await db.query.tasks.findFirst({
-        where: and(
-          eq(tasks.company_id, company.id),
-          eq(tasks.task_type, 'company_card')
-        )
-      });
-
-      if (!task) {
-        return res.status(404).json({ error: 'Card task not found for this company' });
-      }
-
-      return res.json(task);
-    } catch (error) {
-      console.error('Error fetching card task:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
       console.log('[Tasks] ====== Starting task fetch =====');
       console.log('[Tasks] User details:', {
-        id: req.user!.id,
-        company_id: req.user!.company_id,
-        email: req.user!.email
+        id: req.user.id,
+        company_id: req.user.company_id,
+        email: req.user.email
       });
 
       // First, let's check if there are any company-wide KYB tasks
       const kybTasks = await db.select()
         .from(tasks)
         .where(and(
-          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.company_id, req.user.company_id),
           eq(tasks.task_type, 'company_kyb'),
           eq(tasks.task_scope, 'company')
         ));
 
       console.log('[Tasks] KYB tasks found:', {
-        count: kybTasks.length,
-        tasks: kybTasks.map(t => ({
-          id: t.id,
-          company_id: t.company_id,
-          task_scope: t.task_scope,
-          task_type: t.task_type,
-          assigned_to: t.assigned_to,
-          status: t.status
-        }))
+        count: kybTasks.length
       });
 
       // Get all tasks that are either:
@@ -291,25 +276,25 @@ export function registerRoutes(app: Express): Express {
       // 4. KYB tasks for the user's company
       // 5. User onboarding tasks for the user's email
       const query = or(
-        eq(tasks.assigned_to, req.user!.id),
-        eq(tasks.created_by, req.user!.id),
+        eq(tasks.assigned_to, req.user.id),
+        eq(tasks.created_by, req.user.id),
         and(
-          eq(tasks.company_id, req.user!.company_id),
+          eq(tasks.company_id, req.user.company_id),
           isNull(tasks.assigned_to),
           eq(tasks.task_scope, 'company')
         ),
         and(
           eq(tasks.task_type, 'user_onboarding'),
-          sql`LOWER(${tasks.user_email}) = LOWER(${req.user!.email})`
+          sql`LOWER(${tasks.user_email}) = LOWER(${req.user.email})`
         )
       );
 
       console.log('[Tasks] Query conditions:', {
         conditions: {
-          condition1: `tasks.assigned_to = ${req.user!.id}`,
-          condition2: `tasks.created_by = ${req.user!.id}`,
-          condition3: `tasks.company_id = ${req.user!.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
-          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user!.email}')`
+          condition1: `tasks.assigned_to = ${req.user.id}`,
+          condition2: `tasks.created_by = ${req.user.id}`,
+          condition3: `tasks.company_id = ${req.user.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
+          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user.email}')`
         }
       });
 
@@ -320,15 +305,7 @@ export function registerRoutes(app: Express): Express {
 
       console.log('[Tasks] Tasks found:', {
         count: userTasks.length,
-        tasks: userTasks.map(task => ({
-          id: task.id,
-          title: task.title,
-          assigned_to: task.assigned_to,
-          company_id: task.company_id,
-          task_scope: task.task_scope,
-          task_type: task.task_type,
-          status: task.status
-        }))
+        // No longer showing the full task list for better console readability
       });
 
       res.json(userTasks);
@@ -351,7 +328,7 @@ export function registerRoutes(app: Express): Express {
   // Relationships endpoints
   app.get("/api/relationships", requireAuth, async (req, res) => {
     try {
-      console.log('[Relationships] Fetching network for company:', req.user!.company_id);
+      console.log('[Relationships] Fetching network for company:', req.user.company_id);
 
       // Get all relationships where the current company is either the creator or related company
       const networkRelationships = await db.select({
@@ -378,33 +355,161 @@ export function registerRoutes(app: Express): Express {
           eq(
             companies.id,
             sql`CASE 
-          WHEN ${relationships.company_id} = ${req.user!.company_id} THEN ${relationships.related_company_id}
+          WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
           ELSE ${relationships.company_id}
         END`
           )
         )
         .where(
           or(
-            eq(relationships.company_id, req.user!.company_id),
-            eq(relationships.related_company_id, req.user!.company_id)
+            eq(relationships.company_id, req.user.company_id),
+            eq(relationships.related_company_id, req.user.company_id)
           )
         )
         .orderBy(companies.name);
 
       console.log('[Relationships] Found network members:', {
         count: networkRelationships.length,
-        relationships: networkRelationships.map(r => ({
-          id: r.id,
-          companyName: r.relatedCompany.name,
-          status: r.status,
-          type: r.relationshipType
-        }))
+        // No longer showing the full relationship list for better console readability
       });
 
       res.json(networkRelationships);
     } catch (error) {
       console.error("[Relationships] Error fetching relationships:", error);
       res.status(500).json({ message: "Error fetching relationships" });
+    }
+  });
+  
+  // Network Visualization endpoint
+  app.get("/api/network/visualization", requireAuth, async (req, res) => {
+    try {
+      if (!req.user) {
+        console.log('[Network Visualization] No authenticated user found');
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
+
+      console.log('[Network Visualization] Fetching network data for company:', req.user.company_id);
+
+      // 1. Get current company info for the center node
+      const [currentCompany] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        category: sql<string>`COALESCE(${companies.category}, '')`,
+        riskScore: companies.risk_score,
+        accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`
+      })
+      .from(companies)
+      .where(eq(companies.id, req.user.company_id));
+
+      if (!currentCompany) {
+        console.error('[Network Visualization] Company not found:', req.user.company_id);
+        return res.status(404).json({ 
+          message: "Company not found",
+          code: "COMPANY_NOT_FOUND"
+        });
+      }
+
+      // 2. Get all relationships where current company is either the source or target
+      const networkRelationships = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
+        relationshipType: relationships.relationship_type,
+        status: relationships.status,
+        metadata: relationships.metadata,
+        // Join with companies to get related company details
+        relatedCompany: {
+          id: companies.id,
+          name: companies.name,
+          category: sql<string>`COALESCE(${companies.category}, '')`,
+          accreditationStatus: sql<string>`COALESCE(${companies.accreditation_status}, 'PENDING')`,
+          riskScore: sql<number>`COALESCE(${companies.risk_score}, 0)`
+        }
+      })
+      .from(relationships)
+      .innerJoin(
+        companies,
+        eq(
+          companies.id,
+          sql`CASE 
+            WHEN ${relationships.company_id} = ${req.user.company_id} THEN ${relationships.related_company_id}
+            ELSE ${relationships.company_id}
+          END`
+        )
+      )
+      .where(
+        or(
+          eq(relationships.company_id, req.user.company_id),
+          eq(relationships.related_company_id, req.user.company_id)
+        )
+      );
+
+      console.log('[Network Visualization] Found network relationships:', {
+        count: networkRelationships.length
+      });
+
+      // 3. Determine risk bucket for each company on 0-1500 scale
+      const getRiskBucket = (score: number): RiskBucket => {
+        if (score <= 500) return 'low';
+        if (score <= 900) return 'medium';  // Changed from 700 to 900
+        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
+        return 'critical';
+      };
+
+      // 4. Transform into the expected format
+      const nodes = networkRelationships.map(rel => {
+        // Get revenue tier from metadata or use default
+        const revenueTier = (rel.metadata?.revenueTier as string) || 'Unknown';
+        
+        // Create node for the visualization
+        return {
+          id: rel.relatedCompany.id,
+          name: rel.relatedCompany.name,
+          relationshipId: rel.id,
+          relationshipType: rel.relationshipType || 'partner',
+          relationshipStatus: rel.status || 'active',
+          riskScore: rel.relatedCompany.riskScore || 0,
+          riskBucket: getRiskBucket(rel.relatedCompany.riskScore || 0),
+          accreditationStatus: rel.relatedCompany.accreditationStatus || 'PENDING',
+          revenueTier,
+          category: rel.relatedCompany.category || 'Other'
+        };
+      });
+
+      // 5. Create the response object
+      const responseData: NetworkVisualizationData = {
+        center: {
+          id: currentCompany.id,
+          name: currentCompany.name,
+          riskScore: currentCompany.riskScore || 0,
+          riskBucket: getRiskBucket(currentCompany.riskScore || 0),
+          accreditationStatus: currentCompany.accreditationStatus || 'PENDING',
+          revenueTier: 'Enterprise', // Default for the logged-in company
+          category: currentCompany.category || 'FinTech'
+        },
+        nodes
+      };
+
+      console.log('[Network Visualization] Returning visualization data:', {
+        centerNode: responseData.center.name,
+        nodeCount: responseData.nodes.length
+      });
+
+      res.json(responseData);
+    } catch (error) {
+      console.error("[Network Visualization] Error details:", {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+
+      res.status(500).json({
+        message: "Error fetching network visualization data",
+        code: "INTERNAL_ERROR"
+      });
     }
   });
 
@@ -518,14 +623,14 @@ export function registerRoutes(app: Express): Express {
   // Add new endpoint after account setup endpoint
   app.post("/api/user/complete-onboarding", requireAuth, async (req, res) => {
     try {
-      console.log('[User Onboarding] Completing onboarding for user:', req.user!.id);
+      console.log('[User Onboarding] Completing onboarding for user:', req.user.id);
 
       const [updatedUser] = await db.update(users)
         .set({
           onboarding_user_completed: true,
           updated_at: new Date()
         })
-        .where(eq(users.id, req.user!.id))
+        .where(eq(users.id, req.user.id))
         .returning();
 
       console.log('[User Onboarding] Updated user onboarding status:', {
@@ -554,7 +659,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.name, req.file.originalname),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (existingFile.length > 0) {
@@ -590,8 +695,8 @@ export function registerRoutes(app: Express): Express {
         type: req.file.mimetype,
         path: storedPath,
         status: 'uploaded',
-        user_id: req.user!.id,
-        company_id: req.user!.company_id,
+        user_id: req.user.id,
+        company_id: req.user.company_id,
         download_count: 0,
         version: 1.0,
       };
@@ -623,7 +728,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (!file) {
@@ -656,7 +761,7 @@ export function registerRoutes(app: Express): Express {
         .from(files)
         .where(and(
           eq(files.id, parseInt(req.params.id)),
-          eq(files.user_id, req.user!.id)
+          eq(files.user_id, req.user.id)
         ));
 
       if (!file) {
@@ -852,14 +957,15 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add this endpoint before the fintech invite endpoint
+  // Add this endpoint to handle fintech company check
   app.post("/api/fintech/check-company", requireAuth, async (req, res) => {
     try {
       const { company_name } = req.body;
 
       if (!company_name) {
         return res.status(400).json({
-          message: "Company name is required"        });
+          message: "Company name is required"
+        });
       }
 
       // Check for existing company with same name
@@ -888,12 +994,24 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Fix fintech invite endpoint task creation
   app.post("/api/fintech/invite", requireAuth, async (req, res) => {
-    console.log('[FinTech Invite] Starting invitation process');console.log('[FinTech Invite] Request body:', req.body);
-
+    const startTime = Date.now();
     try {
+      console.log('[FinTech Invite] Starting invitation process with payload:', {
+        ...req.body,
+        email: req.body.email ? '***@***.***' : undefined
+      });
+
       const { email, company_name, full_name, sender_name } = req.body;
+
+      // Auth check with error handling
+      if (!req.user?.id) {
+        console.error('[FinTech Invite] Authentication failed:', { user: req.user });
+        return res.status(401).json({
+          message: "Authentication required",
+          code: "AUTH_REQUIRED"
+        });
+      }
 
       // Input validation
       const invalidFields = [];
@@ -903,245 +1021,221 @@ export function registerRoutes(app: Express): Express {
       if (!sender_name) invalidFields.push('sender name');
 
       if (invalidFields.length > 0) {
-        const errorMessage = invalidFields.length === 1
-          ? `${invalidFields[0]} is required`
-          : `${invalidFields.slice(0, -1).join(', ')}${invalidFields.length > 2 ? ',' : ''} and ${invalidFields.slice(-1)[0]} are required`;
-
         console.log('[FinTech Invite] Validation failed:', {
-          receivedData: req.body,
           invalidFields,
-          errorMessage
+          duration: Date.now() - startTime
         });
-
         return res.status(400).json({
-          message: errorMessage,
+          message: `${invalidFields.join(', ')} ${invalidFields.length > 1 ? 'are' : 'is'} required`,
           invalidFields
         });
       }
 
-      // Check for existing company before starting transaction
-      const existingCompany = await db.query.companies.findFirst({
-        where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
-      });
+      // Check existing company outside transaction
+      try {
+        const existingCompany = await db.query.companies.findFirst({
+          where: sql`LOWER(${companies.name}) = LOWER(${company_name})`
+        });
 
-      if (existingCompany) {
-        console.log('[FinTech Invite] Company already exists:', existingCompany.name);
-        return res.status(409).json({
-          message: "A company with this name already exists",
-          existingCompany: {
-            id: existingCompany.id,
+        if (existingCompany) {
+          console.log('[FinTech Invite] Company exists:', {
             name: existingCompany.name,
-            category: existingCompany.category
-          }
+            duration: Date.now() - startTime
+          });
+          return res.status(409).json({
+            message: "Company already exists",
+            existingCompany: {
+              id: existingCompany.id,
+              name: existingCompany.name
+            }
+          });
+        }
+      } catch (error) {
+        console.error('[FinTech Invite] Company check failed:', {
+          error,
+          duration: Date.now() - startTime
+        });
+        return res.status(500).json({
+          message: "Failed to check company existence",
+          code: "DB_ERROR"
         });
       }
 
-      // Single transaction for all database operations
+      // Critical database operations in transaction
       const result = await db.transaction(async (tx) => {
-        // Get sender's company details
-        const [userCompany] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, req.user!.company_id));
+        const txStartTime = Date.now();
+        try {
+          // Get sender company
+          const [userCompany] = await tx.select()
+            .from(companies)
+            .where(eq(companies.id, req.user!.company_id));
 
-        if (!userCompany) {
-          throw new Error("Your company information not found");
-        }
-
-        console.log('[FinTech Invite] Found sender company:', {
-          id: userCompany.id,
-          name: userCompany.name
-        });
-
-        // Create new company
-        const [newCompany] = await tx.insert(companies)
-          .values({
-            name: company_name.trim(),
-            description: `FinTech partner company ${company_name}`,
-            category: 'FinTech',
-            status: 'active',
-            accreditation_status: 'PENDING',
-            onboarding_company_completed: false,
-            available_tabs: ['task-center'], // Only task-center initially
-            metadata: {
-              invited_by: req.user!.id,
-              invited_at: new Date().toISOString(),
-              invited_from: userCompany.name,
-              created_via: 'fintech_invite'
-            }
-          })
-          .returning();
-
-        if (!newCompany) {
-          throw new Error("Failed to create company");
-        }
-
-        console.log('[FinTech Invite] Created new company:', {
-          id: newCompany.id,
-          name: newCompany.name,
-          category: newCompany.category,
-          available_tabs: newCompany.available_tabs
-        });
-
-        // Create user account
-        const tempPassword = crypto.randomBytes(32).toString('hex');
-        const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-        const [newUser] = await tx.insert(users)
-          .values({
-            email: email.toLowerCase(),
-            full_name: full_name,
-            password: hashedPassword,
-            company_id: newCompany.id,
-            onboarding_user_completed: false,
-            metadata: {
-              invited_by: req.user!.id,
-              invited_at: new Date().toISOString()
-            }
-          })
-          .returning();
-
-        console.log('[FinTech Invite] Created new user:', {
-          id: newUser.id,
-          email: newUser.email,
-          companyId: newCompany.id
-        });
-
-        // Create invitation
-        const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
-        const [invitation] = await tx.insert(invitations)
-          .values({
-            email: email.toLowerCase(),
-            code: invitationCode,
-            status: 'pending',
-            company_id: newCompany.id,
-            invitee_name: full_name,
-            invitee_company: company_name,
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            metadata: {
-              invited_by: req.user!.id,
-              invited_at: new Date().toISOString()
-            }
-          })
-          .returning();
-
-        console.log('[FinTech Invite] Created invitation:', {
-          id: invitation.id,
-          code: invitationCode,
-          companyId: newCompany.id
-        });
-
-        // Create required tasks
-        // KYB Task
-        const [kybTask] = await tx.insert(tasks)
-          .values({
-            title: `Company KYB: ${company_name}`,
-            description: `Complete Know Your Business (KYB) process for ${company_name}`,
-            task_type: 'company_kyb',
-            task_scope: 'company',
-            status: TaskStatus.NOT_STARTED,
-            priority: 'high',
-            progress: 0,
-            created_by: req.user!.id,
-            company_id: newCompany.id,
-            due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-            metadata: {
-              company_id: newCompany.id,
-              status_flow: [TaskStatus.NOT_STARTED],
-              created_at: new Date().toISOString()
-            }
-          })
-          .returning();
-
-        console.log('[FinTech Invite] Created KYB task:', {
-          id: kybTask.id,
-          status: kybTask.status,
-          companyId: newCompany.id
-        });
-
-        // CARD Task
-        const [cardTask] = await tx.insert(tasks)
-          .values({
-            title: `Company CARD: ${company_name}`,
-            description: `Provide Compliance and Risk Data (CARD) for ${company_name}`,
-            task_type: 'company_card',
-            task_scope: 'company',
-            status: TaskStatus.NOT_STARTED,
-            priority: 'high',
-            progress: 0,
-            created_by: req.user!.id,
-            company_id: newCompany.id,
-            due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-            metadata: {
-              company_id: newCompany.id,
-              status_flow: [TaskStatus.NOT_STARTED],
-              created_at: new Date().toISOString()
-            }
-          })
-          .returning();
-
-        console.log('[FinTech Invite] Created CARD task:', {
-          id: cardTask.id,
-          status: cardTask.status,
-          companyId: newCompany.id
-        });
-
-        // Onboarding Task
-        const [onboardingTask] = await tx.insert(tasks)
-          .values({
-            title: `New User Invitation: ${email}`,
-            description: `Complete user onboarding for ${full_name}`,
-            task_type: 'user_onboarding',
-            task_scope: 'user',
-            status: TaskStatus.EMAIL_SENT,
-            priority: 'medium',
-            progress: 25,
-            created_by: req.user!.id,
-            assigned_to: newUser.id,
-            company_id: newCompany.id,
-            user_email: email.toLowerCase(),
-            due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            metadata: {
-              user_id: newUser.id,
-              invitation_id: invitation.id,
-              invitation_code: invitationCode,
-              status_flow: [TaskStatus.EMAIL_SENT],
-              email_sent_at: new Date().toISOString()
-            }
-          })
-          .returning();
-
-        console.log('[FinTech Invite] Created onboarding task:', {
-          id: onboardingTask.id,
-          status: onboardingTask.status,
-          companyId: newCompany.id,
-          assignedTo: newUser.id
-        });
-
-        return {
-          company: newCompany,
-          user: newUser,
-          invitation,
-          tasks: {
-            kyb: kybTask,
-            card: cardTask,
-            onboarding: onboardingTask
+          if (!userCompany) {
+            throw new Error("Sender company not found");
           }
-        };
-      });
 
-      console.log('[FinTech Invite] Process completed successfully:', {
-        companyId: result.company.id,
-        companyName: result.company.name,
-        userId: result.user.id,
-        invitationId: result.invitation.id,
-        tasks: {
-          kyb: result.tasks.kyb.id,
-          card: result.tasks.card.id,
-          onboarding: result.tasks.onboarding.id
+          console.log('[FinTech Invite] Found sender company:', {
+            name: userCompany.name,
+            duration: Date.now() - txStartTime
+          });
+
+          // Create new company
+          const [newCompany] = await tx.insert(companies)
+            .values({
+              name: company_name.trim(),
+              description: `FinTech partner company ${company_name}`,
+              category: 'FinTech',
+              status: 'active',
+              accreditation_status: 'PENDING',
+              onboarding_company_completed: false,
+              available_tabs: ['task-center'],
+              metadata: {
+                invited_by: req.user!.id,
+                invited_at: new Date().toISOString(),
+                invited_from: userCompany.name,
+                created_via: 'fintech_invite',
+                created_by_id: req.user!.id
+              }
+            })
+            .returning();
+
+          console.log('[FinTech Invite] Created company:', {
+            id: newCompany.id,
+            duration: Date.now() - txStartTime
+          });
+
+          // Create user account
+          const hashedPassword = await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10);
+          const [newUser] = await tx.insert(users)
+            .values({
+              email: email.toLowerCase(),
+              full_name: full_name.trim(),
+              password: hashedPassword,
+              company_id: newCompany.id,
+              onboarding_user_completed: false,
+              metadata: {
+                invited_by: req.user!.id,
+                invited_at: new Date().toISOString(),
+                invited_from: userCompany.name
+              }
+            })
+            .returning();
+
+          console.log('[FinTech Invite] Created user:', {
+            id: newUser.id,
+            duration: Date.now() - txStartTime
+          });
+
+          // Create user onboarding task first
+          console.log('[FinTech Invite] Creating user onboarding task');
+          const [onboardingTask] = await tx.insert(tasks)
+            .values({
+              title: `New User Invitation: ${email.toLowerCase()}`,
+              description: 'Complete user registration and onboarding.',
+              task_type: 'user_onboarding',
+              task_scope: 'user',
+              status: TaskStatus.EMAIL_SENT,
+              priority: 'medium',  // Changed from 'high' to 'medium'
+              progress: 25,  // Fixed progress value for EMAIL_SENT status
+              company_id: newCompany.id,
+              user_email: email.toLowerCase(),
+              assigned_to: newUser.id,
+              created_by: req.user!.id,
+              due_date: (() => {
+                const date = new Date();
+                date.setDate(date.getDate() + 30); // 30 days deadline
+                return date;
+              })(),
+              metadata: {
+                user_id: newUser.id,
+                company_id: newCompany.id,
+                created_via: 'fintech_invite',
+                created_by_id: req.user!.id,
+                created_at: new Date().toISOString(),
+                email_sent_at: new Date().toISOString(),
+                statusFlow: [TaskStatus.EMAIL_SENT],
+                userEmail: email.toLowerCase(),
+                companyName: company_name
+              }
+            })
+            .returning();
+
+          console.log('[FinTech Invite] Created onboarding task:', {
+            taskId: onboardingTask.id,
+            status: onboardingTask.status,
+            assignedTo: onboardingTask.assigned_to,
+            duration: Date.now() - txStartTime
+          });
+
+          // Create invitation
+          const invitationCode = crypto.randomBytes(3).toString('hex').toUpperCase();
+          const [invitation] = await tx.insert(invitations)
+            .values({
+              email: email.toLowerCase(),
+              company_id: newCompany.id,
+              code: invitationCode,
+              status: 'pending',
+              invitee_name: full_name.trim(),
+              invitee_company: company_name.trim(),
+              expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+              metadata: {
+                sender_name: req.user!.full_name,
+                sender_company: userCompany.name,
+                invitation_type: 'fintech',
+                onboarding_task_id: onboardingTask.id
+              }
+            })
+            .returning();
+
+          console.log('[FinTech Invite] Created invitation:', {
+            id: invitation.id,
+            code: invitation.code,
+            duration: Date.now() - txStartTime
+          });
+
+          // Create company tasks last, passing the existing transaction to avoid nested transactions
+          console.log('[FinTech Invite] Creating company tasks with existing transaction');
+          const createdCompany = await createCompany({
+            ...newCompany,
+            metadata: {
+              created_by_id: req.user!.id,
+              invited_by: req.user!.id,
+              created_via: 'fintech_invite',
+              created_by_company_id: req.user!.company_id
+            }
+          }, tx); // Pass the existing tx to avoid nested transactions
+
+          console.log('[FinTech Invite] Tasks created successfully:', {
+            companyId: createdCompany.id,
+            tasks: {
+              kyb: createdCompany.kyb_task_id,
+              security: createdCompany.security_task_id,
+              card: createdCompany.card_task_id,
+              onboarding: onboardingTask.id
+            },
+            duration: Date.now() - txStartTime
+          });
+
+          // Broadcast task update
+          broadcastTaskUpdate({
+            id: onboardingTask.id,
+            status: onboardingTask.status,
+            progress: onboardingTask.progress,
+            metadata: onboardingTask.metadata
+          });
+
+          return { newCompany: createdCompany, newUser, invitation, onboardingTask, userCompany };
+        } catch (txError) {
+          console.error('[FinTech Invite] Transaction failed:', {
+            error: txError,
+            duration: Date.now() - txStartTime
+          });
+          throw txError;
         }
       });
 
-      // Send invitation email outside transaction
+      // Send email
+      console.log('[FinTech Invite] Sending invitation email');
       const protocol = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers.host;
       const inviteUrl = `${protocol}://${host}/register?code=${result.invitation.code}&email=${encodeURIComponent(email)}`;
@@ -1154,7 +1248,7 @@ export function registerRoutes(app: Express): Express {
           recipientName: full_name,
           recipientEmail: email.toLowerCase(),
           senderName: sender_name,
-          senderCompany: result.company.name,
+          senderCompany: result.userCompany.name,
           targetCompany: company_name,
           inviteUrl,
           code: result.invitation.code
@@ -1162,29 +1256,483 @@ export function registerRoutes(app: Express): Express {
       });
 
       if (!emailResult.success) {
-        console.error('[FinTech Invite] Failed to send email:', emailResult.error);
-        // If email fails, we don't rollback the transaction, but log it
-        // The user can retry sending the email later
+        console.error('[FinTech Invite] Email sending failed:', emailResult.error);
+      } else {
+        console.log('[FinTech Invite] Invitation email sent successfully');
       }
 
-      return res.status(201).json({
-        message: "Invitation sent successfully",
+      console.log('[FinTech Invite] Process completed:', {
+        companyId: result.newCompany.id,
+        userId: result.newUser.id,
+        invitationId: result.invitation.id,
+        onboardingTaskId: result.onboardingTask.id,
+        duration: Date.now() - startTime
+      });
+
+      res.status(201).json({
+        message: "FinTech company invited successfully",
         company: {
-          id: result.company.id,
-          name: result.company.name
+          id: result.newCompany.id,
+          name: result.newCompany.name
+        },
+        invitation: {
+          id: result.invitation.id,
+          code: result.invitation.code
         }
       });
 
     } catch (error) {
-      console.error('[FinTech Invite] Error processing invitation:', error);
-      return res.status(500).json({
+      console.error('[FinTech Invite] Process failed:', {
+        error,
+        duration: Date.now() - startTime
+      });
+
+      res.status(500).json({
         message: "Failed to process invitation",
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: error instanceof Error ? error.message : "Unknown error",
+        code: "INVITATION_FAILED"
       });
     }
   });
 
-  // Add endpoint for companies to add other companies to their network
+  // Add this endpoint to handle user onboarding completion
+  app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
+    try {
+      console.log('[Complete Onboarding] Processing request for user:', req.user.id);
+
+      // Update user's onboarding status
+      const [updatedUser] = await db.update(users)
+        .set({
+          onboarding_user_completed: true,
+          updated_at: new Date()
+        })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      if (!updatedUser) {
+        console.error('[Complete Onboarding] Failed to update user:', req.user.id);
+        return res.status(500).json({ message: "Failed to update user" });
+      }
+
+      // Try to update the onboarding task status
+      const updatedTask = await updateOnboardingTaskStatus(req.user.id);
+
+      console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
+        userId: updatedUser.id,
+        taskId: updatedTask?.id
+      });
+
+      res.json({
+        message: "Onboarding completed successfully",
+        user: updatedUser,
+        task: updatedTask
+      });
+
+    } catch (error) {
+      console.error("[Complete Onboarding] Error:", error);
+      res.status(500).json({
+        message: "Error completing onboarding",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Add document processing endpoint after the file endpoints
+  app.post("/api/documents/process", requireAuth, logoUpload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fieldsJson = req.body.fields;
+      if (!fieldsJson) {
+        return res.status(400).json({ message: "No fields provided" });
+      }
+
+      const fields = JSON.parse(fieldsJson);
+
+      console.log('[DocumentProcessing] Starting document analysis:', {
+        fileName: req.file.originalname,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        fieldsCount: fields.length,
+        timestamp: new Date().toISOString()
+      });
+
+      let documentText: string;
+
+      // Handle different file types
+      if (req.file.mimetype === 'application/pdf') {
+        try {
+          // Extract text from PDF using pdf.js-extract
+          const data = await pdfExtract.extractBuffer(req.file.buffer);
+          documentText = data.pages.map(page => page.content.map(item => item.str).join(' ')).join('\n');
+
+          console.log('[DocumentProcessing] PDF text extracted:', {
+            fileName: req.file.originalname,
+            textLength: documentText.length,
+            pages: data.pages.length,
+            timestamp: new Date().toISOString()
+          });
+        } catch (pdfError) {
+          console.error('[DocumentProcessing] PDF parsing error:', {
+            fileName: req.file.originalname,
+            error: pdfError instanceof Error ? pdfError.message : String(pdfError)
+          });
+          return res.status(400).json({
+            message: "Failed to parse PDF document",
+            error: pdfError instanceof Error ? pdfError.message : String(pdfError)
+          });
+        }
+      } else if (req.file.mimetype === 'text/plain') {
+        // For text files, read buffer directly as UTF-8 text
+        documentText = req.file.buffer.toString('utf-8');
+        console.log('[DocumentProcessing] Text file content loaded:', {
+          fileName: req.file.originalname,
+          textLength: documentText.length,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        return res.status(400).json({
+          message: "Unsupported file type",
+          supportedTypes: ['application/pdf', 'text/plain']
+        });
+      }
+
+      // Split text into chunks for processing
+      const CHUNK_SIZE = 4000; // Adjust based on OpenAI token limits
+      const chunks = [];
+      for (let i = 0; i < documentText.length; i += CHUNK_SIZE) {
+        chunks.push(documentText.slice(i, i + CHUNK_SIZE));
+      }
+
+      console.log('[DocumentProcessing] Document chunked:', {
+        fileName: req.file.originalname,
+        totalChunks: chunks.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Process each chunk and combine results
+      const allAnswers = [];
+      for (const [index, chunk] of chunks.entries()) {
+        console.log('[DocumentProcessing] Processing chunk:', {
+          fileName: req.file.originalname,
+          chunkIndex: index + 1,
+          totalChunks: chunks.length,
+          timestamp: new Date().toISOString()
+        });
+
+        const result = await analyzeDocument(chunk, fields);
+        if (result.answers && result.answers.length > 0) {
+          allAnswers.push(...result.answers);
+        }
+      }
+
+      // Remove duplicate answers based on field_key
+      const uniqueAnswers = Array.from(
+        new Map(allAnswers.map(answer => [answer.field_key, answer])).values()
+      );
+
+      console.log('[DocumentProcessing] Document analysis complete:', {
+        fileName: req.file.originalname,
+        answersFound: uniqueAnswers.length,
+        timestamp: new Date().toISOString()
+      });
+
+      res.json({
+        answersFound: uniqueAnswers.length,
+        answers: uniqueAnswers
+      });
+
+    } catch (error) {
+      console.error("[DocumentProcessing] Error:", error);
+      res.status(500).json({
+        message: "Error processing document",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  //Add new document processing endpoint using stored files
+  app.post("/api/documents/process", requireAuth, async (req, res) => {
+    try {
+      const { fileIds, fields } = req.body;
+
+      if (!fileIds || !Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({ message: "File IDs are required" });
+      }
+
+      if (!fields || !Array.isArray(fields)) {
+        return res.status(400).json({ message: "Fields are required" });
+      }
+
+      console.log('[DocumentProcessing] Starting batch analysis:', {
+        fileCount: fileIds.length,
+        fieldsCount: fields.length,
+        timestamp: new Date().toISOString()
+      });
+
+      // Get files from database
+      const storedFiles = await db.select()
+        .from(files)
+        .where(
+          and(
+            sql`${files.id} = ANY(${fileIds})`,
+            eq(files.company_id, req.user.company_id)
+          )
+        );
+
+      if (storedFiles.length === 0) {
+        return res.status(404).json({ message: "No valid files found" });
+      }
+
+      console.log('[DocumentProcessing] Retrieved files:', {
+        count: storedFiles.length,
+        files: storedFiles.map(f => ({
+          id: f.id,
+          name: f.name,
+          type: f.type
+        }))
+      });
+
+      const results = [];
+
+      // Process each file
+      for (const file of storedFiles) {
+        const filePath = path.join(process.cwd(), 'uploads', 'documents', file.path);
+
+        try {
+          console.log('[DocumentProcessing] Reading file:', {
+            fileName: file.name,
+            filePath: file.path
+          });
+
+          const fileContent = fs.readFileSync(filePath, 'utf-8');
+
+          // Split content into chunks
+          const CHUNK_SIZE = 4000;
+          const chunks = [];
+          for (let i = 0; i < fileContent.length; i += CHUNK_SIZE) {
+            chunks.push(fileContent.slice(i, i + CHUNK_SIZE));
+          }
+
+          console.log('[DocumentProcessing] Content chunked:', {
+            fileName: file.name,
+            chunks: chunks.length
+          });
+
+          const fileAnswers = [];
+
+          // Process each chunk
+          for (const [index, chunk] of chunks.entries()) {
+            console.log('[DocumentProcessing] Processing chunk:', {
+              fileName: file.name,
+              chunkIndex: index + 1,
+              totalChunks: chunks.length
+            });
+
+            const result = await analyzeDocument(chunk, fields);
+            if (result.answers && result.answers.length > 0) {
+              fileAnswers.push(...result.answers);
+            }
+          }
+
+          // Remove duplicates
+          const uniqueAnswers = Array.from(
+            new Map(fileAnswers.map(answer => [answer.field_key, answer])).values()
+          );
+
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            answers: uniqueAnswers
+          });
+
+          console.log('[DocumentProcessing] File analysis complete:', {
+            fileName: file.name,
+            answersFound: uniqueAnswers.length
+          });
+
+        } catch (fileError) {
+          console.error('[DocumentProcessing] Error processing file:', {
+            fileName: file.name,
+            error: fileError instanceof Error ? fileError.message : String(fileError)
+          });
+
+          // Continue with other files
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            error: fileError instanceof Error ? fileError.message : String(fileError)
+          });
+        }
+      }
+
+      res.json({
+        results
+      });
+
+    } catch (error) {
+      console.error('[DocumentProcessing] Error:', error);
+      res.status(500).json({
+        message: "Error processing documents",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  //Add the new document processing endpoint here.
+  app.post("/api/documents/process", requireAuth, async (req, res) => {
+    try {
+      const { fileIds, fields } = req.body;
+
+      if (!Array.isArray(fileIds) || fileIds.length === 0) {
+        return res.status(400).json({
+          message: "No file IDs provided",
+          code: "INVALID_REQUEST"
+        });
+      }
+
+      console.log('[Document Processing] Starting processing:', {
+        fileIds,
+        fieldCount: fields?.length,
+        timestamp: new Date().toISOString()
+      });
+
+      const results = [];
+
+      // Process one file at a time
+      for (const fileId of fileIds) {
+        // Get file record from database
+        const [file] = await db.select()
+          .from(files)
+          .where(eq(files.id, fileId));
+
+        if (!file) {
+          console.error('[Document Processing] File not found:', fileId);
+          results.push({
+            fileId,
+            fileName: 'Unknown',
+            error: 'File not found'
+          });
+          continue;
+        }
+
+        try {
+          // Get file path
+          const filePath = path.resolve('/home/runner/workspace/uploads', file.path);
+
+          if (!fs.existsSync(filePath)) {
+            throw new Error('File not found on disk');
+          }
+
+          // Extract PDF text
+          const data = await pdfExtract.extract(filePath, {});
+          if (!data.pages || data.pages.length === 0) {
+            throw new Error('No text content found in PDF');
+          }
+
+          // Process in chunks of ~3 pages
+          const chunkSize = 3;
+          const answers = [];
+
+          for (let i = 0; i < data.pages.length; i += chunkSize) {
+            const chunk = data.pages.slice(i, i + chunkSize);
+            const chunkText = chunk.map(page => page.content).join('\n');
+
+            // Analyze chunk with OpenAI
+            const chunkAnswers = await analyzeDocument(chunkText, fields);
+            answers.push(...chunkAnswers);
+
+            // Send progress update via WebSocket
+            broadcastTaskUpdate({
+              type: 'CLASSIFICATION_UPDATE',
+              fileId: file.id.toString(),
+              category: file.category || 'unknown',
+              confidence: 0.95
+            });
+          }
+
+          // Add results
+          results.push({
+            fileId: file.id,
+            fileName: file.name,
+            answers
+          });
+
+        } catch (error) {
+          console.error('[Document Processing] Error processing file:', {
+            fileId,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          });
+
+          results.push({
+            fileId,
+            fileName: file.name,
+            error: error instanceof Error ? error.message : 'Error processing document'
+          });
+        }
+      }
+
+      res.json({ results });
+
+    } catch (error) {
+      console.error('[Document Processing] Error:', error);
+      res.status(500).json({
+        message: "Error processing documents",
+        code: "PROCESSING_ERROR"
+      });
+    }
+  });
+
+  //Add the new invitation validation endpoint here.
+  app.get("/api/invitations/:code/validate", async (req, res) => {
+    try {
+      console.log('[Invite Debug] Starting validation for code:', req.params.code);
+
+      // Get the invitation with case-insensitive code match and valid expiration
+      const [invitation] = await db.select()
+        .from(invitations)
+        .where(and(
+          eq(invitations.code, req.params.code.toUpperCase()),
+          eq(invitations.status, 'pending'),
+          sql`${invitations.expires_at} > NOW()`
+        ));
+
+      if (!invitation) {
+        console.log('[Invite Debug] No valid invitation found for code:', req.params.code);
+        return res.json({
+          valid: false,
+          message: "Invalid or expired invitation code"
+        });
+      }
+
+      console.log('[Invite Debug] Found valid invitation:', {
+        id: invitation.id,
+        email: invitation.email,
+        status: invitation.status,
+        expires_at: invitation.expires_at
+      });
+
+      res.json({
+        valid: true,
+        invitation: {
+          email: invitation.email,
+          invitee_name: invitation.invitee_name,
+          company_name: invitation.invitee_company
+        }
+      });
+
+    } catch (error) {
+      console.error('[Invite Debug] Validation error:', error);
+      res.status(500).json({
+        valid: false,
+        message: "Error validating invitation code"
+      });
+    }
+  });
+
+  //Add new endpoint for companies to add other companies to their network
   app.post("/api/companies/:id/network", requireAuth, async (req, res) => {
     try {
       const targetCompanyId = parseInt(req.params.id);
@@ -1202,7 +1750,7 @@ export function registerRoutes(app: Express): Express {
       const [existingRelationship] = await db.select()
         .from(relationships)
         .where(and(
-          eq(relationships.company_id, req.user!.company_id),
+          eq(relationships.company_id, req.user.company_id),
           eq(relationships.related_company_id, targetCompanyId)
         ));
 
@@ -1213,13 +1761,13 @@ export function registerRoutes(app: Express): Express {
       // Create the relationship
       const [relationship] = await db.insert(relationships)
         .values({
-          company_id: req.user!.company_id,
+          company_id: req.user.company_id,
           related_company_id: targetCompanyId,
           relationship_type: 'network_member',
           status: 'active',
           metadata: {
             added_at: new Date().toISOString(),
-            added_by: req.user!.id
+            added_by: req.user.id
           }
         })
         .returning();
@@ -1259,7 +1807,7 @@ export function registerRoutes(app: Express): Express {
             .values({
               email: inviteData.email,
               full_name: inviteData.full_name,
-              company_id: inviteData.company_id, // Explicitly set company_id from invite data
+              company_id: inviteData.company_id,
               password: await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10),
               onboarding_user_completed: false
             })
@@ -1294,14 +1842,14 @@ export function registerRoutes(app: Express): Express {
               task_type: 'user_onboarding',
               task_scope: 'user',
               status: TaskStatus.EMAIL_SENT,
-              progress: 100, // Set directly to 100 for completed status
+              progress: 100,
               priority: 'high',
               company_id: inviteData.company_id,
               user_email: inviteData.email,
-              created_by: req.user!.id, // Ensure created_by is set
+              created_by: req.user.id,
               metadata: {
                 invitation_id: invitation.id,
-                invited_by: req.user!.id,
+                invited_by: req.user.id,
                 invited_at: new Date().toISOString(),
                 status_flow: [TaskStatus.EMAIL_SENT]
               }
@@ -1351,96 +1899,7 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
-  // Add invitation validation endpoint
-  app.get("/api/invitations/:code/validate", async (req, res) => {
-    try {
-      console.log('[Invite Debug] Starting validation for code:', req.params.code);
-
-      // Get the invitation with case-insensitive code match and valid expiration
-      const [invitation] = await db.select()
-        .from(invitations)
-        .where(and(
-          eq(invitations.code, req.params.code.toUpperCase()),
-          eq(invitations.status, 'pending'),
-          sql`${invitations.expires_at} > NOW()`
-        ));
-
-      if (!invitation) {
-        console.log('[Invite Debug] No valid invitation found for code:', req.params.code);
-        return res.json({
-          valid: false,
-          message: "Invalid or expired invitation code"
-        });
-      }
-
-      console.log('[Invite Debug] Found valid invitation:', {
-        id: invitation.id,
-        email: invitation.email,
-        status: invitation.status,
-        expires_at: invitation.expires_at
-      });
-
-      res.json({
-        valid: true,
-        invitation: {
-          email: invitation.email,
-          invitee_name: invitation.invitee_name,
-          company_name: invitation.invitee_company
-        }
-      });
-
-    } catch (error) {
-      console.error('[Invite Debug] Validation error:', error);
-      res.status(500).json({
-        valid: false,
-        message: "Error validating invitation code"
-      });
-    }
-  });
-
-  // Add this endpoint to handle user onboarding completion
-  app.post("/api/users/complete-onboarding", requireAuth, async (req, res) => {
-    try {
-      console.log('[Complete Onboarding] Processing request for user:', req.user!.id);
-
-      // Update user's onboarding status
-      const [updatedUser] = await db.update(users)
-        .set({
-          onboarding_user_completed: true,
-          updated_at: new Date()
-        })
-        .where(eq(users.id, req.user!.id))
-        .returning();
-
-      if (!updatedUser) {
-        console.error('[Complete Onboarding] Failed to update user:', req.user!.id);
-        return res.status(500).json({ message: "Failed to update user" });
-      }
-
-      // Try to update the onboarding task status
-      const updatedTask = await updateOnboardingTaskStatus(req.user!.id);
-
-      console.log('[Complete Onboarding] Successfully completed onboarding for user:', {
-        userId: updatedUser.id,
-        taskId: updatedTask?.id
-      });
-
-      res.json({
-        message: "Onboarding completed successfully",
-        user: updatedUser,
-        task: updatedTask
-      });
-
-    } catch (error) {
-      console.error("[Complete Onboarding] Error:", error);
-      res.status(500).json({
-        message: "Error completing onboarding",
-        error: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Utility functions
+  //Utility functions
   function generateInviteCode(): string {
     return crypto.randomBytes(3).toString('hex').toUpperCase();
   }
@@ -1480,7 +1939,524 @@ export function registerRoutes(app: Express): Express {
     }
   }
 
-  console.log('[Routes] Routes setup completed');
+  // Network visualization endpoint
+  app.get("/api/relationships/network", requireAuth, async (req, res) => {
+    try {
+      console.log('[Network] Fetching network visualization data for company:', req.user.company_id);
+
+      // Get the current company details
+      const [currentCompany] = await db.select({
+        id: companies.id,
+        name: companies.name,
+        risk_score: companies.risk_score,
+        accreditation_status: companies.accreditation_status,
+        revenue_tier: companies.revenue_tier,
+        category: companies.category
+      })
+      .from(companies)
+      .where(eq(companies.id, req.user.company_id));
+
+      if (!currentCompany) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      // Create a simpler query structure to avoid null/undefined issues
+      // First, get basic relationship info
+      const relationshipsData = await db.select({
+        id: relationships.id,
+        companyId: relationships.company_id,
+        relatedCompanyId: relationships.related_company_id,
+        relationshipType: relationships.relationship_type,
+        relationshipStatus: relationships.status,
+        metadata: relationships.metadata,
+      })
+      .from(relationships)
+      .where(
+        or(
+          eq(relationships.company_id, req.user.company_id),
+          eq(relationships.related_company_id, req.user.company_id)
+        )
+      );
+
+      console.log('[Network] Found relationships:', relationshipsData.length);
+      
+      // Process relationships to determine which company IDs we need to fetch
+      const relatedCompanyIds = new Set<number>();
+      relationshipsData.forEach(rel => {
+        // If this company is the current company, we need the related company
+        if (rel.companyId === req.user.company_id) {
+          relatedCompanyIds.add(rel.relatedCompanyId);
+        } else {
+          // Otherwise, we need this company
+          relatedCompanyIds.add(rel.companyId);
+        }
+      });
+      
+      // Now fetch all the needed companies in one query
+      // Convert the Set to a string for SQL IN operation
+      const companyIdsArray = [...relatedCompanyIds, req.user.company_id];
+      const companyIds = companyIdsArray.join(',');
+      
+      const allCompaniesData = await db.select({
+        id: companies.id,
+        name: companies.name,
+        riskScore: companies.risk_score,
+        accreditationStatus: companies.accreditation_status,
+        revenueTier: companies.revenue_tier,
+        category: companies.category
+      })
+      .from(companies)
+      .where(sql`${companies.id} IN (${companyIds})`);
+      
+      console.log('[Network] Found companies:', allCompaniesData.length);
+      
+      // Create a lookup for companies
+      const companiesMap = new Map();
+      allCompaniesData.forEach(company => {
+        companiesMap.set(company.id, company);
+      });
+      
+      // Now construct the network data by joining the information
+      const networkData = relationshipsData.map(rel => {
+        // Determine which is the related company
+        const targetCompanyId = rel.companyId === req.user.company_id 
+          ? rel.relatedCompanyId
+          : rel.companyId;
+        
+        const company = companiesMap.get(targetCompanyId);
+        
+        return {
+          relationshipId: rel.id,
+          relationshipType: rel.relationshipType || 'Unknown',
+          relationshipStatus: rel.relationshipStatus || 'Unknown',
+          relationshipMetadata: rel.metadata || {},
+          companyId: targetCompanyId,
+          companyName: company?.name || 'Unknown Company',
+          riskScore: company?.riskScore || 0,
+          accreditationStatus: company?.accreditationStatus || 'Unknown',
+          revenueTier: company?.revenueTier || 'Unknown',
+          category: company?.category || 'Unknown'
+        };
+      });
+
+      // Map risk scores to risk buckets (0-1500 scale)
+      const getRiskBucket = (score: number) => {
+        if (score <= 500) return 'low';
+        if (score <= 900) return 'medium';  // Changed from 700 to 900
+        if (score <= 1200) return 'high';   // Changed from 1000 to 1200
+        return 'critical';
+      };
+
+      // Add debug logging
+      console.log('[Network] Current company:', currentCompany);
+      console.log('[Network] Sample network node:', networkData.length > 0 ? networkData[0] : 'No network data');
+      
+      // Ensure values are not null/undefined with defaults
+      const safeRiskScore = currentCompany.risk_score || 0;
+      
+      // Transform the data into visualization-friendly format
+      const result = {
+        center: {
+          id: currentCompany.id,
+          name: currentCompany.name || 'Unknown',
+          riskScore: safeRiskScore,
+          riskBucket: getRiskBucket(safeRiskScore),
+          accreditationStatus: currentCompany.accreditation_status || 'Unknown',
+          revenueTier: currentCompany.revenue_tier || 'Unknown',
+          category: currentCompany.category || 'Unknown'
+        },
+        nodes: networkData.map(relation => {
+          // Ensure all values have defaults if null/undefined
+          const nodeRiskScore = relation.riskScore || 0;
+          return {
+            id: relation.companyId,
+            name: relation.companyName || 'Unknown Company',
+            relationshipId: relation.relationshipId,
+            relationshipType: relation.relationshipType || 'Unknown',
+            relationshipStatus: relation.relationshipStatus || 'Unknown',
+            riskScore: nodeRiskScore,
+            riskBucket: getRiskBucket(nodeRiskScore),
+            accreditationStatus: relation.accreditationStatus || 'Unknown',
+            revenueTier: relation.revenueTier || 'Unknown',
+            category: relation.category || 'Unknown'
+          };
+        })
+      };
+
+      console.log('[Network] Found network data:', {
+        centerNode: result.center.name,
+        nodesCount: result.nodes.length
+      });
+
+      res.json(result);
+    } catch (error) {
+      console.error("[Network] Error fetching network data:", error);
+      
+      // Detailed error logging for debugging
+      if (error instanceof Error) {
+        console.error("[Network] Error name:", error.name);
+        console.error("[Network] Error message:", error.message);
+        console.error("[Network] Error stack:", error.stack);
+      }
+      
+      // Check for specific error types and provide better error messages
+      let errorMessage = "Error fetching network visualization data";
+      if (error instanceof TypeError && error.message.includes("Cannot convert undefined or null to object")) {
+        errorMessage = "Data structure error: Null value where object expected";
+      }
+      
+      res.status(500).json({ 
+        message: errorMessage,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Company type distribution endpoint
+  app.get("/api/company-type-distribution", requireAuth, async (req, res) => {
+    try {
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Get the current company ID
+      const currentCompanyId = req.user.company_id;
+      
+      // Execute a query that counts companies by category, but only including companies
+      // that have a relationship with the current company
+      console.log('[CompanyTypes] Fetching company type distribution for company:', currentCompanyId);
+      
+      const result = await db.execute(
+        sql`
+          SELECT c.category, COUNT(*) as count 
+          FROM companies c
+          WHERE c.id IN (
+            SELECT r.related_company_id 
+            FROM relationships r 
+            WHERE r.company_id = ${currentCompanyId}
+            UNION
+            SELECT r.company_id 
+            FROM relationships r 
+            WHERE r.related_company_id = ${currentCompanyId}
+          )
+          GROUP BY c.category
+        `
+      );
+      
+      console.log('[CompanyTypes] Results:', result.rows);
+      
+      // Transform into the format needed by the chart
+      const formattedData = result.rows.map((row: any) => ({
+        type: row.category || 'Unknown',
+        count: parseInt(row.count, 10),
+        color: row.category === 'Invela' ? '#4965EC' : 
+               row.category === 'Bank' ? '#081E59' : 
+               row.category === 'FinTech' ? '#C2C4EA' : '#CCCCCC'
+      }));
+      
+      // Sort data to have the specific order: Invela, Bank, FinTech, then others
+      const sortOrder = { 'Invela': 1, 'Bank': 2, 'FinTech': 3 };
+      
+      const sortedData = formattedData.sort((a, b) => {
+        const orderA = sortOrder[a.type] || 999;
+        const orderB = sortOrder[b.type] || 999;
+        return orderA - orderB;
+      });
+      
+      console.log('[CompanyTypes] Formatted and sorted data:', sortedData);
+      
+      res.json(sortedData);
+    } catch (error) {
+      console.error("[CompanyTypes] Error fetching company type distribution:", error);
+      res.status(500).json({ 
+        message: "Error fetching company type distribution data",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+  
+  // Accreditation status distribution endpoint
+  app.get("/api/accreditation-status-distribution", requireAuth, async (req, res) => {
+    try {
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      // Get the current company ID
+      const currentCompanyId = req.user.company_id;
+      
+      console.log('[AccreditationStatus] Fetching accreditation status distribution for company:', currentCompanyId);
+      
+      // Query the companies along with their accreditation status
+      // Only include companies that have a relationship with the current company
+      const companiesResult = await db.execute(
+        sql`
+          SELECT c.id, c.name, c.category, c.accreditation_status 
+          FROM companies c 
+          WHERE c.id != ${currentCompanyId}
+          AND c.id IN (
+            SELECT r.related_company_id 
+            FROM relationships r 
+            WHERE r.company_id = ${currentCompanyId}
+            UNION
+            SELECT r.company_id 
+            FROM relationships r 
+            WHERE r.related_company_id = ${currentCompanyId}
+          )
+          ORDER BY c.name
+        `
+      );
+      
+      // Define status types and colors
+      const statusMap: Record<string, { color: string; label: string }> = {
+        'APPROVED': { color: '#209C5A', label: 'Approved' }, // Green
+        'PENDING': { color: '#FFC300', label: 'Pending' },   // Yellow
+        'AWAITING_INVITATION': { color: '#9CA3AF', label: 'Awaiting Invitation' }, // Pale Gray
+        'REVOKED': { color: '#EF4444', label: 'Revoked' }    // Red
+      };
+      
+      // Transform the data for the dot matrix visualization
+      const companies = companiesResult.rows.map((row: any) => {
+        // Default to AWAITING_INVITATION if status is null or not recognized
+        const status = row.accreditation_status || 'AWAITING_INVITATION';
+        const statusInfo = statusMap[status] || statusMap['AWAITING_INVITATION'];
+        
+        return {
+          id: row.id,
+          name: row.name,
+          category: row.category || 'Unknown',
+          status: status,
+          color: statusInfo.color,
+          label: statusInfo.label
+        };
+      });
+      
+      // Count companies by status
+      const statusCounts = Object.keys(statusMap).reduce((acc, status) => {
+        acc[status] = companies.filter(c => c.status === status).length;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      // Format the response
+      const response = {
+        companies,
+        statusCounts,
+        statusMap: Object.entries(statusMap).map(([key, value]) => ({
+          id: key,
+          ...value,
+          count: statusCounts[key] || 0
+        }))
+      };
+      
+      console.log('[AccreditationStatus] Results summary:', {
+        totalCompanies: companies.length,
+        statusCounts
+      });
+      
+      res.json(response);
+    } catch (error) {
+      console.error("[AccreditationStatus] Error fetching accreditation status distribution:", error);
+      res.status(500).json({ 
+        message: "Error fetching accreditation status data",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Risk Flow Visualization (Sankey Diagram) endpoint
+  app.get("/api/risk-flow-visualization", requireAuth, async (req, res) => {
+    try {
+      // Ensure user is authenticated
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      
+      const currentCompanyId = req.user.company_id;
+      
+      console.log('[RiskFlow] Fetching risk flow visualization data for company:', currentCompanyId);
+      
+      // Get all companies in the network (current company and related companies)
+      const companiesResult = await db.execute(
+        sql`
+          SELECT 
+            c.id, 
+            c.name, 
+            c.category, 
+            c.accreditation_status, 
+            c.risk_score
+          FROM companies c 
+          WHERE c.id IN (
+            SELECT r.related_company_id 
+            FROM relationships r 
+            WHERE r.company_id = ${currentCompanyId}
+            UNION
+            SELECT r.company_id 
+            FROM relationships r 
+            WHERE r.related_company_id = ${currentCompanyId}
+            UNION
+            SELECT ${currentCompanyId}
+          )
+          ORDER BY c.name
+        `
+      );
+      
+      // Determine risk bucket for each company
+      const getRiskBucket = (score: number): RiskBucket => {
+        if (score < 300) return 'low';
+        if (score < 700) return 'medium';
+        if (score < 1000) return 'high';
+        return 'critical';
+      };
+      
+      // Define colors for each category
+      const colorMap = {
+        companyType: {
+          'Invela': '#4965EC', // Invela Blue
+          'Bank': '#0C195B',   // Dark Blue
+          'FinTech': '#C2C4EA', // Light Purple
+          'Other': '#CCCCCC'  // Gray
+        },
+        accreditationStatus: {
+          'APPROVED': '#209C5A',     // Green
+          'PENDING': '#FFC300',      // Amber
+          'AWAITING_INVITATION': '#8A8D9F', // Gray
+          'REVOKED': '#E15554'       // Red
+        },
+        riskBucket: {
+          'low': '#82C091',     // Light Green
+          'medium': '#F9CB9C',  // Light Orange
+          'high': '#F28C77',    // Orange-Red
+          'critical': '#DB4325' // Deep Red
+        }
+      };
+      
+      // Process and categorize the companies
+      const companyTypes = new Map<string, number>();
+      const accreditationStatuses = new Map<string, number>();
+      const riskBuckets = new Map<string, number>();
+      
+      // Maps to track relationships between categories
+      const typeToStatus = new Map<string, Map<string, number>>();
+      const statusToRisk = new Map<string, Map<string, number>>();
+      
+      // Process each company
+      companiesResult.rows.forEach((company: any) => {
+        const type = company.category || 'Other';
+        const status = company.accreditation_status || 'AWAITING_INVITATION';
+        const riskScore = company.risk_score || 0;
+        const riskBucket = getRiskBucket(riskScore);
+        
+        // Count by company type
+        companyTypes.set(type, (companyTypes.get(type) || 0) + 1);
+        
+        // Count by accreditation status
+        accreditationStatuses.set(status, (accreditationStatuses.get(status) || 0) + 1);
+        
+        // Count by risk bucket
+        riskBuckets.set(riskBucket, (riskBuckets.get(riskBucket) || 0) + 1);
+        
+        // Track company type to accreditation status flow
+        if (!typeToStatus.has(type)) {
+          typeToStatus.set(type, new Map<string, number>());
+        }
+        const statusMap = typeToStatus.get(type)!;
+        statusMap.set(status, (statusMap.get(status) || 0) + 1);
+        
+        // Track accreditation status to risk bucket flow
+        if (!statusToRisk.has(status)) {
+          statusToRisk.set(status, new Map<string, number>());
+        }
+        const riskMap = statusToRisk.get(status)!;
+        riskMap.set(riskBucket, (riskMap.get(riskBucket) || 0) + 1);
+      });
+      
+      // Create Sankey nodes and links
+      const nodes: SankeyNode[] = [];
+      const links: SankeyLink[] = [];
+      
+      // Add company type nodes
+      Array.from(companyTypes.entries()).forEach(([type, count]) => {
+        nodes.push({
+          id: `type-${type}`,
+          name: type,
+          category: 'companyType',
+          count,
+          color: colorMap.companyType[type as keyof typeof colorMap.companyType] || colorMap.companyType.Other
+        });
+      });
+      
+      // Add accreditation status nodes
+      Array.from(accreditationStatuses.entries()).forEach(([status, count]) => {
+        nodes.push({
+          id: `status-${status}`,
+          name: status.replace(/_/g, ' ').replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()),
+          category: 'accreditationStatus',
+          count,
+          color: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION
+        });
+      });
+      
+      // Add risk bucket nodes
+      Array.from(riskBuckets.entries()).forEach(([bucket, count]) => {
+        nodes.push({
+          id: `risk-${bucket}`,
+          name: bucket.charAt(0).toUpperCase() + bucket.slice(1) + ' Risk',
+          category: 'riskBucket',
+          count,
+          color: colorMap.riskBucket[bucket as keyof typeof colorMap.riskBucket]
+        });
+      });
+      
+      // Add links from company types to accreditation statuses
+      typeToStatus.forEach((statusMap, type) => {
+        statusMap.forEach((value, status) => {
+          links.push({
+            source: `type-${type}`,
+            target: `status-${status}`,
+            value,
+            sourceColor: colorMap.companyType[type as keyof typeof colorMap.companyType] || colorMap.companyType.Other,
+            targetColor: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION
+          });
+        });
+      });
+      
+      // Add links from accreditation statuses to risk buckets
+      statusToRisk.forEach((riskMap, status) => {
+        riskMap.forEach((value, riskBucket) => {
+          links.push({
+            source: `status-${status}`,
+            target: `risk-${riskBucket}`,
+            value,
+            sourceColor: colorMap.accreditationStatus[status as keyof typeof colorMap.accreditationStatus] || colorMap.accreditationStatus.AWAITING_INVITATION,
+            targetColor: colorMap.riskBucket[riskBucket as keyof typeof colorMap.riskBucket]
+          });
+        });
+      });
+      
+      // Prepare the final response
+      const sankeyData: SankeyData = {
+        nodes,
+        links
+      };
+      
+      console.log('[RiskFlow] Generated Sankey data with:', {
+        nodeCount: nodes.length,
+        linkCount: links.length
+      });
+      
+      res.json(sankeyData);
+    } catch (error) {
+      console.error("[RiskFlow] Error generating risk flow visualization:", error);
+      res.status(500).json({ 
+        message: "Error generating risk flow visualization",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  console.log('[Routes] Routes setup completed');  
   return app;
 }
 

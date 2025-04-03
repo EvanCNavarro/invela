@@ -34,13 +34,8 @@ const getAcceptFromFormats = (formats?: string) => {
     '.pdf': ['application/pdf'],
     '.rtf': ['application/rtf'],
     '.txt': ['text/plain'],
-    '.wpd': ['application/vnd.ms-works'],
-    '.wpf': ['application/wordperfect'],
     '.jpg': ['image/jpeg'],
-    '.jpeg': ['image/jpeg'],
     '.png': ['image/png'],
-    '.gif': ['image/gif'],
-    '.webp': ['image/webp'],
     '.svg': ['image/svg+xml']
   };
 
@@ -67,7 +62,7 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
   onFilesAccepted,
   acceptedFormats,
   maxFiles = 10,
-  maxSize = 5 * 1024 * 1024,
+  maxSize = 50 * 1024 * 1024,
   variant = 'box',
   className,
   disabled = false,
@@ -144,19 +139,8 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
       .map(type => type.trim().toUpperCase())
       .join(', ');
 
-    const typeArray = types.split(', ');
-    const groups = [];
-    for (let i = 0; i < typeArray.length; i += 6) {
-      groups.push(typeArray.slice(i, i + 6).join(', '));
-    }
-    return groups.join(',\n');
+    return types;
   };
-
-  const acceptedFormatsText = (
-    <p className="text-xs text-muted-foreground max-w-[280px] w-full whitespace-pre-line">
-      Accepted formats: {formatFileTypes()}
-    </p>
-  );
 
   const acceptedFormatsTooltip = (
     <TooltipProvider>
@@ -195,7 +179,11 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
                   <p className="text-sm font-medium">
                     {isDragActive ? "Drop files here" : "Drag and drop files here, or click to select"}
                   </p>
-                  {showAcceptedFormats && acceptedFormatsText}
+                  {showAcceptedFormats && (
+                    <p className="text-xs text-muted-foreground max-w-[280px] w-full px-4">
+                      Accepted formats: {formatFileTypes()}
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -226,9 +214,9 @@ export const FileUploadZone = forwardRef<HTMLDivElement, FileUploadZoneProps>(({
 FileUploadZone.displayName = 'FileUploadZone';
 
 const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};

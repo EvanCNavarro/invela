@@ -8,24 +8,35 @@ import {
   jsonb,
   real,
   uuid,
-  pgEnum
+  pgEnum,
+  varchar
 } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const TaskStatus = {
+  PENDING: 'pending',
+  NOT_STARTED: 'not_started',
   EMAIL_SENT: 'email_sent',
   COMPLETED: 'completed',
-  NOT_STARTED: 'not_started',
+  FAILED: 'failed',
   IN_PROGRESS: 'in_progress',
-  READY_FOR_REVIEW: 'ready_for_review',
   READY_FOR_SUBMISSION: 'ready_for_submission',
   SUBMITTED: 'submitted',
-  APPROVED: 'approved',
+  APPROVED: 'approved'
 } as const;
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
+
+
+export const DocumentCategory = {
+  SOC2_AUDIT: 'soc2_audit',
+  ISO27001_CERT: 'iso27001_cert',
+  PENTEST_REPORT: 'pentest_report',
+  BUSINESS_CONTINUITY: 'business_continuity',
+  OTHER: 'other'
+} as const;
 
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -33,7 +44,7 @@ export const tasks = pgTable("tasks", {
   description: text("description"),
   task_type: text("task_type").notNull(), 
   task_scope: text("task_scope").notNull(), 
-  status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.EMAIL_SENT),
+  status: text("status").$type<TaskStatus>().notNull().default(TaskStatus.PENDING),
   priority: text("priority").notNull().default('medium'),
   progress: real("progress").notNull().default(0),
   assigned_to: integer("assigned_to").references(() => users.id), 
@@ -123,11 +134,15 @@ export const files = pgTable("files", {
   status: text("status").notNull(),
   user_id: integer("user_id").references(() => users.id).notNull(),
   company_id: integer("company_id").references(() => companies.id).notNull(),
-  upload_time: timestamp("upload_time").notNull().defaultNow(),
-  created_at: timestamp("created_at").defaultNow(),
-  updated_at: timestamp("updated_at").defaultNow(),
-  download_count: integer("download_count").default(0),
+  document_category: text("document_category").$type<keyof typeof DocumentCategory>(),
+  classification_status: text("classification_status"),
+  classification_confidence: real("classification_confidence"),
+  created_at: timestamp("created_at"),
+  updated_at: timestamp("updated_at"),
+  upload_time: timestamp("upload_time"),
+  download_count: integer("download_count"),
   version: real("version").notNull().default(1.0),
+  metadata: jsonb("metadata").$type<Record<string, any>>().default({})
 });
 
 export const invitations = pgTable("invitations", {
@@ -223,12 +238,51 @@ export const cardResponses = pgTable("card_responses", {
   field_id: integer("field_id").references(() => cardFields.id).notNull(),
   response_value: text("response_value"),
   ai_suspicion_level: real("ai_suspicion_level").notNull().default(0),
-  ai_reasoning: text("ai_reasoning"),  // Add new column
+  ai_reasoning: text("ai_reasoning"),  
   partial_risk_score: integer("partial_risk_score").notNull().default(0),
   status: text("status").$type<keyof typeof KYBFieldStatus>().notNull().default("empty"),
   version: integer("version").notNull().default(1),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
+});
+
+export const documentAnswers = pgTable("document_answers", {
+  id: serial("id").primaryKey(),
+  file_id: integer("file_id").references(() => files.id).notNull(),
+  response_id: integer("response_id").references(() => cardResponses.id).notNull(),
+  confidence_score: real("confidence_score").notNull().default(0),
+  extracted_text: text("extracted_text").notNull(),
+  page_number: integer("page_number"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
+});
+
+// Define the Security survey tables 
+export const securityFields = pgTable("security_fields", {
+  id: serial("id").primaryKey(),
+  section: varchar("section", { length: 255 }).notNull(),
+  field_key: varchar("field_key", { length: 255 }).notNull().unique(),
+  label: text("label").notNull(),
+  description: text("description"),
+  field_type: varchar("field_type", { length: 50 }).notNull(),
+  is_required: boolean("is_required").notNull().default(false),
+  options: jsonb("options"),
+  validation_rules: jsonb("validation_rules"),
+  metadata: jsonb("metadata"),
+  status: varchar("status", { length: 50 }).notNull().default("ACTIVE"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at"),
+});
+
+export const securityResponses = pgTable("security_responses", {
+  id: serial("id").primaryKey(),
+  company_id: integer("company_id").references(() => companies.id).notNull(),
+  field_id: integer("field_id").references(() => securityFields.id).notNull(),
+  response: text("response"),
+  metadata: jsonb("metadata"),
+  status: varchar("status", { length: 50 }).notNull().default("pending"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at"),
 });
 
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -312,6 +366,45 @@ export const cardResponsesRelations = relations(cardResponses, ({ one }) => ({
   })
 }));
 
+export const securityFieldsRelations = relations(securityFields, ({ many }) => ({
+  responses: many(securityResponses)
+}));
+
+export const securityResponsesRelations = relations(securityResponses, ({ one }) => ({
+  field: one(securityFields, {
+    fields: [securityResponses.field_id],
+    references: [securityFields.id]
+  }),
+  company: one(companies, {
+    fields: [securityResponses.company_id],
+    references: [companies.id]
+  })
+}));
+
+export const filesRelations = relations(files, ({ one, many }) => ({
+  user: one(users, {
+    fields: [files.user_id],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [files.company_id],
+    references: [companies.id],
+  }),
+  documentAnswers: many(documentAnswers),
+}));
+
+export const documentAnswersRelations = relations(documentAnswers, ({ one }) => ({
+  file: one(files, {
+    fields: [documentAnswers.file_id],
+    references: [files.id],
+  }),
+  response: one(cardResponses, {
+    fields: [documentAnswers.response_id],
+    references: [cardResponses.id],
+  }),
+}));
+
+
 export const registrationSchema = z.object({
   email: z.string().email(),
   full_name: z.string().min(1),
@@ -327,7 +420,7 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertCompanySchema = createInsertSchema(companies);
 export const selectCompanySchema = createSelectSchema(companies);
 export const insertTaskSchema = z.object({
-  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "company_card", "compliance_and_risk"]),
+  task_type: z.enum(["user_onboarding", "file_request", "company_onboarding_KYB", "security_assessment", "company_card", "compliance_and_risk"]),
   task_scope: z.enum(["user", "company"]).optional(),
   title: z.string(),
   description: z.string(),
@@ -338,11 +431,12 @@ export const insertTaskSchema = z.object({
   priority: z.enum(["low", "medium", "high"]).optional().default("medium"),
   files_requested: z.array(z.string()).optional(),
   status: z.enum([
+    TaskStatus.PENDING,
+    TaskStatus.NOT_STARTED,
     TaskStatus.EMAIL_SENT,
     TaskStatus.COMPLETED,
-    TaskStatus.NOT_STARTED,
+    TaskStatus.FAILED,
     TaskStatus.IN_PROGRESS,
-    TaskStatus.READY_FOR_REVIEW,
     TaskStatus.READY_FOR_SUBMISSION,
     TaskStatus.SUBMITTED,
     TaskStatus.APPROVED,
@@ -387,25 +481,34 @@ export const insertTaskSchema = z.object({
         path: ["company_id"],
       });
     }
-  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
+  } else if (data.task_type === "company_onboarding_KYB" || data.task_type === "security_assessment" || data.task_type === "company_card" || data.task_type === "compliance_and_risk") {
     if (!data.company_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: data.task_type === "company_onboarding_KYB" 
           ? "Company is required for KYB tasks"
+          : data.task_type === "security_assessment"
+          ? "Company is required for Security Assessment tasks"
           : data.task_type === "company_card"
           ? "Company is required for CARD tasks"
-          : "Company is required for CARD tasks",
+          : "Company is required for compliance tasks",
         path: ["company_id"],
       });
     }
     if (data.task_type === "company_card") {
       data.priority = "high";
-      // If no due date is provided, set it to 2 weeks from now
       if (!data.due_date) {
         const twoWeeksFromNow = new Date();
         twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
         data.due_date = twoWeeksFromNow;
+      }
+    }
+    if (data.task_type === "security_assessment") {
+      data.priority = "medium";
+      if (!data.due_date) {
+        const threeWeeksFromNow = new Date();
+        threeWeeksFromNow.setDate(threeWeeksFromNow.getDate() + 21);
+        data.due_date = threeWeeksFromNow;
       }
     }
     data.task_scope = "company";
@@ -445,3 +548,18 @@ export const insertCardFieldSchema = createInsertSchema(cardFields);
 export const selectCardFieldSchema = createSelectSchema(cardFields);
 export const insertCardResponseSchema = createInsertSchema(cardResponses);
 export const selectCardResponseSchema = createSelectSchema(cardResponses);
+
+export const insertDocumentAnswerSchema = createInsertSchema(documentAnswers);
+export const selectDocumentAnswerSchema = createSelectSchema(documentAnswers);
+
+export const insertSecurityFieldSchema = createInsertSchema(securityFields);
+export const selectSecurityFieldSchema = createSelectSchema(securityFields);
+export const insertSecurityResponseSchema = createInsertSchema(securityResponses);
+export const selectSecurityResponseSchema = createSelectSchema(securityResponses);
+
+export type InsertDocumentAnswer = typeof documentAnswers.$inferInsert;
+export type SelectDocumentAnswer = typeof documentAnswers.$inferSelect;
+export type InsertSecurityField = typeof securityFields.$inferInsert;
+export type SelectSecurityField = typeof securityFields.$inferSelect;
+export type InsertSecurityResponse = typeof securityResponses.$inferInsert;
+export type SelectSecurityResponse = typeof securityResponses.$inferSelect;

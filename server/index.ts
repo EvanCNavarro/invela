@@ -5,6 +5,20 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { setupWebSocket } from "./services/websocket";
 import cors from "cors";
+import fs from 'fs';
+import path from 'path';
+
+// Create required directories
+const uploadsDir = path.join(process.cwd(), 'uploads');
+const documentsDir = path.join(uploadsDir, 'documents');
+
+// Ensure upload directories exist
+[uploadsDir, documentsDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+    console.log(`Created directory: ${dir}`);
+  }
+});
 
 // Custom error class for API errors
 export class APIError extends Error {
@@ -24,7 +38,7 @@ const server = createServer(app);
 
 // Configure CORS for all environments
 app.use(cors({
-  origin: true, // This allows requests from any origin
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -33,6 +47,9 @@ app.use(cors({
 // Configure body parsing middleware first
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Serve static files from the public directory
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Set up authentication before routes
 setupAuth(app);
@@ -98,7 +115,7 @@ setupWebSocket(server);
 // Set up development environment
 if (process.env.NODE_ENV !== "production") {
   log("Setting up Vite development server", "info");
-  await setupVite(app, server);
+  setupVite(app, server);
 } else {
   // Serve static files only in production, after API routes
   serveStatic(app);
@@ -141,7 +158,7 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   res.status(status).json(errorResponse);
 });
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => {
+const PORT = Number(process.env.PORT) || 5000;
+server.listen(PORT, () => {
   log(`Server running on port ${PORT}`);
 });

@@ -97,13 +97,9 @@ const useRegisterMutation = () => {
     onSuccess: (user: User) => {
       queryClient.setQueryData(["/api/user"], user);
       setLocation("/");
-
-      toast({
-        title: "Account setup completed",
-        description: "Welcome to Invela! Your account has been set up successfully.",
-        variant: "default",
-        className: "border-l-4 border-green-500",
-      });
+      
+      // Registration success toast removed to improve user experience
+      // The start modal will be enough to welcome the user
     },
     onError: (error: Error) => {
       toast({

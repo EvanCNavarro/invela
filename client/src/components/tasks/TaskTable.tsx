@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLocation } from "wouter";
 import classNames from "classnames";
 import { TaskModal } from "./TaskModal";
+import { highlightSearchMatch } from "@/components/ui/search-bar";
 import {
   Tooltip,
   TooltipContent,
@@ -32,6 +33,7 @@ interface Task {
   files_requested: string[] | null;
   files_uploaded: string[] | null;
   metadata: Record<string, any> | null;
+  searchMatches?: any[]; // For storing search match data
 }
 
 const taskStatusMap = {
@@ -51,35 +53,40 @@ const getStatusVariant = (status: string): "default" | "secondary" | "destructiv
       return "secondary";
     case 'COMPLETED':
     case 'APPROVED':
+    case 'SUBMITTED':  // Added SUBMITTED to use the same style as COMPLETED
       return "default";
     case 'IN_PROGRESS':
     case 'READY_FOR_SUBMISSION':
-    case 'SUBMITTED':
       return "outline";
     default:
       return "default";
   }
 };
 
-export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks: Task[], companyOnboardingCompleted?: boolean }) {
+export function TaskTable({ tasks, companyOnboardingCompleted }: { 
+  tasks: Task[],
+  companyOnboardingCompleted?: boolean 
+}) {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [, navigate] = useLocation();
-
-  // Log when tasks are rendered to help with debugging
-  useEffect(() => {
-    console.log('[TaskTable] Rendering tasks:', { 
-      count: tasks?.length || 0,
-      timestamp: new Date().toISOString() 
-    });
-  }, [tasks]);
 
   // Find KYB task completion status for the company
   const isKybCompleted = (companyId: number | null): boolean => {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'company_kyb' && 
+      task.task_type === 'company_onboarding_KYB' && 
+      ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
+    );
+  };
+
+  // Find Security Assessment task completion status for the company
+  const isSecurityCompleted = (companyId: number | null): boolean => {
+    if (!companyId) return false;
+    return tasks.some(task => 
+      task.company_id === companyId && 
+      task.task_type === 'security_assessment' && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -94,44 +101,82 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
       timestamp: new Date().toISOString()
     });
 
-    // Check if CARD task is locked
-    if (task.task_type === 'company_card' && !isKybCompleted(task.company_id)) {
-      console.log('[TaskTable] CARD task locked - KYB not completed');
+    // Check if Security Assessment task is locked (needs KYB to be completed)
+    if (task.task_type === 'security_assessment' && !isKybCompleted(task.company_id)) {
+      console.log('[TaskTable] Security Assessment task locked - KYB not completed');
       return; // Prevent navigation
     }
 
-    // Navigate to form pages for KYB and CARD tasks if not in submitted status
-    if ((task.task_type === 'company_kyb' || task.task_type === 'company_card') && task.status !== 'submitted') {
-      // Get company name from metadata or task title
-      const companyName = task.metadata?.company_name || 
-                      task.title.replace(/Company (KYB|CARD): /, '');
+    // Check if CARD task is locked (needs both KYB and Security Assessment to be completed)
+    if (task.task_type === 'company_card' && 
+        (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) {
+      console.log('[TaskTable] CARD task locked - prerequisite tasks not completed');
+      return; // Prevent navigation
+    }
 
-      // Build the URL based on task type
-      const taskTypePrefix = task.task_type === 'company_kyb' ? 'kyb' : 'card';
-      const formUrl = `/task-center/task/${taskTypePrefix}-${companyName}`;
+    // Navigate to form pages for KYB, Security and CARD tasks if not in submitted status
+    if ((task.task_type === 'company_kyb' || 
+         task.task_type === 'company_onboarding_KYB' || 
+         task.task_type === 'company_card' ||
+         task.task_type === 'security_assessment') && 
+        task.status !== 'submitted') {
+      
+      // Get task ID for direct navigation
+      const taskId = task.id;
+      
+      // Get task type for form type determination
+      let formType;
+      if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+        formType = 'kyb';
+      } else if (task.task_type === 'company_card') {
+        formType = 'card';
+      } else if (task.task_type === 'security_assessment') {
+        formType = 'security';
+      }
+      
+      // Get company name from task title or metadata
+      let companyName = '';
+      if (task.metadata?.companyName) {
+        companyName = task.metadata.companyName;
+      } else if (task.metadata?.company?.name) {
+        companyName = task.metadata.company.name;
+      } else {
+        // Try to extract from title as fallback
+        const match = task.title.match(/(\d+\.\s*)?(?:Company\s*)?(?:KYB|CARD|Open Banking \(1033\) Survey|Security Assessment)(?:\s*Form)?(?:\s*Assessment)?:\s*(.*)/i);
+        if (match && match[2]) {
+          companyName = match[2].trim();
+        }
+      }
+      
+      // Build task URL with both ID and semantic path structure
+      let formUrl = `/task-center/task/${taskId}`;
+      
+      // If the task is ready for submission, append the review parameter
+      // Only direct to review page if status is READY_FOR_SUBMISSION
+      if (task.status.toUpperCase() === 'READY_FOR_SUBMISSION') {
+        formUrl += '?review=true';
+      }
+      
+      console.log('[TaskTable] Generated task URL:', { 
+        taskId, 
+        companyName, 
+        formUrl,
+        timestamp: new Date().toISOString()
+      });
 
-      console.log('[TaskTable] Navigation preparation:', {
+      console.log('[TaskTable] Direct task navigation preparation:', {
+        taskId,
         taskType: task.task_type,
-        originalTitle: task.title,
-        extractedCompanyName: companyName,
-        taskTypePrefix,
+        formType,
+        title: task.title,
         constructedUrl: formUrl,
-        metadata: task.metadata,
-        statusBeforeNavigation: task.status,
+        status: task.status,
+        isReadyForSubmission: task.status.toUpperCase() === 'READY_FOR_SUBMISSION',
         timestamp: new Date().toISOString()
       });
 
-      // Additional validation logging
-      console.log('[TaskTable] Task validation:', {
-        hasMetadata: !!task.metadata,
-        hasCompanyName: !!task.metadata?.company_name,
-        titleMatchResult: task.title.match(/Company (KYB|CARD): (.*)/),
-        formattedCompanyName: companyName,
-        timestamp: new Date().toISOString()
-      });
-
-      // Navigate to form page
-      console.log('[TaskTable] Initiating navigation to:', formUrl);
+      // Navigate to task page
+      console.log('[TaskTable] Initiating direct ID-based navigation to:', formUrl);
       navigate(formUrl);
     } else {
       console.log('[TaskTable] Opening modal for task:', {
@@ -161,6 +206,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>ID</TableHead>
               <TableHead>Task</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Progress</TableHead>
@@ -170,8 +216,16 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
           </TableHeader>
           <TableBody>
             {tasks.map((task) => {
+              // Determine if the task is locked based on its type and prerequisites
               const isCardTask = task.task_type === 'company_card';
-              const isLocked = isCardTask && !isKybCompleted(task.company_id);
+              const isSecurityTask = task.task_type === 'security_assessment';
+              
+              // Check locked status based on task type and prerequisites
+              const isLocked = 
+                (isSecurityTask && !isKybCompleted(task.company_id)) || 
+                (isCardTask && (!isKybCompleted(task.company_id) || !isSecurityCompleted(task.company_id))) ||
+                // Also consider the locked flag in metadata if it exists
+                (task.metadata?.locked === true);
 
               return (
                 <TooltipProvider key={task.id}>
@@ -180,21 +234,33 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
                       <TableRow 
                         className={classNames(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
-                          task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          task.task_type === 'company_onboarding_KYB' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
                           isLocked && "opacity-50 cursor-not-allowed"
                         )}
                         onClick={() => !isLocked && handleTaskClick(task)}
                       >
+                        <TableCell className="font-mono text-xs">
+                          {task.id}
+                        </TableCell>
                         <TableCell className="font-medium">
-                          <div className="flex items-center space-x-2">
-                            <span>{task.title}</span>
-                            {task.task_type === 'company_kyb' && (
-                              <Badge variant="outline" className="ml-2">KYB</Badge>
+                          <span className="flex items-center space-x-2">
+                            {task.searchMatches ? (
+                              <span 
+                                dangerouslySetInnerHTML={{ 
+                                  __html: highlightSearchMatch(
+                                    task.title, 
+                                    task.searchMatches.filter(match => match.key === 'title')
+                                  ) 
+                                }} 
+                              />
+                            ) : (
+                              <span>{task.title}</span>
                             )}
                             {isLocked && (
                               <Lock className="h-4 w-4 ml-2 text-muted-foreground" />
                             )}
-                          </div>
+                          </span>
                         </TableCell>
                         <TableCell>
                           <Badge variant={getStatusVariant(task.status)}>
@@ -202,14 +268,16 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="w-full bg-secondary h-2 rounded-full">
-                            <div
-                              className="bg-primary h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${task.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-muted-foreground mt-1">
-                            {task.progress}%
+                          <span className="w-full block">
+                            <span className="block w-full bg-secondary h-2 rounded-full">
+                              <span
+                                className="block bg-primary h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${task.progress}%` }}
+                              />
+                            </span>
+                            <span className="block text-xs text-muted-foreground mt-1">
+                              {task.progress}%
+                            </span>
                           </span>
                         </TableCell>
                         <TableCell>
@@ -246,7 +314,15 @@ export function TaskTable({ tasks, companyOnboardingCompleted = false }: { tasks
                     </TooltipTrigger>
                     {isLocked && (
                       <TooltipContent>
-                        <p>Complete the KYB form to unlock CARD tasks</p>
+                        {isSecurityTask && (
+                          <p>Complete the KYB form to unlock this Security Assessment task</p>
+                        )}
+                        {isCardTask && (
+                          <p>Complete both KYB and Security Assessment tasks to unlock this CARD task</p>
+                        )}
+                        {!isCardTask && !isSecurityTask && task.metadata?.locked && (
+                          <p>This task is locked due to dependencies</p>
+                        )}
                       </TooltipContent>
                     )}
                   </Tooltip>

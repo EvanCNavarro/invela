@@ -30,8 +30,14 @@ export function FileUpload({ onDrop, className }: FileUploadProps) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     accept: ACCEPTED_FILE_TYPES,
-    role: "button",
-    ariaLabelledby: "upload-area-label"
+    maxSize: 50 * 1024 * 1024, // 50MB
+    maxFiles: 1,
+    validator: (file) => {
+      if (file.size > 50 * 1024 * 1024) {
+        return { code: 'file-too-large', message: 'File size exceeds 50MB limit' };
+      }
+      return null;
+    }
   });
 
   return (
@@ -53,13 +59,15 @@ export function FileUpload({ onDrop, className }: FileUploadProps) {
         <UploadIcon className="w-6 h-6 text-primary" />
       </div>
       <p 
-        id="upload-area-label"
         className="text-muted-foreground mb-2 text-base"
       >
         {isDragActive ? "Drop your files here" : "Drag and drop files here, or click to select files"}
       </p>
       <p className="text-sm text-muted-foreground/80">
         Accepted formats: CSV, DOC, DOCX, ODT, PDF, RTF, TXT, WPD, WPF, JPG, PNG, GIF, WEBP, SVG
+      </p>
+      <p className="text-sm text-muted-foreground/80 mt-1">
+        Maximum file size: 50MB
       </p>
     </div>
   );

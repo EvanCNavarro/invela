@@ -60,7 +60,7 @@ export const FormField: FC<FormFieldProps> = ({
       case 'ai-suggestion':
         return 'border-purple-200';
       default:
-        return 'border-gray-200';
+        return 'border-gray-200 bg-white';
     }
   };
 

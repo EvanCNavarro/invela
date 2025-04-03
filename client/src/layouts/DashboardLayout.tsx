@@ -4,11 +4,10 @@ import { TopNav } from "@/components/dashboard/TopNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { Lock } from "lucide-react";
-import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
-import { api } from "@/lib/api"; // Assuming api.ts exports an api object
 
 interface Company {
   id: number;
@@ -26,7 +25,6 @@ interface Task {
   task_type: string;
 }
 
-
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { isExpanded, toggleExpanded } = useSidebarStore();
   const [location, navigate] = useLocation();
@@ -34,16 +32,14 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [, taskCenterParams] = useRoute('/task-center*');
 
   // Add refetchInterval to automatically check for updates
-  const { data: tasks = [], isError: isTasksError } = useQuery({
-    queryKey: ["tasks"], //Simplified key
-    queryFn: api.getTasks, // Use api.getTasks
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
     refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   // Add refetchInterval to automatically check for company updates
-  const { data: currentCompany, isLoading: isLoadingCompany, isError: isCompanyError } = useQuery({
-    queryKey: ["currentCompany"], //Simplified key
-    queryFn: api.getCurrentCompany, //Use api.getCurrentCompany
+  const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
+    queryKey: ["/api/companies/current"],
     refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
   });
 
@@ -59,26 +55,20 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   });
 
-  // Get current tab based on route
   const getCurrentTab = () => {
-    console.log('[DashboardLayout] Getting current tab from path:', location);
-    if (location === '/task-center' || location.startsWith('/task-center/')) return 'task-center';
-    if (location === '/file-vault' || location.startsWith('/file-vault/')) return 'file-vault';
-    // Add other routes as needed
-    return 'dashboard';
+    const path = location.split('/')[1] || 'dashboard';
+    return path === '' ? 'dashboard' : path;
   };
 
   const isRouteAccessible = () => {
-    if (isLoadingCompany || !currentCompany || isCompanyError) return true; // Wait for company data
+    if (isLoadingCompany || !currentCompany) return true; // Wait for company data
     const availableTabs = currentCompany.available_tabs || ['task-center'];
     const currentTab = getCurrentTab();
 
     console.log('[DashboardLayout] Checking route access:', {
       currentTab,
-      path: location,
       availableTabs,
-      isLoadingCompany,
-      isCompanyError
+      isLoadingCompany
     });
 
     return currentTab === 'task-center' || availableTabs.includes(currentTab);
@@ -86,7 +76,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Skip navigation if company data is not yet loaded
-    if (isLoadingCompany || !currentCompany || isCompanyError) {
+    if (isLoadingCompany || !currentCompany) {
       console.log('[DashboardLayout] Waiting for company data...');
       return;
     }
@@ -96,7 +86,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       console.log('[DashboardLayout] Route not accessible, redirecting to task-center');
       navigate('/task-center');
     }
-  }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany, isCompanyError]);
+  }, [location, currentCompany?.available_tabs, navigate, isLoadingCompany]);
 
   if (!isRouteAccessible() && getCurrentTab() !== 'task-center') {
     return (
@@ -159,18 +149,3 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
-//This needs to be in your main.tsx file or a similar entry point.
-const queryClient = new QueryClient();
-
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <DashboardLayout>
-      {/*Your app content*/}
-      </DashboardLayout>
-    </QueryClientProvider>
-  );
-}
-
-export default App;

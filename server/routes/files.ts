@@ -1,45 +1,258 @@
+import { Router } from 'express';
 import { db } from "@db";
 import { files } from "@db/schema";
-import { eq } from "drizzle-orm";
-import { Router } from 'express';
+import { eq, sql } from "drizzle-orm";
 import path from 'path';
 import fs from 'fs';
+import { documentUpload } from '../middleware/upload';
 import multer from 'multer';
+import { createDocumentChunks, processChunk } from '../services/documentChunking';
+import { broadcastDocumentCountUpdate } from '../services/websocket';
+import { aggregateAnswers } from '../services/answerAggregation';
 
+// Create router instance first
 const router = Router();
-const uploadDir = path.join(process.cwd(), 'uploads');
 
 // Ensure upload directory exists
+const uploadDir = path.join(process.cwd(), 'uploads', 'documents');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(2)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
-  }
-});
+// Process chunks in background
+async function processDocument(
+  fileId: number,
+  chunks: any[],
+  fields: any[],
+  metadata: any
+) {
+  let allAnswers: any[] = [];
+  let aggregatedAnswers: any[] = [];
 
-const upload = multer({ 
-  storage,
-  limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB limit
-  }
-});
+  try {
+    console.log('[Document Processing] Starting document processing:', {
+      fileId,
+      totalChunks: chunks.length,
+      timestamp: new Date().toISOString()
+    });
 
-// File upload endpoint
-router.post('/api/files', upload.single('file'), async (req, res) => {
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      console.log('[Document Processing] Processing chunk:', {
+        fileId,
+        chunkIndex: i,
+        totalChunks: chunks.length,
+        timestamp: new Date().toISOString()
+      });
+
+      try {
+        const result = await processChunk(chunk, fields);
+
+        if (result.answers?.length) {
+          // Add new answers to collection
+          allAnswers.push(...result.answers);
+
+          // Update progress in database
+          const updatedMetadata = {
+            status: 'processing',
+            fields,
+            chunks: {
+              total: chunks.length,
+              processed: i + 1
+            },
+            answers: allAnswers,
+            aggregatedAnswers,
+            answersFound: aggregatedAnswers.length,
+            timestamps: {
+              started: metadata.timestamps.started,
+              lastUpdate: new Date().toISOString()
+            }
+          };
+
+          await db.update(files)
+            .set({
+              metadata: updatedMetadata
+            })
+            .where(eq(files.id, fileId));
+
+          console.log('[Document Processing] Progress update:', {
+            fileId,
+            chunkIndex: i,
+            answersFound: allAnswers.length,
+            timestamp: new Date().toISOString()
+          });
+
+          // Every 5 chunks or on last chunk, aggregate answers
+          if (i % 5 === 4 || i === chunks.length - 1) {
+            aggregatedAnswers = await aggregateAnswers(allAnswers);
+
+            const batchMetadata = {
+              ...updatedMetadata,
+              aggregatedAnswers,
+              answersFound: aggregatedAnswers.length
+            };
+
+            await db.update(files)
+              .set({
+                metadata: batchMetadata
+              })
+              .where(eq(files.id, fileId));
+
+            console.log('[Document Processing] Batch aggregation:', {
+              fileId,
+              chunkIndex: i,
+              aggregatedAnswers: aggregatedAnswers.length,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+
+        // Short delay between chunks
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (chunkError) {
+        console.error('[Document Processing] Individual chunk processing error:', {
+          fileId,
+          chunkIndex: i,
+          error: chunkError instanceof Error ? chunkError.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        // Continue processing other chunks even if one fails
+        continue;
+      }
+    }
+
+    // Final aggregation and status update
+    const finalAnswers = await aggregateAnswers(allAnswers);
+    const finalMetadata = {
+      status: 'completed',
+      fields,
+      chunks: {
+        total: chunks.length,
+        processed: chunks.length
+      },
+      answers: allAnswers,
+      aggregatedAnswers: finalAnswers,
+      answersFound: finalAnswers.length,
+      timestamps: {
+        started: metadata.timestamps.started,
+        completed: new Date().toISOString(),
+        lastUpdate: new Date().toISOString()
+      }
+    };
+
+    await db.update(files)
+      .set({
+        status: 'processed',
+        metadata: finalMetadata
+      })
+      .where(eq(files.id, fileId));
+
+    console.log('[Document Processing] Processing completed:', {
+      fileId,
+      totalAnswers: allAnswers.length,
+      aggregatedAnswers: finalAnswers.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('[Document Processing] Processing error:', {
+      fileId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+
+    // Update file status to error
+    try {
+      await db.update(files)
+        .set({
+          status: 'error',
+          metadata: {
+            ...metadata,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamps: {
+              ...metadata.timestamps,
+              error: new Date().toISOString()
+            }
+          }
+        })
+        .where(eq(files.id, fileId));
+    } catch (updateError) {
+      console.error('[Document Processing] Failed to update error status:', {
+        fileId,
+        error: updateError instanceof Error ? updateError.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    }
+    throw error;
+  }
+}
+
+// Document category enum
+enum DocumentCategory {
+  SOC2_AUDIT = 'soc2_audit',
+  ISO27001_CERT = 'iso27001_cert',
+  PENTEST_REPORT = 'pentest_report',
+  BUSINESS_CONTINUITY = 'business_continuity',
+  OTHER = 'other'
+}
+
+function detectDocumentCategory(filename: string): DocumentCategory {
+  const lowerFilename = filename.toLowerCase();
+  let category: DocumentCategory;
+
+  // Improved detection patterns with comprehensive checks
+  if (lowerFilename.includes('soc2') || lowerFilename.includes('soc 2') ||
+      lowerFilename.includes('soc-2')) {
+    category = DocumentCategory.SOC2_AUDIT;
+  } else if (lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001') ||
+            lowerFilename.includes('iso-27001')) {
+    category = DocumentCategory.ISO27001_CERT;
+  } else if (lowerFilename.includes('pentest') || lowerFilename.includes('pen test') ||
+            lowerFilename.includes('pen-test') ||
+            lowerFilename.includes('penetration test') ||
+            lowerFilename.includes('security test') ||
+            lowerFilename.includes('penetration-test') ||
+            lowerFilename.includes('penetration_test')) {
+    category = DocumentCategory.PENTEST_REPORT;
+  } else if (lowerFilename.includes('spg-business-continuity-plan') ||
+            lowerFilename.includes('business continuity') ||
+            lowerFilename.includes('continuity plan') ||
+            lowerFilename.includes('business-continuity') ||
+            lowerFilename.includes('disaster recovery') ||
+            lowerFilename.includes('business_continuity') ||
+            lowerFilename.includes('bcp') ||
+            (lowerFilename.includes('business') && lowerFilename.includes('continuity'))) {
+    category = DocumentCategory.BUSINESS_CONTINUITY;
+  } else {
+    category = DocumentCategory.OTHER;
+  }
+
+  console.log('[Files] Document category detection:', {
+    filename: filename,
+    lowerFilename: lowerFilename,
+    detectedCategory: category,
+    timestamp: new Date().toISOString(),
+    matches: {
+      isSoc2: lowerFilename.includes('soc2') || lowerFilename.includes('soc 2'),
+      isIso27001: lowerFilename.includes('iso27001') || lowerFilename.includes('iso 27001'),
+      isPentest: lowerFilename.includes('pentest') || lowerFilename.includes('pen test'),
+      isBusinessContinuity: lowerFilename.includes('business continuity') || lowerFilename.includes('continuity plan'),
+      exactMatch: lowerFilename
+    }
+  });
+
+  return category;
+}
+
+// Route handlers
+router.post('/api/files', documentUpload.single('file'), async (req, res) => {
   try {
     console.log('[Files] Processing file upload request');
 
     if (!req.file) {
       console.log('[Files] No file received in request');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'No file uploaded',
         detail: 'Request must include a file'
       });
@@ -54,13 +267,17 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
 
     if (!req.user?.id || !req.user?.company_id) {
       console.log('[Files] Authentication required');
-      return res.status(401).json({ 
+      return res.status(401).json({
         error: 'Authentication required',
         detail: 'User must be logged in to upload files'
       });
     }
 
-    // Create file record in database
+    // Detect document category
+    const documentCategory = detectDocumentCategory(req.file.originalname);
+    console.log('[Files] Detected category:', documentCategory);
+
+    // Create file record in database with initial metadata
     const [fileRecord] = await db.insert(files)
       .values({
         name: req.file.originalname,
@@ -70,22 +287,42 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
         user_id: req.user.id,
         company_id: req.user.company_id,
         status: 'uploaded',
+        document_category: documentCategory,
+        created_at: new Date(),
+        updated_at: new Date(),
+        upload_time: new Date(),
         download_count: 0,
-        version: 1
+        version: 1,
+        metadata: {
+          answers: [],
+          aggregatedAnswers: [],
+          chunks_processed: 0,
+          chunks_total: 0,
+          processing_fields: []
+        }
       })
       .returning();
 
     console.log('[Files] Created file record:', {
       id: fileRecord.id,
       name: fileRecord.name,
-      size: fileRecord.size
+      status: fileRecord.status,
+      category: documentCategory
+    });
+
+    // Broadcast document count update
+    broadcastDocumentCountUpdate({
+      type: 'COUNT_UPDATE',
+      category: documentCategory,
+      count: 1,
+      companyId: req.user.company_id.toString()
     });
 
     res.status(201).json(fileRecord);
   } catch (error) {
     console.error('[Files] Error processing upload:', error);
 
-    // Clean up uploaded file if database operation fails
+    // Clean up uploaded file if operation fails
     if (req.file) {
       const filePath = path.join(uploadDir, req.file.filename);
       if (fs.existsSync(filePath)) {
@@ -93,10 +330,178 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
       }
     }
 
-    res.status(500).json({ 
+    // Enhanced error handling
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          error: 'File too large',
+          detail: 'Maximum file size is 50MB'
+        });
+      }
+    }
+
+    res.status(500).json({
       error: 'Upload failed',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
+  }
+});
+
+// Update the process endpoint to use the new processing function
+router.post("/api/documents/:id/process", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+    const { fields } = req.body;
+
+    // Validate fields structure
+    if (!fields?.length) {
+      console.log('[Document Processing] No fields provided');
+      return res.status(400).json({ 
+        error: "No fields provided for processing"
+      });
+    }
+
+    // Validate field structure
+    const invalidFields = fields.filter(field => 
+      !field.field_key || 
+      !field.question ||
+      typeof field.field_key !== 'string' ||
+      typeof field.question !== 'string'
+    );
+
+    if (invalidFields.length > 0) {
+      console.log('[Document Processing] Invalid field structure:', {
+        invalidFields,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(400).json({
+        error: "Invalid field structure",
+        detail: "Each field must have a field_key and question"
+      });
+    }
+
+    console.log('[Document Processing] Processing request:', {
+      fileId,
+      fieldKeys: fields.map(f => f.field_key),
+      timestamp: new Date().toISOString()
+    });
+
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const filePath = path.join(uploadDir, fileRecord.path);
+    const chunks = await createDocumentChunks(filePath, fileRecord.type);
+
+    // Initialize metadata with field information
+    const initialMetadata = {
+      status: 'processing',
+      fields: fields.map(f => ({
+        field_key: f.field_key,
+        question: f.question
+      })),
+      chunks: {
+        total: chunks.length,
+        processed: 0
+      },
+      answers: [],
+      aggregatedAnswers: [],
+      answersFound: 0,
+      timestamps: {
+        started: new Date().toISOString(),
+        lastUpdate: new Date().toISOString()
+      }
+    };
+
+    await db.update(files)
+      .set({
+        status: 'processing',
+        metadata: initialMetadata
+      })
+      .where(eq(files.id, fileId));
+
+    // Send initial response
+    res.json({
+      status: 'processing',
+      totalChunks: chunks.length,
+      fields: fields.map(f => f.field_key)
+    });
+
+    // Start background processing
+    processDocument(fileId, chunks, fields, initialMetadata).catch(error => {
+      console.error('[Document Processing] Background processing error:', {
+        fileId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString()
+      });
+    });
+
+  } catch (error) {
+    console.error('[Document Processing] Process initiation error:', error);
+    res.status(500).json({ error: "Failed to start processing" });
+  }
+});
+
+// Progress check endpoint
+router.get("/api/documents/:id/progress", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const currentMetadata = fileRecord.metadata || {};
+    const chunksTotal = currentMetadata.chunks?.total || 1;
+    const chunksProcessed = currentMetadata.chunks?.processed || 0;
+    const answersFound = currentMetadata.answersFound || 0;
+
+    res.json({
+      status: fileRecord.status,
+      progress: {
+        chunksProcessed,
+        totalChunks: chunksTotal
+      },
+      answersFound
+    });
+  } catch (error) {
+    console.error('[Document Processing] Progress check error:', error);
+    res.status(500).json({ error: "Failed to check progress" });
+  }
+});
+
+// Results endpoint
+router.get("/api/documents/:id/results", async (req, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
+
+    if (!fileRecord) {
+      return res.status(404).json({ error: "File not found" });
+    }
+
+    const metadata = fileRecord.metadata || {};
+    const aggregatedAnswers = metadata.aggregatedAnswers || [];
+
+    res.json({
+      status: fileRecord.status,
+      answers: aggregatedAnswers,
+      answersFound: aggregatedAnswers.length
+    });
+
+  } catch (error) {
+    console.error('[Document Processing] Results fetch error:', error);
+    res.status(500).json({ error: "Failed to get results" });
   }
 });
 
@@ -104,11 +509,6 @@ router.post('/api/files', upload.single('file'), async (req, res) => {
 router.get('/api/files', async (req, res) => {
   try {
     console.log('[Files] Starting file fetch request');
-    console.log('[Files] Authentication state:', {
-      isAuthenticated: req.isAuthenticated(),
-      hasUser: !!req.user,
-      sessionID: req.sessionID
-    });
 
     const companyId = req.query.company_id;
     const userId = req.user?.id;
@@ -117,13 +517,12 @@ router.get('/api/files', async (req, res) => {
       companyId,
       userId,
       query: req.query,
-      user: req.user,
-      headers: req.headers
+      user: req.user
     });
 
     if (!companyId) {
       console.log('[Files] Missing company_id parameter');
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Company ID is required',
         detail: 'The company_id query parameter must be provided'
       });
@@ -131,7 +530,7 @@ router.get('/api/files', async (req, res) => {
 
     if (typeof companyId !== 'string' && typeof companyId !== 'number') {
       console.log('[Files] Invalid company_id type:', typeof companyId);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid company ID format',
         detail: `Expected string or number, got ${typeof companyId}`
       });
@@ -140,7 +539,7 @@ router.get('/api/files', async (req, res) => {
     const parsedCompanyId = parseInt(companyId.toString(), 10);
     if (isNaN(parsedCompanyId)) {
       console.log('[Files] Failed to parse company_id:', companyId);
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Invalid company ID format',
         detail: 'Company ID must be a valid number'
       });
@@ -152,27 +551,55 @@ router.get('/api/files', async (req, res) => {
         requestedCompanyId: parsedCompanyId,
         userCompanyId: req.user?.company_id
       });
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: 'Access denied',
         detail: 'User does not have access to this company\'s files'
       });
     }
 
     console.log('[Files] Executing database query for company:', parsedCompanyId);
+
+    // Get pagination parameters with defaults
+    const page = parseInt(req.query.page?.toString() || '1', 10) || 1;
+    const pageSize = parseInt(req.query.pageSize?.toString() || '10', 10) || 10;
+    const offset = (page - 1) * pageSize;
+    
+    // Get total count first (optimized query)
+    const countResult = await db.select({ count: sql`count(*)` })
+      .from(files)
+      .where(eq(files.company_id, parsedCompanyId));
+    
+    const totalFiles = Number(countResult[0]?.count || 0);
+    
+    // Query files for the company with pagination
     const fileRecords = await db.query.files.findMany({
-      where: eq(files.company_id, parsedCompanyId)
+      where: eq(files.company_id, parsedCompanyId),
+      orderBy: (files, { desc }) => [desc(files.created_at)],
+      limit: pageSize,
+      offset: offset
     });
 
     console.log('[Files] Query results:', {
       recordCount: fileRecords.length,
+      totalFiles,
+      page,
+      pageSize,
       firstRecord: fileRecords[0],
       lastRecord: fileRecords[fileRecords.length - 1]
     });
 
-    res.json(fileRecords);
+    res.json({
+      data: fileRecords,
+      pagination: {
+        page,
+        pageSize,
+        totalItems: totalFiles,
+        totalPages: Math.ceil(totalFiles / pageSize)
+      }
+    });
   } catch (error) {
     console.error('[Files] Error in file fetch endpoint:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Internal server error',
       detail: error instanceof Error ? error.message : 'Unknown error occurred'
     });
@@ -185,40 +612,65 @@ router.get("/api/files/:id/download", async (req, res) => {
     const fileId = parseInt(req.params.id);
     console.log('[Files] Download request for file:', fileId);
 
-    const [fileRecord] = await db.select()
-      .from(files)
-      .where(eq(files.id, fileId));
+    const fileRecord = await db.query.files.findFirst({
+      where: eq(files.id, fileId)
+    });
 
     if (!fileRecord) {
       console.log('[Files] File not found:', fileId);
       return res.status(404).json({ error: "File not found" });
     }
 
-    const filePath = path.join(uploadDir, fileRecord.path);
-    console.log('[Files] Physical file path:', filePath);
-
-    if (!fs.existsSync(filePath)) {
-      console.error('[Files] File missing from disk:', filePath);
-      return res.status(404).json({ error: "File not found on disk" });
-    }
+    console.log('[Files] File found:', {
+      id: fileRecord.id,
+      name: fileRecord.name,
+      type: fileRecord.type,
+      size: fileRecord.size
+    });
 
     // Update download count
     await db.update(files)
       .set({ download_count: (fileRecord.download_count || 0) + 1 })
       .where(eq(files.id, fileId));
 
-    res.download(filePath, fileRecord.name, (err) => {
-      if (err) {
-        console.error("[Files] Error downloading file:", {
-          error: err,
-          fileId,
-          filePath
-        });
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Error downloading file" });
-        }
+    // Check if this is a KYB form CSV file (stored directly in the database)
+    const isKybForm = fileRecord.name.startsWith('kyb_') && fileRecord.type === 'text/csv';
+    
+    if (isKybForm) {
+      console.log('[Files] Serving KYB form directly from database');
+      // KYB forms have their content stored directly in the path field
+      const fileContent = fileRecord.path;
+      
+      // Set appropriate headers
+      res.setHeader('Content-Type', fileRecord.type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename=${fileRecord.name}`);
+      
+      // Send the file content directly
+      return res.send(fileContent);
+    } else {
+      // Regular files are stored on disk
+      const filePath = path.join(uploadDir, fileRecord.path);
+      console.log('[Files] Physical file path:', filePath);
+
+      if (!fs.existsSync(filePath)) {
+        console.error('[Files] File missing from disk:', filePath);
+        return res.status(404).json({ error: "File not found on disk" });
       }
-    });
+
+      // Use res.download for regular files
+      res.download(filePath, fileRecord.name, (err) => {
+        if (err) {
+          console.error("[Files] Error downloading file:", {
+            error: err,
+            fileId,
+            filePath
+          });
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Error downloading file" });
+          }
+        }
+      });
+    }
   } catch (error) {
     console.error("[Files] Error in download endpoint:", error);
     if (!res.headersSent) {

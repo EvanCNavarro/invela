@@ -200,7 +200,11 @@ export function Sidebar({
                 icon={item.icon}
                 label={item.label}
                 href={item.href}
-                isActive={location === item.href}
+                isActive={
+                  item.href === "/task-center" 
+                    ? location === item.href || location.startsWith("/task-center/") 
+                    : location === item.href
+                }
                 isExpanded={isExpanded}
                 isDisabled={item.locked}
                 notificationCount={item.count}

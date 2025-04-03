@@ -11,6 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   Tooltip,
@@ -18,9 +19,19 @@ import {
   TooltipTrigger,
   TooltipProvider
 } from "@/components/ui/tooltip";
-import { CheckCircle2, Info, Download } from "lucide-react";
+import { 
+  CheckCircle2, 
+  Info, 
+  Download, 
+  CheckCircle, 
+  ArrowRight, 
+  FileText,
+  Trophy,
+  Shield,
+  LayoutDashboard,
+  LineChart
+} from "lucide-react";
 import confetti from 'canvas-confetti';
-import { Trophy } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface CardFormPlaygroundProps {
@@ -66,9 +77,13 @@ export function CardFormPlayground({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [currentSection, setCurrentSection] = useState<string>("");
-  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
-  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    riskScore: number;
+    assessmentFile: string;
+  } | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [loadingFields, setLoadingFields] = useState<Record<number, boolean>>({});
   const [fieldAnalysis, setFieldAnalysis] = useState<Record<number, {
     suspicionLevel: number;
@@ -76,12 +91,9 @@ export function CardFormPlayground({
     reasoning: string;
   }>>({});
   const [openTooltip, setOpenTooltip] = useState<number | null>(null);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [successData, setSuccessData] = useState<{
-    riskScore: number;
-    assessmentFile: string;
-  } | null>(null);
   const [, navigate] = useLocation();
+  const [formResponses, setFormResponses] = useState<Record<string, string>>({});
+  const [previousResponses, setPreviousResponses] = useState<Record<string, string>>({});
 
   const { data: taskData } = useQuery({
     queryKey: ['/api/tasks/card', companyName],
@@ -231,13 +243,13 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      const fieldMap = new Map(cardFields.map(f => [f.id, f.field_key]));
+      const fieldMap = new Map(cardFields.map((f: CardField) => [f.id, f.field_key]));
       const responses: Record<string, string> = {};
 
-      existingResponses.forEach(response => {
+      existingResponses.forEach((response: CardResponse) => {
         const fieldKey = fieldMap.get(response.field_id);
         if (fieldKey && response.response_value) {
-          responses[fieldKey] = response.response_value;
+          responses[fieldKey as keyof typeof responses] = response.response_value;
         }
       });
 
@@ -246,19 +258,14 @@ export function CardFormPlayground({
     }
   }, [existingResponses, cardFields]);
 
-  const sections = cardFields.reduce((acc, field) => {
+
+  const sections = cardFields.reduce((acc: Record<string, CardField[]>, field: CardField) => {
     if (!acc[field.wizard_section]) {
       acc[field.wizard_section] = [];
     }
     acc[field.wizard_section].push(field);
     return acc;
   }, {} as Record<string, CardField[]>);
-
-  useEffect(() => {
-    if (!currentSection && Object.keys(sections).length > 0) {
-      setCurrentSection(Object.keys(sections)[0]);
-    }
-  }, [sections]);
 
   const handleResponseChange = async (field: CardField, value: string) => {
     console.log('[CardFormPlayground] Field value changing:', {
@@ -270,7 +277,6 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    // Create a new object with the updated value for this specific field
     const updatedResponses = {
       ...formResponses,
       [field.field_key]: value
@@ -284,10 +290,8 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    // Update state with the new responses object
     setFormResponses(updatedResponses);
 
-    // If the field is emptied, update the database immediately
     if (!value.trim()) {
       console.log('[CardFormPlayground] Empty field detected - saving empty response:', {
         fieldId: field.id,
@@ -312,19 +316,16 @@ export function CardFormPlayground({
   };
 
   const validateResponse = (value: string, previousValue?: string): boolean => {
-    // Skip if response is empty
     if (!value) {
       console.log('[CardFormPlayground] Validation failed: empty value');
       return false;
     }
 
-    // Skip if response hasn't changed from previous value
     if (previousValue && value.trim() === previousValue.trim()) {
       console.log('[CardFormPlayground] Validation failed: unchanged value');
       return false;
     }
 
-    // Minimum length check
     if (value.trim().length < 2) {
       console.log('[CardFormPlayground] Validation failed: too short');
       return false;
@@ -361,7 +362,6 @@ export function CardFormPlayground({
       return;
     }
 
-    // Update previous responses for future comparison
     setPreviousResponses(prev => {
       const updated = {
         ...prev,
@@ -386,7 +386,6 @@ export function CardFormPlayground({
     setLoadingFields(prev => ({ ...prev, [field.id]: true }));
 
     try {
-      // Step 1: Save the response first
       console.log('[CardFormPlayground] Step 1: Saving response');
       const saveResult = await saveResponse.mutateAsync({
         fieldId: field.id,
@@ -400,7 +399,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Step 2: Trigger OpenAI analysis
       console.log('[CardFormPlayground] Step 2: Starting OpenAI analysis');
       const analysis = await analyzeResponse.mutateAsync({
         fieldId: field.id,
@@ -415,7 +413,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Step 3: Update UI with analysis results
       setFieldAnalysis(prev => ({
         ...prev,
         [field.id]: {
@@ -458,12 +455,43 @@ export function CardFormPlayground({
         headers: { 'Content-Type': 'application/json' }
       });
 
+      console.log('[CardFormPlayground] Response received:', {
+        status: response.status,
+        ok: response.ok,
+        contentType: response.headers.get('Content-Type'),
+        timestamp: new Date().toISOString()
+      });
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit assessment');
+        const errorText = await response.text();
+        console.error('[CardFormPlayground] Response error:', {
+          status: response.status,
+          errorText,
+          timestamp: new Date().toISOString()
+        });
+        throw new Error(errorText || 'Failed to submit assessment');
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        const text = await response.text();
+        console.log('[CardFormPlayground] Response text:', {
+          text: text.substring(0, 200), // Log first 200 chars for debugging
+          timestamp: new Date().toISOString()
+        });
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error('[CardFormPlayground] JSON parse error:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        });
+        throw new Error('Invalid response format');
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to submit assessment');
+      }
+
       return data;
     },
     onSuccess: (data) => {
@@ -474,7 +502,6 @@ export function CardFormPlayground({
         timestamp: new Date().toISOString()
       });
 
-      // Trigger confetti animation
       confetti({
         particleCount: 150,
         spread: 80,
@@ -482,7 +509,6 @@ export function CardFormPlayground({
         colors: ['#00A3FF', '#0091FF', '#0068FF', '#0059FF', '#0040FF']
       });
 
-      // Show success modal
       setSuccessData({
         riskScore: data.riskScore,
         assessmentFile: data.assessmentFile
@@ -496,14 +522,10 @@ export function CardFormPlayground({
 
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
 
-      if (onSubmit) {
-        onSubmit(data);
-      }
     },
     onError: (error) => {
       console.error('[CardFormPlayground] Error submitting assessment:', {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString()
       });
 
@@ -522,10 +544,13 @@ export function CardFormPlayground({
       timestamp: new Date().toISOString()
     });
 
-    if (progress < 11) {
+    // Count completed responses
+    const completedResponses = Object.values(formResponses).filter(response => response && response.trim().length > 0).length;
+
+    if (completedResponses < 3) {
       toast({
         title: "Cannot Submit Yet",
-        description: "Please complete at least 11% of the form before submitting.",
+        description: "Please complete at least 3 questions before submitting.",
         variant: "destructive"
       });
       return;
@@ -533,6 +558,17 @@ export function CardFormPlayground({
 
     submitAssessment.mutate();
   };
+
+  useEffect(() => {
+    if (!currentSection && Object.keys(sections).length > 0) {
+      setCurrentSection(Object.keys(sections)[0]);
+    }
+  }, [sections]);
+
+  // Set document title with company name
+  useEffect(() => {
+    document.title = `Open Banking (1033) Survey: ${companyData?.name || companyName || 'Company'} | Invela`;
+  }, [companyData, companyName]);
 
   if (isLoadingFields || isLoadingResponses) {
     return (
@@ -544,19 +580,19 @@ export function CardFormPlayground({
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-start mb-6">
-        <div className="space-y-2">
+      <div className="flex justify-between items-center mb-6">
+        <div className="space-y-1 max-w-[70%]">
           <h1 className="text-2xl font-semibold">
-            Compliance & Risk Documentation Request
+            Open Banking (1033) Survey: {companyData?.name || companyName || 'Company'}
           </h1>
-          {companyData?.description && (
-            <p className="text-muted-foreground">{companyData.description}</p>
-          )}
+          <p className="text-muted-foreground text-sm">
+            Complete this survey to share information about how your organization implements open banking standards and complies with Section 1033 requirements.
+          </p>
         </div>
         <Button
           onClick={handleSubmit}
-          disabled={progress < 11 || submitAssessment.isPending}
-          className="px-8"
+          disabled={Object.values(formResponses).filter(response => response && response.trim().length > 0).length < 3 || submitAssessment.isPending}
+          className={`px-8 min-w-[220px] whitespace-nowrap font-semibold ${!submitAssessment.isPending ? 'relative after:absolute after:inset-0 after:rounded-md after:border-2 after:border-blue-400 after:animate-[pulse_2s_ease-in-out_infinite]' : ''}`}
         >
           {submitAssessment.isPending ? (
             <>
@@ -564,7 +600,7 @@ export function CardFormPlayground({
               Submitting...
             </>
           ) : (
-            'Submit Assessment'
+            'Submit Survey'
           )}
         </Button>
       </div>
@@ -572,10 +608,10 @@ export function CardFormPlayground({
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span>Progress</span>
-          <span>{progress}%</span>
+          <span>{Math.round((Object.values(formResponses).filter(response => response && response.trim().length > 0).length / cardFields.length) * 100)}%</span>
         </div>
         <Progress
-          value={progress}
+          value={Object.values(formResponses).filter(response => response && response.trim().length > 0).length / cardFields.length *100}
           className="h-2 bg-gray-200"
         />
       </div>
@@ -595,11 +631,11 @@ export function CardFormPlayground({
 
       <TooltipProvider>
         {currentSection && sections[currentSection] && (
-          <div className="space-y-6">
-            {sections[currentSection].map((field) => (
+          <div className="space-y-5">
+            {sections[currentSection].map((field: CardField) => (
               <Card
                 key={field.id}
-                className={`p-6 space-y-4 relative border-2 ${
+                className={`p-4 space-y-2 relative border-2 bg-white ${
                   loadingFields[field.id]
                     ? 'border-gray-300'
                     : formResponses[field.field_key]
@@ -607,7 +643,7 @@ export function CardFormPlayground({
                     : 'border-transparent'
                 }`}
               >
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-3 right-3">
                   {loadingFields[field.id] ? (
                     <LoadingSpinner size="sm" className="w-5 h-5" />
                   ) : formResponses[field.field_key] && (
@@ -661,7 +697,7 @@ export function CardFormPlayground({
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-1">
                   <h3 className="text-base text-muted-foreground font-medium">
                     {field.question_label}
                   </h3>
@@ -694,7 +730,7 @@ export function CardFormPlayground({
                   onChange={(e) => handleResponseChange(field, e.target.value)}
                   onBlur={(e) => handleBlur(field, e.target.value)}
                   placeholder="Enter your response..."
-                  className="min-h-[100px]"
+                  className="min-h-[90px]"
                   disabled={loadingFields[field.id]}
                 />
               </Card>
@@ -703,44 +739,100 @@ export function CardFormPlayground({
         )}
       </TooltipProvider>
 
-      {/* Success Modal */}
       <Dialog open={isSuccessModalOpen} onOpenChange={setIsSuccessModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[525px] dialog-content-above-confetti">
           <DialogHeader>
-            <div className="flex flex-col items-center text-center gap-4">
-              <div className="rounded-full bg-green-100 p-3">
-                <Trophy className="h-6 w-6 text-green-600" />
+            <div className="flex flex-col items-center text-center gap-2">
+              <div className="rounded-full bg-green-50 p-3">
+                <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
               <DialogTitle className="text-xl font-semibold">
-                Success! 🎉
+                Open Banking (1033) Survey Complete
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                Open Banking (1033) Survey completion notification with next steps
+              </DialogDescription>
             </div>
           </DialogHeader>
-          <div className="py-6 text-center space-y-4">
-            <p className="text-base">
-              You successfully submitted the CARD Survey on behalf of <span className="font-semibold">{companyName}</span>.
+          <div className="py-5 space-y-2">
+            <p className="text-center text-gray-500 mb-3">
+              Good job! You have successfully submitted the Open Banking (1033) Survey for <span className="font-semibold text-gray-700">{companyData?.name || companyName || 'your company'}</span>
             </p>
-            <p className="text-sm text-muted-foreground">
-              🔓 <span className="font-medium">Achievement Unlocked:</span> You've gained access to new insights! Explore your company's risk analysis and data in the Insights tab.
-            </p>
+            
+            <div className="space-y-3 text-sm">
+              {/* Row 1: Dashboard Tab Block */}
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <LayoutDashboard className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">New Dashboard Access</p>
+                  <p className="text-gray-600">Your company dashboard is now available with compliance metrics and risk monitoring tools.</p>
+                </div>
+              </div>
+              
+              {/* Row 2: Insights Tab Block */}
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <LineChart className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">Insights Unlocked</p>
+                  <p className="text-gray-600">Access detailed analytics and data visualizations in the Insights tab to better understand your compliance posture.</p>
+                </div>
+              </div>
+              
+              {/* Row 3: Download Available Block */}
+              <div className="flex items-start gap-3 border rounded-md p-3 bg-slate-50 flex-1">
+                <FileText className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-medium text-gray-900">New Download Available</p>
+                  <p className="text-gray-600">A complete record of your Open Banking (1033) Survey has been generated and can be downloaded from the File Vault.</p>
+                </div>
+              </div>
+              
+              {/* Row 4: Accreditation Status + Risk Score (side by side) */}
+              <div className="flex gap-3">
+                {/* Left box: Accreditation Status */}
+                <div className="flex items-start gap-3 border rounded-md p-3 bg-green-50 border-green-200 flex-1">
+                  <Shield className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Accreditation Status</p>
+                    <p className="text-gray-600">
+                      Status: <span className="font-medium text-green-600">APPROVED</span>
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Right box: Risk Score */}
+                <div className="flex items-start gap-3 border rounded-md p-3 bg-amber-50 border-amber-200 flex-1">
+                  <Trophy className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-900">Risk Score</p>
+                    <p className="text-gray-600">
+                      Score: <span className="font-medium text-amber-600">{successData?.riskScore || '0'}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className="flex justify-between gap-4 mt-4">
+          <div className="flex justify-between gap-4 mt-2">
             <Button
               variant="outline"
               onClick={() => {
                 navigate('/insights');
                 setIsSuccessModalOpen(false);
               }}
+              className="flex-1"
             >
               Go to Insights
             </Button>
             <Button
               onClick={() => {
-                navigate('/dashboard');
+                navigate('/');
                 setIsSuccessModalOpen(false);
               }}
+              className="flex-1"
             >
               Go to Dashboard
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </DialogContent>

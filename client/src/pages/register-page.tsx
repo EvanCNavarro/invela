@@ -196,10 +196,8 @@ export default function RegisterPage() {
       }, {
         onSuccess: () => {
           console.log("[Registration] Registration successful");
-          toast({
-            title: "Registration successful",
-            description: "Welcome to Invela! You can now log in.",
-          });
+          // Toast notification removed to improve user experience
+          // The welcome modal will be shown instead
         },
         onError: (error: Error) => {
           console.error("[Registration] Registration error:", error);

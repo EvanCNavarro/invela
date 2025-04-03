@@ -15,7 +15,7 @@ const invitationTemplateSchema = z.object({
   targetCompany: z.string().min(1, "Target company is required"),
   inviteUrl: z.string().url("Valid invite URL is required"),
   code: z.string().optional(),
-  inviteType: z.enum(['user', 'fintech']).default('user')
+  inviteType: z.enum(["user", "fintech"]).default("user"),
 });
 
 export type InvitationTemplateData = z.infer<typeof invitationTemplateSchema>;
@@ -32,14 +32,14 @@ const getFooter = (year: number) => `
   <p>© ${year} Invela | Privacy Policy | Terms of Service | Support Center</p>
 </div>`;
 
-const getSteps = (inviteType: 'user' | 'fintech') => `
+const getSteps = (inviteType: "user" | "fintech") => `
 <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
   <h2 style="color: #333; margin-top: 0;">Getting Started:</h2>
   <ol style="margin: 0; padding-left: 20px;">
     <li>Click the button below to Create Your Account</li>
-    ${inviteType === 'fintech' ? '<li>Complete your Company Profile setup</li>' : '<li>Finish updating your Profile</li>'}
+    ${inviteType === "fintech" ? "<li>Complete your Company Profile setup</li>" : "<li>Finish updating your Profile</li>"}
     <li>Upload the requested files to our secure system</li>
-    <li>Acquire an Invela Accreditation & Risk Score${inviteType === 'fintech' ? ' for your company' : ''}</li>
+    <li>Acquire an Invela Accreditation & Risk Score${inviteType === "fintech" ? " for your company" : ""}</li>
   </ol>
 </div>`;
 
@@ -51,22 +51,36 @@ const getButton = (inviteUrl: string) => `
 
 // Unified invitation template
 function invitationTemplate(data: InvitationTemplateData): EmailTemplate {
-  console.log('[Template:invitation] Received template data:', JSON.stringify(data, null, 2));
+  console.log(
+    "[Template:invitation] Received template data:",
+    JSON.stringify(data, null, 2),
+  );
 
   const result = invitationTemplateSchema.safeParse(data);
   if (!result.success) {
-    console.error('[Template:invitation] Invalid template data:', result.error);
-    throw new Error(`Invalid template data: ${JSON.stringify(result.error.errors)}`);
+    console.error("[Template:invitation] Invalid template data:", result.error);
+    throw new Error(
+      `Invalid template data: ${JSON.stringify(result.error.errors)}`,
+    );
   }
 
-  const { recipientName, senderName, senderCompany, targetCompany, inviteUrl, code, inviteType } = result.data;
+  const {
+    recipientName,
+    senderName,
+    senderCompany,
+    targetCompany,
+    inviteUrl,
+    code,
+    inviteType,
+  } = result.data;
   const year = new Date().getFullYear();
 
   const subject = "Invitation to join Invela";
 
-  const intro = inviteType === 'fintech'
-    ? `You have been invited by ${senderName} from ${senderCompany} to join ${targetCompany} on the Invela platform.`
-    : `You've been invited to join ${targetCompany} by ${senderName} from ${senderCompany}.`;
+  const intro =
+    inviteType === "fintech"
+      ? `You have been invited by ${senderName}, from ${senderCompany}, to join the Invela platform, on behalf of your company, ${targetCompany}.`
+      : `You've been invited to join ${targetCompany}, by ${senderName} from ${senderCompany}.`;
 
   return {
     subject,
@@ -77,11 +91,11 @@ ${intro}
 
 Getting Started:
 1. Click the button below to Create Your Account
-2. ${inviteType === 'fintech' ? 'Complete your Company Profile setup' : 'Finish updating your Profile'}
+2. ${inviteType === "fintech" ? "Complete your Company Profile setup" : "Finish updating your Profile"}
 3. Upload the requested files to our secure system
-4. Acquire an Invela Accreditation & Risk Score${inviteType === 'fintech' ? ' for your company' : ''}
+4. Acquire an Invela Accreditation & Risk Score${inviteType === "fintech" ? " for your company" : ""}
 
-${code ? `Your Invitation Code: ${code}` : ''}
+${code ? `Your Invitation Code: ${code}` : ""}
 
 Click here to get started: ${inviteUrl}
 
@@ -95,37 +109,44 @@ Click here to get started: ${inviteUrl}
     <title>${subject}</title>
   </head>
   <body style="font-family: sans-serif; line-height: 1.5; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h1 style="color: #333; margin-bottom: 20px;">Welcome to ${targetCompany}</h1>
+    <h1 style="color: #333; margin-bottom: 20px;">Welcome to Invela</h1>
 
     <p>Hello ${recipientName},</p>
     <p>${intro}</p>
 
     ${getSteps(inviteType)}
 
-    ${code ? `
+    ${
+      code
+        ? `
     <div style="background: #eef; padding: 15px; border-radius: 4px; text-align: center; margin: 20px 0;">
       <p style="margin: 0; font-family: monospace; font-size: 1.2em;">Your Invitation Code: ${code}</p>
     </div>
-    ` : ''}
+    `
+        : ""
+    }
 
     ${getButton(inviteUrl)}
     ${getFooter(year)}
   </body>
 </html>
-`.trim()
+`.trim(),
   };
 }
 
 const templates = {
   user_invite: invitationTemplate,
-  fintech_invite: invitationTemplate
+  fintech_invite: invitationTemplate,
 };
 
 export type TemplateNames = keyof typeof templates;
 
-export function getEmailTemplate(templateName: TemplateNames, data: InvitationTemplateData): EmailTemplate {
-  console.log('[EmailTemplate] Getting template:', templateName);
-  console.log('[EmailTemplate] Template data:', JSON.stringify(data, null, 2));
+export function getEmailTemplate(
+  templateName: TemplateNames,
+  data: InvitationTemplateData,
+): EmailTemplate {
+  console.log("[EmailTemplate] Getting template:", templateName);
+  console.log("[EmailTemplate] Template data:", JSON.stringify(data, null, 2));
 
   const template = templates[templateName];
   if (!template) {
@@ -136,20 +157,25 @@ export function getEmailTemplate(templateName: TemplateNames, data: InvitationTe
     // Set the invite type based on the template name
     const templateData = {
       ...data,
-      inviteType: templateName === 'fintech_invite' ? 'fintech' : 'user'
+      inviteType: templateName === "fintech_invite" ? "fintech" : "user",
     };
 
     const emailTemplate = template(templateData);
     const validationResult = emailTemplateSchema.safeParse(emailTemplate);
 
     if (!validationResult.success) {
-      console.error('[EmailTemplate] Validation error:', validationResult.error);
-      throw new Error(`Invalid email template: ${validationResult.error.message}`);
+      console.error(
+        "[EmailTemplate] Validation error:",
+        validationResult.error,
+      );
+      throw new Error(
+        `Invalid email template: ${validationResult.error.message}`,
+      );
     }
 
     return emailTemplate;
   } catch (error) {
-    console.error('[EmailTemplate] Error generating template:', error);
+    console.error("[EmailTemplate] Error generating template:", error);
     throw error;
   }
 }

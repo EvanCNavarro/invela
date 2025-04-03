@@ -1,6 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { Server } from 'http';
 import type { TaskStatus } from '@db/schema';
+import { DocumentCategory } from '@db/schema';
 
 let wss: WebSocketServer;
 
@@ -11,8 +12,25 @@ interface TaskUpdate {
   metadata?: Record<string, any>;
 }
 
+interface DocumentCountUpdate {
+  type: 'COUNT_UPDATE';
+  category: typeof DocumentCategory[keyof typeof DocumentCategory];
+  count: number;
+  companyId: string;
+}
+
+interface UploadProgress {
+  type: 'UPLOAD_PROGRESS';
+  fileId: number | null;
+  fileName: string;
+  status: 'uploading' | 'uploaded' | 'error';
+  progress?: number;
+  error?: string;
+}
+
+type WebSocketMessage = TaskUpdate | DocumentCountUpdate | UploadProgress;
+
 export function setupWebSocket(server: Server) {
-  // Create WebSocket server with proper configuration
   wss = new WebSocketServer({ 
     noServer: true,
     path: '/ws',
@@ -21,9 +39,7 @@ export function setupWebSocket(server: Server) {
     maxPayload: 1024 * 1024 // 1MB
   });
 
-  // Handle upgrade requests manually
   server.on('upgrade', (request, socket, head) => {
-    // Skip vite-hmr websocket connections
     if (request.headers['sec-websocket-protocol'] === 'vite-hmr') {
       return;
     }
@@ -41,13 +57,11 @@ export function setupWebSocket(server: Server) {
   wss.on('connection', (ws) => {
     console.log('New WebSocket client connected');
 
-    // Send initial connection acknowledgment
     ws.send(JSON.stringify({
       type: 'connection_established',
       data: { timestamp: new Date().toISOString() }
     }));
 
-    // Set up ping/pong with longer intervals
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         try {
@@ -57,7 +71,7 @@ export function setupWebSocket(server: Server) {
           console.error('[WebSocket] Error sending ping:', error);
         }
       }
-    }, 45000); // Match client's interval
+    }, 45000);
 
     ws.on('ping', () => {
       try {
@@ -68,28 +82,24 @@ export function setupWebSocket(server: Server) {
     });
 
     ws.on('pong', () => {
-      // Reset any ping timeouts here if needed
-      console.log('[WebSocket] Received pong from client');
+      console.log('[WebSocket] Received pong');
     });
 
     ws.on('message', (message) => {
       try {
         const data = JSON.parse(message.toString());
-
-        // Handle ping messages immediately
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
           return;
         }
-
-        console.log('Received WebSocket message:', data);
+        console.log('[WebSocket] Received message:', data);
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
+        console.error('[WebSocket] Error processing message:', error);
       }
     });
 
     ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      console.error('[WebSocket] Client error:', error);
     });
 
     ws.on('close', (code, reason) => {
@@ -105,9 +115,16 @@ export function setupWebSocket(server: Server) {
 
 export function broadcastTaskUpdate(task: TaskUpdate) {
   if (!wss) {
-    console.warn('WebSocket server not initialized');
+    console.warn('[WebSocket] Server not initialized');
     return;
   }
+
+  console.log('[WebSocket] Broadcasting task update:', {
+    taskId: task.id,
+    status: task.status,
+    progress: task.progress,
+    metadata: task.metadata
+  });
 
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -117,7 +134,82 @@ export function broadcastTaskUpdate(task: TaskUpdate) {
           payload: task
         }));
       } catch (error) {
-        console.error('Error broadcasting task update:', error);
+        console.error('[WebSocket] Error broadcasting task update:', error);
+      }
+    }
+  });
+}
+
+export function broadcastDocumentCountUpdate(update: DocumentCountUpdate) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+
+  console.log('[WebSocket] Broadcasting document count update:', update);
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting document count:', error);
+      }
+    }
+  });
+}
+
+export function broadcastUploadProgress(update: UploadProgress) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+
+  console.log('[WebSocket] Broadcasting upload progress:', update);
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting upload progress:', error);
+      }
+    }
+  });
+}
+
+// Generic broadcast function for task events
+export function broadcastMessage(type: string, payload: any) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+  
+  console.log(`[WebSocket] Broadcasting message: ${type}`, payload);
+  
+  // Handle specific message types
+  if (type.includes('task')) {
+    // If it's a task-related message, also call the specific task update function
+    if (payload.task || payload.taskId) {
+      broadcastTaskUpdate({
+        id: payload.task?.id || payload.taskId,
+        status: payload.task?.status || payload.status || 'not_started',
+        progress: payload.task?.progress || payload.progress || 0,
+        metadata: payload.task?.metadata || payload.metadata
+      });
+    }
+  }
+  
+  // Broadcast generic message to all clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify({
+          type,
+          payload
+        }));
+      } catch (error) {
+        console.error(`[WebSocket] Error broadcasting ${type} message:`, error);
       }
     }
   });

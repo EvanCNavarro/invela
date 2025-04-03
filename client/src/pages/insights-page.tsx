@@ -7,10 +7,11 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   BarChart,
   Bar,
+  Cell,
 } from "recharts";
 import {
   Select,
@@ -23,40 +24,32 @@ import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/ui/page-header";
+import { NetworkInsightVisualization } from "@/components/insights/NetworkInsightVisualization";
+import { AccreditationDotMatrix } from "@/components/insights/AccreditationDotMatrix";
+import { RiskFlowVisualization } from "@/components/insights/RiskFlowVisualization";
 
 const visualizationTypes = [
-  { value: "risk_trends", label: "Risk Score Trends" },
-  { value: "relationship_distribution", label: "Relationship Distribution" },
+  { value: "network_visualization", label: "Network Visualization" },
+  { value: "relationship_distribution", label: "Company Type Distribution" },
   { value: "accreditation_status", label: "Accreditation Status" },
+  { value: "risk_flow", label: "Risk Flow Visualization" },
 ];
 
 export default function InsightsPage() {
-  const [selectedVisualization, setSelectedVisualization] = useState("risk_trends");
+  const [selectedVisualization, setSelectedVisualization] = useState("network_visualization");
 
-  const { data: companies = [] } = useQuery({
+  const { data: companies = [] } = useQuery<any[]>({
     queryKey: ["/api/companies"],
   });
 
-  const { data: relationships = [] } = useQuery({
+  const { data: relationships = [] } = useQuery<any[]>({
     queryKey: ["/api/relationships"],
   });
 
-  // Sample data transformation for visualizations
-  const riskTrendsData = companies.map((company: any) => ({
-    name: company.name,
-    score: company.riskScore || 0,
-  })).slice(0, 10);
-
-  const relationshipData = relationships.reduce((acc: any, rel: any) => {
-    const type = rel.relationshipType;
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
-
-  const relationshipChartData = Object.entries(relationshipData).map(([type, count]) => ({
-    type,
-    count,
-  }));
+  // Company type distribution from API
+  const { data: companyTypeData = [] } = useQuery<{type: string, count: number, color: string}[]>({
+    queryKey: ['/api/company-type-distribution'],
+  });
 
   const exportData = () => {
     // Implementation for PDF export would go here
@@ -95,32 +88,14 @@ export default function InsightsPage() {
           </Select>
         </div>
 
-        <Widget title="Data Visualization" className="h-[600px]">
-          {selectedVisualization === "risk_trends" && (
-            <ResponsiveContainer width="100%" height={500}>
-              <LineChart data={riskTrendsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="score"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+        <Widget title="" className="h-[700px]">
+          {selectedVisualization === "network_visualization" && (
+            <NetworkInsightVisualization />
           )}
 
           {selectedVisualization === "relationship_distribution" && (
             <ResponsiveContainer width="100%" height={500}>
-              <BarChart data={relationshipChartData}>
+              <BarChart data={companyTypeData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="type"
@@ -129,21 +104,22 @@ export default function InsightsPage() {
                   height={80}
                 />
                 <YAxis />
-                <Tooltip />
-                <Bar
-                  dataKey="count"
-                  fill="hsl(var(--primary))"
-                />
+                <RechartsTooltip />
+                <Bar dataKey="count">
+                  {companyTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color || 'hsl(var(--primary))'} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           )}
 
           {selectedVisualization === "accreditation_status" && (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-muted-foreground">
-                Select a different visualization type to view data
-              </p>
-            </div>
+            <AccreditationDotMatrix />
+          )}
+          
+          {selectedVisualization === "risk_flow" && (
+            <RiskFlowVisualization />
           )}
         </Widget>
       </div>

@@ -62,51 +62,53 @@ export function Widget({
           )}
           <h3 className="font-medium text-base">{title}</h3>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-8 w-8 rounded-md hover:bg-background"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {onVisibilityToggle && (
-              <>
-                <DropdownMenuItem onClick={onVisibilityToggle}>
-                  {isVisible ? (
-                    <>
-                      <EyeOff className="h-4 w-4 mr-2" />
-                      Hide Widget
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Show Widget
-                    </>
+        {(onVisibilityToggle || actions.length > 0 || onEdit) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8 rounded-md hover:bg-background"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {onVisibilityToggle && (
+                <>
+                  <DropdownMenuItem onClick={onVisibilityToggle}>
+                    {isVisible ? (
+                      <>
+                        <EyeOff className="h-4 w-4 mr-2" />
+                        Hide Widget
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="h-4 w-4 mr-2" />
+                        Show Widget
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              {actions.map((action, index) => (
+                <DropdownMenuItem key={index} onClick={action.onClick}>
+                  {action.icon && (
+                    <span className="mr-2">{action.icon}</span>
                   )}
+                  {action.label}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
-            {actions.map((action, index) => (
-              <DropdownMenuItem key={index} onClick={action.onClick}>
-                {action.icon && (
-                  <span className="mr-2">{action.icon}</span>
-                )}
-                {action.label}
-              </DropdownMenuItem>
-            ))}
-            {onEdit && (
-              <DropdownMenuItem onClick={onEdit}>
-                <GripVertical className="h-4 w-4 mr-2" />
-                Edit Widget
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              ))}
+              {onEdit && (
+                <DropdownMenuItem onClick={onEdit}>
+                  <GripVertical className="h-4 w-4 mr-2" />
+                  Edit Widget
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <div className="p-4">
         {children}

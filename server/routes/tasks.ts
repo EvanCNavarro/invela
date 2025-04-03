@@ -1,73 +1,313 @@
 import { Router } from "express";
 import { db } from "@db";
-import { tasks, TaskStatus } from "@db/schema";
+import { tasks, TaskStatus, companies } from "@db/schema";
 import { eq, and, or, ilike } from "drizzle-orm";
 import { z } from "zod";
-import { broadcastMessage } from "../websocket";
-import { validateTaskStatusTransition, loadTaskMiddleware } from "../middleware/taskValidation";
+import { broadcastMessage } from "../services/websocket"; // Use the correct import path
+import { validateTaskStatusTransition, loadTaskMiddleware, TaskRequest } from "../middleware/taskValidation";
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
+// Utility function to get a company by name
+const getCompanyByName = async (companyName: string) => {
+  return await db.query.companies.findFirst({
+    where: ilike(companies.name, companyName)
+  });
+};
+
+// Utility function to find a task by company ID and task type
+const getTaskByCompanyAndType = async (companyId: number, taskType: string) => {
+  return await db.query.tasks.findFirst({
+    where: and(
+      eq(tasks.company_id, companyId),
+      eq(tasks.task_type, taskType)
+    )
+  });
+};
+
 // Get task by company name for CARD tasks
-router.get("/api/tasks/card/:companyName", async (req, res) => {
+router.get("/api/tasks/card/:companyName", requireAuth, async (req, res) => {
   try {
+    // IMPORTANT: Force content type to ensure it's JSON not HTML
+    res.setHeader('Content-Type', 'application/json');
+    
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Tasks Routes] Fetching CARD task:', {
-      companyName: req.params.companyName,
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
+      timestamp: new Date().toISOString()
     });
 
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.task_type, 'company_card'),
-        ilike(tasks.title, `Company CARD: ${req.params.companyName}`)
-      )
+    // Direct DB approach - get company first
+    const company = await db.query.companies.findFirst({
+      where: ilike(companies.name, companyNameToUse)
     });
-
-    console.log('[Tasks Routes] CARD task found:', task);
-
-    if (!task) {
+    
+    if (!company) {
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
+    }
+    
+    console.log('[Tasks Routes] Company found:', {
+      companyId: company.id,
+      companyName: company.name
+    });
+    
+    // Now get ALL tasks for this company and filter in JS
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, company.id)
+    });
+    
+    console.log('[Tasks Routes] All tasks for company:', {
+      count: companyTasks.length,
+      types: companyTasks.map(t => t.task_type)
+    });
+    
+    // Find CARD task (Open Banking 1033 Survey)
+    const cardTask = companyTasks.find(task => 
+      task.task_type === 'company_card'
+    );
+    
+    if (!cardTask) {
+      console.warn('[Tasks Routes] No Open Banking (1033) Survey task found for company:', {
+        companyName: companyNameToUse,
+        timestamp: new Date().toISOString()
+      });
+      
       return res.status(404).json({ 
-        message: `Could not find CARD task for company: ${req.params.companyName}` 
+        error: `Could not find Open Banking (1033) Survey task for company: ${companyNameToUse}` 
       });
     }
-
-    res.json(task);
+    
+    console.log('[Tasks Routes] Open Banking (1033) Survey task found:', {
+      taskId: cardTask.id,
+      taskTitle: cardTask.title,
+      taskType: cardTask.task_type
+    });
+    
+    // Return the task
+    return res.status(200).json(cardTask);
   } catch (error) {
-    console.error('[Tasks Routes] Error fetching CARD task:', error);
-    res.status(500).json({ message: "Failed to fetch CARD task" });
+    console.error('[Tasks Routes] Error fetching CARD task:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch CARD task" });
   }
 });
 
 // Get task by company name for KYB tasks
-router.get("/api/tasks/kyb/:companyName", async (req, res) => {
+router.get("/api/tasks/kyb/:companyName", requireAuth, async (req, res) => {
   try {
+    // IMPORTANT: Force content type to ensure it's JSON not HTML
+    res.setHeader('Content-Type', 'application/json');
+    
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
     console.log('[Tasks Routes] Fetching KYB task:', {
-      companyName: req.params.companyName,
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
+      timestamp: new Date().toISOString()
     });
 
-    const task = await db.query.tasks.findFirst({
-      where: and(
-        eq(tasks.task_type, 'company_kyb'),
-        ilike(tasks.title, `Company KYB: ${req.params.companyName}`)
-      )
+    // Direct DB approach - get company first
+    const company = await db.query.companies.findFirst({
+      where: ilike(companies.name, companyNameToUse)
     });
-
-    console.log('[Tasks Routes] KYB task found:', task);
-
-    if (!task) {
+    
+    if (!company) {
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
+    }
+    
+    console.log('[Tasks Routes] Company found:', {
+      companyId: company.id,
+      companyName: company.name
+    });
+    
+    // Now get ALL tasks for this company and filter in JS
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, company.id)
+    });
+    
+    console.log('[Tasks Routes] All tasks for company:', {
+      count: companyTasks.length,
+      types: companyTasks.map(t => t.task_type)
+    });
+    
+    // Find KYB task
+    const kybTask = companyTasks.find(task => 
+      task.task_type === 'company_kyb' || 
+      task.task_type === 'company_onboarding_KYB'
+    );
+    
+    if (!kybTask) {
+      console.warn('[Tasks Routes] No KYB task found for company:', {
+        companyName: companyNameToUse,
+        timestamp: new Date().toISOString()
+      });
+      
       return res.status(404).json({ 
-        message: `Could not find KYB task for company: ${req.params.companyName}` 
+        error: `Could not find KYB task for company: ${companyNameToUse}` 
       });
     }
-
-    res.json(task);
+    
+    console.log('[Tasks Routes] KYB task found:', {
+      taskId: kybTask.id,
+      taskTitle: kybTask.title,
+      taskType: kybTask.task_type
+    });
+    
+    // Return the task
+    return res.status(200).json(kybTask);
   } catch (error) {
-    console.error('[Tasks Routes] Error fetching KYB task:', error);
-    res.status(500).json({ message: "Failed to fetch KYB task" });
+    console.error('[Tasks Routes] Error fetching KYB task:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch KYB task" });
+  }
+});
+
+// Get task by company name for Security tasks
+router.get("/api/tasks/security/:companyName", requireAuth, async (req, res) => {
+  try {
+    // IMPORTANT: Force content type to ensure it's JSON not HTML
+    res.setHeader('Content-Type', 'application/json');
+    
+    // If "Unknown Company" is passed, use the current user's company if available
+    let companyNameToUse = req.params.companyName;
+    
+    if (companyNameToUse === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyNameToUse = currentCompany.name;
+        console.log('[Tasks Routes] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName: companyNameToUse,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    console.log('[Tasks Routes] Fetching Security task:', {
+      originalCompanyName: req.params.companyName,
+      companyNameToUse,
+      timestamp: new Date().toISOString()
+    });
+
+    // Direct DB approach - get company first
+    const company = await db.query.companies.findFirst({
+      where: ilike(companies.name, companyNameToUse)
+    });
+    
+    if (!company) {
+      console.warn('[Tasks Routes] Company not found:', companyNameToUse);
+      return res.status(404).json({ error: `Company not found: ${companyNameToUse}` });
+    }
+    
+    console.log('[Tasks Routes] Company found:', {
+      companyId: company.id,
+      companyName: company.name
+    });
+    
+    // Now get ALL tasks for this company and filter in JS
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, company.id)
+    });
+    
+    console.log('[Tasks Routes] All tasks for company:', {
+      count: companyTasks.length,
+      types: companyTasks.map(t => t.task_type)
+    });
+    
+    // Find Security task
+    const securityTask = companyTasks.find(task => 
+      task.task_type === 'security_assessment'
+    );
+    
+    if (!securityTask) {
+      console.warn('[Tasks Routes] No Security task found for company:', {
+        companyName: companyNameToUse,
+        timestamp: new Date().toISOString()
+      });
+      
+      return res.status(404).json({ 
+        error: `Could not find Security Assessment task for company: ${companyNameToUse}` 
+      });
+    }
+    
+    console.log('[Tasks Routes] Security task found:', {
+      taskId: securityTask.id,
+      taskTitle: securityTask.title,
+      taskType: securityTask.task_type
+    });
+    
+    // Return the task
+    return res.status(200).json(securityTask);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching Security task:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch Security Assessment task" });
   }
 });
 
 // Create new task - add progress to response
-router.post("/api/tasks", async (req, res) => {
+router.post("/api/tasks", requireAuth, async (req, res) => {
   try {
     const [newTask] = await db
       .insert(tasks)
@@ -113,7 +353,7 @@ router.post("/api/tasks", async (req, res) => {
 });
 
 // Delete task
-router.delete("/api/tasks/:id", async (req, res) => {
+router.delete("/api/tasks/:id", requireAuth, async (req, res) => {
   try {
     const taskId = parseInt(req.params.id);
 
@@ -142,7 +382,7 @@ router.delete("/api/tasks/:id", async (req, res) => {
 });
 
 // Update task status and progress
-router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTransition, async (req, res) => {
+router.patch("/api/tasks/:id/status", loadTaskMiddleware, validateTaskStatusTransition, async (req: TaskRequest, res) => {
   try {
     const taskId = parseInt(req.params.id);
     const { status, progress } = updateTaskStatusSchema.parse(req.body);
@@ -226,6 +466,104 @@ const updateTaskStatusSchema = z.object({
   progress: z.number().min(0).max(100)
 });
 
+// Get a task by ID (direct lookup endpoint for task-page.tsx)
+router.get("/api/tasks/:id", requireAuth, async (req, res) => {
+  try {
+    // Explicitly set header for JSON (crucial to avoid Vite interference)
+    res.setHeader('Content-Type', 'application/json');
+    
+    const taskId = parseInt(req.params.id);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: "Invalid task ID" });
+    }
+    
+    console.log('[Tasks Routes] Fetching task by ID:', {
+      taskId,
+      timestamp: new Date().toISOString()
+    });
+    
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      console.warn('[Tasks Routes] Task not found:', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ error: "Task not found" });
+    }
+    
+    console.log('[Tasks Routes] Task found by ID:', {
+      taskId: task.id,
+      title: task.title,
+      type: task.task_type,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching task by ID:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch task" });
+  }
+});
+
+// Special JSON endpoint with .json extension to prevent Vite conflicts 
+router.get("/api/tasks.json/:id", requireAuth, async (req, res) => {
+  try {
+    // Force JSON response
+    res.setHeader('Content-Type', 'application/json');
+    
+    const taskId = parseInt(req.params.id);
+    
+    if (isNaN(taskId)) {
+      return res.status(400).json({ error: "Invalid task ID" });
+    }
+    
+    console.log('[Tasks Routes] Fetching task by ID (special .json endpoint):', {
+      taskId,
+      timestamp: new Date().toISOString()
+    });
+    
+    const task = await db.query.tasks.findFirst({
+      where: eq(tasks.id, taskId)
+    });
+    
+    if (!task) {
+      console.warn('[Tasks Routes] Task not found (special .json endpoint):', {
+        taskId,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ error: "Task not found" });
+    }
+    
+    console.log('[Tasks Routes] Task found by ID (special .json endpoint):', {
+      taskId: task.id,
+      title: task.title,
+      type: task.task_type,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error('[Tasks Routes] Error fetching task by ID (special .json endpoint):', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ error: "Failed to fetch task" });
+  }
+});
+
 // Helper function to get task counts
 async function getTaskCount() {
   const allTasks = await db.select().from(tasks);
@@ -239,5 +577,139 @@ async function getTaskCount() {
     approved: allTasks.filter(t => t.status === TaskStatus.APPROVED).length
   };
 }
+
+// SPECIAL API for fixing the task navigation issue - completely different URL structure
+router.post("/__special_non_vite_route__/unique_task_lookup_system", requireAuth, async (req, res) => {
+  try {
+    // Force JSON response
+    res.setHeader('Content-Type', 'application/json');
+    
+    // Get company name from request body
+    let { companyName, taskType } = req.body;
+    
+    if (!companyName) {
+      return res.status(400).json({ 
+        error: "Missing companyName in request body" 
+      });
+    }
+    
+    // If "Unknown Company" is passed, use the current user's company if available
+    if (companyName === 'Unknown Company' && req.user?.company_id) {
+      // Get current user's company
+      const currentCompany = await db.query.companies.findFirst({
+        where: eq(companies.id, req.user.company_id)
+      });
+      
+      if (currentCompany) {
+        companyName = currentCompany.name;
+        console.log('[Task Lookup API] Using current user company instead of "Unknown Company":', {
+          userId: req.user.id,
+          companyId: req.user.company_id,
+          companyName,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+    
+    console.log('[Task Lookup API] Request received:', {
+      originalCompanyName: req.body.companyName,
+      companyName,
+      taskType,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Find company
+    const company = await db.query.companies.findFirst({
+      where: ilike(companies.name, companyName)
+    });
+    
+    if (!company) {
+      console.warn('[Task Lookup API] Company not found:', {
+        companyName,
+        timestamp: new Date().toISOString()
+      });
+      return res.status(404).json({ 
+        error: `Company not found: ${companyName}` 
+      });
+    }
+    
+    console.log('[Task Lookup API] Company found:', {
+      id: company.id,
+      name: company.name
+    });
+    
+    // Get tasks for this company
+    const companyTasks = await db.query.tasks.findMany({
+      where: eq(tasks.company_id, company.id)
+    });
+    
+    // Filter task based on type if provided
+    let matchingTask = null;
+    
+    if (taskType) {
+      if (taskType === 'kyb') {
+        matchingTask = companyTasks.find(t => 
+          t.task_type === 'company_kyb' || t.task_type === 'company_onboarding_KYB'
+        );
+      } else if (taskType === 'security') {
+        matchingTask = companyTasks.find(t => 
+          t.task_type === 'security_assessment'
+        );
+      } else if (taskType === 'card') {
+        matchingTask = companyTasks.find(t => 
+          t.task_type === 'company_card'
+        );
+      }
+      
+      if (!matchingTask) {
+        console.warn('[Task Lookup API] No matching task found:', {
+          companyName,
+          taskType,
+          availableTypes: companyTasks.map(t => t.task_type),
+          timestamp: new Date().toISOString()
+        });
+        
+        return res.status(404).json({
+          error: `No ${taskType.toUpperCase()} task found for company: ${companyName}`
+        });
+      }
+      
+      console.log('[Task Lookup API] Matching task found:', {
+        taskId: matchingTask.id,
+        taskType: matchingTask.task_type,
+        title: matchingTask.title
+      });
+      
+      return res.status(200).json({
+        task: matchingTask
+      });
+    }
+    
+    // Return all tasks if no specific type requested
+    console.log('[Task Lookup API] Returning all company tasks:', {
+      count: companyTasks.length,
+      types: companyTasks.map(t => t.task_type)
+    });
+    
+    return res.status(200).json({
+      company: {
+        id: company.id,
+        name: company.name
+      },
+      tasks: companyTasks
+    });
+  } catch (error) {
+    console.error('[Task Lookup API] Error:', {
+      error,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    return res.status(500).json({ 
+      error: "Failed to process task lookup request" 
+    });
+  }
+});
 
 export default router;

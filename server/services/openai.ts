@@ -3,8 +3,171 @@ import { companies } from "@db/schema";
 import { db } from "@db";
 import { openaiSearchAnalytics } from "@db/schema";
 
+// Export the Answer interface to match our aggregation expectations
+export interface Answer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+  confidence: number;
+}
+
+export interface DocumentAnswer {
+  field_key: string;
+  answer: string;
+  source_document: string;
+  confidence: number;
+}
+
 // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// Document classification specific types
+export enum DocumentCategory {
+  SOC2_AUDIT = 'soc2_audit',
+  ISO27001_CERT = 'iso27001_cert',
+  PENTEST_REPORT = 'pentest_report',
+  BUSINESS_CONTINUITY = 'business_continuity',
+  OTHER = 'other'
+}
+
+export interface DocumentClassification {
+  category: DocumentCategory;
+  confidence: number;
+  reasoning: string;
+  suggestedName?: string;
+}
+
+const CLASSIFICATION_PROMPT = `As a security compliance expert, analyze this document and classify it into one of these categories:
+- SOC 2 Audit Report
+- ISO 27001 Certification  
+- Penetration Test Report
+- Business Continuity Plan
+- Other Documents
+
+Respond with a JSON object containing:
+{
+  "category": string (one of the above categories),
+  "confidence": number (0-1),
+  "reasoning": string (brief explanation),
+  "suggestedName": string (optional)
+}
+
+Consider:
+- Document structure and formatting
+- Key terminology and phrases
+- Standard compliance language
+- Certification markers and dates`;
+
+export const CONFIDENCE_THRESHOLDS = {
+  AUTO_CLASSIFY: 0.85, // Automatically classify if confidence is above this
+  SUGGEST: 0.60, // Suggest classification if confidence is above this
+  MINIMUM: 0.30 // Show as "Other Documents" if below this
+};
+
+export async function classifyDocument(content: string): Promise<DocumentClassification> {
+  const startTime = Date.now();
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // Changed from gpt-4o to handle larger documents
+      messages: [
+        { role: "system", content: CLASSIFICATION_PROMPT },
+        { role: "user", content }
+      ],
+      response_format: { type: "json_object" }
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'document_classification',
+      searchPrompt: CLASSIFICATION_PROMPT,
+      searchResults: result,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-3.5-turbo'
+      ),
+      model: 'gpt-3.5-turbo',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Apply confidence thresholds
+    let category = result.category;
+    const confidence = result.confidence;
+
+    if (confidence < CONFIDENCE_THRESHOLDS.MINIMUM) {
+      console.log('[OpenAI Service] Classification confidence too low, marking as OTHER:', {
+        originalCategory: category,
+        confidence,
+        threshold: CONFIDENCE_THRESHOLDS.MINIMUM
+      });
+      category = DocumentCategory.OTHER;
+    }
+
+    if (confidence < CONFIDENCE_THRESHOLDS.AUTO_CLASSIFY) {
+      console.log('[OpenAI Service] Classification needs review:', {
+        category,
+        confidence,
+        threshold: CONFIDENCE_THRESHOLDS.AUTO_CLASSIFY
+      });
+    }
+
+    return {
+      category: mapToDocumentCategory(category),
+      confidence: confidence,
+      reasoning: result.reasoning,
+      suggestedName: result.suggestedName
+    };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.error('[OpenAI Service] Document classification error:', error);
+
+    await logSearchAnalytics({
+      searchType: 'document_classification',
+      searchPrompt: CLASSIFICATION_PROMPT,
+      searchResults: {},
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      model: 'gpt-3.5-turbo',
+      success: false,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    throw error;
+  }
+}
+
+// Helper function to map classification response to DocumentCategory enum
+function mapToDocumentCategory(category: string): DocumentCategory {
+  const categoryMap: Record<string, DocumentCategory> = {
+    'SOC 2 Audit Report': DocumentCategory.SOC2_AUDIT,
+    'ISO 27001 Certification': DocumentCategory.ISO27001_CERT,
+    'Penetration Test Report': DocumentCategory.PENTEST_REPORT,
+    'Business Continuity Plan': DocumentCategory.BUSINESS_CONTINUITY,
+    'Other Documents': DocumentCategory.OTHER
+  };
+
+  return categoryMap[category] || DocumentCategory.OTHER;
+}
 
 interface CleanedCompanyData {
   name: string;
@@ -189,6 +352,10 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
     'gpt-4o': {
       input: 0.01,
       output: 0.03,
+    },
+    'gpt-3.5-turbo': {
+      input: 0.001,
+      output: 0.002,
     }
   };
 
@@ -264,7 +431,7 @@ export async function findMissingCompanyData(
   try {
     console.log("[OpenAI Search] 📤 Sending request to OpenAI");
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -301,9 +468,9 @@ export async function findMissingCompanyData(
       estimatedCost: calculateOpenAICost(
         response.usage?.prompt_tokens || 0,
         response.usage?.completion_tokens || 0,
-        'gpt-4o'
+        'gpt-3.5-turbo'
       ),
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: true,
       duration,
       searchDate: new Date(),
@@ -335,7 +502,7 @@ export async function findMissingCompanyData(
       inputTokens: 0,
       outputTokens: 0,
       estimatedCost: 0,
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: false,
       errorMessage,
       duration,
@@ -402,7 +569,7 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
   while (retries > 0) {
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
@@ -434,9 +601,9 @@ export async function validateAndCleanCompanyData(rawData: Partial<typeof compan
         estimatedCost: calculateOpenAICost(
           response.usage?.prompt_tokens || 0,
           response.usage?.completion_tokens || 0,
-          'gpt-4o'
+          'gpt-3.5-turbo'
         ),
-        model: 'gpt-4o',
+        model: 'gpt-3.5-turbo',
         success: true,
         duration,
         searchDate: new Date(),
@@ -521,7 +688,7 @@ Respond with a JSON object containing:
     });
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -571,9 +738,9 @@ Respond with a JSON object containing:
       estimatedCost: calculateOpenAICost(
         response.usage?.prompt_tokens || 0,
         response.usage?.completion_tokens || 0,
-        'gpt-4o'
+        'gpt-3.5-turbo'
       ),
-      model: 'gpt-4o',
+      model: 'gpt-3.5-turbo',
       success: true,
       duration,
       searchDate: new Date(),
@@ -613,4 +780,134 @@ interface SearchAnalytics {
   searchDate: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+interface DocumentAnalysisResult {
+  answers: DocumentAnswer[];
+}
+
+export async function analyzeDocument(
+  documentText: string,
+  fields: { field_key: string; question: string; ai_search_instructions: string }[]
+): Promise<DocumentAnalysisResult> {
+  const startTime = Date.now();
+
+  try {
+    console.log('[OpenAI Service] Starting document analysis:', {
+      textLength: documentText.length,
+      fieldsCount: fields.length,
+      fieldKeys: fields.map(f => f.field_key),
+      timestamp: new Date().toISOString()
+    });
+
+    const prompt = `
+    As a compliance and security expert, analyze this document section and extract specific information for each field.
+    You must maintain strict field key mapping throughout your analysis.
+
+    Document Text:
+    ${documentText}
+
+    Instructions:
+    1. For each field below, extract ONLY information that directly answers its specific question
+    2. You MUST use the exact field_key provided for each answer
+    3. Do not combine answers from different fields
+    4. If no relevant information is found for a field, skip it
+    5. Use high confidence scores (0.9+) only for exact matches
+
+    Fields to analyze:
+    ${fields.map(f => `
+    Field Key: "${f.field_key}"
+    Question: ${f.question}
+    Search Instructions: ${f.ai_search_instructions}
+    Look for:
+    - Direct statements or claims
+    - Specific dates, numbers, or procedures
+    - Policy descriptions
+    `).join('\n')}
+
+    Return a JSON object in this format:
+    {
+      "answers": [
+        {
+          "field_key": "exact field_key from above",
+          "answer": "exact quote or clear summary from document",
+          "source_document": "relevant section from document that supports this answer",
+          "confidence": number between 0 and 1
+        }
+      ]
+    }
+
+    Important:
+    - Each answer MUST use one of these exact field keys: ${fields.map(f => `"${f.field_key}"`).join(', ')}
+    - Do not create new field keys or combine multiple fields
+    - Confidence scoring:
+      * 0.9+ for exact matches with clear evidence
+      * 0.7-0.8 for strong indirect matches
+      * 0.5-0.6 for relevant but indirect matches
+      * Skip if confidence would be below 0.5
+    `;
+
+    console.log('[OpenAI Service] Sending request with field keys:', { 
+      fieldKeys: fields.map(f => f.field_key),
+      timestamp: new Date().toISOString() 
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a compliance document analysis expert specializing in security and risk assessment."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3
+    });
+
+    const duration = Date.now() - startTime;
+
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+
+    const result = JSON.parse(response.choices[0].message.content);
+
+    // Validate field keys in response
+    const validFieldKeys = new Set(fields.map(f => f.field_key));
+    result.answers = result.answers.filter(answer => {
+      const isValidKey = validFieldKeys.has(answer.field_key);
+      if (!isValidKey) {
+        console.warn('[OpenAI Service] Invalid field key found:', {
+          invalidKey: answer.field_key,
+          validKeys: Array.from(validFieldKeys),
+          answer: answer.answer.substring(0, 100) + '...'
+        });
+      }
+      return isValidKey;
+    });
+
+    console.log('[OpenAI Service] Answers by field:', {
+      total: result.answers.length,
+      byField: Object.fromEntries(
+        Array.from(validFieldKeys).map(key => [
+          key,
+          result.answers.filter(a => a.field_key === key).length
+        ])
+      ),
+      timestamp: new Date().toISOString()
+    });
+
+    return result;
+  } catch (error) {
+    console.error('[OpenAI Service] Document analysis error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: Date.now() - startTime,
+      timestamp: new Date().toISOString()
+    });
+    throw error;
+  }
 }
