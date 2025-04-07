@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { Eye, EyeOff, Check, ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { AuthFooter } from "@/components/auth/AuthFooter";
 
@@ -54,29 +54,36 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
-          <div className="w-full lg:w-3/5 p-12 flex flex-col justify-center">
-            <div className="mb-10">
+      <div className="px-4 pt-8 w-full max-w-6xl mx-auto">
+        <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1 transition-colors font-medium text-sm">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Website
+        </Link>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+          <div className="w-full lg:w-[55%] p-14 flex flex-col justify-center">
+            <div className="mb-12">
               <img
                 src="/invela-logo.svg"
                 alt="Invela"
-                className="h-12 w-12 mb-4"
+                className="h-14 w-14 mb-6"
               />
-              <h1 className="text-2xl font-bold">Log in to Invela</h1>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h1 className="text-3xl font-bold">Log in to Invela</h1>
+              <p className="text-base text-muted-foreground mt-3">
                 Enter your credentials to access your account
               </p>
             </div>
 
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
+                    <FormItem className="mb-6">
+                      <FormLabel className="text-base">Email</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -84,7 +91,7 @@ export default function LoginPage() {
                           autoComplete="email"
                           autoFocus
                           placeholder="Enter your email"
-                          className={field.value && !form.formState.errors.email ? "border-green-500" : ""}
+                          className={`h-12 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
                           onChange={(e) => {
                             field.onChange(e);
                             console.log('[Login] Email field changed:', e.target.value);
@@ -95,7 +102,7 @@ export default function LoginPage() {
                         <FormMessage />
                       )}
                       {field.value && !form.formState.errors.email && (
-                        <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                        <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
                           <Check className="h-4 w-4" />
                           Valid email address
                         </p>
@@ -108,8 +115,8 @@ export default function LoginPage() {
                   control={form.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
+                    <FormItem className="mb-6">
+                      <FormLabel className="text-base">Password</FormLabel>
                       <div className="relative">
                         <FormControl>
                           <Input
@@ -117,7 +124,7 @@ export default function LoginPage() {
                             {...field}
                             autoComplete="current-password"
                             placeholder="Enter your password"
-                            className={field.value && !form.formState.errors.password ? "border-green-500" : ""}
+                            className={`h-12 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
                             onChange={(e) => {
                               field.onChange(e);
                               console.log('[Login] Password field changed, length:', e.target.value.length);
@@ -142,7 +149,7 @@ export default function LoginPage() {
                         <FormMessage />
                       )}
                       {field.value && !form.formState.errors.password && (
-                        <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                        <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
                           <Check className="h-4 w-4" />
                           Password meets requirements
                         </p>
@@ -153,7 +160,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full font-bold hover:opacity-90 mt-8"
+                  className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
                   disabled={!form.formState.isValid || loginMutation.isPending}
                   onClick={() => {
                     console.log('[Login] Submit button clicked');
@@ -173,7 +180,7 @@ export default function LoginPage() {
                   )}
                 </Button>
 
-                <div className="text-center mt-5">
+                <div className="text-center mt-6">
                   <p className="text-sm text-muted-foreground">
                     Have an invitation code?{" "}
                     <Link href="/register" className="text-primary hover:underline">
@@ -185,7 +192,7 @@ export default function LoginPage() {
             </Form>
           </div>
 
-          <div className="hidden lg:block w-2/5 p-3">
+          <div className="hidden lg:block w-[45%] p-3">
             <AuthHeroSection isLogin={true} />
           </div>
         </div>

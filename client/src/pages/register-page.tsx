@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { Eye, EyeOff, Check, ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
 import { AuthFooter } from "@/components/auth/AuthFooter";
 import { useQuery } from "@tanstack/react-query";
@@ -226,40 +226,43 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gray-100">
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
-          <div className="hidden lg:block w-2/5 p-3">
-            <AuthHeroSection isLogin={false} />
-          </div>
-          
-          <div className="w-full lg:w-3/5 p-12 flex flex-col justify-center">
-            <div className="mb-10">
+      <div className="px-4 pt-8 w-full max-w-6xl mx-auto">
+        <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1 transition-colors font-medium text-sm">
+          <ArrowLeft className="h-4 w-4" />
+          Back to Website
+        </Link>
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+          <div className="w-full lg:w-[55%] p-14 flex flex-col justify-center">
+            <div className="mb-12">
               <img
                 src="/invela-logo.svg"
                 alt="Invela"
-                className="h-12 w-12 mb-4"
+                className="h-14 w-14 mb-6"
               />
-              <h1 className="text-2xl font-bold">Create your account</h1>
-              <p className="text-sm text-muted-foreground mt-2">
+              <h1 className="text-3xl font-bold">Create your account</h1>
+              <p className="text-base text-muted-foreground mt-3">
                 Complete your registration to get started
               </p>
             </div>
 
             {!validatedInvitation ? (
               <Form {...invitationForm}>
-                <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-5">
+                <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-6">
                   <FormField
                     control={invitationForm.control}
                     name="invitationCode"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invitation Code</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="text-base">Invitation Code</FormLabel>
                         <FormControl>
                           <Input
                             {...field}
                             placeholder="Enter 6-character code"
                             autoFocus
-                            className="text-center tracking-widest uppercase font-mono"
+                            className="text-center tracking-widest uppercase font-mono h-12"
                             maxLength={6}
                             value={field.value.toUpperCase()}
                           />
@@ -271,13 +274,13 @@ export default function RegisterPage() {
 
                   <Button
                     type="submit"
-                    className="w-full font-bold hover:opacity-90 mt-8"
+                    className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
                     disabled={invitationForm.formState.isSubmitting}
                   >
                     Validate Code
                   </Button>
 
-                  <div className="text-center mt-5">
+                  <div className="text-center mt-6">
                     <p className="text-sm text-muted-foreground">
                       Already have an account?{" "}
                       <Link href="/login" className="text-primary hover:underline">
@@ -289,8 +292,8 @@ export default function RegisterPage() {
               </Form>
             ) : (
               <Form {...registrationForm}>
-                <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     <div className="flex items-start gap-3">
                       <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       <div>
@@ -308,10 +311,10 @@ export default function RegisterPage() {
                     control={registrationForm.control}
                     name="email"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="text-base">Email</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" disabled />
+                          <Input {...field} type="email" disabled className="h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -322,25 +325,25 @@ export default function RegisterPage() {
                     control={registrationForm.control}
                     name="company"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="text-base">Company</FormLabel>
                         <FormControl>
-                          <Input {...field} type="text" disabled />
+                          <Input {...field} type="text" disabled className="h-12" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-6 mb-6">
                     <FormField
                       control={registrationForm.control}
                       name="firstName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>First Name</FormLabel>
+                          <FormLabel className="text-base">First Name</FormLabel>
                           <FormControl>
-                            <Input {...field} type="text" placeholder="First name" />
+                            <Input {...field} type="text" placeholder="First name" className="h-12" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -352,9 +355,9 @@ export default function RegisterPage() {
                       name="lastName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Last Name</FormLabel>
+                          <FormLabel className="text-base">Last Name</FormLabel>
                           <FormControl>
-                            <Input {...field} type="text" placeholder="Last name" />
+                            <Input {...field} type="text" placeholder="Last name" className="h-12" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -366,14 +369,15 @@ export default function RegisterPage() {
                     control={registrationForm.control}
                     name="password"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
+                      <FormItem className="mb-6">
+                        <FormLabel className="text-base">Password</FormLabel>
                         <div className="relative">
                           <FormControl>
                             <Input
                               type={showPassword ? "text" : "password"}
                               {...field}
                               placeholder="Choose a secure password"
+                              className="h-12"
                             />
                           </FormControl>
                           <Button
@@ -397,13 +401,13 @@ export default function RegisterPage() {
 
                   <Button
                     type="submit"
-                    className="w-full font-bold hover:opacity-90 mt-8"
+                    className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
                     disabled={registerMutation.isPending}
                   >
                     Create Account
                   </Button>
 
-                  <div className="text-center mt-5">
+                  <div className="text-center mt-6">
                     <p className="text-sm text-muted-foreground">
                       Already have an account?{" "}
                       <Link href="/login" className="text-primary hover:underline">
@@ -414,6 +418,10 @@ export default function RegisterPage() {
                 </form>
               </Form>
             )}
+          </div>
+
+          <div className="hidden lg:block w-[45%] p-3">
+            <AuthHeroSection isLogin={false} />
           </div>
         </div>
       </div>
