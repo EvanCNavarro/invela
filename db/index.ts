@@ -48,7 +48,8 @@ pool.on('error', (err, client) => {
           await client.connect();
           console.log('Successfully reconnected to database');
           retryCount = 0;
-        } catch (reconnectError) {
+        } catch (error) {
+          const reconnectError = error as Error;
           console.error('Failed to reconnect:', reconnectError.message);
         }
       }, delay);
@@ -104,18 +105,13 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Run migrations conditionally based on environment variable
-// Only run migrations on startup if explicitly enabled
-if (process.env.RUN_MIGRATIONS === 'true') {
-  (async () => {
-    try {
-      console.log('Running database migrations...');
-      await runMigrations();
-      console.log('Database migrations completed successfully');
-    } catch (error) {
-      console.error('Failed to run migrations:', error);
-    }
-  })();
-} else {
-  console.log('Automatic migrations disabled - set RUN_MIGRATIONS=true to enable');
-}
+// Run migrations on startup
+(async () => {
+  try {
+    console.log('Running database migrations...');
+    await runMigrations();
+    console.log('Database migrations completed successfully');
+  } catch (error) {
+    console.error('Failed to run migrations:', error);
+  }
+})();
