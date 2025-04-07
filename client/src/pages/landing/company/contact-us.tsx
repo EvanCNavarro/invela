@@ -42,6 +42,8 @@ export default function ContactUsPage() {
       message: '',
     },
     mode: 'onChange', // Enable validation on field change
+    criteriaMode: 'all',
+    shouldFocusError: true,
   });
   
   // Set autofocus on component mount
@@ -72,6 +74,14 @@ export default function ContactUsPage() {
     const errorCount = Object.keys(form.formState.errors).length;
     
     if (errorCount > 0) {
+      // Force validation of all required fields to show all error states at once
+      Object.keys(contactFormSchema.shape).forEach(key => {
+        form.setError(key as any, { 
+          type: "manual",
+          message: form.formState.errors[key as keyof ContactFormValues]?.message
+        }, { shouldFocus: false });
+      });
+      
       toast({
         title: "Form validation failed",
         description: `Please correct the ${errorCount} highlighted field${errorCount === 1 ? '' : 's'} before submitting.`,
@@ -130,7 +140,7 @@ export default function ContactUsPage() {
                                   autoFocus
                                   {...field} 
                                   className={
-                                    form.formState.touchedFields.name
+                                    form.formState.touchedFields.name || form.formState.isSubmitted
                                       ? !form.formState.errors.name && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
                                         : form.formState.errors.name 
@@ -139,7 +149,7 @@ export default function ContactUsPage() {
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.name && !form.formState.errors.name && field.value && (
+                                {(form.formState.touchedFields.name || form.formState.isSubmitted) && !form.formState.errors.name && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -166,7 +176,7 @@ export default function ContactUsPage() {
                                   placeholder="Your company" 
                                   {...field} 
                                   className={
-                                    form.formState.touchedFields.company
+                                    form.formState.touchedFields.company || form.formState.isSubmitted
                                       ? !form.formState.errors.company && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
                                         : form.formState.errors.company
@@ -175,7 +185,7 @@ export default function ContactUsPage() {
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.company && !form.formState.errors.company && field.value && (
+                                {(form.formState.touchedFields.company || form.formState.isSubmitted) && !form.formState.errors.company && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -205,7 +215,7 @@ export default function ContactUsPage() {
                                   placeholder="your.email@example.com" 
                                   {...field} 
                                   className={
-                                    form.formState.touchedFields.email
+                                    form.formState.touchedFields.email || form.formState.isSubmitted
                                       ? !form.formState.errors.email && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
                                         : form.formState.errors.email
@@ -214,7 +224,7 @@ export default function ContactUsPage() {
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.email && !form.formState.errors.email && field.value && (
+                                {(form.formState.touchedFields.email || form.formState.isSubmitted) && !form.formState.errors.email && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -275,10 +285,12 @@ export default function ContactUsPage() {
                               <FormControl>
                                 <div className="relative">
                                   <SelectTrigger className={
-                                    field.value
-                                      ? !form.formState.errors.inquiryType
+                                    form.formState.touchedFields.inquiryType || field.value || form.formState.isSubmitted
+                                      ? !form.formState.errors.inquiryType && field.value
                                         ? "border-green-500 focus:ring-green-500" 
-                                        : "border-red-500 focus:ring-red-500"
+                                        : form.formState.errors.inquiryType
+                                          ? "border-red-500 focus:ring-red-500"
+                                          : ""
                                       : ""
                                   }>
                                     <SelectValue placeholder="Select the type of inquiry" />
@@ -313,7 +325,7 @@ export default function ContactUsPage() {
                               <Textarea 
                                 placeholder="How can we help you? Please provide details about your inquiry." 
                                 className={`min-h-[120px] ${
-                                  form.formState.touchedFields.message
+                                  form.formState.touchedFields.message || form.formState.isSubmitted
                                     ? !form.formState.errors.message && field.value
                                       ? "border-green-500 focus-visible:ring-green-500 pr-10" 
                                       : form.formState.errors.message
@@ -323,7 +335,7 @@ export default function ContactUsPage() {
                                 }`}
                                 {...field} 
                               />
-                              {form.formState.touchedFields.message && !form.formState.errors.message && field.value && (
+                              {(form.formState.touchedFields.message || form.formState.isSubmitted) && !form.formState.errors.message && field.value && (
                                 <div className="absolute right-3 top-5 pointer-events-none">
                                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                                 </div>
