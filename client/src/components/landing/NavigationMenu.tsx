@@ -132,9 +132,9 @@ interface NavigationLinkProps {
 function NavigationLink({ href, title, description }: NavigationLinkProps) {
   return (
     <Link href={href}>
-      <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors">
+      <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors h-[85px] flex flex-col">
         <div className="text-sm font-medium text-gray-900">{title}</div>
-        {description && <div className="text-xs text-gray-500 mt-1">{description}</div>}
+        {description && <div className="text-xs text-gray-500 mt-1 line-clamp-3">{description}</div>}
       </div>
     </Link>
   );
