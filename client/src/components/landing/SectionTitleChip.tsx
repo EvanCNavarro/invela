@@ -18,50 +18,48 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
     
     // Show copied message for a shorter duration
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 1000); // Reduced from 2000ms to 1000ms
+    setTimeout(() => setIsCopied(false), 1000);
   };
   
   return (
-    <div className="relative">
-      {/* Container with fixed positioning to prevent jitter */}
-      <div className="inline-block relative">
-        {/* The actual button */}
-        <motion.span 
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-          onClick={copyToClipboard}
-          className={`inline-block bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium cursor-pointer hover:bg-blue-100 transition-colors duration-200 ${className}`}
-        >
-          {title}
-        </motion.span>
-        
-        {/* Hash symbol that appears on hover - properly centered */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div 
-              initial={{ opacity: 0, x: -5 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -5 }}
-              transition={{ duration: 0.2 }}
-              className="absolute right-0 top-0 bottom-0 flex items-center transform translate-x-full"
-              style={{ marginLeft: '8px' }}
-            >
-              <span className="text-gray-400 font-semibold" style={{ fontSize: '20px', lineHeight: 1 }}>
-                #
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {/* Copied to clipboard popup - appears above and fades upward faster */}
+    <div className="inline-flex items-center">
+      {/* The chip itself */}
+      <motion.span 
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={copyToClipboard}
+        className={`bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium cursor-pointer hover:bg-blue-100 transition-colors duration-200 ${className}`}
+      >
+        {title}
+      </motion.span>
+      
+      {/* Hash symbol that appears outside the chip on hover */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.span 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="ml-2 text-gray-400 font-semibold"
+            style={{ fontSize: '22px', lineHeight: 1 }}
+          >
+            #
+          </motion.span>
+        )}
+      </AnimatePresence>
+      
+      {/* Popup container */}
+      <div className="relative">
+        {/* Copied to clipboard popup */}
         <AnimatePresence>
           {isCopied && (
             <motion.div
               initial={{ opacity: 0, y: 0 }}
               animate={{ opacity: 1, y: -10 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }} // Faster animation
-              className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="absolute bottom-8 left-0 -translate-x-1/4 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
             >
               Copied to clipboard
             </motion.div>
