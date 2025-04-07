@@ -98,7 +98,7 @@ export default function LoginPage() {
               name="email"
               render={({ field }) => (
                 <FormItem className="mb-6">
-                  <FormLabel className="text-base">Email</FormLabel>
+                  <FormLabel className="text-base font-medium mb-2 block">Email</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -106,7 +106,7 @@ export default function LoginPage() {
                       autoComplete="email"
                       autoFocus
                       placeholder="Enter your email"
-                      className={`h-12 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
+                      className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
                       onChange={(e) => {
                         field.onChange(e);
                         console.log('[Login] Email field changed:', e.target.value);
@@ -139,7 +139,7 @@ export default function LoginPage() {
               name="password"
               render={({ field }) => (
                 <FormItem className="mb-6">
-                  <FormLabel className="text-base">Password</FormLabel>
+                  <FormLabel className="text-base font-medium mb-2 block">Password</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
@@ -147,7 +147,7 @@ export default function LoginPage() {
                         {...field}
                         autoComplete="current-password"
                         placeholder="Enter your password"
-                        className={`h-12 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
+                        className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
                         onChange={(e) => {
                           field.onChange(e);
                           console.log('[Login] Password field changed, length:', e.target.value.length);
@@ -193,7 +193,7 @@ export default function LoginPage() {
           >
             <Button
               type="submit"
-              className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+              className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
               disabled={!form.formState.isValid || loginMutation.isPending}
               onClick={() => {
                 console.log('[Login] Submit button clicked');

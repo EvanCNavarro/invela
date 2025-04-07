@@ -271,14 +271,16 @@ export default function RegisterPage() {
                 control={invitationForm.control}
                 name="invitationCode"
                 render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="text-base">Invitation Code</FormLabel>
+                  <FormItem className="mb-8">
+                    <FormLabel className="text-base font-medium mb-2 block">Invitation Code</FormLabel>
                     <FormControl>
-                      <InvitationCodeInput
-                        value={field.value}
-                        onChange={field.onChange}
-                        autoFocus={true}
-                      />
+                      <div className="flex justify-start w-full">
+                        <InvitationCodeInput
+                          value={field.value}
+                          onChange={field.onChange}
+                          autoFocus={true}
+                        />
+                      </div>
                     </FormControl>
                     <div className="min-h-[24px] mt-4">
                       <FormMessage />
@@ -297,7 +299,7 @@ export default function RegisterPage() {
             >
               <Button
                 type="submit"
-                className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+                className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
                 disabled={invitationForm.formState.isSubmitting}
               >
                 Validate Code
@@ -359,7 +361,7 @@ export default function RegisterPage() {
                   <FormItem className="mb-6">
                     <FormLabel className="text-base">Email</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" disabled className="h-12" />
+                      <Input {...field} type="email" disabled className="h-14 bg-gray-50" />
                     </FormControl>
                     <div className="min-h-[24px] mt-2">
                       <FormMessage />
@@ -381,7 +383,7 @@ export default function RegisterPage() {
                   <FormItem className="mb-6">
                     <FormLabel className="text-base">Company</FormLabel>
                     <FormControl>
-                      <Input {...field} type="text" disabled className="h-12" />
+                      <Input {...field} type="text" disabled className="h-14 bg-gray-50" />
                     </FormControl>
                     <div className="min-h-[24px] mt-2">
                       <FormMessage />
@@ -404,7 +406,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel className="text-base">First Name</FormLabel>
                     <FormControl>
-                      <Input {...field} type="text" placeholder="First name" className="h-12" />
+                      <Input {...field} type="text" placeholder="First name" className="h-14 bg-gray-50" />
                     </FormControl>
                     <div className="min-h-[24px] mt-2">
                       <FormMessage />
@@ -420,7 +422,7 @@ export default function RegisterPage() {
                   <FormItem>
                     <FormLabel className="text-base">Last Name</FormLabel>
                     <FormControl>
-                      <Input {...field} type="text" placeholder="Last name" className="h-12" />
+                      <Input {...field} type="text" placeholder="Last name" className="h-14 bg-gray-50" />
                     </FormControl>
                     <div className="min-h-[24px] mt-2">
                       <FormMessage />
@@ -447,7 +449,7 @@ export default function RegisterPage() {
                           type={showPassword ? "text" : "password"}
                           {...field}
                           placeholder="Choose a secure password"
-                          className="h-12"
+                          className="h-14 bg-gray-50"
                         />
                       </FormControl>
                       <Button
@@ -481,7 +483,7 @@ export default function RegisterPage() {
             >
               <Button
                 type="submit"
-                className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+                className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
                 disabled={registerMutation.isPending}
               >
                 Create Account
