@@ -96,22 +96,22 @@ export function NavigationMenu() {
                   description="Join our team and help shape the future of FinTech compliance"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/legal/privacy-policy"
                   title="Privacy Policy"
                   description="How we handle and protect your data"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/legal/terms-of-use"
                   title="Terms of Use"
                   description="Guidelines for using our platform and services"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/legal"
                   title="Legal"
                   description="Legal information and compliance documentation"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/site-map"
                   title="Site Map"
                   description="Navigate our website with ease"
                 />

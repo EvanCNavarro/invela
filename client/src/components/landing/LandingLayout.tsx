@@ -109,10 +109,10 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><Link href="/landing/company/about"><a className="text-gray-600 hover:text-blue-600">About</a></Link></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Team</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Careers</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Terms of Use</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Legal</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Site Map</a></li>
+                <li><Link href="/landing/legal/privacy-policy"><a className="text-gray-600 hover:text-blue-600">Privacy Policy</a></Link></li>
+                <li><Link href="/landing/legal/terms-of-use"><a className="text-gray-600 hover:text-blue-600">Terms of Use</a></Link></li>
+                <li><Link href="/landing/legal"><a className="text-gray-600 hover:text-blue-600">Legal</a></Link></li>
+                <li><Link href="/landing/site-map"><a className="text-gray-600 hover:text-blue-600">Site Map</a></Link></li>
               </ul>
             </div>
             
