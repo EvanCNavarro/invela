@@ -1,0 +1,298 @@
+import React from 'react';
+import { motion } from 'framer-motion';
+import { LandingLayout } from '@/components/landing/LandingLayout';
+import { ArrowRight, CheckCircle, Shield } from 'lucide-react';
+import { Link } from 'wouter';
+
+// Animation variants
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.2
+    }
+  }
+};
+
+export default function AccreditationPage() {
+  return (
+    <LandingLayout>
+      {/* Hero Section */}
+      <section className="py-20 bg-gradient-to-b from-white to-blue-50/50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <motion.span 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              >
+                Invela Accreditation
+              </motion.span>
+              
+              <motion.h1 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="text-4xl sm:text-5xl font-bold mb-6"
+              >
+                Streamline FinTech partner accreditation
+              </motion.h1>
+              
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="text-xl text-gray-600 mb-10"
+              >
+                Invela's accreditation platform automates the complex process of evaluating and onboarding FinTech partners, reducing time to market while ensuring compliance.
+              </motion.p>
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex flex-col sm:flex-row gap-4"
+              >
+                <Link href="/login">
+                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Link>
+                <a href="#features" className="bg-white hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg border border-gray-200 transition-colors duration-200 text-center">
+                  Learn More
+                </a>
+              </motion.div>
+            </div>
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.7, delay: 0.2 }}
+              className="relative"
+            >
+              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
+                <div className="bg-gray-200 animate-pulse w-full h-full"></div>
+                {/* This would be your product screenshot */}
+              </div>
+              {/* Decorative elements */}
+              <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* How It Works Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <motion.span 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+            >
+              How It Works
+            </motion.span>
+            
+            <motion.h2 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-3xl font-bold mb-6"
+            >
+              A seamless accreditation process
+            </motion.h2>
+            
+            <motion.p 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-lg text-gray-600"
+            >
+              Our platform transforms the traditionally complex and time-consuming accreditation process into a streamlined workflow.
+            </motion.p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Invitation & Onboarding",
+                description: "Invite FinTech partners through a personalized link, where they can complete a secure onboarding process."
+              },
+              {
+                step: "2",
+                title: "Data Collection & Verification",
+                description: "Collect all necessary documentation and data through structured forms, with automated validation and verification."
+              },
+              {
+                step: "3",
+                title: "Risk Assessment",
+                description: "Analyze submitted information against your risk framework to generate comprehensive risk scores and insights."
+              }
+            ].map((step, index) => (
+              <motion.div 
+                key={index}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                variants={fadeIn}
+                className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm"
+              >
+                <div className="absolute -top-5 -left-5 w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                  {step.step}
+                </div>
+                <h3 className="text-xl font-semibold mb-4 mt-2">{step.title}</h3>
+                <p className="text-gray-600">{step.description}</p>
+              </motion.div>
+            ))}
+          </div>
+          
+          <div className="flex justify-center mt-12">
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="relative p-8 bg-blue-50/70 rounded-xl border border-blue-100 max-w-2xl"
+            >
+              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+                4
+              </div>
+              <h3 className="text-xl font-semibold mb-4 mt-2 text-center">Ongoing Monitoring & Compliance</h3>
+              <p className="text-gray-600 text-center">
+                After initial accreditation, our platform continuously monitors key risk indicators and maintains compliance documentation, alerting you to any changes or concerns.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Benefits Section */}
+      <section className="py-20 bg-blue-50/50">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <motion.span 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+            >
+              Benefits
+            </motion.span>
+            
+            <motion.h2 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-3xl font-bold mb-6"
+            >
+              Why choose Invela Accreditation
+            </motion.h2>
+            
+            <motion.p 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-lg text-gray-600"
+            >
+              Our accreditation platform offers significant advantages over traditional manual processes.
+            </motion.p>
+          </div>
+          
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.1 }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
+            {[
+              "Reduce accreditation time from months to weeks",
+              "Standardize evaluation criteria across all partners",
+              "Eliminate manual paperwork and documentation headaches",
+              "Ensure consistent regulatory compliance",
+              "Create defensible audit trails for all decisions",
+              "Gain real-time visibility into the accreditation pipeline",
+              "Automatically identify potential risk factors",
+              "Integrate with existing systems and workflows"
+            ].map((benefit, index) => (
+              <motion.div 
+                key={index}
+                variants={fadeIn}
+                className="flex items-start p-4 bg-white rounded-lg shadow-sm"
+              >
+                <Shield className="h-6 w-6 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
+                <span className="text-gray-700">{benefit}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+      
+      {/* CTA Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
+            <motion.h2 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-3xl font-bold mb-6"
+            >
+              Ready to transform your accreditation process?
+            </motion.h2>
+            
+            <motion.p 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="text-xl text-blue-100 mb-10"
+            >
+              Join leading financial institutions that have streamlined their partner accreditation with Invela.
+            </motion.p>
+            
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Link href="/login">
+                <a className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-8 py-4 rounded-lg transition-colors duration-200">
+                  Start a Free Trial
+                </a>
+              </Link>
+              <Link href="/landing/company/about">
+                <a className="bg-transparent hover:bg-blue-700 text-white font-medium px-8 py-4 rounded-lg border border-white/30 transition-colors duration-200">
+                  Request a Demo
+                </a>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+    </LandingLayout>
+  );
+}

@@ -27,6 +27,11 @@ import { ReportingBuilderPage } from "@/pages/builder/sub-pages/ReportingBuilder
 import { GroupsBuilderPage } from "@/pages/builder/sub-pages/GroupsBuilderPage";
 import { ProtectedRoute } from "./lib/protected-route";
 
+// Landing pages
+import LandingPage from "@/pages/landing";
+import AboutPage from "@/pages/landing/company/about";
+import AccreditationPage from "@/pages/landing/products/accreditation";
+
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
@@ -41,6 +46,11 @@ function Router() {
 
   return (
     <Switch>
+      {/* Landing Pages */}
+      <Route path="/landing" component={LandingPage} />
+      <Route path="/landing/company/about" component={AboutPage} />
+      <Route path="/landing/products/accreditation" component={AccreditationPage} />
+
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
       <Route path="/register" component={RegisterPage} />
