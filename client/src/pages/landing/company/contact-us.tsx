@@ -126,6 +126,7 @@ export default function ContactUsPage() {
                               <div className="relative">
                                 <Input 
                                   placeholder="Your name" 
+                                  autoFocus
                                   {...field} 
                                   className={
                                     form.formState.submitCount > 0
@@ -136,7 +137,9 @@ export default function ContactUsPage() {
                                   }
                                 />
                                 {form.formState.submitCount > 0 && !form.formState.errors.name && (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                  </div>
                                 )}
                               </div>
                             </FormControl>
@@ -168,7 +171,9 @@ export default function ContactUsPage() {
                                   }
                                 />
                                 {form.formState.submitCount > 0 && !form.formState.errors.company && (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                  </div>
                                 )}
                               </div>
                             </FormControl>
@@ -203,7 +208,9 @@ export default function ContactUsPage() {
                                   }
                                 />
                                 {form.formState.submitCount > 0 && !form.formState.errors.email && (
-                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                  </div>
                                 )}
                               </div>
                             </FormControl>
@@ -224,6 +231,16 @@ export default function ContactUsPage() {
                             <FormControl>
                               <Input 
                                 placeholder="+1 (555) 123-4567" 
+                                type="tel"
+                                pattern="[0-9+()-\s]*"
+                                onKeyPress={(e) => {
+                                  // Allow only numbers, +, -, (, ), and spaces
+                                  const regex = /[0-9+\-() ]/;
+                                  const key = e.key;
+                                  if (!regex.test(key)) {
+                                    e.preventDefault();
+                                  }
+                                }}
                                 {...field} 
                               />
                             </FormControl>
@@ -259,7 +276,9 @@ export default function ContactUsPage() {
                                   }>
                                     <SelectValue placeholder="Select the type of inquiry" />
                                     {form.formState.submitCount > 0 && !form.formState.errors.inquiryType && (
-                                      <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-8 top-1/2 transform -translate-y-1/2" />
+                                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                      </div>
                                     )}
                                   </SelectTrigger>
                                 </div>
@@ -302,7 +321,9 @@ export default function ContactUsPage() {
                                 {...field} 
                               />
                               {form.formState.submitCount > 0 && !form.formState.errors.message && (
-                                <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-5" />
+                                <div className="absolute right-3 top-5 pointer-events-none">
+                                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                </div>
                               )}
                             </div>
                           </FormControl>
@@ -311,7 +332,12 @@ export default function ContactUsPage() {
                       )}
                     />
                     
-                    <Button type="submit" className="w-full md:w-auto px-8">Send Message</Button>
+                    <Button 
+                      type="submit" 
+                      className="w-full md:w-auto px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+                    >
+                      Send Message
+                    </Button>
                   </form>
                 </Form>
               </div>

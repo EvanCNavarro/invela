@@ -32,9 +32,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             <div className="flex items-center gap-4">
               <NavigationMenu />
               
-              <Link href="/landing/company/contact-us?type=product-demo">
+              <Link href="/landing/company/contact-us?type=product-demo#contact-form">
                 <div className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
-                  <span className="font-semibold">Request a Demo</span>
+                  <span className="font-semibold">Request Demo</span>
                 </div>
               </Link>
               
