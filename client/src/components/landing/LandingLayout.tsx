@@ -18,7 +18,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             <Link href="/landing">
               <div className="flex items-center">
                 <img 
-                  src="/invela-logo.svg" 
+                  src="/logo_invela.svg" 
                   alt="Invela"
                   className="h-8"
                 />
@@ -29,8 +29,11 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               <NavigationMenu />
               
               <Link href="/login">
-                <div className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
-                  Sign In
+                <div className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer flex items-center gap-2">
+                  <span>Sign In</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </div>
               </Link>
             </div>
@@ -49,7 +52,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <img 
-                src="/invela-logo.svg" 
+                src="/logo_invela.svg" 
                 alt="Invela"
                 className="h-8 mb-4"
               />
@@ -120,10 +123,14 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Phone: <a href="tel:+15551234567" className="text-blue-600 hover:underline">+1 (555) 123-4567</a>
               </p>
               <p className="text-gray-600 mb-2">
-                123 Financial District<br />
-                Suite 4500<br />
-                New York, NY 10001
+                1845 Sidewinder Drive<br />
+                Suite 207<br />
+                Park City, UT 84060
               </p>
+              
+              <a href="#" className="mt-6 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
+                Request a Demo
+              </a>
             </div>
           </div>
           

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getWebSocketService } from '@/services/websocket';
+import webSocketService from '@/services/websocket';
 
 type MessageHandler = (data: any) => void;
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
@@ -25,9 +25,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   } = options;
 
   const [status, setStatus] = useState<WebSocketStatus>('disconnected');
-  const wsService = getWebSocketService();
   const subscribedEvents = useRef<Set<string>>(new Set());
-  const subscribedHandlers = useRef<Map<string, Set<MessageHandler>>>(new Map());
+  const unsubscribeFunctions = useRef<Map<string, Map<MessageHandler, () => void>>>(new Map());
 
   // Effect to manage WebSocket connection
   useEffect(() => {
@@ -35,90 +34,111 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       connect();
     }
 
-    // Update status from service
-    const statusInterval = setInterval(() => {
-      const currentStatus = wsService.getStatus();
-      if (currentStatus !== status) {
-        setStatus(currentStatus);
-        
-        // Trigger callbacks on status changes
-        if (currentStatus === 'connected' && status !== 'connected' && onOpen) {
-          onOpen();
-        }
-        if (currentStatus === 'disconnected' && status === 'connected' && onClose) {
-          onClose();
-        }
-        if (currentStatus === 'error' && onError) {
-          onError(new Event('error'));
-        }
-      }
-    }, 500);
+    // We can't directly check connection status with our websocket service
+    // So we'll just set it to 'connecting' when autoConnect is true
+    if (autoConnect) {
+      setStatus('connecting');
+      
+      // Attempt a connection which will trigger our onOpen event on success
+      webSocketService.connect()
+        .then(() => {
+          setStatus('connected');
+          if (onOpen) onOpen();
+        })
+        .catch((error) => {
+          setStatus('error');
+          if (onError) onError(error);
+        });
+    }
 
     return () => {
       // Clean up all subscriptions
       subscribedEvents.current.forEach(eventType => {
-        const handlers = subscribedHandlers.current.get(eventType);
-        if (handlers) {
-          handlers.forEach(handler => {
-            wsService.unsubscribe(eventType, handler);
+        const handlersMap = unsubscribeFunctions.current.get(eventType);
+        if (handlersMap) {
+          handlersMap.forEach(unsubscribe => {
+            unsubscribe();
           });
         }
       });
       
-      clearInterval(statusInterval);
-      
       if (!reconnect) {
-        wsService.disconnect();
+        webSocketService.disconnect();
       }
     };
   }, [autoConnect, reconnect, onOpen, onClose, onError]);
 
   // Connect to WebSocket
   const connect = useCallback(() => {
-    wsService.connect();
-  }, []);
+    setStatus('connecting');
+    webSocketService.connect()
+      .then(() => {
+        setStatus('connected');
+        if (onOpen) onOpen();
+      })
+      .catch((error) => {
+        setStatus('error');
+        if (onError) onError(error);
+      });
+  }, [onOpen, onError]);
 
   // Disconnect from WebSocket
   const disconnect = useCallback(() => {
-    wsService.disconnect();
-  }, []);
+    webSocketService.disconnect();
+    setStatus('disconnected');
+    if (onClose) onClose();
+  }, [onClose]);
 
   // Subscribe to a specific event type
   const subscribe = useCallback((eventType: string, handler: MessageHandler) => {
-    wsService.subscribe(eventType, handler);
+    // Track the event type
     subscribedEvents.current.add(eventType);
     
-    // Track the handler for cleanup
-    if (!subscribedHandlers.current.has(eventType)) {
-      subscribedHandlers.current.set(eventType, new Set());
-    }
-    subscribedHandlers.current.get(eventType)?.add(handler);
+    // Subscribe and get the unsubscribe function
+    const unsubscribe = webSocketService.subscribe(eventType, handler);
     
+    // Store the unsubscribe function for later cleanup
+    if (!unsubscribeFunctions.current.has(eventType)) {
+      unsubscribeFunctions.current.set(eventType, new Map());
+    }
+    unsubscribeFunctions.current.get(eventType)?.set(handler, unsubscribe);
+    
+    // Return a function to unsubscribe
     return () => {
-      wsService.unsubscribe(eventType, handler);
-      subscribedHandlers.current.get(eventType)?.delete(handler);
+      unsubscribe();
+      unsubscribeFunctions.current.get(eventType)?.delete(handler);
+      
+      // If no handlers left for this event type, remove from tracking
+      if (unsubscribeFunctions.current.get(eventType)?.size === 0) {
+        subscribedEvents.current.delete(eventType);
+        unsubscribeFunctions.current.delete(eventType);
+      }
     };
   }, []);
 
   // Unsubscribe from a specific event type
   const unsubscribe = useCallback((eventType: string, handler: MessageHandler) => {
-    wsService.unsubscribe(eventType, handler);
-    subscribedHandlers.current.get(eventType)?.delete(handler);
-    
-    // If no handlers left for this event, remove from tracking
-    if (subscribedHandlers.current.get(eventType)?.size === 0) {
-      subscribedEvents.current.delete(eventType);
+    const unsubscribeFunc = unsubscribeFunctions.current.get(eventType)?.get(handler);
+    if (unsubscribeFunc) {
+      unsubscribeFunc();
+      unsubscribeFunctions.current.get(eventType)?.delete(handler);
+      
+      // If no handlers left for this event type, remove from tracking
+      if (unsubscribeFunctions.current.get(eventType)?.size === 0) {
+        subscribedEvents.current.delete(eventType);
+        unsubscribeFunctions.current.delete(eventType);
+      }
     }
   }, []);
 
   // Send a message to the server
-  const send = useCallback((message: any) => {
-    wsService.send(message);
+  const send = useCallback((type: string, payload: any) => {
+    webSocketService.send(type, payload);
   }, []);
 
   return {
     status,
-    isConnected: wsService.isConnected(),
+    isConnected: status === 'connected',
     connect,
     disconnect,
     subscribe,
