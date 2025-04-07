@@ -59,6 +59,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               <p className="text-gray-600 mb-4">
                 Simplifying compliance and risk management for the modern financial ecosystem.
               </p>
+              <p className="text-gray-500 text-sm mb-4">
+                &copy; {new Date().getFullYear()} Invela Inc. All rights reserved.
+              </p>
               <div className="flex space-x-4">
                 <div className="text-gray-500 hover:text-blue-600 cursor-pointer">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -86,9 +89,6 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                   </svg>
                 </div>
               </div>
-              <p className="text-gray-500 text-sm mt-4">
-                &copy; {new Date().getFullYear()} Invela Inc. All rights reserved.
-              </p>
             </div>
             
             <div>
@@ -108,7 +108,6 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2">
                 <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600">About</div></Link></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Team</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Careers</a></li>
                 <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
                 <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>

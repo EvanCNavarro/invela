@@ -50,7 +50,7 @@ function Router() {
   console.log('[Router] Current location:', location);
 
   return (
-    <div>
+    <>
       <ScrollToTop />
       <Switch>
         {/* Landing Pages */}
@@ -245,7 +245,7 @@ function Router() {
 
         <Route component={NotFound} />
       </Switch>
-    </div>
+    </>
   );
 }
 

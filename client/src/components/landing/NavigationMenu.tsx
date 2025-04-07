@@ -27,37 +27,37 @@ export function NavigationMenu() {
                 <NavigationLink 
                   href="/landing/products/accreditation"
                   title="Accreditation"
-                  description=""
+                  description="Streamlined partner vetting with structured assessment frameworks"
                 />
                 <NavigationLink 
                   href="#"
                   title="Risk Score"
-                  description=""
+                  description="Real-time risk monitoring and assessment for financial partners"
                 />
                 <NavigationLink 
                   href="#"
                   title="Invela Registry"
-                  description=""
+                  description="Centralized directory of verified financial service providers"
                 />
                 <NavigationLink 
                   href="#"
                   title="Data Access Grants"
-                  description=""
+                  description="Secure management of data sharing permissions and controls"
                 />
                 <NavigationLink 
                   href="#"
                   title="Liability Insurance"
-                  description=""
+                  description="Specialized coverage for FinTech partnerships and data sharing"
                 />
                 <NavigationLink 
                   href="#"
                   title="Dispute Resolution"
-                  description=""
+                  description="Structured process for addressing compliance-related disputes"
                 />
                 <NavigationLink 
                   href="#"
                   title="Insights & Consulting"
-                  description=""
+                  description="Expert guidance for optimizing your compliance strategy"
                 />
               </div>
             </div>
@@ -129,11 +129,12 @@ interface NavigationLinkProps {
   description: string;
 }
 
-function NavigationLink({ href, title }: NavigationLinkProps) {
+function NavigationLink({ href, title, description }: NavigationLinkProps) {
   return (
     <Link href={href}>
       <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors">
         <div className="text-sm font-medium text-gray-900">{title}</div>
+        {description && <div className="text-xs text-gray-500 mt-1">{description}</div>}
       </div>
     </Link>
   );
