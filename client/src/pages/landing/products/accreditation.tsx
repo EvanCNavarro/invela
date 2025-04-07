@@ -47,7 +47,7 @@ export default function AccreditationPage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-4xl sm:text-5xl font-bold mb-6"
               >
-                Streamline FinTech partner accreditation
+                Streamline FinTech partner Accreditation
               </motion.h1>
               
               <motion.p 
@@ -56,7 +56,7 @@ export default function AccreditationPage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="text-xl text-gray-600 mb-10"
               >
-                Invela's accreditation platform automates the complex process of evaluating and onboarding FinTech partners, reducing time to market while ensuring compliance.
+                Invela's Accreditation platform automates the complex process of evaluating and onboarding FinTech partners, reducing time to market while ensuring compliance.
               </motion.p>
               
 
@@ -100,7 +100,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-3xl font-bold mb-6"
             >
-              A seamless accreditation process
+              A seamless Accreditation process
             </motion.h2>
             
             <motion.p 
@@ -110,7 +110,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-lg text-gray-600"
             >
-              Our platform transforms the traditionally complex and time-consuming accreditation process into a streamlined workflow.
+              Our platform transforms the traditionally complex and time-consuming Accreditation process into a streamlined workflow.
             </motion.p>
           </div>
           
@@ -162,7 +162,7 @@ export default function AccreditationPage() {
               </div>
               <h3 className="text-xl font-semibold mb-4 mt-2 text-center">Ongoing Monitoring & Compliance</h3>
               <p className="text-gray-600 text-center">
-                After initial accreditation, our platform continuously monitors key risk indicators and maintains compliance documentation, alerting you to any changes or concerns.
+                After initial Accreditation, our platform continuously monitors key risk indicators and maintains compliance documentation, alerting you to any changes or concerns.
               </p>
             </motion.div>
           </div>
@@ -200,7 +200,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-lg text-gray-600"
             >
-              Our accreditation platform offers significant advantages over traditional manual processes.
+              Our Accreditation platform offers significant advantages over traditional manual processes.
             </motion.p>
           </div>
           
@@ -212,12 +212,12 @@ export default function AccreditationPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             {[
-              "Reduce accreditation time from months to weeks",
+              "Reduce Accreditation time from months to weeks",
               "Standardize evaluation criteria across all partners",
               "Eliminate manual paperwork and documentation headaches",
               "Ensure consistent regulatory compliance",
               "Create defensible audit trails for all decisions",
-              "Gain real-time visibility into the accreditation pipeline",
+              "Gain real-time visibility into the Accreditation pipeline",
               "Automatically identify potential risk factors",
               "Integrate with existing systems and workflows"
             ].map((benefit, index) => (
@@ -255,7 +255,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto"
             >
-              Join leading financial institutions that have streamlined their partner accreditation with Invela.
+              Join leading financial institutions that have streamlined their partner Accreditation with Invela.
             </motion.p>
             
             <motion.div 
