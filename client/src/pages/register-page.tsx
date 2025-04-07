@@ -274,7 +274,7 @@ export default function RegisterPage() {
                   <FormItem className="mb-8">
                     <FormLabel className="text-base font-medium mb-2 block">Invitation Code</FormLabel>
                     <FormControl>
-                      <div className="flex justify-start w-full">
+                      <div className="w-full">
                         <InvitationCodeInput
                           value={field.value}
                           onChange={field.onChange}
