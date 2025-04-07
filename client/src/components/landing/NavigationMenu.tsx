@@ -30,32 +30,32 @@ export function NavigationMenu() {
                   description="Streamlined partner vetting with structured assessment frameworks"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/risk-score"
                   title="Risk Score"
                   description="Real-time risk monitoring and assessment for financial partners"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/invela-registry"
                   title="Invela Registry"
                   description="Centralized directory of verified financial service providers"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/data-access"
                   title="Data Access Grants"
                   description="Secure management of data sharing permissions and controls"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/liability-insurance"
                   title="Liability Insurance"
                   description="Specialized coverage for FinTech partnerships and data sharing"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/dispute-resolution"
                   title="Dispute Resolution"
                   description="Structured process for addressing compliance-related disputes"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/products/insights-consulting"
                   title="Insights & Consulting"
                   description="Expert guidance for optimizing your compliance strategy"
                 />

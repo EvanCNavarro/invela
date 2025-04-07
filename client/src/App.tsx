@@ -32,6 +32,12 @@ import { ProtectedRoute } from "./lib/protected-route";
 import LandingPage from "@/pages/landing";
 import AboutPage from "@/pages/landing/company/about";
 import AccreditationPage from "@/pages/landing/products/accreditation";
+import RiskScorePage from "@/pages/landing/products/risk-score";
+import InvelaRegistryPage from "@/pages/landing/products/invela-registry";
+import DataAccessPage from "@/pages/landing/products/data-access";
+import LiabilityInsurancePage from "@/pages/landing/products/liability-insurance";
+import DisputeResolutionPage from "@/pages/landing/products/dispute-resolution";
+import InsightsConsultingPage from "@/pages/landing/products/insights-consulting";
 import PrivacyPolicyPage from "@/pages/landing/legal/privacy-policy";
 import TermsOfUsePage from "@/pages/landing/legal/terms-of-use";
 import LegalPage from "@/pages/landing/legal";
@@ -57,6 +63,12 @@ function Router() {
         <Route path="/landing" component={LandingPage} />
         <Route path="/landing/company/about" component={AboutPage} />
         <Route path="/landing/products/accreditation" component={AccreditationPage} />
+        <Route path="/landing/products/risk-score" component={RiskScorePage} />
+        <Route path="/landing/products/invela-registry" component={InvelaRegistryPage} />
+        <Route path="/landing/products/data-access" component={DataAccessPage} />
+        <Route path="/landing/products/liability-insurance" component={LiabilityInsurancePage} />
+        <Route path="/landing/products/dispute-resolution" component={DisputeResolutionPage} />
+        <Route path="/landing/products/insights-consulting" component={InsightsConsultingPage} />
         <Route path="/landing/legal" component={LegalPage} />
         <Route path="/landing/legal/privacy-policy" component={PrivacyPolicyPage} />
         <Route path="/landing/legal/terms-of-use" component={TermsOfUsePage} />
