@@ -18,6 +18,7 @@ import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -225,66 +226,116 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout isLogin={false}>
-      <div className="mb-12">
-        <img
+      <motion.div 
+        className="mb-12"
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <motion.img
           src="/invela-logo.svg"
           alt="Invela"
           className="h-14 w-14 mb-6"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
         />
-        <h1 className="text-3xl font-bold">Create your account</h1>
-        <p className="text-base text-muted-foreground mt-3">
+        <motion.h1 
+          className="text-3xl font-bold"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          Create your account
+        </motion.h1>
+        <motion.p 
+          className="text-base text-muted-foreground mt-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
           Complete your registration to get started
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
 
       {!validatedInvitation ? (
         <Form {...invitationForm}>
           <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-6">
-            <FormField
-              control={invitationForm.control}
-              name="invitationCode"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel className="text-base">Invitation Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter 6-character code"
-                      autoFocus
-                      className="text-center tracking-widest uppercase font-mono h-12"
-                      maxLength={6}
-                      value={field.value.toUpperCase()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
-              disabled={invitationForm.formState.isSubmitting}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
             >
-              Validate Code
-            </Button>
+              <FormField
+                control={invitationForm.control}
+                name="invitationCode"
+                render={({ field }) => (
+                  <FormItem className="mb-6">
+                    <FormLabel className="text-base">Invitation Code</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter 6-character code"
+                        autoFocus
+                        className="text-center tracking-widest uppercase font-mono h-12"
+                        maxLength={6}
+                        value={field.value.toUpperCase()}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
-            <div className="text-center mt-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
+                type="submit"
+                className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+                disabled={invitationForm.formState.isSubmitting}
+              >
+                Validate Code
+              </Button>
+            </motion.div>
+
+            <motion.div 
+              className="text-center mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+            >
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">
                   Log in here
                 </Link>
               </p>
-            </div>
+            </motion.div>
           </form>
         </Form>
       ) : (
         <Form {...registrationForm}>
           <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <motion.div 
+              className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            >
               <div className="flex items-start gap-3">
-                <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3, type: "spring" }}
+                >
+                  <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                </motion.div>
                 <div>
                   <p className="text-sm font-medium text-blue-700">
                     Valid invitation code
@@ -294,37 +345,54 @@ export default function RegisterPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <FormField
-              control={registrationForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel className="text-base">Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" disabled className="h-12" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+            >
+              <FormField
+                control={registrationForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="mb-6">
+                    <FormLabel className="text-base">Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" disabled className="h-12" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
-            <FormField
-              control={registrationForm.control}
-              name="company"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel className="text-base">Company</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="text" disabled className="h-12" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
+            >
+              <FormField
+                control={registrationForm.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem className="mb-6">
+                    <FormLabel className="text-base">Company</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="text" disabled className="h-12" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
-            <div className="grid grid-cols-2 gap-6 mb-6">
+            <motion.div 
+              className="grid grid-cols-2 gap-6 mb-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+            >
               <FormField
                 control={registrationForm.control}
                 name="firstName"
@@ -352,58 +420,77 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-            </div>
+            </motion.div>
 
-            <FormField
-              control={registrationForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel className="text-base">Password</FormLabel>
-                  <div className="relative">
-                    <FormControl>
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        {...field}
-                        placeholder="Choose a secure password"
-                        className="h-12"
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
-              disabled={registerMutation.isPending}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
             >
-              Create Account
-            </Button>
+              <FormField
+                control={registrationForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="mb-6">
+                    <FormLabel className="text-base">Password</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          {...field}
+                          placeholder="Choose a secure password"
+                          className="h-12"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
-            <div className="text-center mt-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Button
+                type="submit"
+                className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+                disabled={registerMutation.isPending}
+              >
+                Create Account
+              </Button>
+            </motion.div>
+
+            <motion.div 
+              className="text-center mt-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.7, duration: 0.5 }}
+            >
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">
                   Log in here
                 </Link>
               </p>
-            </div>
+            </motion.div>
           </form>
         </Form>
       )}
