@@ -22,42 +22,42 @@ export function NavigationMenu() {
           <NavigationMenuPrimitive.Content
             className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
-            <div className="w-[550px] p-4 bg-white rounded-xl shadow-lg border border-gray-200/50">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="w-[450px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
+              <div className="grid grid-cols-2 gap-2">
                 <NavigationLink 
                   href="/landing/products/accreditation"
                   title="Accreditation"
-                  description="Streamlined partner vetting with structured assessment frameworks"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Risk Score"
-                  description="Real-time risk monitoring and assessment for financial partners"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Invela Registry"
-                  description="Centralized directory of verified financial service providers"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Data Access Grants"
-                  description="Secure management of data sharing permissions and controls"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Liability Insurance"
-                  description="Specialized coverage for FinTech partnerships and data sharing"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Dispute Resolution"
-                  description="Structured process for addressing compliance-related disputes"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Insights & Consulting"
-                  description="Expert guidance for optimizing your compliance strategy"
+                  description=""
                 />
               </div>
             </div>
@@ -78,42 +78,37 @@ export function NavigationMenu() {
           <NavigationMenuPrimitive.Content
             className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
-            <div className="w-[350px] p-4 bg-white rounded-xl shadow-lg border border-gray-200/50">
-              <div className="grid grid-cols-1 gap-4">
+            <div className="w-[280px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
+              <div className="grid grid-cols-1 gap-2">
                 <NavigationLink 
                   href="/landing/company/about"
                   title="About"
-                  description="Learn about our mission, values, and story"
-                />
-                <NavigationLink 
-                  href="#"
-                  title="Team"
-                  description="Meet the people behind Invela"
+                  description=""
                 />
                 <NavigationLink 
                   href="#"
                   title="Careers"
-                  description="Join our team and help shape the future of FinTech compliance"
+                  description=""
                 />
                 <NavigationLink 
                   href="/landing/legal/privacy-policy"
                   title="Privacy Policy"
-                  description="How we handle and protect your data"
+                  description=""
                 />
                 <NavigationLink 
                   href="/landing/legal/terms-of-use"
                   title="Terms of Use"
-                  description="Guidelines for using our platform and services"
+                  description=""
                 />
                 <NavigationLink 
                   href="/landing/legal"
                   title="Legal"
-                  description="Legal information and compliance documentation"
+                  description=""
                 />
                 <NavigationLink 
                   href="/landing/site-map"
                   title="Site Map"
-                  description="Navigate our website with ease"
+                  description=""
                 />
               </div>
             </div>
@@ -134,12 +129,11 @@ interface NavigationLinkProps {
   description: string;
 }
 
-function NavigationLink({ href, title, description }: NavigationLinkProps) {
+function NavigationLink({ href, title }: NavigationLinkProps) {
   return (
     <Link href={href}>
-      <div className="block rounded-lg p-3 hover:bg-blue-50 transition-colors">
-        <div className="text-sm font-medium text-gray-900 mb-1">{title}</div>
-        <div className="text-xs text-gray-500">{description}</div>
+      <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors">
+        <div className="text-sm font-medium text-gray-900">{title}</div>
       </div>
     </Link>
   );

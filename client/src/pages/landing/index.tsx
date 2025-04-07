@@ -80,7 +80,7 @@ export default function LandingPage() {
                 initial="hidden"
                 animate="visible"
                 variants={fadeIn}
-                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-black"
+                className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 text-black"
               >
                 Simplify Compliance & Risk Management
               </motion.h1>
@@ -102,7 +102,7 @@ export default function LandingPage() {
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
                 <Link href="/login">
-                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-[180px] text-center">
+                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-[180px] text-center hover:text-white">
                     Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Link>
@@ -119,7 +119,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="w-full lg:w-1/2 relative lg:-right-8 flex justify-center lg:justify-end"
+              className="w-full lg:w-3/5 relative lg:-right-12 flex justify-center lg:justify-end"
             >
               <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
                 <motion.div
@@ -138,7 +138,7 @@ export default function LandingPage() {
                     backdropFilter: "blur(10px)",
                     border: "1px solid rgba(255, 255, 255, 0.6)",
                     padding: "1rem",
-                    transform: "scale(1.1)"
+                    transform: "scale(1.2)"
                   }}
                 >
                   <img 
@@ -345,7 +345,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Link href="/login">
-                <a className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-8 py-4 rounded-lg transition-colors duration-200">
+                <a className="bg-white text-blue-600 hover:bg-gray-100 font-medium px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-600">
                   Get Started Now
                 </a>
               </Link>
@@ -367,13 +367,18 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
   return (
     <motion.div 
       variants={fadeIn}
-      className="bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-shadow duration-300"
+      className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300"
     >
-      <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
-        {icon}
+      {/* Colored blur background that appears on hover */}
+      <div className="absolute -bottom-2 -right-2 w-4/5 h-4/5 bg-blue-300/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      
+      <div className="relative z-10">
+        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-3">{title}</h3>
+        <p className="text-gray-600">{description}</p>
       </div>
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
-      <p className="text-gray-600">{description}</p>
     </motion.div>
   );
 }
