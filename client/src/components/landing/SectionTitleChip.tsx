@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Clipboard } from 'lucide-react';
 
 interface SectionTitleChipProps {
   title: string;
@@ -24,7 +25,7 @@ export default function SectionTitleChip({
     
     // Show copied message for a shorter duration
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 1000);
+    setTimeout(() => setIsCopied(false), 1500);
   };
   
   // Width of the hashtag plus margin = ~30px (22px font + 8px margin)
@@ -71,24 +72,24 @@ export default function SectionTitleChip({
         </div>
       </div>
       
-      {/* Copied to clipboard popup - positioned in a fixed overlay to never be clipped */}
+      {/* Toast notification for clipboard copy - bottom right corner */}
       <AnimatePresence>
         {isCopied && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 20, x: 20 }}
+            animate={{ opacity: 1, y: 0, x: 0 }}
+            exit={{ opacity: 0, y: 10, x: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             style={{ 
               position: 'fixed',
-              left: '50%',
-              top: '20%',
-              transform: 'translateX(-50%)',
+              right: '1.5rem',
+              bottom: '1.5rem',
               zIndex: 9999
             }}
-            className="bg-white text-black text-xs rounded px-3 py-1.5 whitespace-nowrap font-medium shadow-lg border border-gray-100"
+            className="bg-gray-800 text-white text-sm rounded-lg px-4 py-2.5 shadow-lg flex items-center gap-2"
           >
-            Copied to clipboard
+            <Clipboard className="h-4 w-4" />
+            <span>Link copied to clipboard</span>
           </motion.div>
         )}
       </AnimatePresence>
