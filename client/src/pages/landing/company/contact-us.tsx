@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
+import { CheckCircle2 } from 'lucide-react';
 
 // Form schema for contact form
 const contactFormSchema = z.object({
@@ -101,7 +102,7 @@ export default function ContactUsPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-16"
           >
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-3xl mx-auto">
               <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-10">
                 <div className="mb-6 text-left">
                   <SectionTitleChip title="Get in Touch" sectionId="contact-form" centered={false} />
@@ -110,117 +111,174 @@ export default function ContactUsPage() {
                 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem className="space-y-1">
-                          <FormLabel>
-                            <span className="font-semibold">Name</span>
-                            <span className="text-red-500 ml-1">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Your name" 
-                              {...field} 
-                              className={form.formState.errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem className="space-y-1">
-                          <FormLabel>
-                            <span className="font-semibold">Email</span>
-                            <span className="text-red-500 ml-1">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="your.email@example.com" 
-                              {...field} 
-                              className={form.formState.errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="company"
-                      render={({ field }) => (
-                        <FormItem className="space-y-1">
-                          <FormLabel>
-                            <span className="font-semibold">Company</span>
-                            <span className="text-red-500 ml-1">*</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Your company" 
-                              {...field} 
-                              className={form.formState.errors.company ? "border-red-500 focus-visible:ring-red-500" : ""}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem className="space-y-1">
-                          <FormLabel>
-                            <span className="font-semibold">Phone</span>
-                            <span className="font-normal text-gray-500"> (Optional)</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="+1 (555) 123-4567" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="inquiryType"
-                      render={({ field }) => (
-                        <FormItem className="space-y-1">
-                          <FormLabel>
-                            <span className="font-semibold">Inquiry Type</span>
-                            <span className="text-red-500 ml-1">*</span>
-                          </FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
+                    {/* Name and Company row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel>
+                              <span className="font-semibold">Name</span>
+                              <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
                             <FormControl>
-                              <SelectTrigger className={form.formState.errors.inquiryType ? "border-red-500 focus:ring-red-500" : ""}>
-                                <SelectValue placeholder="Select the type of inquiry" />
-                              </SelectTrigger>
+                              <div className="relative">
+                                <Input 
+                                  placeholder="Your name" 
+                                  {...field} 
+                                  className={
+                                    form.formState.submitCount > 0
+                                      ? !form.formState.errors.name 
+                                        ? "border-green-500 focus-visible:ring-green-500 pr-10" 
+                                        : "border-red-500 focus-visible:ring-red-500"
+                                      : ""
+                                  }
+                                />
+                                {form.formState.submitCount > 0 && !form.formState.errors.name && (
+                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                )}
+                              </div>
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="product-demo">Product Demo</SelectItem>
-                              <SelectItem value="sales-inquiry">Sales Inquiry</SelectItem>
-                              <SelectItem value="partnership">Partnership Opportunities</SelectItem>
-                              <SelectItem value="support">Support</SelectItem>
-                              <SelectItem value="general">General Inquiry</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="company"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel>
+                              <span className="font-semibold">Company</span>
+                              <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  placeholder="Your company" 
+                                  {...field} 
+                                  className={
+                                    form.formState.submitCount > 0
+                                      ? !form.formState.errors.company 
+                                        ? "border-green-500 focus-visible:ring-green-500 pr-10" 
+                                        : "border-red-500 focus-visible:ring-red-500"
+                                      : ""
+                                  }
+                                />
+                                {form.formState.submitCount > 0 && !form.formState.errors.company && (
+                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                )}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                     
+                    {/* Email and Phone row */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel>
+                              <span className="font-semibold">Email</span>
+                              <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Input 
+                                  placeholder="your.email@example.com" 
+                                  {...field} 
+                                  className={
+                                    form.formState.submitCount > 0
+                                      ? !form.formState.errors.email 
+                                        ? "border-green-500 focus-visible:ring-green-500 pr-10" 
+                                        : "border-red-500 focus-visible:ring-red-500"
+                                      : ""
+                                  }
+                                />
+                                {form.formState.submitCount > 0 && !form.formState.errors.email && (
+                                  <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                                )}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel>
+                              <span className="font-semibold">Phone</span>
+                              <span className="font-normal text-gray-500"> (Optional)</span>
+                            </FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="+1 (555) 123-4567" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    {/* Inquiry Type row (half width) */}
+                    <div className="md:w-1/2">
+                      <FormField
+                        control={form.control}
+                        name="inquiryType"
+                        render={({ field }) => (
+                          <FormItem className="space-y-1">
+                            <FormLabel>
+                              <span className="font-semibold">Inquiry Type</span>
+                              <span className="text-red-500 ml-1">*</span>
+                            </FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <div className="relative">
+                                  <SelectTrigger className={
+                                    form.formState.submitCount > 0
+                                      ? !form.formState.errors.inquiryType
+                                        ? "border-green-500 focus:ring-green-500 pr-10" 
+                                        : "border-red-500 focus:ring-red-500"
+                                      : ""
+                                  }>
+                                    <SelectValue placeholder="Select the type of inquiry" />
+                                    {form.formState.submitCount > 0 && !form.formState.errors.inquiryType && (
+                                      <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-8 top-1/2 transform -translate-y-1/2" />
+                                    )}
+                                  </SelectTrigger>
+                                </div>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="product-demo">Product Demo</SelectItem>
+                                <SelectItem value="sales-inquiry">Sales Inquiry</SelectItem>
+                                <SelectItem value="partnership">Partnership Opportunities</SelectItem>
+                                <SelectItem value="support">Support</SelectItem>
+                                <SelectItem value="general">General Inquiry</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    {/* Message row (full width) */}
                     <FormField
                       control={form.control}
                       name="message"
@@ -231,18 +289,29 @@ export default function ContactUsPage() {
                             <span className="text-red-500 ml-1">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Textarea 
-                              placeholder="How can we help you? Please provide details about your inquiry." 
-                              className={`min-h-[120px] ${form.formState.errors.message ? "border-red-500 focus-visible:ring-red-500" : ""}`}
-                              {...field} 
-                            />
+                            <div className="relative">
+                              <Textarea 
+                                placeholder="How can we help you? Please provide details about your inquiry." 
+                                className={`min-h-[120px] ${
+                                  form.formState.submitCount > 0
+                                    ? !form.formState.errors.message
+                                      ? "border-green-500 focus-visible:ring-green-500 pr-10" 
+                                      : "border-red-500 focus-visible:ring-red-500"
+                                    : ""
+                                }`}
+                                {...field} 
+                              />
+                              {form.formState.submitCount > 0 && !form.formState.errors.message && (
+                                <CheckCircle2 className="h-5 w-5 text-green-500 absolute right-3 top-5" />
+                              )}
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     
-                    <Button type="submit" className="w-full">Send Message</Button>
+                    <Button type="submit" className="w-full md:w-auto px-8">Send Message</Button>
                   </form>
                 </Form>
               </div>
