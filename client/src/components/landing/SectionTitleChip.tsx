@@ -71,15 +71,22 @@ export default function SectionTitleChip({
         </div>
       </div>
       
-      {/* Copied to clipboard popup - centered to the entire component and positioned higher with higher z-index */}
+      {/* Copied to clipboard popup - positioned in a fixed overlay to never be clipped */}
       <AnimatePresence>
         {isCopied && (
           <motion.div
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: -15 }}
-            exit={{ opacity: 0, y: -30 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute left-1/2 -translate-x-1/2 bottom-12 bg-white text-black text-xs rounded px-3 py-1.5 z-[9999] whitespace-nowrap font-medium shadow-sm border border-gray-100"
+            style={{ 
+              position: 'fixed',
+              left: '50%',
+              top: '20%',
+              transform: 'translateX(-50%)',
+              zIndex: 9999
+            }}
+            className="bg-white text-black text-xs rounded px-3 py-1.5 whitespace-nowrap font-medium shadow-lg border border-gray-100"
           >
             Copied to clipboard
           </motion.div>
