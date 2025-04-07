@@ -81,8 +81,8 @@ export function NavigationMenu() {
             <div className="w-[560px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
               <div className="grid grid-cols-2 gap-4">
                 <NavigationLink 
-                  href="/landing/company/about"
-                  title="About"
+                  href="/landing/company/about#mission"
+                  title="About & Mission"
                   description="Our mission to transform FinTech compliance"
                 />
                 <NavigationLink 
@@ -91,7 +91,7 @@ export function NavigationMenu() {
                   description="Join our team of compliance innovators"
                 />
                 <NavigationLink 
-                  href="#"
+                  href="/landing/company/about#leadership"
                   title="Leadership"
                   description="Meet the team behind Invela's innovation"
                 />
@@ -130,12 +130,25 @@ interface NavigationLinkProps {
 }
 
 function NavigationLink({ href, title, description }: NavigationLinkProps) {
-  return (
+  // Determine if this is an anchor link (contains #)
+  const isAnchorLink = href.includes('#');
+  
+  const linkContent = (
+    <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors h-[85px] flex flex-col cursor-pointer">
+      <div className="text-sm font-medium text-gray-900">{title}</div>
+      {description && <div className="text-xs text-gray-500 mt-1 line-clamp-3">{description}</div>}
+    </div>
+  );
+  
+  // If it's a regular link, use the Link component from wouter
+  // If it's an anchor link, use a regular <a> tag to prevent nesting issues
+  return isAnchorLink ? (
+    <a href={href} className="no-underline text-inherit">
+      {linkContent}
+    </a>
+  ) : (
     <Link href={href}>
-      <div className="block rounded-lg p-2 hover:bg-blue-50 transition-colors h-[85px] flex flex-col">
-        <div className="text-sm font-medium text-gray-900">{title}</div>
-        {description && <div className="text-xs text-gray-500 mt-1 line-clamp-3">{description}</div>}
-      </div>
+      {linkContent}
     </Link>
   );
 }
