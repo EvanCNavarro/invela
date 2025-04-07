@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'wouter';
 import { LandingLayout } from '@/components/landing/LandingLayout';
-import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText } from 'lucide-react';
 
 // Animation variants
 const fadeIn = {
@@ -234,6 +234,13 @@ export default function LandingPage() {
               title="Real-time Monitoring"
               description="Continuous compliance monitoring with alerts for potential risks or compliance issues as they arise."
             />
+            
+            {/* Feature 7 - Center in last row */}
+            <FeatureCard
+              icon={<FileText className="h-8 w-8 text-blue-600" />}
+              title="Compliance Reporting"
+              description="Comprehensive reporting tools to document compliance activities, track progress, and demonstrate regulatory adherence."
+            />
           </motion.div>
         </div>
       </section>
@@ -369,16 +376,14 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       variants={fadeIn}
       className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300"
     >
-      {/* Colored blur background that appears on hover */}
-      <div className="absolute -bottom-2 -right-2 w-4/5 h-4/5 bg-blue-300/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      {/* Colored blur background that appears on hover behind the card */}
+      <div className="absolute -inset-4 bg-blue-300/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
       
-      <div className="relative z-10">
-        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
-          {icon}
-        </div>
-        <h3 className="text-xl font-semibold mb-3">{title}</h3>
-        <p className="text-gray-600">{description}</p>
+      <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
+        {icon}
       </div>
+      <h3 className="text-xl font-semibold mb-3">{title}</h3>
+      <p className="text-gray-600">{description}</p>
     </motion.div>
   );
 }
