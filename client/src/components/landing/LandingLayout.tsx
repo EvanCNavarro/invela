@@ -29,8 +29,14 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               </div>
             </Link>
             
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
               <NavigationMenu />
+              
+              <Link href="/landing/company/contact-us?type=product-demo">
+                <div className="border border-blue-600 text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
+                  <span className="font-semibold">Request a Demo</span>
+                </div>
+              </Link>
               
               <Link href="/login">
                 <div className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
@@ -135,12 +141,6 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Suite 450<br />
                 Denver, CO 80202
               </p>
-              
-              <Link href="/landing/company/contact-us">
-                <div className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer hover:text-white">
-                  <span className="font-semibold">Request a Demo</span>
-                </div>
-              </Link>
             </div>
           </div>
         </div>

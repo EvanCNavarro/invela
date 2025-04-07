@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import SectionTitleChip from '@/components/landing/SectionTitleChip';
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 // Form schema for contact form
 const contactFormSchema = z.object({
@@ -25,6 +26,10 @@ const contactFormSchema = z.object({
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 export default function ContactUsPage() {
+  const [location] = useLocation();
+  const searchParams = new URLSearchParams(window.location.search);
+  const typeParam = searchParams.get('type');
+  
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
     defaultValues: {
@@ -32,10 +37,18 @@ export default function ContactUsPage() {
       email: '',
       company: '',
       phone: '',
-      inquiryType: '',
+      inquiryType: typeParam === 'product-demo' ? 'product-demo' : '',
       message: '',
     },
   });
+  
+  // Set autofocus on component mount
+  useEffect(() => {
+    const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+    if (nameInput) {
+      nameInput.focus();
+    }
+  }, []);
 
   function onSubmit(data: ContactFormValues) {
     // In a real implementation, this would send the data to a server
