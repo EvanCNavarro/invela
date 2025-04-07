@@ -118,7 +118,7 @@ function Router() {
         )} 
       />
 
-      <Route path="/network/company/:companySlug" component={({ params }) => (
+      <Route path="/network/company/:companySlug" component={({ params }: { params: { companySlug: string } }) => (
         <ProtectedLayout>
           <OnboardingWrapper>
             <CompanyProfilePage />
@@ -129,9 +129,9 @@ function Router() {
       {/* Main nested task route - will handle both task types and IDs */}
       <ProtectedRoute 
         path="/task-center/task/:taskSlug"
-        component={(props: { params: { taskSlug: string } }) => (
+        component={({ params }: { params: { taskSlug: string } }) => (
           <ProtectedLayout>
-            <TaskPage params={props.params} />
+            <TaskPage params={params} />
           </ProtectedLayout>
         )}
       />
@@ -139,11 +139,11 @@ function Router() {
       {/* Direct task ID route - redirects to task-center for consistency */}
       <ProtectedRoute 
         path="/task/:taskId"
-        component={(props: { params: { taskId: string } }) => {
+        component={({ params }: { params: { taskId: string } }) => {
           console.log('[Router] Redirecting from direct task route to nested task route');
           // Simply redirect to the nested path with the same ID
           // The TaskPage component will handle both formats
-          return <Redirect to={`/task-center/task/${props.params.taskId}`} />;
+          return <Redirect to={`/task-center/task/${params.taskId}`} />;
         }}
       />
 
