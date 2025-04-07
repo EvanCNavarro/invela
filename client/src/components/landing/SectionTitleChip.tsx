@@ -22,58 +22,54 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
   };
   
   return (
-    <div className="inline-flex items-center">
-      {/* The chip itself */}
-      <motion.span 
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={copyToClipboard}
-        className={`bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium cursor-pointer hover:bg-blue-100 transition-colors duration-200 ${className}`}
-      >
-        {title}
-      </motion.span>
-      
-      {/* Hash symbol that appears outside the chip on hover - with vertical centering */}
-      <AnimatePresence>
-        {isHovered && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="ml-2 flex items-center"
-          >
-            <span 
-              className="text-gray-400 font-semibold inline-flex items-center justify-center" 
+    <div className="inline-block relative">
+      <div className="inline-flex items-center">
+        {/* The chip itself */}
+        <motion.span 
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={copyToClipboard}
+          className={`bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium cursor-pointer hover:bg-blue-100 transition-colors duration-200 ${className}`}
+        >
+          {title}
+        </motion.span>
+        
+        {/* Hash symbol that appears outside the chip on hover with perfect vertical alignment */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.span 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="ml-2 text-gray-400 font-semibold"
               style={{ 
-                fontSize: '22px', 
-                lineHeight: 1,
-                transform: 'translateY(-1px)' // Fine-tune vertical alignment
+                fontSize: '22px',
+                lineHeight: '22px',
+                marginTop: '-1px', // Offset to achieve perfect vertical alignment
+                display: 'inline-block'
               }}
             >
               #
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-      {/* Popup container */}
-      <div className="relative">
-        {/* Copied to clipboard popup */}
-        <AnimatePresence>
-          {isCopied && (
-            <motion.div
-              initial={{ opacity: 0, y: 0 }}
-              animate={{ opacity: 1, y: -10 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="absolute bottom-8 left-0 -translate-x-1/4 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
-            >
-              Copied to clipboard
-            </motion.div>
+            </motion.span>
           )}
         </AnimatePresence>
       </div>
+      
+      {/* Copied to clipboard popup - centered to the entire component */}
+      <AnimatePresence>
+        {isCopied && (
+          <motion.div
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ opacity: 1, y: -10 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="absolute left-1/2 -translate-x-1/2 bottom-8 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
+          >
+            Copied to clipboard
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
