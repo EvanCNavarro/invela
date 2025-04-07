@@ -104,13 +104,18 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Run migrations on startup
-(async () => {
-  try {
-    console.log('Running database migrations...');
-    await runMigrations();
-    console.log('Database migrations completed successfully');
-  } catch (error) {
-    console.error('Failed to run migrations:', error);
-  }
-})();
+// Run migrations conditionally based on environment variable
+// Only run migrations on startup if explicitly enabled
+if (process.env.RUN_MIGRATIONS === 'true') {
+  (async () => {
+    try {
+      console.log('Running database migrations...');
+      await runMigrations();
+      console.log('Database migrations completed successfully');
+    } catch (error) {
+      console.error('Failed to run migrations:', error);
+    }
+  })();
+} else {
+  console.log('Automatic migrations disabled - set RUN_MIGRATIONS=true to enable');
+}
