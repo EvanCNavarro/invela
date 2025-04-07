@@ -32,30 +32,33 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
         {title}
       </motion.span>
       
-      {/* Hash symbol that appears on hover */}
+      {/* Hash symbol that appears on hover - centered and taller */}
       <AnimatePresence>
         {isHovered && (
-          <motion.span 
+          <motion.div 
             initial={{ opacity: 0, x: -5 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -5 }}
             transition={{ duration: 0.2 }}
-            className="ml-2 text-gray-400 font-semibold"
+            className="ml-2 flex items-center h-full"
+            style={{ alignItems: 'center' }}
           >
-            #
-          </motion.span>
+            <span className="text-gray-400 font-semibold" style={{ fontSize: '22px', lineHeight: 1 }}>
+              #
+            </span>
+          </motion.div>
         )}
       </AnimatePresence>
       
-      {/* Copied to clipboard popup */}
+      {/* Copied to clipboard popup - appears above and fades upward */}
       <AnimatePresence>
         {isCopied && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
-            className="absolute top-8 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 z-50 whitespace-nowrap"
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ opacity: 1, y: -10 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
           >
             Copied to clipboard
           </motion.div>
