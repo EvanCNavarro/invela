@@ -291,7 +291,7 @@ export default function LandingPage() {
             >
               <motion.span 
                 variants={fadeIn}
-                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-4"
               >
                 Business Impact
               </motion.span>
@@ -448,7 +448,7 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-8 text-white shadow-text"
+              className="text-4xl font-bold mb-6 text-white shadow-text"
               style={{ textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}
             >
               Ready to transform your
@@ -457,7 +457,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-8 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-6 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
