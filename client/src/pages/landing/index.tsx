@@ -347,7 +347,7 @@ export default function LandingPage() {
                 <motion.div 
                   key={index}
                   variants={fadeIn}
-                  className="bg-white rounded-xl p-7 shadow-sm border border-gray-100 h-[160px] flex flex-col justify-center"
+                  className="bg-white rounded-xl p-7 shadow-sm border border-gray-100 h-[160px] flex flex-col"
                 >
                   <div className="text-4xl font-bold text-blue-600 mb-3">{stat.value}</div>
                   <p className="text-gray-600 leading-tight">{stat.label}</p>
