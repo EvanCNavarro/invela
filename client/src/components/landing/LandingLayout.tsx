@@ -52,20 +52,20 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-8">
             {/* Main info and copyright */}
             <div className="flex flex-col">
-              <div className="mb-4">
+              <div className="mb-5">
                 <img 
                   src="/logo_invela.svg" 
                   alt="Invela"
                   className="h-8"
                 />
               </div>
-              <p className="text-gray-600 mb-6">
+              <p className="text-gray-600 mb-5">
                 Simplifying compliance and risk management for the modern financial ecosystem.
               </p>
-              <p className="text-gray-500 text-sm mb-4">
+              <p className="text-gray-500 text-sm mb-5">
                 &copy; {new Date().getFullYear()} Invela Inc. All rights reserved.
               </p>
-              <div className="flex space-x-4 mb-4">
+              <div className="flex space-x-4">
                 <div className="text-gray-500 hover:text-blue-600 cursor-pointer">
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
@@ -120,15 +120,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               </ul>
             </div>
             
-            {/* Legal column */}
+            {/* Contact column */}
             <div className="md:px-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
-                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
-              </ul>
-              
-              <h3 className="font-semibold text-gray-900 mb-4 mt-8">Contact</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
               <p className="text-gray-600 mb-2">
                 Email: <a href="mailto:info@invela.com" className="text-blue-600 hover:underline">info@invela.com</a>
               </p>
