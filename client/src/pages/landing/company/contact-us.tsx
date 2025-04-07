@@ -284,8 +284,6 @@ export default function ContactUsPage() {
                                 <SelectItem value="product-demo">Product Demo</SelectItem>
                                 <SelectItem value="sales-inquiry">Sales Inquiry</SelectItem>
                                 <SelectItem value="partnership">Partnership Opportunities</SelectItem>
-                                <SelectItem value="support">Support</SelectItem>
-                                <SelectItem value="general">General Inquiry</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
