@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthHeroSection } from "@/components/auth/AuthHeroSection";
+import { AuthFooter } from "@/components/auth/AuthFooter";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -52,141 +53,145 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
-      <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
-        <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
-          <div className="mb-8">
-            <img
-              src="/invela-logo.svg"
-              alt="Invela"
-              className="h-12 w-12 mb-4"
-            />
-            <h1 className="text-2xl font-bold">Log in to Invela</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Enter your credentials to access your account
-            </p>
-          </div>
-
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="email"
-                        autoComplete="email"
-                        autoFocus
-                        placeholder="Enter your email"
-                        className={field.value && !form.formState.errors.email ? "border-green-500" : ""}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          console.log('[Login] Email field changed:', e.target.value);
-                        }}
-                      />
-                    </FormControl>
-                    {field.value && form.formState.errors.email && (
-                      <FormMessage />
-                    )}
-                    {field.value && !form.formState.errors.email && (
-                      <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
-                        <Check className="h-4 w-4" />
-                        Valid email address
-                      </p>
-                    )}
-                  </FormItem>
-                )}
+    <div className="min-h-screen flex flex-col justify-between bg-gray-100">
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+          <div className="w-full lg:w-3/5 p-12 flex flex-col justify-center">
+            <div className="mb-10">
+              <img
+                src="/invela-logo.svg"
+                alt="Invela"
+                className="h-12 w-12 mb-4"
               />
+              <h1 className="text-2xl font-bold">Log in to Invela</h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                Enter your credentials to access your account
+              </p>
+            </div>
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <div className="relative">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
                         <Input
-                          type={showPassword ? "text" : "password"}
                           {...field}
-                          autoComplete="current-password"
-                          placeholder="Enter your password"
-                          className={field.value && !form.formState.errors.password ? "border-green-500" : ""}
+                          type="email"
+                          autoComplete="email"
+                          autoFocus
+                          placeholder="Enter your email"
+                          className={field.value && !form.formState.errors.email ? "border-green-500" : ""}
                           onChange={(e) => {
                             field.onChange(e);
-                            console.log('[Login] Password field changed, length:', e.target.value.length);
+                            console.log('[Login] Email field changed:', e.target.value);
                           }}
                         />
                       </FormControl>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                    {field.value && form.formState.errors.password && (
-                      <FormMessage />
-                    )}
-                    {field.value && !form.formState.errors.password && (
-                      <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
-                        <Check className="h-4 w-4" />
-                        Password meets requirements
-                      </p>
-                    )}
-                  </FormItem>
-                )}
-              />
+                      {field.value && form.formState.errors.email && (
+                        <FormMessage />
+                      )}
+                      {field.value && !form.formState.errors.email && (
+                        <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                          <Check className="h-4 w-4" />
+                          Valid email address
+                        </p>
+                      )}
+                    </FormItem>
+                  )}
+                />
 
-              <Button
-                type="submit"
-                className="w-full font-bold hover:opacity-90 mt-6"
-                disabled={!form.formState.isValid || loginMutation.isPending}
-                onClick={() => {
-                  console.log('[Login] Submit button clicked');
-                  console.log('[Login] Form state:', {
-                    isValid: form.formState.isValid,
-                    errors: form.formState.errors,
-                    isDirty: form.formState.isDirty
-                  });
-                }}
-              >
-                {loginMutation.isPending ? (
-                  <span className="flex items-center gap-2">
-                    Logging in...
-                  </span>
-                ) : (
-                  'Log in'
-                )}
-              </Button>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            {...field}
+                            autoComplete="current-password"
+                            placeholder="Enter your password"
+                            className={field.value && !form.formState.errors.password ? "border-green-500" : ""}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              console.log('[Login] Password field changed, length:', e.target.value.length);
+                            }}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      {field.value && form.formState.errors.password && (
+                        <FormMessage />
+                      )}
+                      {field.value && !form.formState.errors.password && (
+                        <p className="text-sm text-green-500 mt-1 flex items-center gap-1">
+                          <Check className="h-4 w-4" />
+                          Password meets requirements
+                        </p>
+                      )}
+                    </FormItem>
+                  )}
+                />
 
-              <div className="text-center mt-4">
-                <p className="text-sm text-muted-foreground">
-                  Have an invitation code?{" "}
-                  <Link href="/register" className="text-primary hover:underline">
-                    Register here
-                  </Link>
-                </p>
-              </div>
-            </form>
-          </Form>
-        </div>
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90 mt-8"
+                  disabled={!form.formState.isValid || loginMutation.isPending}
+                  onClick={() => {
+                    console.log('[Login] Submit button clicked');
+                    console.log('[Login] Form state:', {
+                      isValid: form.formState.isValid,
+                      errors: form.formState.errors,
+                      isDirty: form.formState.isDirty
+                    });
+                  }}
+                >
+                  {loginMutation.isPending ? (
+                    <span className="flex items-center gap-2">
+                      Logging in...
+                    </span>
+                  ) : (
+                    'Log in'
+                  )}
+                </Button>
 
-        <div className="hidden lg:block w-1/2">
-          <AuthHeroSection isLogin={true} />
+                <div className="text-center mt-5">
+                  <p className="text-sm text-muted-foreground">
+                    Have an invitation code?{" "}
+                    <Link href="/register" className="text-primary hover:underline">
+                      Register here
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </Form>
+          </div>
+
+          <div className="hidden lg:block w-2/5 p-3">
+            <AuthHeroSection isLogin={true} />
+          </div>
         </div>
       </div>
+      
+      <AuthFooter />
     </div>
   );
 }

@@ -6,7 +6,7 @@ interface AuthHeroSectionProps {
 
 export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-[#4965EC]">
+    <div className="w-full h-full flex items-center justify-center bg-[#0082FF] rounded-lg">
       <div className="max-w-[500px] w-full h-[500px] relative">
         <img
           src="/assets/auth_animation.gif" 
