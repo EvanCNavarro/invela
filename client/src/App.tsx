@@ -31,6 +31,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 // Landing pages
 import LandingPage from "@/pages/landing";
 import AboutPage from "@/pages/landing/company/about";
+import ContactUsPage from "@/pages/landing/company/contact-us";
 import AccreditationPage from "@/pages/landing/products/accreditation";
 import RiskScorePage from "@/pages/landing/products/risk-score";
 import InvelaRegistryPage from "@/pages/landing/products/invela-registry";
@@ -62,6 +63,7 @@ function Router() {
         {/* Landing Pages */}
         <Route path="/landing" component={LandingPage} />
         <Route path="/landing/company/about" component={AboutPage} />
+        <Route path="/landing/company/contact-us" component={ContactUsPage} />
         <Route path="/landing/products/accreditation" component={AccreditationPage} />
         <Route path="/landing/products/risk-score" component={RiskScorePage} />
         <Route path="/landing/products/invela-registry" component={InvelaRegistryPage} />
