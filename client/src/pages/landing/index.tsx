@@ -366,14 +366,14 @@ export default function LandingPage() {
           <motion.div 
             animate={{ 
               background: [
-                'linear-gradient(to right, #3b82f6, #4f46e5)', 
-                'linear-gradient(to right, #4f46e5, #2563eb)',
-                'linear-gradient(to right, #4338ca, #3b82f6)',
-                'linear-gradient(to right, #3b82f6, #4f46e5)'
+                'linear-gradient(to right, #3b82f6, #6366f1)', 
+                'linear-gradient(to right, #4f46e5, #06b6d4)',
+                'linear-gradient(to right, #8b5cf6, #3b82f6)',
+                'linear-gradient(to right, #2563eb, #7c3aed)'
               ]
             }}
             transition={{ 
-              duration: 15,
+              duration: 10,
               repeat: Infinity, 
               repeatType: "loop",
               ease: "easeInOut"
@@ -395,7 +395,7 @@ export default function LandingPage() {
               repeatType: "reverse",
               ease: "easeInOut"
             }}
-            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[800px] h-[800px] rounded-full bg-indigo-500/30 blur-3xl"
+            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[800px] h-[800px] rounded-full bg-purple-600/40 blur-3xl"
           ></motion.div>
           
           {/* Second animated blob */}
@@ -413,7 +413,7 @@ export default function LandingPage() {
               ease: "easeInOut",
               delay: 1
             }}
-            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[700px] h-[700px] rounded-full bg-blue-500/30 blur-3xl"
+            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[700px] h-[700px] rounded-full bg-cyan-500/40 blur-3xl"
           ></motion.div>
           
           {/* Third animated blob */}
@@ -431,7 +431,7 @@ export default function LandingPage() {
               ease: "easeInOut",
               delay: 2
             }}
-            className="absolute bottom-1/4 right-1/3 w-[600px] h-[600px] rounded-full bg-purple-500/30 blur-3xl"
+            className="absolute bottom-1/4 right-1/3 w-[600px] h-[600px] rounded-full bg-sky-500/40 blur-3xl"
           ></motion.div>
         </div>
         
