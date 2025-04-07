@@ -6,8 +6,8 @@ import { ChevronDown } from 'lucide-react';
 
 export function NavigationMenu() {
   return (
-    <NavigationMenuPrimitive.Root className="relative z-10 hidden md:flex">
-      <NavigationMenuPrimitive.List className="flex items-center gap-1 rounded-lg bg-white/50 p-1">
+    <NavigationMenuPrimitive.Root className="relative z-10 hidden md:flex justify-end">
+      <NavigationMenuPrimitive.List className="flex items-center gap-4 rounded-lg bg-white/50 p-1">
         {/* Products Dropdown */}
         <NavigationMenuPrimitive.Item>
           <NavigationMenuPrimitive.Trigger
@@ -137,10 +137,10 @@ interface NavigationLinkProps {
 function NavigationLink({ href, title, description }: NavigationLinkProps) {
   return (
     <Link href={href}>
-      <a className="block rounded-lg p-3 hover:bg-blue-50 transition-colors">
+      <div className="block rounded-lg p-3 hover:bg-blue-50 transition-colors">
         <div className="text-sm font-medium text-gray-900 mb-1">{title}</div>
         <div className="text-xs text-gray-500">{description}</div>
-      </a>
+      </div>
     </Link>
   );
 }
