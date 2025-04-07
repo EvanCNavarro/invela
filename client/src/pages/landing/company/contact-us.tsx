@@ -269,7 +269,7 @@ export default function ContactUsPage() {
                               <FormControl>
                                 <div className="relative">
                                   <SelectTrigger className={
-                                    form.formState.touchedFields.inquiryType
+                                    field.value
                                       ? !form.formState.errors.inquiryType
                                         ? "border-green-500 focus:ring-green-500 pr-10" 
                                         : "border-red-500 focus:ring-red-500"
