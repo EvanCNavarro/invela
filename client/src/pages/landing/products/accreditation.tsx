@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
-import { ArrowRight, CheckCircle, Shield } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, Send } from 'lucide-react';
 import { Link } from 'wouter';
 
 // Animation variants
@@ -59,21 +59,7 @@ export default function AccreditationPage() {
                 Invela's accreditation platform automates the complex process of evaluating and onboarding FinTech partners, reducing time to market while ensuring compliance.
               </motion.p>
               
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <Link href="/login">
-                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
-                  </a>
-                </Link>
-                <a href="#features" className="bg-white hover:bg-gray-50 text-gray-700 font-medium px-6 py-3 rounded-lg border border-gray-200 transition-colors duration-200 text-center">
-                  Learn More
-                </a>
-              </motion.div>
+
             </div>
             
             <motion.div 
@@ -259,7 +245,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-3xl font-bold mb-6"
             >
-              Ready to transform your accreditation process?
+              Ready to transform your Accreditation process?
             </motion.h2>
             
             <motion.p 
@@ -267,7 +253,7 @@ export default function AccreditationPage() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-10"
+              className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto"
             >
               Join leading financial institutions that have streamlined their partner accreditation with Invela.
             </motion.p>
@@ -277,16 +263,11 @@ export default function AccreditationPage() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex justify-center"
             >
-              <Link href="/login">
-                <a className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-8 py-4 rounded-lg transition-colors duration-200">
-                  Start a Free Trial
-                </a>
-              </Link>
               <Link href="/landing/company/about">
-                <a className="bg-transparent hover:bg-blue-700 text-white font-medium px-8 py-4 rounded-lg border border-white/30 transition-colors duration-200">
-                  Request a Demo
+                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
+                  Contact Sales <Send className="ml-2 h-5 w-5" />
                 </a>
               </Link>
             </motion.div>
