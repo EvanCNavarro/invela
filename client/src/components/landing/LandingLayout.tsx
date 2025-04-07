@@ -30,7 +30,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               
               <Link href="/login">
                 <div className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
-                  <span>Sign In</span>
+                  <span className="font-semibold">Sign In</span>
                 </div>
               </Link>
             </div>
@@ -133,7 +133,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               </p>
               
               <a href="#" className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
-                Request a Demo
+                <span className="font-semibold">Request a Demo</span>
               </a>
             </div>
           </div>
