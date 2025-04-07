@@ -5,6 +5,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
+import { WebSocketProvider } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
@@ -230,10 +231,12 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ToastProvider>
-          <Router />
-          <Toaster />
-        </ToastProvider>
+        <WebSocketProvider>
+          <ToastProvider>
+            <Router />
+            <Toaster />
+          </ToastProvider>
+        </WebSocketProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

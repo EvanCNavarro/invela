@@ -13,6 +13,7 @@ import DownloadButtonPlayground from "@/components/playground/DownloadButtonPlay
 import FileUploadPlayground from '@/components/playground/FileUploadPlayground';
 import TabsDemo from "@/components/playground/TabsDemo";
 import InvitePlayground from "@/components/playground/InvitePlayground";
+import WebSocketPlayground from "@/components/playground/WebSocketPlayground";
 import {
   Select,
   SelectContent,
@@ -160,6 +161,12 @@ const components: PlaygroundComponent[] = [
     name: "Unified Dropdown",
     component: DropdownPlayground,
     description: "Unified dropdown menu component"
+  },
+  {
+    id: "websocket",
+    name: "WebSocket Demo",
+    component: WebSocketPlayground,
+    description: "Real-time WebSocket communication demo"
   }
 ];
 
