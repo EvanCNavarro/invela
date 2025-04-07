@@ -282,7 +282,9 @@ export default function RegisterPage() {
                         value={field.value.toUpperCase()}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -361,7 +363,9 @@ export default function RegisterPage() {
                     <FormControl>
                       <Input {...field} type="email" disabled className="h-12" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -381,7 +385,9 @@ export default function RegisterPage() {
                     <FormControl>
                       <Input {...field} type="text" disabled className="h-12" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -402,7 +408,9 @@ export default function RegisterPage() {
                     <FormControl>
                       <Input {...field} type="text" placeholder="First name" className="h-12" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -416,7 +424,9 @@ export default function RegisterPage() {
                     <FormControl>
                       <Input {...field} type="text" placeholder="Last name" className="h-12" />
                     </FormControl>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />
@@ -456,7 +466,9 @@ export default function RegisterPage() {
                         )}
                       </Button>
                     </div>
-                    <FormMessage />
+                    <div className="min-h-[24px] mt-2">
+                      <FormMessage />
+                    </div>
                   </FormItem>
                 )}
               />

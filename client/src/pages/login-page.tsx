@@ -113,15 +113,17 @@ export default function LoginPage() {
                       }}
                     />
                   </FormControl>
-                  {field.value && form.formState.errors.email && (
-                    <FormMessage />
-                  )}
-                  {field.value && !form.formState.errors.email && (
-                    <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
-                      <Check className="h-4 w-4" />
-                      Valid email address
-                    </p>
-                  )}
+                  <div className="min-h-[24px] mt-2">
+                    {field.value && form.formState.errors.email && (
+                      <FormMessage />
+                    )}
+                    {field.value && !form.formState.errors.email && field.value.length > 0 && (
+                      <p className="text-sm text-green-500 flex items-center gap-1">
+                        <Check className="h-4 w-4" />
+                        Valid email address
+                      </p>
+                    )}
+                  </div>
                 </FormItem>
               )}
             />
@@ -166,15 +168,17 @@ export default function LoginPage() {
                       )}
                     </Button>
                   </div>
-                  {field.value && form.formState.errors.password && (
-                    <FormMessage />
-                  )}
-                  {field.value && !form.formState.errors.password && (
-                    <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
-                      <Check className="h-4 w-4" />
-                      Password meets requirements
-                    </p>
-                  )}
+                  <div className="min-h-[24px] mt-2">
+                    {field.value && form.formState.errors.password && (
+                      <FormMessage />
+                    )}
+                    {field.value && !form.formState.errors.password && field.value.length > 0 && (
+                      <p className="text-sm text-green-500 flex items-center gap-1">
+                        <Check className="h-4 w-4" />
+                        Password meets requirements
+                      </p>
+                    )}
+                  </div>
                 </FormItem>
               )}
             />
