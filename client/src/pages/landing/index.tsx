@@ -191,7 +191,7 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.1 }}
             variants={staggerContainer}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             {/* Feature 1 */}
             <FeatureCard
@@ -235,11 +235,26 @@ export default function LandingPage() {
               description="Continuous compliance monitoring with alerts for potential risks or compliance issues as they arise."
             />
             
-            {/* Feature 7 - Center in last row */}
+            {/* Feature 7 */}
             <FeatureCard
               icon={<FileText className="h-8 w-8 text-blue-600" />}
               title="Compliance Reporting"
               description="Comprehensive reporting tools to document compliance activities, track progress, and demonstrate regulatory adherence."
+            />
+            
+            {/* Feature 8 - Coming Soon */}
+            <FeatureCard
+              icon={<div className="relative">
+                <svg className="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </span>
+              </div>}
+              title="More Coming Soon"
+              description="We're continuously expanding our platform with innovative features to enhance your compliance and risk management capabilities."
             />
           </motion.div>
         </div>
@@ -377,7 +392,8 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300"
     >
       {/* Colored blur background that appears on hover behind the card */}
-      <div className="absolute -inset-4 bg-blue-300/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+      <div className="absolute -inset-4 bg-blue-400/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+      <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
       
       <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
         {icon}
