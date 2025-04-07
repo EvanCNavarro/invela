@@ -132,7 +132,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Denver, CO 80202
               </p>
               
-              <a href="#" className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
+              <a href="#" className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer hover:text-white">
                 <span className="font-semibold">Request a Demo</span>
               </a>
             </div>
