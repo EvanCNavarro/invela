@@ -503,6 +503,12 @@ export default function RegisterPage() {
                   Log in here
                 </Link>
               </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Want to learn more?{" "}
+                <Link href="/landing" className="text-primary hover:underline">
+                  Visit our website
+                </Link>
+              </p>
             </motion.div>
           </form>
         </Form>
