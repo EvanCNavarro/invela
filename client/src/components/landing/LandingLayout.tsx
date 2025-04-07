@@ -102,9 +102,15 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Risk Score</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Invela Registry</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Data Access Grants</a></li>
-                <li><a href="#" className="text-gray-600 hover:text-blue-600">Liability Insurance</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Dispute Resolution</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Insights & Consulting</a></li>
+              </ul>
+              
+              <h3 className="font-semibold text-gray-900 mb-4 mt-8">Legal</h3>
+              <ul className="space-y-2">
+                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
+                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
+                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
               </ul>
             </div>
             
@@ -114,9 +120,8 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               <ul className="space-y-2">
                 <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600">About</div></Link></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Careers</a></li>
-                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
-                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
-                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
+                <li><a href="#" className="text-gray-600 hover:text-blue-600">Leadership</a></li>
+                <li><a href="#" className="text-gray-600 hover:text-blue-600">Partners</a></li>
                 <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600">Site Map</div></Link></li>
               </ul>
             </div>
@@ -131,9 +136,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Phone: <a href="tel:+15551234567" className="text-blue-600 hover:underline">+1 (555) 123-4567</a>
               </p>
               <p className="text-gray-600 mb-5">
-                1845 Sidewinder Drive<br />
-                Suite 207<br />
-                Park City, UT 84060
+                100 Technology Way<br />
+                Suite 450<br />
+                Denver, CO 80202
               </p>
               
               <a href="#" className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer">
