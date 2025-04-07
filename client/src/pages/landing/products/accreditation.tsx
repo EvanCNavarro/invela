@@ -47,7 +47,7 @@ export default function AccreditationPage() {
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="text-4xl sm:text-5xl font-bold mb-6"
               >
-                Streamline FinTech partner Accreditation
+                Streamline FinTech Accreditation
               </motion.h1>
               
               <motion.p 
@@ -190,7 +190,7 @@ export default function AccreditationPage() {
               variants={fadeIn}
               className="text-3xl font-bold mb-6"
             >
-              Why choose Invela Accreditation
+              Why choose Invela Accreditation?
             </motion.h2>
             
             <motion.p 
