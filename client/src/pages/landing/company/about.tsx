@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import SectionTitleChip from '@/components/landing/SectionTitleChip';
 
 // Animation variants
 const fadeIn = {
@@ -29,14 +30,14 @@ export default function AboutPage() {
       <section id="overview" className="py-20 bg-gradient-to-b from-white to-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <motion.span 
+            <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              About Invela
-            </motion.span>
+              <SectionTitleChip title="About Invela" sectionId="overview" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
@@ -83,12 +84,12 @@ export default function AboutPage() {
               viewport={{ once: true, amount: 0.2 }}
               variants={staggerContainer}
             >
-              <motion.span 
+              <motion.div 
                 variants={fadeIn}
-                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+                className="mb-6"
               >
-                Our Mission
-              </motion.span>
+                <SectionTitleChip title="Our Mission" sectionId="mission" className="bg-blue-100" />
+              </motion.div>
               <motion.h2 
                 variants={fadeIn}
                 className="text-3xl font-bold mb-6"
@@ -116,15 +117,15 @@ export default function AboutPage() {
       <section id="values" className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              Our Values
-            </motion.span>
+              <SectionTitleChip title="Our Values" sectionId="values" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"
@@ -195,15 +196,15 @@ export default function AboutPage() {
       <section id="leadership" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              Our Leadership
-            </motion.span>
+              <SectionTitleChip title="Our Leadership" sectionId="leadership" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"
