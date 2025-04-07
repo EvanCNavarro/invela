@@ -4,6 +4,34 @@ import { LandingLayout } from '@/components/landing/LandingLayout';
 import { Link } from 'wouter';
 import { ChevronRight } from 'lucide-react';
 
+// Custom component for site map links to handle both wouter Links and regular anchor tags
+interface SiteMapLinkProps {
+  href: string;
+  label: string;
+}
+
+const SiteMapLink = ({ href, label }: SiteMapLinkProps) => {
+  // If this is an anchor link (contains #) or external link, use regular <a> tag
+  const isSpecialLink = href.includes('#') || href.startsWith('http') || href === '#';
+  
+  const linkContent = (
+    <div className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer">
+      <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
+      {label}
+    </div>
+  );
+  
+  return isSpecialLink ? (
+    <a href={href === '#' ? 'javascript:void(0)' : href} className="no-underline">
+      {linkContent}
+    </a>
+  ) : (
+    <Link href={href}>
+      {linkContent}
+    </Link>
+  );
+};
+
 export default function SiteMapPage() {
   return (
     <LandingLayout>
@@ -31,28 +59,13 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Main Pages</h2>
             <ul className="space-y-4">
               <li>
-                <Link href="/landing">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Home
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing" label="Home" />
               </li>
               <li>
-                <Link href="/login">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Login
-                  </a>
-                </Link>
+                <SiteMapLink href="/login" label="Login" />
               </li>
               <li>
-                <Link href="/register">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Register
-                  </a>
-                </Link>
+                <SiteMapLink href="/register" label="Register" />
               </li>
             </ul>
           </div>
@@ -62,48 +75,25 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Products</h2>
             <ul className="space-y-4">
               <li>
-                <Link href="/landing/products/accreditation">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Accreditation
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing/products/accreditation" label="Accreditation" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Risk Score
-                </a>
+                <SiteMapLink href="/landing/products/risk-score" label="Risk Score" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Invela Registry
-                </a>
+                <SiteMapLink href="/landing/products/invela-registry" label="Invela Registry" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Data Access Grants
-                </a>
+                <SiteMapLink href="/landing/products/data-access" label="Data Access Grants" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Liability Insurance
-                </a>
+                <SiteMapLink href="/landing/products/liability-insurance" label="Liability Insurance" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Dispute Resolution
-                </a>
+                <SiteMapLink href="/landing/products/dispute-resolution" label="Dispute Resolution" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Insights & Consulting
-                </a>
+                <SiteMapLink href="/landing/products/insights-consulting" label="Insights & Consulting" />
               </li>
             </ul>
           </div>
@@ -113,24 +103,13 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Company</h2>
             <ul className="space-y-4">
               <li>
-                <Link href="/landing/company/about">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    About
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing/company/about" label="About" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Team
-                </a>
+                <SiteMapLink href="/landing/company/about#leadership" label="Leadership" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Careers
-                </a>
+                <SiteMapLink href="#" label="Careers" />
               </li>
             </ul>
           </div>
@@ -140,28 +119,13 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Legal</h2>
             <ul className="space-y-4">
               <li>
-                <Link href="/landing/legal">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Legal Information
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing/legal" label="Legal Information" />
               </li>
               <li>
-                <Link href="/landing/legal/privacy-policy">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Privacy Policy
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing/legal/privacy-policy" label="Privacy Policy" />
               </li>
               <li>
-                <Link href="/landing/legal/terms-of-use">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Terms of Use
-                  </a>
-                </Link>
+                <SiteMapLink href="/landing/legal/terms-of-use" label="Terms of Use" />
               </li>
             </ul>
           </div>
@@ -171,44 +135,19 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Dashboard</h2>
             <ul className="space-y-4">
               <li>
-                <Link href="/dashboard">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Dashboard Home
-                  </a>
-                </Link>
+                <SiteMapLink href="/dashboard" label="Dashboard Home" />
               </li>
               <li>
-                <Link href="/task-center">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Task Center
-                  </a>
-                </Link>
+                <SiteMapLink href="/task-center" label="Task Center" />
               </li>
               <li>
-                <Link href="/network">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Network
-                  </a>
-                </Link>
+                <SiteMapLink href="/network" label="Network" />
               </li>
               <li>
-                <Link href="/insights">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    Insights
-                  </a>
-                </Link>
+                <SiteMapLink href="/insights" label="Insights" />
               </li>
               <li>
-                <Link href="/file-vault">
-                  <a className="flex items-center text-gray-700 hover:text-blue-600">
-                    <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                    File Vault
-                  </a>
-                </Link>
+                <SiteMapLink href="/file-vault" label="File Vault" />
               </li>
             </ul>
           </div>
@@ -218,22 +157,13 @@ export default function SiteMapPage() {
             <h2 className="text-xl font-semibold mb-6 pb-2 border-b border-gray-200">Resources</h2>
             <ul className="space-y-4">
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Help Center
-                </a>
+                <SiteMapLink href="#" label="Help Center" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  API Documentation
-                </a>
+                <SiteMapLink href="#" label="API Documentation" />
               </li>
               <li>
-                <a href="#" className="flex items-center text-gray-700 hover:text-blue-600">
-                  <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
-                  Support
-                </a>
+                <SiteMapLink href="#" label="Support" />
               </li>
             </ul>
           </div>
