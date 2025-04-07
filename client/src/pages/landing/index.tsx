@@ -445,13 +445,15 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-6 text-white"
+              className="text-4xl font-bold mb-8 text-white"
             >
-              Ready to transform your Compliance & Risk Management?
+              Ready to transform your
+              <br />
+              Compliance & Risk Management?
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-10 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-8 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
