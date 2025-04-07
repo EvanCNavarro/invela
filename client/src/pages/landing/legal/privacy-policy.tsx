@@ -116,7 +116,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <div className="mt-4">
               <p><strong>Email:</strong> privacy@invela.com</p>
-              <p><strong>Address:</strong> 123 Financial District, Suite 4500, New York, NY 10001</p>
+              <p><strong>Address:</strong> 100 Technology Way, Suite 450, Denver, CO 80202</p>
               <p><strong>Phone:</strong> +1 (555) 123-4567</p>
             </div>
           </section>
