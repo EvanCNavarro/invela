@@ -300,7 +300,8 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
-                disabled={invitationForm.formState.isSubmitting}
+                disabled={invitationForm.formState.isSubmitting || 
+                  invitationForm.watch("invitationCode").length !== 6}
               >
                 Validate Code
               </Button>

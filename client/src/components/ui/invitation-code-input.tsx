@@ -75,9 +75,12 @@ export function InvitationCodeInput({
   
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData('text').toUpperCase();
+    const pasteData = e.clipboardData.getData('text').toUpperCase().trim();
+    
+    // Extract hexadecimal characters only
     const validChars = pasteData.match(/[0-9A-F]/g) || [];
     
+    // Create new segments array with pasted data
     const newSegments = [...segments];
     for (let i = 0; i < Math.min(validChars.length, 6); i++) {
       newSegments[i] = validChars[i];
@@ -86,12 +89,17 @@ export function InvitationCodeInput({
     setSegments(newSegments);
     onChange(newSegments.join(''));
     
-    // Focus the next empty slot or the last slot
-    const nextEmptyIndex = newSegments.findIndex(seg => seg === '');
-    if (nextEmptyIndex !== -1) {
-      inputRefs.current[nextEmptyIndex]?.focus();
-    } else {
+    // If we have a full code, focus the last input
+    if (validChars.length >= 6) {
       inputRefs.current[5]?.focus();
+    } else {
+      // Otherwise focus the next empty slot
+      const nextEmptyIndex = newSegments.findIndex(seg => seg === '');
+      if (nextEmptyIndex !== -1) {
+        inputRefs.current[nextEmptyIndex]?.focus();
+      } else {
+        inputRefs.current[5]?.focus();
+      }
     }
   };
 
@@ -105,7 +113,7 @@ export function InvitationCodeInput({
           value={segment}
           onChange={e => handleChange(index, e)}
           onKeyDown={e => handleKeyDown(index, e)}
-          onPaste={index === 0 ? handlePaste : undefined}
+          onPaste={handlePaste}
           maxLength={1}
           className="w-full h-14 text-center font-mono text-xl font-medium border rounded-md bg-gray-50 focus:ring-2 focus:ring-primary focus:border-primary uppercase mx-1"
           aria-label={`Code segment ${index + 1}`}
