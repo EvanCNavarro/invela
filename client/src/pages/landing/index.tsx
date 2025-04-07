@@ -162,7 +162,7 @@ export default function LandingPage() {
       </section>
       
       {/* Features Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <motion.div 
             initial="hidden"
