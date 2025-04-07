@@ -22,8 +22,8 @@ export function NavigationMenu() {
           <NavigationMenuPrimitive.Content
             className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
-            <div className="w-[450px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="w-[560px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
+              <div className="grid grid-cols-2 gap-4">
                 <NavigationLink 
                   href="/landing/products/accreditation"
                   title="Accreditation"
@@ -78,37 +78,37 @@ export function NavigationMenu() {
           <NavigationMenuPrimitive.Content
             className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
-            <div className="w-[280px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
-              <div className="grid grid-cols-1 gap-2">
+            <div className="w-[560px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
+              <div className="grid grid-cols-2 gap-4">
                 <NavigationLink 
                   href="/landing/company/about"
                   title="About"
-                  description=""
+                  description="Our mission to transform FinTech compliance"
                 />
                 <NavigationLink 
                   href="#"
                   title="Careers"
-                  description=""
+                  description="Join our team of compliance innovators"
                 />
                 <NavigationLink 
-                  href="/landing/legal/privacy-policy"
-                  title="Privacy Policy"
-                  description=""
+                  href="#"
+                  title="Leadership"
+                  description="Meet the team behind Invela's innovation"
                 />
                 <NavigationLink 
-                  href="/landing/legal/terms-of-use"
-                  title="Terms of Use"
-                  description=""
+                  href="#"
+                  title="Partners"
+                  description="Our strategic alliances and integrations"
                 />
                 <NavigationLink 
                   href="/landing/legal"
                   title="Legal"
-                  description=""
+                  description="Our policies, terms, and compliance information"
                 />
                 <NavigationLink 
                   href="/landing/site-map"
                   title="Site Map"
-                  description=""
+                  description="Find what you're looking for on our site"
                 />
               </div>
             </div>

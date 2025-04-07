@@ -254,30 +254,25 @@ export default function LandingPage() {
               link="/landing/products/reporting"
             />
             
-            {/* Feature 8 - Additional Features (visually different) */}
+            {/* Feature 8 - Additional Features (visually different, no button) */}
             <Link href="/landing/products">
               <motion.div 
                 variants={fadeIn}
-                className="group relative bg-gray-50 border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-sm transition-all duration-300 cursor-pointer h-full flex flex-col"
+                className="group relative bg-gray-50 border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-sm transition-all duration-150 cursor-pointer h-full flex flex-col"
               >
-                <div className="bg-gray-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
-                  <div className="relative opacity-60">
-                    <svg className="h-7 w-7 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {/* No hover effect blur for this card as requested */}
+                
+                <div className="bg-gray-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-gray-200 transition-colors duration-150">
+                  <div className="relative">
+                    <svg className="h-7 w-7 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
                     </svg>
                   </div>
                 </div>
-                <h3 className="text-lg font-medium mb-3 text-gray-700">Additional Features</h3>
-                <p className="text-gray-500 text-sm mb-4">Our platform includes many more capabilities to enhance your compliance and risk management processes.</p>
+                <h3 className="text-xl font-semibold mb-3 text-gray-700">Additional Features</h3>
+                <p className="text-gray-600 mb-4">Our platform includes many more capabilities to enhance your compliance and risk management processes.</p>
                 
-                <div className="mt-auto">
-                  <div className="flex items-center text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
-                    View All Products
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
-                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
+                {/* No 'Learn More' button for this card as requested */}
               </motion.div>
             </Link>
           </motion.div>
@@ -286,8 +281,8 @@ export default function LandingPage() {
       
       {/* Benefits Section with Stats */}
       <section className="py-24 bg-blue-50/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="container mx-auto px-6 md:px-10 max-w-6xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div 
               initial="hidden"
               whileInView="visible"
@@ -414,20 +409,20 @@ function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode
     <Link href={link}>
       <motion.div 
         variants={fadeIn}
-        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col"
+        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer h-full flex flex-col overflow-hidden"
       >
-        {/* Inner bottom-left soft gradient blur */}
-        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-blue-400/20 rounded-bl-lg rounded-tr-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+        {/* Inner bottom-left soft gradient blur - persistently rendered but initially transparent */}
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-blue-400/20 rounded-bl-lg rounded-tr-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-150 -z-10"></div>
         
-        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
+        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-150">
           {icon}
         </div>
-        <h3 className="text-xl font-semibold mb-3">{title}</h3>
+        <h3 className="text-xl font-semibold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors duration-150">{title}</h3>
         <p className="text-gray-600 mb-4">{description}</p>
         
         {/* Learn More button that appears on hover */}
         <div className="mt-auto">
-          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-150 font-medium">
             Learn More
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
