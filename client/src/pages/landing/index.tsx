@@ -359,7 +359,7 @@ export default function LandingPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-16 relative overflow-hidden">
+      <section className="py-12 relative overflow-hidden h-[340px] flex items-center">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
           {/* Base gradient */}
@@ -438,7 +438,7 @@ export default function LandingPage() {
           ></motion.div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10 py-4">
+        <div className="container mx-auto px-4 text-center relative z-10 py-2">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -448,7 +448,7 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-4 text-white shadow-text"
+              className="text-4xl font-bold mb-3 text-white shadow-text"
               style={{ textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}
             >
               Ready to transform your
@@ -457,7 +457,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-5 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-4 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
