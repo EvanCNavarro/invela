@@ -96,7 +96,7 @@ export function InvitationCodeInput({
   };
 
   return (
-    <div className="flex justify-center items-center gap-2">
+    <div className="flex items-center gap-3">
       {segments.map((segment, index) => (
         <input
           key={index}
@@ -107,7 +107,7 @@ export function InvitationCodeInput({
           onKeyDown={e => handleKeyDown(index, e)}
           onPaste={index === 0 ? handlePaste : undefined}
           maxLength={1}
-          className="w-10 h-12 text-center font-mono text-lg font-medium border rounded-md focus:ring-2 focus:ring-primary focus:border-primary uppercase"
+          className="w-14 h-14 text-center font-mono text-lg font-medium border rounded-md bg-gray-50 focus:ring-2 focus:ring-primary focus:border-primary uppercase"
           aria-label={`Code segment ${index + 1}`}
         />
       ))}
