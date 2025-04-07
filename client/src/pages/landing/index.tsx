@@ -479,20 +479,24 @@ function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode
     <Link href={link}>
       <motion.div 
         variants={fadeIn}
-        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer h-full flex flex-col overflow-hidden"
+        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col"
       >
-        {/* Bottom right soft gradient blur that appears on hover */}
-        <div className="absolute bottom-0 right-0 w-1/2 h-1/2 bg-blue-300/10 rounded-br-lg blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-300 -z-10"></div>
+        {/* Bottom right gradient blur that appears on hover */}
+        <div 
+          className="absolute bottom-0 right-0 w-[60%] h-[60%] bg-blue-400/20 rounded-br-lg blur-xl opacity-0 
+                     group-hover:opacity-100 transition-opacity duration-300"
+          style={{ zIndex: 0 }}
+        />
         
-        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-150">
+        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-150 z-10">
           {icon}
         </div>
-        <h3 className="text-xl font-semibold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors duration-150">{title}</h3>
-        <p className="text-gray-600 mb-4">{description}</p>
+        <h3 className="text-xl font-semibold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors duration-150 z-10">{title}</h3>
+        <p className="text-gray-600 mb-4 z-10">{description}</p>
         
         {/* Learn More button that appears on hover */}
-        <div className="mt-auto">
-          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-150 font-semibold">
+        <div className="mt-auto z-10">
+          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-150 font-semibold">
             Learn More
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
