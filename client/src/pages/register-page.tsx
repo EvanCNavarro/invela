@@ -19,6 +19,7 @@ import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { InvitationCodeInput } from "@/components/ui/invitation-code-input";
 
 // Updated interface to match API response
 interface InvitationResponse {
@@ -273,16 +274,13 @@ export default function RegisterPage() {
                   <FormItem className="mb-6">
                     <FormLabel className="text-base">Invitation Code</FormLabel>
                     <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Enter 6-character code"
-                        autoFocus
-                        className="text-center tracking-widest uppercase font-mono h-12"
-                        maxLength={6}
-                        value={field.value.toUpperCase()}
+                      <InvitationCodeInput
+                        value={field.value}
+                        onChange={field.onChange}
+                        autoFocus={true}
                       />
                     </FormControl>
-                    <div className="min-h-[24px] mt-2">
+                    <div className="min-h-[24px] mt-4">
                       <FormMessage />
                     </div>
                   </FormItem>
