@@ -28,7 +28,7 @@ export default function LandingPage() {
   return (
     <LandingLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
+      <section id="overview" className="relative overflow-hidden">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-blue-50 to-green-100 opacity-70"></div>
@@ -162,7 +162,7 @@ export default function LandingPage() {
       </section>
       
       {/* Features Section */}
-      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+      <section id="features" className="py-16 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
           <motion.div 
             initial="hidden"
@@ -275,7 +275,7 @@ export default function LandingPage() {
       </section>
       
       {/* Benefits Section with Stats */}
-      <section className="pt-16 pb-24 bg-blue-50/50">
+      <section id="benefits" className="pt-16 pb-24 bg-blue-50/50">
         <div className="container mx-auto px-6 md:px-10 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div 
@@ -354,7 +354,7 @@ export default function LandingPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-12 relative overflow-hidden h-[340px] flex items-center">
+      <section id="contact" className="py-12 relative overflow-hidden h-[340px] flex items-center">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
           {/* Base gradient */}

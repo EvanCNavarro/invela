@@ -26,7 +26,7 @@ export default function AboutPage() {
   return (
     <LandingLayout>
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-white to-blue-50/50">
+      <section id="overview" className="py-20 bg-gradient-to-b from-white to-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
             <motion.span 
@@ -60,7 +60,7 @@ export default function AboutPage() {
       </section>
       
       {/* Mission Section */}
-      <section className="py-20 bg-white">
+      <section id="mission" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <motion.div 
@@ -113,7 +113,7 @@ export default function AboutPage() {
       </section>
       
       {/* Values Section */}
-      <section className="py-20 bg-blue-50/50">
+      <section id="values" className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.span 
@@ -181,6 +181,7 @@ export default function AboutPage() {
                 viewport={{ once: true, amount: 0.1 }}
                 variants={fadeIn}
                 className="bg-white rounded-xl p-8 shadow-sm border border-gray-100"
+                id={`value-${index + 1}`}
               >
                 <h3 className="text-xl font-semibold mb-4">{value.title}</h3>
                 <p className="text-gray-600">{value.description}</p>
@@ -191,7 +192,7 @@ export default function AboutPage() {
       </section>
       
       {/* Leadership Section Placeholder */}
-      <section className="py-20 bg-white">
+      <section id="leadership" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.span 
@@ -232,7 +233,11 @@ export default function AboutPage() {
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto"
             >
               {[1, 2, 3].map((item) => (
-                <div key={item} className="flex flex-col items-center">
+                <div 
+                  key={item} 
+                  className="flex flex-col items-center"
+                  id={`leader-${item}`}
+                >
                   <div className="w-40 h-40 rounded-full bg-gray-200 animate-pulse mb-4" />
                   <h3 className="text-lg font-semibold">Leadership Name</h3>
                   <p className="text-blue-600">Position Title</p>
