@@ -271,7 +271,7 @@ export default function ContactUsPage() {
                                   <SelectTrigger className={
                                     field.value
                                       ? !form.formState.errors.inquiryType
-                                        ? "border-green-500 focus:ring-green-500 pr-10" 
+                                        ? "border-green-500 focus:ring-green-500" 
                                         : "border-red-500 focus:ring-red-500"
                                       : ""
                                   }>
