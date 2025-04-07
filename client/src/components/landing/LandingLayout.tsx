@@ -116,15 +116,19 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Leadership</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Partners</a></li>
                 <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
-                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
-                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
                 <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600">Site Map</div></Link></li>
               </ul>
             </div>
             
-            {/* Contact column */}
+            {/* Legal column */}
             <div className="md:px-4">
-              <h3 className="font-semibold text-gray-900 mb-4">Contact</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
+              <ul className="space-y-2">
+                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
+                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
+              </ul>
+              
+              <h3 className="font-semibold text-gray-900 mb-4 mt-8">Contact</h3>
               <p className="text-gray-600 mb-2">
                 Email: <a href="mailto:info@invela.com" className="text-blue-600 hover:underline">info@invela.com</a>
               </p>
