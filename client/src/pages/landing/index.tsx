@@ -280,7 +280,7 @@ export default function LandingPage() {
       </section>
       
       {/* Benefits Section with Stats */}
-      <section className="py-24 bg-blue-50/50">
+      <section className="pt-16 pb-24 bg-blue-50/50">
         <div className="container mx-auto px-6 md:px-10 max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div 
@@ -303,7 +303,7 @@ export default function LandingPage() {
               </motion.h2>
               <motion.p 
                 variants={fadeIn}
-                className="text-lg text-gray-600 mb-8"
+                className="text-lg text-gray-500 italic mb-8"
               >
                 Financial institutions using Invela report significant improvements in compliance efficiency, risk management, and partner onboarding speed.
               </motion.p>
@@ -325,7 +325,7 @@ export default function LandingPage() {
                     className="flex items-start"
                   >
                     <CheckCircle className="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700">{item}</span>
+                    <span className="text-gray-800 font-medium">{item}</span>
                   </motion.li>
                 ))}
               </motion.ul>
@@ -347,10 +347,10 @@ export default function LandingPage() {
                 <motion.div 
                   key={index}
                   variants={fadeIn}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100"
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[140px] flex flex-col justify-center"
                 >
-                  <div className="text-4xl font-bold text-blue-600 mb-2">{stat.value}</div>
-                  <p className="text-gray-600">{stat.label}</p>
+                  <div className="text-4xl font-bold text-blue-600 mb-3">{stat.value}</div>
+                  <p className="text-gray-600 leading-tight">{stat.label}</p>
                 </motion.div>
               ))}
             </motion.div>
