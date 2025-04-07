@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'wouter';
 import { LandingLayout } from '@/components/landing/LandingLayout';
+import SectionTitleChip from '@/components/landing/SectionTitleChip';
 import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText, Send } from 'lucide-react';
 
 // Animation variants
@@ -171,12 +172,9 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="max-w-3xl mb-12"
           >
-            <motion.span 
-              variants={fadeIn}
-              className="inline-block bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-4"
-            >
-              Key Features
-            </motion.span>
+            <motion.div variants={fadeIn}>
+              <SectionTitleChip title="Key Features" sectionId="features" className="mb-4" />
+            </motion.div>
             <motion.h2 
               variants={fadeIn}
               className="text-4xl font-bold mb-4 max-w-xl"
@@ -284,12 +282,9 @@ export default function LandingPage() {
               viewport={{ once: true, amount: 0.2 }}
               variants={staggerContainer}
             >
-              <motion.span 
-                variants={fadeIn}
-                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-4"
-              >
-                Business Impact
-              </motion.span>
+              <motion.div variants={fadeIn}>
+                <SectionTitleChip title="Business Impact" sectionId="benefits" className="mb-4" />
+              </motion.div>
               <motion.h2 
                 variants={fadeIn}
                 className="text-4xl font-bold mb-6"
@@ -441,6 +436,9 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto"
           >
+            <motion.div variants={fadeIn} className="mb-4">
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90 mb-4" />
+            </motion.div>
             <motion.h2 
               variants={fadeIn}
               className="text-4xl font-bold mb-5 text-white shadow-text"
