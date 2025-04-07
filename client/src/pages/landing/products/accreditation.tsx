@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { ArrowRight, CheckCircle, Shield, Send } from 'lucide-react';
 import { Link } from 'wouter';
+import SectionTitleChip from '@/components/landing/SectionTitleChip';
 
 // Animation variants
 const fadeIn = {
@@ -32,14 +33,14 @@ export default function AccreditationPage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <motion.span 
+              <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+                className="mb-6"
               >
-                Invela Accreditation
-              </motion.span>
+                <SectionTitleChip title="Invela Accreditation" sectionId="overview" className="bg-blue-100" />
+              </motion.div>
               
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
@@ -83,15 +84,15 @@ export default function AccreditationPage() {
       <section id="how-it-works" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              How It Works
-            </motion.span>
+              <SectionTitleChip title="How It Works" sectionId="how-it-works" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"
@@ -175,15 +176,15 @@ export default function AccreditationPage() {
       <section id="benefits" className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              Benefits
-            </motion.span>
+              <SectionTitleChip title="Benefits" sectionId="benefits" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"

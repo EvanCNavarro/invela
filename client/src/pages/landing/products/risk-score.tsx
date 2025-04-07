@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import { BarChart3, Shield, Send, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
 import { Link } from 'wouter';
+import SectionTitleChip from '@/components/landing/SectionTitleChip';
 
 // Animation variants
 const fadeIn = {
@@ -32,14 +33,14 @@ export default function RiskScorePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <motion.span 
+              <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+                className="mb-6"
               >
-                Invela Risk Score
-              </motion.span>
+                <SectionTitleChip title="Invela Risk Score" sectionId="overview" className="bg-blue-100" />
+              </motion.div>
               
               <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
@@ -81,15 +82,15 @@ export default function RiskScorePage() {
       <section id="how-it-works" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              How It Works
-            </motion.span>
+              <SectionTitleChip title="How It Works" sectionId="how-it-works" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"
@@ -173,15 +174,15 @@ export default function RiskScorePage() {
       <section id="benefits" className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <motion.span 
+            <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
-              className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="mb-6"
             >
-              Benefits
-            </motion.span>
+              <SectionTitleChip title="Benefits" sectionId="benefits" className="bg-blue-100" centered />
+            </motion.div>
             
             <motion.h2 
               initial="hidden"
@@ -239,6 +240,16 @@ export default function RiskScorePage() {
       <section id="contact" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="mb-6"
+            >
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/80" centered />
+            </motion.div>
+            
             <motion.h2 
               initial="hidden"
               whileInView="visible"

@@ -70,11 +70,9 @@ export default function LandingPage() {
                 initial="hidden"
                 animate="visible"
                 variants={fadeIn}
-                className="mb-4"
+                className="mb-6"
               >
-                <span className="inline-block bg-white/80 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6 shadow-sm">
-                  The Enterprise Risk Management Platform
-                </span>
+                <SectionTitleChip title="The Enterprise Risk Management Platform" sectionId="overview" className="bg-white/80 shadow-sm" />
               </motion.div>
               
               <motion.h1 
