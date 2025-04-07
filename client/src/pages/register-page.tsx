@@ -224,16 +224,23 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-full max-w-sm p-6">
-          <div className="text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+      <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+        <div className="hidden lg:block w-1/2">
+          <AuthHeroSection isLogin={false} />
+        </div>
+        
+        <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
+          <div className="mb-8">
             <img
               src="/invela-logo.svg"
               alt="Invela"
-              className="h-12 w-12 mx-auto mb-4"
+              className="h-12 w-12 mb-4"
             />
             <h1 className="text-2xl font-bold">Create your account</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Complete your registration to get started
+            </p>
           </div>
 
           {!validatedInvitation ? (
@@ -262,7 +269,7 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  className="w-full font-bold hover:opacity-90"
+                  className="w-full font-bold hover:opacity-90 mt-6"
                   disabled={invitationForm.formState.isSubmitting}
                 >
                   Validate Code
@@ -388,7 +395,7 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  className="w-full font-bold hover:opacity-90"
+                  className="w-full font-bold hover:opacity-90 mt-6"
                   disabled={registerMutation.isPending}
                 >
                   Create Account
@@ -406,10 +413,6 @@ export default function RegisterPage() {
             </Form>
           )}
         </div>
-      </div>
-
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-background">
-        <AuthHeroSection isLogin={false} />
       </div>
     </div>
   );

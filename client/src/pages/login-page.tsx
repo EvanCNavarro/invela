@@ -52,16 +52,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-full max-w-sm p-6">
-          <div className="text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+      <div className="w-full max-w-5xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+        <div className="w-full lg:w-1/2 p-8 flex flex-col justify-center">
+          <div className="mb-8">
             <img
               src="/invela-logo.svg"
               alt="Invela"
-              className="h-12 w-12 mx-auto mb-4"
+              className="h-12 w-12 mb-4"
             />
             <h1 className="text-2xl font-bold">Log in to Invela</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Enter your credentials to access your account
+            </p>
           </div>
 
           <Form {...form}>
@@ -148,7 +151,7 @@ export default function LoginPage() {
 
               <Button
                 type="submit"
-                className="w-full font-bold hover:opacity-90"
+                className="w-full font-bold hover:opacity-90 mt-6"
                 disabled={!form.formState.isValid || loginMutation.isPending}
                 onClick={() => {
                   console.log('[Login] Submit button clicked');
@@ -179,10 +182,10 @@ export default function LoginPage() {
             </form>
           </Form>
         </div>
-      </div>
 
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-[hsl(209,99%,50%)]">
-        <AuthHeroSection isLogin={true} />
+        <div className="hidden lg:block w-1/2">
+          <AuthHeroSection isLogin={true} />
+        </div>
       </div>
     </div>
   );
