@@ -245,73 +245,102 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {!validatedInvitation ? (
-              <Form {...invitationForm}>
-                <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-5">
-                  <FormField
-                    control={invitationForm.control}
-                    name="invitationCode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Invitation Code</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter 6-character code"
-                            autoFocus
-                            className="text-center tracking-widest uppercase font-mono"
-                            maxLength={6}
-                            value={field.value.toUpperCase()}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+          {!validatedInvitation ? (
+            <Form {...invitationForm}>
+              <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-4">
+                <FormField
+                  control={invitationForm.control}
+                  name="invitationCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invitation Code</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="Enter 6-character code"
+                          autoFocus
+                          className="text-center tracking-widest uppercase font-mono"
+                          maxLength={6}
+                          value={field.value.toUpperCase()}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                  <Button
-                    type="submit"
-                    className="w-full font-bold hover:opacity-90 mt-8"
-                    disabled={invitationForm.formState.isSubmitting}
-                  >
-                    Validate Code
-                  </Button>
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90 mt-6"
+                  disabled={invitationForm.formState.isSubmitting}
+                >
+                  Validate Code
+                </Button>
 
-                  <div className="text-center mt-5">
-                    <p className="text-sm text-muted-foreground">
-                      Already have an account?{" "}
-                      <Link href="/login" className="text-primary hover:underline">
-                        Log in here
-                      </Link>
-                    </p>
-                  </div>
-                </form>
-              </Form>
-            ) : (
-              <Form {...registrationForm}>
-                <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-5">
-                  <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="flex items-start gap-3">
-                      <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-700">
-                          Valid invitation code
-                        </p>
-                        <p className="text-sm text-blue-600 mt-1">
-                          Registering for {validatedInvitation.company}
-                        </p>
-                      </div>
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link href="/login" className="text-primary hover:underline">
+                      Log in here
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </Form>
+          ) : (
+            <Form {...registrationForm}>
+              <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-start gap-3">
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-700">
+                        Valid invitation code
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1">
+                        Registering for {validatedInvitation.company}
+                      </p>
                     </div>
                   </div>
+                </div>
 
+                <FormField
+                  control={registrationForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" disabled />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={registrationForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" disabled />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={registrationForm.control}
-                    name="email"
+                    name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" disabled />
+                          <Input {...field} type="text" placeholder="First name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -320,101 +349,72 @@ export default function RegisterPage() {
 
                   <FormField
                     control={registrationForm.control}
-                    name="company"
+                    name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Company</FormLabel>
+                        <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input {...field} type="text" disabled />
+                          <Input {...field} type="text" placeholder="Last name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={registrationForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="text" placeholder="First name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={registrationForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            {...field}
+                            placeholder="Choose a secure password"
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={registrationForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="text" placeholder="Last name" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90 mt-6"
+                  disabled={registerMutation.isPending}
+                >
+                  Create Account
+                </Button>
 
-                  <FormField
-                    control={registrationForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <div className="relative">
-                          <FormControl>
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              {...field}
-                              placeholder="Choose a secure password"
-                            />
-                          </FormControl>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            )}
-                          </Button>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button
-                    type="submit"
-                    className="w-full font-bold hover:opacity-90 mt-8"
-                    disabled={registerMutation.isPending}
-                  >
-                    Create Account
-                  </Button>
-
-                  <div className="text-center mt-5">
-                    <p className="text-sm text-muted-foreground">
-                      Already have an account?{" "}
-                      <Link href="/login" className="text-primary hover:underline">
-                        Log in here
-                      </Link>
-                    </p>
-                  </div>
-                </form>
-              </Form>
-            )}
-          </div>
+                <div className="text-center mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Already have an account?{" "}
+                    <Link href="/login" className="text-primary hover:underline">
+                      Log in here
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </Form>
+          )}
+        </div>
         </div>
       </div>
       
