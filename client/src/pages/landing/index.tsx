@@ -173,7 +173,7 @@ export default function LandingPage() {
             className="max-w-3xl mb-12"
           >
             <motion.div variants={fadeIn}>
-              <SectionTitleChip title="Key Features" sectionId="features" className="mb-4" />
+              <SectionTitleChip title="Key Features" sectionId="features" className="mb-4" centered />
             </motion.div>
             <motion.h2 
               variants={fadeIn}
@@ -349,7 +349,7 @@ export default function LandingPage() {
       </section>
       
       {/* CTA Section */}
-      <section id="contact" className="py-12 relative overflow-hidden h-[340px] flex items-center">
+      <section id="contact" className="py-12 relative overflow-hidden h-[360px] flex items-center">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
           {/* Base gradient */}
@@ -428,7 +428,7 @@ export default function LandingPage() {
           ></motion.div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10 py-4">
+        <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -436,8 +436,8 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto"
           >
-            <motion.div variants={fadeIn} className="mb-4">
-              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90 mb-4" />
+            <motion.div variants={fadeIn} className="mb-5">
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90 mb-4" centered />
             </motion.div>
             <motion.h2 
               variants={fadeIn}
@@ -450,7 +450,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-6 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-9 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
