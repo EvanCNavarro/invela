@@ -38,7 +38,8 @@ export default function ContactUsPage() {
       email: '',
       company: '',
       phone: '',
-      inquiryType: typeParam === 'product-demo' ? 'product-demo' : '',
+      inquiryType: typeParam === 'product-demo' ? 'product-demo' : 
+                   typeParam === 'sales-inquiry' ? 'sales-inquiry' : '',
       message: '',
     },
     mode: 'onChange', // Enable validation on field change

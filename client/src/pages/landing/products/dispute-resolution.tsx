@@ -276,7 +276,7 @@ export default function DisputeResolutionPage() {
               variants={fadeIn}
               className="flex justify-center"
             >
-              <Link href="/landing#contact-us">
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form">
                 <div className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
                   Contact Sales <Send className="ml-2 h-5 w-5" />
                 </div>
