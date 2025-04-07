@@ -369,13 +369,16 @@ export default function LandingPage() {
                 'linear-gradient(to right, #3b82f6, #6366f1)', 
                 'linear-gradient(to right, #4f46e5, #06b6d4)',
                 'linear-gradient(to right, #8b5cf6, #3b82f6)',
-                'linear-gradient(to right, #2563eb, #7c3aed)'
+                'linear-gradient(to right, #2563eb, #7c3aed)',
+                'linear-gradient(to right, #8b5cf6, #3b82f6)',
+                'linear-gradient(to right, #4f46e5, #06b6d4)',
+                'linear-gradient(to right, #3b82f6, #6366f1)'
               ]
             }}
             transition={{ 
-              duration: 10,
+              duration: 15,
               repeat: Infinity, 
-              repeatType: "loop",
+              repeatType: "reverse",
               ease: "easeInOut"
             }}
             className="absolute inset-0"
@@ -445,7 +448,8 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-8 text-white"
+              className="text-4xl font-bold mb-8 text-white shadow-text"
+              style={{ textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}
             >
               Ready to transform your
               <br />
@@ -463,7 +467,7 @@ export default function LandingPage() {
               className="flex justify-center"
             >
               <Link href="/landing/company/about">
-                <a className="bg-white hover:bg-gray-100 text-blue-600 font-medium px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
+                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
                   Contact Sales <Send className="ml-2 h-5 w-5" />
                 </a>
               </Link>
@@ -494,7 +498,7 @@ function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode
         
         {/* Learn More button that appears on hover */}
         <div className="mt-auto">
-          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-150 font-medium">
+          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-all duration-150 font-semibold">
             Learn More
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -522,7 +526,7 @@ function AdditionalFeaturesCard({ icon, title, description, link }: { icon: Reac
         
         {/* Learn More button that appears on hover */}
         <div className="mt-auto">
-          <div className="flex items-center text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+          <div className="flex items-center text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-semibold text-sm">
             View All Products
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
               <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
