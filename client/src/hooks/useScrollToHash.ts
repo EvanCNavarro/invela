@@ -18,10 +18,26 @@ export function useScrollToHash() {
       const targetElement = document.getElementById(targetId);
       
       if (targetElement) {
-        // Add a small delay to ensure the page is fully rendered
+        // Add a longer delay to ensure the page is fully rendered
         setTimeout(() => {
-          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+          // Calculate header height (assuming header is 64px tall)
+          const headerHeight = 64;
+          
+          // Get the position of the element relative to the viewport
+          const targetPosition = targetElement.getBoundingClientRect().top;
+          
+          // Get the current scroll position
+          const scrollPosition = window.pageYOffset;
+          
+          // Calculate the final scroll position with header offset
+          const offsetPosition = scrollPosition + targetPosition - headerHeight;
+          
+          // Scroll to the element with offset
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }, 300);
       }
     }
   }, []);
