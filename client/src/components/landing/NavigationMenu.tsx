@@ -20,7 +20,7 @@ export function NavigationMenu() {
             />
           </NavigationMenuPrimitive.Trigger>
           <NavigationMenuPrimitive.Content
-            className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 left-0 w-auto"
+            className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
             <div className="w-[550px] p-4 bg-white rounded-xl shadow-lg border border-gray-200/50">
               <div className="grid grid-cols-2 gap-4">
@@ -76,7 +76,7 @@ export function NavigationMenu() {
             />
           </NavigationMenuPrimitive.Trigger>
           <NavigationMenuPrimitive.Content
-            className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 left-0 w-auto"
+            className="data-[motion=from-start]:animate-enterFromLeft data-[motion=from-end]:animate-enterFromRight data-[motion=to-start]:animate-exitToLeft data-[motion=to-end]:animate-exitToRight absolute top-0 right-0 w-auto"
           >
             <div className="w-[350px] p-4 bg-white rounded-xl shadow-lg border border-gray-200/50">
               <div className="grid grid-cols-1 gap-4">

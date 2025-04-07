@@ -86,21 +86,40 @@ export function WebSocketDemo() {
       setIsLoading(true);
       
       // Try to parse as JSON first, otherwise send as string
-      let messageContent: any;
+      let messageType = "message";
+      let messagePayload: any;
+      
       try {
-        messageContent = JSON.parse(messageInput);
+        // Try to parse as JSON
+        const parsedContent = JSON.parse(messageInput);
+        
+        // If it's an object with a type property, use that
+        if (parsedContent && typeof parsedContent === 'object') {
+          if (parsedContent.type) {
+            messageType = parsedContent.type;
+            delete parsedContent.type; // Remove type from payload
+            messagePayload = parsedContent;
+          } else {
+            // No type specified, use entire object as payload
+            messagePayload = parsedContent;
+          }
+        } else {
+          // It's a primitive value parsed from JSON
+          messagePayload = { value: parsedContent };
+        }
       } catch {
-        messageContent = { type: "message", text: messageInput };
+        // Not valid JSON, treat as text message
+        messagePayload = { text: messageInput };
       }
       
       // Send the message
-      send(messageContent);
+      send(messageType, messagePayload);
       
       // Add sent message to the messages array
       const sentMessage: Message = {
         id: `sent-${Date.now()}`,
-        type: messageContent.type || "message",
-        content: JSON.stringify(messageContent),
+        type: messageType,
+        content: JSON.stringify({ type: messageType, payload: messagePayload }),
         timestamp: new Date().toISOString(),
         direction: "outgoing"
       };

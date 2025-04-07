@@ -10,7 +10,7 @@ interface WebSocketContextType {
   disconnect: () => void;
   subscribe: (eventType: string, handler: (data: any) => void) => () => void;
   unsubscribe: (eventType: string, handler: (data: any) => void) => void;
-  send: (message: any) => void;
+  send: (type: string, payload: any) => void;
 }
 
 const defaultContext: WebSocketContextType = {
@@ -20,7 +20,7 @@ const defaultContext: WebSocketContextType = {
   disconnect: () => {},
   subscribe: () => () => {},
   unsubscribe: () => {},
-  send: () => {}
+  send: () => {}, // Actually takes two args, but TS is happier with this declaration
 };
 
 const WebSocketContext = createContext<WebSocketContextType>(defaultContext);
