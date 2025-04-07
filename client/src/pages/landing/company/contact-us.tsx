@@ -74,156 +74,147 @@ export default function ContactUsPage() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="mb-16"
           >
-            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-              <div className="mb-6 text-left">
-                <SectionTitleChip title="Get in Touch" sectionId="contact-form" centered={false} />
-                <h2 className="text-2xl font-bold mt-2 mb-6">Send Us a Message</h2>
-              </div>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input placeholder="your.email@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="company"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Your company" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone (Optional)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+1 (555) 123-4567" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="inquiryType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Inquiry Type</FormLabel>
-                        <Select 
-                          onValueChange={field.onChange} 
-                          defaultValue={field.value}
-                        >
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-10">
+                <div className="mb-6 text-left">
+                  <SectionTitleChip title="Get in Touch" sectionId="contact-form" centered={false} />
+                  <h2 className="text-2xl font-bold mt-2 mb-6">Send Us a Message</h2>
+                </div>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Name</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select the type of inquiry" />
-                            </SelectTrigger>
+                            <Input placeholder="Your name" {...field} />
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="product-demo">Product Demo</SelectItem>
-                            <SelectItem value="sales-inquiry">Sales Inquiry</SelectItem>
-                            <SelectItem value="partnership">Partnership Opportunities</SelectItem>
-                            <SelectItem value="support">Support</SelectItem>
-                            <SelectItem value="general">General Inquiry</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="How can we help you? Please provide details about your inquiry." 
-                            className="min-h-[120px]"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button type="submit" className="w-full">Send Message</Button>
-                </form>
-              </Form>
-            </div>
-          </motion.div>
-          
-          {/* Contact Information Section */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="mb-16"
-          >
-            <div className="mb-8 text-center">
-              <SectionTitleChip title="Contact Information" sectionId="contact-info" centered />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {/* Our Office */}
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-semibold mb-4">Our Office</h3>
-                <p className="text-gray-600 mb-4">
-                  100 Technology Way<br />
-                  Suite 450<br />
-                  Denver, CO 80202
-                </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="your.email@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="company"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Company</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your company" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+1 (555) 123-4567" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="inquiryType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Inquiry Type</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select the type of inquiry" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="product-demo">Product Demo</SelectItem>
+                              <SelectItem value="sales-inquiry">Sales Inquiry</SelectItem>
+                              <SelectItem value="partnership">Partnership Opportunities</SelectItem>
+                              <SelectItem value="support">Support</SelectItem>
+                              <SelectItem value="general">General Inquiry</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Message</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="How can we help you? Please provide details about your inquiry." 
+                              className="min-h-[120px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button type="submit" className="w-full">Send Message</Button>
+                  </form>
+                </Form>
               </div>
               
-              {/* Contact Details */}
-              <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                <h3 className="text-xl font-semibold mb-4">Contact Details</h3>
-                <p className="text-gray-600 mb-2">
-                  <span className="font-semibold">Email:</span> <a href="mailto:info@invela.com" className="text-blue-600 hover:underline">info@invela.com</a>
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <span className="font-semibold">Phone:</span> <a href="tel:+15551234567" className="text-blue-600 hover:underline">+1 (555) 123-4567</a>
-                </p>
-                <p className="text-gray-600 mb-2">
-                  <span className="font-semibold">Support:</span> <a href="mailto:support@invela.com" className="text-blue-600 hover:underline">support@invela.com</a>
-                </p>
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Our Office */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <h3 className="text-xl font-semibold mb-4">Our Office</h3>
+                  <p className="text-gray-600 mb-4">
+                    100 Technology Way<br />
+                    Suite 450<br />
+                    Denver, CO 80202
+                  </p>
+                </div>
+                
+                {/* Contact Details */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <h3 className="text-xl font-semibold mb-4">Contact Details</h3>
+                  <p className="text-gray-600 mb-2">
+                    <span className="font-semibold">Email:</span> <a href="mailto:info@invela.com" className="text-blue-600 hover:underline">info@invela.com</a>
+                  </p>
+                  <p className="text-gray-600 mb-2">
+                    <span className="font-semibold">Phone:</span> <a href="tel:+15551234567" className="text-blue-600 hover:underline">+1 (555) 123-4567</a>
+                  </p>
+                  <p className="text-gray-600 mb-2">
+                    <span className="font-semibold">Support:</span> <a href="mailto:support@invela.com" className="text-blue-600 hover:underline">support@invela.com</a>
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
