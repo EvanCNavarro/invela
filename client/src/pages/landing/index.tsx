@@ -362,37 +362,76 @@ export default function LandingPage() {
       <section className="py-24 relative overflow-hidden">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+          {/* Base gradient */}
           <motion.div 
             animate={{ 
-              scale: [1, 1.05, 1],
-              opacity: [0.6, 0.8, 0.6],
-              x: [0, 10, 0],
-              y: [0, 5, 0]
+              background: [
+                'linear-gradient(to right, #3b82f6, #4f46e5)', 
+                'linear-gradient(to right, #4f46e5, #2563eb)',
+                'linear-gradient(to right, #4338ca, #3b82f6)',
+                'linear-gradient(to right, #3b82f6, #4f46e5)'
+              ]
             }}
             transition={{ 
-              duration: 12,
+              duration: 15,
+              repeat: Infinity, 
+              repeatType: "loop",
+              ease: "easeInOut"
+            }}
+            className="absolute inset-0"
+          ></motion.div>
+          
+          {/* First animated blob */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.2, 1],
+              opacity: [0.5, 0.7, 0.5],
+              x: [0, 20, 0],
+              y: [0, 15, 0]
+            }}
+            transition={{ 
+              duration: 8,
               repeat: Infinity,
               repeatType: "reverse",
               ease: "easeInOut"
             }}
-            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[700px] h-[700px] rounded-full bg-indigo-500/30 blur-3xl"
+            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[800px] h-[800px] rounded-full bg-indigo-500/30 blur-3xl"
           ></motion.div>
+          
+          {/* Second animated blob */}
           <motion.div 
             animate={{ 
-              scale: [1, 1.1, 1],
-              opacity: [0.5, 0.7, 0.5],
-              x: [0, -10, 0],
-              y: [0, -5, 0]
+              scale: [1, 1.3, 1],
+              opacity: [0.4, 0.6, 0.4],
+              x: [0, -25, 0],
+              y: [0, -15, 0]
             }}
             transition={{ 
-              duration: 15,
+              duration: 10,
               repeat: Infinity,
               repeatType: "reverse",
               ease: "easeInOut",
               delay: 1
             }}
-            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[600px] h-[600px] rounded-full bg-blue-500/30 blur-3xl"
+            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[700px] h-[700px] rounded-full bg-blue-500/30 blur-3xl"
+          ></motion.div>
+          
+          {/* Third animated blob */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3],
+              x: [0, 15, 0],
+              y: [0, -20, 0]
+            }}
+            transition={{ 
+              duration: 12,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: 2
+            }}
+            className="absolute bottom-1/4 right-1/3 w-[600px] h-[600px] rounded-full bg-purple-500/30 blur-3xl"
           ></motion.div>
         </div>
         
@@ -408,7 +447,7 @@ export default function LandingPage() {
               variants={fadeIn}
               className="text-4xl font-bold mb-6 text-white"
             >
-              COMPLIANCE & RISK MANAGEMENT
+              Ready to transform your Compliance & Risk Management?
             </motion.h2>
             <motion.p 
               variants={fadeIn}
@@ -423,7 +462,7 @@ export default function LandingPage() {
             >
               <Link href="/landing/company/about">
                 <a className="bg-white hover:bg-gray-100 text-blue-600 font-medium px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
-                  <Send className="mr-2 h-5 w-5" /> Contact Sales
+                  Contact Sales <Send className="ml-2 h-5 w-5" />
                 </a>
               </Link>
             </motion.div>
