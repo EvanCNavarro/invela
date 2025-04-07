@@ -276,11 +276,7 @@ export default function ContactUsPage() {
                                       : ""
                                   }>
                                     <SelectValue placeholder="Select the type of inquiry" />
-                                    {form.formState.touchedFields.inquiryType && !form.formState.errors.inquiryType && (
-                                      <div className="absolute right-8 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                      </div>
-                                    )}
+
                                   </SelectTrigger>
                                 </div>
                               </FormControl>
