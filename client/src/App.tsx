@@ -31,6 +31,10 @@ import { ProtectedRoute } from "./lib/protected-route";
 import LandingPage from "@/pages/landing";
 import AboutPage from "@/pages/landing/company/about";
 import AccreditationPage from "@/pages/landing/products/accreditation";
+import PrivacyPolicyPage from "@/pages/landing/legal/privacy-policy";
+import TermsOfUsePage from "@/pages/landing/legal/terms-of-use";
+import LegalPage from "@/pages/landing/legal";
+import SiteMapPage from "@/pages/landing/site-map";
 
 function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -50,6 +54,10 @@ function Router() {
       <Route path="/landing" component={LandingPage} />
       <Route path="/landing/company/about" component={AboutPage} />
       <Route path="/landing/products/accreditation" component={AccreditationPage} />
+      <Route path="/landing/legal" component={LegalPage} />
+      <Route path="/landing/legal/privacy-policy" component={PrivacyPolicyPage} />
+      <Route path="/landing/legal/terms-of-use" component={TermsOfUsePage} />
+      <Route path="/landing/site-map" component={SiteMapPage} />
 
       {/* Public routes */}
       <Route path="/login" component={LoginPage} />
