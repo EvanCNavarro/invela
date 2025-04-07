@@ -438,7 +438,7 @@ export default function LandingPage() {
           ></motion.div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10 py-2">
+        <div className="container mx-auto px-4 text-center relative z-10 py-4">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -448,7 +448,7 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-3 text-white shadow-text"
+              className="text-4xl font-bold mb-5 text-white shadow-text"
               style={{ textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}
             >
               Ready to transform your
@@ -457,7 +457,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-4 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-6 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
@@ -467,7 +467,7 @@ export default function LandingPage() {
               className="flex justify-center"
             >
               <Link href="/landing/company/about">
-                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-7 py-3 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
+                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
                   Contact Sales <Send className="ml-2 h-5 w-5" />
                 </a>
               </Link>
