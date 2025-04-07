@@ -131,13 +131,15 @@ export default function ContactUsPage() {
                                   {...field} 
                                   className={
                                     form.formState.touchedFields.name
-                                      ? !form.formState.errors.name 
+                                      ? !form.formState.errors.name && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
-                                        : "border-red-500 focus-visible:ring-red-500"
+                                        : form.formState.errors.name 
+                                          ? "border-red-500 focus-visible:ring-red-500"
+                                          : ""
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.name && !form.formState.errors.name && (
+                                {form.formState.touchedFields.name && !form.formState.errors.name && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -165,13 +167,15 @@ export default function ContactUsPage() {
                                   {...field} 
                                   className={
                                     form.formState.touchedFields.company
-                                      ? !form.formState.errors.company 
+                                      ? !form.formState.errors.company && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
-                                        : "border-red-500 focus-visible:ring-red-500"
+                                        : form.formState.errors.company
+                                          ? "border-red-500 focus-visible:ring-red-500"
+                                          : ""
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.company && !form.formState.errors.company && (
+                                {form.formState.touchedFields.company && !form.formState.errors.company && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -202,13 +206,15 @@ export default function ContactUsPage() {
                                   {...field} 
                                   className={
                                     form.formState.touchedFields.email
-                                      ? !form.formState.errors.email 
+                                      ? !form.formState.errors.email && field.value
                                         ? "border-green-500 focus-visible:ring-green-500 pr-10" 
-                                        : "border-red-500 focus-visible:ring-red-500"
+                                        : form.formState.errors.email
+                                          ? "border-red-500 focus-visible:ring-red-500"
+                                          : ""
                                       : ""
                                   }
                                 />
-                                {form.formState.touchedFields.email && !form.formState.errors.email && (
+                                {form.formState.touchedFields.email && !form.formState.errors.email && field.value && (
                                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                   </div>
@@ -308,14 +314,16 @@ export default function ContactUsPage() {
                                 placeholder="How can we help you? Please provide details about your inquiry." 
                                 className={`min-h-[120px] ${
                                   form.formState.touchedFields.message
-                                    ? !form.formState.errors.message
+                                    ? !form.formState.errors.message && field.value
                                       ? "border-green-500 focus-visible:ring-green-500 pr-10" 
-                                      : "border-red-500 focus-visible:ring-red-500"
+                                      : form.formState.errors.message
+                                        ? "border-red-500 focus-visible:ring-red-500"
+                                        : ""
                                     : ""
                                 }`}
                                 {...field} 
                               />
-                              {form.formState.touchedFields.message && !form.formState.errors.message && (
+                              {form.formState.touchedFields.message && !form.formState.errors.message && field.value && (
                                 <div className="absolute right-3 top-5 pointer-events-none">
                                   <CheckCircle2 className="h-5 w-5 text-green-500" />
                                 </div>
