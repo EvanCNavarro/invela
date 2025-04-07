@@ -5,9 +5,15 @@ interface SectionTitleChipProps {
   title: string;
   sectionId: string;
   className?: string;
+  centered?: boolean; // New prop to determine if chip is centered in its container
 }
 
-export default function SectionTitleChip({ title, sectionId, className = '' }: SectionTitleChipProps) {
+export default function SectionTitleChip({ 
+  title, 
+  sectionId, 
+  className = '',
+  centered = false // Default to false for left-aligned chips
+}: SectionTitleChipProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   
@@ -26,10 +32,10 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
   
   return (
     <div className="inline-block relative">
-      {/* Container with fixed width to prevent jitter */}
-      <div className="inline-flex items-center justify-center">
-        {/* Invisible placeholder on the left to balance the layout */}
-        <div className="invisible" style={{ width: hashtagWidth }}></div>
+      {/* Container with conditional layout based on centered prop */}
+      <div className={`inline-flex items-center ${centered ? 'justify-center' : 'justify-start'}`}>
+        {/* Invisible placeholder on the left only for centered chips */}
+        {centered && <div className="invisible" style={{ width: hashtagWidth }}></div>}
         
         {/* The chip itself */}
         <motion.span 
@@ -41,7 +47,7 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
           {title}
         </motion.span>
         
-        {/* Hash symbol container (visible or invisible) with fixed width */}
+        {/* Hash symbol container with fixed width */}
         <div className="flex items-center" style={{ width: hashtagWidth, justifyContent: 'flex-start' }}>
           <AnimatePresence>
             {isHovered && (
