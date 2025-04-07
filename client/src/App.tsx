@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { OnboardingWrapper } from "@/components/OnboardingWrapper";
 import { ToastProvider } from "@/components/ui/toast";
 import { WebSocketProvider } from "@/providers/websocket-provider";
-import { ScrollToTop } from "@/components/ScrollToTop";
+import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
 
