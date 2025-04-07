@@ -12,24 +12,40 @@ interface SiteMapLinkProps {
 
 const SiteMapLink = ({ href, label }: SiteMapLinkProps) => {
   // If this is an anchor link (contains #) or external link, use regular <a> tag
-  const isSpecialLink = href.includes('#') || href.startsWith('http') || href === '#';
+  const isSpecialLink = href.includes('#') || href.startsWith('http');
+  const isEmptyLink = href === '#';
   
   const linkContent = (
-    <div className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer">
+    <>
       <ChevronRight className="h-4 w-4 mr-2 text-blue-500" />
       {label}
-    </div>
+    </>
   );
   
-  return isSpecialLink ? (
-    <a href={href === '#' ? 'javascript:void(0)' : href} className="no-underline">
-      {linkContent}
-    </a>
-  ) : (
-    <Link href={href}>
-      {linkContent}
-    </Link>
-  );
+  if (isEmptyLink) {
+    // For empty/placeholder links, use a button styled as a link
+    return (
+      <button className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer bg-transparent border-0 p-0 text-left">
+        {linkContent}
+      </button>
+    );
+  } else if (isSpecialLink) {
+    // For anchor or external links
+    return (
+      <a href={href} className="flex items-center text-gray-700 hover:text-blue-600 no-underline">
+        {linkContent}
+      </a>
+    );
+  } else {
+    // For internal links, use wouter Link
+    return (
+      <Link href={href}>
+        <a className="flex items-center text-gray-700 hover:text-blue-600 no-underline">
+          {linkContent}
+        </a>
+      </Link>
+    );
+  }
 };
 
 export default function SiteMapPage() {

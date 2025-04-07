@@ -81,8 +81,8 @@ export function NavigationMenu() {
             <div className="w-[560px] p-3 bg-white rounded-xl shadow-lg border border-gray-200/50">
               <div className="grid grid-cols-2 gap-4">
                 <NavigationLink 
-                  href="/landing/company/about#mission"
-                  title="About & Mission"
+                  href="/landing/company/about"
+                  title="About"
                   description="Our mission to transform FinTech compliance"
                 />
                 <NavigationLink 
