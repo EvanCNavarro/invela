@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
+import { motion } from "framer-motion";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -53,130 +54,175 @@ export default function LoginPage() {
 
   return (
     <AuthLayout isLogin={true}>
-      <div className="mb-12">
-        <img
+      <motion.div 
+        className="mb-12"
+        initial={{ opacity: 0, y: -5 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <motion.img
           src="/invela-logo.svg"
           alt="Invela"
           className="h-14 w-14 mb-6"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
         />
-        <h1 className="text-3xl font-bold">Log in to Invela</h1>
-        <p className="text-base text-muted-foreground mt-3">
+        <motion.h1 
+          className="text-3xl font-bold"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
+          Log in to Invela
+        </motion.h1>
+        <motion.p 
+          className="text-base text-muted-foreground mt-3"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
           Enter your credentials to access your account
-        </p>
-      </div>
+        </motion.p>
+      </motion.div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-base">Email</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="email"
-                    autoComplete="email"
-                    autoFocus
-                    placeholder="Enter your email"
-                    className={`h-12 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
-                    onChange={(e) => {
-                      field.onChange(e);
-                      console.log('[Login] Email field changed:', e.target.value);
-                    }}
-                  />
-                </FormControl>
-                {field.value && form.formState.errors.email && (
-                  <FormMessage />
-                )}
-                {field.value && !form.formState.errors.email && (
-                  <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
-                    <Check className="h-4 w-4" />
-                    Valid email address
-                  </p>
-                )}
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel className="text-base">Password</FormLabel>
-                <div className="relative">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+          >
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="mb-6">
+                  <FormLabel className="text-base">Email</FormLabel>
                   <FormControl>
                     <Input
-                      type={showPassword ? "text" : "password"}
                       {...field}
-                      autoComplete="current-password"
-                      placeholder="Enter your password"
-                      className={`h-12 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
+                      type="email"
+                      autoComplete="email"
+                      autoFocus
+                      placeholder="Enter your email"
+                      className={`h-12 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
                       onChange={(e) => {
                         field.onChange(e);
-                        console.log('[Login] Password field changed, length:', e.target.value.length);
+                        console.log('[Login] Email field changed:', e.target.value);
                       }}
                     />
                   </FormControl>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </Button>
-                </div>
-                {field.value && form.formState.errors.password && (
-                  <FormMessage />
-                )}
-                {field.value && !form.formState.errors.password && (
-                  <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
-                    <Check className="h-4 w-4" />
-                    Password meets requirements
-                  </p>
-                )}
-              </FormItem>
-            )}
-          />
+                  {field.value && form.formState.errors.email && (
+                    <FormMessage />
+                  )}
+                  {field.value && !form.formState.errors.email && (
+                    <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
+                      <Check className="h-4 w-4" />
+                      Valid email address
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+          </motion.div>
 
-          <Button
-            type="submit"
-            className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
-            disabled={!form.formState.isValid || loginMutation.isPending}
-            onClick={() => {
-              console.log('[Login] Submit button clicked');
-              console.log('[Login] Form state:', {
-                isValid: form.formState.isValid,
-                errors: form.formState.errors,
-                isDirty: form.formState.isDirty
-              });
-            }}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
           >
-            {loginMutation.isPending ? (
-              <span className="flex items-center gap-2">
-                Logging in...
-              </span>
-            ) : (
-              'Log in'
-            )}
-          </Button>
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="mb-6">
+                  <FormLabel className="text-base">Password</FormLabel>
+                  <div className="relative">
+                    <FormControl>
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        {...field}
+                        autoComplete="current-password"
+                        placeholder="Enter your password"
+                        className={`h-12 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          console.log('[Login] Password field changed, length:', e.target.value.length);
+                        }}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </Button>
+                  </div>
+                  {field.value && form.formState.errors.password && (
+                    <FormMessage />
+                  )}
+                  {field.value && !form.formState.errors.password && (
+                    <p className="text-sm text-green-500 mt-2 flex items-center gap-1">
+                      <Check className="h-4 w-4" />
+                      Password meets requirements
+                    </p>
+                  )}
+                </FormItem>
+              )}
+            />
+          </motion.div>
 
-          <div className="text-center mt-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Button
+              type="submit"
+              className="w-full font-bold hover:opacity-90 mt-10 h-12 text-base"
+              disabled={!form.formState.isValid || loginMutation.isPending}
+              onClick={() => {
+                console.log('[Login] Submit button clicked');
+                console.log('[Login] Form state:', {
+                  isValid: form.formState.isValid,
+                  errors: form.formState.errors,
+                  isDirty: form.formState.isDirty
+                });
+              }}
+            >
+              {loginMutation.isPending ? (
+                <span className="flex items-center gap-2">
+                  Logging in...
+                </span>
+              ) : (
+                'Log in'
+              )}
+            </Button>
+          </motion.div>
+
+          <motion.div 
+            className="text-center mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+          >
             <p className="text-sm text-muted-foreground">
               Have an invitation code?{" "}
               <Link href="/register" className="text-primary hover:underline">
                 Register here
               </Link>
             </p>
-          </div>
+          </motion.div>
         </form>
       </Form>
     </AuthLayout>

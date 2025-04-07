@@ -29,32 +29,37 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
     }
   }, [location, prevLocation]);
 
-  // Animation variants
+  // Refined animation variants for smoother transitions
   const variants = {
     initial: (direction: "left" | "right") => ({
-      x: direction === "right" ? "-100%" : "100%",
-      opacity: 0
+      x: direction === "right" ? "-30%" : "30%",
+      opacity: 0,
+      scale: 0.95
     }),
     animate: {
       x: 0,
       opacity: 1,
+      scale: 1,
       transition: {
-        x: { type: "spring", stiffness: 300, damping: 30 },
-        opacity: { duration: 0.2 }
+        x: { type: "spring", stiffness: 100, damping: 20, mass: 1 },
+        opacity: { duration: 0.4, ease: "easeInOut" },
+        scale: { duration: 0.35, ease: "easeOut" }
       }
     },
     exit: (direction: "left" | "right") => ({
-      x: direction === "right" ? "100%" : "-100%",
+      x: direction === "right" ? "30%" : "-30%",
       opacity: 0,
+      scale: 0.95,
       transition: {
-        x: { type: "spring", stiffness: 300, damping: 30 },
-        opacity: { duration: 0.2 }
+        x: { type: "spring", stiffness: 100, damping: 20, mass: 1 },
+        opacity: { duration: 0.4, ease: "easeInOut" },
+        scale: { duration: 0.3, ease: "easeIn" }
       }
     })
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-gray-100">
+    <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="px-4 pt-8 w-full max-w-6xl mx-auto">
         <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1.5 transition-colors font-medium text-base">
           <ArrowLeft className="h-5 w-5" />
@@ -63,7 +68,12 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
       </div>
       
       <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex">
+        <motion.div 
+          className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        >
           {isLogin ? (
             <>
               <motion.div 
@@ -77,15 +87,25 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
               >
                 {children}
               </motion.div>
-              <div className="hidden lg:block w-[45%] p-3">
+              <motion.div 
+                className="hidden lg:block w-[45%] p-3"
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              >
                 <AuthHeroSection isLogin={true} />
-              </div>
+              </motion.div>
             </>
           ) : (
             <>
-              <div className="hidden lg:block w-[45%] p-3">
+              <motion.div 
+                className="hidden lg:block w-[45%] p-3"
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              >
                 <AuthHeroSection isLogin={false} />
-              </div>
+              </motion.div>
               <motion.div 
                 className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
                 custom={direction}
@@ -99,7 +119,7 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
               </motion.div>
             </>
           )}
-        </div>
+        </motion.div>
       </div>
       
       <AuthFooter />
