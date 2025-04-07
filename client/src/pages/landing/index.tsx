@@ -462,7 +462,7 @@ export default function LandingPage() {
               className="flex justify-center"
             >
               <Link href="/landing/company/about">
-                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
+                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
                   Contact Sales <Send className="ml-2 h-5 w-5" />
                 </a>
               </Link>
