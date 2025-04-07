@@ -63,6 +63,20 @@ export default function ContactUsPage() {
     // Reset the form
     form.reset();
   }
+  
+  // This will trigger when the form submission fails due to validation errors
+  const handleInvalidSubmit = () => {
+    // Count the number of validation errors
+    const errorCount = Object.keys(form.formState.errors).length;
+    
+    if (errorCount > 0) {
+      toast({
+        title: "Form validation failed",
+        description: `Please correct the ${errorCount} highlighted field${errorCount === 1 ? '' : 's'} before submitting.`,
+        variant: "destructive",
+      });
+    }
+  }
 
   return (
     <LandingLayout>
@@ -95,15 +109,22 @@ export default function ContactUsPage() {
                 </div>
                 
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className="space-y-6">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Name</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Name</span>
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="Your name" {...field} />
+                            <Input 
+                              placeholder="Your name" 
+                              {...field} 
+                              className={form.formState.errors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -114,10 +135,17 @@ export default function ContactUsPage() {
                       control={form.control}
                       name="email"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Email</span>
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="your.email@example.com" {...field} />
+                            <Input 
+                              placeholder="your.email@example.com" 
+                              {...field} 
+                              className={form.formState.errors.email ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -128,10 +156,17 @@ export default function ContactUsPage() {
                       control={form.control}
                       name="company"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Company</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Company</span>
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="Your company" {...field} />
+                            <Input 
+                              placeholder="Your company" 
+                              {...field} 
+                              className={form.formState.errors.company ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -142,8 +177,11 @@ export default function ContactUsPage() {
                       control={form.control}
                       name="phone"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone (Optional)</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Phone</span>
+                            <span className="font-normal text-gray-500"> (Optional)</span>
+                          </FormLabel>
                           <FormControl>
                             <Input placeholder="+1 (555) 123-4567" {...field} />
                           </FormControl>
@@ -156,14 +194,17 @@ export default function ContactUsPage() {
                       control={form.control}
                       name="inquiryType"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Inquiry Type</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Inquiry Type</span>
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <Select 
                             onValueChange={field.onChange} 
                             defaultValue={field.value}
                           >
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger className={form.formState.errors.inquiryType ? "border-red-500 focus:ring-red-500" : ""}>
                                 <SelectValue placeholder="Select the type of inquiry" />
                               </SelectTrigger>
                             </FormControl>
@@ -184,12 +225,15 @@ export default function ContactUsPage() {
                       control={form.control}
                       name="message"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Message</FormLabel>
+                        <FormItem className="space-y-1">
+                          <FormLabel>
+                            <span className="font-semibold">Message</span>
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="How can we help you? Please provide details about your inquiry." 
-                              className="min-h-[120px]"
+                              className={`min-h-[120px] ${form.formState.errors.message ? "border-red-500 focus-visible:ring-red-500" : ""}`}
                               {...field} 
                             />
                           </FormControl>
