@@ -86,9 +86,9 @@ export function NavigationMenu() {
                   description="Our mission to transform FinTech compliance"
                 />
                 <NavigationLink 
-                  href="#"
-                  title="Careers"
-                  description="Join our team of compliance innovators"
+                  href="/landing/company/contact-us"
+                  title="Contact Us"
+                  description="Get in touch with our team"
                 />
                 <NavigationLink 
                   href="/landing/company/about#leadership"

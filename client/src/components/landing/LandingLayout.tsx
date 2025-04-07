@@ -113,9 +113,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2">
                 <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600">About</div></Link></li>
-                <li><button className="text-gray-600 hover:text-blue-600 bg-transparent border-0 p-0 text-left cursor-pointer">Careers</button></li>
                 <li><a href="/landing/company/about#leadership" className="text-gray-600 hover:text-blue-600">Leadership</a></li>
                 <li><button className="text-gray-600 hover:text-blue-600 bg-transparent border-0 p-0 text-left cursor-pointer">Partners</button></li>
+                <li><Link href="/landing/company/contact-us"><div className="text-gray-600 hover:text-blue-600">Contact Us</div></Link></li>
                 <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
                 <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600">Site Map</div></Link></li>
               </ul>
@@ -136,7 +136,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Denver, CO 80202
               </p>
               
-              <Link href="/landing#contact-us">
+              <Link href="/landing/company/contact-us">
                 <div className="mt-2 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 cursor-pointer hover:text-white">
                   <span className="font-semibold">Request a Demo</span>
                 </div>
