@@ -33,7 +33,7 @@ export default function SectionTitleChip({
   return (
     <div className="inline-block relative">
       {/* Container with conditional layout based on centered prop */}
-      <div className={`inline-flex items-center ${centered ? 'justify-center' : 'justify-start'}`}>
+      <div className={`inline-flex items-start ${centered ? 'justify-center' : 'justify-start'}`}>
         {/* Invisible placeholder on the left only for centered chips */}
         {centered && <div className="invisible" style={{ width: hashtagWidth }}></div>}
         
@@ -47,8 +47,8 @@ export default function SectionTitleChip({
           {title}
         </motion.span>
         
-        {/* Hash symbol container with fixed width */}
-        <div className="flex items-center" style={{ width: hashtagWidth, justifyContent: 'flex-start' }}>
+        {/* Hash symbol container with fixed width - aligned to top */}
+        <div className="flex items-start" style={{ width: hashtagWidth, justifyContent: 'flex-start' }}>
           <AnimatePresence>
             {isHovered && (
               <motion.span 
@@ -60,7 +60,7 @@ export default function SectionTitleChip({
                 style={{ 
                   fontSize: '22px',
                   lineHeight: '22px',
-                  marginTop: '-1px', // Offset to achieve perfect vertical alignment
+                  paddingTop: '2px', // Add top padding to align with top of button
                   display: 'inline-block'
                 }}
               >
@@ -71,15 +71,15 @@ export default function SectionTitleChip({
         </div>
       </div>
       
-      {/* Copied to clipboard popup - centered to the entire component */}
+      {/* Copied to clipboard popup - centered to the entire component and positioned higher */}
       <AnimatePresence>
         {isCopied && (
           <motion.div
             initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: -10 }}
-            exit={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: -15 }}
+            exit={{ opacity: 0, y: -30 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute left-1/2 -translate-x-1/2 bottom-8 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
+            className="absolute left-1/2 -translate-x-1/2 bottom-12 bg-white text-black text-xs rounded px-3 py-1.5 z-50 whitespace-nowrap font-medium shadow-sm border border-gray-100"
           >
             Copied to clipboard
           </motion.div>

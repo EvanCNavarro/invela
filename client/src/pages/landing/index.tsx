@@ -436,12 +436,12 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto"
           >
-            <motion.div variants={fadeIn} className="mb-5">
-              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90 mb-4" centered />
+            <motion.div variants={fadeIn} className="mb-6">
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90" centered />
             </motion.div>
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-5 text-white shadow-text"
+              className="text-4xl font-bold mb-6 text-white shadow-text"
               style={{ textShadow: '0 2px 4px rgba(0,0,0,0.25)' }}
             >
               Ready to transform your
@@ -450,7 +450,7 @@ export default function LandingPage() {
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-9 max-w-xl mx-auto"
+              className="text-xl text-blue-100 mb-6 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
