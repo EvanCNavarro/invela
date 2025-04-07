@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'wouter';
 import { LandingLayout } from '@/components/landing/LandingLayout';
-import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText, Send } from 'lucide-react';
 
 // Animation variants
 const fadeIn = {
@@ -359,8 +359,44 @@ export default function LandingPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-24 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-        <div className="container mx-auto px-4 text-center">
+      <section className="py-24 relative overflow-hidden">
+        {/* Animated gradient background */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.6, 0.8, 0.6],
+              x: [0, 10, 0],
+              y: [0, 5, 0]
+            }}
+            transition={{ 
+              duration: 12,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut"
+            }}
+            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[700px] h-[700px] rounded-full bg-indigo-500/30 blur-3xl"
+          ></motion.div>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 0.7, 0.5],
+              x: [0, -10, 0],
+              y: [0, -5, 0]
+            }}
+            transition={{ 
+              duration: 15,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: 1
+            }}
+            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[600px] h-[600px] rounded-full bg-blue-500/30 blur-3xl"
+          ></motion.div>
+        </div>
+        
+        <div className="container mx-auto px-4 text-center relative z-10">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -370,29 +406,24 @@ export default function LandingPage() {
           >
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-6"
+              className="text-4xl font-bold mb-6 text-white"
             >
-              Ready to transform your compliance management?
+              COMPLIANCE & RISK MANAGEMENT
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-xl text-blue-100 mb-10"
+              className="text-xl text-blue-100 mb-10 max-w-xl mx-auto"
             >
               Join leading financial institutions that trust Invela to streamline their compliance operations and reduce risk.
             </motion.p>
             
             <motion.div 
               variants={fadeIn}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex justify-center"
             >
-              <Link href="/login">
-                <a className="bg-white text-blue-600 hover:bg-gray-100 font-medium px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-600">
-                  Get Started Now
-                </a>
-              </Link>
               <Link href="/landing/company/about">
-                <a className="bg-transparent hover:bg-blue-700 text-white font-medium px-8 py-4 rounded-lg border border-white/30 transition-colors duration-200">
-                  Contact Sales
+                <a className="bg-white hover:bg-gray-100 text-blue-600 font-medium px-8 py-4 rounded-lg transition-colors duration-200 hover:text-blue-700 flex items-center">
+                  <Send className="mr-2 h-5 w-5" /> Contact Sales
                 </a>
               </Link>
             </motion.div>
