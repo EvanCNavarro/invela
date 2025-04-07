@@ -50,8 +50,8 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
       <footer className="bg-gray-50 border-t border-gray-200/50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-8">
-            {/* Main info and copyright - with slightly darker background */}
-            <div className="flex flex-col rounded-lg p-4 bg-gray-100">
+            {/* Main info and copyright */}
+            <div className="flex flex-col">
               <div className="mb-4">
                 <img 
                   src="/logo_invela.svg" 
@@ -105,13 +105,6 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Dispute Resolution</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Insights & Consulting</a></li>
               </ul>
-              
-              <h3 className="font-semibold text-gray-900 mb-4 mt-8">Legal</h3>
-              <ul className="space-y-2">
-                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
-                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
-                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
-              </ul>
             </div>
             
             {/* Company column */}
@@ -122,6 +115,9 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Careers</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Leadership</a></li>
                 <li><a href="#" className="text-gray-600 hover:text-blue-600">Partners</a></li>
+                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
+                <li><Link href="/landing/legal/privacy-policy"><div className="text-gray-600 hover:text-blue-600">Privacy Policy</div></Link></li>
+                <li><Link href="/landing/legal/terms-of-use"><div className="text-gray-600 hover:text-blue-600">Terms of Use</div></Link></li>
                 <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600">Site Map</div></Link></li>
               </ul>
             </div>
