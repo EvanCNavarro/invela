@@ -28,82 +28,128 @@ export default function LandingPage() {
   return (
     <LandingLayout>
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-white to-blue-50/50">
+      <section className="relative overflow-hidden">
+        {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('/assets/grid-pattern.svg')] bg-center opacity-5"></div>
-          <div className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[500px] h-[500px] rounded-full bg-blue-200/20 blur-3xl"></div>
-          <div className="absolute top-1/3 -translate-y-1/2 right-1/4 w-[300px] h-[300px] rounded-full bg-indigo-200/20 blur-3xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-blue-50 to-green-100 opacity-70"></div>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.6, 0.8, 0.6],
+            }}
+            transition={{ 
+              duration: 8,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut"
+            }}
+            className="absolute top-1/2 -translate-y-1/2 left-1/4 w-[600px] h-[600px] rounded-full bg-blue-300/20 blur-3xl"
+          ></motion.div>
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 0.7, 0.5],
+            }}
+            transition={{ 
+              duration: 10,
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut",
+              delay: 1
+            }}
+            className="absolute top-1/3 -translate-y-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-green-300/20 blur-3xl"
+          ></motion.div>
         </div>
         
-        <div className="container mx-auto px-4 pt-24 pb-32 relative z-10">
-          <div className="max-w-4xl mx-auto text-center mb-16">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="mb-4"
-            >
-              <span className="inline-block bg-blue-100 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6">
-                The Enterprise Risk Management Platform
-              </span>
-            </motion.div>
+        <div className="container mx-auto px-4 pt-16 pb-20 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center max-w-7xl mx-auto">
+            {/* Text Content */}
+            <div className="w-full lg:w-1/2 text-center lg:text-left lg:pr-8 mb-10 lg:mb-0">
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
+                className="mb-4"
+              >
+                <span className="inline-block bg-white/80 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6 shadow-sm">
+                  The Enterprise Risk Management Platform
+                </span>
+              </motion.div>
+              
+              <motion.h1 
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
+                className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-black"
+              >
+                Simplify Compliance and Risk Management
+              </motion.h1>
+              
+              <motion.p 
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
+                className="text-lg text-gray-800 mb-10 max-w-xl mx-auto lg:mx-0"
+              >
+                Invela delivers an integrated platform that streamlines FinTech accreditation, 
+                automates risk assessment, and provides real-time compliance monitoring for financial institutions.
+              </motion.p>
+              
+              <motion.div 
+                initial="hidden"
+                animate="visible"
+                variants={fadeIn}
+                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              >
+                <Link href="/login">
+                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-auto">
+                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Link>
+                <Link href="/landing/company/about">
+                  <a className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-8 py-3 rounded-lg border border-gray-200 transition-colors duration-200 w-full sm:w-auto text-center">
+                    Learn More
+                  </a>
+                </Link>
+              </motion.div>
+            </div>
             
-            <motion.h1 
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="text-5xl sm:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-indigo-500 text-transparent bg-clip-text"
-            >
-              Simplify Compliance and Risk Management
-            </motion.h1>
-            
-            <motion.p 
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto"
-            >
-              Invela delivers an integrated platform that streamlines FinTech accreditation, 
-              automates risk assessment, and provides real-time compliance monitoring for financial institutions.
-            </motion.p>
-            
+            {/* Dashboard Image */}
             <motion.div 
-              initial="hidden"
-              animate="visible"
-              variants={fadeIn}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="w-full lg:w-1/2 relative"
             >
-              <Link href="/login">
-                <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-4 rounded-lg transition-colors duration-200 flex items-center justify-center">
-                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
-              </Link>
-              <Link href="/landing/company/about">
-                <a className="bg-white hover:bg-gray-50 text-gray-700 font-medium px-8 py-4 rounded-lg border border-gray-200 transition-colors duration-200">
-                  Learn More
-                </a>
-              </Link>
+              <div className="relative mx-auto max-w-lg lg:max-w-full">
+                <motion.div
+                  animate={{ 
+                    y: [0, -8, 0],
+                  }}
+                  transition={{ 
+                    duration: 4,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    ease: "easeInOut"
+                  }}
+                  className="rounded-xl overflow-hidden shadow-2xl"
+                >
+                  <img 
+                    src="/ui_dashboard.svg" 
+                    alt="Invela Dashboard" 
+                    className="w-full h-auto"
+                  />
+                </motion.div>
+                
+                {/* Decorative elements */}
+                <div className="absolute -bottom-3 inset-x-4 h-8 bg-gradient-to-t from-blue-50 to-transparent rounded-lg blur-md"></div>
+              </div>
             </motion.div>
           </div>
-          
-          {/* Preview Image */}
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="relative mx-auto max-w-5xl"
-          >
-            <div className="aspect-[16/9] rounded-xl overflow-hidden border border-gray-200 shadow-xl bg-white">
-              <div className="bg-gray-200 animate-pulse w-full h-full"></div>
-              {/* This would be your platform screenshot */}
-            </div>
-            {/* Decorative elements showing the platform is hovering */}
-            <div className="absolute -bottom-3 inset-x-4 h-12 bg-gradient-to-t from-blue-50 to-transparent rounded-lg blur-md"></div>
-          </motion.div>
         </div>
         
         {/* Scrolling indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -114,7 +160,7 @@ export default function LandingPage() {
               repeatType: "reverse",
               repeatDelay: 0.5
             }}
-            className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center pt-2"
+            className="w-6 h-10 border-2 border-gray-500 rounded-full flex justify-center pt-2"
           >
             <motion.div 
               animate={{ 
