@@ -33,19 +33,27 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
         {title}
       </motion.span>
       
-      {/* Hash symbol that appears outside the chip on hover */}
+      {/* Hash symbol that appears outside the chip on hover - with vertical centering */}
       <AnimatePresence>
         {isHovered && (
-          <motion.span 
+          <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="ml-2 text-gray-400 font-semibold"
-            style={{ fontSize: '22px', lineHeight: 1 }}
+            className="ml-2 flex items-center"
           >
-            #
-          </motion.span>
+            <span 
+              className="text-gray-400 font-semibold inline-flex items-center justify-center" 
+              style={{ 
+                fontSize: '22px', 
+                lineHeight: 1,
+                transform: 'translateY(-1px)' // Fine-tune vertical alignment
+              }}
+            >
+              #
+            </span>
+          </motion.div>
         )}
       </AnimatePresence>
       
