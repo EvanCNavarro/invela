@@ -50,8 +50,8 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
       <footer className="bg-gray-50 border-t border-gray-200/50 py-12">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-8">
-            {/* Main info and copyright */}
-            <div className="flex flex-col">
+            {/* Main info and copyright - with slightly darker background */}
+            <div className="flex flex-col rounded-lg p-4 bg-gray-100">
               <div className="mb-4">
                 <img 
                   src="/logo_invela.svg" 
@@ -108,8 +108,8 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
               </ul>
             </div>
             
-            {/* Company column - with slightly darker background */}
-            <div className="md:px-4 rounded-lg p-4 bg-gray-100">
+            {/* Company column */}
+            <div className="md:px-4">
               <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2">
                 <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600">About</div></Link></li>

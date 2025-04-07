@@ -120,6 +120,10 @@ export default function LandingPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
               className="w-full lg:w-3/5 relative lg:-right-12 flex justify-center lg:justify-end"
+              style={{
+                display: "flex",
+                alignItems: "center"
+              }}
             >
               <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
                 <motion.div
@@ -138,7 +142,8 @@ export default function LandingPage() {
                     backdropFilter: "blur(10px)",
                     border: "1px solid rgba(255, 255, 255, 0.6)",
                     padding: "1rem",
-                    transform: "scale(1.2)"
+                    transform: "scale(1.35)",
+                    marginTop: "-1rem"
                   }}
                 >
                   <img 
@@ -197,65 +202,84 @@ export default function LandingPage() {
             <FeatureCard
               icon={<Shield className="h-8 w-8 text-blue-600" />}
               title="Accreditation"
-              description="Streamlined process for vetting and accrediting FinTech partners with automated workflows and document management."
+              description="Streamlined vetting and accreditation of FinTech partners with automated workflows."
+              link="/landing/products/accreditation"
             />
             
             {/* Feature 2 */}
             <FeatureCard
               icon={<BarChart4 className="h-8 w-8 text-blue-600" />}
               title="Risk Scoring"
-              description="Sophisticated risk assessment algorithms to evaluate partners based on their financial stability, security practices, and compliance history."
+              description="Advanced risk assessment using financial stability and compliance metrics."
+              link="/landing/products/risk-scoring"
             />
             
             {/* Feature 3 */}
             <FeatureCard
               icon={<Users className="h-8 w-8 text-blue-600" />}
               title="Invela Registry"
-              description="Centralized directory of verified financial service providers with comprehensive profiles and risk scores."
+              description="Centralized directory of verified financial service providers with risk profiles."
+              link="/landing/products/registry"
             />
             
             {/* Feature 4 */}
             <FeatureCard
               icon={<Lock className="h-8 w-8 text-blue-600" />}
               title="Data Access Grants"
-              description="Secure management of data sharing permissions with granular access controls and audit trails."
+              description="Secure data sharing permissions with granular access controls and audit trails."
+              link="/landing/products/data-access"
             />
             
             {/* Feature 5 */}
             <FeatureCard
               icon={<CheckCircle className="h-8 w-8 text-blue-600" />}
               title="Dispute Resolution"
-              description="Structured process for addressing and resolving compliance-related disputes between financial institutions and service providers."
+              description="Structured process for resolving compliance-related disputes between institutions."
+              link="/landing/products/dispute-resolution"
             />
             
             {/* Feature 6 */}
             <FeatureCard
               icon={<Clock className="h-8 w-8 text-blue-600" />}
               title="Real-time Monitoring"
-              description="Continuous compliance monitoring with alerts for potential risks or compliance issues as they arise."
+              description="Continuous compliance monitoring with alerts for potential risks and issues."
+              link="/landing/products/monitoring"
             />
             
             {/* Feature 7 */}
             <FeatureCard
               icon={<FileText className="h-8 w-8 text-blue-600" />}
               title="Compliance Reporting"
-              description="Comprehensive reporting tools to document compliance activities, track progress, and demonstrate regulatory adherence."
+              description="Comprehensive reporting to document and demonstrate regulatory adherence."
+              link="/landing/products/reporting"
             />
             
-            {/* Feature 8 - Coming Soon */}
-            <FeatureCard
-              icon={<div className="relative">
-                <svg className="h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
-                </span>
-              </div>}
-              title="More Coming Soon"
-              description="We're continuously expanding our platform with innovative features to enhance your compliance and risk management capabilities."
-            />
+            {/* Feature 8 - Additional Features (visually different) */}
+            <Link href="/landing/products">
+              <motion.div 
+                variants={fadeIn}
+                className="group relative bg-gray-50 border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-sm transition-all duration-300 cursor-pointer h-full flex flex-col"
+              >
+                <div className="bg-gray-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
+                  <div className="relative opacity-60">
+                    <svg className="h-7 w-7 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                    </svg>
+                  </div>
+                </div>
+                <h3 className="text-lg font-medium mb-3 text-gray-700">Additional Features</h3>
+                <p className="text-gray-500 text-sm mb-4">Our platform includes many more capabilities to enhance your compliance and risk management processes.</p>
+                
+                <div className="mt-auto">
+                  <div className="flex items-center text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+                    View All Products
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
+                      <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
           </motion.div>
         </div>
       </section>
@@ -385,21 +409,60 @@ export default function LandingPage() {
 }
 
 // Feature Card Component
-function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode, title: string, description: string, link: string }) {
   return (
-    <motion.div 
-      variants={fadeIn}
-      className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300"
-    >
-      {/* Colored blur background that appears on hover behind the card */}
-      <div className="absolute -inset-4 bg-blue-400/30 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-      <div className="absolute -inset-1 bg-gradient-to-br from-blue-500/20 to-blue-400/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
-      
-      <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </motion.div>
+    <Link href={link}>
+      <motion.div 
+        variants={fadeIn}
+        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col"
+      >
+        {/* Inner bottom-left soft gradient blur */}
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-blue-400/20 rounded-bl-lg rounded-tr-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+        
+        <div className="bg-blue-50 w-16 h-16 rounded-lg flex items-center justify-center mb-6 group-hover:bg-blue-100 transition-colors duration-300">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-3">{title}</h3>
+        <p className="text-gray-600 mb-4">{description}</p>
+        
+        {/* Learn More button that appears on hover */}
+        <div className="mt-auto">
+          <div className="flex items-center text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium">
+            Learn More
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </motion.div>
+    </Link>
+  );
+}
+
+// Additional Features Card Component (visually different from main feature cards)
+function AdditionalFeaturesCard({ icon, title, description, link }: { icon: React.ReactNode, title: string, description: string, link: string }) {
+  return (
+    <Link href={link}>
+      <motion.div 
+        variants={fadeIn}
+        className="group relative bg-gray-50 border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-sm transition-all duration-300 cursor-pointer h-full flex flex-col"
+      >
+        <div className="bg-gray-100 w-16 h-16 rounded-lg flex items-center justify-center mb-6">
+          {icon}
+        </div>
+        <h3 className="text-lg font-medium mb-3 text-gray-700">{title}</h3>
+        <p className="text-gray-500 text-sm mb-4">{description}</p>
+        
+        {/* Learn More button that appears on hover */}
+        <div className="mt-auto">
+          <div className="flex items-center text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-medium text-sm">
+            View All Products
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 transition-transform group-hover:translate-x-1">
+              <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </motion.div>
+    </Link>
   );
 }
