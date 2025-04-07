@@ -61,12 +61,14 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
       <div className="px-4 pt-8 w-full max-w-6xl mx-auto">
-        <Link href="/">
-          <span className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1.5 font-medium text-base px-3 py-2 rounded-md transition-all duration-200 hover:bg-gray-100">
-            <ArrowLeft className="h-5 w-5" />
-            Back to Website
-          </span>
-        </Link>
+        <div className="pl-10">
+          <Link href="/landing">
+            <span className="inline-flex items-center text-muted-foreground hover:text-foreground gap-1.5 font-medium text-base px-3 py-2 rounded-md transition-all duration-200 hover:bg-gray-100">
+              <ArrowLeft className="h-5 w-5" />
+              Back to Website
+            </span>
+          </Link>
+        </div>
       </div>
       
       <div className="flex-1 flex items-center justify-center p-6">
