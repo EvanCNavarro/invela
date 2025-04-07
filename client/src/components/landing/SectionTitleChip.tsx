@@ -21,9 +21,16 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
     setTimeout(() => setIsCopied(false), 1000);
   };
   
+  // Width of the hashtag plus margin = ~30px (22px font + 8px margin)
+  const hashtagWidth = '30px';
+  
   return (
     <div className="inline-block relative">
-      <div className="inline-flex items-center">
+      {/* Container with fixed width to prevent jitter */}
+      <div className="inline-flex items-center justify-center">
+        {/* Invisible placeholder on the left to balance the layout */}
+        <div className="invisible" style={{ width: hashtagWidth }}></div>
+        
         {/* The chip itself */}
         <motion.span 
           onMouseEnter={() => setIsHovered(true)}
@@ -34,26 +41,28 @@ export default function SectionTitleChip({ title, sectionId, className = '' }: S
           {title}
         </motion.span>
         
-        {/* Hash symbol that appears outside the chip on hover with perfect vertical alignment */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.span 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="ml-2 text-gray-400 font-semibold"
-              style={{ 
-                fontSize: '22px',
-                lineHeight: '22px',
-                marginTop: '-1px', // Offset to achieve perfect vertical alignment
-                display: 'inline-block'
-              }}
-            >
-              #
-            </motion.span>
-          )}
-        </AnimatePresence>
+        {/* Hash symbol container (visible or invisible) with fixed width */}
+        <div className="flex items-center" style={{ width: hashtagWidth, justifyContent: 'flex-start' }}>
+          <AnimatePresence>
+            {isHovered && (
+              <motion.span 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="ml-2 text-gray-400 font-semibold"
+                style={{ 
+                  fontSize: '22px',
+                  lineHeight: '22px',
+                  marginTop: '-1px', // Offset to achieve perfect vertical alignment
+                  display: 'inline-block'
+                }}
+              >
+                #
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
       
       {/* Copied to clipboard popup - centered to the entire component */}
