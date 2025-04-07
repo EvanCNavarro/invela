@@ -125,7 +125,10 @@ export default function SiteMapPage() {
                 <SiteMapLink href="/landing/company/about#leadership" label="Leadership" />
               </li>
               <li>
-                <SiteMapLink href="#" label="Careers" />
+                <SiteMapLink href="#" label="Partners" />
+              </li>
+              <li>
+                <SiteMapLink href="/landing/company/contact-us" label="Contact Us" />
               </li>
             </ul>
           </div>
