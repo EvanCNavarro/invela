@@ -179,13 +179,14 @@ export default function LandingPage() {
             </motion.span>
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-4"
+              className="text-4xl font-bold mb-4 max-w-xl"
             >
-              Everything you need for FinTech compliance
+              Everything you need <br className="hidden sm:block" />
+              for FinTech compliance
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-lg text-gray-600"
+              className="text-lg text-gray-600 max-w-2xl"
             >
               Our comprehensive suite of tools helps you manage the entire compliance lifecycle from accreditation to ongoing monitoring.
             </motion.p>
@@ -483,7 +484,7 @@ function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode
       >
         {/* Bottom right gradient blur that appears on hover */}
         <div 
-          className="absolute bottom-0 right-0 w-[60%] h-[60%] bg-blue-400/20 rounded-br-lg blur-xl opacity-0 
+          className="absolute bottom-0 right-0 w-[55%] h-[45%] bg-blue-300/10 rounded-br-lg blur-xl opacity-0 
                      group-hover:opacity-100 transition-opacity duration-300"
           style={{ zIndex: 0 }}
         />
