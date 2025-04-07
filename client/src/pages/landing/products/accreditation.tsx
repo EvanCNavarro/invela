@@ -28,7 +28,7 @@ export default function AccreditationPage() {
   return (
     <LandingLayout>
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-b from-white to-blue-50/50">
+      <section id="overview" className="py-20 bg-gradient-to-b from-white to-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
@@ -80,7 +80,7 @@ export default function AccreditationPage() {
       </section>
       
       {/* How It Works Section */}
-      <section id="features" className="py-20 bg-white">
+      <section id="how-it-works" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.span 
@@ -139,6 +139,7 @@ export default function AccreditationPage() {
                 viewport={{ once: true, amount: 0.1 }}
                 variants={fadeIn}
                 className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm"
+                id={`step-${index + 1}`}
               >
                 <div className="absolute -top-5 -left-5 w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
                   {step.step}
@@ -156,6 +157,7 @@ export default function AccreditationPage() {
               viewport={{ once: true, amount: 0.2 }}
               variants={fadeIn}
               className="relative p-8 bg-blue-50/70 rounded-xl border border-blue-100 max-w-2xl"
+              id="step-4"
             >
               <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
                 4
@@ -170,7 +172,7 @@ export default function AccreditationPage() {
       </section>
       
       {/* Benefits Section */}
-      <section className="py-20 bg-blue-50/50">
+      <section id="benefits" className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.span 
@@ -225,6 +227,7 @@ export default function AccreditationPage() {
                 key={index}
                 variants={fadeIn}
                 className="flex items-start p-4 bg-white rounded-lg shadow-sm"
+                id={`benefit-${index + 1}`}
               >
                 <Shield className="h-6 w-6 text-blue-500 mt-0.5 mr-3 flex-shrink-0" />
                 <span className="text-gray-700">{benefit}</span>
@@ -235,7 +238,7 @@ export default function AccreditationPage() {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      <section id="contact" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
             <motion.h2 
