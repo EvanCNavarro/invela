@@ -303,7 +303,7 @@ export default function LandingPage() {
               </motion.h2>
               <motion.p 
                 variants={fadeIn}
-                className="text-lg text-gray-500 italic mb-8"
+                className="text-lg text-gray-600 mb-8"
               >
                 Financial institutions using Invela report significant improvements in compliance efficiency, risk management, and partner onboarding speed.
               </motion.p>
@@ -325,7 +325,7 @@ export default function LandingPage() {
                     className="flex items-start"
                   >
                     <CheckCircle className="h-6 w-6 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-gray-800 font-medium">{item}</span>
+                    <span className="text-gray-700 font-medium">{item}</span>
                   </motion.li>
                 ))}
               </motion.ul>
@@ -347,7 +347,7 @@ export default function LandingPage() {
                 <motion.div 
                   key={index}
                   variants={fadeIn}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-[140px] flex flex-col justify-center"
+                  className="bg-white rounded-xl p-7 shadow-sm border border-gray-100 h-[160px] flex flex-col justify-center"
                 >
                   <div className="text-4xl font-bold text-blue-600 mb-3">{stat.value}</div>
                   <p className="text-gray-600 leading-tight">{stat.label}</p>
