@@ -170,21 +170,21 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={staggerContainer}
-            className="max-w-3xl mb-12"
+            className="max-w-3xl mb-12 mx-auto text-center"
           >
             <motion.div variants={fadeIn}>
               <SectionTitleChip title="Key Features" sectionId="features" className="mb-4" centered />
             </motion.div>
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-4 max-w-xl"
+              className="text-4xl font-bold mb-4 mx-auto"
             >
               Everything you need <br className="hidden sm:block" />
               for FinTech compliance
             </motion.h2>
             <motion.p 
               variants={fadeIn}
-              className="text-lg text-gray-600 max-w-2xl"
+              className="text-lg text-gray-600 mx-auto"
             >
               Our comprehensive suite of tools helps you manage the entire compliance lifecycle from accreditation to ongoing monitoring.
             </motion.p>
@@ -349,7 +349,7 @@ export default function LandingPage() {
       </section>
       
       {/* CTA Section */}
-      <section id="contact" className="py-12 relative overflow-hidden h-[360px] flex items-center">
+      <section id="contact" className="py-0 relative overflow-hidden h-[380px] flex items-center">
         {/* Animated gradient background */}
         <div className="absolute inset-0 z-0">
           {/* Base gradient */}
@@ -428,13 +428,13 @@ export default function LandingPage() {
           ></motion.div>
         </div>
         
-        <div className="container mx-auto px-4 text-center relative z-10">
+        <div className="container mx-auto px-4 text-center relative z-10 h-full flex items-center justify-center">
           <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={staggerContainer}
-            className="max-w-3xl mx-auto"
+            className="max-w-3xl mx-auto flex flex-col justify-between"
           >
             <motion.div variants={fadeIn} className="mb-6">
               <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/90" centered />
@@ -457,7 +457,7 @@ export default function LandingPage() {
             
             <motion.div 
               variants={fadeIn}
-              className="flex justify-center"
+              className="flex justify-center mb-6"
             >
               <Link href="/landing/company/about">
                 <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
