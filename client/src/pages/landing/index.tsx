@@ -82,7 +82,7 @@ export default function LandingPage() {
                 variants={fadeIn}
                 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 text-black"
               >
-                Simplify Compliance and Risk Management
+                Simplify Compliance & Risk Management
               </motion.h1>
               
               <motion.p 
@@ -102,12 +102,12 @@ export default function LandingPage() {
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
                 <Link href="/login">
-                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-auto">
+                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-[180px] text-center">
                     Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Link>
                 <Link href="/landing/company/about">
-                  <a className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-8 py-3 rounded-lg border border-gray-200 transition-colors duration-200 w-full sm:w-auto text-center">
+                  <a className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-8 py-3 rounded-lg border border-gray-200 transition-colors duration-200 w-full sm:w-[180px] text-center flex items-center justify-center">
                     Learn More
                   </a>
                 </Link>
@@ -119,9 +119,9 @@ export default function LandingPage() {
               initial={{ opacity: 0, x: 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
-              className="w-full lg:w-1/2 relative"
+              className="w-full lg:w-1/2 relative lg:-right-8 flex justify-center lg:justify-end"
             >
-              <div className="relative mx-auto max-w-lg lg:max-w-full">
+              <div className="relative mx-auto w-full max-w-2xl lg:max-w-none">
                 <motion.div
                   animate={{ 
                     y: [0, -8, 0],
@@ -132,12 +132,19 @@ export default function LandingPage() {
                     repeatType: "reverse",
                     ease: "easeInOut"
                   }}
-                  className="rounded-xl overflow-hidden shadow-2xl"
+                  className="rounded-xl overflow-hidden shadow-2xl relative"
+                  style={{ 
+                    background: "rgba(255, 255, 255, 0.7)",
+                    backdropFilter: "blur(10px)",
+                    border: "1px solid rgba(255, 255, 255, 0.6)",
+                    padding: "1rem",
+                    transform: "scale(1.1)"
+                  }}
                 >
                   <img 
                     src="/ui_dashboard.svg" 
                     alt="Invela Dashboard" 
-                    className="w-full h-auto"
+                    className="w-full h-auto rounded-lg shadow-inner"
                   />
                 </motion.div>
                 
@@ -147,56 +154,27 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </div>
-        
-        {/* Scrolling indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ 
-              duration: 1,
-              delay: 1,
-              repeat: Infinity,
-              repeatType: "reverse",
-              repeatDelay: 0.5
-            }}
-            className="w-6 h-10 border-2 border-gray-500 rounded-full flex justify-center pt-2"
-          >
-            <motion.div 
-              animate={{ 
-                y: [0, 8, 0],
-                opacity: [0.6, 1, 0.6]
-              }}
-              transition={{ 
-                duration: 1.5,
-                repeat: Infinity,
-                repeatType: "loop"
-              }}
-              className="w-1.5 h-1.5 bg-gray-600 rounded-full"
-            />
-          </motion.div>
-        </div>
       </section>
       
       {/* Features Section */}
-      <section className="py-24 bg-white">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
           <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             variants={staggerContainer}
-            className="max-w-3xl mx-auto text-center mb-16"
+            className="max-w-3xl mx-auto text-center mb-12"
           >
             <motion.span 
               variants={fadeIn}
-              className="inline-block bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-6"
+              className="inline-block bg-blue-50 text-blue-600 rounded-full px-4 py-1 text-sm font-medium mb-4"
             >
               Key Features
             </motion.span>
             <motion.h2 
               variants={fadeIn}
-              className="text-4xl font-bold mb-6"
+              className="text-4xl font-bold mb-4"
             >
               Everything you need for FinTech compliance
             </motion.h2>
