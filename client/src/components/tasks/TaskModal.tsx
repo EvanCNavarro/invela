@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useEffect, useCallback } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
@@ -56,13 +57,62 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ task, open, onOpenChange }: TaskModalProps) {
+  // Handle keyboard events to ensure we don't trap focus
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && open) {
+      onOpenChange(false);
+    }
+  }, [open, onOpenChange]);
+
+  // Properly handle modal cleanup
+  useEffect(() => {
+    // Add keyboard event listener when modal opens
+    if (open) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    // Cleanup function to properly remove listeners and restore focus
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      
+      // Extra cleanup to ensure no lingering focus trap
+      if (open) {
+        // Small delay to ensure DOM operations complete
+        setTimeout(() => {
+          // Try to find the main content area to restore focus
+          const mainContent = document.getElementById('main-content') || document.body;
+          if (mainContent) {
+            mainContent.setAttribute('tabindex', '-1');
+            mainContent.focus();
+            // Remove tabindex after focus to not interfere with normal tab flow
+            setTimeout(() => mainContent.removeAttribute('tabindex'), 0);
+          }
+        }, 100);
+      }
+    };
+  }, [open, handleKeyDown]);
+
   if (!task) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(newState) => {
+      // Ensure we clear any focus issues when closing
+      if (!newState) {
+        // Small timeout to allow animation to complete
+        setTimeout(() => {
+          onOpenChange(newState);
+        }, 50);
+      } else {
+        onOpenChange(newState);
+      }
+    }}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
+          {/* Add DialogDescription to fix missing description warning */}
+          <DialogDescription className="sr-only">
+            Details about the task
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
