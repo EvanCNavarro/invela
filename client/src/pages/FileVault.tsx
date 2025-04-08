@@ -402,20 +402,34 @@ export const FileVault: React.FC = () => {
       }
     });
 
+    console.log('[FileVault] Starting upload for file:', file.name, 'with toast ID:', uploadToast.id);
+
     try {
+      // First explicitly dismiss the uploading toast to ensure it disappears
+      uploadToast.dismiss();
+      
+      // Then perform the upload
       await uploadMutation.mutateAsync(formData);
+      
+      // Update local state
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
+      
       // Invalidate with the complete query key structure to match our fetch
       queryClient.invalidateQueries({ 
         queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
-      // Signal success to the upload toast
-      uploadToast.success({
-        name: file.name,
-        size: file.size,
-        type: file.type
-      } as FileItem);
+      // After a short delay, show the success toast
+      setTimeout(() => {
+        console.log('[FileVault] Showing success toast for file:', file.name);
+        
+        // Signal success to the toast system
+        uploadToast.success({
+          name: file.name,
+          size: file.size,
+          type: file.type
+        } as FileItem);
+      }, 100);
       
     } catch (error) {
       console.error('[FileVault Debug] Upload error:', {
@@ -423,6 +437,9 @@ export const FileVault: React.FC = () => {
         fileName: file.name,
         tempId
       });
+
+      // First dismiss the uploading toast
+      uploadToast.dismiss();
 
       setUploadingFiles(prev =>
         prev.map(f =>
@@ -432,8 +449,11 @@ export const FileVault: React.FC = () => {
         )
       );
 
-      // Signal error to the upload toast
-      uploadToast.error(error instanceof Error ? error.message : "Failed to upload file");
+      // After a short delay, show the error toast
+      setTimeout(() => {
+        // Signal error to the toast system
+        uploadToast.error(error instanceof Error ? error.message : "Failed to upload file");
+      }, 100);
     }
   };
 
