@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { getWebSocketClient } from '@/services/websocket';
 
 export type WebSocketMessageType = string;
@@ -12,6 +12,8 @@ export interface UseWebSocketReturn {
   send: (message: any) => boolean;
   addMessageListener: (type: WebSocketMessageType, listener: WebSocketMessageListener) => void;
   removeMessageListener: (type: WebSocketMessageType, listener: WebSocketMessageListener) => void;
+  addConnectionListener: (listener: WebSocketConnectionListener) => void;
+  removeConnectionListener: (listener: WebSocketConnectionListener) => void;
 }
 
 /**
@@ -22,15 +24,31 @@ export interface UseWebSocketReturn {
 export function useWebSocket(autoConnect: boolean = true): UseWebSocketReturn {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const webSocketClient = getWebSocketClient();
+  const connectionAttemptsRef = useRef(0);
   
   // Update connection state when the WebSocket connection status changes
   const handleConnectionChange = useCallback((connected: boolean) => {
     setIsConnected(connected);
+    
+    if (connected) {
+      // Reset connection attempts on successful connection
+      connectionAttemptsRef.current = 0;
+      console.log('[useWebSocket] Connection established');
+    } else {
+      connectionAttemptsRef.current++;
+      console.log(`[useWebSocket] Connection lost or failed (attempt ${connectionAttemptsRef.current})`);
+    }
   }, []);
   
   // Connect to the WebSocket server
   const connect = useCallback(() => {
-    webSocketClient.connect();
+    try {
+      webSocketClient.connect();
+    } catch (err) {
+      console.error('[useWebSocket] Error initiating connection:', err);
+      // Don't block the app - continue with disconnected state
+      setIsConnected(false);
+    }
   }, [webSocketClient]);
   
   // Disconnect from the WebSocket server
@@ -40,8 +58,12 @@ export function useWebSocket(autoConnect: boolean = true): UseWebSocketReturn {
   
   // Send a message to the WebSocket server
   const send = useCallback((message: any): boolean => {
+    if (!isConnected) {
+      console.warn('[useWebSocket] Cannot send message - disconnected');
+      return false;
+    }
     return webSocketClient.send(message);
-  }, [webSocketClient]);
+  }, [webSocketClient, isConnected]);
   
   // Add a listener for a specific message type
   const addMessageListener = useCallback(
@@ -55,6 +77,22 @@ export function useWebSocket(autoConnect: boolean = true): UseWebSocketReturn {
   const removeMessageListener = useCallback(
     (type: WebSocketMessageType, listener: WebSocketMessageListener) => {
       webSocketClient.removeMessageListener(type, listener);
+    },
+    [webSocketClient]
+  );
+  
+  // Add connection listener
+  const addConnectionListener = useCallback(
+    (listener: WebSocketConnectionListener) => {
+      webSocketClient.addConnectionListener(listener);
+    },
+    [webSocketClient]
+  );
+  
+  // Remove connection listener
+  const removeConnectionListener = useCallback(
+    (listener: WebSocketConnectionListener) => {
+      webSocketClient.removeConnectionListener(listener);
     },
     [webSocketClient]
   );
@@ -82,5 +120,7 @@ export function useWebSocket(autoConnect: boolean = true): UseWebSocketReturn {
     send,
     addMessageListener,
     removeMessageListener,
+    addConnectionListener,
+    removeConnectionListener
   };
 }
