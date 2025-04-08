@@ -41,6 +41,7 @@ import DisputeResolutionPage from "@/pages/landing/products/dispute-resolution";
 import InsightsConsultingPage from "@/pages/landing/products/insights-consulting";
 import PrivacyPolicyPage from "@/pages/landing/legal/privacy-policy";
 import TermsOfUsePage from "@/pages/landing/legal/terms-of-use";
+import CompliancePage from "@/pages/landing/legal/compliance";
 import LegalPage from "@/pages/landing/legal";
 import SiteMapPage from "@/pages/landing/site-map";
 
@@ -74,6 +75,7 @@ function Router() {
         <Route path="/landing/legal" component={LegalPage} />
         <Route path="/landing/legal/privacy-policy" component={PrivacyPolicyPage} />
         <Route path="/landing/legal/terms-of-use" component={TermsOfUsePage} />
+        <Route path="/landing/legal/compliance" component={CompliancePage} />
         <Route path="/landing/site-map" component={SiteMapPage} />
 
         {/* Public routes */}
