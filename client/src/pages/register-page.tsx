@@ -122,8 +122,8 @@ export default function RegisterPage() {
     }
   }, []);
 
-  // Reference to first name input for auto-focus
-  const firstNameInputRef = useRef<HTMLInputElement>(null);
+  // Reference to password input for auto-focus
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
     console.log("[Registration] Starting code validation for:", values.invitationCode);
@@ -164,10 +164,10 @@ export default function RegisterPage() {
           password: '',
         });
         
-        // Focus on the first name input after a short delay to allow the form to render
+        // Focus on the password input after a short delay to allow the form to render
         setTimeout(() => {
-          if (firstNameInputRef.current) {
-            firstNameInputRef.current.focus();
+          if (passwordInputRef.current) {
+            passwordInputRef.current.focus();
           }
         }, 300);
 
@@ -347,9 +347,13 @@ export default function RegisterPage() {
       ) : (
         <motion.div
           className="w-full max-w-[800px] mx-auto overflow-y-auto py-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, scale: 1.05, maxWidth: "1200px" }}
+          animate={{ opacity: 1, scale: 1, maxWidth: "800px" }}
+          transition={{ 
+            duration: 0.5,
+            scale: { duration: 0.4, ease: "easeOut" },
+            maxWidth: { duration: 0.35, ease: [0.4, 0.0, 0.2, 1] }
+          }}
         >
           <motion.div
             className="flex flex-col items-center"
@@ -391,7 +395,7 @@ export default function RegisterPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -427,7 +431,7 @@ export default function RegisterPage() {
                           </div>
                         </FormControl>
                       </div>
-                      <div className="min-h-[24px] mt-2">
+                      <div className="min-h-[8px]">
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -454,7 +458,7 @@ export default function RegisterPage() {
                           </div>
                         </FormControl>
                       </div>
-                      <div className="min-h-[24px] mt-2">
+                      <div className="min-h-[8px]">
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -478,7 +482,7 @@ export default function RegisterPage() {
                         <div className="relative">
                           <Input 
                             {...field} 
-                            ref={firstNameInputRef}
+                            
                             type="text" 
                             placeholder="First name" 
                             className={`h-14 bg-gray-50 ${
@@ -558,6 +562,7 @@ export default function RegisterPage() {
                           <Input
                             type={showPassword ? "text" : "password"}
                             {...field}
+                            ref={passwordInputRef}
                             placeholder="Choose a secure password"
                             className={`h-14 bg-gray-50 ${
                               field.value ? 
@@ -628,13 +633,21 @@ export default function RegisterPage() {
                   onClick={() => {
                     // First let the content fade out quickly
                     const formContent = document.querySelector('.registration-form-content');
+                    const authLayout = document.querySelector('.auth-layout-container');
+                    
                     if (formContent) {
                       formContent.classList.add('fade-out');
                     }
+                    
+                    // Animate the container to full width first
+                    if (authLayout) {
+                      authLayout.classList.add('auth-layout-expand');
+                    }
+                    
                     // Then set the state after a short delay
                     setTimeout(() => {
                       setValidatedInvitation(null);
-                    }, 150);
+                    }, 250);
                   }}
                 >
                   <ArrowLeft className="h-4 w-4" />
