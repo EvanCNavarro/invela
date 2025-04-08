@@ -146,6 +146,9 @@ export default function SiteMapPage() {
               <li>
                 <SiteMapLink href="/landing/legal/terms-of-use" label="Terms of Use" />
               </li>
+              <li>
+                <SiteMapLink href="/landing/legal/compliance" label="Compliance Information" />
+              </li>
             </ul>
           </div>
 
