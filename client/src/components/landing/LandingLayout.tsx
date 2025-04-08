@@ -145,13 +145,13 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             <div className="md:px-4">
               <h3 className="font-semibold text-gray-900 mb-4">Products</h3>
               <ul className="space-y-2">
-                <li><Link href="/landing/products/accreditation"><div className="text-gray-600 hover:text-blue-600">Accreditation</div></Link></li>
-                <li><Link href="/landing/products/risk-score"><div className="text-gray-600 hover:text-blue-600">Risk Score</div></Link></li>
-                <li><Link href="/landing/products/invela-registry"><div className="text-gray-600 hover:text-blue-600">Invela Registry</div></Link></li>
-                <li><Link href="/landing/products/data-access-grants-service"><div className="text-gray-600 hover:text-blue-600">DAGS</div></Link></li>
-                <li><Link href="/landing/products/liability-insurance"><div className="text-gray-600 hover:text-blue-600">Liability Insurance</div></Link></li>
-                <li><Link href="/landing/products/dispute-resolution"><div className="text-gray-600 hover:text-blue-600">Dispute Resolution</div></Link></li>
-                <li><Link href="/landing/products/insights-consulting"><div className="text-gray-600 hover:text-blue-600">Insights & Consulting</div></Link></li>
+                <li><Link href="/landing/products/accreditation"><div className="text-gray-600 hover:text-blue-600 hover:underline">Accreditation</div></Link></li>
+                <li><Link href="/landing/products/risk-score"><div className="text-gray-600 hover:text-blue-600 hover:underline">Risk Score</div></Link></li>
+                <li><Link href="/landing/products/invela-registry"><div className="text-gray-600 hover:text-blue-600 hover:underline">Invela Registry</div></Link></li>
+                <li><Link href="/landing/products/data-access-grants-service"><div className="text-gray-600 hover:text-blue-600 hover:underline">DAGS</div></Link></li>
+                <li><Link href="/landing/products/liability-insurance"><div className="text-gray-600 hover:text-blue-600 hover:underline">Liability Insurance</div></Link></li>
+                <li><Link href="/landing/products/dispute-resolution"><div className="text-gray-600 hover:text-blue-600 hover:underline">Dispute Resolution</div></Link></li>
+                <li><Link href="/landing/products/insights-consulting"><div className="text-gray-600 hover:text-blue-600 hover:underline">Insights & Consulting</div></Link></li>
               </ul>
             </div>
             
@@ -159,12 +159,12 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             <div className="md:px-4">
               <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
               <ul className="space-y-2">
-                <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600">About</div></Link></li>
-                <li><a href="/landing/company/about#leadership" className="text-gray-600 hover:text-blue-600">Leadership</a></li>
-                <li><button className="text-gray-600 hover:text-blue-600 bg-transparent border-0 p-0 text-left cursor-pointer">Partners</button></li>
-                <li><Link href="/landing/company/contact-us"><div className="text-gray-600 hover:text-blue-600">Contact Us</div></Link></li>
-                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600">Legal</div></Link></li>
-                <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600">Site Map</div></Link></li>
+                <li><Link href="/landing/company/about"><div className="text-gray-600 hover:text-blue-600 hover:underline">About</div></Link></li>
+                <li><a href="/landing/company/about#leadership" className="text-gray-600 hover:text-blue-600 hover:underline">Leadership</a></li>
+                <li><button className="text-gray-600 hover:text-blue-600 hover:underline bg-transparent border-0 p-0 text-left cursor-pointer">Partners</button></li>
+                <li><Link href="/landing/company/contact-us"><div className="text-gray-600 hover:text-blue-600 hover:underline">Contact Us</div></Link></li>
+                <li><Link href="/landing/legal"><div className="text-gray-600 hover:text-blue-600 hover:underline">Legal</div></Link></li>
+                <li><Link href="/landing/site-map"><div className="text-gray-600 hover:text-blue-600 hover:underline">Site Map</div></Link></li>
               </ul>
             </div>
             
