@@ -1,173 +1,216 @@
 import { WebSocketServer, WebSocket } from 'ws';
-import { IncomingMessage } from 'http';
 import { Server } from 'http';
+import type { TaskStatus } from '@db/schema';
+import { DocumentCategory } from '@db/schema';
 
-// Define the WebSocket service
-export class WebSocketService {
-  private wss: WebSocketServer;
-  private clients: Set<WebSocket> = new Set();
+let wss: WebSocketServer;
 
-  constructor(server: Server) {
-    // Initialize WebSocket Server on a specific path to avoid conflict with Vite HMR
-    this.wss = new WebSocketServer({ 
-      server, 
-      path: '/ws',
-      // Don't use verifyClient as it's causing issues
-      // Simply handle the connection event and check protocol there
-    });
+interface TaskUpdate {
+  id: number;
+  status: TaskStatus;
+  progress: number;
+  metadata?: Record<string, any>;
+}
 
-    console.log('[WebSocket] Server initialized on path: /ws');
-    
-    this.setupConnectionHandlers();
-  }
+interface DocumentCountUpdate {
+  type: 'COUNT_UPDATE';
+  category: typeof DocumentCategory[keyof typeof DocumentCategory];
+  count: number;
+  companyId: string;
+}
 
-  private setupConnectionHandlers() {
-    this.wss.on('connection', (ws: WebSocket) => {
-      console.log('New WebSocket client connected');
-      
-      // Add the client to our set
-      this.clients.add(ws);
+interface UploadProgress {
+  type: 'UPLOAD_PROGRESS';
+  fileId: number | null;
+  fileName: string;
+  status: 'uploading' | 'uploaded' | 'error';
+  progress?: number;
+  error?: string;
+}
 
-      // Send initial connection message with timestamp
-      ws.send(JSON.stringify({
-        type: 'connection_established',
-        timestamp: new Date().toISOString()
-      }));
+type WebSocketMessage = TaskUpdate | DocumentCountUpdate | UploadProgress;
 
-      // Set up ping to keep connection alive
-      const pingInterval = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.ping();
-        }
-      }, 30000);
+export function setupWebSocket(server: Server) {
+  wss = new WebSocketServer({ 
+    noServer: true,
+    path: '/ws',
+    clientTracking: true,
+    perMessageDeflate: false,
+    maxPayload: 1024 * 1024 // 1MB
+  });
 
-      // Handle messages from clients
-      ws.on('message', (message: string) => {
+  server.on('upgrade', (request, socket, head) => {
+    if (request.headers['sec-websocket-protocol'] === 'vite-hmr') {
+      return;
+    }
+
+    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+    if (pathname === '/ws') {
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+      });
+    }
+  });
+
+  console.log('[WebSocket] Server initialized on path: /ws');
+
+  wss.on('connection', (ws) => {
+    console.log('New WebSocket client connected');
+
+    ws.send(JSON.stringify({
+      type: 'connection_established',
+      data: { timestamp: new Date().toISOString() }
+    }));
+
+    const pingInterval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
         try {
-          const parsedMessage = JSON.parse(message.toString());
-          console.log(`[WebSocket] Received message: ${message}`);
-          
-          // Process message based on type
-          if (parsedMessage.type === 'ping') {
-            ws.send(JSON.stringify({
-              type: 'pong',
-              timestamp: new Date().toISOString()
-            }));
-          } else if (parsedMessage.type === 'chat_message') {
-            // Broadcast chat messages to all other clients
-            this.clients.forEach(client => {
-              if (client !== ws && client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify(parsedMessage));
-              }
-            });
-            console.log(`[WebSocket] Broadcasting chat message: ${parsedMessage.text}`);
-          }
-          
-          // You can handle other message types here
+          ws.ping();
+          ws.send(JSON.stringify({ type: 'ping' }));
         } catch (error) {
-          console.error('[WebSocket] Error processing message:', error);
+          console.error('[WebSocket] Error sending ping:', error);
         }
-      });
+      }
+    }, 45000);
 
-      // Handle pong responses from clients
-      ws.on('pong', () => {
-        console.log('[WebSocket] Received pong');
-      });
-
-      // Handle client disconnection
-      ws.on('close', () => {
-        console.log('WebSocket client disconnected');
-        this.clients.delete(ws);
-        clearInterval(pingInterval);
-      });
-
-      // Handle errors
-      ws.on('error', (error) => {
-        console.error('[WebSocket] Client error:', error);
-        this.clients.delete(ws);
-        clearInterval(pingInterval);
-      });
-    });
-  }
-
-  // Method to broadcast a message to all connected clients
-  public broadcast(message: any) {
-    const messageString = typeof message === 'string' 
-      ? message 
-      : JSON.stringify(message);
-    
-    this.clients.forEach(client => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(messageString);
+    ws.on('ping', () => {
+      try {
+        ws.pong();
+      } catch (error) {
+        console.error('[WebSocket] Error sending pong:', error);
       }
     });
+
+    ws.on('pong', () => {
+      console.log('[WebSocket] Received pong');
+    });
+
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+        console.log('[WebSocket] Received message:', data);
+      } catch (error) {
+        console.error('[WebSocket] Error processing message:', error);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error('[WebSocket] Client error:', error);
+    });
+
+    ws.on('close', (code, reason) => {
+      clearInterval(pingInterval);
+      console.log(`WebSocket client disconnected with code ${code}${reason ? ` and reason: ${reason}` : ''}`);
+    });
+  });
+
+  wss.on('error', (error) => {
+    console.error('[WebSocket] Server error:', error);
+  });
+}
+
+export function broadcastTaskUpdate(task: TaskUpdate) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
   }
 
-  // Method to send a message to a specific client
-  public sendToClient(client: WebSocket, message: any) {
+  console.log('[WebSocket] Broadcasting task update:', {
+    taskId: task.id,
+    status: task.status,
+    progress: task.progress,
+    metadata: task.metadata
+  });
+
+  wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
-      const messageString = typeof message === 'string' 
-        ? message 
-        : JSON.stringify(message);
-      
-      client.send(messageString);
+      try {
+        client.send(JSON.stringify({
+          type: 'task_update',
+          payload: task
+        }));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting task update:', error);
+      }
+    }
+  });
+}
+
+export function broadcastDocumentCountUpdate(update: DocumentCountUpdate) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+
+  console.log('[WebSocket] Broadcasting document count update:', update);
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting document count:', error);
+      }
+    }
+  });
+}
+
+export function broadcastUploadProgress(update: UploadProgress) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+
+  console.log('[WebSocket] Broadcasting upload progress:', update);
+
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify(update));
+      } catch (error) {
+        console.error('[WebSocket] Error broadcasting upload progress:', error);
+      }
+    }
+  });
+}
+
+// Generic broadcast function for task events
+export function broadcastMessage(type: string, payload: any) {
+  if (!wss) {
+    console.warn('[WebSocket] Server not initialized');
+    return;
+  }
+  
+  console.log(`[WebSocket] Broadcasting message: ${type}`, payload);
+  
+  // Handle specific message types
+  if (type.includes('task')) {
+    // If it's a task-related message, also call the specific task update function
+    if (payload.task || payload.taskId) {
+      broadcastTaskUpdate({
+        id: payload.task?.id || payload.taskId,
+        status: payload.task?.status || payload.status || 'not_started',
+        progress: payload.task?.progress || payload.progress || 0,
+        metadata: payload.task?.metadata || payload.metadata
+      });
     }
   }
-
-  // Get the number of connected clients
-  public getClientCount(): number {
-    return this.clients.size;
-  }
-}
-
-// Create a singleton instance
-let websocketService: WebSocketService | null = null;
-
-// Initialize the WebSocket service with the HTTP server
-export function initWebSocketService(server: Server): WebSocketService {
-  if (!websocketService) {
-    websocketService = new WebSocketService(server);
-  }
-  return websocketService;
-}
-
-// Get the WebSocket service instance
-export function getWebSocketService(): WebSocketService | null {
-  return websocketService;
-}
-
-// Function to broadcast task updates to all connected clients
-export function broadcastTaskUpdate(taskData: any) {
-  const service = getWebSocketService();
-  if (service) {
-    service.broadcast({
-      type: 'task_update',
-      data: taskData,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-
-// Function to broadcast document count updates to all connected clients
-export function broadcastDocumentCountUpdate(counts: any) {
-  const service = getWebSocketService();
-  if (service) {
-    service.broadcast({
-      type: 'document_count_update',
-      data: counts,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
-
-// Function to broadcast generic messages to all connected clients
-export function broadcastMessage(type: string, data: any) {
-  const service = getWebSocketService();
-  if (service) {
-    service.broadcast({
-      type,
-      data,
-      timestamp: new Date().toISOString()
-    });
-  }
+  
+  // Broadcast generic message to all clients
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(JSON.stringify({
+          type,
+          payload
+        }));
+      } catch (error) {
+        console.error(`[WebSocket] Error broadcasting ${type} message:`, error);
+      }
+    }
+  });
 }
