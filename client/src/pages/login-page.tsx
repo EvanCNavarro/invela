@@ -109,88 +109,128 @@ export default function LoginPage() {
       () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
-        // Show two different approaches to file upload toasts
-        const demoUpload = Math.random() > 0.5;
+        // Demonstrate the file upload toast with animated progress bar
+        const mockFile = {
+          name: 'sample-file.pdf',
+          size: 1024 * 1024 * 2.5, // 2.5MB
+          type: 'application/pdf'
+        };
         
-        if (demoUpload) {
-          // Option 1: Using the advanced file-toast hook
-          const { createFileUploadToast } = useFileToast();
+        // Display a single toast that will be updated
+        const { toast } = useToast();
+        
+        // Create a unique ID for this toast
+        const toastId = Math.random().toString(36).substring(2, 9);
+        
+        // Create the initial toast with progress bar at 0%
+        toast({
+          id: toastId,
+          variant: "file-upload",
+          title: `Uploading '${mockFile.name}'`,
+          description: (
+            <div className="w-full">
+              <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                <div 
+                  className="bg-indigo-600 h-2.5 rounded-full transition-all duration-700 ease-in-out" 
+                  style={{ width: '0%' }}
+                ></div>
+              </div>
+              <div className="flex justify-between items-center mt-1">
+                <div className="text-sm font-medium text-gray-700">0%</div>
+                <button
+                  onClick={() => {
+                    console.log('Upload cancelled');
+                    
+                    // Convert to error toast
+                    toast({
+                      id: toastId,
+                      variant: "error",
+                      title: "Upload failed",
+                      description: "The upload was cancelled."
+                    });
+                    
+                    // Clear the interval
+                    if (intervalRef.current) {
+                      clearInterval(intervalRef.current);
+                    }
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ),
+          duration: 30000, // Keep toast open for the duration of the upload
+        });
+        
+        // Keep track of progress
+        let progress = 0;
+        
+        // Store the interval reference so we can clear it if needed
+        const intervalRef = { current: null as NodeJS.Timeout | null };
+        
+        // Update the toast with progress animations
+        intervalRef.current = setInterval(() => {
+          progress += 10;
           
-          const mockFile = {
-            name: 'sample-file.pdf',
-            size: 1024 * 1024 * 2.5, // 2.5MB
-            type: 'application/pdf'
-          };
-          
-          const fileToast = createFileUploadToast(mockFile, {
-            onCancel: () => console.log('Upload cancelled'),
-            onSuccess: (file) => console.log('Upload success', file),
-            onError: (error) => console.log('Upload error', error),
-            showUploadAnother: true,
-            onUploadAnother: () => console.log('Upload another clicked')
-          });
-          
-          // Simulate progress updates
-          let progress = 0;
-          const interval = setInterval(() => {
-            progress += 10;
-            fileToast.setProgress(progress);
+          if (progress < 100) {
+            // Update the existing toast with new progress
+            toast({
+              id: toastId,
+              variant: "file-upload",
+              title: `Uploading '${mockFile.name}'`,
+              description: (
+                <div className="w-full">
+                  <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                    <div 
+                      className="bg-indigo-600 h-2.5 rounded-full transition-all duration-700 ease-in-out" 
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <div className="text-sm font-medium text-gray-700">{progress}%</div>
+                    <button
+                      onClick={() => {
+                        console.log('Upload cancelled');
+                        
+                        // Convert to error toast
+                        toast({
+                          id: toastId,
+                          variant: "error",
+                          title: "Upload failed",
+                          description: "The upload was cancelled."
+                        });
+                        
+                        // Clear the interval
+                        if (intervalRef.current) {
+                          clearInterval(intervalRef.current);
+                        }
+                      }}
+                      className="text-sm text-gray-500 hover:text-gray-900"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ),
+              duration: 30000,
+            });
+          } else {
+            // Upload complete - convert to success toast
+            toast({
+              id: toastId,
+              variant: "success",
+              title: "File uploaded successfully",
+              description: `${mockFile.name} has been uploaded.`,
+            });
             
-            if (progress >= 100) {
-              clearInterval(interval);
-            }
-          }, 500);
-        } else {
-          // Option 2: Using the simpler unified toast approach with progress bar
-          let progress = 0;
-          let toastId: string | undefined;
-          
-          // Handle cancel action
-          const handleCancel = () => {
-            clearInterval(interval);
-            console.log('Upload cancelled');
-            
-            // Show error toast
-            unifiedToast.error(
-              'Upload failed',
-              'The upload was cancelled.'
-            );
-          };
-          
-          // Handle upload another action
-          const handleUploadAnother = () => {
-            console.log('Upload another clicked');
-          };
-          
-          // Initial toast
-          const toast = unifiedToast.fileUploadProgress(
-            'sample-file.pdf',
-            progress,
-            handleCancel,
-            handleUploadAnother
-          );
-          
-          // Simulate progress updates
-          const interval = setInterval(() => {
-            progress += 10;
-            
-            if (progress < 100) {
-              // Update progress bar
-              unifiedToast.fileUploadProgress(
-                'sample-file.pdf',
-                progress,
-                handleCancel,
-                handleUploadAnother
-              );
-            } else {
-              // Show success when complete
-              clearInterval(interval);
-              setTimeout(() => {
-                unifiedToast.fileUploadSuccess('sample-file.pdf');
-              }, 500);
-            }
-          }, 500);
-        }
+            // Clear the interval
+            clearInterval(intervalRef.current);
+          }
+        }, 800); // Slower interval for demo purposes (800ms)
       }
     ];
     
