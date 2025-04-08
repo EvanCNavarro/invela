@@ -95,6 +95,7 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
             width: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }, // Custom ease for width transition
             maxWidth: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }
           }}
+          layout
         >
           {isRegistrationValidated ? (
             // Show full-width registration form
@@ -129,7 +130,9 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
                 className="hidden lg:block w-[45%] p-3"
                 initial={{ opacity: 0.8 }}
                 animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
+                key="register-hero"
               >
                 <AuthHeroSection isLogin={false} />
               </motion.div>
