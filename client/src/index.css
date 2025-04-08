@@ -8,6 +8,15 @@
   transition: opacity 150ms ease-out;
 }
 
+.auth-layout-container {
+  transition: max-width 250ms ease-out;
+}
+
+.auth-layout-expand {
+  max-width: 1200px !important;
+  transition: max-width 250ms ease-out;
+}
+
 @layer base {
   * {
     @apply border-border;
