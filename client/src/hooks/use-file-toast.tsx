@@ -39,27 +39,30 @@ export function useFileToast() {
     
     // Function for upload completion
     const success = (file: FileItem) => {
+      console.log('[FileToast] Success called, toastId:', toastId);
+      
       // First dismiss the existing upload toast if it exists
       if (toastId) {
-        // Dismiss the current toast completely
+        // Forcefully dismiss the current toast
+        console.log('[FileToast] Dismissing upload toast with ID:', toastId);
         toast({
           id: toastId,
           open: false,
         } as any);
         
-        // Clear the toast ID immediately
-        toastId = undefined;
-        
-        // Show success toast immediately after dismissing
-        const successToast = unifiedToast.fileUploadSuccess(file);
-        
-        if (onSuccess) {
-          onSuccess(file);
-        }
-        
-        return successToast;
+        // Small delay to ensure the previous toast is gone
+        setTimeout(() => {
+          // Show success toast after dismissing
+          console.log('[FileToast] Showing success toast after upload toast dismissed');
+          const successToast = unifiedToast.fileUploadSuccess(file);
+          
+          if (onSuccess) {
+            onSuccess(file);
+          }
+        }, 100);
       } else {
         // If no toast was active, just show success immediately
+        console.log('[FileToast] No upload toast found, showing success immediately');
         const successToast = unifiedToast.fileUploadSuccess(file);
         
         if (onSuccess) {
@@ -68,6 +71,9 @@ export function useFileToast() {
         
         return successToast;
       }
+      
+      // Clear the toast ID immediately
+      toastId = undefined;
     };
     
     // Function to show error toast
