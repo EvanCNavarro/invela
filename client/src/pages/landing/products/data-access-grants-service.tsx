@@ -150,10 +150,10 @@ export default function DataAccessPage() {
                 key={index}
                 className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden"
               >
-                <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 text-xl font-bold h-12 w-12 flex items-center justify-center rounded-br-xl">
+                <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 font-bold h-10 w-10 flex items-center justify-center rounded-br-xl">
                   {feature.step}
                 </div>
-                <h3 className="text-xl font-bold mb-4 mt-4">{feature.title}</h3>
+                <h3 className="text-xl font-bold mb-4 mt-6 pl-2">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
               </motion.div>
             ))}
