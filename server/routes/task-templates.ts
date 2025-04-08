@@ -1,6 +1,6 @@
 import express from 'express';
 import { db } from '@db';
-import { taskTemplates, templateConfigurations } from '@db/schema';
+import { taskTemplates, componentConfigurations } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
@@ -48,8 +48,8 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Template not found' });
     }
     
-    const configurations = await db.query.templateConfigurations.findMany({
-      where: eq(templateConfigurations.template_id, templateId)
+    const configurations = await db.query.componentConfigurations.findMany({
+      where: eq(componentConfigurations.template_id, templateId)
     });
     
     res.json({
@@ -81,8 +81,8 @@ router.get('/by-type/:taskType', async (req, res) => {
       return res.status(404).json({ error: `No active template found for task type: ${taskType}` });
     }
     
-    const configurations = await db.query.templateConfigurations.findMany({
-      where: eq(templateConfigurations.template_id, template.id)
+    const configurations = await db.query.componentConfigurations.findMany({
+      where: eq(componentConfigurations.template_id, template.id)
     });
     
     res.json({
@@ -216,12 +216,12 @@ router.post('/:id/configurations', async (req, res) => {
     }
     
     // Check if configuration with the same key and scope already exists
-    const existingConfig = await db.query.templateConfigurations.findFirst({
+    const existingConfig = await db.query.componentConfigurations.findFirst({
       where: and(
-        eq(templateConfigurations.template_id, templateId),
-        eq(templateConfigurations.config_key, config_key),
-        eq(templateConfigurations.scope, scope),
-        scope_target ? eq(templateConfigurations.scope_target, scope_target) : undefined
+        eq(componentConfigurations.template_id, templateId),
+        eq(componentConfigurations.config_key, config_key),
+        eq(componentConfigurations.scope, scope),
+        scope_target ? eq(componentConfigurations.scope_target, scope_target) : undefined
       )
     });
     
@@ -232,7 +232,7 @@ router.post('/:id/configurations', async (req, res) => {
     }
     
     // Insert the new configuration
-    const result = await db.insert(templateConfigurations).values({
+    const result = await db.insert(componentConfigurations).values({
       template_id: templateId,
       config_key,
       config_value,
@@ -267,10 +267,10 @@ router.patch('/:id/configurations/:configId', async (req, res) => {
     }
     
     // Check if the configuration exists
-    const config = await db.query.templateConfigurations.findFirst({
+    const config = await db.query.componentConfigurations.findFirst({
       where: and(
-        eq(templateConfigurations.id, configId),
-        eq(templateConfigurations.template_id, templateId)
+        eq(componentConfigurations.id, configId),
+        eq(componentConfigurations.template_id, templateId)
       )
     });
     
@@ -281,14 +281,14 @@ router.patch('/:id/configurations/:configId', async (req, res) => {
     const { config_key, config_value, scope, scope_target } = req.body;
     
     // Update the configuration
-    const result = await db.update(templateConfigurations)
+    const result = await db.update(componentConfigurations)
       .set({
         config_key: config_key ?? config.config_key,
         config_value: config_value !== undefined ? config_value : config.config_value,
         scope: scope ?? config.scope,
         scope_target: scope_target !== undefined ? scope_target : config.scope_target
       })
-      .where(eq(templateConfigurations.id, configId))
+      .where(eq(componentConfigurations.id, configId))
       .returning();
     
     if (!result.length) {
@@ -318,10 +318,10 @@ router.delete('/:id/configurations/:configId', async (req, res) => {
     }
     
     // Check if the configuration exists
-    const config = await db.query.templateConfigurations.findFirst({
+    const config = await db.query.componentConfigurations.findFirst({
       where: and(
-        eq(templateConfigurations.id, configId),
-        eq(templateConfigurations.template_id, templateId)
+        eq(componentConfigurations.id, configId),
+        eq(componentConfigurations.template_id, templateId)
       )
     });
     
@@ -330,10 +330,10 @@ router.delete('/:id/configurations/:configId', async (req, res) => {
     }
     
     // Delete the configuration
-    await db.delete(templateConfigurations)
+    await db.delete(componentConfigurations)
       .where(and(
-        eq(templateConfigurations.id, configId),
-        eq(templateConfigurations.template_id, templateId)
+        eq(componentConfigurations.id, configId),
+        eq(componentConfigurations.template_id, templateId)
       ));
     
     res.status(204).end();
