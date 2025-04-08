@@ -2,11 +2,12 @@ import { useState, useEffect, forwardRef } from "react";
 import { Dialog, DialogTitle, DialogDescription, DialogPortal, DialogOverlay } from "@/components/ui/dialog";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useWebSocket } from "@/hooks/useWebSocket";
+import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 
 // Create a custom dialog content without close button
@@ -78,11 +79,14 @@ const preloadImages = () => {
 export function WelcomeModal() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const { toast } = useToast();
-  const { socket, connected } = useWebSocket();
+  const websocket = useWebSocketContext();
+  const connected = websocket.isConnected;
 
   const isLastSlide = currentSlide === carouselContent.length - 1;
+  const isCurrentImageLoaded = imagesLoaded[carouselContent[currentSlide]?.src] === true;
 
   // Only set modal visibility once when user data is fully available
   useEffect(() => {
@@ -133,19 +137,16 @@ export function WelcomeModal() {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
 
-      if (connected && socket && onboardingTask?.id) {
+      if (connected && websocket && onboardingTask?.id) {
         try {
-          socket.send(JSON.stringify({
-            type: 'task_update',
-            data: {
-              taskId: onboardingTask.id,
-              status: 'completed',
-              metadata: {
-                onboardingCompleted: true,
-                completionTime: new Date().toISOString()
-              }
+          websocket.send('task_update', {
+            taskId: onboardingTask.id,
+            status: 'completed',
+            metadata: {
+              onboardingCompleted: true,
+              completionTime: new Date().toISOString()
             }
-          }));
+          });
         } catch (error) {
           console.error('[WelcomeModal] WebSocket send error:', error);
         }
@@ -216,21 +217,37 @@ export function WelcomeModal() {
             <div className="relative flex items-center justify-center w-full">
               {/* Log image path but don't display anything */}
               {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
-              <img
-                src={carouselContent[currentSlide].src}
-                alt={carouselContent[currentSlide].alt}
-                className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
-                style={{ 
-                  maxWidth: '92%',
-                  height: 'auto'
-                }}
-                onError={(e) => {
-                  console.error('Failed to load image:', carouselContent[currentSlide].src, e);
-                }}
-                onLoad={() => {
-                  console.log('Successfully loaded image:', carouselContent[currentSlide].src);
-                }}
-              />
+              
+              {/* Show skeleton while image is loading */}
+              <div className="relative w-full">
+                <Skeleton 
+                  className={cn(
+                    "rounded-xl mx-auto bg-gray-200/70 max-h-[380px] min-h-[250px] w-[92%] absolute top-0 left-1/2 transform -translate-x-1/2 transition-opacity duration-200",
+                    imagesLoaded[carouselContent[currentSlide].src] ? "opacity-0" : "opacity-100"
+                  )}
+                />
+                
+                <img
+                  src={carouselContent[currentSlide].src}
+                  alt={carouselContent[currentSlide].alt}
+                  className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
+                  style={{ 
+                    maxWidth: '92%',
+                    height: 'auto'
+                  }}
+                  onError={(e) => {
+                    console.error('Failed to load image:', carouselContent[currentSlide].src, e);
+                  }}
+                  onLoad={() => {
+                    console.log('Successfully loaded image:', carouselContent[currentSlide].src);
+                    // Mark this image as loaded
+                    setImagesLoaded(prev => ({
+                      ...prev,
+                      [carouselContent[currentSlide].src]: true
+                    }));
+                  }}
+                />
+              </div>
             </div>
           </div>
           
