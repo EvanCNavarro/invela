@@ -15,7 +15,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]", 
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
       className
     )}
     {...props}
@@ -91,7 +91,7 @@ export const ToastIcon = React.forwardRef<
 });
 ToastIcon.displayName = "ToastIcon";
 
-// Enhanced Toast
+// Enhanced Toast with Framer Motion
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
@@ -106,7 +106,13 @@ const Toast = React.forwardRef<
   }
   
   return (
-    <div className="mb-3"> {/* Add margin-bottom to each toast for extra separation */}
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 10 }}
+      transition={{ duration: 0.3 }}
+      className="mb-3" // Add margin-bottom to each toast for extra separation
+    >
       <ToastPrimitives.Root
         ref={ref}
         className={cn(toastVariants({ variant: safeVariant }), className)}
@@ -114,7 +120,7 @@ const Toast = React.forwardRef<
       >
         {children}
       </ToastPrimitives.Root>
-    </div>
+    </motion.div>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
