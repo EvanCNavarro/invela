@@ -247,7 +247,7 @@ export default function RegisterPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          Create your account
+          Verify your invitation
         </motion.h1>
         <motion.p 
           className="text-base text-muted-foreground mt-3"
@@ -255,7 +255,7 @@ export default function RegisterPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          Complete your registration to get started
+          Enter your invitation code to begin registration
         </motion.p>
       </motion.div>
 
