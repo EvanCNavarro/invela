@@ -83,7 +83,7 @@ export default function DataAccessPage() {
       </section>
       
       {/* Features Section */}
-      <section id="features" className="py-20">
+      <section id="features" className="pt-10 pb-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.div 
@@ -150,7 +150,7 @@ export default function DataAccessPage() {
                 key={index}
                 className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 bg-blue-100 text-blue-800 text-xl font-bold h-12 w-12 flex items-center justify-center rounded-bl-xl">
+                <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 text-xl font-bold h-12 w-12 flex items-center justify-center rounded-br-xl">
                   {feature.step}
                 </div>
                 <h3 className="text-xl font-bold mb-4 mt-4">{feature.title}</h3>
