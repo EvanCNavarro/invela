@@ -100,15 +100,11 @@ export default function LandingPage() {
                 variants={fadeIn}
                 className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
               >
-                <Link href="/login">
-                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-[180px] text-center hover:text-white">
-                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
-                  </a>
+                <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-3 rounded-lg transition-colors duration-200 flex items-center justify-center w-full sm:w-[180px] text-center hover:text-white">
+                  Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
-                <Link href="/landing/company/about">
-                  <a className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-8 py-3 rounded-lg border border-gray-200 transition-colors duration-200 w-full sm:w-[180px] text-center flex items-center justify-center">
-                    Learn More
-                  </a>
+                <Link href="/landing/company/about" className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-8 py-3 rounded-lg border border-gray-200 transition-colors duration-200 w-full sm:w-[180px] text-center flex items-center justify-center">
+                  Learn More
                 </Link>
               </motion.div>
             </div>
@@ -457,10 +453,8 @@ export default function LandingPage() {
               variants={fadeIn}
               className="flex justify-center mb-6"
             >
-              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form">
-                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
-                  Contact Sales <Send className="ml-2 h-5 w-5" />
-                </a>
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
+                Contact Sales <Send className="ml-2 h-5 w-5" />
               </Link>
             </motion.div>
           </motion.div>
@@ -473,7 +467,7 @@ export default function LandingPage() {
 // Feature Card Component
 function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode, title: string, description: string, link: string }) {
   return (
-    <Link href={link}>
+    <Link href={link} className="block">
       <motion.div 
         variants={fadeIn}
         className="group relative bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col overflow-hidden"
