@@ -6,8 +6,10 @@ import type {
 } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 1
-// Default timeout for most toasts (5 seconds)
-const TOAST_REMOVE_DELAY = 5000
+// Default timeout for most toasts (3 seconds)
+const TOAST_REMOVE_DELAY = 3000
+// Shorter timeout for error toasts (2 seconds)
+const ERROR_TOAST_REMOVE_DELAY = 2000
 
 type ToasterToast = ToastProps & {
   id: string
@@ -162,11 +164,11 @@ function toast({ ...props }: Toast) {
     },
   })
 
-  // For destructive/error toasts, automatically start the dismiss timer
+  // For destructive/error toasts, automatically start the dismiss timer with shorter duration
   if (props.variant === 'destructive') {
     setTimeout(() => {
       dismiss()
-    }, TOAST_REMOVE_DELAY)
+    }, ERROR_TOAST_REMOVE_DELAY)
   }
 
   return {
