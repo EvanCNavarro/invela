@@ -116,6 +116,30 @@ const logTaskDebug = (stage: string, task: any, extras: Record<string, any> = {}
   });
 };
 
+// Get KYB fields 
+router.get('/api/kyb/fields', async (req, res) => {
+  try {
+    logger.info('Fetching KYB fields');
+    const fields = await db.select().from(kybFields).orderBy(sql`"group" ASC, "order" ASC`);
+    
+    logger.info('KYB fields retrieved successfully', {
+      fieldCount: fields.length,
+      groups: [...new Set(fields.map(f => f.group))]
+    });
+    
+    res.json(fields);
+  } catch (error) {
+    logger.error('Error fetching KYB fields', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({
+      message: "Failed to fetch KYB fields",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Debug utility for logging response data
 const logResponseDebug = (stage: string, responses: any[], extras: Record<string, any> = {}) => {
   console.log(`[KYB API Debug] ${stage}:`, {
