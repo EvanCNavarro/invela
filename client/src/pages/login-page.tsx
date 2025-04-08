@@ -109,26 +109,24 @@ export default function LoginPage() {
       () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
-        const mockFile: FileItem = {
-          name: 'sample-file.pdf',
-          size: 1024 * 1024 * 2.5, // 2.5MB
-          type: 'application/pdf',
-        };
-        const fileToast = createFileUploadToast(mockFile, {
-          onCancel: () => console.log('Upload cancelled'),
-          onSuccess: (file) => console.log('Upload success', file),
-          onError: (error) => console.log('Upload error', error),
-          showUploadAnother: true,
-          onUploadAnother: () => console.log('Upload another clicked')
-        });
-        
-        // Simulate progress
+        // Show simple file upload toast
         let progress = 0;
+        
+        // First create an upload toast
+        const initialToast = unifiedToast.fileUploadStarted('sample-file.pdf');
+        
+        // Simulate progress updates
         const interval = setInterval(() => {
           progress += 10;
-          fileToast.setProgress(progress);
+          
+          // Convert to success toast when done
           if (progress >= 100) {
             clearInterval(interval);
+            setTimeout(() => {
+              // Show success toast when complete
+              unifiedToast.fileUploadSuccess('sample-file.pdf');
+              console.log('Upload success', { name: 'sample-file.pdf', size: 1024 * 1024 * 2.5 });
+            }, 500);
           }
         }, 500);
       }
