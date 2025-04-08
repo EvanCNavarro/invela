@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { PageHeader } from "@/components/ui/page-header";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms/UniversalForm";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -88,9 +88,10 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
         />
 
         <div className="container max-w-7xl mx-auto">
-          <OnboardingKYBFormPlayground 
+          <UniversalForm 
             taskId={task.id}
-            initialReviewMode={isReviewMode} // Set initial review mode from URL parameter
+            taskType="kyb"
+            initialData={task.savedFormData}
             onSubmit={(formData) => {
               // Handle form submission
               console.log('[KYB Form] Starting form submission:', {
@@ -212,7 +213,9 @@ export default function KYBTaskPage({ params }: KYBTaskPageProps) {
                 });
               });
             }}
-            companyName={task.metadata?.company_name || companyName}
+            onProgress={(progress) => {
+              // Handle progress updates if needed
+            }}
           />
         </div>
       </div>
