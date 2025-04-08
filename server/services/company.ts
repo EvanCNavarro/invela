@@ -102,7 +102,7 @@ async function createCompanyInternal(
       .values({
         title: `1. KYB Form: ${newCompany.name}`,
         description: `Complete KYB verification for ${newCompany.name}`,
-        task_type: 'company_onboarding_KYB',
+        task_type: 'company_kyb',
         task_scope: 'company',
         status: TaskStatus.NOT_STARTED,
         priority: 'high',
@@ -167,7 +167,7 @@ async function createCompanyInternal(
           locked: true, // Task is initially locked
           prerequisite_task_id: kybTask.id, // KYB task is a prerequisite
           prerequisite_for: ['company_card'], // This task is a prerequisite for CARD
-          prerequisite_task_type: 'company_onboarding_KYB'
+          prerequisite_task_type: 'company_kyb'
         }
       })
       .returning();

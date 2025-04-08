@@ -76,7 +76,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
     if (!companyId) return false;
     return tasks.some(task => 
       task.company_id === companyId && 
-      task.task_type === 'company_onboarding_KYB' && 
+      task.task_type === 'company_kyb' && 
       ['submitted', 'COMPLETED'].includes(task.status.toLowerCase())
     );
   };
@@ -126,7 +126,6 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
 
     // Navigate to form pages for KYB, Security and CARD tasks if not in submitted status
     if ((task.task_type === 'company_kyb' || 
-         task.task_type === 'company_onboarding_KYB' || 
          task.task_type === 'company_card' ||
          task.task_type === 'security_assessment') && 
         task.status !== 'submitted') {
@@ -136,7 +135,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       
       // Get task type for form type determination
       let formType;
-      if (task.task_type === 'company_kyb' || task.task_type === 'company_onboarding_KYB') {
+      if (task.task_type === 'company_kyb') {
         formType = 'kyb';
       } else if (task.task_type === 'company_card') {
         formType = 'card';
@@ -251,7 +250,7 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                       <TableRow 
                         className={classNames(
                           "cursor-pointer hover:bg-muted/50 transition-colors",
-                          task.task_type === 'company_onboarding_KYB' && task.status !== 'submitted' && "hover:bg-blue-50/50",
+                          task.task_type === 'company_kyb' && task.status !== 'submitted' && "hover:bg-blue-50/50",
                           task.searchMatches && task.searchMatches.length > 0 && "bg-yellow-50/30 dark:bg-yellow-900/10",
                           isLocked && "opacity-50 cursor-not-allowed"
                         )}

@@ -4,6 +4,7 @@ import { updateTaskTitles } from "./update_task_titles";
 import { updateKybFields2025April } from "./update_kyb_fields_2025_04";
 import { up as addTaskTemplates } from "./add_task_templates";
 import addKybFieldHelpText from "./add_kyb_field_help_text";
+import { up as consolidateKybTemplates } from "./consolidate_kyb_templates";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -40,6 +41,10 @@ export async function runMigrations() {
     // Add help text (tooltips) for KYB fields
     log('Adding help text for KYB fields');
     await addKybFieldHelpText();
+    
+    // Consolidate KYB templates into a single template
+    log('Consolidating KYB templates to use consistent naming');
+    await consolidateKybTemplates();
     
     log('All migrations completed successfully');
     return true;

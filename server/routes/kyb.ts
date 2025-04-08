@@ -60,7 +60,7 @@ const unlockSecurityTasks = async (companyId: number, kybTaskId: number, userId?
       // Check if the task is locked and if the KYB task is a prerequisite
       if (securityTask.metadata?.locked === true || 
           securityTask.metadata?.prerequisite_task_id === kybTaskId ||
-          securityTask.metadata?.prerequisite_task_type === 'company_onboarding_KYB') {
+          securityTask.metadata?.prerequisite_task_type === 'company_kyb') {
         
         logger.info('Unlocking security task', {
           securityTaskId: securityTask.id,

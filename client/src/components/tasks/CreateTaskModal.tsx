@@ -28,7 +28,7 @@ interface Company {
 const TaskType = {
   USER_ONBOARDING: "user_onboarding",
   FILE_REQUEST: "file_request",
-  COMPANY_KYB: "company_onboarding_KYB",
+  COMPANY_KYB: "company_kyb",
 } as const;
 
 const TaskScope = {
