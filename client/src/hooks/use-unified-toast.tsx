@@ -185,11 +185,13 @@ export const unifiedToast = {
   
   fileUploadSuccess: (file: FileItem | string) => {
     const fileName = typeof file === 'string' ? file : file.name;
+    console.log('[UnifiedToast] Creating success toast for file:', fileName);
+    
     return baseToast({
       variant: "success",
       title: "File uploaded successfully",
       description: `${fileName} has been uploaded.`,
-      duration: STANDARD_DURATION, // Standard duration
+      duration: STANDARD_DURATION, // Standard duration (3000ms)
     });
   },
   
