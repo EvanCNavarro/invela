@@ -67,12 +67,20 @@ const carouselContent = [
 ];
 
 // Preload all images to ensure fast display
-const preloadImages = () => {
+const preloadImages = (
+  callback?: (src: string, success: boolean) => void
+) => {
   carouselContent.forEach(item => {
     const img = new Image();
     img.src = item.src;
-    img.onload = () => console.log(`Preloaded image: ${item.src}`);
-    img.onerror = (e) => console.error(`Failed to preload image: ${item.src}`, e);
+    img.onload = () => {
+      console.log(`Preloaded image: ${item.src}`);
+      if (callback) callback(item.src, true);
+    };
+    img.onerror = (e) => {
+      console.error(`Failed to preload image: ${item.src}`, e);
+      if (callback) callback(item.src, false);
+    };
   });
 };
 
@@ -93,7 +101,14 @@ export function WelcomeModal() {
     if (!user) return;
     
     // Preload all images immediately to ensure fast display when modal shows
-    preloadImages();
+    preloadImages((src, success) => {
+      if (success) {
+        setImagesLoaded(prev => ({
+          ...prev,
+          [src]: true
+        }));
+      }
+    });
     
     // A small delay to ensure all auth processes are complete
     const timer = setTimeout(() => {
@@ -218,19 +233,21 @@ export function WelcomeModal() {
               {/* Log image path but don't display anything */}
               {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
               
-              {/* Show skeleton while image is loading */}
-              <div className="relative w-full">
-                <Skeleton 
-                  className={cn(
-                    "rounded-xl mx-auto bg-gray-200/70 max-h-[380px] min-h-[250px] w-[92%] absolute top-0 left-1/2 transform -translate-x-1/2 transition-opacity duration-200",
-                    imagesLoaded[carouselContent[currentSlide].src] ? "opacity-0" : "opacity-100"
-                  )}
-                />
+              {/* Use conditional rendering with display:none instead of opacity */}
+              <div className="relative w-full h-[250px] flex items-center justify-center">
+                {!imagesLoaded[carouselContent[currentSlide].src] && (
+                  <Skeleton 
+                    className="rounded-xl mx-auto bg-gray-200/70 max-h-[380px] min-h-[250px] w-[92%] absolute"
+                  />
+                )}
                 
                 <img
                   src={carouselContent[currentSlide].src}
                   alt={carouselContent[currentSlide].alt}
-                  className="rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto"
+                  className={cn(
+                    "rounded-xl max-h-[380px] w-auto object-contain shadow-md mx-auto transition-opacity duration-300",
+                    imagesLoaded[carouselContent[currentSlide].src] ? "opacity-100" : "opacity-0"
+                  )}
                   style={{ 
                     maxWidth: '92%',
                     height: 'auto'
