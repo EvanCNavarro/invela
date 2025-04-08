@@ -2,11 +2,9 @@ import * as React from "react";
 import { useToast } from "./use-toast";
 import { useUnifiedToast } from "./use-unified-toast";
 import { FileItem } from "../types/files";
-import { ToastAction } from "../components/ui/toast";
 
 type FileToastOptions = {
   autoStart?: boolean;
-  onCancel?: () => void;
   onSuccess?: (file: FileItem) => void;
   onError?: (error: string) => void;
   successMessage?: string;
@@ -15,7 +13,7 @@ type FileToastOptions = {
 
 interface FileUploadToastRef {
   id: string | undefined;
-  uploadComplete: (file: FileItem) => void;
+  success: (file: FileItem) => void;
   error: (errorMessage?: string) => void;
   dismiss: () => void;
 }
@@ -32,7 +30,6 @@ export function useFileToast() {
     
     const {
       autoStart = true,
-      onCancel,
       onSuccess,
       onError,
       errorMessage,
@@ -40,19 +37,8 @@ export function useFileToast() {
     
     let toastId: string | undefined;
     
-    // Custom cancel handler
-    const handleCancel = () => {
-      if (onCancel) {
-        onCancel();
-      }
-      
-      // Call the error function to show error toast
-      error("Upload cancelled");
-      console.log("Upload cancelled");
-    };
-    
     // Function for upload completion
-    const uploadComplete = (file: FileItem) => {
+    const success = (file: FileItem) => {
       // Dismiss the existing upload toast if it exists
       if (toastId) {
         dismiss();
@@ -107,11 +93,6 @@ export function useFileToast() {
         title: `Uploading '${fileName}'`,
         description: "Please wait while we upload your file.",
         duration: 30000, // Long duration while uploading
-        action: onCancel ? (
-          <ToastAction altText="Cancel" onClick={handleCancel}>
-            Cancel
-          </ToastAction>
-        ) : undefined,
       });
       
       toastId = initialToast.id;
@@ -119,7 +100,7 @@ export function useFileToast() {
     
     return {
       id: toastId,
-      uploadComplete,
+      success,
       error,
       dismiss
     };

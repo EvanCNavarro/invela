@@ -80,10 +80,9 @@ export function useUnifiedToast() {
 
   // Progress bar no longer needed
 
-  // Simple File Upload Toast (no progress)
+  // Simple File Upload Toast (no progress or cancel)
   const fileUploadProgress = (
-    fileName: string, 
-    onCancel?: () => void
+    fileName: string
   ) => {
     // Create a toast without progress indication
     const toastRef = toast({
@@ -91,11 +90,6 @@ export function useUnifiedToast() {
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
-      action: onCancel ? (
-        <ToastAction altText="Cancel" onClick={onCancel}>
-          Cancel
-        </ToastAction>
-      ) : undefined,
     });
     
     return toastRef;
@@ -225,19 +219,13 @@ export const unifiedToast = {
   
   // Simple file upload toast
   fileUploadProgress: (
-    fileName: string, 
-    onCancel?: () => void
+    fileName: string
   ) => {
     return baseToast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
-      action: onCancel ? (
-        <ToastAction altText="Cancel" onClick={onCancel}>
-          Cancel
-        </ToastAction>
-      ) : undefined,
     });
   },
   
@@ -245,9 +233,8 @@ export const unifiedToast = {
   uploadProgress: (options: {
     id?: string;
     fileName: string;
-    onCancel?: () => void;
   }) => {
-    const { id, fileName, onCancel } = options;
+    const { id, fileName } = options;
     
     return baseToast({
       id,
@@ -255,11 +242,6 @@ export const unifiedToast = {
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
-      action: onCancel ? (
-        <ToastAction altText="Cancel" onClick={onCancel}>
-          Cancel
-        </ToastAction>
-      ) : undefined,
     });
   }
 };
