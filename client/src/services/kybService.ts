@@ -1,5 +1,6 @@
-import { FormField } from "@/utils/formUtils";
-import { FormServiceInterface, groupFields } from "./formService";
+import { apiRequest } from '@/lib/queryClient';
+import { FormData, FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
+import { sortFields, getFieldComponentType } from '../utils/formUtils';
 
 export interface KybField {
   id: number;
@@ -25,76 +26,196 @@ export interface KybProgressResponse {
  * Implementation of FormServiceInterface for the KYB form type
  */
 export class KybFormService implements FormServiceInterface {
+  private fields: FormField[] = [];
+  private sections: FormSection[] = [];
+  private formData: Record<string, any> = {};
+  private initialized = false;
+  private templateId: number | null = null;
+  
+  /**
+   * Initialize the KYB form service
+   * @param templateId ID of the task template
+   */
+  async initialize(templateId: number): Promise<void> {
+    if (this.initialized) return;
+    
+    this.templateId = templateId;
+    
+    // Fetch KYB fields from the API
+    const kybFields = await this.getKybFields();
+    
+    // Group fields by section (group)
+    const fieldGroups = this.groupFieldsBySection(kybFields);
+    
+    // Create sections from groups
+    this.sections = Object.entries(fieldGroups).map(([groupName, groupFields], index) => {
+      return {
+        id: groupName,
+        title: groupName,
+        order: index,
+        collapsed: false,
+        fields: groupFields.map(field => this.convertToFormField(field))
+      };
+    });
+    
+    // Flatten all fields
+    this.fields = this.sections.flatMap(section => section.fields);
+    
+    this.initialized = true;
+  }
+  
   /**
    * Fetches all KYB fields from the server, ordered by group and order
    * @returns Promise with an array of KYB fields
    */
-  async getFields(): Promise<KybField[]> {
-    console.log('[KYB Service] Fetching KYB fields');
-    const response = await fetch('/api/kyb/fields');
-    if (!response.ok) {
-      throw new Error(`Failed to fetch KYB fields: ${response.statusText}`);
+  async getKybFields(): Promise<KybField[]> {
+    try {
+      const fields = await apiRequest('/api/kyb/fields');
+      return fields;
+    } catch (error) {
+      console.error('Error fetching KYB fields:', error);
+      return [];
     }
-    return await response.json();
   }
-
+  
   /**
    * Groups KYB fields by their group property
    * @param fields Array of KYB fields to group
    * @returns Object with group names as keys and arrays of fields as values
    */
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
-    return groupFields(
-      fields,
-      (field) => field.group,
-      (field) => field.order
-    );
+    const groups: Record<string, KybField[]> = {};
+    
+    for (const field of fields) {
+      if (!groups[field.group]) {
+        groups[field.group] = [];
+      }
+      
+      groups[field.group].push(field);
+    }
+    
+    // Sort fields within each group by their order property
+    for (const group in groups) {
+      groups[group] = groups[group].sort((a, b) => a.order - b.order);
+    }
+    
+    return groups;
   }
-
+  
   /**
    * Convert KybField from database to FormField format for the form
    * @param field KYB field from the API
    * @returns FormField object ready for the universal form
    */
   convertToFormField(field: KybField): FormField {
-    // Map field types from database to form component
-    let fieldType: string | undefined = undefined;
-    let options: string[] | undefined = undefined;
-
-    if (field.field_type === 'BOOLEAN') {
-      fieldType = 'BOOLEAN';
-    } else if (field.field_type === 'DATE') {
-      fieldType = 'DATE';
-    } else if (field.field_type === 'MULTIPLE_CHOICE') {
-      fieldType = 'MULTIPLE_CHOICE';
-      // Try to parse options from validation_rules if available
-      if (field.validation_rules && typeof field.validation_rules === 'object') {
-        const rules = field.validation_rules as any;
-        if (rules.options && Array.isArray(rules.options)) {
-          options = rules.options;
-        }
-      }
-      // Default options if none are specified
-      if (!options || options.length === 0) {
-        options = [
-          'Less than $1 million',
-          '$1 million - $10 million',
-          '$10 million - $50 million',
-          'Greater than $50 million'
-        ];
-      }
-    }
-
     return {
-      name: field.field_key,
+      key: field.field_key,
       label: field.display_name,
-      question: field.question,
-      tooltip: field.help_text || '',
-      field_type: fieldType,
-      options: options
+      type: field.field_type,
+      section: field.group,
+      placeholder: field.question,
+      helpText: field.help_text || undefined,
+      validation: {
+        required: field.required,
+        ...(field.validation_rules || {})
+      },
+      order: field.order,
+      metadata: {
+        id: field.id,
+        original: field
+      }
     };
   }
-
+  
+  /**
+   * Get all form fields
+   * @returns Array of form fields
+   */
+  getFields(): FormField[] {
+    return [...this.fields];
+  }
+  
+  /**
+   * Get all form sections
+   * @returns Array of form sections
+   */
+  getSections(): FormSection[] {
+    return [...this.sections];
+  }
+  
+  /**
+   * Load form data into the service
+   * @param data Form data to load
+   */
+  loadFormData(data: FormData): void {
+    this.formData = { ...data };
+  }
+  
+  /**
+   * Update a specific field in the form data
+   * @param fieldKey Field key to update
+   * @param value New value for the field
+   */
+  updateFormData(fieldKey: string, value: any): void {
+    this.formData[fieldKey] = value;
+  }
+  
+  /**
+   * Get the current form data
+   * @returns Current form data
+   */
+  getFormData(): FormData {
+    return { ...this.formData };
+  }
+  
+  /**
+   * Calculate form completion progress
+   * @returns Percentage of form completion (0-100)
+   */
+  calculateProgress(): number {
+    if (!this.fields.length) return 0;
+    
+    // Count the number of required fields that have values
+    const requiredFields = this.fields.filter(field => field.validation?.required);
+    
+    if (!requiredFields.length) {
+      // If no required fields, base progress on all fields
+      const filledFields = this.fields.filter(field => {
+        const value = this.formData[field.key];
+        return value !== undefined && value !== null && value !== '';
+      });
+      
+      return Math.round((filledFields.length / this.fields.length) * 100);
+    }
+    
+    // Count filled required fields
+    const filledRequiredFields = requiredFields.filter(field => {
+      const value = this.formData[field.key];
+      return value !== undefined && value !== null && value !== '';
+    });
+    
+    return Math.round((filledRequiredFields.length / requiredFields.length) * 100);
+  }
+  
+  /**
+   * Saves progress for a KYB form
+   * @param taskId ID of the task
+   * @returns Promise that resolves when progress is saved
+   */
+  async saveProgress(taskId?: number): Promise<void> {
+    if (!taskId) {
+      throw new Error('Task ID is required to save progress');
+    }
+    
+    try {
+      const progress = this.calculateProgress();
+      await this.saveKybProgress(taskId, progress, this.formData);
+    } catch (error) {
+      console.error('Error saving KYB progress:', error);
+      throw error;
+    }
+  }
+  
   /**
    * Saves progress for a KYB form
    * @param taskId ID of the task
@@ -102,48 +223,69 @@ export class KybFormService implements FormServiceInterface {
    * @param formData Form data to save
    * @returns Promise with saved data
    */
-  async saveProgress(taskId: number, progress: number, formData: Record<string, any>) {
-    console.log('[KYB Service] Saving KYB progress', {
-      taskId,
-      progress,
-      formDataKeys: Object.keys(formData)
-    });
-    
-    const response = await fetch('/api/kyb/progress', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        taskId,
-        progress,
-        formData
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to save KYB progress: ${response.statusText}`);
+  async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
+    try {
+      return await apiRequest(`/api/kyb/progress/${taskId}`, {
+        method: 'POST',
+        data: {
+          progress,
+          formData
+        }
+      });
+    } catch (error) {
+      console.error('Error saving KYB progress:', error);
+      throw error;
     }
-    
-    return await response.json();
   }
-
+  
   /**
    * Gets saved progress for a KYB form
    * @param taskId ID of the task
    * @returns Promise with saved form data and progress
    */
-  async getProgress(taskId: number): Promise<KybProgressResponse> {
-    console.log('[KYB Service] Getting KYB progress', { taskId });
-    
-    const response = await fetch(`/api/kyb/progress/${taskId}`);
-    if (!response.ok) {
-      throw new Error(`Failed to get KYB progress: ${response.statusText}`);
+  async getKybProgress(taskId: number): Promise<KybProgressResponse> {
+    try {
+      return await apiRequest(`/api/kyb/progress/${taskId}`);
+    } catch (error) {
+      console.error('Error getting KYB progress:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Load saved progress for a task
+   * @param taskId ID of the task
+   * @returns Promise that resolves with loaded form data
+   */
+  async loadProgress(taskId: number): Promise<FormData> {
+    try {
+      const { formData } = await this.getKybProgress(taskId);
+      this.loadFormData(formData);
+      return formData;
+    } catch (error) {
+      console.error('Error loading KYB progress:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Submit the form
+   * @param options Form submission options
+   * @returns Promise that resolves with submission result
+   */
+  async submit(options: FormSubmitOptions): Promise<any> {
+    if (!options.taskId) {
+      throw new Error('Task ID is required to submit the form');
     }
     
-    return await response.json();
+    try {
+      return await this.submitKybForm(options.taskId, this.formData, options.fileName);
+    } catch (error) {
+      console.error('Error submitting KYB form:', error);
+      throw error;
+    }
   }
-
+  
   /**
    * Submits a completed KYB form
    * @param taskId ID of the task
@@ -151,39 +293,93 @@ export class KybFormService implements FormServiceInterface {
    * @param fileName Optional file name for the CSV export
    * @returns Promise with submission result
    */
-  async submitForm(taskId: number, formData: Record<string, any>, fileName?: string) {
-    console.log('[KYB Service] Submitting KYB form', {
-      taskId,
-      formDataKeys: Object.keys(formData),
-      fileName
-    });
+  async submitKybForm(taskId: number, formData: Record<string, any>, fileName?: string) {
+    try {
+      return await apiRequest(`/api/kyb/submit/${taskId}`, {
+        method: 'POST',
+        data: {
+          formData,
+          fileName
+        }
+      });
+    } catch (error) {
+      console.error('Error submitting KYB form:', error);
+      throw error;
+    }
+  }
+  
+  /**
+   * Validate form data
+   * @param data Form data to validate
+   * @returns Validation result (true if valid, error object if invalid)
+   */
+  validate(data: FormData): boolean | Record<string, string> {
+    const errors: Record<string, string> = {};
     
-    const response = await fetch(`/api/kyb/submit/${taskId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        taskId,
-        formData,
-        fileName: fileName || `kyb_form_${taskId}_${new Date().toISOString().replace(/[:]/g, '')}`
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to submit KYB form: ${response.statusText}`);
+    for (const field of this.fields) {
+      const { key, validation, label } = field;
+      const value = data[key];
+      
+      // Skip fields that don't have validation rules
+      if (!validation) continue;
+      
+      // Required validation
+      if (validation.required && (value === undefined || value === null || value === '')) {
+        errors[key] = `${label} is required`;
+        continue;
+      }
+      
+      // Skip further validation for empty optional fields
+      if (value === undefined || value === null || value === '') continue;
+      
+      // String validations
+      if (typeof value === 'string') {
+        // Min length validation
+        if (validation.minLength !== undefined && value.length < validation.minLength) {
+          errors[key] = `${label} must be at least ${validation.minLength} characters`;
+          continue;
+        }
+        
+        // Max length validation
+        if (validation.maxLength !== undefined && value.length > validation.maxLength) {
+          errors[key] = `${label} must be at most ${validation.maxLength} characters`;
+          continue;
+        }
+        
+        // Pattern validation
+        if (validation.pattern && !new RegExp(validation.pattern).test(value)) {
+          errors[key] = validation.message || `${label} has an invalid format`;
+          continue;
+        }
+      }
+      
+      // Number validations
+      if (typeof value === 'number') {
+        // Min value validation
+        if (validation.min !== undefined && value < validation.min) {
+          errors[key] = `${label} must be at least ${validation.min}`;
+          continue;
+        }
+        
+        // Max value validation
+        if (validation.max !== undefined && value > validation.max) {
+          errors[key] = `${label} must be at most ${validation.max}`;
+          continue;
+        }
+      }
     }
     
-    return await response.json();
+    // Return true if no errors, otherwise return the errors object
+    return Object.keys(errors).length === 0 ? true : errors;
   }
 }
 
-// Create a singleton instance of the KYB service
+// Export a singleton instance of the KYB form service
 export const kybService = new KybFormService();
 
-// For backward compatibility, export functions that use the singleton
-export const getKybFields = (): Promise<KybField[]> => kybService.getFields();
+// Export convenience functions
+export const getKybFields = (): Promise<KybField[]> => kybService.getKybFields();
 export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybField[]> => kybService.groupFieldsBySection(fields);
-export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>) => kybService.saveProgress(taskId, progress, formData);
-export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getProgress(taskId);
-export const submitKybForm = (taskId: number, formData: Record<string, any>, fileName?: string) => kybService.submitForm(taskId, formData, fileName);
+export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>) => kybService.saveKybProgress(taskId, progress, formData);
+export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getKybProgress(taskId);
+export const submitKybForm = (taskId: number, formData: Record<string, any>, fileName?: string) => kybService.submitKybForm(taskId, formData, fileName);

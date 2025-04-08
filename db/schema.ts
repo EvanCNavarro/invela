@@ -557,9 +557,50 @@ export const selectSecurityFieldSchema = createSelectSchema(securityFields);
 export const insertSecurityResponseSchema = createInsertSchema(securityResponses);
 export const selectSecurityResponseSchema = createSelectSchema(securityResponses);
 
+// Task template configuration tables
+export const taskTemplates = pgTable("task_templates", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  task_type: varchar("task_type", { length: 100 }).notNull().unique(),
+  component_type: varchar("component_type", { length: 100 }).notNull().default('form'),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+export const componentConfigurations = pgTable("component_configurations", {
+  id: serial("id").primaryKey(),
+  template_id: integer("template_id").references(() => taskTemplates.id).notNull(),
+  config_key: varchar("config_key", { length: 100 }).notNull(),
+  config_value: jsonb("config_value").$type<any>().notNull(),
+  scope: varchar("scope", { length: 50 }).default('global'),
+  scope_target: varchar("scope_target", { length: 255 }),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow()
+});
+
+// Add relation for task to template mapping
+export const taskToTemplateRelations = relations(tasks, ({ one }) => ({
+  template: one(taskTemplates, {
+    fields: [tasks.task_type],
+    references: [taskTemplates.task_type]
+  })
+}));
+
+// Add schemas for the new tables
+export const insertTaskTemplateSchema = createInsertSchema(taskTemplates);
+export const selectTaskTemplateSchema = createSelectSchema(taskTemplates);
+export const insertComponentConfigSchema = createInsertSchema(componentConfigurations);
+export const selectComponentConfigSchema = createSelectSchema(componentConfigurations);
+
 export type InsertDocumentAnswer = typeof documentAnswers.$inferInsert;
 export type SelectDocumentAnswer = typeof documentAnswers.$inferSelect;
 export type InsertSecurityField = typeof securityFields.$inferInsert;
 export type SelectSecurityField = typeof securityFields.$inferSelect;
 export type InsertSecurityResponse = typeof securityResponses.$inferInsert;
 export type SelectSecurityResponse = typeof securityResponses.$inferSelect;
+export type InsertTaskTemplate = typeof taskTemplates.$inferInsert;
+export type SelectTaskTemplate = typeof taskTemplates.$inferSelect;
+export type InsertComponentConfig = typeof componentConfigurations.$inferInsert;
+export type SelectComponentConfig = typeof componentConfigurations.$inferSelect;
