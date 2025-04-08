@@ -3,7 +3,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send, AlertTriangle, ExternalLink } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import confetti from 'canvas-confetti';
@@ -49,7 +49,7 @@ function slugify(text: string): string {
 }
 
 export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId, companyName }: InviteModalProps) {
-  const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
   const { user } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [existingCompany, setExistingCompany] = useState<{ id: number; name: string; category: string; } | null>(null);
@@ -97,7 +97,7 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         full_name: formData.full_name.trim(),
         company_name: formData.company_name.trim(),
         sender_name: user?.full_name,
-        sender_company: user?.company_name || 'Invela',
+        sender_company: 'Invela', // Simplified to use a default value
         ...(variant === 'user' && { company_id: companyId }) // Only include company_id for user invites
       };
 
@@ -141,10 +141,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
         });
       }
 
-      toast({
-        title: "Invitation Sent Successfully",
-        description: `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`,
-      });
+      unifiedToast.success(
+        "Invitation Sent Successfully", 
+        `${form.getValues('full_name')} has been invited to join ${form.getValues('company_name')}.`
+      );
 
       form.reset({
         email: "",
@@ -159,11 +159,10 @@ export function InviteModal({ variant, open, onOpenChange, onSuccess, companyId,
     onError: (error: Error) => {
       if (error.message !== "COMPANY_EXISTS") {
         setServerError(error.message);
-        toast({
-          title: "Error Sending Invitation",
-          description: error.message,
-          variant: "destructive",
-        });
+        unifiedToast.error(
+          "Error Sending Invitation", 
+          error.message
+        );
       }
     },
   });
