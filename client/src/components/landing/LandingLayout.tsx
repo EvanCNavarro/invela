@@ -178,9 +178,8 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 Phone: <a href="tel:+15551234567" className="text-blue-600 hover:underline">+1 (555) 123-4567</a>
               </p>
               <p className="text-gray-600 mb-5">
-                100 Technology Way<br />
-                Suite 450<br />
-                Denver, CO 80202
+                350 Buck Center Dr<br />
+                Salt Lake City, UT 84108
               </p>
             </div>
           </div>
