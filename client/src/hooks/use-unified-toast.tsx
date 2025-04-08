@@ -54,7 +54,7 @@ export function useUnifiedToast() {
     return toast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file.",
+      description: "Please wait while we upload your file...",
       duration: STANDARD_DURATION * 2, // Longer duration for uploads
     });
   };
@@ -88,7 +88,7 @@ export function useUnifiedToast() {
     const toastRef = toast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file.",
+      description: "Please wait while we upload your file...",
       duration: 30000, // Stay open until complete or timeout
     });
     
@@ -217,7 +217,7 @@ export const unifiedToast = {
     return baseToast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file.",
+      description: "Please wait while we upload your file...",
       duration: 15000, // Long enough for upload but will auto-dismiss
     });
   },
@@ -233,7 +233,7 @@ export const unifiedToast = {
       id,
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file.",
+      description: "Please wait while we upload your file...",
       duration: 15000, // Long enough for upload but will auto-dismiss
     });
   }
