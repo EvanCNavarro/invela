@@ -149,6 +149,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
                 <li><Link href="/landing/products/risk-score"><div className="text-gray-600 hover:text-blue-600">Risk Score</div></Link></li>
                 <li><Link href="/landing/products/invela-registry"><div className="text-gray-600 hover:text-blue-600">Invela Registry</div></Link></li>
                 <li><Link href="/landing/products/data-access-grants-service"><div className="text-gray-600 hover:text-blue-600">DAGS</div></Link></li>
+                <li><Link href="/landing/products/liability-insurance"><div className="text-gray-600 hover:text-blue-600">Liability Insurance</div></Link></li>
                 <li><Link href="/landing/products/dispute-resolution"><div className="text-gray-600 hover:text-blue-600">Dispute Resolution</div></Link></li>
                 <li><Link href="/landing/products/insights-consulting"><div className="text-gray-600 hover:text-blue-600">Insights & Consulting</div></Link></li>
               </ul>
