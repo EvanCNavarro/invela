@@ -32,9 +32,21 @@ const useLoginMutation = () => {
 
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
-        const error = await res.text();
-        console.error('[Auth] Login request failed:', error);
-        throw new Error(error || "Login failed");
+        const errorText = await res.text();
+        console.error('[Auth] Login request failed:', errorText);
+        
+        // Try to parse the error message to see if it's a JSON response
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.message) {
+            throw new Error(errorJson.message);
+          }
+        } catch (e) {
+          // It's not JSON or doesn't have a message field
+        }
+        
+        // If we couldn't extract a message from JSON, provide a friendly error
+        throw new Error("We couldn't sign you in. Please check your email and password and try again.");
       }
 
       console.log('[Auth] Login request successful');
@@ -71,7 +83,7 @@ const useLoginMutation = () => {
     onError: (error: Error) => {
       console.error('[Auth] Login mutation error:', error);
       toast({
-        title: "Login failed",
+        title: "Sign in failed",
         description: error.message,
         variant: "destructive",
       });
@@ -90,7 +102,14 @@ const useRegisterMutation = () => {
         const errorData = await res.json().catch(async () => ({ 
           message: await res.text() 
         }));
-        throw new Error(errorData.message || "Account setup failed");
+        
+        // Provide a more user-friendly error message
+        const errorMessage = errorData.message || "Account setup failed";
+        const friendlyMessage = errorMessage.includes("duplicate") || errorMessage.includes("already exists")
+          ? "This account already exists. Please try signing in instead."
+          : errorMessage;
+          
+        throw new Error(friendlyMessage);
       }
       return await res.json();
     },
@@ -103,7 +122,7 @@ const useRegisterMutation = () => {
     },
     onError: (error: Error) => {
       toast({
-        title: "Account setup failed",
+        title: "Registration failed",
         description: error.message,
         variant: "destructive",
       });
@@ -119,8 +138,21 @@ const useLogoutMutation = () => {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/logout");
       if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error || "Logout failed");
+        const errorText = await res.text();
+        console.error('[Auth] Logout request failed:', errorText);
+        
+        // Try to parse the error message to see if it's a JSON response
+        try {
+          const errorJson = JSON.parse(errorText);
+          if (errorJson.message) {
+            throw new Error(errorJson.message);
+          }
+        } catch (e) {
+          // It's not JSON or doesn't have a message field
+        }
+        
+        // If we couldn't extract a message from JSON, provide a friendly error
+        throw new Error("There was a problem signing out. Please try again.");
       }
     },
     onSuccess: () => {
@@ -128,9 +160,16 @@ const useLogoutMutation = () => {
       setLocation("/login");
     },
     onError: (error: Error) => {
+      console.error('[Auth] Logout mutation error:', error);
+      
+      // Force logout on client side even if server logout failed
+      // This ensures users can still sign out even if there's a server issue
+      queryClient.clear();
+      setLocation("/login");
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
+        title: "Sign out issue",
+        description: "There was an issue signing you out, but you've been redirected to the login page.",
         variant: "destructive",
       });
     },
