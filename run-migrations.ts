@@ -5,6 +5,7 @@ import { updateTaskTitles } from "./db/migrations/update_task_titles";
 import { updateSecurityFields } from "./db/migrations/update_security_fields";
 import { updateKybFields2025April } from "./db/migrations/update_kyb_fields_2025_04";
 import { up as addTaskTemplates } from "./db/migrations/add_task_templates";
+import addKybFieldHelpText from "./db/migrations/add_kyb_field_help_text";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
@@ -14,6 +15,7 @@ const migrations = {
   'update_security_fields': updateSecurityFields,
   'update_kyb_fields_2025_april': updateKybFields2025April,
   'add_task_templates': addTaskTemplates,
+  'add_kyb_field_help_text': addKybFieldHelpText,
   'all': runMigrations
 };
 
