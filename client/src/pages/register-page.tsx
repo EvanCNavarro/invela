@@ -347,13 +347,9 @@ export default function RegisterPage() {
       ) : (
         <motion.div
           className="w-full max-w-[800px] mx-auto overflow-y-auto py-4"
-          initial={{ opacity: 0, scale: 1.05, maxWidth: "1200px" }}
-          animate={{ opacity: 1, scale: 1, maxWidth: "800px" }}
-          transition={{ 
-            duration: 0.5,
-            scale: { duration: 0.4, ease: "easeOut" },
-            maxWidth: { duration: 0.35, ease: [0.4, 0.0, 0.2, 1] }
-          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
         >
           <motion.div
             className="flex flex-col items-center"
