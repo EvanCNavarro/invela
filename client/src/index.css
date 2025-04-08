@@ -12,10 +12,11 @@
   transition: max-width 250ms ease-out;
 }
 
-.auth-layout-expand {
+/* We no longer need this class since we're handling width differently */
+/* .auth-layout-expand {
   max-width: 1200px !important;
   transition: max-width 250ms ease-out;
-}
+} */
 
 @layer base {
   * {
