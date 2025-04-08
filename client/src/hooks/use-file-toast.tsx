@@ -41,19 +41,23 @@ export function useFileToast() {
     const success = (file: FileItem) => {
       // First dismiss the existing upload toast if it exists
       if (toastId) {
-        dismiss();
+        // Dismiss the current toast completely
+        toast({
+          id: toastId,
+          open: false,
+        } as any);
         
-        // Small delay to ensure the first toast is dismissed before showing success
-        setTimeout(() => {
-          // Create a new success toast with standard duration
-          const successToast = unifiedToast.fileUploadSuccess(file);
-          
-          if (onSuccess) {
-            onSuccess(file);
-          }
-        }, 100);
+        // Clear the toast ID immediately
+        toastId = undefined;
         
-        return { id: undefined };
+        // Show success toast immediately after dismissing
+        const successToast = unifiedToast.fileUploadSuccess(file);
+        
+        if (onSuccess) {
+          onSuccess(file);
+        }
+        
+        return successToast;
       } else {
         // If no toast was active, just show success immediately
         const successToast = unifiedToast.fileUploadSuccess(file);
@@ -72,19 +76,23 @@ export function useFileToast() {
       
       // First dismiss the existing upload toast if it exists
       if (toastId) {
-        dismiss();
+        // Dismiss the current toast completely
+        toast({
+          id: toastId,
+          open: false,
+        } as any);
         
-        // Small delay to ensure the first toast is dismissed before showing error
-        setTimeout(() => {
-          // Create a new error toast with standard duration
-          const errorToast = unifiedToast.fileUploadError(fileName, errorMsg);
-          
-          if (onError) {
-            onError(errorMsg);
-          }
-        }, 100);
+        // Clear the toast ID immediately
+        toastId = undefined;
         
-        return { id: undefined };
+        // Show error toast immediately after dismissing
+        const errorToast = unifiedToast.fileUploadError(fileName, errorMsg);
+        
+        if (onError) {
+          onError(errorMsg);
+        }
+        
+        return errorToast;
       } else {
         // If no toast was active, just show error immediately
         const errorToast = unifiedToast.fileUploadError(fileName, errorMsg);
@@ -116,7 +124,7 @@ export function useFileToast() {
         variant: "file-upload",
         title: `Uploading '${fileName}'`,
         description: "Please wait while we upload your file.",
-        duration: 10000, // Long enough for upload but will auto-dismiss
+        duration: 15000, // Long enough for upload but will auto-dismiss
       });
       
       toastId = initialToast.id;
