@@ -466,8 +466,25 @@ export const FileVault: React.FC = () => {
 
     setIsUploading(true);
     try {
-      for (const file of files) {
-        await uploadFile(file);
+      // For bulk uploads, we need special handling to ensure toasts work properly
+      if (files.length > 1) {
+        console.log('[FileVault] Processing bulk upload of', files.length, 'files');
+        
+        // Process files one by one, with a slight delay between success toasts
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          
+          // Upload each file
+          await uploadFile(file);
+          
+          // For bulk uploads, add a small delay between files to prevent toast overlap
+          if (i < files.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+      } else {
+        // Single file upload - normal flow
+        await uploadFile(files[0]);
       }
     } finally {
       setIsUploading(false);
