@@ -133,7 +133,7 @@ export default function CompliancePage() {
             </p>
             <div className="mt-4">
               <p><strong>Email:</strong> legal@invela.com</p>
-              <p><strong>Address:</strong> 100 Technology Way, Suite 450, Denver, CO 80202</p>
+              <p><strong>Address:</strong> 350 Buck Center Dr, Salt Lake City, UT 84108</p>
               <p><strong>Phone:</strong> +1 (555) 123-4567</p>
             </div>
           </section>

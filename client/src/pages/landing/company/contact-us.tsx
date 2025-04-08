@@ -364,9 +364,8 @@ export default function ContactUsPage() {
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                   <h3 className="text-xl font-semibold mb-4">Our Office</h3>
                   <p className="text-gray-600 mb-4">
-                    100 Technology Way<br />
-                    Suite 450<br />
-                    Denver, CO 80202
+                    350 Buck Center Dr<br />
+                    Salt Lake City, UT 84108
                   </p>
                 </div>
                 
