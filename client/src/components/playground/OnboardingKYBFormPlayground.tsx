@@ -1539,11 +1539,35 @@ export const OnboardingKYBFormPlayground = ({
                   // 4. The prior step is completed (for skipping to future steps)
                   // 5. The form is 100% complete
                   const isNextStep = index === currentStep + 1;
-                  const isPriorStepCompleted = index > 0 && 
-                    (dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS)[index-1].map(field => field.name)
-                      .every(fieldName => formData && formData[fieldName] && 
-                        (formData[fieldName].toString?.().trim() !== '' || 
-                         typeof formData[fieldName] === 'boolean'));
+                  
+                  // Safe check for prior step completion - with proper null checking
+                  let isPriorStepCompleted = false;
+                  
+                  if (index > 0) {
+                    // First check if we have dynamicFormSteps or need to use FORM_STEPS
+                    const formSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS;
+                    
+                    // Safely check if the previous step exists
+                    if (formSteps && formSteps[index-1]) {
+                      // Now safely map and check each field
+                      const fieldNames = formSteps[index-1].map(field => field.name);
+                      
+                      // Check if all fields have valid values
+                      isPriorStepCompleted = fieldNames.every(fieldName => 
+                        formData && 
+                        formData[fieldName] !== undefined && 
+                        formData[fieldName] !== null &&
+                        (
+                          // String values should be non-empty when trimmed
+                          (typeof formData[fieldName] === 'string' && formData[fieldName].trim() !== '') ||
+                          // Boolean values are valid as-is
+                          typeof formData[fieldName] === 'boolean' ||
+                          // Numbers are valid as-is (except NaN)
+                          (typeof formData[fieldName] === 'number' && !isNaN(formData[fieldName]))
+                        )
+                      );
+                    }
+                  }
                   
                   const isClickable = hasProgress || 
                                      index <= currentStep || 
