@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'wouter';
 import { LandingLayout } from '@/components/landing/LandingLayout';
 import SectionTitleChip from '@/components/landing/SectionTitleChip';
-import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText, Send } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, BarChart4, Clock, Users, Lock, FileText, Send, ShieldCheck, LineChart } from 'lucide-react';
 
 // Animation variants
 const fadeIn = {
@@ -206,9 +206,9 @@ export default function LandingPage() {
             {/* Feature 2 */}
             <FeatureCard
               icon={<BarChart4 className="h-8 w-8 text-blue-600" />}
-              title="Risk Scoring"
+              title="Risk Score"
               description="Advanced risk assessment using financial stability and compliance metrics."
-              link="/landing/products/risk-scoring"
+              link="/landing/products/risk-score"
             />
             
             {/* Feature 3 */}
@@ -216,7 +216,7 @@ export default function LandingPage() {
               icon={<Users className="h-8 w-8 text-blue-600" />}
               title="Invela Registry"
               description="Centralized directory of verified financial service providers with risk profiles."
-              link="/landing/products/registry"
+              link="/landing/products/invela-registry"
             />
             
             {/* Feature 4 */}
@@ -229,26 +229,26 @@ export default function LandingPage() {
             
             {/* Feature 5 */}
             <FeatureCard
+              icon={<ShieldCheck className="h-8 w-8 text-blue-600" />}
+              title="Liability Insurance"
+              description="Specialized coverage for financial institutions and FinTechs to mitigate compliance risks."
+              link="/landing/products/liability-insurance"
+            />
+            
+            {/* Feature 6 */}
+            <FeatureCard
               icon={<CheckCircle className="h-8 w-8 text-blue-600" />}
               title="Dispute Resolution"
               description="Structured process for resolving compliance-related disputes between institutions."
               link="/landing/products/dispute-resolution"
             />
             
-            {/* Feature 6 */}
-            <FeatureCard
-              icon={<Clock className="h-8 w-8 text-blue-600" />}
-              title="Real-time Monitoring"
-              description="Continuous compliance monitoring with alerts for potential risks and issues."
-              link="/landing/products/monitoring"
-            />
-            
             {/* Feature 7 */}
             <FeatureCard
-              icon={<FileText className="h-8 w-8 text-blue-600" />}
-              title="Compliance Reporting"
-              description="Comprehensive reporting to document and demonstrate regulatory adherence."
-              link="/landing/products/reporting"
+              icon={<LineChart className="h-8 w-8 text-blue-600" />}
+              title="Insights & Consulting"
+              description="Expert advisory services and data-driven insights for regulatory compliance."
+              link="/landing/products/insights-consulting"
             />
             
             {/* Feature 8 - Additional Features (no hover effects or click options) */}
