@@ -202,6 +202,7 @@ export const kybFields = pgTable("kyb_fields", {
   group: text("group").notNull(), 
   required: boolean("required").notNull().default(true),
   order: integer("order").notNull(),
+  step_index: integer("step_index").notNull().default(0),
   validation_rules: jsonb("validation_rules"),
   help_text: text("help_text"),
   created_at: timestamp("created_at").defaultNow(),
@@ -228,6 +229,7 @@ export const cardFields = pgTable("card_fields", {
   example_response: text("example_response"),
   ai_search_instructions: text("ai_search_instructions"),
   partial_risk_score_max: integer("partial_risk_score_max").notNull(),
+  step_index: integer("step_index").notNull().default(0),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
@@ -266,6 +268,7 @@ export const securityFields = pgTable("security_fields", {
   description: text("description"),
   field_type: varchar("field_type", { length: 50 }).notNull(),
   is_required: boolean("is_required").notNull().default(false),
+  step_index: integer("step_index").notNull().default(0),
   options: jsonb("options"),
   validation_rules: jsonb("validation_rules"),
   metadata: jsonb("metadata"),
