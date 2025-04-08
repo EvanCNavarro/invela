@@ -26,7 +26,9 @@ export class WebSocketClient {
       // Create the WebSocket URL using the current host and the /ws path
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      console.log(`Connecting to WebSocket server at ${wsUrl}`);
+      console.log(`[WebSocket] Connecting to WebSocket server at ${wsUrl}`);
+      
+      // Create the WebSocket connection
       this.socket = new WebSocket(wsUrl);
       
       // Set up event handlers
@@ -35,7 +37,9 @@ export class WebSocketClient {
       this.socket.onclose = this.handleClose.bind(this);
       this.socket.onerror = this.handleError.bind(this);
     } catch (error) {
-      console.error('Error creating WebSocket connection:', error);
+      console.error('[WebSocket] Error creating WebSocket connection:', error);
+      // Don't block the app if WebSocket fails
+      this.notifyConnectionListeners(false);
       this.scheduleReconnect();
     }
   }
