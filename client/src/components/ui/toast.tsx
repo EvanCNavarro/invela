@@ -15,7 +15,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]",
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:right-0 sm:top-0 sm:flex-col-reverse md:max-w-[440px]", 
       className
     )}
     {...props}
@@ -107,22 +107,25 @@ const Toast = React.forwardRef<
   
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, x: 0 }}
-      animate={{ opacity: 1, y: 0, x: 0 }}
-      exit={{ opacity: 0, y: -20, x: 0 }}
-      transition={{ 
-        duration: 0.4,
-        ease: [0.4, 0.0, 0.2, 1], // Material Design standard easing
-        exit: { 
-          duration: 1.2,  // Much longer exit duration for smoother fade
-          opacity: { duration: 1.2 }, // Ensure opacity animation lasts the full duration
-          y: { 
-            duration: 1.2,
-            ease: [0.2, 0.0, 0.0, 1] // Custom ease for upward motion
-          }
-        }
+      layout
+      initial={{ opacity: 0, y: 50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ 
+        opacity: 0, 
+        y: -20,
+        scale: 0.95, 
+        transition: { 
+          duration: 0.8, 
+          ease: [0.2, 0.0, 0.0, 1] 
+        } 
       }}
-      className="mb-3" // Add margin-bottom to each toast for extra separation
+      transition={{ 
+        type: "spring",
+        damping: 26,
+        stiffness: 340,
+        mass: 0.8
+      }}
+      className="mb-3 pointer-events-auto" // Add margin-bottom to each toast for extra separation
     >
       <ToastPrimitives.Root
         ref={ref}
