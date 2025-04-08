@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormField as OriginalFormField } from "@/components/ui/form-field";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { getKybFields, KybField, saveKybProgress, getKybProgress, groupKybFieldsBySection } from "@/services/kybService";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -407,9 +408,6 @@ const FormReviewPage = ({ formData, fieldConfigs, onBack, onSubmit }: FormReview
   );
 };
 
-// Calculate total fields across all steps
-const TOTAL_FIELDS = FORM_STEPS.reduce((acc, step) => acc + step.length, 0);
-
 // Simplified empty value check
 const isEmptyValue = (value: unknown): boolean => {
   if (value === null || value === undefined) return true;
@@ -419,13 +417,26 @@ const isEmptyValue = (value: unknown): boolean => {
 };
 
 // Update progress calculation logging
-const calculateProgress = (formData: Record<string, any>) => {
+// This version doesn't try to access dynamicFormSteps outside the component
+const calculateProgress = (formData: Record<string, any>, totalFieldCount?: number, customFieldNames?: string[]) => {
+  // If formData is undefined or null, return 0
+  if (!formData) return 0;
+  
+  // Use provided custom field names or fall back to static field names
+  const fieldNames = customFieldNames || FORM_FIELD_NAMES;
+  
+  // Calculate total fields count
+  const totalFieldsCount = fieldNames.length;
+  
   console.log('[Progress Debug] Starting progress calculation:', {
     timestamp: new Date().toISOString(),
-    formDataKeys: Object.keys(formData)
+    formDataKeys: Object.keys(formData),
+    fieldNamesSource: customFieldNames ? 'dynamic' : 'static',
+    totalFields: totalFieldCount || totalFieldsCount,
+    fieldCount: fieldNames.length
   });
 
-  const filledFields = FORM_FIELD_NAMES.filter(fieldName => {
+  const filledFields = fieldNames.filter(fieldName => {
     const value = formData[fieldName];
     const isEmpty = isEmptyValue(value);
     console.log(`[Progress Debug] Field "${fieldName}":`, {
@@ -437,21 +448,23 @@ const calculateProgress = (formData: Record<string, any>) => {
     return !isEmpty;
   }).length;
 
-  const progress = Math.round((filledFields / TOTAL_FIELDS) * 100);
+  // Use provided total field count or calculate from fields
+  const totalFields = totalFieldCount || totalFieldsCount;
+  const progress = Math.round((filledFields / totalFields) * 100);
   console.log('[Progress Debug] Final calculation:', {
     filledFields,
-    totalFields: TOTAL_FIELDS,
+    totalFields,
     progress,
     timestamp: new Date().toISOString()
   });
   return progress;
 };
 
-// Helper function to filter out non-form fields from metadata
+// Helper function to filter out non-form fields from metadata - basic version
 const extractFormData = (metadata: Record<string, any>) => {
   const formData: Record<string, string> = {};
 
-  console.log('[Form Debug] Extracting form data from metadata:', {
+  console.log('[Form Debug] Extracting form data from metadata (basic):', {
     metadataKeys: Object.keys(metadata),
     formFieldNames: FORM_FIELD_NAMES,
     timestamp: new Date().toISOString()
@@ -590,6 +603,46 @@ const logFormDataDebug = (stage: string, data: any) => {
   });
 };
 
+// Convert KybField from database to FormField format for the form
+const convertKybFieldToFormField = (field: KybField): FormField => {
+  // Map field types from database to form component
+  let fieldType: string | undefined = undefined;
+  let options: string[] | undefined = undefined;
+
+  if (field.field_type === 'BOOLEAN') {
+    fieldType = 'BOOLEAN';
+  } else if (field.field_type === 'DATE') {
+    fieldType = 'DATE';
+  } else if (field.field_type === 'MULTIPLE_CHOICE') {
+    fieldType = 'MULTIPLE_CHOICE';
+    // Try to parse options from validation_rules if available
+    if (field.validation_rules && typeof field.validation_rules === 'object') {
+      const rules = field.validation_rules as any;
+      if (rules.options && Array.isArray(rules.options)) {
+        options = rules.options;
+      }
+    }
+    // Default options if none are specified
+    if (!options || options.length === 0) {
+      options = [
+        'Less than $1 million',
+        '$1 million - $10 million',
+        '$10 million - $50 million',
+        'Greater than $50 million'
+      ];
+    }
+  }
+
+  return {
+    name: field.field_key,
+    label: field.display_name,
+    question: field.question,
+    tooltip: field.help_text || '',
+    field_type: fieldType,
+    options: options
+  };
+};
+
 // Enhanced debug logging for company data
 const logCompanyDataDebug = (data: any) => {
   console.log('[KYB Form Company Debug] Available company data:', {
@@ -635,11 +688,64 @@ export const OnboardingKYBFormPlayground = ({
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
   const isCompanyDataLoading = useState(false);
+  const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>([]);
+  const [fieldConfig, setFieldConfig] = useState<Record<string, FormField>>({});
+  
+  // Fetch KYB fields from the server
+  const { data: kybFields, isLoading: isLoadingFields, error: kybFieldsError } = useQuery({
+    queryKey: ['/api/kyb/fields'],
+    queryFn: getKybFields,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
+  
+  // Process KYB fields when they are loaded
+  useEffect(() => {
+    if (kybFields && kybFields.length > 0) {
+      // Convert API fields to form fields
+      const formFieldsMap: Record<string, FormField> = {};
+      const groupedBySection: Record<string, KybField[]> = groupKybFieldsBySection(kybFields);
+      const newFormSteps: FormField[][] = [];
+      
+      console.log('[KYB Form Debug] Processing API fields:', {
+        fieldCount: kybFields.length,
+        groups: Object.keys(groupedBySection),
+        timestamp: new Date().toISOString()
+      });
+      
+      // Process each group into a form step
+      Object.entries(groupedBySection).forEach(([groupName, fields]) => {
+        const formFields = fields
+          .sort((a, b) => a.order - b.order) // Ensure fields are in correct order
+          .map(field => {
+            const formField = convertKybFieldToFormField(field);
+            formFieldsMap[field.field_key] = formField;
+            return formField;
+          });
+          
+        newFormSteps.push(formFields);
+      });
+      
+      // Update state with processed fields
+      setDynamicFormSteps(newFormSteps);
+      setFieldConfig(formFieldsMap);
+      
+      console.log('[KYB Form Debug] Dynamic form steps created:', {
+        stepCount: newFormSteps.length,
+        fieldCount: Object.keys(formFieldsMap).length,
+        stepsBreakdown: newFormSteps.map(step => step.map(f => f.name)),
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [kybFields]);
 
   // Function to find the first incomplete step
   const findFirstIncompleteStep = (formData: Record<string, string>): number => {
-    for (let i = 0; i < FORM_STEPS.length; i++) {
-      const step = FORM_STEPS[i];
+    // Use dynamic steps if available, otherwise fallback to static steps
+    const steps: FormField[][] = dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS;
+    
+    for (let i = 0; i < steps.length; i++) {
+      const step: FormField[] = steps[i];
       const isStepValid = validateCurrentStep(formData, step);
       if (!isStepValid) {
         return i;
@@ -670,6 +776,37 @@ export const OnboardingKYBFormPlayground = ({
     }
   }, []);
 
+  // Enhanced extract form data function that uses dynamic fields when available
+  const extractFormDataEnhanced = useCallback((metadata: Record<string, any>) => {
+    const formData: Record<string, string> = {};
+    
+    // Get all possible field names - from dynamic fields if available, otherwise from static fields
+    let allFieldNames: string[] = FORM_FIELD_NAMES;
+    
+    if (dynamicFormSteps && dynamicFormSteps.length > 0) {
+      allFieldNames = dynamicFormSteps.flatMap((step: FormField[]) => 
+        step.map((field: FormField) => field.name)
+      );
+    }
+
+    console.log('[Form Debug] Extracting form data from metadata (enhanced):', {
+      metadataKeys: Object.keys(metadata),
+      formFieldNames: allFieldNames,
+      usingDynamicFields: dynamicFormSteps && dynamicFormSteps.length > 0,
+      timestamp: new Date().toISOString()
+    });
+
+    // Extract form data from metadata for all supported field names
+    allFieldNames.forEach(fieldName => {
+      const value = metadata[fieldName];
+      if (!isEmptyValue(value)) {
+        formData[fieldName] = String(value).trim();
+      }
+    });
+
+    return formData;
+  }, [dynamicFormSteps]);
+
   // Effect to initialize form data
   useEffect(() => {
     let mounted = true;
@@ -693,6 +830,7 @@ export const OnboardingKYBFormPlayground = ({
           });
 
           if (savedData) {
+            // Use enhanced form data extraction that supports dynamic fields
             initialData = Object.entries(savedData).reduce((acc, [key, value]) => {
               if (value !== null && value !== undefined) {
                 acc[key] = String(value);
@@ -710,6 +848,7 @@ export const OnboardingKYBFormPlayground = ({
             }
           }
         } else if (initialSavedFormData) {
+          // Use enhanced extraction with dynamic fields support
           initialData = Object.entries(initialSavedFormData).reduce((acc, [key, value]) => {
             if (value !== null && value !== undefined) {
               acc[key] = String(value);
@@ -759,7 +898,7 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       mounted = false;
     };
-  }, [taskId, initialSavedFormData]);
+  }, [taskId, initialSavedFormData, calculateProgress, extractFormDataEnhanced]);
 
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
@@ -884,7 +1023,10 @@ export const OnboardingKYBFormPlayground = ({
       return;
     }
     
-    if (currentStep < FORM_STEPS.length - 1) {
+    // Use dynamic steps length if available, otherwise fallback to static steps
+    const maxSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps.length - 1 : FORM_STEPS.length - 1;
+    
+    if (currentStep < maxSteps) {
       setCurrentStep(current => current + 1);
     } else {
       // Last step completed, go to review mode instead of submitting
@@ -900,8 +1042,14 @@ export const OnboardingKYBFormPlayground = ({
     setIsSubmitted(true);
   };
 
-  const currentStepData = FORM_STEPS[currentStep];
-  const isLastStep = currentStep === FORM_STEPS.length - 1;
+  // Use dynamic form steps if available, otherwise fall back to static steps
+  const currentStepData: FormField[] = dynamicFormSteps.length > 0 && dynamicFormSteps[currentStep] 
+    ? dynamicFormSteps[currentStep] 
+    : FORM_STEPS[currentStep];
+    
+  const isLastStep: boolean = dynamicFormSteps.length > 0 
+    ? currentStep === dynamicFormSteps.length - 1
+    : currentStep === FORM_STEPS.length - 1;
 
   // Check if current step is valid
   const isCurrentStepValid = validateCurrentStep(formData, currentStepData);
@@ -926,21 +1074,46 @@ export const OnboardingKYBFormPlayground = ({
 
     suggestionProcessingRef.current = true;
     try {
-      const field = FORM_STEPS
+      // First check if we have the field in our field config (from API)
+      const dynamicField = fieldConfig[fieldName];
+      
+      // If found in dynamic config, use it
+      if (dynamicField) {
+        if (!dynamicField.suggestion) {
+          console.log('[KYB Form Debug] No suggestion mapping found in dynamic field:', {
+            fieldName,
+            fieldConfig: dynamicField,
+            timestamp: new Date().toISOString()
+          });
+          return undefined;
+        }
+        
+        const suggestion = processSuggestion(fieldName, dynamicField.suggestion, companyData);
+        console.log('[KYB Form Debug] Dynamic field suggestion result:', {
+          fieldName,
+          suggestion,
+          timestamp: new Date().toISOString()
+        });
+        
+        return suggestion;
+      }
+      
+      // Fall back to static field definitions if not found in dynamic config
+      const staticField = FORM_STEPS
         .flatMap(step => step)
         .find(f => f.name === fieldName);
-
-      if (!field?.suggestion) {
-        console.log('[KYB Form Debug] No suggestion mapping found:', {
+      
+      if (!staticField?.suggestion) {
+        console.log('[KYB Form Debug] No suggestion mapping found in static field:', {
           fieldName,
-          fieldConfig: field,
+          fieldConfig: staticField,
           timestamp: new Date().toISOString()
         });
         return undefined;
       }
 
-      const suggestion = processSuggestion(fieldName, field.suggestion, companyData);
-      console.log('[KYB Form Debug] Final suggestion result:', {
+      const suggestion = processSuggestion(fieldName, staticField.suggestion, companyData);
+      console.log('[KYB Form Debug] Static field suggestion result:', {
         fieldName,
         suggestion,
         timestamp: new Date().toISOString()
@@ -1221,7 +1394,7 @@ export const OnboardingKYBFormPlayground = ({
       ) : isReviewMode ? (
         <FormReviewPage
           formData={formData}
-          fieldConfigs={FORM_STEPS.flat().reduce((acc, field) => {
+          fieldConfigs={Object.keys(fieldConfig).length > 0 ? fieldConfig : FORM_STEPS.flat().reduce((acc, field) => {
             acc[field.name] = field;
             return acc;
           }, {} as Record<string, FormField>)}
@@ -1269,7 +1442,7 @@ export const OnboardingKYBFormPlayground = ({
             {/* Step Wizard */}
             {!isSubmitted && (
               <div className="flex justify-start px-0 mb-4 gap-6">
-                {FORM_STEPS.map((step, index) => {
+                {(dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS).map((step, index) => {
                   // Check if ALL fields in this step are completed
                   const stepFields = step.map(field => field.name);
                   const stepCompleted = stepFields.every(fieldName => 
@@ -1291,7 +1464,7 @@ export const OnboardingKYBFormPlayground = ({
                   // 5. The form is 100% complete
                   const isNextStep = index === currentStep + 1;
                   const isPriorStepCompleted = index > 0 && 
-                    FORM_STEPS[index-1].map(field => field.name)
+                    (dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS)[index-1].map(field => field.name)
                       .every(fieldName => formData && formData[fieldName] && 
                         (formData[fieldName].toString?.().trim() !== '' || 
                          typeof formData[fieldName] === 'boolean'));
@@ -1314,6 +1487,30 @@ export const OnboardingKYBFormPlayground = ({
                     : isCurrent 
                       ? '#4965EC' 
                       : '#6B7280';
+                  
+                  // Determine step title based on the group
+                  let stepTitle = STEP_TITLES[index];
+                  
+                  // If using dynamic form steps, get the step title from the first field's group
+                  if (dynamicFormSteps.length > 0 && step.length > 0) {
+                    // Get the first field in the step which should have its group set
+                    const firstField = step[0];
+                    
+                    if (firstField && firstField.name) {
+                      // Find corresponding field in kybFields
+                      const kybField = kybFields?.find(f => f.field_key === firstField.name);
+                      
+                      if (kybField) {
+                        // Normalize the group name for display
+                        const group = kybField.group;
+                        stepTitle = group
+                          // Convert camelCase to Title Case with spaces
+                          .replace(/([A-Z])/g, ' $1')
+                          // Capitalize first letter
+                          .replace(/^./, str => str.toUpperCase());
+                      }
+                    }
+                  }
                   
                   return (
                     <div 
@@ -1366,7 +1563,7 @@ export const OnboardingKYBFormPlayground = ({
                         className="text-sm mt-3 text-center w-full mx-auto min-h-[40px] whitespace-pre-line font-bold transition-colors duration-200 z-10 px-4"
                         style={{ color: textColor }}
                       >
-                        {STEP_TITLES[index]}
+                        {stepTitle}
                       </div>
                     </div>
                   );
