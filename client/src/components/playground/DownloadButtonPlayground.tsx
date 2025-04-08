@@ -1,7 +1,8 @@
 import React from 'react';
 import { Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
+import { useToast, Toast } from '@/hooks/use-toast';
+import { useUnifiedToast } from '@/hooks/use-unified-toast';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { UnifiedDropdown } from '@/components/ui/unified-dropdown';
@@ -33,9 +34,11 @@ export const DownloadButton = ({
   useRealDownload = false,
 }: DownloadButtonProps) => {
   const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
 
   const downloadMutation = useMutation({
     mutationFn: async () => {
+      // Using the standard toast for the loading state since it has a spinner
       const downloadToast = toast({
         title: "Preparing Download",
         description: (
@@ -66,25 +69,23 @@ export const DownloadButton = ({
         }
 
         if (downloadToast) {
-          toast.dismiss(downloadToast.id);
-          toast({
-            title: "Download Complete",
-            description: "File downloaded successfully",
-            duration: 3000,
-          });
+          // Dismiss using the toast returned object
+          downloadToast.dismiss();
+          // Use the unified toast system for success message
+          unifiedToast.success("Download Complete", "File downloaded successfully");
         }
 
         onDownloadComplete?.();
         return true;
       } catch (error) {
         if (downloadToast) {
-          toast.dismiss(downloadToast.id);
-          toast({
-            title: "Error",
-            description: error instanceof Error ? error.message : "Failed to download file",
-            variant: "destructive",
-            duration: 3000,
-          });
+          // Dismiss using the toast returned object
+          downloadToast.dismiss();
+          // Use the unified toast system for error message
+          unifiedToast.error(
+            "Download Failed", 
+            error instanceof Error ? error.message : "Failed to download file"
+          );
         }
         onDownloadError?.(error instanceof Error ? error : new Error('Download failed'));
         throw error;
@@ -162,7 +163,7 @@ export const DownloadButtonPlayground = () => {
         <UnifiedDropdown
           trigger={{
             text: displayItems.find(item => item.selected)?.label || "Select Display Mode",
-            variant: 'outline'
+            variant: 'default'
           }}
           items={displayItems}
           multiSelect={false}

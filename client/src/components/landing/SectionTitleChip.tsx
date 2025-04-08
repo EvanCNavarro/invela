@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clipboard } from 'lucide-react';
+import { unifiedToast } from '@/hooks/use-unified-toast';
 
 interface SectionTitleChipProps {
   title: string;
   sectionId: string;
   className?: string;
-  centered?: boolean; // New prop to determine if chip is centered in its container
+  centered?: boolean;
 }
 
 export default function SectionTitleChip({ 
@@ -16,16 +16,14 @@ export default function SectionTitleChip({
   centered = false // Default to false for left-aligned chips
 }: SectionTitleChipProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isCopied, setIsCopied] = useState(false);
   
   const copyToClipboard = () => {
     // Get current URL and add the section ID as a fragment
     const url = window.location.href.split('#')[0] + '#' + sectionId;
     navigator.clipboard.writeText(url);
     
-    // Show copied message for a shorter duration
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 1500);
+    // Use the unified toast system with clipboard variant
+    unifiedToast.clipboardCopy(url);
   };
   
   // Width of the hashtag plus margin = ~30px (22px font + 8px margin)
@@ -71,28 +69,6 @@ export default function SectionTitleChip({
           </AnimatePresence>
         </div>
       </div>
-      
-      {/* Toast notification for clipboard copy - bottom right corner */}
-      <AnimatePresence>
-        {isCopied && (
-          <motion.div
-            initial={{ opacity: 0, y: 20, x: 20 }}
-            animate={{ opacity: 1, y: 0, x: 0 }}
-            exit={{ opacity: 0, y: 10, x: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            style={{ 
-              position: 'fixed',
-              right: '1.5rem',
-              bottom: '1.5rem',
-              zIndex: 9999
-            }}
-            className="bg-gray-800 text-white text-sm rounded-lg px-4 py-2.5 shadow-lg flex items-center gap-2"
-          >
-            <Clipboard className="h-4 w-4" />
-            <span>Link copied to clipboard</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

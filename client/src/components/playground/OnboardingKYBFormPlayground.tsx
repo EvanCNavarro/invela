@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -574,6 +575,7 @@ export const OnboardingKYBFormPlayground = ({
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -701,11 +703,7 @@ export const OnboardingKYBFormPlayground = ({
       } catch (error) {
         console.error('Error initializing form:', error);
         if (mounted) {
-          toast({
-            title: "Error",
-            description: "Failed to load form data",
-            variant: "destructive"
-          });
+          unifiedToast.error("Failed to load form data");
         }
       } finally {
         if (mounted) {
@@ -815,11 +813,7 @@ export const OnboardingKYBFormPlayground = ({
 
       if (!isMountedRef.current) return;
 
-      toast({
-        title: "Error",
-        description: "Failed to save progress. Please try again.",
-        variant: "destructive"
-      });
+      unifiedToast.error("Failed to save progress. Please try again.");
     }
   };
 
