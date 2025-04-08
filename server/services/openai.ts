@@ -18,7 +18,189 @@ export interface DocumentAnswer {
   confidence: number;
 }
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+export interface FieldSuggestion {
+  value: string;
+  confidence: number;
+  source?: string;
+}
+
+export interface FormFieldSuggestions {
+  [key: string]: FieldSuggestion;
+}
+
+interface SearchAnalytics {
+  searchType: string;
+  companyId?: number;
+  searchPrompt: string;
+  searchResults: Record<string, any>;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCost: number;
+  model: string;
+  success: boolean;
+  errorMessage?: string;
+  duration: number;
+  searchDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Get AI-powered suggestions for form fields
+ * This function focuses on the current form step only for better performance
+ * and adds strict precautions against hallucination
+ */
+export async function getFormFieldSuggestions(
+  companyInfo: Record<string, any>,
+  formFields: Array<{ field_key: string; question: string; field_type: string }>,
+  existingFormData: Record<string, any> = {}
+): Promise<FormFieldSuggestions> {
+  const startTime = Date.now();
+  
+  console.log('[OpenAI Service] Generating form field suggestions:', {
+    companyName: companyInfo.name,
+    fieldsCount: formFields.length,
+    existingDataCount: Object.keys(existingFormData).length,
+    timestamp: new Date().toISOString()
+  });
+  
+  try {
+    // Generate a prompt specifically for form field suggestions
+    // that focuses on preventing hallucination
+    const prompt = `
+I need accurate suggestions for a form related to this company:
+
+Company Information:
+${Object.entries(companyInfo)
+  .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+  .map(([key, value]) => `- ${key}: ${value}`)
+  .join('\n')}
+
+Form Questions:
+${formFields.map(q => `- ${q.field_key}: ${q.question} (${q.field_type})`).join('\n')}
+
+Existing Form Data:
+${Object.entries(existingFormData)
+  .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+  .map(([key, value]) => `- ${key}: ${value}`)
+  .join('\n')}
+
+Instructions:
+1. Provide suggestions ONLY for the questions listed above.
+2. If you don't have enough information for a confident answer, DO NOT suggest a value.
+3. Only suggest verifiable information about this company. NEVER invent or hallucinate data.
+4. DO NOT make up addresses, phone numbers, dates, or any factual information.
+5. For each field, provide:
+   - The value (exact information from context)
+   - A confidence score (0.0-1.0)
+   - The source of information (if available)
+
+Format your response as a JSON object like this:
+{
+  "field_key1": {
+    "value": "suggested value",
+    "confidence": 0.9,
+    "source": "Company information"
+  },
+  "field_key2": {
+    "value": "another suggestion",
+    "confidence": 0.7,
+    "source": "Company profile"
+  }
+}
+
+Only include fields where you have at least 70% confidence (0.7).
+`;
+
+    // Call OpenAI with low temperature setting to reduce randomness
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system", 
+          content: "You are a helpful assistant specializing in business data verification. You prioritize accuracy and never hallucinate data when uncertain."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.1 // Low temperature for more deterministic, factual responses
+    });
+
+    const duration = Date.now() - startTime;
+    
+    if (!response.choices[0].message.content) {
+      throw new Error("Empty response from OpenAI");
+    }
+    
+    // Parse the response
+    const suggestions = JSON.parse(response.choices[0].message.content) as FormFieldSuggestions;
+    
+    // Log analytics
+    await logSearchAnalytics({
+      searchType: 'form_suggestions',
+      companyId: companyInfo.id,
+      searchPrompt: prompt,
+      searchResults: suggestions,
+      inputTokens: response.usage?.prompt_tokens || 0,
+      outputTokens: response.usage?.completion_tokens || 0,
+      estimatedCost: calculateOpenAICost(
+        response.usage?.prompt_tokens || 0,
+        response.usage?.completion_tokens || 0,
+        'gpt-3.5-turbo'
+      ),
+      model: 'gpt-3.5-turbo',
+      success: true,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    console.log('[OpenAI Service] Field suggestions generated successfully:', {
+      duration,
+      suggestionCount: Object.keys(suggestions).length,
+      fields: Object.keys(suggestions),
+      timestamp: new Date().toISOString()
+    });
+    
+    return suggestions;
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    console.error('[OpenAI Service] Error generating field suggestions:', {
+      error: errorMessage,
+      duration,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Log error analytics
+    await logSearchAnalytics({
+      searchType: 'form_suggestions',
+      companyId: companyInfo.id,
+      searchPrompt: '',
+      searchResults: {},
+      inputTokens: 0,
+      outputTokens: 0,
+      estimatedCost: 0,
+      model: 'gpt-3.5-turbo',
+      success: false,
+      errorMessage,
+      duration,
+      searchDate: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    
+    // Return empty suggestions on error
+    return {};
+  }
+}
+
+// OpenAI API client instance
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Document classification specific types
