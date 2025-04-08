@@ -5,7 +5,7 @@ import { FileItem } from "@/types/files";
 import { ToastAction } from "@/components/ui/toast";
 
 // Standard duration for all toasts
-const STANDARD_DURATION = 4000;
+const STANDARD_DURATION = 3000;
 
 export function useUnifiedToast() {
   const { toast } = useToast();
@@ -189,7 +189,7 @@ export const unifiedToast = {
       variant: "success",
       title: "File uploaded successfully",
       description: `${fileName} has been uploaded.`,
-      duration: STANDARD_DURATION, // Standard 4000ms duration
+      duration: STANDARD_DURATION, // Standard duration
     });
   },
   
