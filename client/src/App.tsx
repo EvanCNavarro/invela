@@ -268,14 +268,14 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <WebSocketProvider showNotifications={false}>
-          <ToastProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <WebSocketProvider showNotifications={false}>
             <Router />
             <Toaster />
-          </ToastProvider>
-        </WebSocketProvider>
-      </AuthProvider>
+          </WebSocketProvider>
+        </AuthProvider>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

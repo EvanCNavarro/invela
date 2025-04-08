@@ -80,9 +80,11 @@ const useLoginMutation = () => {
     onError: (error: Error) => {
       console.error('[Auth] Login mutation error:', error);
       
-      // Use the error message directly from the Error object
-      // The mutationFn already handles cleaning up the error message
-      const errorMessage = error.message || "We couldn't sign you in. Please check your email and password and try again.";
+      // Simplify error messages for users
+      let errorMessage = "Please check your email and password and try again.";
+      
+      // Keep console logging the original error for debugging
+      console.log('[Auth] Original login error:', error.message);
       
       toast({
         title: "Sign in failed",
@@ -123,9 +125,18 @@ const useRegisterMutation = () => {
       // The start modal will be enough to welcome the user
     },
     onError: (error: Error) => {
+      // Log the original error for debugging
+      console.log('[Auth] Original registration error:', error.message);
+      
+      // Display a simplified message to the user
+      let errorMessage = error.message;
+      if (!errorMessage.includes("already exists")) {
+        errorMessage = "We couldn't complete your registration. Please try again.";
+      }
+      
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
