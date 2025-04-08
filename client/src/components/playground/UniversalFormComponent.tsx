@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useReducer } from "react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -670,8 +670,12 @@ export const OnboardingKYBFormPlayground = ({
         requestId: Date.now().toString() 
       });
       
-    } else if (isLoadingFields === false) {
+    } else if (kybFields !== undefined && kybFields.length === 0 && isLoadingFields === false) {
       // If there are no fields but loading is complete, transition to next state
+      console.log('[KYB Form Debug] No fields found but loading complete, transitioning state', {
+        hasFields: false,
+        timestamp: new Date().toISOString()
+      });
       dispatchLoading({ 
         type: 'FIELDS_LOADED_SUCCESS', 
         hasFields: false,
@@ -753,16 +757,17 @@ export const OnboardingKYBFormPlayground = ({
     let mounted = true;
 
     const initializeFormData = async () => {
-      // Only proceed if we have field data loaded
-      if (loadingState.status !== 'loading-fields' && !kybFields) {
-        console.log('[KYB Form Debug] Waiting for field data before initializing form data');
+      // We want to proceed if we're in loading-data state
+      // This is a critical condition - only initialize form data after fields are loaded
+      if (loadingState.status !== 'loading-data') {
+        console.log('[KYB Form Debug] Not in loading-data state, skipping form data initialization:', loadingState.status);
         return;
       }
 
-      // Set state to indicate we're loading form data
-      dispatchLoading({ 
-        type: 'START_LOADING_DATA',
-        requestId: Date.now().toString() 
+      // We're already in loading-data state, no need to dispatch again
+      // Just log that we're starting the data initialization process
+      console.log('[KYB Form Debug] Starting form data initialization', {
+        timestamp: new Date().toISOString()
       });
       
       // Create an empty initial data structure
@@ -880,16 +885,19 @@ export const OnboardingKYBFormPlayground = ({
       }
     };
 
-    // Only run initialization when appropriate
-    if (loadingState.status === 'loading-fields' || loadingState.status === 'loading-data') {
-      console.log('[KYB Form Debug] Initializing form data, current state:', loadingState.status);
+    // Only run initialization when in loading-data state (not loading-fields)
+    // This ensures we don't try to initialize data before fields are loaded
+    if (loadingState.status === 'loading-data') {
+      console.log('[KYB Form Debug] Initializing form data in loading-data state:', loadingState.status);
       initializeFormData();
     }
 
     return () => {
       mounted = false;
     };
-  }, [taskId, initialSavedFormData, calculateProgress, extractFormDataEnhanced, loadingState.status, kybFields]);
+  // We don't want to include loadingState.status in dependencies as it will create a loop
+  // Instead, we use the check in the effect body to run initialization when appropriate
+  }, [taskId, initialSavedFormData, calculateProgress, extractFormDataEnhanced, kybFields]);
 
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
