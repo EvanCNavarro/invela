@@ -17,10 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
-import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast, unifiedToast } from "@/hooks/use-unified-toast";
-import { useFileToast } from "@/hooks/use-file-toast";
-import { FileItem } from "@/types/files";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -30,10 +26,6 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const { toast } = useToast();
-  const unifiedToast = useUnifiedToast();
-  const { createFileUploadToast } = useFileToast();
-  const [toastIndex, setToastIndex] = useState(0);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   
@@ -99,64 +91,7 @@ export default function LoginPage() {
     }
   }, [form]);
 
-  // Function to test all toast variants
-  const showNextToast = () => {
-    const toastTypes = [
-      () => unifiedToast.success('Success Toast', 'Operation completed successfully.'),
-      () => unifiedToast.info('Info Toast', 'Here is some useful information.'),
-      () => unifiedToast.warning('Warning Toast', 'This action might cause issues.'),
-      () => unifiedToast.error('Error Toast', 'Something went wrong.'),
-      () => unifiedToast.clipboardCopy('Text copied to clipboard.'),
-      () => {
-        // Demonstrate simplified file upload toast flow - no progress updates
-        const mockFile = {
-          name: 'sample-file.pdf',
-          size: 1024 * 1024 * 2.5, // 2.5MB
-          type: 'application/pdf'
-        };
-        
-        // Create a file upload toast that persists until completion
-        const uploadToast = createFileUploadToast(mockFile as FileItem, {
-          autoStart: true,
-          onSuccess: (file) => {
-            console.log("Upload completed successfully:", file.name);
-          },
-          onError: (error) => {
-            console.log("Upload failed:", error);
-          }
-        });
-        
-        // Simulate an upload event processing
-        // Using a Promise to simulate an actual upload 
-        // This simulates a real API call that would resolve when upload is complete
-        const simulateUpload = async () => {
-          try {
-            // Simulate network request with a promise
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // When upload is complete, call success which will properly handle toast transitions
-            uploadToast.success({
-              name: mockFile.name,
-              size: mockFile.size,
-              type: mockFile.type
-            });
-            
-            console.log("Upload completed successfully:", mockFile.name);
-          } catch (error) {
-            // Handle any errors during upload
-            uploadToast.error("Network error during upload.");
-          }
-        };
-        
-        // Start the simulated upload process
-        simulateUpload();
-      }
-    ];
-    
-    // Show the next toast in the sequence
-    toastTypes[toastIndex % toastTypes.length]();
-    setToastIndex(prev => prev + 1);
-  };
+
 
   // Redirect if already logged in
   if (user) {
@@ -349,25 +284,6 @@ export default function LoginPage() {
               <Link href="/register" className="text-primary hover:underline">
                 Register here
               </Link>
-            </p>
-          </motion.div>
-          
-          <motion.div
-            className="mt-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-          >
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full text-sm"
-              onClick={showNextToast}
-            >
-              Test Toast Notifications
-            </Button>
-            <p className="text-xs text-muted-foreground text-center mt-2">
-              Click to cycle through all toast variants
             </p>
           </motion.div>
         </form>
