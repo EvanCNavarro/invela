@@ -391,25 +391,17 @@ export const FileVault: React.FC = () => {
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
     
-    // Create a file upload toast that shows progress
-    const uploadToast = createFileUploadToast(file, {
-      autoStart: true,
-      onSuccess: (fileItem) => {
-        console.log('[FileVault] Upload completed successfully:', fileItem.name);
-      },
-      onError: (error) => {
-        console.log('[FileVault] Upload failed:', error);
-      }
+    // Create an upload toast with a unique ID
+    const toastId = unifiedToast.uploadProgress({
+      fileName: file.name
     });
-
-    console.log('[FileVault] Starting upload for file:', file.name, 'with toast ID:', uploadToast.id);
-
+    
+    console.log('[FileVault] Created upload toast with ID:', toastId);
+    
     try {
-      // First explicitly dismiss the uploading toast to ensure it disappears
-      uploadToast.dismiss();
-      
-      // Then perform the upload
-      await uploadMutation.mutateAsync(formData);
+      // Perform the actual upload
+      const result = await uploadMutation.mutateAsync(formData);
+      console.log('[FileVault] Upload completed:', result);
       
       // Update local state
       setUploadingFiles(prev => prev.filter(f => f.id !== tempId));
@@ -419,17 +411,18 @@ export const FileVault: React.FC = () => {
         queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
-      // After a short delay, show the success toast
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Successfully dismissed upload toast');
+      }
+      
+      // Then after a brief delay, show the success toast
       setTimeout(() => {
-        console.log('[FileVault] Showing success toast for file:', file.name);
-        
-        // Signal success to the toast system
-        uploadToast.success({
-          name: file.name,
-          size: file.size,
-          type: file.type
-        } as FileItem);
-      }, 100);
+        unifiedToast.fileUploadSuccess(file.name);
+        console.log('[FileVault] Showed success toast for file:', file.name);
+      }, 300);
       
     } catch (error) {
       console.error('[FileVault Debug] Upload error:', {
@@ -438,9 +431,7 @@ export const FileVault: React.FC = () => {
         tempId
       });
 
-      // First dismiss the uploading toast
-      uploadToast.dismiss();
-
+      // Update UI for failed upload
       setUploadingFiles(prev =>
         prev.map(f =>
           f.id === tempId
@@ -449,11 +440,21 @@ export const FileVault: React.FC = () => {
         )
       );
 
-      // After a short delay, show the error toast
+      // First explicitly dismiss the uploading toast
+      // Need to use the dismiss method directly from the toast reference
+      if (toastId && toastId.dismiss) {
+        toastId.dismiss();
+        console.log('[FileVault] Dismissed error upload toast');
+      }
+      
+      // Then show the error toast
       setTimeout(() => {
-        // Signal error to the toast system
-        uploadToast.error(error instanceof Error ? error.message : "Failed to upload file");
-      }, 100);
+        unifiedToast.fileUploadError(
+          file.name, 
+          error instanceof Error ? error.message : "Upload failed"
+        );
+        console.log('[FileVault] Showed error toast for file:', file.name);
+      }, 300);
     }
   };
 
