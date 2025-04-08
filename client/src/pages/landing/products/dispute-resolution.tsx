@@ -39,7 +39,7 @@ export default function DisputeResolutionPage() {
                 transition={{ duration: 0.5 }}
                 className="mb-6"
               >
-                <SectionTitleChip title="Invela Dispute Resolution" sectionId="overview" className="bg-blue-100" />
+                <SectionTitleChip title="Dispute Resolution" sectionId="overview" className="bg-blue-100" />
               </motion.div>
               
               <motion.h1 
@@ -81,7 +81,7 @@ export default function DisputeResolutionPage() {
       </section>
       
       {/* How It Works Section */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.div 
@@ -141,31 +141,13 @@ export default function DisputeResolutionPage() {
                 variants={fadeIn}
                 className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm"
               >
-                <div className="absolute -top-5 -left-5 w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                <div className="absolute top-4 left-4 w-8 h-8 rounded-tl-lg rounded-br-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
                   {step.step}
                 </div>
-                <h3 className="text-xl font-semibold mb-4 mt-2">{step.title}</h3>
+                <h3 className="text-xl font-semibold mb-4 mt-4 pl-6">{step.title}</h3>
                 <p className="text-gray-600">{step.description}</p>
               </motion.div>
             ))}
-          </div>
-          
-          <div className="flex justify-center mt-12">
-            <motion.div 
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={fadeIn}
-              className="relative p-8 bg-blue-50/70 rounded-xl border border-blue-100 max-w-2xl"
-            >
-              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
-                4
-              </div>
-              <h3 className="text-xl font-semibold mb-4 mt-2 text-center">Outcome Tracking & Analysis</h3>
-              <p className="text-gray-600 text-center">
-                Comprehensive tracking and analysis of dispute outcomes provide valuable insights to improve processes and identify recurring issues across the ecosystem.
-              </p>
-            </motion.div>
           </div>
         </div>
       </section>
