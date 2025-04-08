@@ -69,9 +69,12 @@ export default function AccreditationPage() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
-                <div className="bg-gray-200 animate-pulse w-full h-full"></div>
-                {/* This would be your product screenshot */}
+              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
+                <img 
+                  src="/images/products/thumbnail_01_accreditation.png" 
+                  alt="Accreditation Security Shield" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               {/* Decorative elements */}
               <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
