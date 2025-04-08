@@ -198,9 +198,9 @@ export default function AboutPage() {
       </section>
       
       {/* Leadership Section */}
-      <section id="leadership" className="py-20 bg-white">
+      <section id="leadership" className="pt-12 pb-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-5xl mx-auto text-center mb-16">
+          <div className="max-w-5xl mx-auto text-center mb-12">
             <motion.div 
               initial="hidden"
               whileInView="visible"
@@ -266,7 +266,7 @@ export default function AboutPage() {
 
                 <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-4">
                   <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                    <img src="/images/company/leadership/leadership_04_dnehrebecki.png" alt="Darek Nehrebecki" className="w-full h-full object-cover" style={{ transform: 'scale(2.15)', objectPosition: 'calc(50% - 3px) 4px' }} />
+                    <img src="/images/company/leadership/leadership_04_dnehrebecki.png" alt="Darek Nehrebecki" className="w-full h-full object-cover" style={{ transform: 'scale(2.15)', objectPosition: 'calc(50% - 1px) 4px' }} />
                   </div>
                   <h3 className="text-lg font-semibold">Darek Nehrebecki</h3>
                   <p className="text-gray-500">Chief Strategy Officer</p>
