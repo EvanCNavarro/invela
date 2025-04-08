@@ -227,9 +227,9 @@ export default function DataAccessPage() {
       </section>
       
       {/* CTA Section */}
-      <section id="contact" className="py-20 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+      <section id="contact" className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
             <motion.div 
               initial="hidden"
               whileInView="visible"
@@ -237,7 +237,7 @@ export default function DataAccessPage() {
               variants={fadeIn}
               className="mb-6"
             >
-              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/20 text-white" centered />
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/80" centered />
             </motion.div>
             
             <motion.h2 
@@ -267,7 +267,7 @@ export default function DataAccessPage() {
               variants={fadeIn}
               className="flex justify-center"
             >
-              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
                 Contact Sales <Send className="ml-2 h-5 w-5" />
               </Link>
             </motion.div>
