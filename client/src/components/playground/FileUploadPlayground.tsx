@@ -4,7 +4,7 @@ import { DragDropProvider } from '../files/DragDropProvider';
 import { FileUploadPreview } from '../files/FileUploadPreview';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
+import { useUnifiedToast } from '@/hooks/use-unified-toast';
 
 interface UploadingFile extends File {
   id: string;
@@ -16,7 +16,7 @@ export function FileUploadPlayground() {
   const [variant, setVariant] = useState<'box' | 'row'>('box');
   const [files, setFiles] = useState<UploadingFile[]>([]);
   const [isDragDropEnabled, setIsDragDropEnabled] = useState(false);
-  const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
 
   const handleFilesAccepted = (acceptedFiles: File[]) => {
     console.log('Accepted files:', acceptedFiles.map(file => ({
@@ -51,11 +51,10 @@ export function FileUploadPlayground() {
 
             // If all files are at 100%, show success toast
             if (updatedFiles.every(f => f.progress === 100)) {
-              toast({
-                title: "Upload Complete",
-                description: `Successfully uploaded ${updatedFiles.length} file${updatedFiles.length !== 1 ? 's' : ''}.`,
-                duration: 3000,
-              });
+              unifiedToast.success(
+                "Upload Complete", 
+                `Successfully uploaded ${updatedFiles.length} file${updatedFiles.length !== 1 ? 's' : ''}.`
+              );
             }
 
             return updatedFiles;
