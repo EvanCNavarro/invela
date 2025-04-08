@@ -24,18 +24,18 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full md:max-w-[440px]",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full md:max-w-[440px] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1",
   {
     variants: {
       variant: {
-        default: "text-gray-900",
-        success: "success group text-gray-900",
-        info: "info group text-gray-900",
-        warning: "warning group text-gray-900",
-        error: "error group text-gray-900",
-        "file-upload": "file-upload group text-gray-900",
-        clipboard: "clipboard group text-gray-900",
-        destructive: "destructive group text-gray-900", // Kept for backward compatibility
+        default: "text-gray-900 before:bg-gray-300",
+        success: "success group text-gray-900 before:bg-[#4CAF50]",
+        info: "info group text-gray-900 before:bg-[#2196F3]",
+        warning: "warning group text-gray-900 before:bg-[#F9A825]",
+        error: "error group text-gray-900 before:bg-[#EE6565]",
+        "file-upload": "file-upload group text-gray-900 before:bg-[#6357C2]",
+        clipboard: "clipboard group text-gray-900 before:bg-[#757575]",
+        destructive: "destructive group text-gray-900 before:bg-[#EE6565]", // Kept for backward compatibility
       },
     },
     defaultVariants: {

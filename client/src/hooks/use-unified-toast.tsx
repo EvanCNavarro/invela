@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useToast, toast as baseToast } from "@/hooks/use-toast";
+import { useToast, toast as baseToast, Toast } from "@/hooks/use-toast";
+import type { ToastProps } from "@/components/ui/toast";
 import { FileItem } from "@/types/files";
 import { ToastAction } from "@/components/ui/toast";
 
@@ -55,7 +56,7 @@ export function useUnifiedToast() {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file...",
-      duration: STANDARD_DURATION * 2, // Longer duration for uploads
+      duration: Infinity, // Keep open until explicitly closed
     });
   };
   
@@ -89,7 +90,7 @@ export function useUnifiedToast() {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file...",
-      duration: 30000, // Stay open until complete or timeout
+      duration: Infinity, // Stay open until explicitly closed
     });
     
     return toastRef;
@@ -218,7 +219,7 @@ export const unifiedToast = {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file...",
-      duration: 15000, // Long enough for upload but will auto-dismiss
+      duration: Infinity, // Stay open until explicitly closed
     });
   },
   
@@ -234,7 +235,7 @@ export const unifiedToast = {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file...",
-      duration: 15000, // Long enough for upload but will auto-dismiss
+      duration: Infinity, // Stay open until explicitly closed
     });
   }
 };
