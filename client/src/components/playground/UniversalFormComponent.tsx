@@ -51,6 +51,15 @@ import {
   submitKybForm
 } from "@/services/kybService";
 
+// Define consistent loading state types
+type LoadingStatus = 'idle' | 'loading-fields' | 'loading-data' | 'ready' | 'error';
+
+interface LoadingState {
+  isLoading: boolean;
+  status: LoadingStatus;
+  message: string;
+}
+
 // We now use the FormField type imported from formUtils.ts
 
 // Define the form steps based on April 2025 updated KYB requirements
@@ -507,11 +516,7 @@ export const OnboardingKYBFormPlayground = ({
   const [searchCompleted, setSearchCompleted] = useState(false);
   
   // Simplified loading state
-  const [loadingState, setLoadingState] = useState<{
-    isLoading: boolean;
-    status: 'idle' | 'loading-fields' | 'loading-data' | 'ready';
-    message: string;
-  }>({
+  const [loadingState, setLoadingState] = useState<LoadingState>({
     isLoading: true,
     status: 'idle',
     message: 'Initializing...'
@@ -669,7 +674,13 @@ export const OnboardingKYBFormPlayground = ({
     let mounted = true;
 
     const initializeFormData = async () => {
-      // Update loading state for form data loading
+      // Only proceed if we have field data loaded
+      if (loadingState.status !== 'loading-fields' && !kybFields) {
+        console.log('[KYB Form Debug] Waiting for field data before initializing form data');
+        return;
+      }
+
+      // Set state to indicate we're loading form data
       setLoadingState(prev => ({
         ...prev,
         isLoading: true,
@@ -677,33 +688,45 @@ export const OnboardingKYBFormPlayground = ({
         message: 'Loading form data...'
       }));
       
+      // Create an empty initial data structure
       let initialData: Record<string, string> = {};
 
       try {
+        // Load saved form data from server if a taskId is provided
         if (taskId) {
+          console.log('[KYB Form Debug] Loading form data for task:', taskId);
+          
           const response = await fetch(`/api/kyb/progress/${taskId}`);
-          if (!response.ok) throw new Error('Failed to fetch task data');
+          if (!response.ok) {
+            throw new Error(`Failed to fetch task data: ${response.statusText}`);
+          }
 
           const { formData: savedData, progress: savedProgress, status } = await response.json();
+          
+          // Log what we received
           console.log('[KYB Form Debug] Loaded task data:', {
             taskId,
             hasData: !!savedData,
-            fields: savedData ? Object.keys(savedData) : [],
+            dataFields: savedData ? Object.keys(savedData) : [],
+            savedProgress,
             status,
             timestamp: new Date().toISOString()
           });
 
-          if (savedData) {
-            // Use enhanced form data extraction that supports dynamic fields
+          // Process the form data if it exists
+          if (savedData && Object.keys(savedData).length > 0) {
+            // Convert all values to strings to ensure consistency
             initialData = Object.entries(savedData).reduce((acc, [key, value]) => {
               if (value !== null && value !== undefined) {
+                // Safely convert to string
                 acc[key] = String(value);
               }
               return acc;
             }, {} as Record<string, string>);
 
-            setProgress(savedProgress);
-            lastProgressRef.current = savedProgress;
+            // Update progress state
+            setProgress(savedProgress || 0);
+            lastProgressRef.current = savedProgress || 0;
             
             // Auto-set review mode if task is ready for submission
             if (status && status.toUpperCase() === 'READY_FOR_SUBMISSION') {
@@ -711,8 +734,12 @@ export const OnboardingKYBFormPlayground = ({
               setIsReviewMode(true);
             }
           }
-        } else if (initialSavedFormData) {
-          // Use enhanced extraction with dynamic fields support
+        } 
+        // Use initial form data passed as a prop if available
+        else if (initialSavedFormData && Object.keys(initialSavedFormData).length > 0) {
+          console.log('[KYB Form Debug] Using provided initialSavedFormData');
+          
+          // Convert all values to strings
           initialData = Object.entries(initialSavedFormData).reduce((acc, [key, value]) => {
             if (value !== null && value !== undefined) {
               acc[key] = String(value);
@@ -720,31 +747,38 @@ export const OnboardingKYBFormPlayground = ({
             return acc;
           }, {} as Record<string, string>);
 
+          // Calculate and set progress
           const initialProgress = calculateProgress(initialData);
           setProgress(initialProgress);
           lastProgressRef.current = initialProgress;
         }
 
         if (mounted) {
-          // First, update the refs
+          // First, update the refs to ensure consistency
           formDataRef.current = initialData;
 
-          // Then set the state
+          // Then update state
           setFormData(initialData);
 
-          console.log('[KYB Form Debug] Form data initialized:', {
+          // Log successful initialization
+          console.log('[KYB Form Debug] Form data initialized successfully:', {
             dataKeys: Object.keys(initialData),
-            values: Object.values(initialData),
+            dataCount: Object.keys(initialData).length,
             timestamp: new Date().toISOString()
           });
 
-          // Set initialization as complete
+          // Mark initialization as complete
           formInitializedRef.current = true;
           
-          // Finally set the current step
-          setCurrentStep(findFirstIncompleteStep(initialData));
+          // Set the current step based on form completion status
+          const firstIncompleteStep = findFirstIncompleteStep(initialData);
+          console.log('[KYB Form Debug] Setting initial step:', {
+            step: firstIncompleteStep,
+            timestamp: new Date().toISOString()
+          });
+          setCurrentStep(firstIncompleteStep);
           
-          // Mark loading as complete
+          // Mark loading as complete - AFTER all state is set
           setLoadingState({
             isLoading: false,
             status: 'ready',
@@ -754,24 +788,33 @@ export const OnboardingKYBFormPlayground = ({
       } catch (error) {
         console.error('Error initializing form:', error);
         if (mounted) {
+          // Show error to user
           unifiedToast.error("Failed to load form data");
           
-          // Mark loading as failed but allow interaction
+          // Set a basic empty form data to prevent undefined errors
+          setFormData({});
+          formDataRef.current = {};
+          
+          // Mark loading as failed but allow interaction with form
           setLoadingState({
             isLoading: false,
-            status: 'ready',
-            message: 'Form ready (with errors)'
+            status: 'error',
+            message: 'Form initialization failed'
           });
         }
       }
     };
 
-    initializeFormData();
+    // Only run initialization when appropriate
+    if (loadingState.status === 'loading-fields' || loadingState.status === 'loading-data') {
+      console.log('[KYB Form Debug] Initializing form data, current state:', loadingState.status);
+      initializeFormData();
+    }
 
     return () => {
       mounted = false;
     };
-  }, [taskId, initialSavedFormData, calculateProgress, extractFormDataEnhanced]);
+  }, [taskId, initialSavedFormData, calculateProgress, extractFormDataEnhanced, loadingState.status, kybFields]);
 
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
@@ -1264,8 +1307,8 @@ export const OnboardingKYBFormPlayground = ({
           <div className="flex flex-col items-center justify-center min-h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
             <div className="text-sm text-muted-foreground">
-              {loadingState.status === 'loading_fields' ? "Loading form fields..." : 
-               loadingState.status === 'loading_data' ? "Loading saved data..." : 
+              {loadingState.status === 'loading-fields' ? "Loading form fields..." : 
+               loadingState.status === 'loading-data' ? "Loading saved data..." : 
                "Initializing form..."}
             </div>
           </div>
