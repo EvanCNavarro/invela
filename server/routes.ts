@@ -20,6 +20,7 @@ import filesRouter from './routes/files';
 import accessRouter from './routes/access';
 import adminRouter from './routes/admin';
 import tasksRouter from './routes/tasks';
+import taskTemplatesRouter from './routes/task-templates';
 import { analyzeDocument } from './services/openai';
 import { PDFExtract } from 'pdf.js-extract';
 
@@ -35,6 +36,7 @@ export function registerRoutes(app: Express): Express {
   app.use(accessRouter);
   app.use('/api/admin', adminRouter);
   app.use(tasksRouter);
+  app.use('/api/task-templates', taskTemplatesRouter);
 
   // Companies endpoints
   app.get("/api/companies", requireAuth, async (req, res) => {
