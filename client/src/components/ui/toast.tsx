@@ -15,7 +15,7 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:right-0 sm:top-0 sm:flex-col-reverse md:max-w-[440px]", 
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse p-4 gap-3 sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]", 
       className
     )}
     {...props}
@@ -24,7 +24,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none md:max-w-[440px] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full md:max-w-[440px] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1",
   {
     variants: {
       variant: {
@@ -91,7 +91,7 @@ export const ToastIcon = React.forwardRef<
 });
 ToastIcon.displayName = "ToastIcon";
 
-// Enhanced Toast with Framer Motion
+// Enhanced Toast
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
@@ -106,27 +106,7 @@ const Toast = React.forwardRef<
   }
   
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 50, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ 
-        opacity: 0, 
-        y: -20,
-        scale: 0.95, 
-        transition: { 
-          duration: 0.8, 
-          ease: [0.2, 0.0, 0.0, 1] 
-        } 
-      }}
-      transition={{ 
-        type: "spring",
-        damping: 26,
-        stiffness: 340,
-        mass: 0.8
-      }}
-      className="mb-3 pointer-events-auto" // Add margin-bottom to each toast for extra separation
-    >
+    <div className="mb-3"> {/* Add margin-bottom to each toast for extra separation */}
       <ToastPrimitives.Root
         ref={ref}
         className={cn(toastVariants({ variant: safeVariant }), className)}
@@ -134,7 +114,7 @@ const Toast = React.forwardRef<
       >
         {children}
       </ToastPrimitives.Root>
-    </motion.div>
+    </div>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
