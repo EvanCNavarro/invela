@@ -2,8 +2,14 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
+    // Get response text and use it directly for the error message without status code
     const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    
+    // Include the status in console for debugging, but not in the user-facing message
+    console.error(`API error ${res.status}: ${text}`);
+    
+    // Throw a clean error without the status code prefix
+    throw new Error(text);
   }
 }
 
