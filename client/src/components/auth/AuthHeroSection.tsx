@@ -20,44 +20,34 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Set animation direction based on login/register page
+  // For login: content comes from right, hero from left
+  // For register: content comes from left, hero from right
+  const initialX = isLogin ? -40 : 40; 
+  
   return (
     <motion.div 
       className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-[#0082FF]' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, x: initialX }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ 
-        duration: 0.8, 
+        duration: 0.6, 
         ease: [0.22, 1, 0.36, 1]
       }}
     >
-      <motion.div 
-        className="max-w-[500px] w-full h-[500px] relative"
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ 
-          opacity: isLoaded ? 1 : 0, 
-          scale: isLoaded ? 1 : 0.9, 
-          y: isLoaded ? 0 : 20 
+      <img
+        src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"} 
+        alt={isLogin ? "Secure Login Animation" : "Register Animation"}
+        className="w-full h-full object-contain max-w-[500px]"
+        style={{
+          imageRendering: 'auto',
+          WebkitBackfaceVisibility: 'hidden',
+          backfaceVisibility: 'hidden'
         }}
-        transition={{ 
-          duration: 0.8, 
-          ease: [0.22, 1, 0.36, 1],
-          delay: 0.3
-        }}
-      >
-        <img
-          src={isLogin ? "/assets/auth_animation.gif" : "/assets/register_animation.gif"} 
-          alt={isLogin ? "Secure Login Animation" : "Register Animation"}
-          className="w-full h-full object-contain"
-          style={{
-            imageRendering: 'auto',
-            WebkitBackfaceVisibility: 'hidden',
-            backfaceVisibility: 'hidden'
-          }}
-          loading="eager"
-          decoding="async"
-          onLoad={() => setIsLoaded(true)}
-        />
-      </motion.div>
+        loading="eager"
+        decoding="async"
+        onLoad={() => setIsLoaded(true)}
+      />
     </motion.div>
   );
 }
