@@ -33,7 +33,7 @@ export default function LoginPage() {
       email: "",
       password: "",
     },
-    mode: "onChange" // Validate on change instead of just on submit
+    mode: "onBlur" // Validate when user leaves the field
   });
 
   // Redirect if already logged in
@@ -106,7 +106,7 @@ export default function LoginPage() {
                       autoComplete="email"
                       autoFocus
                       placeholder="Enter your email"
-                      className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
+                      className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email && form.formState.touchedFields.email ? "border-green-500" : ""}`}
                       onChange={(e) => {
                         field.onChange(e);
                         console.log('[Login] Email field changed:', e.target.value);
@@ -114,10 +114,10 @@ export default function LoginPage() {
                     />
                   </FormControl>
                   <div className="min-h-[24px] mt-2">
-                    {field.value && form.formState.errors.email && (
+                    {field.value && form.formState.errors.email && form.formState.touchedFields.email && (
                       <FormMessage />
                     )}
-                    {field.value && !form.formState.errors.email && field.value.length > 0 && (
+                    {field.value && !form.formState.errors.email && field.value.length > 0 && form.formState.touchedFields.email && (
                       <p className="text-sm text-green-500 flex items-center gap-1">
                         <Check className="h-4 w-4" />
                         Valid email address
@@ -147,7 +147,7 @@ export default function LoginPage() {
                         {...field}
                         autoComplete="current-password"
                         placeholder="Enter your password"
-                        className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
+                        className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.password && form.formState.touchedFields.password ? "border-green-500" : ""}`}
                         onChange={(e) => {
                           field.onChange(e);
                           console.log('[Login] Password field changed, length:', e.target.value.length);
@@ -169,10 +169,10 @@ export default function LoginPage() {
                     </Button>
                   </div>
                   <div className="min-h-[24px] mt-2">
-                    {field.value && form.formState.errors.password && (
+                    {field.value && form.formState.errors.password && form.formState.touchedFields.password && (
                       <FormMessage />
                     )}
-                    {field.value && !form.formState.errors.password && field.value.length > 0 && (
+                    {field.value && !form.formState.errors.password && field.value.length > 0 && form.formState.touchedFields.password && (
                       <p className="text-sm text-green-500 flex items-center gap-1">
                         <Check className="h-4 w-4" />
                         Password meets requirements
