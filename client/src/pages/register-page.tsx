@@ -235,6 +235,16 @@ export default function RegisterPage() {
     return <Redirect to="/" />;
   }
 
+  // Create a helper function to check if all fields are valid
+  const areRequiredFieldsValid = () => {
+    const { firstName, lastName, password } = registrationForm.getValues();
+    const hasFirstName = !!firstName && !registrationForm.formState.errors.firstName;
+    const hasLastName = !!lastName && !registrationForm.formState.errors.lastName;
+    const hasPassword = !!password && !registrationForm.formState.errors.password;
+    
+    return hasFirstName && hasLastName && hasPassword;
+  };
+
   return (
     <AuthLayout isLogin={false}>
       {!validatedInvitation ? (
@@ -374,29 +384,27 @@ export default function RegisterPage() {
           </motion.div>
 
           <Form {...registrationForm}>
-            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6 max-w-[600px] mx-auto">
+            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="flex flex-col space-y-8 max-w-[600px] mx-auto registration-form-content">
               <motion.div 
-                className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200"
+                className="p-4 bg-blue-50 rounded-lg border border-blue-200"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.1, duration: 0.3, type: "spring" }}
+                    className="flex-shrink-0"
                   >
-                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <Check className="h-5 w-5 text-blue-600" />
                   </motion.div>
-                  <div>
-                    <p className="text-sm font-medium text-blue-700">
-                      Valid invitation code
-                    </p>
-                    <p className="text-sm text-blue-600 mt-1 whitespace-nowrap">
-                      Registering for {validatedInvitation.company}
-                    </p>
-                  </div>
+                  <p className="text-sm text-blue-600 whitespace-nowrap sm:whitespace-normal md:whitespace-nowrap">
+                    <span className="font-medium text-blue-700">Valid invitation code</span>
+                    {" — "}
+                    <span>Registering for {validatedInvitation.company}</span>
+                  </p>
                 </div>
               </motion.div>
 
@@ -409,7 +417,7 @@ export default function RegisterPage() {
                   control={registrationForm.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem className="mb-6">
+                    <FormItem>
                       <FormLabel className="text-base">Email</FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -436,7 +444,7 @@ export default function RegisterPage() {
                   control={registrationForm.control}
                   name="company"
                   render={({ field }) => (
-                    <FormItem className="mb-6">
+                    <FormItem>
                       <FormLabel className="text-base">Company</FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -455,7 +463,7 @@ export default function RegisterPage() {
               </motion.div>
 
               <motion.div 
-                className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6"
+                className="grid grid-cols-1 sm:grid-cols-2 gap-6"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
@@ -543,7 +551,7 @@ export default function RegisterPage() {
                   control={registrationForm.control}
                   name="password"
                   render={({ field }) => (
-                    <FormItem className="mb-6">
+                    <FormItem>
                       <FormLabel className="text-base">Password</FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -597,19 +605,19 @@ export default function RegisterPage() {
                 transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
-                className="mt-10"
+                className=""
               >
                 <Button
                   type="submit"
                   className="w-full font-bold hover:opacity-90 h-14 text-base"
-                  disabled={registerMutation.isPending}
+                  disabled={registerMutation.isPending || !areRequiredFieldsValid()}
                 >
                   Create Account
                 </Button>
               </motion.div>
 
               <motion.div 
-                className="mt-6"
+                className=""
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
@@ -617,7 +625,17 @@ export default function RegisterPage() {
                 <button 
                   type="button" 
                   className="flex items-center text-primary hover:underline gap-1.5"
-                  onClick={() => setValidatedInvitation(null)}
+                  onClick={() => {
+                    // First let the content fade out quickly
+                    const formContent = document.querySelector('.registration-form-content');
+                    if (formContent) {
+                      formContent.classList.add('fade-out');
+                    }
+                    // Then set the state after a short delay
+                    setTimeout(() => {
+                      setValidatedInvitation(null);
+                    }, 150);
+                  }}
                 >
                   <ArrowLeft className="h-4 w-4" />
                   <span>Back to Invitation Code</span>
