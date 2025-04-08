@@ -60,23 +60,7 @@ export default function DataAccessPage() {
                 Our comprehensive data access management platform simplifies the complexities of consent management, authorization, and audit for financial institutions and FinTechs.
               </motion.p>
               
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-col sm:flex-row gap-4"
-              >
-                <Link href="/landing/company/contact-us?type=product-demo#contact-form">
-                  <a className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center justify-center sm:justify-start">
-                    Request a Demo <Send className="ml-2 h-5 w-5" />
-                  </a>
-                </Link>
-                <Link href="#features">
-                  <a className="border border-blue-600 bg-white hover:bg-blue-50 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center justify-center sm:justify-start">
-                    Learn More
-                  </a>
-                </Link>
-              </motion.div>
+
             </div>
             
             <motion.div 
@@ -85,13 +69,11 @@ export default function DataAccessPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="relative"
             >
-              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
+              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
                 <img 
-                  src="/attached_assets/thumbnail_04_data-access-grants-service.png"
+                  src="/images/products/thumbnail_04_data-access-grants-service.png" 
                   alt="Data Access Grants Service Interface" 
                   className="w-full h-full object-cover"
-                  width={600}
-                  height={450}
                 />
               </div>
               {/* Decorative elements */}
