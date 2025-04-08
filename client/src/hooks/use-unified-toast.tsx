@@ -187,12 +187,24 @@ export const unifiedToast = {
     const fileName = typeof file === 'string' ? file : file.name;
     console.log('[UnifiedToast] Creating success toast for file:', fileName);
     
-    return baseToast({
+    // Create success toast with explicit duration and force auto-dismiss
+    const toastRef = baseToast({
       variant: "success",
       title: "File uploaded successfully",
       description: `${fileName} has been uploaded.`,
       duration: STANDARD_DURATION, // Standard duration (3000ms)
     });
+    
+    // Ensure the toast gets dismissed automatically after the standard duration
+    // This is a failsafe for bulk uploads
+    setTimeout(() => {
+      if (toastRef && toastRef.dismiss) {
+        toastRef.dismiss();
+        console.log('[UnifiedToast] Force dismissed success toast for:', fileName);
+      }
+    }, STANDARD_DURATION + 500); // Add a small buffer (500ms) to ensure the toast has time to show
+    
+    return toastRef;
   },
   
   fileUploadError: (fileName: string, error?: string) => {
