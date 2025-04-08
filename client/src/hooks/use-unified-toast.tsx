@@ -180,14 +180,7 @@ export const unifiedToast = {
     }
   },
   
-  fileUploadStarted: (fileName: string) => {
-    return baseToast({
-      variant: "file-upload",
-      title: `Uploading '${fileName}'`,
-      description: "Please wait while we upload your file.",
-      duration: STANDARD_DURATION * 2,
-    });
-  },
+  // No longer used - removed
   
   fileUploadSuccess: (file: FileItem | string) => {
     const fileName = typeof file === 'string' ? file : file.name;
@@ -195,7 +188,7 @@ export const unifiedToast = {
       variant: "success",
       title: "File uploaded successfully",
       description: `${fileName} has been uploaded.`,
-      duration: STANDARD_DURATION,
+      duration: STANDARD_DURATION, // Standard 4000ms duration
     });
   },
   
@@ -225,7 +218,7 @@ export const unifiedToast = {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file.",
-      duration: 30000, // Stay open until complete or timeout
+      duration: 15000, // Long enough for upload but will auto-dismiss
     });
   },
   
@@ -241,7 +234,7 @@ export const unifiedToast = {
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: "Please wait while we upload your file.",
-      duration: 30000, // Stay open until complete or timeout
+      duration: 15000, // Long enough for upload but will auto-dismiss
     });
   }
 };

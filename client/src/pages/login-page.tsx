@@ -126,7 +126,7 @@ export default function LoginPage() {
           }
         });
         
-        // Simulate a completed upload after 3 seconds
+        // Simulate a completed upload after 2 seconds
         const uploadCompleteTimer = setTimeout(() => {
           // Show success toast when upload completes
           uploadToast.success({
@@ -136,7 +136,7 @@ export default function LoginPage() {
           });
           
           console.log("Upload completed successfully:", mockFile.name);
-        }, 3000);
+        }, 2000);
       }
     ];
     
