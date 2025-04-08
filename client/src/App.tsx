@@ -269,7 +269,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WebSocketProvider>
+        <WebSocketProvider showNotifications={false}>
           <ToastProvider>
             <Router />
             <Toaster />
