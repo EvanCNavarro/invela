@@ -67,9 +67,12 @@ export default function InsightsConsultingPage() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
-                <div className="bg-gray-200 animate-pulse w-full h-full"></div>
-                {/* This would be your product screenshot */}
+              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
+                <img 
+                  src="/images/products/thumbnail_07_insights-consulting.png" 
+                  alt="Data Analytics and Insights Dashboard" 
+                  className="w-full h-full object-cover"
+                />
               </div>
               {/* Decorative elements */}
               <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
@@ -274,10 +277,8 @@ export default function InsightsConsultingPage() {
               variants={fadeIn}
               className="flex justify-center"
             >
-              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form">
-                <div className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
-                  Contact Sales <Send className="ml-2 h-5 w-5" />
-                </div>
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
+                Contact Sales <Send className="ml-2 h-5 w-5" />
               </Link>
             </motion.div>
           </div>
