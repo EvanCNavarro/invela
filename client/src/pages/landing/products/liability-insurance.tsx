@@ -67,7 +67,7 @@ export default function LiabilityInsurancePage() {
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative"
             >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
+              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl relative">
                 <img 
                   src="/images/products/thumbnail_05_liability-insurance.png" 
                   alt="Liability Insurance Protection" 
