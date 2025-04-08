@@ -31,20 +31,22 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
         {isRegistrationValidated ? (
           // Account creation form (step 2 of registration) - narrow width
           <motion.div 
-            className="bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]"
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
+            layout
           >
             {children}
           </motion.div>
         ) : (
           // Login or initial registration (step 1) - wider width with two columns
           <motion.div 
-            className="bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex w-full max-w-[980px]"
+            className="auth-layout-container bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex w-full max-w-[980px]"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
+            layout
           >
             {isLogin ? (
               // Login layout with hero on right
