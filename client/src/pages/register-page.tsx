@@ -4,6 +4,7 @@ import { Link, Redirect } from "wouter";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -248,23 +249,45 @@ export default function RegisterPage() {
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
       {!validatedInvitation ? (
         <>
-          <div className="mb-12">
-            <img
+          <motion.div 
+            className="mb-12"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <motion.img
               src="/invela-logo.svg"
               alt="Invela"
               className="h-14 w-14 mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
             />
-            <h1 className="text-3xl font-bold">
+            <motion.h1 
+              className="text-3xl font-bold"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
               Verify your invitation
-            </h1>
-            <p className="text-base text-muted-foreground mt-3">
+            </motion.h1>
+            <motion.p 
+              className="text-base text-muted-foreground mt-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
               Enter your invitation code to begin registration
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
           <Form {...invitationForm}>
             <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-6">
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+              >
                 <FormField
                   control={invitationForm.control}
                   name="invitationCode"
@@ -286,9 +309,15 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-              </div>
+              </motion.div>
 
-              <div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Button
                   type="submit"
                   className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
@@ -297,37 +326,63 @@ export default function RegisterPage() {
                 >
                   Validate Code
                 </Button>
-              </div>
+              </motion.div>
 
-              <div className="text-center mt-6">
+              <motion.div 
+                className="text-center mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+              >
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
                   <Link href="/login" className="text-primary hover:underline">
                     Sign in here
                   </Link>
                 </p>
-              </div>
+              </motion.div>
             </form>
           </Form>
         </>
       ) : (
         <div className="w-full max-w-[800px] mx-auto overflow-y-auto py-4">
-          <div className="flex flex-col items-center">
-            <img
+          <motion.div 
+            className="flex flex-col items-center"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <motion.img
               src="/invela-logo.svg"
               alt="Invela"
               className="h-14 w-14 mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
             />
-            <h1 className="text-3xl font-bold text-center mb-2">
+            <motion.h1 
+              className="text-3xl font-bold text-center mb-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+            >
               Create your account
-            </h1>
-            <p className="text-base text-muted-foreground text-center mb-8">
+            </motion.h1>
+            <motion.p 
+              className="text-base text-muted-foreground text-center mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
               Complete your registration to get started
-            </p>
-          </div>
+            </motion.p>
+          </motion.div>
 
           <Form {...registrationForm}>
-            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="flex flex-col space-y-6 max-w-[600px] mx-auto registration-form-content">
+            <form 
+              onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} 
+              className="flex flex-col space-y-6 max-w-[600px] mx-auto registration-form-content"
+            >
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center justify-center gap-3">
                   <div className="flex-shrink-0">
