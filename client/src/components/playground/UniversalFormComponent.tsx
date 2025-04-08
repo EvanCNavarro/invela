@@ -51,13 +51,93 @@ import {
   submitKybForm
 } from "@/services/kybService";
 
-// Define consistent loading state types
-type LoadingStatus = 'idle' | 'loading-fields' | 'loading-data' | 'ready' | 'error';
+// State machine approach for loading states
+type FormLoadingState = 
+  | { status: 'idle' }
+  | { status: 'loading-fields'; requestId?: string }
+  | { status: 'loading-data'; requestId?: string; hasFields: boolean }
+  | { status: 'ready'; formInitialized: boolean }
+  | { status: 'error'; message: string; code: string };
 
-interface LoadingState {
-  isLoading: boolean;
-  status: LoadingStatus;
-  message: string;
+// Define actions for the state machine
+type FormLoadingAction = 
+  | { type: 'START_LOADING_FIELDS'; requestId?: string }
+  | { type: 'FIELDS_LOADED_SUCCESS'; hasFields: boolean; requestId?: string }
+  | { type: 'START_LOADING_DATA'; requestId?: string }
+  | { type: 'DATA_LOADED_SUCCESS' }
+  | { type: 'LOADING_ERROR'; message: string; code: string };
+
+// Reducer function to handle state transitions
+function loadingReducer(state: FormLoadingState, action: FormLoadingAction): FormLoadingState {
+  console.log('[Loading State Reducer]', { 
+    currentState: state.status, 
+    action: action.type,
+    timestamp: new Date().toISOString() 
+  });
+
+  switch (state.status) {
+    case 'idle':
+      if (action.type === 'START_LOADING_FIELDS') {
+        return { status: 'loading-fields', requestId: action.requestId };
+      }
+      break;
+    
+    case 'loading-fields':
+      if (action.type === 'FIELDS_LOADED_SUCCESS' && 
+          (!action.requestId || action.requestId === state.requestId)) {
+        return { 
+          status: 'loading-data', 
+          requestId: action.requestId, 
+          hasFields: action.hasFields 
+        };
+      } else if (action.type === 'LOADING_ERROR') {
+        return { 
+          status: 'error', 
+          message: action.message, 
+          code: action.code 
+        };
+      }
+      break;
+
+    case 'loading-data':
+      if (action.type === 'DATA_LOADED_SUCCESS') {
+        return { 
+          status: 'ready', 
+          formInitialized: true 
+        };
+      } else if (action.type === 'LOADING_ERROR') {
+        return { 
+          status: 'error', 
+          message: action.message, 
+          code: action.code 
+        };
+      }
+      break;
+
+    case 'ready':
+      // Once ready, we only transition to error
+      if (action.type === 'LOADING_ERROR') {
+        return { 
+          status: 'error', 
+          message: action.message, 
+          code: action.code 
+        };
+      }
+      break;
+
+    case 'error':
+      // Allow retrying from error state
+      if (action.type === 'START_LOADING_FIELDS') {
+        return { 
+          status: 'loading-fields', 
+          requestId: action.requestId 
+        };
+      }
+      break;
+  }
+
+  // If no valid transition, return current state
+  return state;
 }
 
 // We now use the FormField type imported from formUtils.ts
@@ -516,11 +596,11 @@ export const OnboardingKYBFormPlayground = ({
   const [searchCompleted, setSearchCompleted] = useState(false);
   
   // Simplified loading state
-  const [loadingState, setLoadingState] = useState<LoadingState>({
-    isLoading: true,
-    status: 'idle',
-    message: 'Initializing...'
-  });
+  // State machine for form loading management
+  const [loadingState, dispatchLoading] = useReducer(
+    loadingReducer, 
+    { status: 'idle' }
+  );
   
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
@@ -553,12 +633,11 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // Update loading state
-      setLoadingState(prev => ({
-        ...prev,
-        status: 'loading-fields',
-        message: 'Loading form fields...'
-      }));
+      // Start loading fields using the state machine
+      dispatchLoading({ 
+        type: 'START_LOADING_FIELDS',
+        requestId: Date.now().toString() 
+      });
       
       // Process each group into a form step
       Object.entries(groupedBySection).forEach(([groupName, fields]) => {
@@ -584,20 +663,20 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // Update loading state
-      setLoadingState(prev => ({
-        ...prev,
-        status: 'loading-data', // Move to the next state in the loading sequence
-        message: 'Form fields loaded, preparing data...'
-      }));
+      // Signal that fields are loaded, transition to loading data state
+      dispatchLoading({ 
+        type: 'FIELDS_LOADED_SUCCESS', 
+        hasFields: true,
+        requestId: Date.now().toString() 
+      });
       
     } else if (isLoadingFields === false) {
       // If there are no fields but loading is complete, transition to next state
-      setLoadingState(prev => ({
-        ...prev,
-        status: 'loading-data',
-        message: 'No form fields found, preparing data...'
-      }));
+      dispatchLoading({ 
+        type: 'FIELDS_LOADED_SUCCESS', 
+        hasFields: false,
+        requestId: Date.now().toString() 
+      });
     }
   }, [kybFields, isLoadingFields]);
 
@@ -681,12 +760,10 @@ export const OnboardingKYBFormPlayground = ({
       }
 
       // Set state to indicate we're loading form data
-      setLoadingState(prev => ({
-        ...prev,
-        isLoading: true,
-        status: 'loading-data',
-        message: 'Loading form data...'
-      }));
+      dispatchLoading({ 
+        type: 'START_LOADING_DATA',
+        requestId: Date.now().toString() 
+      });
       
       // Create an empty initial data structure
       let initialData: Record<string, string> = {};
@@ -779,10 +856,8 @@ export const OnboardingKYBFormPlayground = ({
           setCurrentStep(firstIncompleteStep);
           
           // Mark loading as complete - AFTER all state is set
-          setLoadingState({
-            isLoading: false,
-            status: 'ready',
-            message: 'Form ready'
+          dispatchLoading({ 
+            type: 'DATA_LOADED_SUCCESS' 
           });
         }
       } catch (error) {
@@ -796,10 +871,10 @@ export const OnboardingKYBFormPlayground = ({
           formDataRef.current = {};
           
           // Mark loading as failed but allow interaction with form
-          setLoadingState({
-            isLoading: false,
-            status: 'error',
-            message: 'Form initialization failed'
+          dispatchLoading({ 
+            type: 'LOADING_ERROR', 
+            message: 'Form initialization failed', 
+            code: 'INIT_FAILED' 
           });
         }
       }
