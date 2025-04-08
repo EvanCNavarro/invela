@@ -8,6 +8,8 @@ import type {
 const TOAST_LIMIT = 3 // Allow up to 3 toasts at once
 // Standard timeout for all toasts (4 seconds)
 const TOAST_REMOVE_DELAY = 4000
+// Add a visual delay before removing the toast from the DOM (after animation)
+const TOAST_ANIMATION_REMOVE_DELAY = 1500
 // Kept for backward compatibility but we'll use TOAST_REMOVE_DELAY for error toasts too
 const ERROR_TOAST_REMOVE_DELAY = TOAST_REMOVE_DELAY
 
@@ -63,13 +65,23 @@ const addToRemoveQueue = (toastId: string) => {
     return
   }
 
+  // First, mark the toast as closed which will trigger the exit animation
+  dispatch({
+    type: "UPDATE_TOAST",
+    toast: { 
+      id: toastId,
+      open: false 
+    },
+  })
+
+  // Then, schedule the actual removal from DOM after animation completes
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
     dispatch({
       type: "REMOVE_TOAST",
       toastId: toastId,
     })
-  }, TOAST_REMOVE_DELAY)
+  }, TOAST_REMOVE_DELAY + TOAST_ANIMATION_REMOVE_DELAY) // Add animation delay to removal
 
   toastTimeouts.set(toastId, timeout)
 }
@@ -103,17 +115,9 @@ export const reducer = (state: State, action: Action): State => {
         })
       }
 
-      return {
-        ...state,
-        toasts: state.toasts.map((t) =>
-          t.id === toastId || toastId === undefined
-            ? {
-                ...t,
-                open: false,
-              }
-            : t
-        ),
-      }
+      // Don't redundantly set open: false here since addToRemoveQueue already does this
+      // Just return the current state since the update will happen in addToRemoveQueue
+      return state;
     }
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
