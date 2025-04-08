@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
+import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { AuthHeroSection } from "./AuthHeroSection";
 import { AuthFooter } from "./AuthFooter";
@@ -12,55 +11,9 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, isLogin, isRegistrationValidated = false }: AuthLayoutProps) {
-  const [location] = useLocation();
-  const [direction, setDirection] = useState<"left" | "right">("left");
-  const [prevLocation, setPrevLocation] = useState(location);
-
-  // Determine animation direction based on navigation
-  useEffect(() => {
-    if (location !== prevLocation) {
-      if ((prevLocation === "/login" && location === "/register") || 
-          (prevLocation === "/" && location === "/register")) {
-        setDirection("left");
-      } else if ((prevLocation === "/register" && location === "/login") || 
-                (prevLocation === "/" && location === "/login")) {
-        setDirection("right");
-      }
-      setPrevLocation(location);
-    }
-  }, [location, prevLocation]);
-
-  // Refined animation variants for smoother transitions
-  const variants = {
-    initial: (direction: "left" | "right") => ({
-      x: direction === "right" ? "-30%" : "30%",
-      opacity: 0,
-      scale: 0.95
-    }),
-    animate: {
-      x: 0,
-      opacity: 1,
-      scale: 1,
-      transition: {
-        x: { type: "spring", stiffness: 100, damping: 20, mass: 1 },
-        opacity: { duration: 0.4, ease: "easeInOut" },
-        scale: { duration: 0.35, ease: "easeOut" }
-      }
-    },
-    exit: (direction: "left" | "right") => ({
-      x: direction === "right" ? "30%" : "-30%",
-      opacity: 0,
-      scale: 0.95,
-      transition: {
-        x: { type: "spring", stiffness: 100, damping: 20, mass: 1 },
-        opacity: { duration: 0.4, ease: "easeInOut" },
-        scale: { duration: 0.3, ease: "easeIn" }
-      }
-    })
-  };
-
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-b from-gray-50 to-gray-100">
+      {/* Header with Back button */}
       <div className="px-4 pt-8 w-full max-w-6xl mx-auto">
         <div className="w-full max-w-6xl">
           <Link href="/landing">
@@ -72,83 +25,42 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
         </div>
       </div>
       
+      {/* Main content */}
       <div className="flex-1 flex items-center justify-center p-6">
-        <AnimatePresence mode="wait">
-          {isRegistrationValidated ? (
-            // Account creation form (step 2 of registration) - narrow width
-            <motion.div 
-              className="bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0, width: '100%', maxWidth: '800px' }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              key="registration-validated"
-            >
-              {children}
-            </motion.div>
-          ) : (
-            // Login or initial registration (step 1) - wider width with two columns
-            <motion.div 
-              className="bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0, width: '100%', maxWidth: '980px' }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-              key={isLogin ? "login-layout" : "register-layout"}
-            >
-              {isLogin ? (
-                // Login layout with hero on right
-                <>
-                  <motion.div 
-                    className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
-                    custom={direction}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    variants={variants}
-                    key="login-form"
-                  >
-                    {children}
-                  </motion.div>
-                  <motion.div 
-                    className="hidden lg:block w-[45%] p-3"
-                    initial={{ opacity: 0.8 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                  >
-                    <AuthHeroSection isLogin={true} />
-                  </motion.div>
-                </>
-              ) : (
-                // Registration initial layout with hero on left
-                <>
-                  <motion.div 
-                    className="hidden lg:block w-[45%] p-3"
-                    initial={{ opacity: 0.8 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    key="register-hero"
-                  >
-                    <AuthHeroSection isLogin={false} />
-                  </motion.div>
-                  <motion.div 
-                    className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
-                    custom={direction}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    variants={variants}
-                    key="register-form"
-                  >
-                    {children}
-                  </motion.div>
-                </>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {isRegistrationValidated ? (
+          // Account creation form (step 2 of registration) - narrow width
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]">
+            {children}
+          </div>
+        ) : (
+          // Login or initial registration (step 1) - wider width with two columns
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex w-full max-w-[980px]">
+            {isLogin ? (
+              // Login layout with hero on right
+              <>
+                <div className="w-full lg:w-[55%] p-14 flex flex-col justify-center">
+                  {children}
+                </div>
+                <div className="hidden lg:block w-[45%] p-3">
+                  <AuthHeroSection isLogin={true} />
+                </div>
+              </>
+            ) : (
+              // Registration initial layout with hero on left
+              <>
+                <div className="hidden lg:block w-[45%] p-3">
+                  <AuthHeroSection isLogin={false} />
+                </div>
+                <div className="w-full lg:w-[55%] p-14 flex flex-col justify-center">
+                  {children}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
       
+      {/* Footer */}
       <AuthFooter />
     </div>
   );
