@@ -74,7 +74,7 @@ export default function LoginPage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
         >
-          Log in to Invela
+          Sign In to Invela
         </motion.h1>
         <motion.p 
           className="text-base text-muted-foreground mt-3"
@@ -206,10 +206,10 @@ export default function LoginPage() {
             >
               {loginMutation.isPending ? (
                 <span className="flex items-center gap-2">
-                  Logging in...
+                  Signing in...
                 </span>
               ) : (
-                'Log in'
+                'Sign In'
               )}
             </Button>
           </motion.div>
