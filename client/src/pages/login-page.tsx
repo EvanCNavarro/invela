@@ -102,11 +102,11 @@ export default function LoginPage() {
   // Function to test all toast variants
   const showNextToast = () => {
     const toastTypes = [
-      () => unifiedToast.success('Success Toast', 'Operation completed successfully'),
-      () => unifiedToast.info('Info Toast', 'Here is some useful information'),
-      () => unifiedToast.warning('Warning Toast', 'This action might cause issues'),
-      () => unifiedToast.error('Error Toast', 'Something went wrong'),
-      () => unifiedToast.clipboardCopy('Text copied to clipboard'),
+      () => unifiedToast.success('Success Toast', 'Operation completed successfully.'),
+      () => unifiedToast.info('Info Toast', 'Here is some useful information.'),
+      () => unifiedToast.warning('Warning Toast', 'This action might cause issues.'),
+      () => unifiedToast.error('Error Toast', 'Something went wrong.'),
+      () => unifiedToast.clipboardCopy('Text copied to clipboard.'),
       () => {
         // Demonstrate simplified file upload toast flow - no progress updates
         const mockFile = {
@@ -144,7 +144,7 @@ export default function LoginPage() {
             console.log("Upload completed successfully:", mockFile.name);
           } catch (error) {
             // Handle any errors during upload
-            uploadToast.error("Network error during upload");
+            uploadToast.error("Network error during upload.");
           }
         };
         
