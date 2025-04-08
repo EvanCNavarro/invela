@@ -81,7 +81,7 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
       
       <div className="flex-1 flex items-center justify-center p-6">
         <motion.div 
-          className={`bg-white rounded-lg shadow-lg overflow-hidden ${isRegistrationValidated ? '' : 'flex'} ${isRegistrationValidated ? 'min-h-[800px] h-auto pt-10 pb-14' : 'h-[768px]'}`}
+          className={`bg-white rounded-lg shadow-lg overflow-hidden auth-layout-container ${isRegistrationValidated ? '' : 'flex'} ${isRegistrationValidated ? 'min-h-[800px] h-auto pt-10 pb-14' : 'h-[768px]'}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ 
             opacity: 1, 
