@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { z } from "zod";
@@ -28,21 +28,70 @@ export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   
-  // Clear any existing error toasts when the login page loads
-  useEffect(() => {
-    // We don't need to manually clear toasts as they'll be automatically cleared
-    // when navigating between pages
-  }, []);
-
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
     },
-    mode: "onBlur" // Validate when user leaves the field
+    mode: "onChange" // Changed from onBlur to onChange to better handle autofill
   });
+
+  // Handle autofill detection and form validation
+  useEffect(() => {
+    // Initialize a MutationObserver to detect when browser autofill occurs
+    // This works because browsers typically add inline styles when autofilling
+    if (emailInputRef.current && passwordInputRef.current) {
+      const emailInput = emailInputRef.current;
+      const passwordInput = passwordInputRef.current;
+      
+      // Function to check input values and update form if needed
+      const checkAutofill = () => {
+        if (emailInput.value && emailInput.value !== form.getValues('email')) {
+          form.setValue('email', emailInput.value, { 
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true 
+          });
+          console.log('[Login] Autofill detected for email:', emailInput.value);
+        }
+        
+        if (passwordInput.value && passwordInput.value !== form.getValues('password')) {
+          form.setValue('password', passwordInput.value, { 
+            shouldValidate: true,
+            shouldDirty: true,
+            shouldTouch: true 
+          });
+          console.log('[Login] Autofill detected for password, length:', passwordInput.value.length);
+        }
+      };
+      
+      // Check immediately for instant autofills
+      setTimeout(checkAutofill, 100);
+      
+      // Also check after a short delay to catch delayed autofills
+      setTimeout(checkAutofill, 500);
+      
+      // And check again after a longer delay for slower browsers/connections
+      setTimeout(checkAutofill, 1000);
+      
+      // Set up mutation observer to detect style changes from autofill
+      const observer = new MutationObserver((mutations) => {
+        checkAutofill();
+      });
+      
+      // Observe both inputs for attribute changes (especially style changes)
+      observer.observe(emailInput, { attributes: true });
+      observer.observe(passwordInput, { attributes: true });
+      
+      return () => {
+        observer.disconnect();
+      };
+    }
+  }, [form]);
 
   // Redirect if already logged in
   if (user) {
@@ -114,7 +163,8 @@ export default function LoginPage() {
                       autoComplete="email"
                       autoFocus
                       placeholder="Enter your email"
-                      className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email && form.formState.touchedFields.email ? "border-green-500" : ""}`}
+                      ref={emailInputRef}
+                      className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.email ? "border-green-500" : ""}`}
                       onChange={(e) => {
                         field.onChange(e);
                         console.log('[Login] Email field changed:', e.target.value);
@@ -122,10 +172,10 @@ export default function LoginPage() {
                     />
                   </FormControl>
                   <div className="min-h-[24px] mt-2">
-                    {field.value && form.formState.errors.email && form.formState.touchedFields.email && (
+                    {field.value && form.formState.errors.email && (
                       <FormMessage />
                     )}
-                    {field.value && !form.formState.errors.email && field.value.length > 0 && form.formState.touchedFields.email && (
+                    {field.value && !form.formState.errors.email && field.value.length > 0 && (
                       <p className="text-sm text-green-500 flex items-center gap-1">
                         <Check className="h-4 w-4" />
                         Valid email address
@@ -155,7 +205,8 @@ export default function LoginPage() {
                         {...field}
                         autoComplete="current-password"
                         placeholder="Enter your password"
-                        className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.password && form.formState.touchedFields.password ? "border-green-500" : ""}`}
+                        ref={passwordInputRef}
+                        className={`h-14 bg-gray-50 ${field.value && !form.formState.errors.password ? "border-green-500" : ""}`}
                         onChange={(e) => {
                           field.onChange(e);
                           console.log('[Login] Password field changed, length:', e.target.value.length);
@@ -177,10 +228,10 @@ export default function LoginPage() {
                     </Button>
                   </div>
                   <div className="min-h-[24px] mt-2">
-                    {field.value && form.formState.errors.password && form.formState.touchedFields.password && (
+                    {field.value && form.formState.errors.password && (
                       <FormMessage />
                     )}
-                    {field.value && !form.formState.errors.password && field.value.length > 0 && form.formState.touchedFields.password && (
+                    {field.value && !form.formState.errors.password && field.value.length > 0 && (
                       <p className="text-sm text-green-500 flex items-center gap-1">
                         <Check className="h-4 w-4" />
                         Password meets requirements
