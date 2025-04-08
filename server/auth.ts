@@ -207,7 +207,8 @@ export function setupAuth(app: Express) {
           userFriendlyMessage = "There was a problem with your account. Please contact support.";
         }
         
-        return res.status(401).json({ message: userFriendlyMessage });
+        // Use plain text error response instead of JSON to avoid client-side JSON parsing issues
+        return res.status(401).send(userFriendlyMessage);
       }
       req.login(user, (loginErr) => {
         if (loginErr) {
@@ -243,9 +244,8 @@ export function setupAuth(app: Express) {
 
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
-      return res.status(401).json({ 
-        message: 'Your session has expired. Please sign in again.'
-      });
+      // Use plain text error response for consistency
+      return res.status(401).send('Your session has expired. Please sign in again.');
     }
 
     console.log('[Auth] Returning user session data:', {
@@ -260,9 +260,8 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
-      return res.status(401).json({ 
-        message: "Your session has expired. Please sign in again." 
-      });
+      // Use plain text error response for consistency
+      return res.status(401).send("Your session has expired. Please sign in again.");
     }
     console.log('[Auth] Returning user session data');
     res.json(req.user);

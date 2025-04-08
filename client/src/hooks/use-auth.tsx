@@ -32,22 +32,15 @@ const useLoginMutation = () => {
 
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
+        // Get plain text error message directly from response
         const errorText = await res.text();
         console.error('[Auth] Login request failed:', errorText);
         
-        // Try to parse the error message to see if it's a JSON response
-        try {
-          const errorJson = JSON.parse(errorText);
-          if (errorJson.message) {
-            // Just use the message text directly without including it in an Error object
-            throw new Error(errorJson.message);
-          }
-        } catch (e) {
-          // It's not JSON or doesn't have a message field
-        }
+        // If we have an error message from the server, use it; otherwise use a default
+        const errorMessage = errorText || "We couldn't sign you in. Please check your email and password and try again.";
         
-        // If we couldn't extract a message from JSON, provide a friendly error
-        throw new Error("We couldn't sign you in. Please check your email and password and try again.");
+        // Throw a clean error with just the message text
+        throw new Error(errorMessage);
       }
 
       console.log('[Auth] Login request successful');
@@ -86,9 +79,14 @@ const useLoginMutation = () => {
     },
     onError: (error: Error) => {
       console.error('[Auth] Login mutation error:', error);
+      
+      // Use the error message directly from the Error object
+      // The mutationFn already handles cleaning up the error message
+      const errorMessage = error.message || "We couldn't sign you in. Please check your email and password and try again.";
+      
       toast({
         title: "Sign in failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -142,21 +140,14 @@ const useLogoutMutation = () => {
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/logout");
       if (!res.ok) {
+        // Get plain text error message directly from response
         const errorText = await res.text();
         console.error('[Auth] Logout request failed:', errorText);
         
-        // Try to parse the error message to see if it's a JSON response
-        try {
-          const errorJson = JSON.parse(errorText);
-          if (errorJson.message) {
-            throw new Error(errorJson.message);
-          }
-        } catch (e) {
-          // It's not JSON or doesn't have a message field
-        }
+        // If we have an error message from the server, use it; otherwise use a default
+        const errorMessage = errorText || "There was a problem signing out. Please try again.";
         
-        // If we couldn't extract a message from JSON, provide a friendly error
-        throw new Error("There was a problem signing out. Please try again.");
+        throw new Error(errorMessage);
       }
     },
     onSuccess: () => {
