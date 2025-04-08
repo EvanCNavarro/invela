@@ -52,7 +52,7 @@ export default function AboutPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-xl text-gray-600 mb-10"
+              className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto"
             >
               Invela was founded with a mission to simplify complex compliance processes for financial institutions and their technology partners.
             </motion.p>
@@ -69,13 +69,18 @@ export default function AboutPage() {
               whileInView="visible"
               viewport={{ once: true, amount: 0.2 }}
               variants={staggerContainer}
-              className="relative aspect-square rounded-2xl overflow-hidden bg-blue-100"
+              className="relative aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl"
             >
               <motion.div 
                 variants={fadeIn}
-                className="w-full h-full bg-gray-200 animate-pulse"
-              />
-              {/* This would be an image */}
+                className="w-full h-full"
+              >
+                <img 
+                  src="/images/company/thumbnail_00_about.png" 
+                  alt="Invela Trust Network Visualization" 
+                  className="w-full h-full object-cover"
+                />
+              </motion.div>
             </motion.div>
             
             <motion.div 
