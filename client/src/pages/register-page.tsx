@@ -316,7 +316,7 @@ export default function RegisterPage() {
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">
-                  Log in here
+                  Sign in here
                 </Link>
               </p>
             </motion.div>
@@ -500,7 +500,7 @@ export default function RegisterPage() {
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
                 <Link href="/login" className="text-primary hover:underline">
-                  Log in here
+                  Sign in here
                 </Link>
               </p>
               <p className="text-sm text-muted-foreground mt-2">

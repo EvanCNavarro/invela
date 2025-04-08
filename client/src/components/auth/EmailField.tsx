@@ -184,7 +184,7 @@ export function EmailField({
           className="w-full bg-[#FDEBE2] hover:bg-[#FDEBE2]/80 text-foreground"
           onClick={handleLoginRedirect}
         >
-          Account exists. Log in instead
+          Account exists. Sign in instead
         </Button>
       )}
     </>

@@ -548,7 +548,7 @@ export default function AuthPage() {
               alt="Invela"
               className="h-12 w-12 mx-auto mb-4"
             />
-            <h1 className="text-2xl font-bold">Log in to Invela</h1>
+            <h1 className="text-2xl font-bold">Sign in to Invela</h1>
           </div>
 
           {!showRegistrationForm && invitationCode && (
@@ -635,7 +635,7 @@ export default function AuthPage() {
                 className="w-full font-bold hover:opacity-90"
                 disabled={loginMutation.isPending}
               >
-                Log in
+                Sign in
               </Button>
             </form>
           </Form>
