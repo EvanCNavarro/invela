@@ -242,6 +242,16 @@ export default function AccreditationPage() {
       <section id="contact" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+              variants={fadeIn}
+              className="mb-6"
+            >
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/80" centered />
+            </motion.div>
+            
             <motion.h2 
               initial="hidden"
               whileInView="visible"
