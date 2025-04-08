@@ -81,10 +81,20 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
       
       <div className="flex-1 flex items-center justify-center p-6">
         <motion.div 
-          className={`w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden ${isRegistrationValidated ? '' : 'flex'} ${isRegistrationValidated ? 'min-h-[800px] h-auto' : 'h-[768px]'}`}
+          className={`bg-white rounded-lg shadow-lg overflow-hidden ${isRegistrationValidated ? '' : 'flex'} ${isRegistrationValidated ? 'min-h-[800px] h-auto pt-10 pb-14' : 'h-[768px]'}`}
           initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          animate={{ 
+            opacity: 1, 
+            y: 0,
+            width: isRegistrationValidated ? '100%' : '100%', 
+            maxWidth: isRegistrationValidated ? '800px' : '6xl'
+          }}
+          transition={{ 
+            duration: 0.5, 
+            ease: "easeOut",
+            width: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }, // Custom ease for width transition
+            maxWidth: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }
+          }}
         >
           {isRegistrationValidated ? (
             // Show full-width registration form
