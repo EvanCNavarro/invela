@@ -388,7 +388,7 @@ export default function RegisterPage() {
           </motion.div>
 
           <Form {...registrationForm}>
-            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="flex flex-col space-y-8 max-w-[600px] mx-auto registration-form-content">
+            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="flex flex-col space-y-6 max-w-[600px] mx-auto registration-form-content">
               <motion.div 
                 className="p-4 bg-blue-50 rounded-lg border border-blue-200"
                 initial={{ opacity: 0, y: 10 }}
@@ -421,7 +421,7 @@ export default function RegisterPage() {
                   control={registrationForm.control}
                   name="email"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mb-1">
                       <FormLabel className="text-base">Email</FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -431,7 +431,7 @@ export default function RegisterPage() {
                           </div>
                         </FormControl>
                       </div>
-                      <div className="min-h-[8px]">
+                      <div className="min-h-[4px]">
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -448,7 +448,7 @@ export default function RegisterPage() {
                   control={registrationForm.control}
                   name="company"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="mb-1">
                       <FormLabel className="text-base">Company</FormLabel>
                       <div className="relative">
                         <FormControl>
@@ -458,7 +458,7 @@ export default function RegisterPage() {
                           </div>
                         </FormControl>
                       </div>
-                      <div className="min-h-[8px]">
+                      <div className="min-h-[4px]">
                         <FormMessage />
                       </div>
                     </FormItem>
@@ -633,15 +633,9 @@ export default function RegisterPage() {
                   onClick={() => {
                     // First let the content fade out quickly
                     const formContent = document.querySelector('.registration-form-content');
-                    const authLayout = document.querySelector('.auth-layout-container');
                     
                     if (formContent) {
                       formContent.classList.add('fade-out');
-                    }
-                    
-                    // Animate the container to full width first
-                    if (authLayout) {
-                      authLayout.classList.add('auth-layout-expand');
                     }
                     
                     // Then set the state after a short delay

@@ -86,8 +86,8 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
           animate={{ 
             opacity: 1, 
             y: 0,
-            width: isRegistrationValidated ? '100%' : '100%', 
-            maxWidth: isRegistrationValidated ? '800px' : '6xl'
+            width: '100%', 
+            maxWidth: isRegistrationValidated ? '800px' : '980px'
           }}
           transition={{ 
             duration: 0.5, 
