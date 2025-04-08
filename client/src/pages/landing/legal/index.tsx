@@ -101,19 +101,19 @@ export default function LegalPage() {
             className="grid grid-cols-1 md:grid-cols-2 gap-8"
           >
             <LegalCard
-              icon={<FileText className="h-8 w-8 text-blue-600" />}
-              title="Terms of Use"
-              description="Read our terms and conditions for using the Invela platform and services."
-              link="/landing/legal/terms-of-use"
-              actionText="Read Terms"
-            />
-
-            <LegalCard
               icon={<ShieldCheck className="h-8 w-8 text-blue-600" />}
               title="Privacy Policy"
               description="Understand how we collect, use, and protect your personal information."
               link="/landing/legal/privacy-policy"
               actionText="Read Policy"
+            />
+
+            <LegalCard
+              icon={<FileText className="h-8 w-8 text-blue-600" />}
+              title="Terms of Use"
+              description="Read our terms and conditions for using the Invela platform and services."
+              link="/landing/legal/terms-of-use"
+              actionText="Read Terms"
             />
 
             <LegalCard
