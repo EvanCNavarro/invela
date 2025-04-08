@@ -3,6 +3,7 @@ import { addSecurityFormTables } from "./db/migrations/add_security_form_tables"
 import { populateSecurityFields } from "./db/migrations/populate_security_fields";
 import { updateTaskTitles } from "./db/migrations/update_task_titles";
 import { updateSecurityFields } from "./db/migrations/update_security_fields";
+import { updateKybFields2025April } from "./db/migrations/update_kyb_fields_2025_04";
 
 // Migration mapping to allow running specific migrations
 const migrations = {
@@ -10,6 +11,7 @@ const migrations = {
   'populate_security_fields': populateSecurityFields,
   'update_task_titles': updateTaskTitles,
   'update_security_fields': updateSecurityFields,
+  'update_kyb_fields_2025_april': updateKybFields2025April,
   'all': runMigrations
 };
 
