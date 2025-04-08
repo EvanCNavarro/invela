@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { wsService } from "@/lib/websocket";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
-import { getKybFields, KybField, saveKybProgress, getKybProgress, groupKybFieldsBySection } from "@/services/kybService";
+import { getKybFields, getKybFieldsByStepIndex, KybField, saveKybProgress, getKybProgress, groupKybFieldsBySection } from "@/services/kybService";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -691,12 +691,21 @@ export const OnboardingKYBFormPlayground = ({
   const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>([]);
   const [fieldConfig, setFieldConfig] = useState<Record<string, FormField>>({});
   
-  // Fetch KYB fields from the server
-  const { data: kybFields, isLoading: isLoadingFields, error: kybFieldsError } = useQuery({
+  // Fetch all KYB fields to have them available for reference
+  const { data: allKybFields, isLoading: isLoadingAllFields, error: allKybFieldsError } = useQuery({
     queryKey: ['/api/kyb/fields'],
     queryFn: getKybFields,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
+  });
+  
+  // Fetch KYB fields for the current step by step_index
+  const { data: kybFields, isLoading: isLoadingFields, error: kybFieldsError } = useQuery({
+    queryKey: ['/api/form-fields/company_kyb', currentStep],
+    queryFn: () => getKybFieldsByStepIndex(currentStep),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    enabled: !isSubmitted, // Only fetch if form is not submitted yet
   });
   
   // Process KYB fields when they are loaded
@@ -704,40 +713,49 @@ export const OnboardingKYBFormPlayground = ({
     if (kybFields && kybFields.length > 0) {
       // Convert API fields to form fields
       const formFieldsMap: Record<string, FormField> = {};
-      const groupedBySection: Record<string, KybField[]> = groupKybFieldsBySection(kybFields);
-      const newFormSteps: FormField[][] = [];
       
-      console.log('[KYB Form Debug] Processing API fields:', {
+      // We're now getting fields specifically for the current step
+      // So we don't need to group them by section, we can just process them directly
+      const formFields = kybFields
+        .sort((a, b) => a.order - b.order) // Ensure fields are in correct order
+        .map(field => {
+          const formField = convertKybFieldToFormField(field);
+          formFieldsMap[field.field_key] = formField;
+          return formField;
+        });
+      
+      console.log('[KYB Form Debug] Processing step-based API fields:', {
+        stepIndex: currentStep,
         fieldCount: kybFields.length,
-        groups: Object.keys(groupedBySection),
+        fieldNames: kybFields.map(f => f.field_key),
         timestamp: new Date().toISOString()
-      });
-      
-      // Process each group into a form step
-      Object.entries(groupedBySection).forEach(([groupName, fields]) => {
-        const formFields = fields
-          .sort((a, b) => a.order - b.order) // Ensure fields are in correct order
-          .map(field => {
-            const formField = convertKybFieldToFormField(field);
-            formFieldsMap[field.field_key] = formField;
-            return formField;
-          });
-          
-        newFormSteps.push(formFields);
       });
       
       // Update state with processed fields
-      setDynamicFormSteps(newFormSteps);
-      setFieldConfig(formFieldsMap);
+      setDynamicFormSteps(prevSteps => {
+        // Make a copy of the previous steps
+        const updatedSteps = [...prevSteps];
+        
+        // Update the step for the current index
+        updatedSteps[currentStep] = formFields;
+        
+        return updatedSteps;
+      });
       
-      console.log('[KYB Form Debug] Dynamic form steps created:', {
-        stepCount: newFormSteps.length,
-        fieldCount: Object.keys(formFieldsMap).length,
-        stepsBreakdown: newFormSteps.map(step => step.map(f => f.name)),
+      // Update the field config
+      setFieldConfig(prevConfig => ({
+        ...prevConfig,
+        ...formFieldsMap
+      }));
+      
+      console.log('[KYB Form Debug] Updated step fields:', {
+        stepIndex: currentStep,
+        fieldsUpdated: formFields.length,
+        fieldNames: formFields.map(f => f.name),
         timestamp: new Date().toISOString()
       });
     }
-  }, [kybFields]);
+  }, [kybFields, currentStep]);
 
   // Function to find the first incomplete step
   const findFirstIncompleteStep = (formData: Record<string, string>): number => {
@@ -910,6 +928,42 @@ export const OnboardingKYBFormPlayground = ({
       }
     };
   }, [taskId, queryClient]);
+  
+  // Add effect to handle step changes
+  useEffect(() => {
+    console.log('[KYB Form Debug] Step changed:', {
+      currentStep,
+      fieldsLoaded: kybFields ? kybFields.length : 0,
+      timestamp: new Date().toISOString()
+    });
+    
+    // When step changes, invalidate the query for the current step's fields
+    queryClient.invalidateQueries({ 
+      queryKey: ['/api/form-fields/company_kyb', currentStep]
+    });
+    
+    // Prefetch fields for adjacent steps - next and previous
+    if (currentStep > 0) {
+      const prevStep = currentStep - 1;
+      queryClient.prefetchQuery({
+        queryKey: ['/api/form-fields/company_kyb', prevStep],
+        queryFn: () => getKybFieldsByStepIndex(prevStep),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+    
+    // Use dynamic steps length if available, otherwise fallback to static steps
+    const maxSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps.length - 1 : FORM_STEPS.length - 1;
+    
+    if (currentStep < maxSteps) {
+      const nextStep = currentStep + 1;
+      queryClient.prefetchQuery({
+        queryKey: ['/api/form-fields/company_kyb', nextStep],
+        queryFn: () => getKybFieldsByStepIndex(nextStep),
+        staleTime: 5 * 60 * 1000,
+      });
+    }
+  }, [currentStep, queryClient, dynamicFormSteps, kybFields, getKybFieldsByStepIndex]);
 
   // Handle form updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
@@ -1006,6 +1060,17 @@ export const OnboardingKYBFormPlayground = ({
     }
     
     if (currentStep > 0) {
+      // Prefetch data for the previous step before navigating
+      const prevStep = currentStep - 1;
+      
+      // Prefetch the fields for the previous step if they're not already in cache
+      queryClient.prefetchQuery({
+        queryKey: ['/api/form-fields/company_kyb', prevStep],
+        queryFn: () => getKybFieldsByStepIndex(prevStep),
+        staleTime: 5 * 60 * 1000,
+      });
+      
+      // Then navigate to the previous step
       setCurrentStep(current => current - 1);
     }
   };
@@ -1027,6 +1092,17 @@ export const OnboardingKYBFormPlayground = ({
     const maxSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps.length - 1 : FORM_STEPS.length - 1;
     
     if (currentStep < maxSteps) {
+      // Prefetch data for the next step before navigating
+      const nextStep = currentStep + 1;
+      
+      // Prefetch the fields for the next step
+      queryClient.prefetchQuery({
+        queryKey: ['/api/form-fields/company_kyb', nextStep],
+        queryFn: () => getKybFieldsByStepIndex(nextStep),
+        staleTime: 5 * 60 * 1000,
+      });
+      
+      // Then navigate to the next step
       setCurrentStep(current => current + 1);
     } else {
       // Last step completed, go to review mode instead of submitting
