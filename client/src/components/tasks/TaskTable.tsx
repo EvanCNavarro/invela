@@ -101,6 +101,16 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
       timestamp: new Date().toISOString()
     });
 
+    // Reset any lingering overlay issues first
+    document.body.style.overflow = '';
+    document.body.style.pointerEvents = '';
+    const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+    overlays.forEach(overlay => {
+      if (overlay instanceof HTMLElement) {
+        overlay.style.display = 'none';
+      }
+    });
+
     // Check if Security Assessment task is locked (needs KYB to be completed)
     if (task.task_type === 'security_assessment' && !isKybCompleted(task.company_id)) {
       console.log('[TaskTable] Security Assessment task locked - KYB not completed');
@@ -186,9 +196,16 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
         isSubmitted: task.status === 'submitted',
         timestamp: new Date().toISOString()
       });
-      // Show modal for other task types or submitted KYB/CARD tasks
-      setSelectedTask(task);
-      setDetailsModalOpen(true);
+      
+      // Make sure any existing modal is closed first
+      setDetailsModalOpen(false);
+      
+      // Small delay to ensure previous modal is fully closed
+      setTimeout(() => {
+        // Show modal for other task types or submitted KYB/CARD tasks
+        setSelectedTask(task);
+        setDetailsModalOpen(true);
+      }, 50);
     }
   };
 
@@ -299,8 +316,24 @@ export function TaskTable({ tasks, companyOnboardingCompleted }: {
                               <DropdownMenuContent align="end" className="w-[160px]">
                                 <DropdownMenuItem
                                   onClick={() => {
-                                    setSelectedTask(task);
-                                    setDetailsModalOpen(true);
+                                    // Reset any lingering overlay issues first
+                                    document.body.style.overflow = '';
+                                    document.body.style.pointerEvents = '';
+                                    const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
+                                    overlays.forEach(overlay => {
+                                      if (overlay instanceof HTMLElement) {
+                                        overlay.style.display = 'none';
+                                      }
+                                    });
+                                    
+                                    // Make sure any existing modal is closed first
+                                    setDetailsModalOpen(false);
+                                    
+                                    // Small delay to ensure previous modal is fully closed
+                                    setTimeout(() => {
+                                      setSelectedTask(task);
+                                      setDetailsModalOpen(true);
+                                    }, 50);
                                   }}
                                   className="cursor-pointer"
                                 >
