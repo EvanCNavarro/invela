@@ -18,7 +18,7 @@ export function useScrollToHash() {
       const targetElement = document.getElementById(targetId);
       
       if (targetElement) {
-        // Add a longer delay to ensure the page is fully rendered
+        // Add a slight delay to ensure the page is fully rendered
         setTimeout(() => {
           // Calculate header height (assuming header is 64px tall)
           const headerHeight = 64;
@@ -37,7 +37,7 @@ export function useScrollToHash() {
             top: offsetPosition,
             behavior: 'smooth'
           });
-        }, 300);
+        }, 100);
       }
     }
   }, []);
