@@ -42,8 +42,19 @@ function LegalCard({
     <Link href={link}>
       <motion.div 
         variants={fadeIn} 
-        className="group relative bg-white rounded-xl p-8 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+        className="group relative bg-white rounded-xl p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden"
       >
+        {/* Gradient border that appears on hover */}
+        <div 
+          className="absolute inset-0 rounded-xl p-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(73, 101, 236, 0.5) 0%, rgba(32, 156, 90, 0.5) 100%)',
+            zIndex: 0 
+          }}
+        >
+          <div className="absolute inset-0 bg-white rounded-xl m-[1px]"></div>
+        </div>
+        
         {/* Bottom right gradient blur that appears on hover */}
         <div 
           className="absolute bottom-0 right-0 w-[55%] h-[45%] bg-blue-300/10 rounded-br-lg blur-xl opacity-0 
@@ -51,15 +62,15 @@ function LegalCard({
           style={{ zIndex: 0 }}
         />
         
-        <div className="mb-5 inline-block p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors duration-150 z-10">
+        <div className="mb-5 inline-block p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors duration-150 z-10 relative">
           {icon}
         </div>
-        <h2 className="text-2xl font-semibold mb-3 group-hover:text-blue-600 transition-colors duration-150 z-10">{title}</h2>
-        <p className="text-gray-600 mb-6 z-10">
+        <h2 className="text-2xl font-semibold mb-3 group-hover:text-blue-600 transition-colors duration-150 z-10 relative">{title}</h2>
+        <p className="text-gray-600 mb-6 z-10 relative">
           {description}
         </p>
-        <div className="flex items-center text-blue-600 font-medium group-hover:text-blue-800 z-10">
-          {actionText} <ArrowRight className="ml-2 h-4 w-4" />
+        <div className="flex items-center text-blue-600 font-medium group-hover:text-blue-800 z-10 relative">
+          {actionText} <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </motion.div>
     </Link>
