@@ -222,13 +222,13 @@ export function WelcomeModal() {
         <DialogDescription className="sr-only">{carouselContent[currentSlide].subtitle}</DialogDescription>
         <div className="flex flex-col w-full">
           {/* Content header with title and subtitle */}
-          <div className="pt-12 pb-10 px-10 text-center">
-            <h2 className="text-3xl font-bold mb-5">{carouselContent[currentSlide].title}</h2>
+          <div className="pt-16 pb-16 px-10 text-center">
+            <h2 className="text-3xl font-bold mb-6">{carouselContent[currentSlide].title}</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">{carouselContent[currentSlide].subtitle}</p>
           </div>
           
           {/* Image content with even spacing above and below */}
-          <div className="px-12 py-12 flex justify-center items-center">
+          <div className="px-12 py-16 flex justify-center items-center">
             <div className="relative flex items-center justify-center w-full">
               {/* Log image path but don't display anything */}
               {(() => { console.log('Loading image:', carouselContent[currentSlide].src); return null; })()}
@@ -269,7 +269,7 @@ export function WelcomeModal() {
           </div>
           
           {/* Navigation buttons with step indicators in between - more spacing */}
-          <div className="flex items-center justify-between p-10 border-t mt-2">
+          <div className="flex items-center justify-between p-16 border-t">
             {/* Back button - hidden on first slide */}
             <div className="min-w-[100px]">
               {currentSlide > 0 && (
