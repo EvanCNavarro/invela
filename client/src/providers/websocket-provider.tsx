@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect } from 'react';
 import { useWebSocket, UseWebSocketReturn } from '@/hooks/use-websocket';
 
 // Create a context for the WebSocket
@@ -20,6 +20,31 @@ export function WebSocketProvider({
 }: WebSocketProviderProps): JSX.Element {
   // Use the WebSocket hook to manage the connection
   const webSocket = useWebSocket(autoConnect);
+  
+  // Add error handling for connection failures
+  useEffect(() => {
+    // Log connection status changes
+    const handleConnectionChange = (connected: boolean) => {
+      if (connected) {
+        console.log('[WebSocketProvider] Connection established');
+      } else {
+        console.log('[WebSocketProvider] Connection lost or failed');
+      }
+    };
+    
+    // Add and remove connection listener
+    webSocket.addMessageListener('connection_established', () => {
+      console.log('[WebSocketProvider] Received connection confirmation');
+    });
+    
+    // Monitor connection state
+    webSocket.addConnectionListener(handleConnectionChange);
+    
+    // Clean up
+    return () => {
+      webSocket.removeConnectionListener(handleConnectionChange);
+    };
+  }, [webSocket]);
   
   return (
     <WebSocketContext.Provider value={webSocket}>

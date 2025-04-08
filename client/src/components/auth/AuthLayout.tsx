@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
+import { motion } from "framer-motion";
 import { AuthHeroSection } from "./AuthHeroSection";
 import { AuthFooter } from "./AuthFooter";
 
@@ -29,9 +30,14 @@ export function AuthLayout({ children, isLogin, isRegistrationValidated = false 
       <div className="flex-1 flex items-center justify-center p-6">
         {isRegistrationValidated ? (
           // Account creation form (step 2 of registration) - narrow width
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]">
+          <motion.div 
+            className="bg-white rounded-lg shadow-lg overflow-hidden min-h-[800px] h-auto pt-10 pb-14 w-full max-w-[800px]"
+            initial={{ width: "980px" }}
+            animate={{ width: "800px" }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+          >
             {children}
-          </div>
+          </motion.div>
         ) : (
           // Login or initial registration (step 1) - wider width with two columns
           <div className="bg-white rounded-lg shadow-lg overflow-hidden h-[768px] flex w-full max-w-[980px]">

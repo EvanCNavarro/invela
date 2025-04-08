@@ -269,12 +269,11 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <WebSocketProvider>
-          <ToastProvider>
-            <Router />
-            <Toaster />
-          </ToastProvider>
-        </WebSocketProvider>
+        {/* Temporarily disabled WebSocketProvider to focus on auth layout */}
+        <ToastProvider>
+          <Router />
+          <Toaster />
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

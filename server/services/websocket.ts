@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from 'ws';
+import { IncomingMessage } from 'http';
 import { Server } from 'http';
 
 // Define the WebSocket service
@@ -11,15 +12,8 @@ export class WebSocketService {
     this.wss = new WebSocketServer({ 
       server, 
       path: '/ws',
-      // Explicitly ignore connections with Vite HMR protocol
-      verifyClient: (info) => {
-        const protocol = info.req.headers['sec-websocket-protocol'];
-        if (protocol === 'vite-hmr') {
-          console.log('[WebSocket] Ignoring Vite HMR connection');
-          return false;
-        }
-        return true;
-      }
+      // Don't use verifyClient as it's causing issues
+      // Simply handle the connection event and check protocol there
     });
 
     console.log('[WebSocket] Server initialized on path: /ws');
