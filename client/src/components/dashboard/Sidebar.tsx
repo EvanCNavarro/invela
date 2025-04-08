@@ -18,6 +18,7 @@ import { usePlaygroundVisibility } from "@/hooks/use-playground-visibility";
 import { SidebarTab } from "./SidebarTab";
 import { useEffect, useState } from "react";
 import { wsService } from "@/lib/websocket";
+import { TaskCountData } from "@/lib/types";
 
 interface SidebarProps {
   isExpanded: boolean;
@@ -69,7 +70,7 @@ export function Sidebar({
     const setupWebSocketSubscriptions = async () => {
       try {
         // Subscribe to task creation
-        const unsubTaskCreate = await wsService.subscribe('task_created', (data) => {
+        const unsubTaskCreate = await wsService.subscribe('task_created', (data: TaskCountData) => {
           if (data.count?.total !== undefined) {
             setTaskCount(data.count.total);
           }
@@ -77,7 +78,7 @@ export function Sidebar({
         subscriptions.push(unsubTaskCreate);
 
         // Subscribe to task deletion
-        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data) => {
+        const unsubTaskDelete = await wsService.subscribe('task_deleted', (data: TaskCountData) => {
           if (data.count?.total !== undefined) {
             setTaskCount(data.count.total);
           }
@@ -85,7 +86,7 @@ export function Sidebar({
         subscriptions.push(unsubTaskDelete);
 
         // Subscribe to task updates
-        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data) => {
+        const unsubTaskUpdate = await wsService.subscribe('task_updated', (data: TaskCountData) => {
           if (data.count?.total !== undefined) {
             setTaskCount(data.count.total);
           }
