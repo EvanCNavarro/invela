@@ -70,7 +70,8 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybFields(): Promise<KybField[]> {
     try {
-      const fields = await apiRequest('/api/kyb/fields');
+      const response = await apiRequest('GET', '/api/kyb/fields');
+      const fields = await response.json();
       return fields;
     } catch (error) {
       console.error('Error fetching KYB fields:', error);
@@ -225,13 +226,11 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
     try {
-      return await apiRequest(`/api/kyb/progress/${taskId}`, {
-        method: 'POST',
-        data: {
-          progress,
-          formData
-        }
+      const response = await apiRequest('POST', `/api/kyb/progress/${taskId}`, {
+        progress,
+        formData
       });
+      return await response.json();
     } catch (error) {
       console.error('Error saving KYB progress:', error);
       throw error;
@@ -245,7 +244,9 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybProgress(taskId: number): Promise<KybProgressResponse> {
     try {
-      return await apiRequest(`/api/kyb/progress/${taskId}`);
+      const response = await apiRequest('GET', `/api/kyb/progress/${taskId}`);
+      const data = await response.json();
+      return data;
     } catch (error) {
       console.error('Error getting KYB progress:', error);
       throw error;
@@ -295,13 +296,11 @@ export class KybFormService implements FormServiceInterface {
    */
   async submitKybForm(taskId: number, formData: Record<string, any>, fileName?: string) {
     try {
-      return await apiRequest(`/api/kyb/submit/${taskId}`, {
-        method: 'POST',
-        data: {
-          formData,
-          fileName
-        }
+      const response = await apiRequest('POST', `/api/kyb/submit/${taskId}`, {
+        formData,
+        fileName
       });
+      return await response.json();
     } catch (error) {
       console.error('Error submitting KYB form:', error);
       throw error;
