@@ -1,7 +1,5 @@
-import * as React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useUnifiedToast } from "@/hooks/use-unified-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { FileItem } from "@/types/files";
 
 type FileToastOptions = {
@@ -53,33 +51,43 @@ export function useFileToast() {
     
     let toastId: string | undefined;
     
+    // Custom cancel handler that converts upload toast to error toast
+    const handleCancel = () => {
+      if (onCancel) {
+        onCancel();
+      }
+      
+      // Call the error function to show error toast
+      error("Upload cancelled");
+      console.log("Upload cancelled");
+    };
+    
     // Function to set progress
     const setProgress = (progress: number) => {
-      if (!toastId && progress > 0) return;
+      if (progress < 0 || progress > 100) return;
       
-      // If it's the first progress update and file is starting to upload
-      if (progress === 0) {
-        const progressToast = unifiedToast.fileUploadProgress(
-          fileName,
-          0,
-          onCancel,
-          showUploadAnother ? onUploadAnother : undefined
-        ) as ToastReturnType;
+      // If this is the first progress update, create the toast
+      if (!toastId) {
+        const progressToast = toast({
+          variant: "file-upload",
+          title: `Uploading '${fileName}'`,
+          description: `Please wait while we upload your file. ${progress}%`,
+          duration: 30000,
+        });
         
         toastId = progressToast.id;
         return;
       }
       
-      // If it's a progress update 
-      if (progress > 0 && progress < 100) {
-        const progressToast = unifiedToast.fileUploadProgress(
-          fileName,
-          progress,
-          onCancel,
-          showUploadAnother ? onUploadAnother : undefined
-        ) as ToastReturnType;
-        
-        toastId = progressToast.id;
+      // Otherwise, update the existing toast with new progress
+      if (toastId && progress < 100) {
+        toast({
+          id: toastId,
+          variant: "file-upload",
+          title: `Uploading '${fileName}'`,
+          description: `Please wait while we upload your file. ${progress}%`,
+          duration: 30000,
+        } as any);
       }
       
       // If upload is complete, convert to success toast
@@ -97,12 +105,22 @@ export function useFileToast() {
     // Function to show success toast
     const success = (file: FileItem) => {
       if (toastId) {
+        // Update the existing toast to show success
         toast({
           id: toastId,
-          open: false,
+          variant: "success",
+          title: "File uploaded successfully",
+          description: `${file.name} has been uploaded.`,
         } as any);
+        
+        if (onSuccess) {
+          onSuccess(file);
+        }
+        
+        return { id: toastId, update: () => {}, dismiss: () => {} };
       }
       
+      // If no existing toast, create a new success toast
       const successToast = unifiedToast.fileUploadSuccess(file);
       if (onSuccess) {
         onSuccess(file);
@@ -112,16 +130,28 @@ export function useFileToast() {
     
     // Function to show error toast
     const error = (customError?: string) => {
+      const errorMsg = customError || errorMessage || "Upload failed";
+      
       if (toastId) {
+        // Update the existing toast to show error
         toast({
           id: toastId,
-          open: false,
+          variant: "error",
+          title: "Upload failed",
+          description: `Failed to upload ${fileName}. ${errorMsg}`,
         } as any);
+        
+        if (onError) {
+          onError(errorMsg);
+        }
+        
+        return { id: toastId, update: () => {}, dismiss: () => {} };
       }
       
-      const errorToast = unifiedToast.fileUploadError(fileName, customError || errorMessage);
+      // If no existing toast, create a new error toast
+      const errorToast = unifiedToast.fileUploadError(fileName, errorMsg);
       if (onError) {
-        onError(customError || errorMessage || "Upload failed");
+        onError(errorMsg);
       }
       return errorToast;
     };
@@ -138,12 +168,12 @@ export function useFileToast() {
     
     // If autoStart is true, create the initial upload toast
     if (autoStart) {
-      const initialToast = unifiedToast.fileUploadProgress(
-        fileName,
-        0,
-        onCancel,
-        showUploadAnother ? onUploadAnother : undefined
-      ) as ToastReturnType;
+      const initialToast = toast({
+        variant: "file-upload",
+        title: `Uploading '${fileName}'`,
+        description: `Please wait while we upload your file. 0%`,
+        duration: 30000,
+      });
       
       toastId = initialToast.id;
     }
