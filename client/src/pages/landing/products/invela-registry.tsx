@@ -61,22 +61,21 @@ export default function InvelaRegistryPage() {
               </motion.p>
             </div>
             
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
-                <img 
-                  src="/images/products/thumbnail_03_invela-registry.png" 
-                  alt="Invela Registry Document" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              {/* Decorative elements */}
-              <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
-            </motion.div>
+            <div className="relative">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+              >
+                <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl relative">
+                  <img 
+                    src="/images/products/thumbnail_03_invela-registry.png" 
+                    alt="Invela Registry Document" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -277,10 +276,8 @@ export default function InvelaRegistryPage() {
               variants={fadeIn}
               className="flex justify-center"
             >
-              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form">
-                <div className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
-                  Contact Sales <Send className="ml-2 h-5 w-5" />
-                </div>
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center cursor-pointer">
+                Contact Sales <Send className="ml-2 h-5 w-5" />
               </Link>
             </motion.div>
           </div>
