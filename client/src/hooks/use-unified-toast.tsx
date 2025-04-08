@@ -201,15 +201,26 @@ const getProgressBarStandalone = (
 
 // Export standalone functions for use without the hook
 export const unifiedToast = {
-  success: (title: string, description?: string) => {
-    return baseToast({
-      variant: "success",
-      title,
-      description,
-      duration: STANDARD_DURATION,
-    });
+  // Enhanced success toast with support for both string and object params
+  success: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+    if (typeof titleOrOptions === 'string') {
+      return baseToast({
+        variant: "success",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return baseToast({
+        variant: "success",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
   },
   
+  // Info toast
   info: (title: string, description?: string) => {
     return baseToast({
       variant: "info",
@@ -219,6 +230,7 @@ export const unifiedToast = {
     });
   },
   
+  // Warning toast
   warning: (title: string, description?: string) => {
     return baseToast({
       variant: "warning",
@@ -228,13 +240,23 @@ export const unifiedToast = {
     });
   },
   
-  error: (title: string, description?: string) => {
-    return baseToast({
-      variant: "error",
-      title,
-      description,
-      duration: STANDARD_DURATION,
-    });
+  // Enhanced error toast with support for both string and object params
+  error: (titleOrOptions: string | { title: string; description?: string; id?: string }) => {
+    if (typeof titleOrOptions === 'string') {
+      return baseToast({
+        variant: "error",
+        title: titleOrOptions,
+        duration: STANDARD_DURATION,
+      });
+    } else {
+      return baseToast({
+        variant: "error",
+        title: titleOrOptions.title,
+        description: titleOrOptions.description,
+        duration: STANDARD_DURATION,
+        id: titleOrOptions.id,
+      });
+    }
   },
   
   fileUploadStarted: (fileName: string) => {
@@ -315,6 +337,49 @@ export const unifiedToast = {
     );
     
     return baseToast({
+      variant: "file-upload",
+      title: `Uploading '${fileName}'`,
+      description: progressBar,
+      duration: 30000, // Stay open until complete or timeout
+    });
+  },
+  
+  // New method that takes options object for more flexibility and ID support
+  uploadProgress: (options: {
+    id?: string;
+    fileName: string;
+    progress: number;
+    onCancel?: () => void;
+    onUploadAnother?: () => void;
+  }) => {
+    const { id, fileName, progress, onCancel, onUploadAnother } = options;
+    
+    // Create a progress bar component directly in JSX
+    const progressBar = (
+      <div className="w-full">
+        <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+          <div 
+            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-700 ease-in-out" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between items-center mt-1">
+          <div className="text-sm font-medium text-gray-700">{progress}%</div>
+          {progress < 100 && onCancel && (
+            <button
+              onClick={onCancel}
+              className="text-sm text-gray-500 hover:text-gray-900"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </div>
+    );
+    
+    return baseToast({
+      id,
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
       description: progressBar,
