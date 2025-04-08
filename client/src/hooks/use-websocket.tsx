@@ -30,10 +30,6 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
   // Effect to manage WebSocket connection
   useEffect(() => {
-    if (autoConnect) {
-      connect();
-    }
-
     // We can't directly check connection status with our websocket service
     // So we'll just set it to 'connecting' when autoConnect is true
     if (autoConnect) {
