@@ -1,6 +1,4 @@
 import * as React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
@@ -60,81 +58,88 @@ interface TaskModalProps {
 
 export function TaskModal({ task, open, onOpenChange }: TaskModalProps) {
   const modalRef = React.useRef<HTMLDivElement>(null);
+  const [isClosing, setIsClosing] = React.useState(false);
   
-  // Clean up any potential overlay issues when component unmounts
+  // Reset modal state when task changes
   React.useEffect(() => {
-    if (!open) {
-      // Make sure document body is scrollable
-      document.body.style.overflow = '';
-      document.body.style.pointerEvents = '';
+    if (task && open) {
+      setIsClosing(false);
     }
+  }, [task, open]);
 
+  // Handle outside clicks
+  React.useEffect(() => {
+    if (!open) return;
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    
     return () => {
-      // Reset any potential overlay state issues
-      document.body.style.overflow = '';
-      document.body.style.pointerEvents = '';
-      
-      // Force reset all dialog-related elements when component unmounts
-      const overlays = document.querySelectorAll('[data-state="open"][data-radix-dialog-overlay]');
-      overlays.forEach(overlay => {
-        if (overlay instanceof HTMLElement) {
-          overlay.style.display = 'none';
-          overlay.setAttribute('data-state', 'closed');
-        }
-      });
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [open]);
+  
+  // Handle escape key
+  React.useEffect(() => {
+    if (!open) return;
+    
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleEscKey);
+    
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
     };
   }, [open]);
 
-  // Create a direct close handler that bypasses animations
-  const handleDirectClose = React.useCallback(() => {
-    if (modalRef.current) {
-      // Forcibly remove modal
-      modalRef.current.style.display = 'none';
-    }
-    
-    // Force all overlays to be closed
-    const overlays = document.querySelectorAll('[data-radix-dialog-overlay]');
-    overlays.forEach(overlay => {
-      if (overlay instanceof HTMLElement) {
-        overlay.style.display = 'none';
-      }
-    });
-    
-    // Call onOpenChange after cleanup
-    onOpenChange(false);
-    
-    // Restore document state
-    document.body.style.overflow = '';
-    document.body.style.pointerEvents = '';
-  }, [onOpenChange]);
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onOpenChange(false);
+      setIsClosing(false);
+    }, 150);
+  };
 
-  if (!task) return null;
+  if (!task || !open) return null;
 
   return (
-    <Dialog open={open} modal={false}>
-      <DialogContent 
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className={`absolute inset-0 bg-black/50 transition-opacity ${isClosing ? 'opacity-0' : 'opacity-100'}`}
+        style={{transitionDuration: '150ms'}}
+      />
+      
+      {/* Modal */}
+      <div 
         ref={modalRef}
-        className="sm:max-w-[600px]" 
-        onEscapeKeyDown={handleDirectClose}
-        onPointerDownOutside={handleDirectClose}
-        onInteractOutside={handleDirectClose}
+        className={`bg-white dark:bg-slate-950 z-50 rounded-lg shadow-lg p-6 max-w-[600px] w-full max-h-[90vh] overflow-auto transition-all ${isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}
+        style={{transitionDuration: '150ms'}}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background hover:opacity-100"
-          onClick={handleDirectClose}
+        {/* Close button */}
+        <button
+          className="absolute right-4 top-4 rounded-sm p-1 opacity-70 ring-offset-background hover:opacity-100"
+          onClick={handleClose}
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
-        </Button>
+        </button>
         
-        <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">{task.title}</DialogTitle>
-          <DialogDescription className="sr-only">Details about the task</DialogDescription>
-        </DialogHeader>
+        {/* Header */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold">{task.title}</h2>
+        </div>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6">
           {/* Status and Progress Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -184,7 +189,7 @@ export function TaskModal({ task, open, onOpenChange }: TaskModalProps) {
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
