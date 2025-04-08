@@ -78,57 +78,18 @@ export function useUnifiedToast() {
     });
   };
 
-  // Reusable progress bar component for file uploads
-  const getProgressBar = (
-    progress: number, 
-    onCancel?: () => void, 
-    onUploadAnother?: () => void
-  ) => {
-    return (
-      <div className="w-full">
-        <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-          <div 
-            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between items-center">
-          <div className="text-right text-sm font-medium text-gray-700">{progress}%</div>
-          <div className="flex gap-4">
-            {progress < 100 && onCancel && (
-              <button 
-                onClick={onCancel}
-                className="text-sm text-gray-500 hover:text-gray-900"
-              >
-                Cancel
-              </button>
-            )}
-            {progress === 100 && onUploadAnother && (
-              <button 
-                onClick={onUploadAnother}
-                className="text-sm text-indigo-600 hover:text-indigo-700"
-              >
-                Upload another
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Progress bar no longer needed
 
-  // Advanced File Upload Toast with Progress
+  // Simple File Upload Toast (no progress)
   const fileUploadProgress = (
     fileName: string, 
-    progress: number, 
     onCancel?: () => void
   ) => {
-    // Create a simple toast that shows progress as text
+    // Create a toast without progress indication
     const toastRef = toast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: `Please wait while we upload your file. ${progress}%`,
+      description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
       action: onCancel ? (
         <ToastAction altText="Cancel" onClick={onCancel}>
@@ -163,45 +124,7 @@ export function useUnifiedToast() {
   };
 }
 
-// Define the progress bar component for the standalone export
-const getProgressBarStandalone = (
-  progress: number, 
-  onCancel?: () => void, 
-  onUploadAnother?: () => void
-) => {
-  return (
-    <div className="w-full">
-      <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-        <div 
-          className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
-          style={{ width: `${progress}%` }}
-        ></div>
-      </div>
-      <div className="flex justify-between items-center">
-        <div className="text-right text-sm font-medium text-gray-700">{progress}%</div>
-        <div className="flex gap-4">
-          {progress < 100 && onCancel && (
-            <button 
-              onClick={onCancel}
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-          )}
-          {progress === 100 && onUploadAnother && (
-            <button 
-              onClick={onUploadAnother}
-              className="text-sm text-indigo-600 hover:text-indigo-700"
-            >
-              Upload another
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
+// Standalone progress bar no longer needed
 
 // Export standalone functions for use without the hook
 export const unifiedToast = {
@@ -300,16 +223,15 @@ export const unifiedToast = {
     });
   },
   
-  // File upload with progress as text
+  // Simple file upload toast
   fileUploadProgress: (
     fileName: string, 
-    progress: number, 
     onCancel?: () => void
   ) => {
     return baseToast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: `Please wait while we upload your file. ${progress}%`,
+      description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
       action: onCancel ? (
         <ToastAction altText="Cancel" onClick={onCancel}>
@@ -319,21 +241,19 @@ export const unifiedToast = {
     });
   },
   
-  // New method that takes options object for more flexibility and ID support
+  // Method with ID support
   uploadProgress: (options: {
     id?: string;
     fileName: string;
-    progress: number;
     onCancel?: () => void;
-    onUploadAnother?: () => void;
   }) => {
-    const { id, fileName, progress, onCancel } = options;
+    const { id, fileName, onCancel } = options;
     
     return baseToast({
       id,
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: `Please wait while we upload your file. ${progress}%`,
+      description: "Please wait while we upload your file.",
       duration: 30000, // Stay open until complete or timeout
       action: onCancel ? (
         <ToastAction altText="Cancel" onClick={onCancel}>

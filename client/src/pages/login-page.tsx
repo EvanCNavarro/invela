@@ -109,22 +109,19 @@ export default function LoginPage() {
       () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
-        // Demonstrate a simpler file upload toast flow
+        // Demonstrate simplified file upload toast flow - no progress updates
         const mockFile = {
           name: 'sample-file.pdf',
           size: 1024 * 1024 * 2.5, // 2.5MB
           type: 'application/pdf'
         };
         
-        let progress = 0;
-        let intervalId: NodeJS.Timeout;
-        
         // Create a file upload toast that persists until completion
         const uploadToast = createFileUploadToast(mockFile as FileItem, {
           autoStart: true,
           onCancel: () => {
             console.log("Upload cancelled by user");
-            if (intervalId) clearInterval(intervalId);
+            clearTimeout(uploadCompleteTimer);
           },
           onSuccess: (file) => {
             console.log("Upload completed successfully:", file.name);
@@ -134,20 +131,17 @@ export default function LoginPage() {
           }
         });
         
-        // Set up interval to simulate upload progress
-        intervalId = setInterval(() => {
-          progress += 10;
+        // Simulate a completed upload after 3 seconds
+        const uploadCompleteTimer = setTimeout(() => {
+          // Show success toast when upload completes
+          uploadToast.uploadComplete({
+            name: mockFile.name,
+            size: mockFile.size,
+            type: mockFile.type
+          });
           
-          if (progress <= 100) {
-            // Update the toast with new progress
-            uploadToast.setProgress(progress);
-          } 
-          
-          if (progress >= 100) {
-            // Upload complete - clear interval
-            clearInterval(intervalId);
-          }
-        }, 500); // Update every 500ms
+          console.log("Upload completed successfully:", mockFile.name);
+        }, 3000);
       }
     ];
     

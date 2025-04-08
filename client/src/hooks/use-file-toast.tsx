@@ -11,14 +11,11 @@ type FileToastOptions = {
   onError?: (error: string) => void;
   successMessage?: string;
   errorMessage?: string;
-  showUploadAnother?: boolean;
-  onUploadAnother?: () => void;
 };
 
 interface FileUploadToastRef {
   id: string | undefined;
-  setProgress: (progress: number) => void;
-  success: (file: FileItem) => void;
+  uploadComplete: (file: FileItem) => void;
   error: (errorMessage?: string) => void;
   dismiss: () => void;
 }
@@ -32,23 +29,18 @@ export function useFileToast() {
     options: FileToastOptions = {}
   ): FileUploadToastRef => {
     const fileName = file.name;
-    const fileSize = file.size;
     
     const {
       autoStart = true,
       onCancel,
       onSuccess,
       onError,
-      successMessage,
       errorMessage,
-      showUploadAnother = false,
-      onUploadAnother,
     } = options;
     
     let toastId: string | undefined;
-    let currentProgress = 0;
     
-    // Custom cancel handler that converts upload toast to error toast
+    // Custom cancel handler
     const handleCancel = () => {
       if (onCancel) {
         onCancel();
@@ -59,58 +51,8 @@ export function useFileToast() {
       console.log("Upload cancelled");
     };
     
-    // Function to set progress
-    const setProgress = (progress: number) => {
-      if (progress < 0 || progress > 100) return;
-      
-      // Save current progress
-      currentProgress = progress;
-      
-      // If this is the first progress update, create the toast
-      if (!toastId) {
-        // Create the initial uploading toast
-        const progressToast = toast({
-          variant: "file-upload",
-          title: `Uploading '${fileName}'`,
-          description: `Please wait while we upload your file. ${progress}%`,
-          duration: 30000, // Long duration while uploading
-          action: onCancel ? (
-            <ToastAction altText="Cancel" onClick={handleCancel}>
-              Cancel
-            </ToastAction>
-          ) : undefined,
-        });
-        
-        toastId = progressToast.id;
-        return;
-      }
-      
-      // Update the toast description with new progress
-      if (toastId && progress < 100) {
-        toast({
-          id: toastId,
-          description: `Please wait while we upload your file. ${progress}%`,
-        } as any);
-      }
-      
-      // If upload is complete, dismiss this toast and show success
-      if (progress === 100) {
-        setTimeout(() => {
-          // Dismiss the progress toast
-          dismiss();
-          
-          // Show success toast
-          success({
-            name: fileName,
-            size: fileSize,
-            type: ""
-          });
-        }, 500);
-      }
-    };
-    
-    // Function to show success toast
-    const success = (file: FileItem) => {
+    // Function for upload completion
+    const uploadComplete = (file: FileItem) => {
       // Dismiss the existing upload toast if it exists
       if (toastId) {
         dismiss();
@@ -163,7 +105,7 @@ export function useFileToast() {
       const initialToast = toast({
         variant: "file-upload",
         title: `Uploading '${fileName}'`,
-        description: `Please wait while we upload your file. 0%`,
+        description: "Please wait while we upload your file.",
         duration: 30000, // Long duration while uploading
         action: onCancel ? (
           <ToastAction altText="Cancel" onClick={handleCancel}>
@@ -177,8 +119,7 @@ export function useFileToast() {
     
     return {
       id: toastId,
-      setProgress,
-      success,
+      uploadComplete,
       error,
       dismiss
     };
