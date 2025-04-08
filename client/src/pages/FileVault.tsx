@@ -17,6 +17,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { useFileToast } from "@/hooks/use-file-toast";
 import { useUser } from "@/hooks/use-user";
 import type { FileStatus, FileItem } from "@/types/files";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +29,8 @@ const ACCEPTED_FORMATS = ".CSV, .DOC, .DOCX, .ODT, .PDF, .RTF, .TXT, .JPG, .PNG,
 
 export const FileVault: React.FC = () => {
   const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
+  const { createFileUploadToast } = useFileToast();
   const queryClient = useQueryClient();
   const { user } = useUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -386,6 +390,17 @@ export const FileVault: React.FC = () => {
     };
 
     setUploadingFiles(prev => [...prev, uploadingFile]);
+    
+    // Create a file upload toast that shows progress
+    const uploadToast = createFileUploadToast(file, {
+      autoStart: true,
+      onSuccess: (fileItem) => {
+        console.log('[FileVault] Upload completed successfully:', fileItem.name);
+      },
+      onError: (error) => {
+        console.log('[FileVault] Upload failed:', error);
+      }
+    });
 
     try {
       await uploadMutation.mutateAsync(formData);
@@ -395,11 +410,13 @@ export const FileVault: React.FC = () => {
         queryKey: ['/api/files', { company_id: user?.company_id, page: currentPage, pageSize: itemsPerPage }] 
       });
 
-      toast({
-        title: "Success",
-        description: `${file.name} uploaded successfully`,
-        duration: 3000,
-      });
+      // Signal success to the upload toast
+      uploadToast.success({
+        name: file.name,
+        size: file.size,
+        type: file.type
+      } as FileItem);
+      
     } catch (error) {
       console.error('[FileVault Debug] Upload error:', {
         error,
@@ -415,12 +432,8 @@ export const FileVault: React.FC = () => {
         )
       );
 
-      toast({
-        title: "Upload Error",
-        description: error instanceof Error ? error.message : "Failed to upload file",
-        variant: "destructive",
-        duration: 5000,
-      });
+      // Signal error to the upload toast
+      uploadToast.error(error instanceof Error ? error.message : "Failed to upload file");
     }
   };
 
