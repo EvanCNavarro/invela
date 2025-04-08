@@ -505,17 +505,24 @@ export const OnboardingKYBFormPlayground = ({
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fieldsLoading, setFieldsLoading] = useState(true);
-  const [formDataLoading, setFormDataLoading] = useState(true);
-  const [dataInitialized, setDataInitialized] = useState(false);
-  const [formReady, setFormReady] = useState(false);
+  
+  // Simplified loading state
+  const [loadingState, setLoadingState] = useState<{
+    isLoading: boolean;
+    status: 'idle' | 'loading-fields' | 'loading-data' | 'ready';
+    message: string;
+  }>({
+    isLoading: true,
+    status: 'idle',
+    message: 'Initializing...'
+  });
+  
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
-  const isCompanyDataLoading = useState(false);
+  const formInitializedRef = useRef(false);
   const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>([]);
   const [fieldConfig, setFieldConfig] = useState<Record<string, FormField>>({});
   
@@ -541,6 +548,13 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
+      // Update loading state
+      setLoadingState(prev => ({
+        ...prev,
+        status: 'loading-fields',
+        message: 'Loading form fields...'
+      }));
+      
       // Process each group into a form step
       Object.entries(groupedBySection).forEach(([groupName, fields]) => {
         const formFields = fields
@@ -557,7 +571,6 @@ export const OnboardingKYBFormPlayground = ({
       // Update state with processed fields
       setDynamicFormSteps(newFormSteps);
       setFieldConfig(formFieldsMap);
-      setFieldsLoading(false); // Mark fields as loaded
       
       console.log('[KYB Form Debug] Dynamic form steps created:', {
         stepCount: newFormSteps.length,
@@ -565,9 +578,21 @@ export const OnboardingKYBFormPlayground = ({
         stepsBreakdown: newFormSteps.map(step => step.map(f => f.name)),
         timestamp: new Date().toISOString()
       });
+      
+      // Update loading state
+      setLoadingState(prev => ({
+        ...prev,
+        status: 'loading-data', // Move to the next state in the loading sequence
+        message: 'Form fields loaded, preparing data...'
+      }));
+      
     } else if (isLoadingFields === false) {
-      // If there are no fields but loading is complete, set field loading to false
-      setFieldsLoading(false);
+      // If there are no fields but loading is complete, transition to next state
+      setLoadingState(prev => ({
+        ...prev,
+        status: 'loading-data',
+        message: 'No form fields found, preparing data...'
+      }));
     }
   }, [kybFields, isLoadingFields]);
 
@@ -644,8 +669,14 @@ export const OnboardingKYBFormPlayground = ({
     let mounted = true;
 
     const initializeFormData = async () => {
-      setIsLoading(true);
-      setFormDataLoading(true);
+      // Update loading state for form data loading
+      setLoadingState(prev => ({
+        ...prev,
+        isLoading: true,
+        status: 'loading-data',
+        message: 'Loading form data...'
+      }));
+      
       let initialData: Record<string, string> = {};
 
       try {
@@ -707,23 +738,30 @@ export const OnboardingKYBFormPlayground = ({
             timestamp: new Date().toISOString()
           });
 
-          // Set initialization flags
-          setDataInitialized(true);
-          setFormReady(true);
-          setFormDataLoading(false);
-
+          // Set initialization as complete
+          formInitializedRef.current = true;
+          
           // Finally set the current step
           setCurrentStep(findFirstIncompleteStep(initialData));
+          
+          // Mark loading as complete
+          setLoadingState({
+            isLoading: false,
+            status: 'ready',
+            message: 'Form ready'
+          });
         }
       } catch (error) {
         console.error('Error initializing form:', error);
         if (mounted) {
           unifiedToast.error("Failed to load form data");
-          setFormDataLoading(false);
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
+          
+          // Mark loading as failed but allow interaction
+          setLoadingState({
+            isLoading: false,
+            status: 'ready',
+            message: 'Form ready (with errors)'
+          });
         }
       }
     };
@@ -1052,8 +1090,8 @@ export const OnboardingKYBFormPlayground = ({
     let isMounted = true;
 
     const fetchCompanyData = async () => {
-      if (!companyName || !dataInitialized) {
-        setIsLoading(false);
+      // Only fetch company data if form is properly initialized and we have a company name
+      if (!companyName || loadingState.status !== 'ready') {
         return;
       }
 
@@ -1063,6 +1101,7 @@ export const OnboardingKYBFormPlayground = ({
       try {
         console.log('[KYB Form Debug] Starting company search:', {
           companyName,
+          formLoadingState: loadingState.status,
           timestamp: new Date().toISOString()
         });
 
@@ -1096,7 +1135,6 @@ export const OnboardingKYBFormPlayground = ({
       } finally {
         if (isMounted) {
           setIsSearching(false);
-          setIsLoading(false);
         }
       }
     };
@@ -1106,11 +1144,12 @@ export const OnboardingKYBFormPlayground = ({
     return () => {
       isMounted = false;
     };
-  }, [companyName, dataInitialized]);
+  }, [companyName, loadingState.status]);
 
   // Update renderField function to handle multiple choice fields
   const renderField = (field: FormField) => {
-    if (!formReady) return null;
+    // Only render fields when the form is ready and initialized
+    if (loadingState.status !== 'ready') return null;
 
     const fieldValue = formData[field.name];
     const value = fieldValue !== null && fieldValue !== undefined ? String(fieldValue) : '';
@@ -1121,7 +1160,7 @@ export const OnboardingKYBFormPlayground = ({
       processedValue: value,
       fieldType: field.field_type,
       formDataKeys: Object.keys(formData),
-      isReady: formReady,
+      isReady: loadingState.status === 'ready',
       timestamp: new Date().toISOString()
     });
 
@@ -1220,13 +1259,13 @@ export const OnboardingKYBFormPlayground = ({
 
   return (
     <div className="space-y-6">
-      {isLoading || fieldsLoading || formDataLoading ? (
+      {loadingState.status !== 'ready' ? (
         <Card className="p-6">
           <div className="flex flex-col items-center justify-center min-h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
             <div className="text-sm text-muted-foreground">
-              {fieldsLoading ? "Loading form fields..." : 
-               formDataLoading ? "Loading saved data..." : 
+              {loadingState.status === 'loading_fields' ? "Loading form fields..." : 
+               loadingState.status === 'loading_data' ? "Loading saved data..." : 
                "Initializing form..."}
             </div>
           </div>
