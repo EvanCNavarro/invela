@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SearchBar } from "@/components/playground/SearchBar";
-import { WebSocketStatus } from "@/components/websocket-status";
+// WebSocket functionality is still maintained but the icon has been removed
+import { useWebSocketContext } from "@/providers/websocket-provider";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,8 +62,7 @@ export function TopNav() {
 
         <div className="flex items-center gap-2 shrink-0">
           <div className="hidden sm:flex items-center gap-2">
-            <WebSocketStatus />
-            
+            {/* WebSocket functionality still maintained in the context provider */}
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
               <HelpCircleIcon className="h-4 w-4" />
             </Button>
