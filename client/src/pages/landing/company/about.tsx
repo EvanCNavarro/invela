@@ -266,7 +266,7 @@ export default function AboutPage() {
 
                 <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-4">
                   <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                    <img src="/images/company/leadership/leadership_04_dnehrebecki.png" alt="Darek Nehrebecki" className="w-full h-full object-cover" style={{ transform: 'scale(2.2)', objectPosition: 'center 4px' }} />
+                    <img src="/images/company/leadership/leadership_04_dnehrebecki.png" alt="Darek Nehrebecki" className="w-full h-full object-cover" style={{ transform: 'scale(2.1)', objectPosition: 'center 4px' }} />
                   </div>
                   <h3 className="text-lg font-semibold">Darek Nehrebecki</h3>
                   <p className="text-gray-500">Chief Strategy Officer</p>
@@ -284,7 +284,7 @@ export default function AboutPage() {
             >
               <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-5">
                 <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                  <img src="/images/company/leadership/leadership_05_gsulbaran.png" alt="Gaby Sulbaran" className="w-full h-full object-cover" style={{ transform: 'scale(2.2)', objectPosition: 'center 4px' }} />
+                  <img src="/images/company/leadership/leadership_05_gsulbaran.png" alt="Gaby Sulbaran" className="w-full h-full object-cover" style={{ transform: 'scale(2.3)', objectPosition: 'center 4px' }} />
                 </div>
                 <h3 className="text-lg font-semibold">Gaby Sulbaran</h3>
                 <p className="text-gray-500">Chief Payments Officer</p>
