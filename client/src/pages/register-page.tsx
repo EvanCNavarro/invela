@@ -139,41 +139,73 @@ export default function RegisterPage() {
         const nameParts = invitation.invitee_name.split(' ');
         const firstName = nameParts[0] || '';
         const lastName = nameParts.slice(1).join(' ') || '';
-
-        setValidatedInvitation({
-          email: invitation.email,
-          company: invitation.company_name,
-          fullName: invitation.invitee_name,
-        });
-
-        // Pre-fill registration form
-        console.log("[Registration] Pre-filling registration form with:", {
-          email: invitation.email,
-          company: invitation.company_name,
-          firstName,
-          lastName,
-          fullName: invitation.invitee_name
-        });
-
-        registrationForm.reset({
-          invitationCode: values.invitationCode,
-          email: invitation.email,
-          company: invitation.company_name,
-          firstName,
-          lastName,
-          password: '',
-        });
         
-        // Focus on the password input after a short delay to allow the form to render
-        setTimeout(() => {
-          if (passwordInputRef.current) {
-            passwordInputRef.current.focus();
-          }
-        }, 300);
+        // First animate the content fading out
+        const invitationContainer = document.querySelector('.invitation-container');
+        if (invitationContainer) {
+          // Add fade-out animation class
+          invitationContainer.classList.add('fade-out');
+          
+          // Wait for animation to complete before changing state
+          setTimeout(() => {
+            // Update state after fade-out animation
+            setValidatedInvitation({
+              email: invitation.email,
+              company: invitation.company_name,
+              fullName: invitation.invitee_name,
+            });
+            
+            // Pre-fill registration form
+            console.log("[Registration] Pre-filling registration form with:", {
+              email: invitation.email,
+              company: invitation.company_name,
+              firstName,
+              lastName,
+              fullName: invitation.invitee_name
+            });
 
-        // Debug form values after setting
-        console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
+            registrationForm.reset({
+              invitationCode: values.invitationCode,
+              email: invitation.email,
+              company: invitation.company_name,
+              firstName,
+              lastName,
+              password: '',
+            });
+            
+            // Focus on the password input after a short delay to allow the form to render
+            setTimeout(() => {
+              if (passwordInputRef.current) {
+                passwordInputRef.current.focus();
+              }
+            }, 300);
 
+            // Debug form values after setting
+            console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
+          }, 400); // Match the duration of the fade-out animation
+        } else {
+          // Fallback if container not found
+          setValidatedInvitation({
+            email: invitation.email,
+            company: invitation.company_name,
+            fullName: invitation.invitee_name,
+          });
+          
+          registrationForm.reset({
+            invitationCode: values.invitationCode,
+            email: invitation.email,
+            company: invitation.company_name,
+            firstName,
+            lastName,
+            password: '',
+          });
+          
+          setTimeout(() => {
+            if (passwordInputRef.current) {
+              passwordInputRef.current.focus();
+            }
+          }, 300);
+        }
       } else {
         console.log("[Registration] Invalid invitation code response");
         invitationForm.setError("invitationCode", {
@@ -248,7 +280,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
       {!validatedInvitation ? (
-        <>
+        <div className="invitation-container">
           <motion.div 
             className="mb-12"
             initial={{ opacity: 0, y: -5 }}
@@ -343,7 +375,7 @@ export default function RegisterPage() {
               </motion.div>
             </form>
           </Form>
-        </>
+        </div>
       ) : (
         <div className="w-full max-w-[800px] mx-auto overflow-y-auto py-4">
           <motion.div 
