@@ -1,7 +1,7 @@
-import OpenAI from "openai";
 import { companies } from "@db/schema";
 import { db } from "@db";
 import { openaiSearchAnalytics } from "@db/schema";
+import { openai, extractCompanyData, generateMissingDataPrompt, generateFieldSuggestionPrompt, logOpenAIUsage } from "../utils/openaiUtils";
 
 // Export the Answer interface to match our aggregation expectations
 export interface Answer {
@@ -65,52 +65,8 @@ export async function getFormFieldSuggestions(
   });
   
   try {
-    // Generate a prompt specifically for form field suggestions
-    // that focuses on preventing hallucination
-    const prompt = `
-I need accurate suggestions for a form related to this company:
-
-Company Information:
-${Object.entries(companyInfo)
-  .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-  .map(([key, value]) => `- ${key}: ${value}`)
-  .join('\n')}
-
-Form Questions:
-${formFields.map(q => `- ${q.field_key}: ${q.question} (${q.field_type})`).join('\n')}
-
-Existing Form Data:
-${Object.entries(existingFormData)
-  .filter(([_, value]) => value !== null && value !== undefined && value !== '')
-  .map(([key, value]) => `- ${key}: ${value}`)
-  .join('\n')}
-
-Instructions:
-1. Provide suggestions ONLY for the questions listed above.
-2. If you don't have enough information for a confident answer, DO NOT suggest a value.
-3. Only suggest verifiable information about this company. NEVER invent or hallucinate data.
-4. DO NOT make up addresses, phone numbers, dates, or any factual information.
-5. For each field, provide:
-   - The value (exact information from context)
-   - A confidence score (0.0-1.0)
-   - The source of information (if available)
-
-Format your response as a JSON object like this:
-{
-  "field_key1": {
-    "value": "suggested value",
-    "confidence": 0.9,
-    "source": "Company information"
-  },
-  "field_key2": {
-    "value": "another suggestion",
-    "confidence": 0.7,
-    "source": "Company profile"
-  }
-}
-
-Only include fields where you have at least 70% confidence (0.7).
-`;
+    // Generate a prompt specifically for form field suggestions using the utility function
+    const prompt = generateFieldSuggestionPrompt(companyInfo, formFields, existingFormData);
 
     // Call OpenAI with low temperature setting to reduce randomness
     const response = await openai.chat.completions.create({
@@ -200,8 +156,7 @@ Only include fields where you have at least 70% confidence (0.7).
   }
 }
 
-// OpenAI API client instance
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+// OpenAI API client is now imported from utils/openaiUtils.ts
 
 // Document classification specific types
 export enum DocumentCategory {
@@ -550,54 +505,8 @@ function calculateOpenAICost(inputTokens: number, outputTokens: number, model: s
   );
 }
 
-function generateMissingDataPrompt(companyInfo: Partial<CleanedCompanyData>, missingFields: string[]): string {
-  console.log("[OpenAI Search] 📋 Generating search prompt for fields:", missingFields);
-
-  // Filter out excluded fields from company info
-  const relevantInfo = { ...companyInfo };
-  const excludedFields = [
-    'category', 'riskScore', 'accreditationStatus', 'onboardingCompanyCompleted',
-    'registryDate', 'filesPublic', 'filesPrivate', 'createdAt', 'updatedAt',
-    'id', 'logoId'
-  ];
-
-  console.log("[OpenAI Search] 🔍 Filtering out excluded fields:", excludedFields);
-  excludedFields.forEach(field => delete relevantInfo[field as keyof typeof relevantInfo]);
-
-  // Filter out excluded fields from missing fields list
-  const relevantMissingFields = missingFields.filter(field => !excludedFields.includes(field));
-  console.log("[OpenAI Search] 🎯 Relevant missing fields to search for:", relevantMissingFields);
-
-  return `
-As a financial data expert, use the following known details to find accurate company information. Focus on the missing fields and prioritize data from the sources listed below:
-
-**Company Details:**
-${JSON.stringify(relevantInfo, null, 2)}
-
-**Missing Fields to Focus On:**
-${relevantMissingFields.map(field => `- ${field}`).join('\n')}
-
-**Sources (Prioritized Order):**
-1. Wikipedia
-2. Official Website
-3. LinkedIn
-4. Crunchbase
-5. ZoomInfo
-6. Dun & Bradstreet
-
-**Instructions:**
-1. Find and return the missing fields only, matching the CleanedCompanyData interface.
-2. For each field, provide the source and data.
-3. If unsure about a field, omit it. Do not guess.
-4. Return data in this JSON format:
-   {
-     "fieldName": {
-       "source": "Source Name",
-       "data": "actual data or array"
-     }
-   }
-`;
-}
+// Local generateMissingDataPrompt function has been removed.
+// Now using the imported function from utils/openaiUtils.ts
 
 export async function findMissingCompanyData(
   companyInfo: Partial<CleanedCompanyData>,
@@ -608,6 +517,7 @@ export async function findMissingCompanyData(
   console.log("[OpenAI Search] 🔍 Missing fields:", missingFields);
 
   const startTime = Date.now();
+  // Use the imported utility function instead of the local one
   const prompt = generateMissingDataPrompt(companyInfo, missingFields);
 
   try {
