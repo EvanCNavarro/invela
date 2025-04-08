@@ -242,7 +242,7 @@ export default function AboutPage() {
                 {/* First Row - 4 Leaders */}
                 <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-1">
                   <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                    <img src="/images/company/leadership/leadership_01_ssmith.png" alt="Steve Smith" className="w-full h-full object-cover" />
+                    <img src="/images/company/leadership/leadership_01_ssmith.png" alt="Steve Smith" className="w-full h-full object-cover" style={{ transform: 'scale(1.2)' }} />
                   </div>
                   <h3 className="text-lg font-semibold">Steve Smith</h3>
                   <p className="text-gray-500">Chief Executive Officer</p>
@@ -250,7 +250,7 @@ export default function AboutPage() {
 
                 <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-2">
                   <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                    <img src="/images/company/leadership/leadership_02_ncoffing.png" alt="Nathanael Coffing" className="w-full h-full object-cover object-top" style={{ transform: 'scale(2.2)' }} />
+                    <img src="/images/company/leadership/leadership_02_ncoffing.png" alt="Nathanael Coffing" className="w-full h-full object-cover" style={{ transform: 'scale(2.2)', objectPosition: 'center 40%' }} />
                   </div>
                   <h3 className="text-lg font-semibold">Nathanael Coffing</h3>
                   <p className="text-gray-500">Chief Operations Officer</p>
@@ -284,7 +284,7 @@ export default function AboutPage() {
             >
               <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-5">
                 <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                  <img src="/images/company/leadership/leadership_05_gsulbaran.png" alt="Gaby Sulbaran" className="w-full h-full object-cover object-top" style={{ transform: 'scale(2.2)' }} />
+                  <img src="/images/company/leadership/leadership_05_gsulbaran.png" alt="Gaby Sulbaran" className="w-full h-full object-cover" style={{ transform: 'scale(2.2)', objectPosition: 'center 40%' }} />
                 </div>
                 <h3 className="text-lg font-semibold">Gaby Sulbaran</h3>
                 <p className="text-gray-500">Chief Payments Officer</p>
@@ -300,7 +300,7 @@ export default function AboutPage() {
 
               <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-7">
                 <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
-                  <img src="/images/company/leadership/leadership_07_jwadsworth.png" alt="Jim Wadsworth" className="w-full h-full object-cover object-top" style={{ transform: 'scale(2.2)' }} />
+                  <img src="/images/company/leadership/leadership_07_jwadsworth.png" alt="Jim Wadsworth" className="w-full h-full object-cover" style={{ transform: 'scale(2.2)', objectPosition: 'center 35%' }} />
                 </div>
                 <h3 className="text-lg font-semibold">Jim Wadsworth</h3>
                 <p className="text-gray-500">Chief Revenue Officer – International</p>
