@@ -109,26 +109,88 @@ export default function LoginPage() {
       () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
-        // Show simple file upload toast
-        let progress = 0;
+        // Show two different approaches to file upload toasts
+        const demoUpload = Math.random() > 0.5;
         
-        // First create an upload toast
-        const initialToast = unifiedToast.fileUploadStarted('sample-file.pdf');
-        
-        // Simulate progress updates
-        const interval = setInterval(() => {
-          progress += 10;
+        if (demoUpload) {
+          // Option 1: Using the advanced file-toast hook
+          const { createFileUploadToast } = useFileToast();
           
-          // Convert to success toast when done
-          if (progress >= 100) {
+          const mockFile = {
+            name: 'sample-file.pdf',
+            size: 1024 * 1024 * 2.5, // 2.5MB
+            type: 'application/pdf'
+          };
+          
+          const fileToast = createFileUploadToast(mockFile, {
+            onCancel: () => console.log('Upload cancelled'),
+            onSuccess: (file) => console.log('Upload success', file),
+            onError: (error) => console.log('Upload error', error),
+            showUploadAnother: true,
+            onUploadAnother: () => console.log('Upload another clicked')
+          });
+          
+          // Simulate progress updates
+          let progress = 0;
+          const interval = setInterval(() => {
+            progress += 10;
+            fileToast.setProgress(progress);
+            
+            if (progress >= 100) {
+              clearInterval(interval);
+            }
+          }, 500);
+        } else {
+          // Option 2: Using the simpler unified toast approach with progress bar
+          let progress = 0;
+          let toastId: string | undefined;
+          
+          // Handle cancel action
+          const handleCancel = () => {
             clearInterval(interval);
-            setTimeout(() => {
-              // Show success toast when complete
-              unifiedToast.fileUploadSuccess('sample-file.pdf');
-              console.log('Upload success', { name: 'sample-file.pdf', size: 1024 * 1024 * 2.5 });
-            }, 500);
-          }
-        }, 500);
+            console.log('Upload cancelled');
+            
+            // Show error toast
+            unifiedToast.error(
+              'Upload failed',
+              'The upload was cancelled.'
+            );
+          };
+          
+          // Handle upload another action
+          const handleUploadAnother = () => {
+            console.log('Upload another clicked');
+          };
+          
+          // Initial toast
+          const toast = unifiedToast.fileUploadProgress(
+            'sample-file.pdf',
+            progress,
+            handleCancel,
+            handleUploadAnother
+          );
+          
+          // Simulate progress updates
+          const interval = setInterval(() => {
+            progress += 10;
+            
+            if (progress < 100) {
+              // Update progress bar
+              unifiedToast.fileUploadProgress(
+                'sample-file.pdf',
+                progress,
+                handleCancel,
+                handleUploadAnother
+              );
+            } else {
+              // Show success when complete
+              clearInterval(interval);
+              setTimeout(() => {
+                unifiedToast.fileUploadSuccess('sample-file.pdf');
+              }, 500);
+            }
+          }, 500);
+        }
       }
     ];
     

@@ -274,17 +274,50 @@ export const unifiedToast = {
     });
   },
   
-  // Add the fileUploadProgress function
+  // File upload with progress bar
   fileUploadProgress: (
     fileName: string, 
     progress: number, 
     onCancel?: () => void, 
     onUploadAnother?: () => void
   ) => {
+    // Create a progress bar component directly in JSX
+    const progressBar = (
+      <div className="w-full">
+        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 mt-2">
+          <div 
+            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+        <div className="flex justify-between items-center mt-1">
+          <div className="text-sm font-medium text-gray-700">{progress}%</div>
+          <div className="flex gap-4">
+            {progress < 100 && onCancel && (
+              <button 
+                onClick={onCancel}
+                className="text-sm text-gray-500 hover:text-gray-900"
+              >
+                Cancel
+              </button>
+            )}
+            {progress === 100 && onUploadAnother && (
+              <button 
+                onClick={onUploadAnother}
+                className="text-sm text-indigo-600 hover:text-indigo-700"
+              >
+                Upload another
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+    
     return baseToast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: `Please wait while we upload your file. ${progress}%`,
+      description: progressBar,
       duration: 30000, // Stay open until complete or timeout
     });
   }
