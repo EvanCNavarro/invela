@@ -130,6 +130,12 @@ export default function SiteMapPage() {
               <li>
                 <SiteMapLink href="/landing/company/contact-us" label="Contact Us" />
               </li>
+              <li>
+                <SiteMapLink href="/landing/legal" label="Legal" />
+              </li>
+              <li>
+                <SiteMapLink href="/landing/site-map" label="Site Map" />
+              </li>
             </ul>
           </div>
 

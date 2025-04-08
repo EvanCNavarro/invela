@@ -86,11 +86,6 @@ export function NavigationMenu() {
                   description="Our mission to transform FinTech compliance"
                 />
                 <NavigationLink 
-                  href="/landing/company/contact-us"
-                  title="Contact Us"
-                  description="Get in touch with our team"
-                />
-                <NavigationLink 
                   href="/landing/company/about#leadership"
                   title="Leadership"
                   description="Meet the team behind Invela's innovation"
@@ -99,6 +94,11 @@ export function NavigationMenu() {
                   href="#"
                   title="Partners"
                   description="Our strategic alliances and integrations"
+                />
+                <NavigationLink 
+                  href="/landing/company/contact-us"
+                  title="Contact Us"
+                  description="Get in touch with our team"
                 />
                 <NavigationLink 
                   href="/landing/legal"
