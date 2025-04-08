@@ -201,9 +201,9 @@ export function Sidebar({
                 label={item.label}
                 href={item.href}
                 isActive={
-                  item.href === "/task-center" 
-                    ? location === item.href || location.startsWith("/task-center/") 
-                    : location === item.href
+                  // Check if current location is the tab or a sub-page of the tab
+                  location === item.href || 
+                  (item.href !== "/" && location.startsWith(`${item.href}/`))
                 }
                 isExpanded={isExpanded}
                 isDisabled={item.locked}
@@ -239,7 +239,10 @@ export function Sidebar({
                     icon={item.icon}
                     label={item.label}
                     href={item.href}
-                    isActive={location === item.href}
+                    isActive={
+                      location === item.href || 
+                      (item.href !== "/" && location.startsWith(`${item.href}/`))
+                    }
                     isExpanded={isExpanded}
                     isDisabled={item.locked}
                     variant="invela"
