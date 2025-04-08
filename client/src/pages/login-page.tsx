@@ -109,7 +109,7 @@ export default function LoginPage() {
       () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
-        // Demonstrate a file upload with a single toast and animated progress bar
+        // Demonstrate a simpler file upload toast flow
         const mockFile = {
           name: 'sample-file.pdf',
           size: 1024 * 1024 * 2.5, // 2.5MB
@@ -119,7 +119,7 @@ export default function LoginPage() {
         let progress = 0;
         let intervalId: NodeJS.Timeout;
         
-        // Create a file upload toast that persists and can be updated
+        // Create a file upload toast that persists until completion
         const uploadToast = createFileUploadToast(mockFile as FileItem, {
           autoStart: true,
           onCancel: () => {
@@ -138,17 +138,16 @@ export default function LoginPage() {
         intervalId = setInterval(() => {
           progress += 10;
           
-          if (progress < 100) {
-            // Update the existing toast with new progress
+          if (progress <= 100) {
+            // Update the toast with new progress
             uploadToast.setProgress(progress);
-          } else {
+          } 
+          
+          if (progress >= 100) {
             // Upload complete - clear interval
             clearInterval(intervalId);
-            
-            // Convert to success toast
-            uploadToast.success(mockFile as FileItem);
           }
-        }, 800); // Slower for demo purposes
+        }, 500); // Update every 500ms
       }
     ];
     

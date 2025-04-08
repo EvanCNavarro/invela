@@ -122,15 +122,19 @@ export function useUnifiedToast() {
   const fileUploadProgress = (
     fileName: string, 
     progress: number, 
-    onCancel?: () => void, 
-    onUploadAnother?: () => void
+    onCancel?: () => void
   ) => {
-    // Create a single toast that will be updated with progress
+    // Create a simple toast that shows progress as text
     const toastRef = toast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: getProgressBar(progress, onCancel, onUploadAnother),
+      description: `Please wait while we upload your file. ${progress}%`,
       duration: 30000, // Stay open until complete or timeout
+      action: onCancel ? (
+        <ToastAction altText="Cancel" onClick={onCancel}>
+          Cancel
+        </ToastAction>
+      ) : undefined,
     });
     
     return toastRef;
@@ -296,51 +300,22 @@ export const unifiedToast = {
     });
   },
   
-  // File upload with progress bar
+  // File upload with progress as text
   fileUploadProgress: (
     fileName: string, 
     progress: number, 
-    onCancel?: () => void, 
-    onUploadAnother?: () => void
+    onCancel?: () => void
   ) => {
-    // Create a progress bar component directly in JSX
-    const progressBar = (
-      <div className="w-full">
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 mt-2">
-          <div 
-            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between items-center mt-1">
-          <div className="text-sm font-medium text-gray-700">{progress}%</div>
-          <div className="flex gap-4">
-            {progress < 100 && onCancel && (
-              <button 
-                onClick={onCancel}
-                className="text-sm text-gray-500 hover:text-gray-900"
-              >
-                Cancel
-              </button>
-            )}
-            {progress === 100 && onUploadAnother && (
-              <button 
-                onClick={onUploadAnother}
-                className="text-sm text-indigo-600 hover:text-indigo-700"
-              >
-                Upload another
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-    
     return baseToast({
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: progressBar,
+      description: `Please wait while we upload your file. ${progress}%`,
       duration: 30000, // Stay open until complete or timeout
+      action: onCancel ? (
+        <ToastAction altText="Cancel" onClick={onCancel}>
+          Cancel
+        </ToastAction>
+      ) : undefined,
     });
   },
   
@@ -352,38 +327,19 @@ export const unifiedToast = {
     onCancel?: () => void;
     onUploadAnother?: () => void;
   }) => {
-    const { id, fileName, progress, onCancel, onUploadAnother } = options;
-    
-    // Create a progress bar component directly in JSX
-    const progressBar = (
-      <div className="w-full">
-        <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
-          <div 
-            className="bg-indigo-600 h-2.5 rounded-full transition-all duration-700 ease-in-out" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-        <div className="flex justify-between items-center mt-1">
-          <div className="text-sm font-medium text-gray-700">{progress}%</div>
-          {progress < 100 && onCancel && (
-            <button
-              onClick={onCancel}
-              className="text-sm text-gray-500 hover:text-gray-900"
-            >
-              Cancel
-            </button>
-          )}
-        </div>
-      </div>
-    );
+    const { id, fileName, progress, onCancel } = options;
     
     return baseToast({
       id,
       variant: "file-upload",
       title: `Uploading '${fileName}'`,
-      description: progressBar,
+      description: `Please wait while we upload your file. ${progress}%`,
       duration: 30000, // Stay open until complete or timeout
+      action: onCancel ? (
+        <ToastAction altText="Cancel" onClick={onCancel}>
+          Cancel
+        </ToastAction>
+      ) : undefined,
     });
   }
 };
