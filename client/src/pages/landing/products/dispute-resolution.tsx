@@ -139,13 +139,15 @@ export default function DisputeResolutionPage() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.1 }}
                 variants={fadeIn}
-                className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm"
+                className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
               >
-                <div className="absolute top-4 left-4 w-8 h-8 rounded-tl-lg rounded-br-lg bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 font-bold h-10 w-10 flex items-center justify-center rounded-br-xl">
                   {step.step}
                 </div>
-                <h3 className="text-xl font-semibold mb-4 mt-4 pl-6">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <div className="pl-2">
+                  <h3 className="text-xl font-bold mb-4 mt-6">{step.title}</h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>
