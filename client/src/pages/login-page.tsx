@@ -234,7 +234,7 @@ export default function LoginPage() {
                     {field.value && !form.formState.errors.password && field.value.length > 0 && (
                       <p className="text-sm text-green-500 flex items-center gap-1">
                         <Check className="h-4 w-4" />
-                        Password meets requirements
+                        Valid password
                       </p>
                     )}
                   </div>
