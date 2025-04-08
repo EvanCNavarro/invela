@@ -246,7 +246,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout isLogin={false}>
+    <AuthLayout isLogin={false} isRegistrationValidated={!!validatedInvitation}>
       {!validatedInvitation ? (
         <>
           <motion.div 

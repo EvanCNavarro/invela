@@ -8,20 +8,13 @@ import { AuthFooter } from "./AuthFooter";
 interface AuthLayoutProps {
   children: React.ReactNode;
   isLogin: boolean;
+  isRegistrationValidated?: boolean;
 }
 
-export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
+export function AuthLayout({ children, isLogin, isRegistrationValidated = false }: AuthLayoutProps) {
   const [location] = useLocation();
   const [direction, setDirection] = useState<"left" | "right">("left");
   const [prevLocation, setPrevLocation] = useState(location);
-  
-  // Set this flag in the register-page.tsx to represent the validated state
-  const hasValidatedChild = React.Children.toArray(children).some(
-    (child: any) => child?.props?.className?.includes?.("w-full max-w-[800px]")
-  );
-  
-  // Determine if we're in the validated registration flow
-  const isRegistrationValidated = location === "/register" && hasValidatedChild;
 
   // Determine animation direction based on navigation
   useEffect(() => {
@@ -92,10 +85,10 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
           transition={{ 
             duration: 0.5, 
             ease: "easeOut",
-            width: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }, // Custom ease for width transition
+            width: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }, 
             maxWidth: { duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }
           }}
-          layout
+          key={`auth-layout-${isRegistrationValidated ? 'validated' : (isLogin ? 'login' : 'register')}`}
         >
           {isRegistrationValidated ? (
             // Show full-width registration form
