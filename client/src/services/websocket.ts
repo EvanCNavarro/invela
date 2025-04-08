@@ -14,26 +14,39 @@ class WebSocketService {
   private connectionPromise: Promise<WebSocket> | null = null;
   private connectionResolver: ((ws: WebSocket) => void) | null = null;
 
+  // URL for WebSocket connection
+  private get url(): string {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws`;
+  }
+
   /**
    * Initialize the WebSocket connection
    */
   public connect(): Promise<WebSocket> {
+    // If we already have an open connection, return it
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      // Connection already established, return silently
       return Promise.resolve(this.socket);
     }
     
-    if (this.connectionPromise) {
+    // If connection is in progress, return the existing promise
+    if (this.connectionPromise && this.socket && this.socket.readyState === WebSocket.CONNECTING) {
       return this.connectionPromise;
     }
+    
+    // If socket exists but is closing/closed, clean it up first
+    if (this.socket) {
+      this.socket = null;
+    }
 
+    // Clear any existing connection promise
+    this.connectionPromise = null;
+    
+    // Create a new connection promise
     this.connectionPromise = new Promise((resolve) => {
       this.connectionResolver = resolve;
       
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      this.socket = new WebSocket(wsUrl);
+      this.socket = new WebSocket(this.url);
       
       this.socket.onopen = this.handleOpen.bind(this);
       this.socket.onmessage = this.handleMessage.bind(this);
