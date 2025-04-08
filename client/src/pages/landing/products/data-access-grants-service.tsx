@@ -153,8 +153,10 @@ export default function DataAccessPage() {
                 <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 font-bold h-10 w-10 flex items-center justify-center rounded-br-xl">
                   {feature.step}
                 </div>
-                <h3 className="text-xl font-bold mb-4 mt-6 pl-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <div className="pl-2">
+                  <h3 className="text-xl font-bold mb-4 mt-6">{feature.title}</h3>
+                  <p className="text-gray-600">{feature.description}</p>
+                </div>
               </motion.div>
             ))}
           </div>
