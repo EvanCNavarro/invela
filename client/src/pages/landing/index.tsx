@@ -222,9 +222,9 @@ export default function LandingPage() {
             {/* Feature 4 */}
             <FeatureCard
               icon={<Lock className="h-8 w-8 text-blue-600" />}
-              title="Data Access Grants"
+              title="Data Access Grants Service"
               description="Secure data sharing permissions with granular access controls and audit trails."
-              link="/landing/products/data-access"
+              link="/landing/products/data-access-grants-service"
             />
             
             {/* Feature 5 */}

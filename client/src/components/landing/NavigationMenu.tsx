@@ -40,8 +40,8 @@ export function NavigationMenu() {
                   description="Centralized directory of verified financial service providers"
                 />
                 <NavigationLink 
-                  href="/landing/products/data-access"
-                  title="Data Access Grants"
+                  href="/landing/products/data-access-grants-service"
+                  title="Data Access Grants Service"
                   description="Secure management of data sharing permissions and controls"
                 />
                 <NavigationLink 

@@ -100,7 +100,7 @@ export default function SiteMapPage() {
                 <SiteMapLink href="/landing/products/invela-registry" label="Invela Registry" />
               </li>
               <li>
-                <SiteMapLink href="/landing/products/data-access" label="Data Access Grants" />
+                <SiteMapLink href="/landing/products/data-access-grants-service" label="Data Access Grants Service" />
               </li>
               <li>
                 <SiteMapLink href="/landing/products/liability-insurance" label="Liability Insurance" />
