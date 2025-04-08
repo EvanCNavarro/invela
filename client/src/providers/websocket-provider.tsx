@@ -75,12 +75,12 @@ export function WebSocketProvider({
 
   // Connect/Disconnect based on authentication state
   useEffect(() => {
-    if (user) {
-      websocket.connect();
-    } else {
+    // The connect will be handled by autoConnect=true in useWebSocket
+    // We only need to handle disconnect when user logs out
+    if (!user) {
       websocket.disconnect();
     }
-  }, [user]);
+  }, [user, websocket]);
 
   return (
     <WebSocketContext.Provider value={websocket}>

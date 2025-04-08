@@ -28,11 +28,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
   const subscribedEvents = useRef<Set<string>>(new Set());
   const unsubscribeFunctions = useRef<Map<string, Map<MessageHandler, () => void>>>(new Map());
 
+  // Track if we've already tried connecting in this component instance
+  const hasConnected = useRef(false);
+
   // Effect to manage WebSocket connection
   useEffect(() => {
-    // We can't directly check connection status with our websocket service
-    // So we'll just set it to 'connecting' when autoConnect is true
-    if (autoConnect) {
+    // Only attempt connection if autoConnect is true and we haven't tried connecting yet
+    if (autoConnect && !hasConnected.current) {
+      hasConnected.current = true;
       setStatus('connecting');
       
       // Attempt a connection which will trigger our onOpen event on success
@@ -64,8 +67,13 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     };
   }, [autoConnect, reconnect, onOpen, onClose, onError]);
 
-  // Connect to WebSocket
+  // Connect to WebSocket only if not already connected
   const connect = useCallback(() => {
+    // Don't try to connect if we're already connected
+    if (status === 'connected') {
+      return;
+    }
+    
     setStatus('connecting');
     webSocketService.connect()
       .then(() => {
@@ -76,7 +84,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
         setStatus('error');
         if (onError) onError(error);
       });
-  }, [onOpen, onError]);
+  }, [status, onOpen, onError]);
 
   // Disconnect from WebSocket
   const disconnect = useCallback(() => {
