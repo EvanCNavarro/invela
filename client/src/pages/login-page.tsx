@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
+import { useToast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -26,6 +27,13 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const { toast } = useToast();
+  
+  // Clear any existing error toasts when the login page loads
+  useEffect(() => {
+    // We don't need to manually clear toasts as they'll be automatically cleared
+    // when navigating between pages
+  }, []);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
