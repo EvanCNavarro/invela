@@ -97,17 +97,21 @@ const Toast = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
+  // Extract the id prop if it exists
+  const { id, ...restProps } = props as any;
+  
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
       transition={{ duration: 0.3 }}
+      data-toast-id={id}
     >
       <ToastPrimitives.Root
         ref={ref}
         className={cn(toastVariants({ variant }), className)}
-        {...props}
+        {...restProps}
       />
     </motion.div>
   )

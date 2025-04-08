@@ -1,8 +1,8 @@
 import * as React from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useUnifiedToast } from "@/hooks/use-unified-toast";
-import { FileItem } from "@/types/files";
-import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "./use-toast";
+import { useUnifiedToast } from "./use-unified-toast";
+import { FileItem } from "../types/files";
+import { ToastAction } from "../components/ui/toast";
 
 type FileToastOptions = {
   autoStart?: boolean;
@@ -36,19 +36,20 @@ const ProgressBar: React.FC<{
   onUploadAnother?: () => void;
 }> = ({ progress, onCancel, onUploadAnother }) => {
   return (
-    <div className="w-full">
-      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 mt-2">
+    <div className="w-full file-upload-progress-container">
+      <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
+      <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2 progress-bar-container">
         <div 
-          className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+          className="bg-indigo-600 h-2.5 rounded-full transition-all duration-700 ease-in-out progress-bar-inner" 
           style={{ width: `${progress}%` }}
         ></div>
       </div>
       <div className="flex justify-between items-center mt-1">
-        <div className="text-sm font-medium text-gray-700">{progress}%</div>
+        <div className="text-sm font-medium text-gray-700 progress-percentage">{progress}%</div>
         {progress < 100 && onCancel && (
           <button 
             onClick={onCancel}
-            className="text-sm text-gray-500 hover:text-gray-900"
+            className="text-sm text-gray-500 hover:text-gray-900 cancel-button"
           >
             Cancel
           </button>
@@ -56,7 +57,7 @@ const ProgressBar: React.FC<{
         {progress === 100 && onUploadAnother && (
           <button 
             onClick={onUploadAnother}
-            className="text-sm text-indigo-600 hover:text-indigo-700"
+            className="text-sm text-indigo-600 hover:text-indigo-700 upload-another-button"
           >
             Upload another
           </button>
@@ -135,28 +136,49 @@ export function useFileToast() {
       
       // Otherwise, update the existing toast with new progress
       if (toastId && progress < 100) {
-        toast({
-          id: toastId,
-          variant: "file-upload",
-          title: `Uploading '${fileName}'`,
-          description: (
-            <ProgressBar 
-              progress={progress} 
-              onCancel={handleCancel}
-              onUploadAnother={progress === 100 ? onUploadAnother : undefined}
-            />
-          ),
-          duration: 30000,
-          action: progress < 100 && onCancel ? (
-            <ToastAction altText="Cancel" onClick={handleCancel}>
-              Cancel
-            </ToastAction>
-          ) : showUploadAnother && progress === 100 ? (
-            <ToastAction altText="Upload Another" onClick={onUploadAnother}>
-              Upload another
-            </ToastAction>
-          ) : undefined,
-        } as any);
+        // Find the existing toast and use the update method
+        const existingToasts = window.document.querySelectorAll('[data-toast-id]');
+        const toastElement = Array.from(existingToasts).find(
+          el => el.getAttribute('data-toast-id') === toastId
+        );
+        
+        if (toastElement) {
+          // If we found the toast in the DOM, update it directly
+          const progressBarElement = toastElement.querySelector('.progress-bar-inner');
+          const percentTextElement = toastElement.querySelector('.progress-percentage');
+          
+          if (progressBarElement) {
+            (progressBarElement as HTMLElement).style.width = `${progress}%`;
+          }
+          
+          if (percentTextElement) {
+            percentTextElement.textContent = `${progress}%`;
+          }
+        } else {
+          // Fallback to creating a new toast with the same ID
+          toast({
+            id: toastId,
+            variant: "file-upload",
+            title: `Uploading '${fileName}'`,
+            description: (
+              <ProgressBar 
+                progress={progress} 
+                onCancel={handleCancel}
+                onUploadAnother={progress === 100 ? onUploadAnother : undefined}
+              />
+            ),
+            duration: 30000,
+            action: progress < 100 && onCancel ? (
+              <ToastAction altText="Cancel" onClick={handleCancel}>
+                Cancel
+              </ToastAction>
+            ) : showUploadAnother && progress === 100 ? (
+              <ToastAction altText="Upload Another" onClick={onUploadAnother}>
+                Upload another
+              </ToastAction>
+            ) : undefined,
+          } as any);
+        }
       }
       
       // If upload is complete, convert to success toast
