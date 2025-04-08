@@ -2,6 +2,7 @@ import { addSecurityFormTables } from "./add_security_form_tables";
 import { populateSecurityFields } from "./populate_security_fields";
 import { updateTaskTitles } from "./update_task_titles";
 import { updateKybFields2025April } from "./update_kyb_fields_2025_04";
+import { up as addTaskTemplates } from "./add_task_templates";
 
 // Simpler logging for standalone execution
 function log(message: string) {
@@ -30,6 +31,10 @@ export async function runMigrations() {
     // Update KYB form fields based on April 2025 revision
     log('Updating KYB form fields');
     await updateKybFields2025April();
+    
+    // Add task templates and component configurations
+    log('Adding task templates and component configurations');
+    await addTaskTemplates();
     
     log('All migrations completed successfully');
     return true;

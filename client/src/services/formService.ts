@@ -1,72 +1,134 @@
 /**
- * Form Service Interface
- * 
- * This file defines the interface that all form services should implement.
- * Each form type (KYB, CARD, Security) will implement these methods.
+ * Interface for form field validation rules
  */
-import { FormField } from "@/utils/formUtils";
+export interface FormFieldValidation {
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+  pattern?: string;
+  message?: string;
+  [key: string]: any;
+}
 
-// Defines what every form service should implement
+/**
+ * Interface for form field
+ */
+export interface FormField {
+  key: string;
+  label: string;
+  type: string;
+  section: string;
+  placeholder?: string;
+  helpText?: string;
+  default?: any;
+  options?: { label: string; value: any }[];
+  validation?: FormFieldValidation;
+  order: number;
+  metadata?: Record<string, any>;
+}
+
+/**
+ * Interface for form section
+ */
+export interface FormSection {
+  id: string;
+  title: string;
+  description?: string;
+  order: number;
+  collapsed: boolean;
+  fields: FormField[];
+}
+
+/**
+ * Generic form data type
+ */
+export type FormData = Record<string, any>;
+
+/**
+ * Interface for form submission options
+ */
+export interface FormSubmitOptions {
+  taskId?: number;
+  templateId?: number;
+  fileName?: string;
+  [key: string]: any;
+}
+
+/**
+ * Interface for form services
+ * This defines the contract that all form service implementations must follow
+ */
 export interface FormServiceInterface {
-  // Get all form fields for a specific form type
-  getFields: () => Promise<any[]>;
+  /**
+   * Initialize the form service with a template ID
+   * @param templateId ID of the task template
+   */
+  initialize(templateId: number): Promise<void>;
   
-  // Group form fields by section/step
-  groupFieldsBySection: (fields: any[]) => Record<string, any[]>;
+  /**
+   * Get all form fields
+   * @returns Array of form fields
+   */
+  getFields(): FormField[];
   
-  // Convert specific field type to FormField format
-  convertToFormField: (field: any) => FormField;
+  /**
+   * Get all form sections
+   * @returns Array of form sections
+   */
+  getSections(): FormSection[];
   
-  // Save progress for a form
-  saveProgress: (taskId: number, progress: number, formData: Record<string, any>) => Promise<any>;
+  /**
+   * Load form data into the service
+   * @param data Form data to load
+   */
+  loadFormData(data: FormData): void;
   
-  // Get saved progress for a form
-  getProgress: (taskId: number) => Promise<{formData: Record<string, any>, progress: number, status?: string}>;
+  /**
+   * Update a specific field in the form data
+   * @param fieldKey Field key to update
+   * @param value New value for the field
+   */
+  updateFormData(fieldKey: string, value: any): void;
   
-  // Submit a completed form
-  submitForm: (taskId: number, formData: Record<string, any>, fileName?: string) => Promise<any>;
-}
-
-/**
- * Generic function to extract FormField array from API response
- * @param fields Raw field data from API
- * @param converter Function to convert raw field to FormField
- * @returns Array of FormFields
- */
-export function convertFieldsToFormFields<T>(
-  fields: T[], 
-  converter: (field: T) => FormField
-): FormField[] {
-  return fields.map(field => converter(field));
-}
-
-/**
- * Generic function to group form fields by section
- * @param fields Array of form fields
- * @param getGroup Function to extract group from a field
- * @param getOrder Function to extract order from a field
- * @returns Object with groups as keys and arrays of fields as values
- */
-export function groupFields<T>(
-  fields: T[],
-  getGroup: (field: T) => string,
-  getOrder: (field: T) => number
-): Record<string, T[]> {
-  const groups: Record<string, T[]> = {};
+  /**
+   * Get the current form data
+   * @returns Current form data
+   */
+  getFormData(): FormData;
   
-  // Group fields by their group property
-  fields.forEach(field => {
-    const group = getGroup(field);
-    if (!groups[group]) {
-      groups[group] = [];
-    }
-    groups[group].push(field);
-  });
+  /**
+   * Calculate form completion progress
+   * @returns Percentage of form completion (0-100)
+   */
+  calculateProgress(): number;
   
-  // Sort fields within each group by their order
-  Object.keys(groups).forEach(group => {
-    groups[group].sort((a, b) => getOrder(a) - getOrder(b));
-  });
+  /**
+   * Save form progress for a task
+   * @param taskId Optional ID of the task
+   * @returns Promise that resolves when progress is saved
+   */
+  saveProgress(taskId?: number): Promise<void>;
   
-  return groups;
+  /**
+   * Load saved progress for a task
+   * @param taskId ID of the task
+   * @returns Promise that resolves with loaded form data
+   */
+  loadProgress(taskId: number): Promise<FormData>;
+  
+  /**
+   * Submit the form
+   * @param options Form submission options
+   * @returns Promise that resolves with submission result
+   */
+  submit(options: FormSubmitOptions): Promise<any>;
+  
+  /**
+   * Validate form data
+   * @param data Form data to validate
+   * @returns Validation result (true if valid, error object if invalid)
+   */
+  validate(data: FormData): boolean | Record<string, string>;
 }
