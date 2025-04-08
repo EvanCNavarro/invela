@@ -198,7 +198,16 @@ export function setupAuth(app: Express) {
       }
       if (!user) {
         console.log('[Auth] Login failed:', info?.message);
-        return res.status(401).json({ message: info?.message || 'Authentication failed' });
+        
+        // Provide a user-friendly error message
+        let userFriendlyMessage = "We couldn't sign you in. Please check your email and password and try again.";
+        
+        // Only use specific error messages for specific known errors
+        if (info?.message === "Invalid password format") {
+          userFriendlyMessage = "There was a problem with your account. Please contact support.";
+        }
+        
+        return res.status(401).json({ message: userFriendlyMessage });
       }
       req.login(user, (loginErr) => {
         if (loginErr) {
@@ -235,8 +244,7 @@ export function setupAuth(app: Express) {
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
       return res.status(401).json({ 
-        error: 'Unauthorized',
-        message: 'User not authenticated'
+        message: 'Your session has expired. Please sign in again.'
       });
     }
 
@@ -252,7 +260,9 @@ export function setupAuth(app: Express) {
   app.get("/api/user", (req, res) => {
     if (!req.isAuthenticated()) {
       console.log('[Auth] Unauthenticated user session');
-      return res.sendStatus(401);
+      return res.status(401).json({ 
+        message: "Your session has expired. Please sign in again." 
+      });
     }
     console.log('[Auth] Returning user session data');
     res.json(req.user);
