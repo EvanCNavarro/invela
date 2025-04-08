@@ -80,6 +80,28 @@ export class KybFormService implements FormServiceInterface {
   }
   
   /**
+   * Get KYB fields for a specific step index
+   * This is used for multi-step form rendering
+   * @param stepIndex The step index to fetch fields for
+   * @returns Array of KYB fields for the specified step
+   */
+  async getKybFieldsByStepIndex(stepIndex: number): Promise<KybField[]> {
+    try {
+      console.log(`[KYB Service] Fetching fields for step index: ${stepIndex}`);
+      
+      // Use our new API endpoint for fetching fields by step index
+      const response = await apiRequest('GET', `/api/form-fields/company_kyb/${stepIndex}`);
+      const fields = await response.json();
+      
+      console.log(`[KYB Service] Found ${fields.length} fields for step ${stepIndex}`);
+      return fields;
+    } catch (error) {
+      console.error(`[KYB Service] Error fetching KYB fields for step ${stepIndex}:`, error);
+      return [];
+    }
+  }
+  
+  /**
    * Groups KYB fields by their group property
    * @param fields Array of KYB fields to group
    * @returns Object with group names as keys and arrays of fields as values
@@ -378,6 +400,7 @@ export const kybService = new KybFormService();
 
 // Export convenience functions
 export const getKybFields = (): Promise<KybField[]> => kybService.getKybFields();
+export const getKybFieldsByStepIndex = (stepIndex: number): Promise<KybField[]> => kybService.getKybFieldsByStepIndex(stepIndex);
 export const groupKybFieldsBySection = (fields: KybField[]): Record<string, KybField[]> => kybService.groupFieldsBySection(fields);
 export const saveKybProgress = (taskId: number, progress: number, formData: Record<string, any>) => kybService.saveKybProgress(taskId, progress, formData);
 export const getKybProgress = (taskId: number): Promise<KybProgressResponse> => kybService.getKybProgress(taskId);

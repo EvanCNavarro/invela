@@ -170,9 +170,52 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
               <button
                 type="button"
                 className="text-xs text-primary hover:text-primary/80 flex items-center"
-                onClick={() => {
-                  // This would trigger AI suggestion functionality
-                  // We'll implement this separately
+                onClick={async () => {
+                  try {
+                    // Get current task data (from context or props)
+                    const taskId = form.getValues('taskId') || template.id;
+                    const companyId = form.getValues('companyId') || 1; // Default to company 1 if not found
+                    const currentFormData = form.getValues();
+                    const currentStepIndex = form.getValues('currentStepIndex') || 0;
+                    
+                    // Make API request to get suggestions
+                    const response = await fetch('/api/ai-suggestions', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        companyId,
+                        taskType: template.task_type,
+                        stepIndex: currentStepIndex,
+                        formData: currentFormData
+                      }),
+                    });
+                    
+                    if (!response.ok) {
+                      throw new Error('Failed to get AI suggestions');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.suggestions && data.suggestions[field.key]) {
+                      const suggestion = data.suggestions[field.key];
+                      console.log(`[AI Suggestion] Got suggestion for ${field.key}:`, suggestion);
+                      
+                      // Apply the suggestion value to the form field
+                      form.setValue(field.key, suggestion.value, { 
+                        shouldValidate: true, 
+                        shouldDirty: true 
+                      });
+                      
+                      // Notify parent components of the change
+                      onFieldChange?.(suggestion.value);
+                    } else {
+                      console.log(`[AI Suggestion] No suggestion available for ${field.key}`);
+                    }
+                  } catch (error) {
+                    console.error('[AI Suggestion] Error getting suggestions:', error);
+                  }
                 }}
               >
                 ✨ Get AI suggestions
