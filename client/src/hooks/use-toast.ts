@@ -5,11 +5,11 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-// Default timeout for most toasts (3 seconds)
-const TOAST_REMOVE_DELAY = 3000
-// Shorter timeout for error toasts (2 seconds)
-const ERROR_TOAST_REMOVE_DELAY = 2000
+const TOAST_LIMIT = 3 // Allow up to 3 toasts at once
+// Standard timeout for all toasts (4 seconds)
+const TOAST_REMOVE_DELAY = 4000
+// Kept for backward compatibility but we'll use TOAST_REMOVE_DELAY for error toasts too
+const ERROR_TOAST_REMOVE_DELAY = TOAST_REMOVE_DELAY
 
 type ToasterToast = ToastProps & {
   id: string
@@ -172,10 +172,10 @@ function toast({ ...props }: Toast) {
   }
 
   return {
-    id: id,
+    id,
     dismiss,
     update,
-  }
+  } as const
 }
 
 function useToast() {
