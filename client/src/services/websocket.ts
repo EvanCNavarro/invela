@@ -19,7 +19,7 @@ class WebSocketService {
    */
   public connect(): Promise<WebSocket> {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      console.log('WebSocket already connected');
+      // Connection already established, return silently
       return Promise.resolve(this.socket);
     }
     
@@ -33,7 +33,6 @@ class WebSocketService {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       
-      console.log('WebSocket connecting...');
       this.socket = new WebSocket(wsUrl);
       
       this.socket.onopen = this.handleOpen.bind(this);
@@ -55,7 +54,7 @@ class WebSocketService {
       this.connectionPromise = null;
       this.connectionResolver = null;
       this.reconnectAttempts = 0;
-      console.log('WebSocket disconnected');
+      // Disconnect log removed to reduce console noise
     }
   }
 
@@ -83,7 +82,6 @@ class WebSocketService {
     }
     
     this.subscribers.get(type)?.add(callback);
-    console.log(`New subscription added: Object type=${type}, deleted=${this.subscribers.get(type)?.delete}, handlersCount=${this.subscribers.get(type)?.size}, connectionId=${this.connectionId}`);
     
     // Return unsubscribe function
     return () => {
@@ -112,7 +110,7 @@ class WebSocketService {
    * Handle WebSocket open event
    */
   private handleOpen(event: Event): void {
-    console.log('WebSocket connected');
+    // Reset reconnect attempts on successful connection
     this.reconnectAttempts = 0;
     
     if (this.connectionResolver && this.socket) {
@@ -131,7 +129,7 @@ class WebSocketService {
       // If this is a connection establishment message, store any connection ID
       if (data.type === 'connection_established') {
         this.connectionId = data.connectionId || 'ws-1';
-        console.log(`WebSocket Service initialized: Object connectionId=${this.connectionId}`);
+        // Connection ID received, but log removed to reduce console noise
         
         // Notify subscribers for connection_established type
         this.subscribers.get('connection_established')?.forEach(callback => {
@@ -177,7 +175,7 @@ class WebSocketService {
     // Only attempt to reconnect if it wasn't a clean close and we haven't exceeded max attempts
     if (!event.wasClean && this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`WebSocket connection closed. Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+      // Reconnection log removed to reduce console noise
       
       setTimeout(() => {
         this.connect();
