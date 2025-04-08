@@ -18,6 +18,9 @@ import { Eye, EyeOff, Check } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { useFileToast } from "@/hooks/use-file-toast";
+import { FileItem } from "@/types/files";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -28,6 +31,9 @@ export default function LoginPage() {
   const { user, loginMutation } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
+  const { createFileUploadToast } = useFileToast();
+  const [toastIndex, setToastIndex] = useState(0);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   
@@ -92,6 +98,46 @@ export default function LoginPage() {
       };
     }
   }, [form]);
+
+  // Function to test all toast variants
+  const showNextToast = () => {
+    const toastTypes = [
+      () => unifiedToast.success('Success Toast', 'Operation completed successfully'),
+      () => unifiedToast.info('Info Toast', 'Here is some useful information'),
+      () => unifiedToast.warning('Warning Toast', 'This action might cause issues'),
+      () => unifiedToast.error('Error Toast', 'Something went wrong'),
+      () => unifiedToast.fileUploadStarted('document.pdf'),
+      () => unifiedToast.clipboardCopy('Text copied to clipboard'),
+      () => {
+        const mockFile: FileItem = {
+          name: 'sample-file.pdf',
+          size: 1024 * 1024 * 2.5, // 2.5MB
+          type: 'application/pdf',
+        };
+        const fileToast = createFileUploadToast(mockFile, {
+          onCancel: () => console.log('Upload cancelled'),
+          onSuccess: (file) => console.log('Upload success', file),
+          onError: (error) => console.log('Upload error', error),
+          showUploadAnother: true,
+          onUploadAnother: () => console.log('Upload another clicked')
+        });
+        
+        // Simulate progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 10;
+          fileToast.setProgress(progress);
+          if (progress >= 100) {
+            clearInterval(interval);
+          }
+        }, 500);
+      }
+    ];
+    
+    // Show the next toast in the sequence
+    toastTypes[toastIndex % toastTypes.length]();
+    setToastIndex(prev => prev + 1);
+  };
 
   // Redirect if already logged in
   if (user) {
@@ -284,6 +330,25 @@ export default function LoginPage() {
               <Link href="/register" className="text-primary hover:underline">
                 Register here
               </Link>
+            </p>
+          </motion.div>
+          
+          <motion.div
+            className="mt-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full text-sm"
+              onClick={showNextToast}
+            >
+              Test Toast Notifications
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Click to cycle through all toast variants
             </p>
           </motion.div>
         </form>
