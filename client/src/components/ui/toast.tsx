@@ -1,7 +1,8 @@
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva, type VariantProps } from "class-variance-authority"
-import { X } from "lucide-react"
+import { X, CheckCircle, AlertCircle, AlertTriangle, Info, Upload, Clipboard } from "lucide-react"
+import { motion } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -23,13 +24,18 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border p-4 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
         default: "border bg-background text-foreground",
-        destructive:
-          "destructive group border-[#EE6565] bg-[#FEF0F0] text-[#B92929]",
+        success: "success group border-[#E7F5E9] bg-[#F8FBF9] text-[#2E7D32]",
+        info: "info group border-[#E3F2FD] bg-[#F5FAFF] text-[#1565C0]",
+        warning: "warning group border-[#FFF8E1] bg-[#FFFDF5] text-[#F57C00]",
+        error: "error group border-[#EE6565] bg-[#FEF0F0] text-[#B92929]",
+        "file-upload": "file-upload group border-[#EDE7F6] bg-[#F9F5FD] text-[#5E35B1]",
+        clipboard: "clipboard group border-[#EEEEEE] bg-[#F9F9F9] text-[#424242]",
+        destructive: "destructive group border-[#EE6565] bg-[#FEF0F0] text-[#B92929]", // Kept for backward compatibility
       },
     },
     defaultVariants: {
@@ -38,17 +44,72 @@ const toastVariants = cva(
   }
 )
 
+// New Toast Icon Component
+export const ToastIcon = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & { 
+    variant: "success" | "info" | "warning" | "error" | "file-upload" | "clipboard" | "destructive" | "default" 
+  }
+>(({ className, variant = "default", ...props }, ref) => {
+  const icons = {
+    success: <CheckCircle className="h-5 w-5" />,
+    info: <Info className="h-5 w-5" />,
+    warning: <AlertTriangle className="h-5 w-5" />,
+    error: <AlertCircle className="h-5 w-5" />,
+    "file-upload": <Upload className="h-5 w-5" />,
+    clipboard: <Clipboard className="h-5 w-5" />,
+    destructive: <AlertCircle className="h-5 w-5" />, // For backward compatibility
+    default: null,
+  };
+
+  const iconColorClasses = {
+    success: "bg-[#E8F5E9] text-[#4CAF50] border-[#C8E6C9]",
+    info: "bg-[#E3F2FD] text-[#2196F3] border-[#BBDEFB]",
+    warning: "bg-[#FFF8E1] text-[#F9A825] border-[#FFECB3]",
+    error: "bg-[#FFEBEE] text-[#EE6565] border-[#FFCDD2]",
+    "file-upload": "bg-[#EDE7F6] text-[#7E57C2] border-[#D1C4E9]",
+    clipboard: "bg-[#F5F5F5] text-[#757575] border-[#E0E0E0]",
+    destructive: "bg-[#FFEBEE] text-[#EE6565] border-[#FFCDD2]", // For backward compatibility
+    default: "",
+  };
+
+  if (!icons[variant]) return null;
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex items-center justify-center min-w-10 min-h-10 w-10 h-10 rounded-md border mr-3",
+        iconColorClasses[variant],
+        className
+      )}
+      {...props}
+    >
+      {icons[variant]}
+    </div>
+  );
+});
+ToastIcon.displayName = "ToastIcon";
+
+// Enhanced Toast with Framer Motion
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
 >(({ className, variant, ...props }, ref) => {
   return (
-    <ToastPrimitives.Root
-      ref={ref}
-      className={cn(toastVariants({ variant }), className)}
-      {...props}
-    />
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 10 }}
+      transition={{ duration: 0.3 }}
+    >
+      <ToastPrimitives.Root
+        ref={ref}
+        className={cn(toastVariants({ variant }), className)}
+        {...props}
+      />
+    </motion.div>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
@@ -60,7 +121,15 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-[#EE6565]/30 group-[.destructive]:text-[#B92929] group-[.destructive]:hover:border-[#EE6565]/50 group-[.destructive]:hover:bg-[#FEF0F0] group-[.destructive]:hover:text-[#A32525] group-[.destructive]:focus:ring-[#EE6565]",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium ring-offset-background transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+      // Group-specific styling for all variants
+      "group-[.success]:border-[#C8E6C9]/30 group-[.success]:text-[#2E7D32] group-[.success]:hover:border-[#C8E6C9]/50 group-[.success]:hover:bg-[#E8F5E9] group-[.success]:hover:text-[#1B5E20] group-[.success]:focus:ring-[#4CAF50]",
+      "group-[.info]:border-[#BBDEFB]/30 group-[.info]:text-[#1565C0] group-[.info]:hover:border-[#BBDEFB]/50 group-[.info]:hover:bg-[#E3F2FD] group-[.info]:hover:text-[#0D47A1] group-[.info]:focus:ring-[#2196F3]",
+      "group-[.warning]:border-[#FFECB3]/30 group-[.warning]:text-[#F57C00] group-[.warning]:hover:border-[#FFECB3]/50 group-[.warning]:hover:bg-[#FFF8E1] group-[.warning]:hover:text-[#E65100] group-[.warning]:focus:ring-[#FFC107]",
+      "group-[.error]:border-[#FFCDD2]/30 group-[.error]:text-[#B92929] group-[.error]:hover:border-[#FFCDD2]/50 group-[.error]:hover:bg-[#FFEBEE] group-[.error]:hover:text-[#8E2424] group-[.error]:focus:ring-[#EE6565]",
+      "group-[.file-upload]:border-[#D1C4E9]/30 group-[.file-upload]:text-[#5E35B1] group-[.file-upload]:hover:border-[#D1C4E9]/50 group-[.file-upload]:hover:bg-[#EDE7F6] group-[.file-upload]:hover:text-[#4527A0] group-[.file-upload]:focus:ring-[#7E57C2]",
+      "group-[.clipboard]:border-[#E0E0E0]/30 group-[.clipboard]:text-[#424242] group-[.clipboard]:hover:border-[#E0E0E0]/50 group-[.clipboard]:hover:bg-[#F5F5F5] group-[.clipboard]:hover:text-[#212121] group-[.clipboard]:focus:ring-[#757575]",
+      "group-[.destructive]:border-[#FFCDD2]/30 group-[.destructive]:text-[#B92929] group-[.destructive]:hover:border-[#FFCDD2]/50 group-[.destructive]:hover:bg-[#FFEBEE] group-[.destructive]:hover:text-[#8E2424] group-[.destructive]:focus:ring-[#EE6565]",
       className
     )}
     {...props}
@@ -75,7 +144,15 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-[#B92929] group-[.destructive]:hover:text-[#A32525] group-[.destructive]:focus:ring-[#EE6565] group-[.destructive]:focus:ring-offset-[#FEF0F0]",
+      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+      // Group-specific styling for all variants
+      "group-[.success]:text-[#2E7D32] group-[.success]:hover:text-[#1B5E20] group-[.success]:focus:ring-[#4CAF50] group-[.success]:focus:ring-offset-[#F8FBF9]",
+      "group-[.info]:text-[#1565C0] group-[.info]:hover:text-[#0D47A1] group-[.info]:focus:ring-[#2196F3] group-[.info]:focus:ring-offset-[#F5FAFF]",
+      "group-[.warning]:text-[#F57C00] group-[.warning]:hover:text-[#E65100] group-[.warning]:focus:ring-[#FFC107] group-[.warning]:focus:ring-offset-[#FFFDF5]",
+      "group-[.error]:text-[#B92929] group-[.error]:hover:text-[#8E2424] group-[.error]:focus:ring-[#EE6565] group-[.error]:focus:ring-offset-[#FEF0F0]",
+      "group-[.file-upload]:text-[#5E35B1] group-[.file-upload]:hover:text-[#4527A0] group-[.file-upload]:focus:ring-[#7E57C2] group-[.file-upload]:focus:ring-offset-[#F9F5FD]",
+      "group-[.clipboard]:text-[#424242] group-[.clipboard]:hover:text-[#212121] group-[.clipboard]:focus:ring-[#757575] group-[.clipboard]:focus:ring-offset-[#F9F9F9]",
+      "group-[.destructive]:text-[#B92929] group-[.destructive]:hover:text-[#8E2424] group-[.destructive]:focus:ring-[#EE6565] group-[.destructive]:focus:ring-offset-[#FEF0F0]",
       className
     )}
     toast-close=""
@@ -104,7 +181,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm leading-relaxed opacity-90 group-[.destructive]:opacity-100", className)}
+    className={cn("text-sm leading-relaxed opacity-90", className)}
     {...props}
   />
 ))
