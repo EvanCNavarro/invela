@@ -1,159 +1,115 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 
-interface UseWebSocketReturn {
-  socket: WebSocket | null;
-  connected: boolean;
-  error: Error | null;
+type MessageType = 'text' | 'connection_established' | 'ping' | 'pong';
+
+export interface WebSocketMessage {
+  type: MessageType;
+  data?: any;
+  sender?: string;
+  timestamp?: string;
+  content?: string;
 }
 
-const RECONNECT_DELAY = 2000;
-const MAX_RETRIES = 3;
-
-// Singleton instance to track global connection state
-let globalSocket: WebSocket | null = null;
-let connectionPromise: Promise<void> | null = null;
-let activeSubscribers = 0;
-
-export function useWebSocket(): UseWebSocketReturn {
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-  const reconnectAttempt = useRef(0);
-  const queryClient = useQueryClient();
-  const mounted = useRef(true);
-
-  const connect = useCallback(() => {
-    if (!mounted.current) return;
-
-    // If we already have a connection promise, wait for it
-    if (connectionPromise) {
-      connectionPromise.then(() => {
-        if (mounted.current && globalSocket) {
-          setSocket(globalSocket);
-          setConnected(globalSocket.readyState === WebSocket.OPEN);
-        }
-      });
-      return;
-    }
-
-    // If we already have a global socket that's connected, use it
-    if (globalSocket?.readyState === WebSocket.OPEN) {
-      setSocket(globalSocket);
-      setConnected(true);
-      return;
-    }
-
-    // Create new connection
-    try {
-      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`;
-      console.log('[WebSocket] Creating new connection:', {
-        url: wsUrl,
-        activeSubscribers: activeSubscribers + 1,
-        timestamp: new Date().toISOString()
-      });
-
-      const ws = new WebSocket(wsUrl);
-      globalSocket = ws;
-
-      connectionPromise = new Promise((resolve) => {
-        ws.onopen = () => {
-          if (!mounted.current) {
-            ws.close();
-            return;
-          }
-          console.log('[WebSocket] Connected successfully');
-          setConnected(true);
-          setError(null);
-          reconnectAttempt.current = 0;
-          resolve();
-          connectionPromise = null;
-
-          // Send initial ping
-          ws.send(JSON.stringify({ type: 'ping' }));
-        };
-      });
-
-      ws.onclose = (event) => {
-        if (!mounted.current) return;
-
-        console.log('[WebSocket] Connection closed:', {
-          code: event.code,
-          reason: event.reason,
-          activeSubscribers,
-          timestamp: new Date().toISOString()
-        });
-
-        setConnected(false);
-        globalSocket = null;
-        connectionPromise = null;
-
-        if (event.code !== 1000 && event.code !== 1001 && reconnectAttempt.current < MAX_RETRIES) {
-          setTimeout(() => {
-            if (mounted.current) {
-              reconnectAttempt.current++;
-              connect();
-            }
-          }, RECONNECT_DELAY);
-        }
-      };
-
-      ws.onerror = (event) => {
-        if (!mounted.current) return;
-        console.error('[WebSocket] Connection error:', event);
-        setError(new Error('Connection error. Please check your internet connection.'));
-      };
-
-      ws.onmessage = (event) => {
-        if (!mounted.current) return;
-
-        try {
-          const data = JSON.parse(event.data);
-          console.log('[WebSocket] Received message:', data);
-
-          if (data.type === 'task_update') {
-            queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
-          } else if (data.type === 'file_update') {
-            queryClient.invalidateQueries({ queryKey: ['/api/files'] });
-          } else if (data.type === 'pong') {
-            console.log('[WebSocket] Received pong');
-          }
-        } catch (err) {
-          console.error('[WebSocket] Message parse error:', err);
-        }
-      };
-
-      setSocket(ws);
-      activeSubscribers++;
-
-    } catch (err) {
-      console.error('[WebSocket] Setup error:', err);
-      setError(err as Error);
-      connectionPromise = null;
-    }
-  }, [queryClient]);
+export const useWebSocket = () => {
+  const [messages, setMessages] = useState<WebSocketMessage[]>([]);
+  const [connected, setConnected] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const socketRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    mounted.current = true;
-    connect();
+    // Create WebSocket connection
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    const socket = new WebSocket(wsUrl);
+    socketRef.current = socket;
 
-    return () => {
-      mounted.current = false;
-      activeSubscribers--;
+    socket.onopen = () => {
+      setConnected(true);
+      setError(null);
+      console.log('WebSocket connected');
+    };
 
-      console.log('[WebSocket] Component unmounting:', {
-        remainingSubscribers: activeSubscribers,
-        timestamp: new Date().toISOString()
-      });
+    socket.onclose = (event) => {
+      setConnected(false);
+      console.log(`WebSocket disconnected: ${event.code} ${event.reason}`);
+      
+      // Try to reconnect after 5 seconds
+      setTimeout(() => {
+        if (socketRef.current?.readyState !== WebSocket.OPEN) {
+          console.log('Attempting to reconnect WebSocket...');
+          // The component will unmount and remount, which will trigger a new connection attempt
+          setError('Disconnected. Attempting to reconnect...');
+        }
+      }, 5000);
+    };
 
-      // Only close the global socket if no subscribers remain
-      if (activeSubscribers === 0 && globalSocket) {
-        console.log('[WebSocket] Closing global connection - no active subscribers');
-        globalSocket.close();
-        globalSocket = null;
+    socket.onerror = (event) => {
+      console.error('WebSocket error:', event);
+      setError('Error connecting to chat server. Please try again later.');
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        // Handle different message types
+        if (message.type === 'connection_established') {
+          console.log('Connection established with server');
+        } else if (message.type === 'ping') {
+          // Respond to pings automatically
+          socket.send(JSON.stringify({ type: 'pong' }));
+        } else if (message.type === 'text') {
+          // Add the message to our state
+          setMessages((prevMessages) => [...prevMessages, {
+            ...message,
+            timestamp: message.timestamp || new Date().toISOString()
+          }]);
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
       }
     };
-  }, [connect]);
 
-  return { socket, connected, error };
-}
+    // Clean up on unmount
+    return () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
+    };
+  }, []);
+
+  // Function to send a chat message
+  const sendMessage = useCallback((content: string, sender: string) => {
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      setError('Not connected to chat server');
+      return false;
+    }
+
+    try {
+      const message: WebSocketMessage = {
+        type: 'text',
+        content,
+        sender,
+        timestamp: new Date().toISOString()
+      };
+
+      socketRef.current.send(JSON.stringify(message));
+      
+      // Add the message to our local state immediately
+      setMessages((prevMessages) => [...prevMessages, message]);
+      return true;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message');
+      return false;
+    }
+  }, []);
+
+  return {
+    messages,
+    connected,
+    error,
+    sendMessage
+  };
+};
