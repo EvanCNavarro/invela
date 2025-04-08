@@ -197,10 +197,10 @@ export default function AboutPage() {
         </div>
       </section>
       
-      {/* Leadership Section Placeholder */}
+      {/* Leadership Section */}
       <section id="leadership" className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-16">
+          <div className="max-w-5xl mx-auto text-center mb-16">
             <motion.div 
               initial="hidden"
               whileInView="visible"
@@ -231,24 +231,80 @@ export default function AboutPage() {
               Our leadership team brings together decades of experience in finance, regulation, technology, and data security.
             </motion.p>
             
+            <div className="mb-10">
+              <motion.div 
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.1 }}
+                variants={staggerContainer}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto"
+              >
+                {/* First Row - 4 Leaders */}
+                <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-1">
+                  <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                    <img src="/images/company/leadership/leadership_01_ssmith.png" alt="Steve Smith" className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Steve Smith</h3>
+                  <p className="text-blue-600">Chief Executive Officer</p>
+                </motion.div>
+
+                <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-2">
+                  <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                    <img src="/images/company/leadership/leadership_02_ncoffing.png" alt="Nathanael Coffing" className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Nathanael Coffing</h3>
+                  <p className="text-blue-600">Chief Operations Officer</p>
+                </motion.div>
+
+                <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-3">
+                  <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                    <img src="/images/company/leadership/leadership_03_pmcfarland.png" alt="Preston McFarland" className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Preston McFarland</h3>
+                  <p className="text-blue-600">Chief Technology Officer</p>
+                </motion.div>
+
+                <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-4">
+                  <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                    <img src="/images/company/leadership/leadership_04_dnehrebecki.png" alt="Darek Nehrebecki" className="w-full h-full object-cover" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Darek Nehrebecki</h3>
+                  <p className="text-blue-600">Chief Strategy Officer</p>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Second Row - 3 Leaders (Centered) */}
             <motion.div 
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
-              variants={fadeIn}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto"
+              variants={staggerContainer}
+              className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto"
             >
-              {[1, 2, 3].map((item) => (
-                <div 
-                  key={item} 
-                  className="flex flex-col items-center"
-                  id={`leader-${item}`}
-                >
-                  <div className="w-40 h-40 rounded-full bg-gray-200 animate-pulse mb-4" />
-                  <h3 className="text-lg font-semibold">Leadership Name</h3>
-                  <p className="text-blue-600">Position Title</p>
+              <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-5">
+                <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                  <img src="/images/company/leadership/leadership_05_gsulbaran.png" alt="Gaby Sulbaran" className="w-full h-full object-cover" />
                 </div>
-              ))}
+                <h3 className="text-lg font-semibold">Gaby Sulbaran</h3>
+                <p className="text-blue-600">Chief Payments Officer</p>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-6">
+                <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                  <img src="/images/company/leadership/leadership_06_dkurbur.png" alt="Dev Kurbur" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-lg font-semibold">Dev Kurbur</h3>
+                <p className="text-blue-600">Chief Customer Officer</p>
+              </motion.div>
+
+              <motion.div variants={fadeIn} className="flex flex-col items-center" id="leader-7">
+                <div className="w-36 h-36 rounded-full overflow-hidden shadow-md mb-4 border-2 border-gray-100">
+                  <img src="/images/company/leadership/leadership_07_jwadsworth.png" alt="Jim Wadsworth" className="w-full h-full object-cover" />
+                </div>
+                <h3 className="text-lg font-semibold">Jim Wadsworth</h3>
+                <p className="text-blue-600">Chief Revenue Officer – International</p>
+              </motion.div>
             </motion.div>
           </div>
         </div>
