@@ -118,13 +118,13 @@ export function useFileToast() {
       }
     };
     
-    // If autoStart is true, create the initial upload toast
+    // If autoStart is true, create the initial upload toast - with no auto-dismiss
     if (autoStart) {
       const initialToast = toast({
         variant: "file-upload",
         title: `Uploading '${fileName}'`,
         description: "Please wait while we upload your file.",
-        duration: 15000, // Long enough for upload but will auto-dismiss
+        duration: Infinity, // No auto-dismiss, will stay until explicitly closed
       });
       
       toastId = initialToast.id;

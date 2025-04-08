@@ -96,9 +96,14 @@ const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
-  // Extract the id prop if it exists
-  const { id, ...restProps } = props as any;
+>(({ className, variant, children, ...props }, ref) => {
+  // Ensure we have a valid variant
+  const safeVariant = variant || 'default';
+  
+  // Check if we have content
+  if (!children) {
+    return null;
+  }
   
   return (
     <motion.div
@@ -106,13 +111,14 @@ const Toast = React.forwardRef<
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 10 }}
       transition={{ duration: 0.3 }}
-      data-toast-id={id}
     >
       <ToastPrimitives.Root
         ref={ref}
-        className={cn(toastVariants({ variant }), className)}
-        {...restProps}
-      />
+        className={cn(toastVariants({ variant: safeVariant }), className)}
+        {...props}
+      >
+        {children}
+      </ToastPrimitives.Root>
     </motion.div>
   )
 })
