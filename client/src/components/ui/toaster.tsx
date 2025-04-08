@@ -15,6 +15,11 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, variant, ...props }) {
+        // Skip empty toasts
+        if (!id || (!title && !description && !action)) {
+          return null;
+        }
+        
         // Normalize the variant
         const normalizedVariant = variant as "default" | "success" | "info" | "warning" | "error" | "file-upload" | "clipboard" | "destructive" | undefined;
         
