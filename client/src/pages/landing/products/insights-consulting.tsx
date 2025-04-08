@@ -234,7 +234,7 @@ export default function InsightsConsultingPage() {
       </section>
       
       {/* CTA Section */}
-      <section id="get-started" className="py-20 bg-white">
+      <section id="contact" className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-12 text-white">
             <motion.div 
@@ -244,7 +244,7 @@ export default function InsightsConsultingPage() {
               variants={fadeIn}
               className="mb-6"
             >
-              <SectionTitleChip title="Get Started" sectionId="get-started" className="bg-white/80" centered />
+              <SectionTitleChip title="Get Started" sectionId="contact" className="bg-white/80" centered />
             </motion.div>
             
             <motion.h2 
