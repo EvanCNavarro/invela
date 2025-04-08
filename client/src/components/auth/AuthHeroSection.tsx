@@ -21,7 +21,15 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
   }, []);
 
   return (
-    <div className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-[#0082FF]' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}>
+    <motion.div 
+      className={`w-full h-full flex items-center justify-center ${isLogin ? 'bg-[#0082FF]' : 'bg-[#F5F4F9]'} rounded-lg overflow-hidden`}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ 
+        duration: 0.8, 
+        ease: [0.22, 1, 0.36, 1]
+      }}
+    >
       <motion.div 
         className="max-w-[500px] w-full h-[500px] relative"
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -33,7 +41,7 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
         transition={{ 
           duration: 0.8, 
           ease: [0.22, 1, 0.36, 1],
-          delay: 0.2
+          delay: 0.3
         }}
       >
         <img
@@ -50,6 +58,6 @@ export function AuthHeroSection({ isLogin }: AuthHeroSectionProps) {
           onLoad={() => setIsLoaded(true)}
         />
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
