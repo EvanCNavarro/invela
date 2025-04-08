@@ -25,14 +25,14 @@ const SiteMapLink = ({ href, label }: SiteMapLinkProps) => {
   if (isEmptyLink) {
     // For empty/placeholder links, use a button styled as a link
     return (
-      <button className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer bg-transparent border-0 p-0 text-left">
+      <button className="flex items-center text-gray-700 hover:text-blue-600 hover:underline cursor-pointer bg-transparent border-0 p-0 text-left">
         {linkContent}
       </button>
     );
   } else if (isSpecialLink) {
     // For anchor or external links
     return (
-      <a href={href} className="flex items-center text-gray-700 hover:text-blue-600 no-underline">
+      <a href={href} className="flex items-center text-gray-700 hover:text-blue-600 hover:underline">
         {linkContent}
       </a>
     );
@@ -40,7 +40,7 @@ const SiteMapLink = ({ href, label }: SiteMapLinkProps) => {
     // For internal links, use wouter Link
     return (
       <Link href={href}>
-        <a className="flex items-center text-gray-700 hover:text-blue-600 no-underline">
+        <a className="flex items-center text-gray-700 hover:text-blue-600 hover:underline">
           {linkContent}
         </a>
       </Link>
