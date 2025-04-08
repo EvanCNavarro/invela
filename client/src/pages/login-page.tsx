@@ -106,7 +106,6 @@ export default function LoginPage() {
       () => unifiedToast.info('Info Toast', 'Here is some useful information'),
       () => unifiedToast.warning('Warning Toast', 'This action might cause issues'),
       () => unifiedToast.error('Error Toast', 'Something went wrong'),
-      () => unifiedToast.fileUploadStarted('document.pdf'),
       () => unifiedToast.clipboardCopy('Text copied to clipboard'),
       () => {
         // Demonstrate simplified file upload toast flow - no progress updates
@@ -119,10 +118,6 @@ export default function LoginPage() {
         // Create a file upload toast that persists until completion
         const uploadToast = createFileUploadToast(mockFile as FileItem, {
           autoStart: true,
-          onCancel: () => {
-            console.log("Upload cancelled by user");
-            clearTimeout(uploadCompleteTimer);
-          },
           onSuccess: (file) => {
             console.log("Upload completed successfully:", file.name);
           },
@@ -134,7 +129,7 @@ export default function LoginPage() {
         // Simulate a completed upload after 3 seconds
         const uploadCompleteTimer = setTimeout(() => {
           // Show success toast when upload completes
-          uploadToast.uploadComplete({
+          uploadToast.success({
             name: mockFile.name,
             size: mockFile.size,
             type: mockFile.type
