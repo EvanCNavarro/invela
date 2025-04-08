@@ -140,6 +140,44 @@ router.get('/api/kyb/fields', async (req, res) => {
   }
 });
 
+// Endpoint to fetch KYB fields by step index
+router.get('/api/form-fields/company_kyb/:stepIndex', async (req, res) => {
+  try {
+    const stepIndex = parseInt(req.params.stepIndex, 10);
+    
+    if (isNaN(stepIndex)) {
+      return res.status(400).json({
+        message: "Invalid step index provided",
+        error: "Step index must be a valid number"
+      });
+    }
+    
+    logger.info(`Fetching KYB fields for step ${stepIndex}`);
+    
+    const fields = await db.select()
+      .from(kybFields)
+      .where(eq(kybFields.step_index, stepIndex))
+      .orderBy(sql`"group" ASC, "order" ASC`);
+    
+    logger.info(`KYB fields for step ${stepIndex} retrieved successfully`, {
+      fieldCount: fields.length,
+      stepIndex,
+      groups: [...new Set(fields.map(f => f.group))]
+    });
+    
+    res.json(fields);
+  } catch (error) {
+    logger.error(`Error fetching KYB fields for step index`, {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(500).json({
+      message: "Failed to fetch KYB fields for step",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // Debug utility for logging response data
 const logResponseDebug = (stage: string, responses: any[], extras: Record<string, any> = {}) => {
   console.log(`[KYB API Debug] ${stage}:`, {
