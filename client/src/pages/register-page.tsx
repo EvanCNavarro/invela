@@ -227,291 +227,333 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout isLogin={false}>
-      <motion.div 
-        className="mb-12"
-        initial={{ opacity: 0, y: -5 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
-        <motion.img
-          src="/invela-logo.svg"
-          alt="Invela"
-          className="h-14 w-14 mb-6"
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
-        />
-        <motion.h1 
-          className="text-3xl font-bold"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
-        >
-          Verify your invitation
-        </motion.h1>
-        <motion.p 
-          className="text-base text-muted-foreground mt-3"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.4 }}
-        >
-          Enter your invitation code to begin registration
-        </motion.p>
-      </motion.div>
-
       {!validatedInvitation ? (
-        <Form {...invitationForm}>
-          <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
-            >
-              <FormField
-                control={invitationForm.control}
-                name="invitationCode"
-                render={({ field }) => (
-                  <FormItem className="mb-8">
-                    <FormLabel className="text-base font-medium mb-2 block">Invitation Code</FormLabel>
-                    <FormControl>
-                      <div className="w-full">
-                        <InvitationCodeInput
-                          value={field.value}
-                          onChange={field.onChange}
-                          autoFocus={true}
-                        />
-                      </div>
-                    </FormControl>
-                    <div className="min-h-[24px] mt-4">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
-                disabled={invitationForm.formState.isSubmitting || 
-                  invitationForm.watch("invitationCode").length !== 6}
-              >
-                Validate Code
-              </Button>
-            </motion.div>
-
-            <motion.div 
-              className="text-center mt-6"
+        <>
+          <motion.div 
+            className="mb-12"
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            <motion.img
+              src="/invela-logo.svg"
+              alt="Invela"
+              className="h-14 w-14 mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
+            />
+            <motion.h1 
+              className="text-3xl font-bold"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
             >
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/login" className="text-primary hover:underline">
-                  Sign in here
-                </Link>
-              </p>
-            </motion.div>
-          </form>
-        </Form>
-      ) : (
-        <Form {...registrationForm}>
-          <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6">
-            <motion.div 
-              className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              Verify your invitation
+            </motion.h1>
+            <motion.p 
+              className="text-base text-muted-foreground mt-3"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
             >
-              <div className="flex items-start gap-3">
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.3, type: "spring" }}
-                >
-                  <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                </motion.div>
-                <div>
-                  <p className="text-sm font-medium text-blue-700">
-                    Valid invitation code
-                  </p>
-                  <p className="text-sm text-blue-600 mt-1">
-                    Registering for {validatedInvitation.company}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
+              Enter your invitation code to begin registration
+            </motion.p>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
-            >
-              <FormField
-                control={registrationForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="text-base">Email</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="email" disabled className="h-14 bg-gray-50" />
-                    </FormControl>
-                    <div className="min-h-[24px] mt-2">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
-            >
-              <FormField
-                control={registrationForm.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="text-base">Company</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="text" disabled className="h-14 bg-gray-50" />
-                    </FormControl>
-                    <div className="min-h-[24px] mt-2">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div 
-              className="grid grid-cols-2 gap-6 mb-6"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
-            >
-              <FormField
-                control={registrationForm.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="text" placeholder="First name" className="h-14 bg-gray-50" />
-                    </FormControl>
-                    <div className="min-h-[24px] mt-2">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={registrationForm.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="text" placeholder="Last name" className="h-14 bg-gray-50" />
-                    </FormControl>
-                    <div className="min-h-[24px] mt-2">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
-            >
-              <FormField
-                control={registrationForm.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="mb-6">
-                    <FormLabel className="text-base">Password</FormLabel>
-                    <div className="relative">
+          <Form {...invitationForm}>
+            <form onSubmit={invitationForm.handleSubmit(onValidateCode)} className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+              >
+                <FormField
+                  control={invitationForm.control}
+                  name="invitationCode"
+                  render={({ field }) => (
+                    <FormItem className="mb-8">
+                      <FormLabel className="text-base font-medium mb-2 block">Invitation Code</FormLabel>
                       <FormControl>
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          {...field}
-                          placeholder="Choose a secure password"
-                          className="h-14 bg-gray-50"
-                        />
+                        <div className="w-full">
+                          <InvitationCodeInput
+                            value={field.value}
+                            onChange={field.onChange}
+                            autoFocus={true}
+                          />
+                        </div>
                       </FormControl>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </Button>
-                    </div>
-                    <div className="min-h-[24px] mt-2">
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </motion.div>
+                      <div className="min-h-[24px] mt-4">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
-                disabled={registerMutation.isPending}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
               >
-                Create Account
-              </Button>
-            </motion.div>
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90 mt-10 h-14 text-base"
+                  disabled={invitationForm.formState.isSubmitting || 
+                    invitationForm.watch("invitationCode").length !== 6}
+                >
+                  Validate Code
+                </Button>
+              </motion.div>
 
-            <motion.div 
-              className="text-center mt-6"
+              <motion.div 
+                className="text-center mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6, duration: 0.5 }}
+              >
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-primary hover:underline">
+                    Sign in here
+                  </Link>
+                </p>
+              </motion.div>
+            </form>
+          </Form>
+        </>
+      ) : (
+        <motion.div
+          className="w-full max-w-[800px] mx-auto overflow-y-auto py-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            className="flex flex-col items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+          >
+            <motion.img
+              src="/invela-logo.svg"
+              alt="Invela"
+              className="h-14 w-14 mb-6"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5, ease: "easeOut" }}
+            />
+            <motion.h1 
+              className="text-3xl font-bold text-center mb-2"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.7, duration: 0.5 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
             >
-              <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/login" className="text-primary hover:underline">
-                  Sign in here
-                </Link>
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Want to learn more?{" "}
-                <Link href="/landing" className="text-primary hover:underline">
-                  Visit our website
-                </Link>
-              </p>
-            </motion.div>
-          </form>
-        </Form>
+              Create your account
+            </motion.h1>
+            <motion.p 
+              className="text-base text-muted-foreground text-center mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.4 }}
+            >
+              Complete your registration to get started
+            </motion.p>
+          </motion.div>
+
+          <Form {...registrationForm}>
+            <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6 max-w-[600px] mx-auto">
+              <motion.div 
+                className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                <div className="flex items-start gap-3">
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1, duration: 0.3, type: "spring" }}
+                  >
+                    <Check className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  </motion.div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">
+                      Valid invitation code
+                    </p>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Registering for {validatedInvitation.company}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.5, ease: "easeOut" }}
+              >
+                <FormField
+                  control={registrationForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="text-base">Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" disabled className="h-14 bg-gray-50" />
+                      </FormControl>
+                      <div className="min-h-[24px] mt-2">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.5, ease: "easeOut" }}
+              >
+                <FormField
+                  control={registrationForm.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="text-base">Company</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" disabled className="h-14 bg-gray-50" />
+                      </FormControl>
+                      <div className="min-h-[24px] mt-2">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div 
+                className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.5, ease: "easeOut" }}
+              >
+                <FormField
+                  control={registrationForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">First Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" placeholder="First name" className="h-14 bg-gray-50" />
+                      </FormControl>
+                      <div className="min-h-[24px] mt-2">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={registrationForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-base">Last Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="text" placeholder="Last name" className="h-14 bg-gray-50" />
+                      </FormControl>
+                      <div className="min-h-[24px] mt-2">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5, ease: "easeOut" }}
+              >
+                <FormField
+                  control={registrationForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel className="text-base">Password</FormLabel>
+                      <div className="relative">
+                        <FormControl>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            {...field}
+                            placeholder="Choose a secure password"
+                            className="h-14 bg-gray-50"
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                      <div className="min-h-[24px] mt-2">
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                className="mt-10"
+              >
+                <Button
+                  type="submit"
+                  className="w-full font-bold hover:opacity-90 h-14 text-base"
+                  disabled={registerMutation.isPending}
+                >
+                  Create Account
+                </Button>
+              </motion.div>
+
+              <motion.div 
+                className="text-center mt-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7, duration: 0.5 }}
+              >
+                <p className="text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-primary hover:underline">
+                    Sign in here
+                  </Link>
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Want to learn more?{" "}
+                  <Link href="/landing" className="text-primary hover:underline">
+                    Visit our website
+                  </Link>
+                </p>
+              </motion.div>
+            </form>
+          </Form>
+        </motion.div>
       )}
     </AuthLayout>
   );

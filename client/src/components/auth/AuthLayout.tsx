@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
@@ -15,6 +15,14 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
   const [direction, setDirection] = useState<"left" | "right">("left");
   const [prevLocation, setPrevLocation] = useState(location);
   
+  // Set this flag in the register-page.tsx to represent the validated state
+  const hasValidatedChild = React.Children.toArray(children).some(
+    (child: any) => child?.props?.className?.includes?.("w-full max-w-[800px]")
+  );
+  
+  // Determine if we're in the validated registration flow
+  const isRegistrationValidated = location === "/register" && hasValidatedChild;
+
   // Determine animation direction based on navigation
   useEffect(() => {
     if (location !== prevLocation) {
@@ -73,12 +81,16 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
       
       <div className="flex-1 flex items-center justify-center p-6">
         <motion.div 
-          className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden flex h-[768px]"
+          className={`w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden ${isRegistrationValidated ? '' : 'flex'} ${isRegistrationValidated ? 'min-h-[800px] h-auto' : 'h-[768px]'}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
         >
-          {isLogin ? (
+          {isRegistrationValidated ? (
+            // Show full-width registration form
+            children
+          ) : isLogin ? (
+            // Login layout with hero on right
             <>
               <motion.div 
                 className="w-full lg:w-[55%] p-14 flex flex-col justify-center"
@@ -101,6 +113,7 @@ export function AuthLayout({ children, isLogin }: AuthLayoutProps) {
               </motion.div>
             </>
           ) : (
+            // Registration initial layout with hero on left
             <>
               <motion.div 
                 className="hidden lg:block w-[45%] p-3"
