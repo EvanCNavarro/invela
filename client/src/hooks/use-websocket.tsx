@@ -1,126 +1,150 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { getWebSocketClient } from '@/services/websocket';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import webSocketService from '@/services/websocket';
 
-export type WebSocketMessageType = string;
-export type WebSocketMessageListener = (data: any) => void;
-export type WebSocketConnectionListener = (connected: boolean) => void;
+type MessageHandler = (data: any) => void;
+type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-export interface UseWebSocketReturn {
-  isConnected: boolean;
-  connect: () => void;
-  disconnect: () => void;
-  send: (message: any) => boolean;
-  addMessageListener: (type: WebSocketMessageType, listener: WebSocketMessageListener) => void;
-  removeMessageListener: (type: WebSocketMessageType, listener: WebSocketMessageListener) => void;
-  addConnectionListener: (listener: WebSocketConnectionListener) => void;
-  removeConnectionListener: (listener: WebSocketConnectionListener) => void;
+interface UseWebSocketOptions {
+  autoConnect?: boolean;
+  reconnect?: boolean;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onError?: (error: Event) => void;
 }
 
 /**
- * Custom hook for WebSocket communication
- * @param autoConnect Whether to automatically connect to the WebSocket server on mount
- * @returns An object with WebSocket methods and connection state
+ * React hook for WebSocket communication
  */
-export function useWebSocket(autoConnect: boolean = true): UseWebSocketReturn {
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const webSocketClient = getWebSocketClient();
-  const connectionAttemptsRef = useRef(0);
-  
-  // Update connection state when the WebSocket connection status changes
-  const handleConnectionChange = useCallback((connected: boolean) => {
-    setIsConnected(connected);
-    
-    if (connected) {
-      // Reset connection attempts on successful connection
-      connectionAttemptsRef.current = 0;
-      console.log('[useWebSocket] Connection established');
-    } else {
-      connectionAttemptsRef.current++;
-      console.log(`[useWebSocket] Connection lost or failed (attempt ${connectionAttemptsRef.current})`);
-    }
-  }, []);
-  
-  // Connect to the WebSocket server
-  const connect = useCallback(() => {
-    try {
-      webSocketClient.connect();
-    } catch (err) {
-      console.error('[useWebSocket] Error initiating connection:', err);
-      // Don't block the app - continue with disconnected state
-      setIsConnected(false);
-    }
-  }, [webSocketClient]);
-  
-  // Disconnect from the WebSocket server
-  const disconnect = useCallback(() => {
-    webSocketClient.disconnect();
-  }, [webSocketClient]);
-  
-  // Send a message to the WebSocket server
-  const send = useCallback((message: any): boolean => {
-    if (!isConnected) {
-      console.warn('[useWebSocket] Cannot send message - disconnected');
-      return false;
-    }
-    return webSocketClient.send(message);
-  }, [webSocketClient, isConnected]);
-  
-  // Add a listener for a specific message type
-  const addMessageListener = useCallback(
-    (type: WebSocketMessageType, listener: WebSocketMessageListener) => {
-      webSocketClient.addMessageListener(type, listener);
-    },
-    [webSocketClient]
-  );
-  
-  // Remove a listener for a specific message type
-  const removeMessageListener = useCallback(
-    (type: WebSocketMessageType, listener: WebSocketMessageListener) => {
-      webSocketClient.removeMessageListener(type, listener);
-    },
-    [webSocketClient]
-  );
-  
-  // Add connection listener
-  const addConnectionListener = useCallback(
-    (listener: WebSocketConnectionListener) => {
-      webSocketClient.addConnectionListener(listener);
-    },
-    [webSocketClient]
-  );
-  
-  // Remove connection listener
-  const removeConnectionListener = useCallback(
-    (listener: WebSocketConnectionListener) => {
-      webSocketClient.removeConnectionListener(listener);
-    },
-    [webSocketClient]
-  );
-  
-  // Set up the connection and clean up on unmount
+export function useWebSocket(options: UseWebSocketOptions = {}) {
+  const {
+    autoConnect = true,
+    reconnect = true,
+    onOpen,
+    onClose,
+    onError
+  } = options;
+
+  const [status, setStatus] = useState<WebSocketStatus>('disconnected');
+  const subscribedEvents = useRef<Set<string>>(new Set());
+  const unsubscribeFunctions = useRef<Map<string, Map<MessageHandler, () => void>>>(new Map());
+
+  // Effect to manage WebSocket connection
   useEffect(() => {
-    // Add connection state change listener
-    webSocketClient.addConnectionListener(handleConnectionChange);
-    
-    // Connect if autoConnect is true
     if (autoConnect) {
       connect();
     }
-    
-    // Clean up on unmount
+
+    // We can't directly check connection status with our websocket service
+    // So we'll just set it to 'connecting' when autoConnect is true
+    if (autoConnect) {
+      setStatus('connecting');
+      
+      // Attempt a connection which will trigger our onOpen event on success
+      webSocketService.connect()
+        .then(() => {
+          setStatus('connected');
+          if (onOpen) onOpen();
+        })
+        .catch((error) => {
+          setStatus('error');
+          if (onError) onError(error);
+        });
+    }
+
     return () => {
-      webSocketClient.removeConnectionListener(handleConnectionChange);
+      // Clean up all subscriptions
+      subscribedEvents.current.forEach(eventType => {
+        const handlersMap = unsubscribeFunctions.current.get(eventType);
+        if (handlersMap) {
+          handlersMap.forEach(unsubscribe => {
+            unsubscribe();
+          });
+        }
+      });
+      
+      if (!reconnect) {
+        webSocketService.disconnect();
+      }
     };
-  }, [autoConnect, connect, handleConnectionChange, webSocketClient]);
-  
+  }, [autoConnect, reconnect, onOpen, onClose, onError]);
+
+  // Connect to WebSocket
+  const connect = useCallback(() => {
+    setStatus('connecting');
+    webSocketService.connect()
+      .then(() => {
+        setStatus('connected');
+        if (onOpen) onOpen();
+      })
+      .catch((error) => {
+        setStatus('error');
+        if (onError) onError(error);
+      });
+  }, [onOpen, onError]);
+
+  // Disconnect from WebSocket
+  const disconnect = useCallback(() => {
+    webSocketService.disconnect();
+    setStatus('disconnected');
+    if (onClose) onClose();
+  }, [onClose]);
+
+  // Subscribe to a specific event type
+  const subscribe = useCallback((eventType: string, handler: MessageHandler) => {
+    // Track the event type
+    subscribedEvents.current.add(eventType);
+    
+    // Subscribe and get the unsubscribe function
+    const unsubscribe = webSocketService.subscribe(eventType, handler);
+    
+    // Store the unsubscribe function for later cleanup
+    if (!unsubscribeFunctions.current.has(eventType)) {
+      unsubscribeFunctions.current.set(eventType, new Map());
+    }
+    unsubscribeFunctions.current.get(eventType)?.set(handler, unsubscribe);
+    
+    // Return a function to unsubscribe
+    return () => {
+      unsubscribe();
+      unsubscribeFunctions.current.get(eventType)?.delete(handler);
+      
+      // If no handlers left for this event type, remove from tracking
+      if (unsubscribeFunctions.current.get(eventType)?.size === 0) {
+        subscribedEvents.current.delete(eventType);
+        unsubscribeFunctions.current.delete(eventType);
+      }
+    };
+  }, []);
+
+  // Unsubscribe from a specific event type
+  const unsubscribe = useCallback((eventType: string, handler: MessageHandler) => {
+    const unsubscribeFunc = unsubscribeFunctions.current.get(eventType)?.get(handler);
+    if (unsubscribeFunc) {
+      unsubscribeFunc();
+      unsubscribeFunctions.current.get(eventType)?.delete(handler);
+      
+      // If no handlers left for this event type, remove from tracking
+      if (unsubscribeFunctions.current.get(eventType)?.size === 0) {
+        subscribedEvents.current.delete(eventType);
+        unsubscribeFunctions.current.delete(eventType);
+      }
+    }
+  }, []);
+
+  // Send a message to the server
+  const send = useCallback((type: string, payload: any) => {
+    webSocketService.send(type, payload);
+  }, []);
+
   return {
-    isConnected,
+    status,
+    isConnected: status === 'connected',
     connect,
     disconnect,
-    send,
-    addMessageListener,
-    removeMessageListener,
-    addConnectionListener,
-    removeConnectionListener
+    subscribe,
+    unsubscribe,
+    send
   };
 }
+
+export default useWebSocket;
