@@ -123,7 +123,7 @@ export function useFileToast() {
       const initialToast = toast({
         variant: "file-upload",
         title: `Uploading '${fileName}'`,
-        description: "Please wait while we upload your file.",
+        description: "Please wait while we upload your file...",
         duration: Infinity, // No auto-dismiss, will stay until explicitly closed
       });
       
