@@ -392,9 +392,7 @@ export const FileVault: React.FC = () => {
     setUploadingFiles(prev => [...prev, uploadingFile]);
     
     // Create an upload toast with a unique ID
-    const toastId = unifiedToast.uploadProgress({
-      fileName: file.name
-    });
+    const toastId = unifiedToast.fileUploadProgress(file.name);
     
     console.log('[FileVault] Created upload toast with ID:', toastId);
     
