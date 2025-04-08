@@ -40,9 +40,9 @@ const SiteMapLink = ({ href, label }: SiteMapLinkProps) => {
     // For internal links, use wouter Link
     return (
       <Link href={href}>
-        <a className="flex items-center text-gray-700 hover:text-blue-600 hover:underline">
+        <div className="flex items-center text-gray-700 hover:text-blue-600 hover:underline cursor-pointer">
           {linkContent}
-        </a>
+        </div>
       </Link>
     );
   }
