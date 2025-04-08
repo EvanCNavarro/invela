@@ -476,8 +476,19 @@ function FeatureCard({ icon, title, description, link }: { icon: React.ReactNode
     <Link href={link}>
       <motion.div 
         variants={fadeIn}
-        className="group relative bg-white border border-gray-100 rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col"
+        className="group relative bg-white rounded-lg p-8 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer h-full flex flex-col overflow-hidden"
       >
+        {/* Gradient border that appears on hover */}
+        <div 
+          className="absolute inset-0 rounded-lg p-[1px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 overflow-hidden"
+          style={{
+            background: 'linear-gradient(135deg, rgba(73, 101, 236, 0.5) 0%, rgba(32, 156, 90, 0.5) 100%)',
+            zIndex: 0 
+          }}
+        >
+          <div className="absolute inset-0 bg-white rounded-lg m-[1px]"></div>
+        </div>
+        
         {/* Bottom right gradient blur that appears on hover */}
         <div 
           className="absolute bottom-0 right-0 w-[55%] h-[45%] bg-blue-300/10 rounded-br-lg blur-xl opacity-0 
