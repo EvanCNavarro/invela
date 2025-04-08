@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
 import { UniversalForm } from "@/components/forms/UniversalForm";
@@ -8,6 +8,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import confetti from "canvas-confetti";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -380,6 +381,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                 taskId={task.id}
                 taskType="kyb"
                 initialData={task.savedFormData}
+                onProgress={(progress) => {
+                  // Update progress in the task if needed
+                  console.log('[TaskPage] Form progress updated:', progress);
+                }}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting KYB Form",
@@ -492,6 +497,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                 }}
                 savedFormData={task.savedFormData}
                 taskStatus={task.status}
+                onProgress={(progress) => {
+                  // Update progress in the task if needed
+                  console.log('[TaskPage] Security Form progress updated:', progress);
+                }}
                 onSubmit={(formData) => {
                   toast({
                     title: "Submitting Security Assessment",
@@ -615,6 +624,10 @@ export default function TaskPage({ params }: TaskPageProps) {
                 companyData={{
                   name: displayName,
                   description: task.metadata?.company?.description || undefined
+                }}
+                onProgress={(progress) => {
+                  // Update progress in the task if needed
+                  console.log('[TaskPage] Card Form progress updated:', progress);
                 }}
                 onSubmit={(formData) => {
                   fetch('/api/card/save', {
