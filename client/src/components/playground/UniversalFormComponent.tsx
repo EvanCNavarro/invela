@@ -506,6 +506,8 @@ export const OnboardingKYBFormPlayground = ({
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searchCompleted, setSearchCompleted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [fieldsLoading, setFieldsLoading] = useState(true);
+  const [formDataLoading, setFormDataLoading] = useState(true);
   const [dataInitialized, setDataInitialized] = useState(false);
   const [formReady, setFormReady] = useState(false);
   const lastProgressRef = useRef<number>(0);
@@ -555,6 +557,7 @@ export const OnboardingKYBFormPlayground = ({
       // Update state with processed fields
       setDynamicFormSteps(newFormSteps);
       setFieldConfig(formFieldsMap);
+      setFieldsLoading(false); // Mark fields as loaded
       
       console.log('[KYB Form Debug] Dynamic form steps created:', {
         stepCount: newFormSteps.length,
@@ -562,8 +565,11 @@ export const OnboardingKYBFormPlayground = ({
         stepsBreakdown: newFormSteps.map(step => step.map(f => f.name)),
         timestamp: new Date().toISOString()
       });
+    } else if (isLoadingFields === false) {
+      // If there are no fields but loading is complete, set field loading to false
+      setFieldsLoading(false);
     }
-  }, [kybFields]);
+  }, [kybFields, isLoadingFields]);
 
   // Function to find the first incomplete step
   const findFirstIncompleteStep = (formData: Record<string, string>): number => {
@@ -639,6 +645,7 @@ export const OnboardingKYBFormPlayground = ({
 
     const initializeFormData = async () => {
       setIsLoading(true);
+      setFormDataLoading(true);
       let initialData: Record<string, string> = {};
 
       try {
@@ -703,6 +710,7 @@ export const OnboardingKYBFormPlayground = ({
           // Set initialization flags
           setDataInitialized(true);
           setFormReady(true);
+          setFormDataLoading(false);
 
           // Finally set the current step
           setCurrentStep(findFirstIncompleteStep(initialData));
@@ -711,6 +719,7 @@ export const OnboardingKYBFormPlayground = ({
         console.error('Error initializing form:', error);
         if (mounted) {
           unifiedToast.error("Failed to load form data");
+          setFormDataLoading(false);
         }
       } finally {
         if (mounted) {
@@ -1211,10 +1220,15 @@ export const OnboardingKYBFormPlayground = ({
 
   return (
     <div className="space-y-6">
-      {isLoading ? (
+      {isLoading || fieldsLoading || formDataLoading ? (
         <Card className="p-6">
-          <div className="flex items-center justify-center min-h-[200px]">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+          <div className="flex flex-col items-center justify-center min-h-[200px]">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mb-4"></div>
+            <div className="text-sm text-muted-foreground">
+              {fieldsLoading ? "Loading form fields..." : 
+               formDataLoading ? "Loading saved data..." : 
+               "Initializing form..."}
+            </div>
           </div>
         </Card>
       ) : isReviewMode ? (
