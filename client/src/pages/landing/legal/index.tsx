@@ -80,57 +80,59 @@ function LegalCard({
 export default function LegalPage() {
   return (
     <LandingLayout>
-      <div className="container mx-auto px-4 py-20 max-w-5xl">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-16 text-center"
-        >
-          <h1 className="text-4xl font-bold mb-6">Legal Documentation</h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Access Invela's legal documentation, policies, and compliance information to understand how we operate and protect your data.
-          </p>
-        </motion.div>
+      <div className="min-h-screen bg-gradient-to-b from-[#F8FAFF] to-white">
+        <div className="container mx-auto px-4 py-20 max-w-5xl">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-16 text-center"
+          >
+            <h1 className="text-4xl font-bold mb-6">Legal Documentation</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Access Invela's legal documentation, policies, and compliance information to understand how we operate and protect your data.
+            </p>
+          </motion.div>
 
-        <motion.div 
-          initial="hidden"
-          animate="visible"
-          variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
-        >
-          <LegalCard
-            icon={<FileText className="h-8 w-8 text-blue-600" />}
-            title="Terms of Use"
-            description="Read our terms and conditions for using the Invela platform and services."
-            link="/landing/legal/terms-of-use"
-            actionText="Read Terms"
-          />
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          >
+            <LegalCard
+              icon={<FileText className="h-8 w-8 text-blue-600" />}
+              title="Terms of Use"
+              description="Read our terms and conditions for using the Invela platform and services."
+              link="/landing/legal/terms-of-use"
+              actionText="Read Terms"
+            />
 
-          <LegalCard
-            icon={<ShieldCheck className="h-8 w-8 text-blue-600" />}
-            title="Privacy Policy"
-            description="Understand how we collect, use, and protect your personal information."
-            link="/landing/legal/privacy-policy"
-            actionText="Read Policy"
-          />
+            <LegalCard
+              icon={<ShieldCheck className="h-8 w-8 text-blue-600" />}
+              title="Privacy Policy"
+              description="Understand how we collect, use, and protect your personal information."
+              link="/landing/legal/privacy-policy"
+              actionText="Read Policy"
+            />
 
-          <LegalCard
-            icon={<Scale className="h-8 w-8 text-blue-600" />}
-            title="Compliance Information"
-            description="Details about our security certifications, regulatory compliance, and industry standards."
-            link="/landing/legal/compliance"
-            actionText="Learn More"
-          />
+            <LegalCard
+              icon={<Scale className="h-8 w-8 text-blue-600" />}
+              title="Compliance Information"
+              description="Details about our security certifications, regulatory compliance, and industry standards."
+              link="/landing/legal/compliance"
+              actionText="Learn More"
+            />
 
-          <LegalCard
-            icon={<BookOpen className="h-8 w-8 text-blue-600" />}
-            title="Site Map"
-            description="Complete overview of our website structure to help you navigate our resources."
-            link="/landing/site-map"
-            actionText="View Site Map"
-          />
-        </motion.div>
+            <LegalCard
+              icon={<BookOpen className="h-8 w-8 text-blue-600" />}
+              title="Site Map"
+              description="Complete overview of our website structure to help you navigate our resources."
+              link="/landing/site-map"
+              actionText="View Site Map"
+            />
+          </motion.div>
+        </div>
       </div>
     </LandingLayout>
   );
