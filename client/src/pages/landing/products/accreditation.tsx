@@ -39,7 +39,7 @@ export default function AccreditationPage() {
                 transition={{ duration: 0.5 }}
                 className="mb-6"
               >
-                <SectionTitleChip title="Invela Accreditation" sectionId="overview" className="bg-blue-100" />
+                <SectionTitleChip title="Accreditation" sectionId="overview" className="bg-blue-100" />
               </motion.div>
               
               <motion.h1 
@@ -83,7 +83,7 @@ export default function AccreditationPage() {
       </section>
       
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-white">
+      <section id="how-it-works" className="pt-10 pb-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
             <motion.div 
@@ -141,35 +141,18 @@ export default function AccreditationPage() {
                 whileInView="visible"
                 viewport={{ once: true, amount: 0.1 }}
                 variants={fadeIn}
-                className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm"
+                className="relative p-8 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
                 id={`step-${index + 1}`}
               >
-                <div className="absolute -top-5 -left-5 w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                <div className="absolute top-0 left-0 bg-blue-100 text-blue-800 font-bold h-10 w-10 flex items-center justify-center rounded-br-xl">
                   {step.step}
                 </div>
-                <h3 className="text-xl font-semibold mb-4 mt-2">{step.title}</h3>
-                <p className="text-gray-600">{step.description}</p>
+                <div className="pl-2">
+                  <h3 className="text-xl font-bold mb-4 mt-6">{step.title}</h3>
+                  <p className="text-gray-600">{step.description}</p>
+                </div>
               </motion.div>
             ))}
-          </div>
-          
-          <div className="flex justify-center mt-12">
-            <motion.div 
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={fadeIn}
-              className="relative p-8 bg-blue-50/70 rounded-xl border border-blue-100 max-w-2xl"
-              id="step-4"
-            >
-              <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
-                4
-              </div>
-              <h3 className="text-xl font-semibold mb-4 mt-2 text-center">Ongoing Monitoring & Compliance</h3>
-              <p className="text-gray-600 text-center">
-                After initial Accreditation, our platform continuously monitors key risk indicators and maintains compliance documentation, alerting you to any changes or concerns.
-              </p>
-            </motion.div>
           </div>
         </div>
       </section>
