@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'wouter';
+import React, { useCallback } from 'react';
+import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 import { NavigationMenu } from '@/components/landing/NavigationMenu';
 import useScrollToHash from '@/hooks/useScrollToHash';
@@ -12,6 +12,42 @@ interface LandingLayoutProps {
 export function LandingLayout({ children, className }: LandingLayoutProps) {
   // Use the scroll to hash hook to enable automatic scrolling to anchor sections
   useScrollToHash();
+  const [location] = useLocation();
+  
+  // Function to scroll to overview section
+  const scrollToOverview = useCallback((e: React.MouseEvent) => {
+    // Only prevent default if we're already on the landing page
+    if (location === '/landing') {
+      e.preventDefault();
+      const overviewElement = document.getElementById('overview');
+      
+      if (overviewElement) {
+        // Calculate header height
+        const headerHeight = 64;
+        
+        // Get the position of the element
+        const targetPosition = overviewElement.getBoundingClientRect().top;
+        
+        // Get the current scroll position
+        const scrollPosition = window.pageYOffset;
+        
+        // Calculate the final scroll position with header offset
+        const offsetPosition = scrollPosition + targetPosition - headerHeight;
+        
+        // Scroll to the element with offset
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        // If element not found, just scroll to top
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [location]);
   
   return (
     <div className={cn("min-h-screen bg-white", className)}>
@@ -20,7 +56,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
         <div className="backdrop-blur-md bg-white/80 border-b border-gray-200/50 shadow-sm">
           <div className="container mx-auto px-4 flex items-center justify-between h-16">
             <Link href="/landing#overview">
-              <div className="flex items-center">
+              <div className="flex items-center" onClick={scrollToOverview}>
                 <img 
                   src="/logo_invela.svg" 
                   alt="Invela"
@@ -61,11 +97,13 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             <div className="flex flex-col">
               <div className="mb-5">
                 <Link href="/landing#overview">
-                  <img 
-                    src="/logo_invela.svg" 
-                    alt="Invela"
-                    className="h-8"
-                  />
+                  <div onClick={scrollToOverview}>
+                    <img 
+                      src="/logo_invela.svg" 
+                      alt="Invela"
+                      className="h-8"
+                    />
+                  </div>
                 </Link>
               </div>
               <p className="text-gray-600 mb-5">
