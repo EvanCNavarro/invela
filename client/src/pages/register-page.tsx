@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect } from "wouter";
 import { z } from "zod";
@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, Check } from "lucide-react";
+import { Eye, EyeOff, Check, Lock, ArrowLeft } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -122,6 +122,9 @@ export default function RegisterPage() {
     }
   }, []);
 
+  // Reference to first name input for auto-focus
+  const firstNameInputRef = useRef<HTMLInputElement>(null);
+  
   const onValidateCode = async (values: z.infer<typeof invitationCodeSchema>) => {
     console.log("[Registration] Starting code validation for:", values.invitationCode);
     try {
@@ -160,6 +163,13 @@ export default function RegisterPage() {
           lastName,
           password: '',
         });
+        
+        // Focus on the first name input after a short delay to allow the form to render
+        setTimeout(() => {
+          if (firstNameInputRef.current) {
+            firstNameInputRef.current.focus();
+          }
+        }, 300);
 
         // Debug form values after setting
         console.log("[Registration] Form values after pre-fill:", registrationForm.getValues());
@@ -366,7 +376,7 @@ export default function RegisterPage() {
           <Form {...registrationForm}>
             <form onSubmit={registrationForm.handleSubmit(onRegisterSubmit)} className="space-y-6 max-w-[600px] mx-auto">
               <motion.div 
-                className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200"
+                className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
@@ -383,7 +393,7 @@ export default function RegisterPage() {
                     <p className="text-sm font-medium text-blue-700">
                       Valid invitation code
                     </p>
-                    <p className="text-sm text-blue-600 mt-1">
+                    <p className="text-sm text-blue-600 mt-1 whitespace-nowrap">
                       Registering for {validatedInvitation.company}
                     </p>
                   </div>
@@ -401,9 +411,14 @@ export default function RegisterPage() {
                   render={({ field }) => (
                     <FormItem className="mb-6">
                       <FormLabel className="text-base">Email</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="email" disabled className="h-14 bg-gray-50" />
-                      </FormControl>
+                      <div className="relative">
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                            <Input {...field} type="email" disabled className="h-14 bg-gray-50 pl-10" />
+                          </div>
+                        </FormControl>
+                      </div>
                       <div className="min-h-[24px] mt-2">
                         <FormMessage />
                       </div>
@@ -423,9 +438,14 @@ export default function RegisterPage() {
                   render={({ field }) => (
                     <FormItem className="mb-6">
                       <FormLabel className="text-base">Company</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="text" disabled className="h-14 bg-gray-50" />
-                      </FormControl>
+                      <div className="relative">
+                        <FormControl>
+                          <div className="relative">
+                            <Lock className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                            <Input {...field} type="text" disabled className="h-14 bg-gray-50 pl-10" />
+                          </div>
+                        </FormControl>
+                      </div>
                       <div className="min-h-[24px] mt-2">
                         <FormMessage />
                       </div>
@@ -447,7 +467,28 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel className="text-base">First Name</FormLabel>
                       <FormControl>
-                        <Input {...field} type="text" placeholder="First name" className="h-14 bg-gray-50" />
+                        <div className="relative">
+                          <Input 
+                            {...field} 
+                            ref={firstNameInputRef}
+                            type="text" 
+                            placeholder="First name" 
+                            className={`h-14 bg-gray-50 ${
+                              field.value ? 
+                                registrationForm.formState.errors.firstName ? 
+                                  'border-red-500 focus:border-red-500' : 
+                                  'border-green-500 focus:border-green-500' : 
+                                ''
+                            }`}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              registrationForm.trigger('firstName');
+                            }}
+                          />
+                          {field.value && !registrationForm.formState.errors.firstName && (
+                            <Check className="h-4 w-4 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                          )}
+                        </div>
                       </FormControl>
                       <div className="min-h-[24px] mt-2">
                         <FormMessage />
@@ -463,7 +504,27 @@ export default function RegisterPage() {
                     <FormItem>
                       <FormLabel className="text-base">Last Name</FormLabel>
                       <FormControl>
-                        <Input {...field} type="text" placeholder="Last name" className="h-14 bg-gray-50" />
+                        <div className="relative">
+                          <Input 
+                            {...field} 
+                            type="text" 
+                            placeholder="Last name" 
+                            className={`h-14 bg-gray-50 ${
+                              field.value ? 
+                                registrationForm.formState.errors.lastName ? 
+                                  'border-red-500 focus:border-red-500' : 
+                                  'border-green-500 focus:border-green-500' : 
+                                ''
+                            }`}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              registrationForm.trigger('lastName');
+                            }}
+                          />
+                          {field.value && !registrationForm.formState.errors.lastName && (
+                            <Check className="h-4 w-4 text-green-500 absolute right-3 top-1/2 transform -translate-y-1/2" />
+                          )}
+                        </div>
                       </FormControl>
                       <div className="min-h-[24px] mt-2">
                         <FormMessage />
@@ -490,22 +551,37 @@ export default function RegisterPage() {
                             type={showPassword ? "text" : "password"}
                             {...field}
                             placeholder="Choose a secure password"
-                            className="h-14 bg-gray-50"
+                            className={`h-14 bg-gray-50 ${
+                              field.value ? 
+                                registrationForm.formState.errors.password ? 
+                                  'border-red-500 focus:border-red-500 pr-10' : 
+                                  'border-green-500 focus:border-green-500 pr-10' : 
+                                ''
+                            }`}
+                            onBlur={(e) => {
+                              field.onBlur();
+                              registrationForm.trigger('password');
+                            }}
                           />
                         </FormControl>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
+                        <div className="absolute right-0 top-0 h-full flex items-center">
+                          {field.value && !registrationForm.formState.errors.password && (
+                            <Check className="h-4 w-4 text-green-500 mr-2" />
                           )}
-                        </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-full px-3 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </div>
                       </div>
                       <div className="min-h-[24px] mt-2">
                         <FormMessage />
@@ -533,23 +609,19 @@ export default function RegisterPage() {
               </motion.div>
 
               <motion.div 
-                className="text-center mt-6"
+                className="mt-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
-                <p className="text-sm text-muted-foreground">
-                  Already have an account?{" "}
-                  <Link href="/login" className="text-primary hover:underline">
-                    Sign in here
-                  </Link>
-                </p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Want to learn more?{" "}
-                  <Link href="/landing" className="text-primary hover:underline">
-                    Visit our website
-                  </Link>
-                </p>
+                <button 
+                  type="button" 
+                  className="flex items-center text-primary hover:underline gap-1.5"
+                  onClick={() => setValidatedInvitation(null)}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>Back to Invitation Code</span>
+                </button>
               </motion.div>
             </form>
           </Form>
