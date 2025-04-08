@@ -85,31 +85,17 @@ export default function DataAccessPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="relative"
             >
-              <div className="aspect-[4/3] bg-blue-600/5 rounded-xl flex items-center justify-center">
-                <div className="w-4/5 h-4/5 bg-gradient-to-br from-blue-500/10 to-blue-600/20 rounded-lg flex items-center justify-center relative overflow-hidden">
-                  {/* Abstract data flow visual */}
-                  <div className="absolute inset-0 grid grid-cols-8 grid-rows-6 gap-2 p-6">
-                    {Array.from({ length: 30 }).map((_, i) => (
-                      <div 
-                        key={i}
-                        className="relative bg-white/30 rounded"
-                        style={{
-                          gridColumn: `span ${Math.floor(Math.random() * 3) + 1}`,
-                          gridRow: `span ${Math.floor(Math.random() * 2) + 1}`,
-                          animationDelay: `${i * 0.1}s`,
-                          animation: 'pulse 3s infinite'
-                        }}
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded opacity-50"></div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="relative z-10 text-center p-6">
-                    <div className="font-bold text-blue-800 text-lg mb-2">Data Access Grants Service</div>
-                    <div className="text-sm text-blue-700">Simplified consent & authorization management</div>
-                  </div>
-                </div>
+              <div className="aspect-[4/3] rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white">
+                <img 
+                  src="/attached_assets/thumbnail_04_data-access-grants-service.png"
+                  alt="Data Access Grants Service Interface" 
+                  className="w-full h-full object-cover"
+                  width={600}
+                  height={450}
+                />
               </div>
+              {/* Decorative elements */}
+              <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
             </motion.div>
           </div>
         </div>
