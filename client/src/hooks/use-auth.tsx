@@ -39,6 +39,7 @@ const useLoginMutation = () => {
         try {
           const errorJson = JSON.parse(errorText);
           if (errorJson.message) {
+            // Just use the message text directly without including it in an Error object
             throw new Error(errorJson.message);
           }
         } catch (e) {
@@ -55,6 +56,9 @@ const useLoginMutation = () => {
     onSuccess: async (user: User) => {
       console.log('[Auth] Login mutation succeeded, user:', user.id);
       queryClient.setQueryData(["/api/user"], user);
+      
+      // Successfully logged in, no need to show error messages anymore
+      // The redirect will naturally clear any visible toasts
 
       // Fetch current company to check available tabs
       try {
