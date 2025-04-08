@@ -24,7 +24,7 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full md:max-w-[440px] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-1 overflow-hidden rounded-md border border-gray-100 p-4 pr-8 shadow-lg bg-white transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full md:max-w-[440px] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1",
   {
     variants: {
       variant: {
@@ -107,9 +107,9 @@ const Toast = React.forwardRef<
   
   return (
     <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 10 }}
+      initial={{ opacity: 0, y: 10, x: 0 }}
+      animate={{ opacity: 1, y: 0, x: 0 }}
+      exit={{ opacity: 0, y: -10, x: 0 }}
       transition={{ duration: 0.3 }}
       className="mb-3" // Add margin-bottom to each toast for extra separation
     >
