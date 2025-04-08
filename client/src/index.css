@@ -5,11 +5,29 @@
 /* Custom Animation Classes */
 .fade-out {
   opacity: 0;
-  transition: opacity 150ms ease-out;
+  transform: scale(0.98);
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
 }
 
 .auth-layout-container {
-  transition: max-width 250ms ease-out;
+  transition: max-width 350ms ease-out;
+}
+
+.registration-form-content {
+  transition: opacity 250ms ease-out;
+}
+
+.registration-form-content.fade-out {
+  opacity: 0;
+}
+
+.invitation-container {
+  transition: opacity 400ms ease-out, transform 400ms ease-out;
+}
+
+.invitation-container.fade-out {
+  opacity: 0;
+  transform: scale(0.98);
 }
 
 /* We no longer need this class since we're handling width differently */
