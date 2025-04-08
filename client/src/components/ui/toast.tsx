@@ -109,8 +109,15 @@ const Toast = React.forwardRef<
     <motion.div
       initial={{ opacity: 0, y: 10, x: 0 }}
       animate={{ opacity: 1, y: 0, x: 0 }}
-      exit={{ opacity: 0, y: -10, x: 0 }}
-      transition={{ duration: 0.3 }}
+      exit={{ opacity: 0, y: -15, x: 0 }}
+      transition={{ 
+        duration: 0.5,
+        ease: [0.4, 0.0, 0.2, 1], // Material Design standard easing
+        exit: { 
+          duration: 0.7,
+          ease: [0.4, 0.0, 0.2, 1]
+        }
+      }}
       className="mb-3" // Add margin-bottom to each toast for extra separation
     >
       <ToastPrimitives.Root
