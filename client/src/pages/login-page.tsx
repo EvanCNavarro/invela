@@ -126,17 +126,30 @@ export default function LoginPage() {
           }
         });
         
-        // Simulate a completed upload after 2 seconds
-        const uploadCompleteTimer = setTimeout(() => {
-          // Show success toast when upload completes
-          uploadToast.success({
-            name: mockFile.name,
-            size: mockFile.size,
-            type: mockFile.type
-          });
-          
-          console.log("Upload completed successfully:", mockFile.name);
-        }, 2000);
+        // Simulate an upload event processing
+        // Using a Promise to simulate an actual upload 
+        // This simulates a real API call that would resolve when upload is complete
+        const simulateUpload = async () => {
+          try {
+            // Simulate network request with a promise
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // When upload is complete, call success which will properly handle toast transitions
+            uploadToast.success({
+              name: mockFile.name,
+              size: mockFile.size,
+              type: mockFile.type
+            });
+            
+            console.log("Upload completed successfully:", mockFile.name);
+          } catch (error) {
+            // Handle any errors during upload
+            uploadToast.error("Network error during upload");
+          }
+        };
+        
+        // Start the simulated upload process
+        simulateUpload();
       }
     ];
     
