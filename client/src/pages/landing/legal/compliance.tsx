@@ -80,11 +80,46 @@ export default function CompliancePage() {
             <p>
               Invela operates within a comprehensive regulatory framework that governs financial services and technology providers. Our platform is designed to help financial institutions and FinTech companies meet their regulatory obligations while enabling innovation and collaboration.
             </p>
-            <ul className="list-disc pl-6 mt-4 space-y-2">
-              <li><strong>Financial Services Regulations:</strong> We comply with relevant financial services regulations in the jurisdictions where we operate.</li>
-              <li><strong>Data Protection Laws:</strong> Our platform meets requirements under GDPR, CCPA, and other applicable data protection laws.</li>
-              <li><strong>Anti-Money Laundering:</strong> We implement robust KYC and AML procedures as required by financial regulations.</li>
-              <li><strong>Open Banking Standards:</strong> Our systems comply with relevant open banking standards and regulations, including Section 1033 requirements.</li>
+            <ul className="list-none pl-0 mt-4 space-y-6">
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Financial Services Regulations</h3>
+                  <p className="text-gray-700">We comply with relevant financial services regulations in the jurisdictions where we operate.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Data Protection Laws</h3>
+                  <p className="text-gray-700">Our platform meets requirements under GDPR, CCPA, and other applicable data protection laws.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Anti-Money Laundering</h3>
+                  <p className="text-gray-700">We implement robust KYC and AML procedures as required by financial regulations.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Open Banking Standards</h3>
+                  <p className="text-gray-700">Our systems comply with relevant open banking standards and regulations, including Section 1033 requirements.</p>
+                </div>
+              </li>
             </ul>
           </section>
 
@@ -93,39 +128,47 @@ export default function CompliancePage() {
             <p>
               We implement comprehensive security measures to protect our platform and your data:
             </p>
-            <div className="mt-4 space-y-4">
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-1" />
+            <ul className="list-none pl-0 mt-4 space-y-6">
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Encryption</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Encryption</h3>
                   <p className="text-gray-700">All data is encrypted in transit and at rest using industry-standard encryption protocols.</p>
                 </div>
-              </div>
+              </li>
               
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-1" />
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Access Controls</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Access Controls</h3>
                   <p className="text-gray-700">Strict access controls and multi-factor authentication are enforced across our systems.</p>
                 </div>
-              </div>
+              </li>
               
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-1" />
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Continuous Monitoring</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Continuous Monitoring</h3>
                   <p className="text-gray-700">Our systems are continuously monitored for security threats and vulnerabilities.</p>
                 </div>
-              </div>
+              </li>
               
-              <div className="flex items-start">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2 mt-1" />
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Regular Audits</h3>
+                  <h3 className="font-semibold text-gray-900 mb-1">Regular Audits</h3>
                   <p className="text-gray-700">We conduct regular security audits and penetration testing of our platform.</p>
                 </div>
-              </div>
-            </div>
+              </li>
+            </ul>
           </section>
 
           <section className="mb-10">
@@ -133,11 +176,46 @@ export default function CompliancePage() {
             <p>
               Our internal compliance program ensures that we maintain the highest standards of regulatory compliance:
             </p>
-            <ul className="list-disc pl-6 mt-4 space-y-2">
-              <li><strong>Dedicated Compliance Team:</strong> Our compliance team monitors regulatory developments and ensures platform compliance.</li>
-              <li><strong>Regular Assessments:</strong> We conduct regular compliance assessments to identify and address any compliance gaps.</li>
-              <li><strong>Employee Training:</strong> All employees undergo regular training on compliance requirements and best practices.</li>
-              <li><strong>Third-party Audits:</strong> We engage independent third-party auditors to verify our compliance with relevant standards and regulations.</li>
+            <ul className="list-none pl-0 mt-4 space-y-6">
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Dedicated Compliance Team</h3>
+                  <p className="text-gray-700">Our compliance team monitors regulatory developments and ensures platform compliance.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Regular Assessments</h3>
+                  <p className="text-gray-700">We conduct regular compliance assessments to identify and address any compliance gaps.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Employee Training</h3>
+                  <p className="text-gray-700">All employees undergo regular training on compliance requirements and best practices.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Third-party Audits</h3>
+                  <p className="text-gray-700">We engage independent third-party auditors to verify our compliance with relevant standards and regulations.</p>
+                </div>
+              </li>
             </ul>
           </section>
 
@@ -146,18 +224,49 @@ export default function CompliancePage() {
             <p>
               We maintain a robust vendor management program to ensure that our third-party service providers meet our compliance standards:
             </p>
-            <ul className="list-disc pl-6 mt-4 space-y-2">
-              <li><strong>Due Diligence:</strong> We conduct thorough due diligence on all third-party service providers.</li>
-              <li><strong>Contractual Requirements:</strong> Our vendor contracts include specific compliance and security requirements.</li>
-              <li><strong>Ongoing Monitoring:</strong> We regularly monitor vendor compliance with our standards and requirements.</li>
+            <ul className="list-none pl-0 mt-4 space-y-6">
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Due Diligence</h3>
+                  <p className="text-gray-700">We conduct thorough due diligence on all third-party service providers.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Contractual Requirements</h3>
+                  <p className="text-gray-700">Our vendor contracts include specific compliance and security requirements.</p>
+                </div>
+              </li>
+              
+              <li className="flex items-start">
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Ongoing Monitoring</h3>
+                  <p className="text-gray-700">We regularly monitor vendor compliance with our standards and requirements.</p>
+                </div>
+              </li>
             </ul>
           </section>
 
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-4">7. Contact Us</h2>
+          <section>
+            <h2 className="text-2xl font-semibold mb-4">7. Contact Information</h2>
             <p>
-              If you have any questions about our compliance program or require additional compliance information, please contact our compliance team at <a href="mailto:compliance@invela.com" className="text-blue-600 hover:text-blue-800">compliance@invela.com</a>.
+              If you have any questions about our compliance program or require additional compliance information, please contact us at:
             </p>
+            <div className="mt-4">
+              <p><strong>Email:</strong> legal@invela.com</p>
+              <p><strong>Address:</strong> 100 Technology Way, Suite 450, Denver, CO 80202</p>
+              <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+            </div>
           </section>
         </motion.div>
       </div>
