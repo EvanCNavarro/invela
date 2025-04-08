@@ -23,6 +23,12 @@ interface FileUploadToastRef {
   dismiss: () => void;
 }
 
+type ToastReturnType = {
+  id: string;
+  update: (props: any) => void;
+  dismiss: () => void;
+};
+
 export function useFileToast() {
   const { toast } = useToast();
   const unifiedToast = useUnifiedToast();
@@ -31,8 +37,8 @@ export function useFileToast() {
     file: File | FileItem, 
     options: FileToastOptions = {}
   ): FileUploadToastRef => {
-    const fileName = 'name' in file ? file.name : file.name;
-    const fileSize = 'size' in file ? file.size : 0;
+    const fileName = file.name;
+    const fileSize = file.size;
     
     const {
       autoStart = true,
@@ -58,7 +64,8 @@ export function useFileToast() {
           0,
           onCancel,
           showUploadAnother ? onUploadAnother : undefined
-        );
+        ) as ToastReturnType;
+        
         toastId = progressToast.id;
         return;
       }
@@ -70,7 +77,8 @@ export function useFileToast() {
           progress,
           onCancel,
           showUploadAnother ? onUploadAnother : undefined
-        );
+        ) as ToastReturnType;
+        
         toastId = progressToast.id;
       }
       
@@ -92,7 +100,7 @@ export function useFileToast() {
         toast({
           id: toastId,
           open: false,
-        });
+        } as any);
       }
       
       const successToast = unifiedToast.fileUploadSuccess(file);
@@ -108,7 +116,7 @@ export function useFileToast() {
         toast({
           id: toastId,
           open: false,
-        });
+        } as any);
       }
       
       const errorToast = unifiedToast.fileUploadError(fileName, customError || errorMessage);
@@ -124,7 +132,7 @@ export function useFileToast() {
         toast({
           id: toastId,
           open: false,
-        });
+        } as any);
       }
     };
     
@@ -135,7 +143,8 @@ export function useFileToast() {
         0,
         onCancel,
         showUploadAnother ? onUploadAnother : undefined
-      );
+      ) as ToastReturnType;
+      
       toastId = initialToast.id;
     }
     

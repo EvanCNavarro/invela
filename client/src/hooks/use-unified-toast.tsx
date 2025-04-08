@@ -90,33 +90,36 @@ export function useUnifiedToast() {
       title: `Uploading '${fileName}'`,
       description: (
         <div className="w-full">
-          <div className="text-sm mb-2">Please wait while we upload your file.</div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+          <div className="text-sm mb-2 text-gray-600">Please wait while we upload your file.</div>
+          <div className="w-full bg-gray-200 rounded-full h-2.5 mb-2">
             <div 
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+              className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300 ease-in-out" 
               style={{ width: `${progress}%` }}
             ></div>
           </div>
           <div className="flex justify-between items-center">
-            <div className="text-right text-sm font-medium">{progress}%</div>
-            <div className="flex gap-2">
+            <div className="text-right text-sm font-medium text-gray-700">{progress}%</div>
+            <div className="flex gap-4">
               {progress < 100 && onCancel && (
                 <button 
                   onClick={onCancel}
-                  className="text-sm text-gray-500 hover:text-gray-700"
+                  className="text-sm text-gray-500 hover:text-gray-900"
                 >
                   Cancel
+                </button>
+              )}
+              {progress === 100 && onUploadAnother && (
+                <button 
+                  onClick={onUploadAnother}
+                  className="text-sm text-indigo-600 hover:text-indigo-700"
+                >
+                  Upload another
                 </button>
               )}
             </div>
           </div>
         </div>
       ),
-      action: progress === 100 && onUploadAnother ? (
-        <ToastAction altText="Upload another" onClick={onUploadAnother}>
-          Upload another
-        </ToastAction>
-      ) : undefined,
       duration: progress === 100 ? STANDARD_DURATION : 30000, // Stay open until complete or timeout
     });
     
