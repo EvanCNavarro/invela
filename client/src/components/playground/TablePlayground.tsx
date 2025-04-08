@@ -3,7 +3,7 @@ import { Table, type Column } from "./Table";
 import { SearchBar } from "./SearchBar";
 import { Button } from "@/components/ui/button";
 import { Download, Trash2, Eye } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
 
 interface DataItem {
   id: string;
@@ -59,7 +59,7 @@ export default function TablePlayground() {
   const [sortField, setSortField] = React.useState<string>('name');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
   const [searchResults, setSearchResults] = React.useState<any[]>([]);
-  const { toast } = useToast();
+  const unifiedToast = useUnifiedToast();
 
   const columns: Column<DataItem>[] = [
     {
@@ -102,10 +102,11 @@ export default function TablePlayground() {
   };
 
   const handleAction = (action: string, item: DataItem) => {
-    toast({
-      title: "Action Triggered",
-      description: `${action} action on ${item.name}`,
-    });
+    if (action === "delete") {
+      unifiedToast.warning("Action Triggered", `${action} action on ${item.name}`);
+    } else {
+      unifiedToast.info("Action Triggered", `${action} action on ${item.name}`);
+    }
   };
 
   return (
