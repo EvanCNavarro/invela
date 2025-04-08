@@ -63,22 +63,21 @@ export default function DataAccessPage() {
 
             </div>
             
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl bg-white relative">
-                <img 
-                  src="/images/products/thumbnail_04_data-access-grants-service.png" 
-                  alt="Data Access Grants Service Interface" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              {/* Decorative elements */}
-              <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
-            </motion.div>
+            <div className="relative">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl relative">
+                  <img 
+                    src="/images/products/thumbnail_04_data-access-grants-service.png" 
+                    alt="Data Access Grants Service Interface" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -268,10 +267,8 @@ export default function DataAccessPage() {
               variants={fadeIn}
               className="flex justify-center"
             >
-              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form">
-                <a className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
-                  Contact Sales <Send className="ml-2 h-5 w-5" />
-                </a>
+              <Link href="/landing/company/contact-us?type=sales-inquiry#contact-form" className="bg-white hover:bg-gray-100 text-blue-600 font-semibold px-8 py-3.5 rounded-lg transition-colors duration-200 flex items-center">
+                Contact Sales <Send className="ml-2 h-5 w-5" />
               </Link>
             </motion.div>
           </div>

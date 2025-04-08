@@ -61,22 +61,21 @@ export default function InsightsConsultingPage() {
               </motion.p>
             </div>
             
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl relative">
-                <img 
-                  src="/images/products/thumbnail_07_insights-consulting.png" 
-                  alt="Data Analytics and Insights Dashboard" 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              {/* Decorative elements */}
-              <div className="absolute -z-10 -bottom-6 -right-6 w-full h-full rounded-2xl border border-blue-200 bg-blue-50/50"></div>
-            </motion.div>
+            <div className="relative">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+              >
+                <div className="aspect-square rounded-2xl overflow-hidden border border-gray-200 shadow-xl relative">
+                  <img 
+                    src="/images/products/thumbnail_07_insights-consulting.png" 
+                    alt="Data Analytics and Insights Dashboard" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </section>
