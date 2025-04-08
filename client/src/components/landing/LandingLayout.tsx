@@ -19,7 +19,7 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
       <header className="sticky top-0 z-50 w-full">
         <div className="backdrop-blur-md bg-white/80 border-b border-gray-200/50 shadow-sm">
           <div className="container mx-auto px-4 flex items-center justify-between h-16">
-            <Link href="/landing">
+            <Link href="/landing#overview">
               <div className="flex items-center">
                 <img 
                   src="/logo_invela.svg" 
@@ -60,11 +60,13 @@ export function LandingLayout({ children, className }: LandingLayoutProps) {
             {/* Main info and copyright */}
             <div className="flex flex-col">
               <div className="mb-5">
-                <img 
-                  src="/logo_invela.svg" 
-                  alt="Invela"
-                  className="h-8"
-                />
+                <Link href="/landing#overview">
+                  <img 
+                    src="/logo_invela.svg" 
+                    alt="Invela"
+                    className="h-8"
+                  />
+                </Link>
               </div>
               <p className="text-gray-600 mb-5">
                 Simplifying compliance and risk management for the modern financial ecosystem.
