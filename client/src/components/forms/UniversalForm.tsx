@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -410,6 +410,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     try {
       logger.debug(`Submitting form data for task ID: ${taskId}, form type: ${taskType}`);
       
+      // First make sure all data is saved
+      const currentFormData = form.getValues();
+      
+      // Update any field that might have changed but not triggered an onChange
+      Object.entries(currentFormData).forEach(([key, value]) => {
+        if (key !== 'taskId' && key !== 'formType') {
+          formService.updateFormData(key, value);
+        }
+      });
+      
       // Submit the form data
       const result = await formService.submit({
         taskId,
@@ -461,6 +471,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   );
   
   // Throttled field change handler to prevent excessive updates
+  // Create a ref for the debounce timer
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   const handleFieldChange = useCallback((name: string, value: any) => {
     if (!formService) return;
     
@@ -469,11 +482,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Update form data in the service
     formService.updateFormData(name, value);
     
+    // Auto-save after changes (debounced)
+    if (taskId) {
+      // Clear previous timer if it exists
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+      }
+      
+      // Set new timer for auto-save (1500ms delay)
+      saveTimerRef.current = setTimeout(async () => {
+        try {
+          logger.debug(`Auto-saving form data for task ID: ${taskId}`);
+          const result = await formService.save({
+            taskId,
+            formType: taskType,
+            includeMetadata: true
+          });
+          logger.debug(`Auto-save successful: ${result ? 'true' : 'false'}`);
+        } catch (error) {
+          logger.error(`Auto-save failed:`, error);
+        }
+      }, 1500);
+    }
+    
     // Use debounced progress calculation
     if (onProgress) {
       debouncedProgressUpdate(fields);
     }
-  }, [formService, fields, debouncedProgressUpdate, onProgress]);
+  }, [formService, fields, debouncedProgressUpdate, onProgress, taskId, taskType]);
   
   // Always call hooks at the top level in the same order
   // This fixes the React hooks order error
