@@ -39,6 +39,10 @@ export class KybFormService implements FormServiceInterface {
   private templateId: number | null = null;
   private logger = getLogger('KYB Service');
   
+  // For debouncing and state tracking
+  private saveProgressTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastSavedData: string = '';
+  
   // Static cache for fields to prevent redundant API calls
   private static fieldsCache: Record<number, KybField[]> = {};
   
@@ -238,6 +242,12 @@ export class KybFormService implements FormServiceInterface {
    * Update form data for a specific field
    */
   updateFormData(fieldKey: string, value: any): void {
+    // Check if the value has actually changed before updating
+    if (JSON.stringify(this.formData[fieldKey]) === JSON.stringify(value)) {
+      return; // Value hasn't changed, no need to update
+    }
+    
+    // Update the value in the internal formData object
     this.formData[fieldKey] = value;
     
     // Update the field value in fields array
@@ -277,7 +287,7 @@ export class KybFormService implements FormServiceInterface {
   }
 
   /**
-   * Save form progress
+   * Save form progress with debouncing
    */
   async saveProgress(taskId?: number): Promise<void> {
     if (!taskId) {
@@ -285,13 +295,22 @@ export class KybFormService implements FormServiceInterface {
       return;
     }
     
-    try {
-      const progress = this.calculateProgress();
-      await this.saveKybProgress(taskId, progress, this.formData);
-    } catch (error) {
-      console.error('Error saving progress:', error);
-      // Silent failure to allow user to continue working
+    // Clear any existing timer
+    if (this.saveProgressTimer) {
+      clearTimeout(this.saveProgressTimer);
+      this.saveProgressTimer = null;
     }
+    
+    // Set a new timer for debouncing (800ms)
+    this.saveProgressTimer = setTimeout(async () => {
+      try {
+        const progress = this.calculateProgress();
+        await this.saveKybProgress(taskId, progress, this.formData);
+      } catch (error) {
+        console.error('Error saving progress:', error);
+        // Silent failure to allow user to continue working
+      }
+    }, 800);
   }
 
   /**
@@ -300,6 +319,16 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
     try {
+      // Check if data has actually changed
+      const formDataString = JSON.stringify(formData);
+      if (formDataString === this.lastSavedData) {
+        console.log('[DEBUG KybService] Skipping save - data unchanged');
+        return { success: true };
+      }
+      
+      // Update last saved data
+      this.lastSavedData = formDataString;
+      
       // Send as urlencoded parameter
       const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
@@ -373,6 +402,9 @@ export class KybFormService implements FormServiceInterface {
         console.error('[DEBUG KybService] Error parsing JSON response:', parseError);
         return { formData: {}, progress: 0 };
       }
+      
+      // Save the loaded data as the "last saved" for change detection
+      this.lastSavedData = JSON.stringify(data.formData || {});
       
       console.log(`[DEBUG KybService] Successfully loaded data with ${Object.keys(data.formData || {}).length} fields`);
       
