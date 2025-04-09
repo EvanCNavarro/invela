@@ -90,32 +90,53 @@ export class TaskTemplateService {
    */
   static async getTemplateByTaskType(taskType: string): Promise<TaskTemplateWithConfigs> {
     try {
-      console.log(`[TaskTemplateService] Fetching template for task type: ${taskType}`);
+      console.log(`[TaskTemplateService] Fetching template for task type: ${taskType} at ${new Date().toISOString()}`);
+      
+      const url = `/api/task-templates/by-type/${taskType}`;
+      console.log(`[TaskTemplateService] Full URL: ${window.location.origin}${url}`);
       
       // Use direct fetch with credentials to ensure cookies are sent
-      const response = await fetch(`/api/task-templates/by-type/${taskType}`, {
+      const requestStartTime = Date.now();
+      console.log(`[TaskTemplateService] Starting fetch request at ${new Date(requestStartTime).toISOString()}`);
+      
+      const requestId = `template-by-type-${taskType}-${requestStartTime}`;
+      
+      const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-Request-ID': `template-by-type-${taskType}-${Date.now()}`
+          'X-Request-ID': requestId
         }
       });
       
-      console.log(`[TaskTemplateService] Template API response status: ${response.status} for task type ${taskType}`);
+      const requestEndTime = Date.now();
+      const requestDuration = requestEndTime - requestStartTime;
+      
+      console.log(`[TaskTemplateService] Template API response: 
+        - Status: ${response.status} 
+        - StatusText: ${response.statusText}
+        - Duration: ${requestDuration}ms
+        - Task Type: ${taskType}
+        - Request ID: ${requestId}
+        - Time: ${new Date(requestEndTime).toISOString()}
+      `);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[TaskTemplateService] Error fetching template for task type ${taskType}: HTTP ${response.status}`, errorText);
-        throw new Error(`Failed to fetch template: ${response.status} ${errorText}`);
+        throw new Error(`Failed to fetch template: ${response.status} ${response.statusText} - ${errorText}`);
       }
       
+      console.log(`[TaskTemplateService] Starting JSON parsing at ${new Date().toISOString()}`);
       const data = await response.json();
       console.log(`[TaskTemplateService] Successfully fetched template:`, { 
         templateId: data.id,
         templateName: data.name,
-        configCount: data.configurations?.length || 0
+        taskType: data.task_type,
+        configCount: data.configurations?.length || 0,
+        time: new Date().toISOString()
       });
       
       return data;
