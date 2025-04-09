@@ -7,6 +7,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useUnifiedToast } from "@/hooks/use-unified-toast";
+import { unifiedToast } from "@/hooks/use-unified-toast";
 import { useWebSocketContext } from "@/providers/websocket-provider";
 import { cn } from "@/lib/utils";
 
@@ -90,6 +92,7 @@ export function WelcomeModal() {
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
   const { toast } = useToast();
+  const unifiedToastHook = useUnifiedToast();
   const websocket = useWebSocketContext();
   const connected = websocket.isConnected;
 
@@ -167,19 +170,20 @@ export function WelcomeModal() {
         }
       }
 
-      toast({
+      // Use the unified toast for consistent styling
+      unifiedToast.success({
         title: "Welcome aboard!",
-        description: "Your onboarding has been completed successfully.",
+        description: "Your onboarding has been completed successfully."
       });
 
       // Close modal after successful completion
       setShowModal(false);
     },
     onError: (error: Error) => {
-      toast({
+      // Use unified toast for error handling too
+      unifiedToast.error({
         title: "Error",
-        description: error.message || "Failed to complete onboarding",
-        variant: "destructive",
+        description: error.message || "Failed to complete onboarding"
       });
     },
   });
