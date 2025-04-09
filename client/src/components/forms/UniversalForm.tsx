@@ -91,10 +91,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Use the mapped task type for API requests
         const dbTaskType = taskTypeMap[taskType] || taskType;
-        console.log(`[UniversalForm] Mapped task type: ${taskType} → ${dbTaskType}`);
+        console.log(`[UniversalForm] Mapped task type: ${taskType} → ${dbTaskType}, URL will be /api/task-templates/by-type/${dbTaskType}`);
+        
+        // Log the current template request attempt
+        console.log(`[UniversalForm] Template fetch attempt ${initializationAttempts + 1}/${MAX_INITIALIZATION_ATTEMPTS} for ${dbTaskType}`);
         
         // Fetch template configuration from API
+        console.log(`[UniversalForm] Making template fetch request at ${new Date().toISOString()}`);
         const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
+        console.log(`[UniversalForm] Template fetch response received at ${new Date().toISOString()}`);
         
         // Check if this request is still relevant after the async operation
         if (templateRequestId !== requestId) {

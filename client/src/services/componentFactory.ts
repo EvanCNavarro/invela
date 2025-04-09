@@ -40,7 +40,26 @@ export class ComponentFactory {
    * @param service FormServiceInterface implementation
    */
   public registerFormService(taskType: string, service: FormServiceInterface): void {
+    console.log(`[ComponentFactory] Registering form service for task type: ${taskType}`, {
+      serviceType: service.constructor.name,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Safety check to prevent overriding existing services without warning
+    if (this.formServices[taskType]) {
+      console.warn(`[ComponentFactory] Overriding existing service for task type: ${taskType}`, {
+        oldServiceType: this.formServices[taskType].constructor.name,
+        newServiceType: service.constructor.name
+      });
+    }
+    
     this.formServices[taskType] = service;
+    
+    // Log the updated list of registered services
+    const serviceTypes = Object.entries(this.formServices).map(([type, svc]) => 
+      `${type}: ${svc.constructor.name}`
+    );
+    console.log(`[ComponentFactory] Current registered services: [${serviceTypes.join(', ')}]`);
   }
 
   /**
@@ -49,7 +68,21 @@ export class ComponentFactory {
    * @returns FormServiceInterface implementation
    */
   public getFormService(taskType: string): FormServiceInterface | null {
-    return this.formServices[taskType] || null;
+    const service = this.formServices[taskType] || null;
+    
+    console.log(`[ComponentFactory] Looking up form service for task type: ${taskType}`, {
+      found: !!service,
+      serviceType: service ? service.constructor.name : 'null',
+      timestamp: new Date().toISOString()
+    });
+    
+    // If service not found, log all available services for debugging
+    if (!service) {
+      const availableServices = Object.keys(this.formServices);
+      console.warn(`[ComponentFactory] No service found for task type: ${taskType}. Available services: [${availableServices.join(', ')}]`);
+    }
+    
+    return service;
   }
 
   /**
@@ -57,7 +90,18 @@ export class ComponentFactory {
    * @returns Object with task types as keys and service implementations as values
    */
   public getRegisteredFormServices(): Record<string, FormServiceInterface> {
-    return { ...this.formServices };
+    const services = { ...this.formServices };
+    
+    // Log all registered services
+    const serviceCount = Object.keys(services).length;
+    console.log(`[ComponentFactory] Getting all registered form services (${serviceCount} total)`);
+    
+    // Log information about each service
+    Object.entries(services).forEach(([type, service]) => {
+      console.log(`[ComponentFactory] Registered service: ${type} -> ${service.constructor.name}`);
+    });
+    
+    return services;
   }
 
   /**
