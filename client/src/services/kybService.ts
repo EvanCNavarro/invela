@@ -66,7 +66,8 @@ export class KybFormService implements FormServiceInterface {
     }
     
     // If another initialization is in progress for this template, wait for it
-    if (KybFormService.initializationPromise[templateId]) {
+    if (templateId in KybFormService.initializationPromise && 
+        KybFormService.initializationPromise[templateId] !== undefined) {
       this.logger.debug(`Another initialization in progress for template ${templateId}, waiting for it to complete`);
       await KybFormService.initializationPromise[templateId];
       
@@ -739,11 +740,12 @@ export class KybFormService implements FormServiceInterface {
       
       // Create an AbortController to handle timeout
       const controller = new AbortController();
-      // Use a named function to avoid arrow function syntax issues
-      function abortRequest() {
+      
+      // Use the simplest possible setTimeout approach
+      // Using any type to avoid TypeScript issues with NodeJS.Timeout vs number
+      const timeoutId: any = setTimeout(function() {
         controller.abort();
-      }
-      const timeoutId = setTimeout(abortRequest, 5000); // 5 second timeout
+      }, 5000); // 5 second timeout
       
       try {
         const response = await fetch(apiUrl, {
