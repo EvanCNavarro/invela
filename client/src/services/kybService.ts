@@ -319,6 +319,15 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
     try {
+      // Check if taskId is provided
+      if (!taskId) {
+        console.error('[DEBUG KybService] Missing taskId in saveKybProgress');
+        return {
+          success: false,
+          error: 'Task ID is required'
+        };
+      }
+      
       // Check if data has actually changed
       const formDataString = JSON.stringify(formData);
       if (formDataString === this.lastSavedData) {
@@ -329,7 +338,7 @@ export class KybFormService implements FormServiceInterface {
       // Update last saved data
       this.lastSavedData = formDataString;
       
-      // Send as urlencoded parameter
+      // Send as JSON with taskId included
       const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
         credentials: 'include',
@@ -338,6 +347,7 @@ export class KybFormService implements FormServiceInterface {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
+          taskId,  // Include taskId in the request body
           progress,
           formData
         })

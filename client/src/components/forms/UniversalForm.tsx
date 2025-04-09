@@ -96,20 +96,55 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // State to track loaded data
   const [loadedFormData, setLoadedFormData] = useState<FormData>(initialData);
   
-  // Setup form with validation
+  // Create default empty values for all fields to prevent uncontrolled/controlled input warnings
+  const createEmptyDefaultValues = (fields: FormField[]): FormData => {
+    const emptyValues: FormData = {};
+    fields.forEach(field => {
+      // Initialize all fields with empty string to prevent uncontrolled input warnings
+      // For different field types, we can provide appropriate default values
+      switch (field.type) {
+        case 'checkbox':
+        case 'toggle':
+          emptyValues[field.key] = false;
+          break;
+        case 'number':
+          emptyValues[field.key] = '';  // We use empty string instead of null for number inputs too
+          break;
+        case 'select':
+        case 'multi-select':
+          emptyValues[field.key] = field.type === 'multi-select' ? [] : '';
+          break;
+        default:
+          emptyValues[field.key] = ''; // Default empty string for text inputs
+      }
+    });
+    return emptyValues;
+  };
+  
+  // Combine empty defaults with any loaded data
+  const getFormDefaultValues = (): FormData => {
+    // Start with empty defaults for all fields
+    const defaultValues = createEmptyDefaultValues(fields);
+    
+    // Merge with any existing loaded data
+    return { ...defaultValues, ...loadedFormData };
+  };
+  
+  // Setup form with validation - use merged default values
   const form = useForm({
-    defaultValues: loadedFormData,
+    defaultValues: getFormDefaultValues(),
     resolver: zodResolver(createFormSchema(fields)),
     mode: 'onChange',
   });
   
-  // Reset form when loadedFormData changes
+  // Reset form when either fields or loadedFormData changes
   useEffect(() => {
-    if (loadedFormData && Object.keys(loadedFormData).length > 0) {
-      console.log(`[DEBUG UniversalForm] LoadedFormData changed, resetting form with ${Object.keys(loadedFormData).length} fields`);
-      form.reset(loadedFormData);
-    }
-  }, [loadedFormData, form]);
+    // Create default values with empty strings to prevent uncontrolled inputs
+    const defaultValues = getFormDefaultValues();
+    
+    console.log(`[DEBUG UniversalForm] Updating form with ${Object.keys(defaultValues).length} fields (${Object.keys(loadedFormData).length} from loaded data)`);
+    form.reset(defaultValues);
+  }, [loadedFormData, fields, form]);
   
   // Request tracking to prevent multiple concurrent initialization attempts
   const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
