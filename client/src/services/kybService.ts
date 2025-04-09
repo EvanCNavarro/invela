@@ -243,26 +243,32 @@ export class KybFormService implements FormServiceInterface {
    */
   updateFormData(fieldKey: string, value: any): void {
     // Log the update attempt for debugging
-    console.log(`[DEBUG KybService] Field update: ${fieldKey} = ${value}`);
+    console.log(`[DEBUG KybService] Field update: ${fieldKey} = ${value !== undefined && value !== null ? 
+      (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
     console.log(`[DEBUG KybService] Current form data before update has ${Object.keys(this.formData).length} fields`);
     
     // Store the old value for reference
     const oldValue = this.formData[fieldKey];
     
-    // Normalize value (convert null to empty string to avoid controlled/uncontrolled input warnings)
-    const normalizedValue = value === null ? '' : value;
+    // Normalize value - handle null, undefined, and empty values properly
+    // This is critical for proper form field updates
+    const normalizedValue = (value === null || value === undefined) ? '' : value;
     
-    // Check if the value has actually changed before updating
-    if (JSON.stringify(oldValue) === JSON.stringify(normalizedValue)) {
+    // More accurate change detection - convert to strings to ensure proper comparison
+    const oldValueStr = oldValue !== undefined ? String(oldValue) : '';
+    const newValueStr = normalizedValue !== undefined ? String(normalizedValue) : '';
+    
+    // Use string comparison to detect changes
+    if (oldValueStr === newValueStr && oldValue !== undefined) {
       console.log(`[DEBUG KybService] Skipping update - value unchanged for field ${fieldKey}`);
       return; // Value hasn't changed, no need to update
     }
     
-    // Update the value in the internal formData object
+    // Always update the value in the internal formData object
     this.formData[fieldKey] = normalizedValue;
     
-    // Debug - log the change
-    console.log(`[DEBUG KybService] Updated field ${fieldKey} from "${oldValue || ''}" to "${normalizedValue || ''}"`);
+    // Improved debug logging with type info
+    console.log(`[DEBUG KybService] Updated field ${fieldKey} from "${oldValue || ''}" (${typeof oldValue}) to "${normalizedValue || ''}" (${typeof normalizedValue})`);
     
     // Update the field value in fields array
     this.fields = this.fields.map(field => 
@@ -277,7 +283,9 @@ export class KybFormService implements FormServiceInterface {
       )
     }));
     
+    // Log summary of update
     console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
+    console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value:`, this.formData[fieldKey]);
   }
 
   /**
@@ -321,10 +329,14 @@ export class KybFormService implements FormServiceInterface {
       try {
         const previousData = JSON.parse(this.lastSavedData);
         
-        // Debug - Find changed fields
+        // Debug - Find changed fields with more robust comparison
         const changedFields = Object.keys(this.formData).filter(key => {
-          // Skip fields that haven't changed
-          return previousData[key] !== this.formData[key];
+          // Convert to string for comparison to handle different types correctly
+          const prevValue = previousData[key] !== undefined ? String(previousData[key]) : '';
+          const newValue = this.formData[key] !== undefined ? String(this.formData[key]) : '';
+          
+          // Check if the values are different
+          return prevValue !== newValue;
         });
         
         // Log changes for debugging
