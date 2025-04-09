@@ -147,6 +147,9 @@ export function useFormProgress({
       return;
     }
     
+    // Debounce the update to reduce CPU load from frequent updates
+    let timeoutId: number | null = null;
+    
     const updateCompletedSections = () => {
       const newCompletedSections: Record<string | number, boolean> = {};
       
@@ -158,13 +161,15 @@ export function useFormProgress({
       setCompletedSections(newCompletedSections);
     };
     
-    // Use requestAnimationFrame to ensure UI updates are smooth
-    const frameId = requestAnimationFrame(updateCompletedSections);
+    // Delay the update by 250ms to batch changes together
+    timeoutId = window.setTimeout(updateCompletedSections, 250);
     
     return () => {
-      cancelAnimationFrame(frameId);
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
     };
-  }, [sections, sectionFields, getSectionProgress, getFormValues]);
+  }, [sections, sectionFields, getSectionProgress]); // Remove getFormValues to prevent excessive recalculations
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
