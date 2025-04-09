@@ -439,7 +439,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     };
     
     initializeService();
-  }, [template, formService, initialData]);
+  }, [template, formService, initialData, taskId]);
   
   // Handle form submission
   const handleSubmit = async (data: FormData) => {
