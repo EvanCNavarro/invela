@@ -18,8 +18,8 @@ interface LoggerOptions {
 const DEFAULT_OPTIONS: LoggerOptions = {
   enabled: process.env.NODE_ENV !== 'production',
   levels: {
-    debug: process.env.NODE_ENV !== 'production',
-    info: process.env.NODE_ENV !== 'production',
+    debug: false, // Debug is off by default to reduce spam
+    info: process.env.NODE_ENV === 'development', // Only in explicit development mode
     warn: true, // Always show warnings
     error: true, // Always show errors
   },
