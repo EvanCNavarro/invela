@@ -37,20 +37,16 @@ export function WebSocketProvider({
   showNotifications = true 
 }: WebSocketProviderProps) {
   const [connectionLost, setConnectionLost] = useState(false);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const [suppressNotifications, setSuppressNotifications] = useState(false);
   const { user } = useAuth(); // Access auth context to connect only when logged in
   
-  // Initialize WebSocket hook with delayed auto-connect
+  // Initialize WebSocket hook
   const websocket = useWebSocket({
-    autoConnect: false, // We'll handle connection manually
-    reconnect: true,
+    autoConnect: !!user, // Only connect if user is authenticated
     onOpen: () => {
       console.log("[WebSocket] Connection established");
-      setConnectionAttempts(0);
       
       // Show reconnection toast if we previously lost connection
-      if (connectionLost && showNotifications && !suppressNotifications) {
+      if (connectionLost && showNotifications) {
         toast({
           title: "Connection Restored",
           description: "You're back online and will receive real-time updates.",
@@ -66,46 +62,24 @@ export function WebSocketProvider({
     onError: (error) => {
       console.error("[WebSocket] Connection error:", error);
       setConnectionLost(true);
-      setConnectionAttempts(prev => prev + 1);
       
-      // Only show notifications for first 2 attempts to avoid spamming the user
-      if (showNotifications && connectionAttempts < 2 && !suppressNotifications) {
+      if (showNotifications) {
         toast({
-          title: "Connection Issue",
-          description: "There was a problem with real-time updates. Reconnecting...",
+          title: "Connection Lost",
+          description: "Unable to connect to the server. Retrying...",
           variant: "destructive",
         });
-      }
-      
-      // If we've tried too many times, suppress future notifications
-      if (connectionAttempts >= 3) {
-        setSuppressNotifications(true);
       }
     }
   });
 
-  // Connect/Disconnect based on authentication state with debounce
+  // Connect/Disconnect based on authentication state
   useEffect(() => {
-    let connectTimer: ReturnType<typeof setTimeout>;
-    
-    if (user) {
-      // Delay connection to avoid race conditions with session initialization
-      connectTimer = setTimeout(() => {
-        // Only attempt connection if we have a valid user and we're not already connected
-        if (user && websocket.status !== 'connected') {
-          console.log("[WebSocket Provider] Initiating connection after delay");
-          websocket.connect();
-        }
-      }, 1000);
-    } else {
-      // Immediate disconnect if user logs out
+    // The connect will be handled by autoConnect=true in useWebSocket
+    // We only need to handle disconnect when user logs out
+    if (!user) {
       websocket.disconnect();
     }
-    
-    // Clean up timers on unmount
-    return () => {
-      clearTimeout(connectTimer);
-    };
   }, [user, websocket]);
 
   return (

@@ -48,21 +48,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // When fields or initialData change, reset the form with the new values
   useEffect(() => {
     if (fields.length > 0) {
-      console.log('[UniversalForm] Fields or initialData changed, resetting form values');
-      
-      // First reset to empty state then set values one by one with validation
-      form.reset({});
-      
-      // Add each field individually to ensure proper controlled component behavior
-      Object.entries(initialData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          form.setValue(key, value, {
-            shouldValidate: true,
-            shouldDirty: false,
-            shouldTouch: false
-          });
-        }
-      });
+      form.reset(initialData);
     }
   }, [fields, initialData, form]);
   
@@ -198,17 +184,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const handleFieldChange = (name: string, value: any) => {
     if (!formService) return;
     
-    console.log(`[UniversalForm] Field changed: ${name} = ${JSON.stringify(value)}`);
-    
     // Update form data in the service
     formService.updateFormData(name, value);
-    
-    // Also explicitly update the form values to ensure React Hook Form is in sync
-    form.setValue(name, value, { 
-      shouldValidate: true,
-      shouldDirty: true,
-      shouldTouch: true
-    });
     
     // Calculate and report progress if callback is provided
     if (onProgress) {
@@ -320,10 +297,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 ))}
               </div>
             ) : (
-              // If there are multiple sections, use Tabs component
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              // If there are multiple sections, use Tabs component with a unique ID
+              <div className="content-tabs">
                 {/* Render all fields if "all" tab is active */}
-                <TabsContent value="all" className="mt-0">
+                {activeTab === 'all' && (
                   <div className="space-y-6">
                     {sections.map(section => (
                       <SectionRenderer
@@ -335,12 +312,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       />
                     ))}
                   </div>
-                </TabsContent>
+                )}
                 
                 {/* Render section tabs */}
                 {sectionTabs.map(tab => (
-                  <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                    <div className="space-y-4">
+                  activeTab === tab.id && (
+                    <div key={tab.id} className="space-y-4">
                       {tab.fields.map(field => (
                         <FieldRenderer
                           key={field.key}
@@ -351,9 +328,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         />
                       ))}
                     </div>
-                  </TabsContent>
+                  )
                 ))}
-              </Tabs>
+              </div>
             )}
             
             <div className="flex justify-end space-x-2 pt-4">

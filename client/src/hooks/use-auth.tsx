@@ -185,63 +185,6 @@ const useLogoutMutation = () => {
 export const AuthContext = React.createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // EMERGENCY MODE FOR REPLIT: Skip authentication and provide a mock user
-  // This is only for debugging purposes to make the app work in Replit environment
-  const useEmergencyMode = true;
-  
-  if (useEmergencyMode) {
-    console.log('[Auth] EMERGENCY MODE: Using mock auth context for Replit debugging');
-    // Create a mock user that fully matches our User type structure
-    const mockUser: User = {
-      id: 199,
-      email: "mock-user@example.com",
-      full_name: "Mock User",
-      first_name: "Mock",
-      last_name: "User",
-      company_id: 160,
-      permissions: ["*"],
-      preferences: {},
-      onboarding_completed: true,
-      onboarding_user_completed: true,
-      created_at: new Date(),
-      updated_at: new Date(),
-      password: "$2b$10$dummyhashedpasswordforEmergencyMode"
-    };
-    
-    // Create simplified mutation objects that do nothing
-    const noopMutation = {
-      mutate: () => console.log('[Auth] Mock mutation called'),
-      isPending: false,
-      isError: false,
-      isSuccess: false,
-      error: null,
-      data: null,
-      reset: () => {},
-      context: undefined,
-      failureCount: 0,
-      failureReason: null,
-      variables: undefined,
-      submittedAt: 0,
-      status: 'idle' as const,
-    };
-    
-    return (
-      <AuthContext.Provider
-        value={{
-          user: mockUser,
-          isLoading: false,
-          error: null,
-          loginMutation: noopMutation as any,
-          logoutMutation: noopMutation as any,
-          registerMutation: noopMutation as any,
-        }}
-      >
-        {children}
-      </AuthContext.Provider>
-    );
-  }
-  
-  // NORMAL MODE - Standard auth flow with real authentication
   const {
     data: user,
     error,
