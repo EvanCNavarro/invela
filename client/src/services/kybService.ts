@@ -63,11 +63,13 @@ export class KybFormService implements FormServiceInterface {
       // Group fields by section name
       const groupedFields = this.groupFieldsBySection(fields);
       
-      // Create sections from grouped fields
+      // Create sections from grouped fields with proper interface implementation
       this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => ({
-        id: index + 1,
-        name: sectionName,
+        id: `section-${index + 1}`, // FormSection requires string ID
+        title: sectionName,         // Use title instead of name
         description: '',
+        order: index + 1,
+        collapsed: false,
         fields: sectionFields.map(field => this.convertToFormField(field))
       }));
       
@@ -337,7 +339,11 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybProgress(taskId: number): Promise<KybProgressResponse> {
     try {
-      const response = await fetch(`/api/kyb/progress/${taskId}`, {
+      console.log(`[DEBUG KybService] Getting progress for task ID: ${taskId}`);
+      
+      // Use the correct URL format based on server logs - WITHOUT taskID in path
+      // Server expects a query parameter instead of a path parameter
+      const response = await fetch(`/api/kyb/progress?taskId=${taskId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -345,19 +351,23 @@ export class KybFormService implements FormServiceInterface {
         }
       });
       
+      console.log(`[DEBUG KybService] Response status: ${response.status}`);
+      
       if (!response.ok) {
-        console.error(`Error loading form data: ${response.status}`);
+        console.error(`[DEBUG KybService] Error loading form data: ${response.status}`);
         return { formData: {}, progress: 0 };
       }
       
       const data = await response.json();
+      console.log(`[DEBUG KybService] Successfully loaded data with ${Object.keys(data.formData || {}).length} fields`);
+      
       return {
         formData: data.formData || {},
         progress: data.progress || 0,
         status: data.status
       };
     } catch (error) {
-      console.error('Network error while loading form data:', error);
+      console.error('[DEBUG KybService] Network error while loading form data:', error);
       return { formData: {}, progress: 0 };
     }
   }
