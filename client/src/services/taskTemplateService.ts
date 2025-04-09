@@ -48,10 +48,37 @@ export class TaskTemplateService {
    */
   static async getTemplate(id: number): Promise<TaskTemplateWithConfigs> {
     try {
-      const response = await apiRequest<TaskTemplateWithConfigs>(`/api/task-templates/${id}`);
-      return response;
+      console.log(`[TaskTemplateService] Fetching template by ID: ${id}`);
+      
+      // Use direct fetch with credentials to ensure cookies are sent
+      const response = await fetch(`/api/task-templates/${id}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-Request-ID': `template-by-id-${id}-${Date.now()}`
+        }
+      });
+      
+      console.log(`[TaskTemplateService] Template API response status: ${response.status} for template ID ${id}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[TaskTemplateService] Error fetching template with ID ${id}: HTTP ${response.status}`, errorText);
+        throw new Error(`Failed to fetch template: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`[TaskTemplateService] Successfully fetched template by ID:`, { 
+        templateId: data.id,
+        templateName: data.name,
+        configCount: data.configurations?.length || 0
+      });
+      
+      return data;
     } catch (error) {
-      console.error('Error fetching task template:', error);
+      console.error('[TaskTemplateService] Error fetching task template:', error);
       throw error;
     }
   }
@@ -63,10 +90,37 @@ export class TaskTemplateService {
    */
   static async getTemplateByTaskType(taskType: string): Promise<TaskTemplateWithConfigs> {
     try {
-      const response = await apiRequest<TaskTemplateWithConfigs>(`/api/task-templates/by-type/${taskType}`);
-      return response;
+      console.log(`[TaskTemplateService] Fetching template for task type: ${taskType}`);
+      
+      // Use direct fetch with credentials to ensure cookies are sent
+      const response = await fetch(`/api/task-templates/by-type/${taskType}`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-Request-ID': `template-by-type-${taskType}-${Date.now()}`
+        }
+      });
+      
+      console.log(`[TaskTemplateService] Template API response status: ${response.status} for task type ${taskType}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[TaskTemplateService] Error fetching template for task type ${taskType}: HTTP ${response.status}`, errorText);
+        throw new Error(`Failed to fetch template: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log(`[TaskTemplateService] Successfully fetched template:`, { 
+        templateId: data.id,
+        templateName: data.name,
+        configCount: data.configurations?.length || 0
+      });
+      
+      return data;
     } catch (error) {
-      console.error('Error fetching task template by type:', error);
+      console.error('[TaskTemplateService] Error fetching task template by type:', error);
       throw error;
     }
   }
