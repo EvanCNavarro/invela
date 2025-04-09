@@ -105,20 +105,9 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Run migrations on startup only if SKIP_MIGRATIONS is not set to 'true'
-console.log(`SKIP_MIGRATIONS environment variable: "${process.env.SKIP_MIGRATIONS}"`);
-console.log(`Environment variables: NODE_ENV=${process.env.NODE_ENV}, PORT=${process.env.PORT}`);
+// Migrations have already been applied successfully to the database,
+// so we're disabling automatic migrations on startup to prevent issues.
+console.log('Database migrations are disabled on startup - use the CLI tool to run migrations if needed.');
 
-if (process.env.SKIP_MIGRATIONS !== 'true') {
-  (async () => {
-    try {
-      console.log('Running database migrations...');
-      await runMigrations();
-      console.log('Database migrations completed successfully');
-    } catch (error) {
-      console.error('Failed to run migrations:', error);
-    }
-  })();
-} else {
-  console.log('Skipping database migrations (SKIP_MIGRATIONS=true)');
-}
+// If you need to run migrations manually, use:
+// npx tsx run-migrations.ts
