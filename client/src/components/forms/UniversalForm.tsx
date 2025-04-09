@@ -20,8 +20,15 @@ import { getLogger } from '../../utils/logger';
 // Create a type alias that combines both section types - using NavigationFormSection as our primary type
 type FormSection = NavigationFormSection;
 
-// Create logger instance
-const logger = getLogger('UniversalForm');
+// Create logger instance with more restrictive logging configuration
+const logger = getLogger('UniversalForm', {
+  levels: {
+    debug: false, // Turn off debug logging by default
+    info: false,  // Turn off info logging by default
+    warn: true,   // Keep warnings enabled
+    error: true   // Keep errors enabled
+  }
+});
 
 /**
  * Helper function to convert FormSection from service to navigation version
