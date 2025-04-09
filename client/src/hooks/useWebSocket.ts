@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { wsService } from '@/lib/websocket';
 
 type MessageType = 'text' | 'connection_established' | 'ping' | 'pong';
 
@@ -10,82 +11,57 @@ export interface WebSocketMessage {
   content?: string;
 }
 
+/**
+ * IMPORTANT: This hook is deprecated. Use the wsService from @/lib/websocket.ts instead. 
+ * This separate implementation causes duplicate WebSocket connections.
+ * 
+ * This exists for backward compatibility only and will be removed in the future.
+ */
 export const useWebSocket = () => {
   const [messages, setMessages] = useState<WebSocketMessage[]>([]);
   const [connected, setConnected] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const socketRef = useRef<WebSocket | null>(null);
-
+  
+  // Use the singleton WebSocket service instead of creating a new connection
   useEffect(() => {
-    // Create WebSocket connection
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    // Mark as using WebSocket services
+    let unsubscribeFunc: (() => void) | null = null;
     
-    const socket = new WebSocket(wsUrl);
-    socketRef.current = socket;
-
-    socket.onopen = () => {
-      setConnected(true);
-      setError(null);
-      console.log('WebSocket connected');
-    };
-
-    socket.onclose = (event) => {
-      setConnected(false);
-      console.log(`WebSocket disconnected: ${event.code} ${event.reason}`);
-      
-      // Try to reconnect after 5 seconds
-      setTimeout(() => {
-        if (socketRef.current?.readyState !== WebSocket.OPEN) {
-          console.log('Attempting to reconnect WebSocket...');
-          // The component will unmount and remount, which will trigger a new connection attempt
-          setError('Disconnected. Attempting to reconnect...');
-        }
-      }, 5000);
-    };
-
-    socket.onerror = (event) => {
-      console.error('WebSocket error:', event);
-      setError('Error connecting to chat server. Please try again later.');
-    };
-
-    socket.onmessage = (event) => {
+    setConnected(true);
+    // Using a proper logger would be overkill for a deprecated hook
+    // Just leave a small debug message to indicate usage
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('[Deprecated] Using shared WebSocket connection (compatibility mode)');
+    }
+    
+    // Subscribe to text messages through the shared service
+    const subscribeToMessages = async () => {
       try {
-        const message = JSON.parse(event.data);
-        
-        // Handle different message types
-        if (message.type === 'connection_established') {
-          console.log('Connection established with server');
-        } else if (message.type === 'ping') {
-          // Respond to pings automatically
-          socket.send(JSON.stringify({ type: 'pong' }));
-        } else if (message.type === 'text') {
-          // Add the message to our state
+        unsubscribeFunc = await wsService.subscribe('text', (data) => {
           setMessages((prevMessages) => [...prevMessages, {
-            ...message,
-            timestamp: message.timestamp || new Date().toISOString()
+            type: 'text',
+            ...data,
+            timestamp: data.timestamp || new Date().toISOString()
           }]);
-        }
+        });
       } catch (err) {
-        console.error('Error parsing WebSocket message:', err);
+        // Keep simple error handling in deprecated hook
+        setError('Failed to connect to chat server');
       }
     };
-
-    // Clean up on unmount
+    
+    subscribeToMessages();
+    
+    // Clean up subscription on unmount
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        socket.close();
+      if (unsubscribeFunc) {
+        unsubscribeFunc();
       }
     };
   }, []);
 
-  // Function to send a chat message
-  const sendMessage = useCallback((content: string, sender: string) => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      setError('Not connected to chat server');
-      return false;
-    }
-
+  // Send messages through the shared service - returns a promise for better error handling
+  const sendMessage = useCallback(async (content: string, sender: string) => {
     try {
       const message: WebSocketMessage = {
         type: 'text',
@@ -94,13 +70,14 @@ export const useWebSocket = () => {
         timestamp: new Date().toISOString()
       };
 
-      socketRef.current.send(JSON.stringify(message));
+      // Use await to properly handle any errors from the send operation
+      await wsService.send('text', message);
       
       // Add the message to our local state immediately
       setMessages((prevMessages) => [...prevMessages, message]);
       return true;
     } catch (err) {
-      console.error('Error sending message:', err);
+      // Still set error state but avoid console logging in deprecated hook
       setError('Failed to send message');
       return false;
     }

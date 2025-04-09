@@ -1,4 +1,17 @@
 import type { MessageHandler } from './types';
+import getLogger from '@/utils/logger';
+
+// Create a logger with lazy initialization for WebSocket operations
+const logger = getLogger('WebSocket', {
+  enabled: process.env.NODE_ENV !== 'production' && false, // Disable even in development
+  levels: {
+    debug: false,
+    info: false,
+    warn: true,
+    error: true
+  },
+  lazy: true // Prevent logger creation if logging is disabled
+});
 
 class WebSocketService {
   private socket: WebSocket | null = null;
@@ -11,14 +24,12 @@ class WebSocketService {
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private pongTimeout: NodeJS.Timeout | null = null;
   private connectionId: string = '';
+  private isInitialized: boolean = false;
 
   constructor() {
     this.connectionId = `ws_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log('[WebSocket] Service initialized:', {
-      connectionId: this.connectionId,
-      timestamp: new Date().toISOString()
-    });
-    this.connect();
+    // Don't connect immediately - lazy initialize only when actually needed
+    this.isInitialized = false;
   }
 
   private getWebSocketUrl(): string {
@@ -38,15 +49,13 @@ class WebSocketService {
     this.heartbeatInterval = setInterval(() => {
       if (this.socket?.readyState === WebSocket.OPEN) {
         // Only log at debug level to reduce console noise
-        if (process.env.NODE_ENV === 'development') {
-          console.debug('[WebSocket] Sending ping');
-        }
+        logger.debug('Sending ping');
         
         this.socket.send(JSON.stringify({ type: 'ping' }));
 
         // Set a timeout for pong response
         this.pongTimeout = setTimeout(() => {
-          console.log('[WebSocket] No pong received, reconnecting...', {
+          logger.warn('No pong received, reconnecting...', {
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
           });
@@ -57,17 +66,24 @@ class WebSocketService {
   }
 
   private async connect(): Promise<void> {
+    // If already connected or connecting, return the existing promise
     if (this.connectionPromise) return this.connectionPromise;
+
+    // Mark as initialized
+    this.isInitialized = true;
+    logger.info('Service initializing connection now:', {
+      connectionId: this.connectionId,
+      timestamp: new Date().toISOString()
+    });
 
     this.connectionPromise = new Promise((resolve) => {
       this.connectionResolve = resolve;
 
       try {
         const wsUrl = this.getWebSocketUrl();
-        console.log('[WebSocket] Connecting to:', {
+        logger.debug('Connecting to:', {
           url: wsUrl,
-          connectionId: this.connectionId,
-          timestamp: new Date().toISOString()
+          connectionId: this.connectionId
         });
 
         this.socket = new WebSocket(wsUrl);
@@ -75,9 +91,8 @@ class WebSocketService {
         // Set a generous timeout for the initial connection
         const connectionTimeout = setTimeout(() => {
           if (this.socket?.readyState !== WebSocket.OPEN) {
-            console.log('[WebSocket] Connection timeout, attempting reconnect...', {
-              connectionId: this.connectionId,
-              timestamp: new Date().toISOString()
+            logger.debug('Connection timeout, attempting reconnect...', {
+              connectionId: this.connectionId
             });
             this.socket?.close();
             this.cleanup();
@@ -86,7 +101,7 @@ class WebSocketService {
         }, 20000); // 20 second timeout for initial connection
 
         this.socket.onopen = () => {
-          console.log('[WebSocket] Connected successfully', {
+          logger.info('Connected successfully', {
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
           });
@@ -113,7 +128,7 @@ class WebSocketService {
             }
 
             if (message.type === 'connection_established') {
-              console.log('[WebSocket] Connection established:', {
+              logger.info('Connection established:', {
                 connectionId: this.connectionId,
                 data: message.data,
                 timestamp: new Date().toISOString()
@@ -123,7 +138,7 @@ class WebSocketService {
 
             this.handleMessage(message.type, message.data);
           } catch (error) {
-            console.error('[WebSocket] Error parsing message:', {
+            logger.error('Error parsing message:', {
               error,
               connectionId: this.connectionId,
               timestamp: new Date().toISOString()
@@ -132,7 +147,7 @@ class WebSocketService {
         };
 
         this.socket.onclose = (event) => {
-          console.log('[WebSocket] Connection closed:', {
+          logger.info('Connection closed:', {
             code: event.code,
             reason: event.reason,
             connectionId: this.connectionId,
@@ -148,7 +163,7 @@ class WebSocketService {
         };
 
         this.socket.onerror = (error) => {
-          console.error('[WebSocket] Error:', {
+          logger.error('Error:', {
             error,
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
@@ -157,7 +172,7 @@ class WebSocketService {
         };
 
       } catch (error) {
-        console.error('[WebSocket] Error establishing connection:', {
+        logger.error('Error establishing connection:', {
           error,
           connectionId: this.connectionId,
           timestamp: new Date().toISOString()
@@ -181,7 +196,7 @@ class WebSocketService {
     }
     this.socket = null;
     this.connectionPromise = null;
-    console.log('[WebSocket] Cleanup completed', {
+    logger.debug('Cleanup completed', {
       connectionId: this.connectionId,
       timestamp: new Date().toISOString()
     });
@@ -190,7 +205,7 @@ class WebSocketService {
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`[WebSocket] Attempting to reconnect`, {
+      logger.info('Attempting to reconnect', {
         attempt: this.reconnectAttempts,
         maxAttempts: this.maxReconnectAttempts,
         connectionId: this.connectionId,
@@ -199,7 +214,7 @@ class WebSocketService {
 
       setTimeout(() => {
         this.connect().catch(error => {
-          console.error('[WebSocket] Reconnection attempt failed:', {
+          logger.error('Reconnection attempt failed:', {
             error,
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
@@ -209,7 +224,7 @@ class WebSocketService {
         this.reconnectTimeout = Math.min(this.reconnectTimeout * 2, 30000);
       }, this.reconnectTimeout);
     } else {
-      console.error('[WebSocket] Max reconnection attempts reached', {
+      logger.error('Max reconnection attempts reached', {
         connectionId: this.connectionId,
         timestamp: new Date().toISOString()
       });
@@ -229,7 +244,7 @@ class WebSocketService {
         try {
           handler(data);
         } catch (error) {
-          console.error(`[WebSocket] Error in message handler for type "${type}":`, {
+          logger.error(`Error in message handler for type "${type}":`, {
             error,
             connectionId: this.connectionId,
             timestamp: new Date().toISOString()
@@ -240,17 +255,22 @@ class WebSocketService {
   }
 
   public async subscribe(type: string, handler: MessageHandler): Promise<() => void> {
+    // Mark as initialized - we have an active subscriber
+    if (!this.isInitialized) {
+      logger.info('First subscription - initializing WebSocket service');
+      this.isInitialized = true;
+    }
+    
     await this.connect();
 
     if (!this.messageHandlers.has(type)) {
       this.messageHandlers.set(type, new Set());
     }
 
-    console.log('[WebSocket] New subscription added:', {
+    logger.debug('New subscription added:', {
       type,
       handlersCount: this.messageHandlers.get(type)!.size + 1,
-      connectionId: this.connectionId,
-      timestamp: new Date().toISOString()
+      connectionId: this.connectionId
     });
 
     this.messageHandlers.get(type)!.add(handler);
@@ -262,35 +282,44 @@ class WebSocketService {
         if (handlers.size === 0) {
           this.messageHandlers.delete(type);
         }
-        console.log('[WebSocket] Subscription removed:', {
+        logger.debug('Subscription removed:', {
           type,
           remainingHandlers: handlers.size,
-          connectionId: this.connectionId,
-          timestamp: new Date().toISOString()
+          connectionId: this.connectionId
         });
       }
     };
   }
 
   public async send(type: string, data: any): Promise<void> {
+    // Skip if not initialized and not forcing initialization
+    if (!this.isInitialized) {
+      logger.debug('Skipping send - service not initialized');
+      return;
+    }
+    
     await this.connect();
 
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({ type, data }));
     } else {
-      throw new Error('[WebSocket] Connection not ready');
+      throw new Error('Connection not ready');
     }
   }
 
   public async emit(type: string, data: any): Promise<void> {
+    // Skip if not initialized and not forcing initialization
+    if (!this.isInitialized) {
+      logger.debug('Skipping emit - service not initialized');
+      return;
+    }
+    
     try {
       await this.connect();
 
-      console.log('[WebSocket] Emitting message:', {
+      logger.debug('Emitting message:', {
         type,
-        data,
-        connectionId: this.connectionId,
-        timestamp: new Date().toISOString()
+        connectionId: this.connectionId
       });
 
       if (this.socket?.readyState === WebSocket.OPEN) {
@@ -302,11 +331,10 @@ class WebSocketService {
         throw new Error('WebSocket connection not ready');
       }
     } catch (error) {
-      console.error('[WebSocket] Error emitting message:', {
+      logger.error('Error emitting message:', {
         type,
         error: error instanceof Error ? error.message : 'Unknown error',
-        connectionId: this.connectionId,
-        timestamp: new Date().toISOString()
+        connectionId: this.connectionId
       });
       throw error;
     }

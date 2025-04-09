@@ -1,6 +1,11 @@
 /**
  * Logger utility to manage console logging in a centralized way
  * Allows for enabling/disabling logs by level and namespace
+ * 
+ * OPTIMIZED FOR PERFORMANCE: 
+ * - Aggressive log filtering
+ * - Lazy initialization of loggers
+ * - Minimal overhead when logging is disabled
  */
 
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -12,18 +17,21 @@ interface LoggerOptions {
   levels?: Partial<Record<LogLevel, boolean>>;
   // Enable console group for grouped logs
   grouping?: boolean;
+  // Enable lazy initialization (only create logger when needed)
+  lazy?: boolean;
 }
 
-// Default global options - much more aggressive throttling for performance
+// Default global options - aggressive throttling for performance
 const DEFAULT_OPTIONS: LoggerOptions = {
-  enabled: process.env.NODE_ENV !== 'production' && false, // Disable logging completely for performance
+  enabled: process.env.NODE_ENV !== 'production' && false, // Disable logging completely by default
   levels: {
-    debug: false, // Debug is off by default to reduce spam
-    info: false,  // Disable info logs completely for performance
-    warn: false,  // Disable warn logs for performance except in critical sections
+    debug: false, // Debug is off by default
+    info: false,  // Info is off by default
+    warn: false,  // Warnings are off by default
     error: true,  // Only show true errors
   },
-  grouping: false // Disable grouping for performance
+  grouping: false, // Disable grouping for performance
+  lazy: true      // Enable lazy initialization by default
 };
 
 // Store created loggers by namespace to maintain their state
@@ -156,10 +164,44 @@ export class Logger {
 /**
  * Get a logger instance for a specific namespace
  * Reuses existing loggers for the same namespace
+ * Supports lazy initialization (no logger objects created if logging is disabled)
  */
 export function getLogger(namespace: string, options: LoggerOptions = {}): Logger {
+  // Merge options with defaults
+  const mergedOptions = {
+    ...DEFAULT_OPTIONS,
+    ...options,
+    levels: {
+      ...DEFAULT_OPTIONS.levels,
+      ...(options.levels || {})
+    }
+  };
+  
+  // Fast return - if lazy initialization is enabled and logging is disabled
+  // return a minimal logger object without actually creating/storing one
+  if (mergedOptions.lazy && !mergedOptions.enabled) {
+    // Return a lightweight no-op logger that doesn't get stored
+    return new Proxy({} as Logger, {
+      get: (target, prop) => {
+        // For log methods (debug, info, warn, error) return no-op function
+        if (['debug', 'info', 'warn', 'error', 'group', 'groupEnd'].includes(prop as string)) {
+          return () => {};
+        }
+        
+        // For time method return function that returns no-op function
+        if (prop === 'time') {
+          return () => () => {};
+        }
+        
+        // For other properties
+        return undefined;
+      }
+    });
+  }
+  
+  // Regular initialization - create and store the logger instance
   if (!loggers[namespace]) {
-    loggers[namespace] = new Logger(namespace, options);
+    loggers[namespace] = new Logger(namespace, mergedOptions);
   }
   return loggers[namespace];
 }
