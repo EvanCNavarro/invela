@@ -1206,10 +1206,16 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   const handleBack = async () => {
-    console.log('[KYB Form Debug] NAVIGATION: Back button clicked', {
-      status: 'START',
+    const eventId = Date.now();
+    console.log(`[KYB TRACE-${eventId}] BACK-BUTTON CLICKED - START OF SEQUENCE`, {
+      action: 'BACK_NAVIGATION_START',
       currentStep,
       isReviewMode,
+      formDataKeys: Object.keys(formData),
+      formDataKeysCount: Object.keys(formData).length,
+      formDataKeysSample: Object.keys(formData).slice(0, 5),
+      formDataValuesSample: Object.entries(formData).slice(0, 3),
+      dynamicFormStepsCount: dynamicFormSteps.length,
       timestamp: new Date().toISOString()
     });
     
@@ -1439,10 +1445,14 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   const handleNext = async () => {
-    console.log('[KYB Form Debug] NAVIGATION: Next button clicked', {
-      status: 'START',
+    const eventId = Date.now();
+    console.log(`[KYB TRACE-${eventId}] NEXT-BUTTON CLICKED - START OF SEQUENCE`, {
+      status: 'INIT',
       currentStep,
       isReviewMode,
+      formDataKeys: Object.keys(formData),
+      formDataValues: formData,
+      dynamicFormStepsCount: dynamicFormSteps.length,
       timestamp: new Date().toISOString()
     });
     
@@ -2432,10 +2442,17 @@ export const OnboardingKYBFormPlayground = ({
                         // 2. It's the next step and the current step is valid
                         // 3. Its prior step is fully completed
                         if (isClickable) {
-                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: User clicked numbered step', {
-                            status: 'START',
+                          const eventId = Date.now();
+                          console.log(`[KYB TRACE-${eventId}] STEP-NUMBER CLICKED - START OF SEQUENCE`, {
+                            action: 'DIRECT_STEP_NAVIGATION_START',
                             fromStep: currentStep,
                             toStep: index,
+                            isClickable,
+                            formDataKeys: Object.keys(formData),
+                            formDataKeysCount: Object.keys(formData).length,
+                            formDataKeysSample: Object.keys(formData).slice(0, 5),
+                            formDataValuesSample: Object.entries(formData).slice(0, 3),
+                            dynamicFormStepsCount: dynamicFormSteps.length,
                             timestamp: new Date().toISOString()
                           });
                           
