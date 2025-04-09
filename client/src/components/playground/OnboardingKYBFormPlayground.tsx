@@ -682,6 +682,7 @@ export const OnboardingKYBFormPlayground = ({
   const [isLoading, setIsLoading] = useState(true);
   const [dataInitialized, setDataInitialized] = useState(false);
   const [formReady, setFormReady] = useState(false);
+  const [dynamicStepsWithFallbacks, setDynamicStepsWithFallbacks] = useState<FormField[][]>([]);
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
   const suggestionProcessingRef = useRef(false);
@@ -951,6 +952,51 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, [taskId, queryClient]);
   
+  // Create a useEffect to handle empty steps with placeholder content
+  useEffect(() => {
+    if (dynamicFormSteps && dynamicFormSteps.length > 0) {
+      // Clone the steps to avoid direct mutation
+      const enhancedSteps = [...dynamicFormSteps];
+      let hasEmptySteps = false;
+      
+      // Create fallback titles that make sense for the KYB process
+      const fallbackTitles = [
+        "Company Profile", 
+        "Business Details", 
+        "Ownership Structure", 
+        "Additional Information"
+      ];
+      
+      // Check each step and add placeholder content for empty ones
+      enhancedSteps.forEach((step, index) => {
+        if (!step || !Array.isArray(step) || step.length === 0) {
+          console.log(`[KYB Form Debug] Creating placeholder for empty step ${index}`, {
+            timestamp: new Date().toISOString()
+          });
+          hasEmptySteps = true;
+          
+          // Create a placeholder field for this step
+          enhancedSteps[index] = [{
+            name: `placeholder-step-${index}`,
+            label: fallbackTitles[index] || `Step ${index + 1}`,
+            question: `This section will be available after completing the previous steps.`,
+            tooltip: "This step will contain fields related to your business verification."
+          }];
+        }
+      });
+      
+      // Always update dynamicStepsWithFallbacks to keep it in sync with dynamicFormSteps
+      // This ensures we always have the latest data available
+      console.log('[KYB Form Debug] Setting dynamicStepsWithFallbacks:', {
+        originalSteps: dynamicFormSteps.map(step => step.length),
+        enhancedSteps: enhancedSteps.map(step => step.length),
+        hasEmptySteps,
+        timestamp: new Date().toISOString()
+      });
+      setDynamicStepsWithFallbacks(enhancedSteps);
+    }
+  }, [dynamicFormSteps]);
+  
   // Add effect to handle step changes
   useEffect(() => {
     console.log('[KYB Form Debug] Step changed:', {
@@ -1196,6 +1242,43 @@ export const OnboardingKYBFormPlayground = ({
                 timestamp: new Date().toISOString()
               });
               
+              // Immediately create a consistent version with fallbacks
+              // This ensures dynamicStepsWithFallbacks stays in sync
+              const enhancedSteps = [...updatedSteps];
+              const fallbackTitles = [
+                "Company Profile", 
+                "Business Details", 
+                "Ownership Structure", 
+                "Additional Information"
+              ];
+              
+              let hasEmptySteps = false;
+              enhancedSteps.forEach((step, index) => {
+                if (!step || !Array.isArray(step) || step.length === 0) {
+                  console.log(`[KYB Form Debug] Creating placeholder for empty step ${index} during back navigation`, {
+                    timestamp: new Date().toISOString()
+                  });
+                  hasEmptySteps = true;
+                  
+                  // Create a placeholder field for this step
+                  enhancedSteps[index] = [{
+                    name: `placeholder-step-${index}`,
+                    label: fallbackTitles[index] || `Step ${index + 1}`,
+                    question: `This section will be available after completing the previous steps.`,
+                    tooltip: "This step will contain fields related to your business verification."
+                  }];
+                }
+              });
+              
+              // Always update the fallbacks to maintain consistency
+              console.log('[KYB Form Debug] Updating dynamicStepsWithFallbacks during back navigation:', {
+                originalSteps: updatedSteps.map(step => step?.length || 0),
+                enhancedSteps: enhancedSteps.map(step => step?.length || 0),
+                hasEmptySteps,
+                timestamp: new Date().toISOString()
+              });
+              setDynamicStepsWithFallbacks(enhancedSteps);
+              
               return updatedSteps;
             });
             
@@ -1359,6 +1442,43 @@ export const OnboardingKYBFormPlayground = ({
                 timestamp: new Date().toISOString()
               });
               
+              // Immediately create a consistent version with fallbacks
+              // This ensures dynamicStepsWithFallbacks stays in sync
+              const enhancedSteps = [...updatedSteps];
+              const fallbackTitles = [
+                "Company Profile", 
+                "Business Details", 
+                "Ownership Structure", 
+                "Additional Information"
+              ];
+              
+              let hasEmptySteps = false;
+              enhancedSteps.forEach((step, index) => {
+                if (!step || !Array.isArray(step) || step.length === 0) {
+                  console.log(`[KYB Form Debug] Creating placeholder for empty step ${index} during navigation`, {
+                    timestamp: new Date().toISOString()
+                  });
+                  hasEmptySteps = true;
+                  
+                  // Create a placeholder field for this step
+                  enhancedSteps[index] = [{
+                    name: `placeholder-step-${index}`,
+                    label: fallbackTitles[index] || `Step ${index + 1}`,
+                    question: `This section will be available after completing the previous steps.`,
+                    tooltip: "This step will contain fields related to your business verification."
+                  }];
+                }
+              });
+              
+              // Always update the fallbacks to maintain consistency
+              console.log('[KYB Form Debug] Updating dynamicStepsWithFallbacks during navigation:', {
+                originalSteps: updatedSteps.map(step => step?.length || 0),
+                enhancedSteps: enhancedSteps.map(step => step?.length || 0),
+                hasEmptySteps,
+                timestamp: new Date().toISOString()
+              });
+              setDynamicStepsWithFallbacks(enhancedSteps);
+              
               return updatedSteps;
             });
             
@@ -1504,14 +1624,30 @@ export const OnboardingKYBFormPlayground = ({
   let currentStepData: FormField[] = [];
   
   try {
-    if (useDynamicData) {
+    // First check if we have fallback data available
+    if (dynamicStepsWithFallbacks.length > 0 && 
+        Array.isArray(dynamicStepsWithFallbacks[currentStep]) && 
+        dynamicStepsWithFallbacks[currentStep].length > 0) {
+      
+      currentStepData = dynamicStepsWithFallbacks[currentStep];
+      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using fallback step data', {
+        timestamp: new Date().toISOString(),
+        isFallback: true,
+        fieldCount: currentStepData.length,
+        fieldNames: currentStepData.map(f => f.name)
+      });
+    } 
+    // Otherwise try regular dynamic data
+    else if (useDynamicData) {
       currentStepData = dynamicFormSteps[currentStep];
       console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using dynamic step data', {
         timestamp: new Date().toISOString(),
         fieldCount: currentStepData.length,
         fieldNames: currentStepData.map(f => f.name)
       });
-    } else if (currentStep < FORM_STEPS.length) {
+    } 
+    // Finally use static data as last resort
+    else if (currentStep < FORM_STEPS.length) {
       currentStepData = FORM_STEPS[currentStep];
       console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using static step data', {
         timestamp: new Date().toISOString(),
@@ -1975,12 +2111,15 @@ export const OnboardingKYBFormPlayground = ({
                     return <div key={`empty-step-${index}`} className="flex-none w-[250px] opacity-50"></div>;
                   }
                   
-                  // If the step array is empty, also render a placeholder
+                  // If the step array is empty, create placeholder data for rendering
                   if (step.length === 0) {
-                    console.error('[KYB Form Debug] Empty step array found:', {
+                    console.log('[KYB Form Debug] Creating placeholder data for empty step:', {
                       stepIndex: index
                     });
-                    return <div key={`empty-step-${index}`} className="flex-none w-[250px] opacity-50"></div>;
+                    
+                    // Instead of returning early, continue with the rendering process
+                    // This approach allows us to display the step navigation properly
+                    // We'll use fallback titles and styling defined below
                   }
                   
                   // Extract field names safely
@@ -2066,26 +2205,57 @@ export const OnboardingKYBFormPlayground = ({
                       : '#6B7280';
                   
                   // Determine step title based on the group
-                  let stepTitle = STEP_TITLES[index];
+                  // Default titles if nothing else is available
+                  const fallbackTitles = [
+                    "Company Profile",
+                    "Business Details",
+                    "Ownership Structure",
+                    "Additional Information"
+                  ];
                   
-                  // If using dynamic form steps, get the step title from the first field's group
-                  if (dynamicFormSteps.length > 0 && step.length > 0) {
-                    // Get the first field in the step which should have its group set
-                    const firstField = step[0];
-                    
-                    if (firstField && firstField.name) {
-                      // Find corresponding field in kybFields
-                      const kybField = kybFields?.find(f => f.field_key === firstField.name);
+                  // Start with the static STEP_TITLES or fallback
+                  let stepTitle = STEP_TITLES[index] || fallbackTitles[index] || `Step ${index + 1}`;
+                  
+                  console.log(`[KYB Form Debug] Step title initial value for step ${index}:`, { 
+                    stepTitle,
+                    fromFallback: !STEP_TITLES[index],
+                    step: step
+                  });
+                  
+                  // If using dynamic form steps, try to get the title from the first field's group
+                  if (dynamicFormSteps.length > 0) {
+                    if (step.length > 0) {
+                      // Get the first field in the step which should have its group set
+                      const firstField = step[0];
                       
-                      if (kybField) {
-                        // Normalize the group name for display
-                        const group = kybField.group;
-                        stepTitle = group
-                          // Convert camelCase to Title Case with spaces
-                          .replace(/([A-Z])/g, ' $1')
-                          // Capitalize first letter
-                          .replace(/^./, str => str.toUpperCase());
+                      console.log(`[KYB Form Debug] Processing first field for step ${index}:`, firstField);
+                      
+                      if (firstField && typeof firstField === 'object' && 'name' in firstField) {
+                        // Find corresponding field in kybFields
+                        const kybField = kybFields?.find(f => f && f.field_key === firstField.name);
+                        
+                        if (kybField && kybField.group) {
+                          // Normalize the group name for display
+                          const group = kybField.group;
+                          stepTitle = group
+                            // Convert camelCase to Title Case with spaces
+                            .replace(/([A-Z])/g, ' $1')
+                            // Capitalize first letter
+                            .replace(/^./, str => str.toUpperCase());
+                          
+                          console.log(`[KYB Form Debug] Found title from kybField for step ${index}:`, {
+                            fieldName: firstField.name,
+                            group: kybField.group,
+                            stepTitle
+                          });
+                        }
                       }
+                    } else {
+                      // For empty steps, we'll stick with the fallback titles from above
+                      console.log(`[KYB Form Debug] Using fallback title for empty step ${index}:`, {
+                        stepTitle,
+                        isEmpty: true
+                      });
                     }
                   }
                   
