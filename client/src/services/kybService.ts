@@ -610,17 +610,33 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
     try {
+      const requestId = `kyb-progress-${taskId}-${Date.now()}`;
       this.logger.info(`Saving progress for task ${taskId}, progress: ${progress}%`);
+      console.log(`[DEBUG KybService] Saving progress for task ${taskId}, progress: ${progress}%, fields: ${Object.keys(formData).length}, request ID: ${requestId}`);
+      
+      // Log data sample for debugging (first few fields)
+      const fieldSample = Object.entries(formData).slice(0, 3);
+      console.log(`[DEBUG KybService] Form data sample:`, fieldSample);
+      
+      // Get a list of all field keys
+      const fieldKeys = Object.keys(formData);
+      console.log(`[DEBUG KybService] Field keys: ${fieldKeys.join(', ')}`);
+      
+      // API endpoint URL
+      const apiUrl = `/api/kyb/progress`;
+      console.log(`[DEBUG KybService] API URL: ${apiUrl}`);
+      
+      console.log(`[DEBUG KybService] Sending save progress API request at ${new Date().toISOString()}`);
       
       // Use direct fetch with credentials
-      const response = await fetch(`/api/kyb/progress`, {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-Request-ID': `kyb-progress-${taskId}-${Date.now()}`
+          'X-Request-ID': requestId
         },
         body: JSON.stringify({
           taskId,
@@ -630,16 +646,32 @@ export class KybFormService implements FormServiceInterface {
       });
       
       this.logger.debug(`Save progress API response status: ${response.status} for task ${taskId}`);
+      console.log(`[DEBUG KybService] Save progress API response - Status: ${response.status}, Status Text: ${response.statusText} for task ${taskId} at ${new Date().toISOString()}`);
       
       if (!response.ok) {
         const errorText = await response.text();
         this.logger.error(`Error saving KYB progress for task ${taskId}: HTTP ${response.status}`, errorText);
+        console.log(`[DEBUG KybService] Error saving progress: ${response.status} - ${errorText}`);
         throw new Error(`Failed to save KYB progress: ${response.status} ${errorText}`);
       }
       
-      return await response.json();
+      console.log(`[DEBUG KybService] Parsing JSON response at ${new Date().toISOString()}`);
+      const result = await response.json();
+      
+      // Log the success response with details
+      console.log(`[DEBUG KybService] Progress saved successfully:`, {
+        success: result.success,
+        taskId: taskId,
+        progress: progress,
+        status: result.savedData?.status,
+        fieldsSaved: result.savedData?.formData ? Object.keys(result.savedData.formData).length : 0,
+        timestamp: new Date().toISOString()
+      });
+      
+      return result;
     } catch (error: unknown) {
       this.logger.error('Error saving KYB progress:', error);
+      console.error(`[DEBUG KybService] Error saving KYB progress:`, error);
       throw error;
     }
   }
@@ -651,42 +683,76 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybProgress(taskId: number): Promise<KybProgressResponse> {
     try {
+      const requestId = `kyb-get-progress-${taskId}-${Date.now()}`;
       this.logger.info(`Getting progress for task ${taskId}`);
+      console.log(`[DEBUG KybService] Getting progress for task ${taskId}, request ID: ${requestId}`);
+      
+      // Log the exact API URL being used
+      const apiUrl = `/api/kyb/progress/${taskId}`;
+      console.log(`[DEBUG KybService] API URL: ${apiUrl}`);
       
       // Use direct fetch with credentials
-      const response = await fetch(`/api/kyb/progress/${taskId}`, {
+      console.log(`[DEBUG KybService] Sending API request at ${new Date().toISOString()}`);
+      const response = await fetch(apiUrl, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-Request-ID': `kyb-get-progress-${taskId}-${Date.now()}`
+          'X-Request-ID': requestId
         }
       });
       
       this.logger.debug(`Get progress API response status: ${response.status} for task ${taskId}`);
+      console.log(`[DEBUG KybService] Progress API response - Status: ${response.status}, Status Text: ${response.statusText} for task ${taskId} at ${new Date().toISOString()}`);
       
       if (!response.ok) {
         const errorText = await response.text();
         this.logger.error(`Error getting KYB progress for task ${taskId}: HTTP ${response.status}`, errorText);
+        console.log(`[DEBUG KybService] Error getting KYB progress: ${response.status}, Details: ${errorText}`);
         throw new Error(`Failed to get KYB progress: ${response.status} ${errorText}`);
       }
       
+      console.log(`[DEBUG KybService] Parsing JSON response at ${new Date().toISOString()}`);
       const data = await response.json();
       
       // Type assertion for the response data
       const typedData = data as KybProgressResponse;
       
+      // Check if data has the expected structure
+      if (!typedData) {
+        console.log(`[DEBUG KybService] Invalid response data: null or undefined`);
+        throw new Error('Invalid response data: received null or undefined');
+      }
+      
+      // Log key fields from the response
+      console.log(`[DEBUG KybService] Progress data received:`, {
+        progress: typedData.progress,
+        status: typedData.status,
+        formDataPresent: !!typedData.formData,
+        formDataKeys: typedData.formData ? Object.keys(typedData.formData) : [],
+        formDataSize: typedData.formData ? Object.keys(typedData.formData).length : 0
+      });
+      
       this.logger.debug(`Progress data received:`, typedData);
       
-      // Ensure the required fields are present
-      return {
+      // Ensure the required fields are present and log detailed information
+      const result = {
         formData: typedData.formData || {},
         progress: typedData.progress || 0,
         status: typedData.status
       };
+      
+      console.log(`[DEBUG KybService] Returning processed progress data:`, {
+        progress: result.progress,
+        status: result.status,
+        formDataFields: Object.keys(result.formData).length
+      });
+      
+      return result;
     } catch (error: unknown) {
       this.logger.error('Error getting KYB progress:', error);
+      console.error(`[DEBUG KybService] Error getting KYB progress:`, error);
       throw error;
     }
   }
@@ -699,13 +765,26 @@ export class KybFormService implements FormServiceInterface {
   async loadProgress(taskId: number): Promise<FormData> {
     try {
       this.logger.info(`Loading saved progress for task ${taskId}`);
-      const { formData } = await this.getKybProgress(taskId);
+      console.log(`[DEBUG KybService] Loading saved progress for task ${taskId}`);
+      
+      const progressData = await this.getKybProgress(taskId);
+      console.log(`[DEBUG KybService] Progress data received:`, progressData);
+      
+      const { formData } = progressData;
       
       if (!formData) {
         this.logger.warn(`No form data found for task ${taskId}, using empty object`);
+        console.log(`[DEBUG KybService] No form data found for task ${taskId}, using empty object`);
         this.loadFormData({});
         return {};
       }
+      
+      // Log field keys and values for debugging
+      console.log(`[DEBUG KybService] Form data fields (${Object.keys(formData).length} total):`);
+      Object.entries(formData).forEach(([key, value]) => {
+        console.log(`[DEBUG KybService] Field: ${key} = ${value !== null && value !== undefined ? 
+          (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
+      });
       
       this.logger.debug(`Form data loaded successfully for task ${taskId}:`, 
         Object.keys(formData).length > 0 
@@ -713,10 +792,14 @@ export class KybFormService implements FormServiceInterface {
           : 'Empty form data'
       );
       
+      console.log(`[DEBUG KybService] Loading form data into service (${Object.keys(formData).length} fields)`);
       this.loadFormData(formData);
+      console.log(`[DEBUG KybService] Form data successfully loaded into service`);
+      
       return formData;
     } catch (error: unknown) {
       this.logger.error(`Error loading KYB progress for task ${taskId}:`, error);
+      console.error(`[DEBUG KybService] Error loading KYB progress for task ${taskId}:`, error);
       // Fall back to empty object on error, but still throw the error
       this.loadFormData({});
       throw error;
@@ -734,11 +817,29 @@ export class KybFormService implements FormServiceInterface {
     }
     
     try {
+      console.log(`[DEBUG KybService] Saving form for task ID: ${options.taskId}, form has ${
+        Object.keys(this.formData).length
+      } fields`);
+      
+      // Log field keys and a sample of values
+      const fieldKeys = Object.keys(this.formData);
+      console.log(`[DEBUG KybService] Form fields to save: ${fieldKeys.join(', ').substring(0, 100)}...`);
+      
+      // Sample the first few fields for debugging
+      const fieldSample = Object.entries(this.formData).slice(0, 3);
+      console.log(`[DEBUG KybService] Field data sample:`, fieldSample);
+      
+      // Calculate progress before saving
+      const progress = this.calculateProgress();
+      console.log(`[DEBUG KybService] Calculated progress: ${progress}%`);
+      
       // Use the existing saveProgress method
       await this.saveProgress(options.taskId);
+      console.log(`[DEBUG KybService] Form saved successfully for task ID: ${options.taskId}`);
       return true;
     } catch (error: unknown) {
       this.logger.error('Error saving KYB form:', error);
+      console.error(`[DEBUG KybService] Error saving KYB form:`, error);
       return false;
     }
   }
