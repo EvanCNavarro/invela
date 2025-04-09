@@ -23,9 +23,6 @@ import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
-import DebugPage from "@/pages/debug-page";
-import ReplitDebug from "@/pages/replit-debug";
-import StandaloneDebugPage from "@/pages/standalone-debug";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -86,9 +83,6 @@ function Router() {
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
-        <Route path="/debug" component={DebugPage} />
-        <Route path="/replit-debug" component={ReplitDebug} />
-        <Route path="/standalone-debug" component={StandaloneDebugPage} />
         <Route path="/auth">
           {(params) => {
             const searchParams = new URLSearchParams(window.location.search);
@@ -280,25 +274,6 @@ export default function App() {
     registerServices();
   }, []);
   
-  // EMERGENCY FIX FOR REPLIT: Disabling WebSocket to allow basic rendering
-  // This is a temporary solution to get the application working in Replit
-  const useEmergencyMode = true;
-  
-  if (useEmergencyMode) {
-    console.log('[App] EMERGENCY MODE: WebSocket provider disabled for troubleshooting');
-    return (
-      <QueryClientProvider client={queryClient}>
-        <ToastProvider>
-          <AuthProvider>
-            <Router />
-            <Toaster />
-          </AuthProvider>
-        </ToastProvider>
-      </QueryClientProvider>
-    );
-  }
-  
-  // Normal mode (standard app structure)
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>

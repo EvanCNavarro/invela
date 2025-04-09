@@ -162,34 +162,9 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // REPLIT EMERGENCY MODE: Special mock deserializer to prevent auth cycles
-  const useEmergencyMode = true;
-
   passport.deserializeUser(async (id: number, done) => {
     try {
-      if (useEmergencyMode) {
-        // Create a mock user to bypass database lookups
-        console.log('[Auth] EMERGENCY MODE: Using mock user instead of database lookup');
-        const mockUser = {
-          id: 199,
-          email: "mock-user@example.com",
-          full_name: "Mock User",
-          first_name: "Mock",
-          last_name: "User",
-          password: "$2b$10$dummyhashedpasswordforEmergencyMode",
-          company_id: 160,
-          permissions: ["*"],
-          preferences: {},
-          onboarding_completed: true,
-          onboarding_user_completed: true,
-          created_at: new Date(),
-          updated_at: new Date()
-        };
-        return done(null, mockUser);
-      }
-      
-      // Standard database lookup (disabled in emergency mode)
-      console.log('[Auth] Normal mode: Deserializing user:', id);
+      console.log('[Auth] Deserializing user:', id);
       const [user] = await db
         .select()
         .from(users)

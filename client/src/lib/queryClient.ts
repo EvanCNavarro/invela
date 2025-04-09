@@ -52,40 +52,11 @@ export async function apiRequest<T>(
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
-// EMERGENCY MODE flag for Replit debugging
-const useEmergencyMode = true;
-
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // EMERGENCY MODE: Return mock empty data instead of making API calls
-    if (useEmergencyMode) {
-      console.log('[QueryClient] EMERGENCY MODE: Bypassing API call to:', queryKey[0]);
-      // Return empty arrays or objects based on the endpoint
-      const path = queryKey[0] as string;
-      
-      if (path.includes('/api/tasks')) {
-        return { 
-          tasks: [],
-          totalCount: 0 
-        } as unknown as T;
-      }
-      
-      if (path.includes('/api/companies')) {
-        return { 
-          name: "Mock Company", 
-          id: 160,
-          status: "active" 
-        } as unknown as T;
-      }
-      
-      // Default mock data
-      return {} as unknown as T;
-    }
-    
-    // Normal API call behavior
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
     });
