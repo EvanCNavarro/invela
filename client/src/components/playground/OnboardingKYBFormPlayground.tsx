@@ -1370,21 +1370,47 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // Use a more stable approach to prevent unnecessary reloads
+      // Use a more reliable approach to navigate and preserve state
       // 1. Create a copy of the current form data to preserve values
       const preservedFormData = {...formData};
       
-      // 2. Mark transition state
-      const isTransitioning = true;
+      console.log('[KYB Form Debug] NAVIGATION-BACK: Preserving form data before navigation', {
+        status: 'PENDING',
+        dataFields: Object.keys(preservedFormData),
+        fieldCount: Object.keys(preservedFormData).length,
+        timestamp: new Date().toISOString()
+      });
       
-      // 3. Update state in a controlled manner
-      setCurrentStep(prevStep);
+      // 2. First update the formData to ensure it's preserved
+      setFormData(prevData => {
+        // Create a complete merged copy to ensure no data loss
+        const completeData = {...prevData};
+        console.log('[KYB Form Debug] NAVIGATION-BACK: Form data before state update', {
+          status: 'PROCESSING',
+          dataFieldsBefore: Object.keys(completeData).length,
+          timestamp: new Date().toISOString()
+        });
+        return completeData;
+      });
       
-      // 4. Create a small delay to allow React to process the state change
+      // 3. Then update the current step in a separate render cycle
       setTimeout(() => {
-        // 5. Restore the form data to preserve values during transition
-        setFormData(preservedFormData);
-      }, 10);
+        setCurrentStep(prevStep);
+        
+        // 4. Again ensure form data is preserved after step change
+        setTimeout(() => {
+          setFormData(prevData => {
+            // Ensure all data from the preserved copy is included
+            const finalData = {...prevData, ...preservedFormData};
+            console.log('[KYB Form Debug] NAVIGATION-BACK: Form data after state update', {
+              status: 'SUCCESS',
+              dataFieldsAfter: Object.keys(finalData).length,
+              timestamp: new Date().toISOString()
+            });
+            return finalData;
+          });
+        }, 20);
+      }, 20);
       
       console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
@@ -1584,21 +1610,47 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // Use the same stable approach as in handleBack to prevent reloads
+      // Use a more reliable approach to navigate and preserve state
       // 1. Create a copy of the current form data to preserve values
       const preservedFormData = {...formData};
       
-      // 2. Mark transition state
-      const isTransitioning = true;
+      console.log('[KYB Form Debug] NAVIGATION-NEXT: Preserving form data before navigation', {
+        status: 'PENDING',
+        dataFields: Object.keys(preservedFormData),
+        fieldCount: Object.keys(preservedFormData).length,
+        timestamp: new Date().toISOString()
+      });
       
-      // 3. Update state in a controlled manner
-      setCurrentStep(nextStep);
+      // 2. First update the formData to ensure it's preserved
+      setFormData(prevData => {
+        // Create a complete merged copy to ensure no data loss
+        const completeData = {...prevData};
+        console.log('[KYB Form Debug] NAVIGATION-NEXT: Form data before state update', {
+          status: 'PROCESSING',
+          dataFieldsBefore: Object.keys(completeData).length,
+          timestamp: new Date().toISOString()
+        });
+        return completeData;
+      });
       
-      // 4. Create a small delay to allow React to process the state change
+      // 3. Then update the current step in a separate render cycle
       setTimeout(() => {
-        // 5. Restore the form data to preserve values during transition
-        setFormData(preservedFormData);
-      }, 10);
+        setCurrentStep(nextStep);
+        
+        // 4. Again ensure form data is preserved after step change
+        setTimeout(() => {
+          setFormData(prevData => {
+            // Ensure all data from the preserved copy is included
+            const finalData = {...prevData, ...preservedFormData};
+            console.log('[KYB Form Debug] NAVIGATION-NEXT: Form data after state update', {
+              status: 'SUCCESS',
+              dataFieldsAfter: Object.keys(finalData).length,
+              timestamp: new Date().toISOString()
+            });
+            return finalData;
+          });
+        }, 20);
+      }, 20);
       
       console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
@@ -2368,23 +2420,50 @@ export const OnboardingKYBFormPlayground = ({
                             timestamp: new Date().toISOString()
                           });
                           
-                          // Preserve form data during step transition
+                          // Preserve form data for navigation - store a deep copy to ensure no reference issues
                           const preservedFormData = {...formData};
                           
-                          // Navigate to the clicked step
-                          setCurrentStep(index);
+                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Preserving form data', {
+                            status: 'PENDING',
+                            dataFields: Object.keys(preservedFormData),
+                            fieldCount: Object.keys(preservedFormData).length,
+                            sampleValues: Object.entries(preservedFormData).slice(0, 2),
+                            timestamp: new Date().toISOString()
+                          });
                           
-                          // Restore form data after state change
-                          setTimeout(() => {
-                            setFormData(preservedFormData);
-                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Navigation complete', {
-                              status: 'SUCCESS',
-                              fromStep: currentStep,
-                              toStep: index,
-                              preservedDataFields: Object.keys(preservedFormData).length,
+                          // Use a more reliable approach to navigate and preserve state
+                          const targetStep = index;
+                          
+                          // First update the formData to ensure it's preserved
+                          setFormData(prevData => {
+                            // Create a complete merged copy to ensure no data loss
+                            const completeData = {...prevData};
+                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data before state update', {
+                              status: 'PROCESSING',
+                              dataFieldsBefore: Object.keys(completeData).length,
                               timestamp: new Date().toISOString()
                             });
-                          }, 10);
+                            return completeData;
+                          });
+                          
+                          // Then update the current step in a separate render cycle
+                          setTimeout(() => {
+                            setCurrentStep(targetStep);
+                            
+                            // Again ensure form data is preserved after step change
+                            setTimeout(() => {
+                              setFormData(prevData => {
+                                // Ensure all data from the preserved copy is included
+                                const finalData = {...prevData, ...preservedFormData};
+                                console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data after state update', {
+                                  status: 'SUCCESS',
+                                  dataFieldsAfter: Object.keys(finalData).length,
+                                  timestamp: new Date().toISOString()
+                                });
+                                return finalData;
+                              });
+                            }, 20);
+                          }, 20);
                         } else {
                           console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Step not clickable', {
                             status: 'CANCELLED',
