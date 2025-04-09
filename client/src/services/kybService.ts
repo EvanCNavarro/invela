@@ -723,6 +723,26 @@ export class KybFormService implements FormServiceInterface {
   }
   
   /**
+   * Save the form data
+   * @param options Form submission options
+   * @returns Promise that resolves when form data is saved
+   */
+  async save(options: FormSubmitOptions): Promise<boolean> {
+    if (!options.taskId) {
+      throw new Error('Task ID is required to save the form');
+    }
+    
+    try {
+      // Use the existing saveProgress method
+      await this.saveProgress(options.taskId);
+      return true;
+    } catch (error: unknown) {
+      this.logger.error('Error saving KYB form:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Submit the form
    * @param options Form submission options
    * @returns Promise that resolves with submission result

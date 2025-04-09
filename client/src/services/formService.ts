@@ -119,6 +119,13 @@ export interface FormServiceInterface {
   loadProgress(taskId: number): Promise<FormData>;
   
   /**
+   * Save the form data
+   * @param options Form submission options
+   * @returns Promise that resolves when form data is saved
+   */
+  save(options: FormSubmitOptions): Promise<boolean>;
+  
+  /**
    * Submit the form
    * @param options Form submission options
    * @returns Promise that resolves with submission result
