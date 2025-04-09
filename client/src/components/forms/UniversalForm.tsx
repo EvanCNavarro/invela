@@ -119,14 +119,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Use a ref to track if we already loaded saved data
   const savedDataLoadedRef = useRef(false);
   
+  // Create empty default values for all fields to prevent uncontrolled input warnings
+  const emptyDefaults = useMemo(() => createEmptyDefaultValues(fields), [fields]);
+  
   // Store all form data in one state object to avoid re-renders
   const [formData, setFormData] = useState<FormData>({
-    ...createEmptyDefaultValues(fields),
+    ...emptyDefaults,
     ...initialData
   });
   
   // Setup form with validation and fixed empty defaults to prevent warnings
   const form = useForm({
+    // Always ensure we have non-null values for all fields
     defaultValues: formData,
     resolver: zodResolver(createFormSchema(fields)),
     mode: 'onChange',
@@ -145,26 +149,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     // Load saved data once
     const loadSavedData = async () => {
       try {
+        console.log(`[UniversalForm] Loading saved progress for task ID: ${taskId}`);
         const savedData = await formService.loadProgress(taskId);
         
         // Only update if we got actual data
         if (savedData && Object.keys(savedData).length > 0) {
+          console.log(`[UniversalForm] Received saved data with ${Object.keys(savedData).length} fields`);
+          
+          // Normalize any null values to empty strings to prevent React warnings
+          const normalizedData = Object.fromEntries(
+            Object.entries(savedData).map(([key, value]) => [key, value === null ? '' : value])
+          );
+          
           // Update state and form with saved data
           const completeData = {
-            ...createEmptyDefaultValues(fields),
-            ...savedData
+            ...emptyDefaults, // Use the memoized empty defaults
+            ...normalizedData // Use normalized data without null values
           };
           
+          console.log(`[UniversalForm] Updating form with complete data (${Object.keys(completeData).length} fields)`);
           setFormData(completeData);
           form.reset(completeData);
+        } else {
+          console.log(`[UniversalForm] No saved data found, using empty defaults`);
         }
       } catch (error) {
-        console.error('Failed to load saved form data:', error);
+        console.error('[UniversalForm] Failed to load saved form data:', error);
       }
     };
     
     loadSavedData();
-  }, [fields, taskId, formService]);
+  }, [fields, taskId, formService, emptyDefaults]); // Added emptyDefaults to dependency array
   
   // Request tracking to prevent multiple concurrent initialization attempts
   const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
@@ -405,14 +420,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               
               // If we retrieved valid form data, update the form
               if (savedFormData && Object.keys(savedFormData).length > 0) {
-                console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data:`, savedFormData);
-                console.log(`[DEBUG UniversalForm] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
+                console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data with ${Object.keys(savedFormData).length} fields`);
+                
+                // Normalize any null values to empty strings to prevent React warnings
+                const normalizedData = Object.fromEntries(
+                  Object.entries(savedFormData).map(([key, value]) => [key, value === null ? '' : value])
+                );
+                
+                // Merge with empty defaults for any missing fields
+                const completeData = {
+                  ...emptyDefaults,
+                  ...normalizedData
+                };
+                
+                console.log(`[DEBUG UniversalForm] Updating form with normalized data: ${Object.keys(completeData).length} fields`);
                 
                 // Update formData state to ensure it's available for form initialization
-                setFormData(savedFormData);
+                setFormData(completeData);
                 
                 // Reset form with saved values - this is critical for when a user returns to the form
-                form.reset(savedFormData);
+                form.reset(completeData);
               } else {
                 console.log('[DEBUG UniversalForm] No saved data found for already initialized service');
               }
@@ -503,10 +530,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (savedFormData && Object.keys(savedFormData).length > 0) {
               console.log(`[DEBUG] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
               logger.debug(`Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
+              
+              // Normalize any null values to empty strings to prevent React warnings
+              const normalizedData = Object.fromEntries(
+                Object.entries(savedFormData).map(([key, value]) => [key, value === null ? '' : value])
+              );
+              
+              // Merge with empty defaults for any missing fields
+              const completeData = {
+                ...emptyDefaults,
+                ...normalizedData
+              };
+              
+              console.log(`[DEBUG] Updating form with normalized data: ${Object.keys(completeData).length} fields`);
+              
               // Update formData state to ensure it's available for form initialization
-              setFormData(savedFormData);
+              setFormData(completeData);
               // Reset form with saved values
-              form.reset(savedFormData);
+              form.reset(completeData);
             } else {
               console.log('[DEBUG] No saved data found or empty data object received');
             }
@@ -517,22 +558,56 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // If loading from server fails but we have initialData, use that instead
             if (Object.keys(initialData).length > 0) {
               logger.debug(`Using initialData as fallback for task ID: ${taskId}`);
-              formService.loadFormData(initialData);
+              
+              // Normalize any null values in initialData to empty strings
+              const normalizedData = Object.fromEntries(
+                Object.entries(initialData).map(([key, value]) => [key, value === null ? '' : value])
+              );
+              
+              // Merge with empty defaults for any missing fields
+              const completeData = {
+                ...emptyDefaults,
+                ...normalizedData
+              };
+              
+              console.log(`[DEBUG] Using normalized initialData as fallback with ${Object.keys(completeData).length} fields`);
+              
+              // Load normalized data into service
+              formService.loadFormData(completeData);
+              
               // Update formData state
-              setFormData(initialData);
-              // Reset form with initial data
-              form.reset(initialData);
+              setFormData(completeData);
+              
+              // Reset form with normalized initial data
+              form.reset(completeData);
             }
           }
         }
         // If no taskId but we have initialData, load it into the service
         else if (Object.keys(initialData).length > 0) {
           logger.debug(`No taskId provided, using initialData only`);
-          formService.loadFormData(initialData);
+          
+          // Normalize any null values in initialData to empty strings
+          const normalizedData = Object.fromEntries(
+            Object.entries(initialData).map(([key, value]) => [key, value === null ? '' : value])
+          );
+          
+          // Merge with empty defaults for any missing fields
+          const completeData = {
+            ...emptyDefaults,
+            ...normalizedData
+          };
+          
+          console.log(`[DEBUG] Using normalized initialData with ${Object.keys(completeData).length} fields`);
+          
+          // Load normalized data into service
+          formService.loadFormData(completeData);
+          
           // Update formData state
-          setFormData(initialData);
-          // Reset form with initial data
-          form.reset(initialData);
+          setFormData(completeData);
+          
+          // Reset form with normalized initial data
+          form.reset(completeData);
         }
         
         // Get form structure from service
