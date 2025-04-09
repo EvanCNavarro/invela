@@ -31,6 +31,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Company } from "@/types/company";
 import { InviteModal } from "@/components/playground/InviteModal";
 import { cn } from "@/lib/utils";
+import { getOptimizedQueryOptions } from "@/lib/queryClient";
 import { NetworkVisualization } from "@/components/network";
 
 const DEFAULT_WIDGETS = {
@@ -47,15 +48,11 @@ export default function DashboardPage() {
   const [openFinTechModal, setOpenFinTechModal] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // Updated query configuration with shorter refetch interval and stale time
+  // Use optimized query options for better performance
   const { data: companyData, isLoading } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     enabled: !!user,
-    refetchInterval: 5000, // Refetch every 5 seconds
-    staleTime: 1000, // Consider data stale after 1 second
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true
+    ...getOptimizedQueryOptions("/api/companies/current")
   });
 
   const toggleWidget = (widgetId: keyof typeof DEFAULT_WIDGETS) => {

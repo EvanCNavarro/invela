@@ -74,7 +74,13 @@ export const getQueryFn: <T>(options: {
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
     const url = queryKey[0] as string;
-    console.log(`[TanStack Query] Fetching: ${url}`);
+    // Only log in development mode and suppress repetitive logs
+    if (process.env.NODE_ENV === 'development') {
+      // Don't log common API calls that happen frequently
+      if (!url.includes('/api/companies/current') && !url.includes('/api/tasks')) {
+        console.log(`[TanStack Query] Fetching: ${url}`);
+      }
+    }
 
     // Add request ID for tracing
     const requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -87,9 +93,16 @@ export const getQueryFn: <T>(options: {
         }
       });
 
-      console.log(`[TanStack Query] Response for ${url}: Status ${res.status}`);
+      // Only log responses in development mode and suppress repetitive logs
+      if (process.env.NODE_ENV === 'development') {
+        // Don't log common API calls that happen frequently
+        if (!url.includes('/api/companies/current') && !url.includes('/api/tasks')) {
+          console.log(`[TanStack Query] Response for ${url}: Status ${res.status}`);
+        }
+      }
 
       if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        // Only log 401 errors even in production as they're important
         console.log(`[TanStack Query] 401 Unauthorized for ${url}, returning null as configured`);
         return null;
       }
@@ -102,13 +115,73 @@ export const getQueryFn: <T>(options: {
     }
   };
 
+/**
+ * Optimizes TanStack Query's behavior for different endpoints by providing
+ * custom cache configurations based on the endpoint
+ */
+export function getOptimizedQueryOptions(url: string | string[]) {
+  const urlStr = Array.isArray(url) ? url[0] : url;
+  
+  // Default configuration (moderate caching)
+  const defaultOptions = {
+    refetchInterval: false,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60, // 1 minute
+    retry: false,
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+  };
+  
+  // Frequently accessed endpoints - more aggressive caching to reduce redundant requests
+  if (urlStr.includes('/api/companies/current')) {
+    return {
+      refetchInterval: 60000,       // 1 minute - poll for updates periodically 
+      refetchOnWindowFocus: true,   // Fetch when tab becomes active
+      staleTime: 30000,             // 30 seconds - keep data fresh for 30 seconds
+      retry: false,
+      cacheTime: 5 * 60 * 1000,     // 5 minutes - keep in cache longer
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+    };
+  }
+  
+  // Tasks endpoint - slightly different caching strategy
+  if (urlStr.includes('/api/tasks')) {
+    return {
+      refetchInterval: 45000,       // 45 seconds - poll for updates periodically
+      refetchOnWindowFocus: true,   // Fetch when tab becomes active
+      staleTime: 20000,             // 20 seconds - keep data fresh for 20 seconds
+      retry: false,
+      cacheTime: 3 * 60 * 1000,     // 3 minutes - keep in cache
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+    };
+  }
+  
+  // Task form data - cache longer since it changes less frequently
+  if (urlStr.includes('/api/task-templates')) {
+    return {
+      refetchInterval: false,       // Don't poll automatically
+      refetchOnWindowFocus: false,  // Don't fetch on window focus
+      staleTime: 5 * 60 * 1000,     // 5 minutes - form templates rarely change
+      retry: false,
+      cacheTime: 10 * 60 * 1000,    // 10 minutes - keep in cache longer
+      refetchOnReconnect: true,
+      refetchOnMount: true,
+    };
+  }
+  
+  return defaultOptions;
+}
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
+      // These are the global defaults, but individual queries should use getOptimizedQueryOptions
       refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
+      staleTime: 30000,             // 30 seconds (shorter than previous Infinity)
       retry: false,
     },
     mutations: {

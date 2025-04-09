@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { useEffect } from "react";
 import { WelcomeModal } from "@/components/modals/WelcomeModal";
+import { getOptimizedQueryOptions } from "@/lib/queryClient";
 
 interface Company {
   id: number;
@@ -31,16 +32,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
 
-  // Add refetchInterval to automatically check for updates
+  // Use the optimized query options for frequently accessed endpoints
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
-    refetchInterval: 5000, // Refetch every 5 seconds
+    ...getOptimizedQueryOptions("/api/tasks"),
   });
 
-  // Add refetchInterval to automatically check for company updates
+  // Use the optimized query options for frequently accessed endpoints
   const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
-    refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
+    ...getOptimizedQueryOptions("/api/companies/current"),
   });
 
   const relevantTasks = tasks.filter(task => {
