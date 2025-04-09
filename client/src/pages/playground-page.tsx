@@ -24,7 +24,7 @@ import {
 import { Card } from "@/components/ui/card";
 import PageSideDrawerPlayground from "@/components/playground/PageSideDrawerPlayground";
 import FormPlayground from "@/components/playground/FormPlayground";
-import OnboardingKYBFormPlayground from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms/UniversalForm";
 
 // Sample data for DataTable demo
 const sampleTableData = [
@@ -105,7 +105,7 @@ const components: PlaygroundComponent[] = [
   {
     id: "kyb-form",
     name: "KYB Form",
-    component: OnboardingKYBFormPlayground,
+    component: () => <UniversalForm taskType="kyb" onSubmit={(data) => console.log('Form submitted:', data)} />,
     description: "Interactive KYB form with company data suggestions"
   },
   {
