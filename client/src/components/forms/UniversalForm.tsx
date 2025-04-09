@@ -207,6 +207,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       return;
     }
 
+    // Check if service is already initialized
+    try {
+      const existingFields = formService.getFields();
+      const existingSections = formService.getSections();
+      
+      // If we already have fields and sections, the service is already initialized
+      if (existingFields.length > 0 && existingSections.length > 0) {
+        console.log(`[UniversalForm] Service already initialized with ${existingFields.length} fields and ${existingSections.length} sections`);
+        
+        // Set form structure directly without reinitializing
+        setSections(sortSections(existingSections));
+        setFields(sortFields(existingFields));
+        setLoading(false);
+        return; // Skip initialization
+      }
+    } catch (e) {
+      // If we can't access fields/sections, service is not initialized yet
+      console.log(`[UniversalForm] Service not yet initialized, proceeding with initialization`);
+    }
+
     // Reset attempt counter when we get a new template or form service
     setServiceInitAttempts(0);
     
