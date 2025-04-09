@@ -192,17 +192,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   if (useEmergencyMode) {
     console.log('[Auth] EMERGENCY MODE: Using mock auth context for Replit debugging');
     // Provide a simplified context with a mock user to allow the application to load
-    const mockUser: User = {
+    // Make sure the mock user exactly matches our User type
+    const mockUser = {
       id: 199,
       email: "mock-user@example.com",
       full_name: "Mock User",
-      role: "admin",
       company_id: 160,
       permissions: ["*"],
       preferences: {},
       onboarding_completed: true,
       onboarding_user_completed: true,
-    };
+    } as User;
     
     // Create simplified mutation objects that do nothing
     const noopMutation = {
