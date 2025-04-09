@@ -9,6 +9,8 @@ import { WebSocketProvider } from "@/providers/websocket-provider";
 import ScrollToTop from "@/components/ScrollToTop";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useEffect } from "react";
+import { registerServices } from "./services/registerServices";
 
 import DashboardPage from "@/pages/dashboard-page";
 import NotFound from "@/pages/not-found";
@@ -266,6 +268,12 @@ function Router() {
 }
 
 export default function App() {
+  // Register all form services when the app initializes
+  useEffect(() => {
+    console.log('[App] Registering form services at application startup');
+    registerServices();
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
