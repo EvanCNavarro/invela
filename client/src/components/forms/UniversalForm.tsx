@@ -375,8 +375,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         if (taskId) {
           try {
             logger.debug(`Loading saved progress for task ID: ${taskId}`);
-            await formService.loadProgress(taskId);
+            const savedFormData = await formService.loadProgress(taskId);
             logger.debug(`Successfully loaded saved progress for task ID: ${taskId}`);
+            
+            // Critical: Update React Hook Form with the loaded data
+            if (savedFormData && Object.keys(savedFormData).length > 0) {
+              logger.debug(`Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
+              // Reset form with saved values
+              form.reset(savedFormData);
+            }
           } catch (loadError) {
             logger.error(`Error loading saved progress for task ID: ${taskId}:`, loadError);
             // Continue with initialization even if loading saved progress fails
@@ -385,6 +392,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (Object.keys(initialData).length > 0) {
               logger.debug(`Using initialData as fallback for task ID: ${taskId}`);
               formService.loadFormData(initialData);
+              // Reset form with initial data
+              form.reset(initialData);
             }
           }
         }
@@ -392,6 +401,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         else if (Object.keys(initialData).length > 0) {
           logger.debug(`No taskId provided, using initialData only`);
           formService.loadFormData(initialData);
+          // Reset form with initial data
+          form.reset(initialData);
         }
         
         // Get form structure from service
