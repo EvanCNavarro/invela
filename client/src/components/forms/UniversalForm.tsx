@@ -63,6 +63,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
   const MAX_INITIALIZATION_ATTEMPTS = 2;
+  
+  // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
+  const sectionTabs = useMemo(() => {
+    if (!sections || !fields) return [];
+    return sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      fields: fields.filter(field => field.section === section.id)
+    }));
+  }, [sections, fields]);
 
   // Load template and configuration - step 1: fetch template 
   useEffect(() => {
@@ -430,16 +440,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       </Card>
     );
   }
-  
-  // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
-  const sectionTabs = React.useMemo(() => {
-    if (!sections || !fields) return [];
-    return sections.map(section => ({
-      id: section.id,
-      title: section.title,
-      fields: fields.filter(field => field.section === section.id)
-    }));
-  }, [sections, fields]);
   
   // If no template or form service was found
   if (!template || !formService) {
