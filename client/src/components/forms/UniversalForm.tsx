@@ -152,7 +152,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Important: We're using the locally captured requestId instead of templateRequestId state
         // This ensures we don't run into state timing issues
         
-        console.log(`[UniversalForm] Starting template fetch for taskType: ${taskType}, attempt: ${initializationAttempts + 1}`);
+        logger.debug(`Starting template fetch for taskType: ${taskType}, attempt: ${initializationAttempts + 1}`);
         setLoading(true);
         setError(null);
         
@@ -165,14 +165,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Use the mapped task type for API requests
         const dbTaskType = taskTypeMap[taskType] || taskType;
-        console.log(`[UniversalForm] Mapped task type: ${taskType} → ${dbTaskType}, URL will be /api/task-templates/by-type/${dbTaskType}`);
+        logger.debug(`Mapped task type: ${taskType} → ${dbTaskType}, URL will be /api/task-templates/by-type/${dbTaskType}`);
         
         // Log the current template request attempt
-        console.log(`[UniversalForm] Template fetch attempt ${initializationAttempts + 1}/${MAX_INITIALIZATION_ATTEMPTS} for ${dbTaskType}`);
+        logger.debug(`Template fetch attempt ${initializationAttempts + 1}/${MAX_INITIALIZATION_ATTEMPTS} for ${dbTaskType}`);
         
         // Fetch template configuration from API
-        console.log(`[UniversalForm] Making template fetch request for ${dbTaskType} at ${new Date().toISOString()}`);
-        console.log(`[UniversalForm] Request details:`, {
+        logger.debug(`Making template fetch request for ${dbTaskType} at ${new Date().toISOString()}`);
+        logger.debug('Request details:', {
           taskId,
           originalTaskType: taskType,
           mappedTaskType: dbTaskType,
@@ -184,8 +184,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         let templateData;
         try {
           templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
-          console.log(`[UniversalForm] Template fetch response received at ${new Date().toISOString()}`);
-          console.log(`[UniversalForm] Template data:`, {
+          logger.debug(`Template fetch response received at ${new Date().toISOString()}`);
+          logger.debug(`Template data:`, {
             id: templateData.id,
             name: templateData.name,
             taskType: templateData.task_type, 
@@ -199,56 +199,58 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           // throughout this function closure instead.
           
           // Log template data
-          console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
+          logger.debug(`Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
         } catch (error) {
-          console.error(`[UniversalForm] Template fetch error for ${dbTaskType}:`, error);
-          console.log(`[UniversalForm] Will attempt to continue anyway and check service registration`);
+          logger.error(`Template fetch error for ${dbTaskType}:`, error);
+          logger.info(`Will attempt to continue anyway and check service registration`);
           // We'll continue execution and try to get the service, even without template
         }
         
         // Debug: Check if services are registered
-        console.log('[UniversalForm] DEBUG: Checking service registration');
+        logger.debug('Checking service registration');
         const allServices = componentFactory.getRegisteredFormServices();
         const serviceKeys = Object.keys(allServices);
-        console.log(`[UniversalForm] Available services: [${serviceKeys.join(', ')}]`);
+        logger.debug(`Available services: [${serviceKeys.join(', ')}]`);
         
         // Debug: Explicitly check for kyb service
         const kybServiceCheck = componentFactory.getFormService('kyb');
-        console.log('[UniversalForm] KYB service available:', !!kybServiceCheck, 
-          kybServiceCheck ? `(${kybServiceCheck.constructor.name})` : '');
+        logger.debug('KYB service available:', {
+          available: !!kybServiceCheck,
+          type: kybServiceCheck ? kybServiceCheck.constructor.name : 'N/A'
+        });
         
         // Find the appropriate form service
-        console.log(`[UniversalForm] Looking for form service for task type: ${taskType}`);
+        logger.debug(`Looking for form service for task type: ${taskType}`);
         let service = componentFactory.getFormService(taskType);
         
         if (service) {
-          console.log(`[UniversalForm] Found form service using original task type: ${taskType}`, {
+          logger.debug(`Found form service using original task type: ${taskType}`, {
             serviceType: service.constructor.name
           });
         } else {
           // If not found with original task type, try with mapped DB task type
-          console.log(`[UniversalForm] No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
+          logger.debug(`No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
           service = componentFactory.getFormService(dbTaskType);
           
           if (service) {
-            console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`, {
+            logger.debug(`Found form service using mapped DB task type: ${dbTaskType}`, {
               serviceType: service.constructor.name
             });
           } else {
             // No service found for either task type
-            console.error(`[UniversalForm] No service found for either ${taskType} or ${dbTaskType}`);
+            logger.error(`No service found for either ${taskType} or ${dbTaskType}`);
             throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
           }
         }
         
         // First set the template and service states - template might be undefined if there was an error
-        console.log(`[UniversalForm] Setting template:`, templateData ? { 
+        logger.debug(`Setting template:`, templateData ? { 
           id: templateData.id, 
           name: templateData.name 
         } : 'null');
         setTemplate(templateData || null);
         
-        console.log(`[UniversalForm] Setting form service:`, {
+        logger.debug(`Setting form service:`, {
           serviceType: service ? service.constructor.name : 'null'
         });
         setFormService(service);
@@ -257,7 +259,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       } catch (err) {
         // Only update state if this request is still relevant
         if (templateRequestId === requestId) {
-          console.error('[UniversalForm] Error loading form template or service:', err);
+          logger.error('Error loading form template or service:', err);
           setError(err instanceof Error ? err.message : 'Failed to load form template');
           setLoading(false);
         }
@@ -286,7 +288,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // If we already have fields and sections, the service is already initialized
       if (existingFields.length > 0 && existingSections.length > 0) {
-        console.log(`[UniversalForm] Service already initialized with ${existingFields.length} fields and ${existingSections.length} sections`);
+        logger.debug(`Service already initialized with ${existingFields.length} fields and ${existingSections.length} sections`);
         
         // Set form structure directly without reinitializing
         // Get form structure from service and convert to NavigationFormSection type
@@ -300,7 +302,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       }
     } catch (e) {
       // If we can't access fields/sections, service is not initialized yet
-      console.log(`[UniversalForm] Service not yet initialized, proceeding with initialization`);
+      logger.debug(`Service not yet initialized, proceeding with initialization`);
     }
 
     // Reset attempt counter when we get a new template or form service
@@ -308,15 +310,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Generate a unique initialization ID
     const initId = `${template.id}-${Date.now()}`;
-    console.log(`[UniversalForm] Generated new service initialization ID: ${initId}`);
+    logger.debug(`Generated new service initialization ID: ${initId}`);
     setServiceInitId(initId);
     
     const initializeService = async () => {
-      console.log(`[UniversalForm] Starting service initialization with ID: ${initId}, current serviceInitId: ${serviceInitId}`);
+      logger.debug(`Starting service initialization with ID: ${initId}, current serviceInitId: ${serviceInitId}`);
       
       // Skip if we've exceeded max initialization attempts
       if (serviceInitAttempts >= MAX_SERVICE_INIT_ATTEMPTS) {
-        console.warn(`[UniversalForm] Exceeded maximum service initialization attempts (${MAX_SERVICE_INIT_ATTEMPTS})`);
+        logger.warn(`Exceeded maximum service initialization attempts (${MAX_SERVICE_INIT_ATTEMPTS})`);
         setError(`Failed to initialize form service after ${MAX_SERVICE_INIT_ATTEMPTS} attempts. Please refresh and try again.`);
         setLoading(false);
         return;
@@ -329,18 +331,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // This avoids state update timing issues
       
       try {
-        console.log(`[UniversalForm] Initializing form service with template ID ${template.id}, attempt: ${serviceInitAttempts + 1}`);
+        logger.debug(`Initializing form service with template ID ${template.id}, attempt: ${serviceInitAttempts + 1}`);
         
         // Let's add more debug info about the form service
-        console.log(`[UniversalForm] Form service type: ${formService.constructor.name}`);
+        logger.debug(`Form service type: ${formService.constructor.name}`);
         
         // Check if any fields/sections are already available
         try {
           const existingFields = formService.getFields();
           const existingSections = formService.getSections();
-          console.log(`[UniversalForm] Pre-init check - Fields: ${existingFields.length}, Sections: ${existingSections.length}`);
+          logger.debug(`Pre-init check - Fields: ${existingFields.length}, Sections: ${existingSections.length}`);
         } catch (e) {
-          console.log(`[UniversalForm] Pre-init check - No fields/sections available yet`);
+          logger.debug(`Pre-init check - No fields/sections available yet`);
         }
         
         // Initialize the service with template ID - with timeout protection
@@ -352,15 +354,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         });
         
         // Race the initialization against the timeout
-        console.log(`[UniversalForm] Awaiting promise resolution...`);
+        logger.debug(`Awaiting promise resolution...`);
         await Promise.race([initPromise, timeoutPromise]);
-        console.log(`[UniversalForm] Service initialization completed successfully`);
+        logger.debug(`Service initialization completed successfully`);
         
         // IMPORTANT: We're NOT checking serviceInitId anymore because of React's 
         // asynchronous state updates. Using the locally captured initId throughout 
         // this function closure to maintain consistency.
         
-        console.log(`[UniversalForm] Proceeding with service initialization (ID: ${initId})`);
+        logger.debug(`Proceeding with service initialization (ID: ${initId})`);
         
         // Load initial data if available
         if (Object.keys(initialData).length > 0) {
@@ -371,7 +373,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         const serviceFormSections = sortSections(formService.getSections());
         const formFields = sortFields(formService.getFields());
         
-        console.log(`[UniversalForm] Form structure loaded: ${serviceFormSections.length} sections, ${formFields.length} fields`);
+        logger.debug(`Form structure loaded: ${serviceFormSections.length} sections, ${formFields.length} fields`);
         
         // Convert service sections to NavigationFormSection type
         const navigationSections = toNavigationSections(serviceFormSections);
@@ -385,7 +387,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       } catch (err) {
         // We're not checking serviceInitId here either, for the same reason
         // as above - React's asynchronous state updates can cause timing issues
-        console.error('[UniversalForm] Error initializing form service:', err);
+        logger.error('Error initializing form service:', err);
         setError(err instanceof Error ? err.message : 'Failed to initialize form');
         setLoading(false);
       }
@@ -399,6 +401,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     if (!formService) return;
     
     try {
+      logger.debug(`Submitting form data for task ID: ${taskId}, form type: ${taskType}`);
+      
       // Submit the form data
       const result = await formService.submit({
         taskId,
@@ -408,6 +412,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Call onSubmit callback if provided
       if (onSubmit) {
+        logger.debug(`Executing onSubmit callback`);
         onSubmit(data);
       }
       
@@ -417,9 +422,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'default',
       });
       
+      logger.debug(`Form submitted successfully`);
       return result;
     } catch (err) {
-      console.error('Error submitting form:', err);
+      logger.error('Error submitting form:', err);
       
       toast({
         title: 'Error submitting form',
@@ -441,7 +447,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       const progress = Math.round((filledFields.length / fields.length) * 100);
-      console.log(`[UniversalForm] Updating progress: ${progress}%`);
+      logger.debug(`Updating progress: ${progress}%`);
       onProgress(progress);
     }, 500), // 500ms debounce delay
     [onProgress, form, fields]
@@ -450,6 +456,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Throttled field change handler to prevent excessive updates
   const handleFieldChange = useCallback((name: string, value: any) => {
     if (!formService) return;
+    
+    logger.debug(`Field update: ${name} = ${value !== undefined && value !== null ? (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
     
     // Update form data in the service
     formService.updateFormData(name, value);
