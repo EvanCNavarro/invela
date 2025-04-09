@@ -292,6 +292,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [serviceInitAttempts, setServiceInitAttempts] = useState(0);
   const MAX_SERVICE_INIT_ATTEMPTS = 5; // Increased from 2 to 5 to allow more attempts
   
+  // Track if we've already loaded initial data for this service instance
+  const initialDataLoadedRef = useRef(false);
+  
   // Step 2: Initialize service once we have both template and service
   useEffect(() => {
     // Skip if we don't have both template and service
@@ -316,13 +319,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         setSections(navigationSections);
         setFields(sortFields(existingFields));
         
-        // CRITICAL FIX: Even if service is already initialized, we still need to load saved data
-        // when navigating back to the form
-        if (taskId) {
+        // CRITICAL FIX: Only load saved data if we haven't already done so for this component instance
+        if (taskId && !initialDataLoadedRef.current) {
+          // Mark that we're loading initial data to prevent future loads
+          initialDataLoadedRef.current = true;
+          
           // Use an immediately invoked async function
           (async () => {
             try {
-              console.log(`[DEBUG UniversalForm] Service already initialized but loading saved progress for task ID: ${taskId}`);
+              console.log(`[DEBUG UniversalForm] Service already initialized - loading saved progress for task ID: ${taskId} (one-time load)`);
               
               // Key fix: Only make one API request, wait for it to complete before proceeding
               const savedFormData = await formService.loadProgress(taskId).catch(error => {
