@@ -45,10 +45,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     mode: 'onChange',
   });
   
+  // Request tracking to prevent multiple concurrent initialization attempts
+  const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
+  const [initializationAttempts, setInitializationAttempts] = useState(0);
+  const MAX_INITIALIZATION_ATTEMPTS = 2;
+
   // Load template and configuration - step 1: fetch template 
   useEffect(() => {
+    // Reset the initialization counter when task type changes
+    setInitializationAttempts(0);
+    
+    // Generate a unique request ID for tracking
+    const requestId = `${taskType}-${Date.now()}`;
+    setTemplateRequestId(requestId);
+    
     const fetchTemplate = async () => {
       try {
+        // Skip if we've exceeded max initialization attempts
+        if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+          console.warn(`[UniversalForm] Exceeded maximum initialization attempts (${MAX_INITIALIZATION_ATTEMPTS})`);
+          setError(`Failed to initialize form after ${MAX_INITIALIZATION_ATTEMPTS} attempts. Please refresh and try again.`);
+          setLoading(false);
+          return;
+        }
+        
+        // Update attempt counter
+        setInitializationAttempts(prev => prev + 1);
+        
+        // Check if this request is still relevant
+        if (templateRequestId !== requestId) {
+          console.log(`[UniversalForm] Skipping stale request: ${requestId}`);
+          return;
+        }
+        
+        console.log(`[UniversalForm] Starting template fetch for taskType: ${taskType}, attempt: ${initializationAttempts + 1}`);
         setLoading(true);
         setError(null);
         
@@ -65,6 +95,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Fetch template configuration from API
         const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
+        
+        // Check if this request is still relevant after the async operation
+        if (templateRequestId !== requestId) {
+          console.log(`[UniversalForm] Discarding stale response: ${requestId}`);
+          return;
+        }
         
         // Log template data
         console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
@@ -92,28 +128,71 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // We'll use a second useEffect to handle initialization once the state is updated
       } catch (err) {
-        console.error('[UniversalForm] Error loading form template or service:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load form template');
-        setLoading(false);
+        // Only update state if this request is still relevant
+        if (templateRequestId === requestId) {
+          console.error('[UniversalForm] Error loading form template or service:', err);
+          setError(err instanceof Error ? err.message : 'Failed to load form template');
+          setLoading(false);
+        }
       }
     };
     
     fetchTemplate();
   }, [taskType]); 
   
+  // Service initialization tracking
+  const [serviceInitId, setServiceInitId] = useState<string | null>(null);
+  const [serviceInitAttempts, setServiceInitAttempts] = useState(0);
+  const MAX_SERVICE_INIT_ATTEMPTS = 2;
+  
   // Step 2: Initialize service once we have both template and service
   useEffect(() => {
+    // Skip if we don't have both template and service
+    if (!template || !formService) {
+      return;
+    }
+    
+    // Generate a unique initialization ID
+    const initId = `${template.id}-${Date.now()}`;
+    setServiceInitId(initId);
+    
     const initializeService = async () => {
-      // Only proceed if we have both template and service
-      if (!template || !formService) {
+      // Skip if we've exceeded max initialization attempts
+      if (serviceInitAttempts >= MAX_SERVICE_INIT_ATTEMPTS) {
+        console.warn(`[UniversalForm] Exceeded maximum service initialization attempts (${MAX_SERVICE_INIT_ATTEMPTS})`);
+        setError(`Failed to initialize form service after ${MAX_SERVICE_INIT_ATTEMPTS} attempts. Please refresh and try again.`);
+        setLoading(false);
+        return;
+      }
+      
+      // Update attempt counter
+      setServiceInitAttempts(prev => prev + 1);
+      
+      // Check if this initialization is still relevant
+      if (serviceInitId !== initId) {
+        console.log(`[UniversalForm] Skipping stale service initialization: ${initId}`);
         return;
       }
       
       try {
-        console.log(`[UniversalForm] Initializing form service with template ID ${template.id}`);
+        console.log(`[UniversalForm] Initializing form service with template ID ${template.id}, attempt: ${serviceInitAttempts + 1}`);
         
-        // Initialize the service with template ID
-        await formService.initialize(template.id);
+        // Initialize the service with template ID - with timeout protection
+        const initPromise = formService.initialize(template.id);
+        
+        // Set a timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Service initialization timed out after 5 seconds')), 5000);
+        });
+        
+        // Race the initialization against the timeout
+        await Promise.race([initPromise, timeoutPromise]);
+        
+        // Check if this request is still relevant after async operation
+        if (serviceInitId !== initId) {
+          console.log(`[UniversalForm] Discarding stale service initialization result: ${initId}`);
+          return;
+        }
         
         // Load initial data if available
         if (Object.keys(initialData).length > 0) {
@@ -124,14 +203,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         const formSections = sortSections(formService.getSections());
         const formFields = sortFields(formService.getFields());
         
+        console.log(`[UniversalForm] Form structure loaded: ${formSections.length} sections, ${formFields.length} fields`);
+        
+        // Set state with the form structure
         setSections(formSections);
         setFields(formFields);
         
+        // Form is ready
         setLoading(false);
       } catch (err) {
-        console.error('[UniversalForm] Error initializing form service:', err);
-        setError(err instanceof Error ? err.message : 'Failed to initialize form');
-        setLoading(false);
+        // Only update state if this initialization is still relevant
+        if (serviceInitId === initId) {
+          console.error('[UniversalForm] Error initializing form service:', err);
+          setError(err instanceof Error ? err.message : 'Failed to initialize form');
+          setLoading(false);
+        }
       }
     };
     
