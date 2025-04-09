@@ -152,20 +152,37 @@ export function registerRoutes(app: Express): Express {
     }
   });
 
+  // Company cache for current company endpoint
+  const companyCache = new Map<number, { company: any, timestamp: number }>();
+  const COMPANY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  
   app.get("/api/companies/current", requireAuth, async (req, res) => {
     try {
+      const now = Date.now();
+      const companyId = req.user.company_id;
+      const cachedData = companyCache.get(companyId);
+      
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < COMPANY_CACHE_TTL) {
+        // Only log cache hits occasionally to reduce log noise
+        if (Math.random() < 0.05) { // Log ~5% of cache hits
+          console.log('[Current Company] Using cached company data:', companyId);
+        }
+        return res.json(cachedData.company);
+      }
+      
       console.log('[Current Company] Fetching company for user:', {
         userId: req.user.id,
-        companyId: req.user.company_id
+        companyId: companyId
       });
 
       // Use a direct query to get the most updated company data including the risk_score
       const [company] = await db.select()
         .from(companies)
-        .where(eq(companies.id, req.user.company_id));
+        .where(eq(companies.id, companyId));
 
       if (!company) {
-        console.error('[Current Company] Company not found:', req.user.company_id);
+        console.error('[Current Company] Company not found:', companyId);
         return res.status(404).json({ message: "Company not found" });
       }
 
@@ -183,8 +200,14 @@ export function registerRoutes(app: Express): Express {
         risk_score: company.risk_score, // Keep the original property
         riskScore: company.risk_score   // Add the frontend expected property name
       };
+      
+      // Update the cache with the transformed data
+      companyCache.set(companyId, { 
+        company: transformedCompany, 
+        timestamp: now 
+      });
 
-      // Ensure we're returning the most up-to-date data
+      // Return the transformed data to the client
       res.json(transformedCompany);
     } catch (error) {
       console.error("[Current Company] Error fetching company:", error);
