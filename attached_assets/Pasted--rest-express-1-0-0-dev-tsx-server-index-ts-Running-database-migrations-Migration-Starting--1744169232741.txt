@@ -1,0 +1,60 @@
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Running database migrations...
+[Migration] Starting database migrations
+[Migration] Running security form tables migration
+[DB Migration] Creating security form tables...
+[EmailService] Initializing email service
+[EmailService] Email service initialized successfully
+[Auth] Setting up authentication...
+[Auth] Authentication setup completed
+[Routes] Routes setup completed
+[WebSocket] Server initialized on path: /ws
+3:25:35 AM [info] Setting up Vite development server
+3:25:35 AM [express] Server running on port 5000
+[2025-04-09T03:25:35.531Z] New client connected to the pool
+[DB Migration] Security form tables created successfully.
+[Migration] Populating security fields from card fields
+[DB Migration] Populating security fields...
+[DB Migration] Security fields already populated (25 fields exist)
+[Migration] Updating existing task titles
+[DB Migration] Updating existing task titles...
+[DB Migration] Updated 0 KYB task titles
+[DB Migration] Updated 0 Security Assessment task titles
+[DB Migration] Updated 0 CARD task titles
+[DB Migration] Task titles updated successfully
+[Migration] Updating KYB form fields
+[KYB Migration] Starting April 2025 KYB fields update migration
+[KYB Migration] Verifying field groupings and order
+[KYB Migration] Migration status: new fields present (2), tax fields to remove (0)
+[KYB Migration] Updating existing fields
+[KYB Migration] No fields to delete
+[KYB Migration] Successfully updated KYB fields for April 2025 revision
+[Migration] Adding task templates and component configurations
+Adding task templates and configurations...
+KYB template already exists with ID: 1
+Created KYB template with ID: 1
+Adding field configurations for KYB template ID: 1
+Created new CARD template with ID: 36
+Created CARD template with ID: 36
+Adding global configurations for CARD template ID: 36
+Adding field configurations for CARD template ID: 36
+Security template already exists with ID: 4
+Created Security template with ID: 4
+Adding section configurations for Security template ID: 4
+Successfully added all task templates and configurations
+[Migration] Adding help text for KYB fields
+[KYB Migration] Starting to update KYB field help text
+[KYB Migration] Successfully updated KYB field help text
+[Migration] Consolidating KYB templates to use consistent naming
+[Migration] Starting KYB task type consolidation...
+[Migration] Found 0 tasks with old 'company_onboarding_KYB' task type
+[Migration] No tasks found with old task_type, skipping update
+[Migration] No old task template found, skipping template consolidation
+[Migration] KYB task type consolidation completed successfully
+[Migration] All migrations completed successfully
+Database migrations completed successfully
+New WebSocket client connected
+[Auth] Unauthenticated user session
+WebSocket client disconnected with code 1001 and reason: 
