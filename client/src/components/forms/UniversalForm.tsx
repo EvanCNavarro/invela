@@ -723,25 +723,46 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     try {
       previousData = formService.getFormData();
       console.log(`[DEBUG UniversalForm] Current form data before update has ${Object.keys(previousData).length} fields`);
+      // Log previous value for this specific field
+      const prevValue = previousData[name];
+      console.log(`[DEBUG UniversalForm] Previous value for field ${name}: ${prevValue !== undefined ? 
+        (typeof prevValue === 'object' ? JSON.stringify(prevValue) : prevValue) : 'undefined'}`);
     } catch (error) {
       console.log('[DEBUG UniversalForm] Could not get current form data', error);
     }
     
-    // Normalize value (prevent null values that cause controlled/uncontrolled input warnings)
-    const normalizedValue = value === null ? '' : value;
+    // Improved normalization handling both null and undefined values consistently
+    const normalizedValue = (value === null || value === undefined) ? '' : value;
+    
+    // Always ensure empty values are properly handled as empty strings
+    // This is crucial for overwriting existing values
+    if (normalizedValue === '') {
+      console.log(`[DEBUG UniversalForm] Handling empty value for field ${name} - ensuring proper empty string`);
+    }
+    
+    // Force immediate update in both the service and form
+    console.log(`[DEBUG UniversalForm] Updating field ${name} with normalized value: "${normalizedValue}"`);
     
     // Update form data in the service
     formService.updateFormData(name, normalizedValue);
     
     // Also update local React state via form's setValue method
     // This ensures React form state stays in sync with the service
-    form.setValue(name, normalizedValue);
+    // Setting shouldDirty to true to ensure React Hook Form recognizes the change
+    form.setValue(name, normalizedValue, { 
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true
+    });
     
     // Get updated form data after the update
     let updatedData = {};
     try {
       updatedData = formService.getFormData();
       console.log(`[DEBUG UniversalForm] Form data after update has ${Object.keys(updatedData).length} fields`);
+      // Verify that the update happened correctly
+      console.log(`[DEBUG UniversalForm] Updated value for field ${name}: ${updatedData[name] !== undefined ? 
+        (typeof updatedData[name] === 'object' ? JSON.stringify(updatedData[name]) : updatedData[name]) : 'undefined'}`);
     } catch (error) {
       console.log('[DEBUG UniversalForm] Could not get updated form data', error);
     }
