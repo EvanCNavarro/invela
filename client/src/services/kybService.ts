@@ -32,7 +32,14 @@ export class KybFormService implements FormServiceInterface {
   private formData: Record<string, any> = {};
   private initialized = false;
   private templateId: number | null = null;
-  private logger = getLogger('KYB Service');
+  private logger = getLogger('KYB Service', {
+    levels: {
+      debug: false, // Turn off debug logging by default
+      info: false,  // Turn off info logging by default
+      warn: true,   // Keep warnings enabled
+      error: true   // Keep errors enabled
+    }
+  });
   
   /**
    * Initialize the KYB form service
