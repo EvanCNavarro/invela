@@ -276,8 +276,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {sections.length <= 1 ? (
-              // If there is only one section or none, just render the fields without tabs
+            {/* Render all fields if "all" tab is active */}
+            <TabsContent value="all" className="mt-0">
               <div className="space-y-6">
                 {sections.map(section => (
                   <SectionRenderer
@@ -289,42 +289,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   />
                 ))}
               </div>
-            ) : (
-              // If there are multiple sections, use Tabs component
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Render all fields if "all" tab is active */}
-                <TabsContent value="all" className="mt-0">
-                  <div className="space-y-6">
-                    {sections.map(section => (
-                      <SectionRenderer
-                        key={section.id}
-                        section={section}
-                        template={template}
-                        form={form}
-                        onFieldChange={handleFieldChange}
-                      />
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                {/* Render section tabs */}
-                {sectionTabs.map(tab => (
-                  <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                    <div className="space-y-4">
-                      {tab.fields.map(field => (
-                        <FieldRenderer
-                          key={field.key}
-                          field={field}
-                          template={template}
-                          form={form}
-                          onFieldChange={val => handleFieldChange(field.key, val)}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            )}
+            </TabsContent>
+            
+            {/* Render section tabs */}
+            {sectionTabs.map(tab => (
+              <TabsContent key={tab.id} value={tab.id} className="mt-0">
+                <div className="space-y-4">
+                  {tab.fields.map(field => (
+                    <FieldRenderer
+                      key={field.key}
+                      field={field}
+                      template={template}
+                      form={form}
+                      onFieldChange={val => handleFieldChange(field.key, val)}
+                    />
+                  ))}
+                </div>
+              </TabsContent>
+            ))}
             
             <div className="flex justify-end space-x-2 pt-4">
               {onCancel && (
