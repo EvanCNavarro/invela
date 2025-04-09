@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,20 @@ import { TaskTemplateService, TaskTemplateWithConfigs } from '../../services/tas
 import { createFormSchema, sortFields, sortSections } from '../../utils/formUtils';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { SectionRenderer } from './renderers/SectionRenderer';
+
+// SectionRenderer is already memoized internally
+
+// Helper function to debounce frequent operations
+function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  
+  return function(...args: Parameters<F>): void {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+    }
+    timeout = setTimeout(() => func(...args), waitFor);
+  };
+}
 
 interface UniversalFormProps {
   taskId?: number;
@@ -350,15 +364,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   };
   
-  // Handle form field changes
-  const handleFieldChange = (name: string, value: any) => {
-    if (!formService) return;
-    
-    // Update form data in the service
-    formService.updateFormData(name, value);
-    
-    // Calculate and report progress if callback is provided
-    if (onProgress) {
+  // Create a debounced version of the progress update
+  const debouncedProgressUpdate = useCallback(
+    debounce((fields: FormField[]) => {
+      if (!onProgress) return;
+      
       // Simple progress calculation based on filled fields
       const filledFields = fields.filter(field => {
         const fieldValue = form.getValues(field.key);
@@ -366,9 +376,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       });
       
       const progress = Math.round((filledFields.length / fields.length) * 100);
+      console.log(`[UniversalForm] Updating progress: ${progress}%`);
       onProgress(progress);
+    }, 500), // 500ms debounce delay
+    [onProgress, form, fields]
+  );
+  
+  // Throttled field change handler to prevent excessive updates
+  const handleFieldChange = useCallback((name: string, value: any) => {
+    if (!formService) return;
+    
+    // Update form data in the service
+    formService.updateFormData(name, value);
+    
+    // Use debounced progress calculation
+    if (onProgress) {
+      debouncedProgressUpdate(fields);
     }
-  };
+  }, [formService, fields, debouncedProgressUpdate, onProgress]);
   
   // If still loading or error occurred
   if (loading) {
@@ -425,12 +450,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
-  // Group fields by section for tab view
-  const sectionTabs = sections.map(section => ({
-    id: section.id,
-    title: section.title,
-    fields: fields.filter(field => field.section === section.id)
-  }));
+  // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
+  const sectionTabs = React.useMemo(() => {
+    return sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      fields: fields.filter(field => field.section === section.id)
+    }));
+  }, [sections, fields]);
   
   return (
     <Card className="w-full">
