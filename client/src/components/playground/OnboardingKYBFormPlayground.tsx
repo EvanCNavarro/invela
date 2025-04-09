@@ -1370,14 +1370,27 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // FIXED: First set current step directly to ensure immediate navigation
-      // This is simpler and more reliable than using the callback form
+      // Use a more stable approach to prevent unnecessary reloads
+      // 1. Create a copy of the current form data to preserve values
+      const preservedFormData = {...formData};
+      
+      // 2. Mark transition state
+      const isTransitioning = true;
+      
+      // 3. Update state in a controlled manner
       setCurrentStep(prevStep);
+      
+      // 4. Create a small delay to allow React to process the state change
+      setTimeout(() => {
+        // 5. Restore the form data to preserve values during transition
+        setFormData(preservedFormData);
+      }, 10);
       
       console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
         fromStep: currentStep,
         toStep: prevStep,
+        preservedDataFields: Object.keys(preservedFormData).length,
         timestamp: new Date().toISOString()
       });
     } else {
@@ -1571,13 +1584,27 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // FIXED: Use direct navigation similar to the fix in handleBack
+      // Use the same stable approach as in handleBack to prevent reloads
+      // 1. Create a copy of the current form data to preserve values
+      const preservedFormData = {...formData};
+      
+      // 2. Mark transition state
+      const isTransitioning = true;
+      
+      // 3. Update state in a controlled manner
       setCurrentStep(nextStep);
+      
+      // 4. Create a small delay to allow React to process the state change
+      setTimeout(() => {
+        // 5. Restore the form data to preserve values during transition
+        setFormData(preservedFormData);
+      }, 10);
       
       console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
         fromStep: currentStep,
         toStep: nextStep,
+        preservedDataFields: Object.keys(preservedFormData).length,
         timestamp: new Date().toISOString()
       });
     } else {
@@ -1671,39 +1698,41 @@ export const OnboardingKYBFormPlayground = ({
       : 'OUT_OF_RANGE'
   });
   
-  // Now select the current step data with enhanced error handling
-  let currentStepData: FormField[] = [];
+  // Use dynamic current step data reference to prevent unnecessary re-renders
+  // Creating a stable reference to step data to avoid unnecessary rerenders
+  const currentStepDataRef = useRef<FormField[]>([]);
   
+  // Update the step data reference only when needed
   try {
     // First check if we have fallback data available
     if (dynamicStepsWithFallbacks.length > 0 && 
         Array.isArray(dynamicStepsWithFallbacks[currentStep]) && 
         dynamicStepsWithFallbacks[currentStep].length > 0) {
       
-      currentStepData = dynamicStepsWithFallbacks[currentStep];
+      currentStepDataRef.current = dynamicStepsWithFallbacks[currentStep];
       console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using fallback step data', {
         timestamp: new Date().toISOString(),
         isFallback: true,
-        fieldCount: currentStepData.length,
-        fieldNames: currentStepData.map(f => f.name)
+        fieldCount: currentStepDataRef.current.length,
+        fieldNames: currentStepDataRef.current.map(f => f.name)
       });
     } 
     // Otherwise try regular dynamic data
     else if (useDynamicData) {
-      currentStepData = dynamicFormSteps[currentStep];
+      currentStepDataRef.current = dynamicFormSteps[currentStep];
       console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using dynamic step data', {
         timestamp: new Date().toISOString(),
-        fieldCount: currentStepData.length,
-        fieldNames: currentStepData.map(f => f.name)
+        fieldCount: currentStepDataRef.current.length,
+        fieldNames: currentStepDataRef.current.map(f => f.name)
       });
     } 
     // Finally use static data as last resort
     else if (currentStep < FORM_STEPS.length) {
-      currentStepData = FORM_STEPS[currentStep];
+      currentStepDataRef.current = FORM_STEPS[currentStep];
       console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using static step data', {
         timestamp: new Date().toISOString(),
-        fieldCount: currentStepData.length,
-        fieldNames: currentStepData.map(f => f.name)
+        fieldCount: currentStepDataRef.current.length,
+        fieldNames: currentStepDataRef.current.map(f => f.name)
       });
     } else {
       console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - ERROR: No valid step data available', {
@@ -1713,6 +1742,7 @@ export const OnboardingKYBFormPlayground = ({
         staticStepsCount: FORM_STEPS.length
       });
       // Fallback to empty array - we'll handle this gracefully in the UI
+      currentStepDataRef.current = [];
     }
   } catch (error) {
     console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - EXCEPTION: Error selecting step data', {
@@ -1721,13 +1751,14 @@ export const OnboardingKYBFormPlayground = ({
       stack: error instanceof Error ? error.stack : undefined
     });
     // Fallback to empty array on error
+    currentStepDataRef.current = [];
   }
   
   // Final validation
   console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - COMPLETE', {
     timestamp: new Date().toISOString(),
-    success: currentStepData && currentStepData.length > 0,
-    fieldCount: currentStepData?.length || 0,
+    success: currentStepDataRef.current && currentStepDataRef.current.length > 0,
+    fieldCount: currentStepDataRef.current?.length || 0,
     stepTitle: STEP_TITLES[currentStep] || 'Unknown Step',
     isLastStep: dynamicFormSteps.length > 0 
       ? currentStep === dynamicFormSteps.length - 1
@@ -1737,6 +1768,9 @@ export const OnboardingKYBFormPlayground = ({
   const isLastStep: boolean = dynamicFormSteps.length > 0 
     ? currentStep === dynamicFormSteps.length - 1
     : currentStep === FORM_STEPS.length - 1;
+    
+  // Create a stable reference to the current step data
+  const currentStepData = currentStepDataRef.current;
 
   // Check if current step is valid
   const isCurrentStepValid = validateCurrentStep(formData, currentStepData);
