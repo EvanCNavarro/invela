@@ -1,6 +1,33 @@
 import { FormData, FormField, FormSection, FormServiceInterface, FormSubmitOptions } from './formService';
-import { sortFields, getFieldComponentType } from '../utils/formUtils';
+import { getFieldComponentType } from '../utils/formUtils';
 import getLogger from '../utils/logger';
+
+/**
+ * Sort KYB fields by their group and then by order
+ * @param fields Array of KYB fields to sort
+ * @returns Sorted array of KYB fields
+ */
+const sortFields = (fields: any[]): any[] => {
+  if (!Array.isArray(fields)) {
+    console.error('[DEBUG] sortFields received non-array input:', fields);
+    return [];
+  }
+  
+  // Safe sorting - handle potential missing properties
+  return [...fields].sort((a, b) => {
+    // First sort by group name
+    const groupA = a?.group || '';
+    const groupB = b?.group || '';
+    
+    if (groupA < groupB) return -1;
+    if (groupA > groupB) return 1;
+    
+    // Then sort by order within the same group
+    const orderA = a?.order || 0;
+    const orderB = b?.order || 0;
+    return orderA - orderB;
+  });
+};
 
 /**
  * Represents a KYB field from the database
@@ -135,10 +162,12 @@ export class KybFormService implements FormServiceInterface {
   async getKybFields(): Promise<KybField[]> {
     // Use cache if available
     if (this.templateId && KybFormService.fieldsCache[this.templateId]) {
+      console.log('[DEBUG] Using cached fields for template:', this.templateId);
       return KybFormService.fieldsCache[this.templateId];
     }
     
     try {
+      console.log('[DEBUG] Fetching KYB fields from server');
       // Simple fetch without all the timeout complexity
       const response = await fetch('/api/kyb/fields');
       
@@ -146,14 +175,27 @@ export class KybFormService implements FormServiceInterface {
         throw new Error(`Failed to fetch KYB fields: ${response.status}`);
       }
       
-      const fields = await response.json();
+      const responseData = await response.json();
+      console.log('[DEBUG] KYB fields raw response:', responseData);
+      
+      // Check if the response has a fields property (API may return { fields: [...] })
+      const fields = responseData.fields || responseData;
+      
+      if (!Array.isArray(fields)) {
+        console.error('[DEBUG] KYB fields is not an array:', fields);
+        throw new Error('KYB fields response is not in expected format');
+      }
+      
+      console.log('[DEBUG] Successfully parsed KYB fields, count:', fields.length);
       
       // Sort fields by group and then by order
       const sortedFields = sortFields(fields);
+      console.log('[DEBUG] Fields sorted by group and order');
       
       // Cache the fields
       if (this.templateId) {
         KybFormService.fieldsCache[this.templateId] = sortedFields;
+        console.log('[DEBUG] Fields cached for template:', this.templateId);
       }
       
       return sortedFields;
