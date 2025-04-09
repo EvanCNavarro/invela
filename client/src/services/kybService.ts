@@ -37,31 +37,49 @@ export class KybFormService implements FormServiceInterface {
    * @param templateId ID of the task template
    */
   async initialize(templateId: number): Promise<void> {
-    if (this.initialized) return;
+    console.log(`[KYB Service] Initialize called with templateId: ${templateId}, already initialized: ${this.initialized}`);
+    
+    if (this.initialized) {
+      console.log('[KYB Service] Already initialized, returning early');
+      return;
+    }
     
     this.templateId = templateId;
     
-    // Fetch KYB fields from the API
-    const kybFields = await this.getKybFields();
-    
-    // Group fields by section (group)
-    const fieldGroups = this.groupFieldsBySection(kybFields);
-    
-    // Create sections from groups
-    this.sections = Object.entries(fieldGroups).map(([groupName, groupFields], index) => {
-      return {
-        id: groupName,
-        title: groupName,
-        order: index,
-        collapsed: false,
-        fields: groupFields.map(field => this.convertToFormField(field))
-      };
-    });
-    
-    // Flatten all fields
-    this.fields = this.sections.flatMap(section => section.fields);
-    
-    this.initialized = true;
+    try {
+      console.log('[KYB Service] Fetching KYB fields...');
+      // Fetch KYB fields from the API
+      const kybFields = await this.getKybFields();
+      console.log(`[KYB Service] Fetched ${kybFields.length} KYB fields`);
+      
+      // Group fields by section (group)
+      const fieldGroups = this.groupFieldsBySection(kybFields);
+      console.log(`[KYB Service] Created ${Object.keys(fieldGroups).length} field groups`);
+      
+      // Create sections from groups
+      this.sections = Object.entries(fieldGroups).map(([groupName, groupFields], index) => {
+        console.log(`[KYB Service] Processing group: ${groupName} with ${groupFields.length} fields`);
+        return {
+          id: groupName,
+          title: groupName,
+          order: index,
+          collapsed: false,
+          fields: groupFields.map(field => this.convertToFormField(field))
+        };
+      });
+      
+      console.log(`[KYB Service] Created ${this.sections.length} sections`);
+      
+      // Flatten all fields
+      this.fields = this.sections.flatMap(section => section.fields);
+      console.log(`[KYB Service] Flattened ${this.fields.length} fields total`);
+      
+      this.initialized = true;
+      console.log('[KYB Service] Initialization complete');
+    } catch (error) {
+      console.error('[KYB Service] Initialization failed:', error);
+      throw error;
+    }
   }
   
   /**
