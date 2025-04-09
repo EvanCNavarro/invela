@@ -635,7 +635,11 @@ export class KybFormService implements FormServiceInterface {
       
       // Create an AbortController to handle timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      // Use a named function to avoid arrow function syntax issues
+      function abortRequest() {
+        controller.abort();
+      }
+      const timeoutId = setTimeout(abortRequest, 10000); // 10 second timeout
       
       try {
         // Use direct fetch with credentials and timeout handling
@@ -735,7 +739,11 @@ export class KybFormService implements FormServiceInterface {
       
       // Create an AbortController to handle timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+      // Use a named function to avoid arrow function syntax issues
+      function abortRequest() {
+        controller.abort();
+      }
+      const timeoutId = setTimeout(abortRequest, 5000); // 5 second timeout
       
       try {
         const response = await fetch(apiUrl, {
