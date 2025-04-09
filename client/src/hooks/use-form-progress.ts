@@ -45,24 +45,26 @@ export function useFormProgress({
     }, {});
   }, [sections, fields]);
 
-  // Calculate if a section is complete
-  const getSectionProgress = (sectionId: string | number): number => {
-    const sectionFieldList = sectionFields[sectionId] || [];
-    if (sectionFieldList.length === 0) return 0;
-
-    const relevantFields = requiredOnly 
-      ? sectionFieldList.filter(field => field.validation?.required)
-      : sectionFieldList;
-    
-    if (relevantFields.length === 0) return 0;
-
-    const filledFields = relevantFields.filter(field => {
-      const value = formData[field.key];
-      return value !== undefined && value !== null && value !== '';
-    });
-
-    return Math.round((filledFields.length / relevantFields.length) * 100);
-  };
+  // Calculate if a section is complete - memoized to avoid circular dependencies
+  const getSectionProgress = useMemo(() => {
+    return (sectionId: string | number): number => {
+      const sectionFieldList = sectionFields[sectionId] || [];
+      if (sectionFieldList.length === 0) return 0;
+  
+      const relevantFields = requiredOnly 
+        ? sectionFieldList.filter(field => field.validation?.required)
+        : sectionFieldList;
+      
+      if (relevantFields.length === 0) return 0;
+  
+      const filledFields = relevantFields.filter(field => {
+        const value = formData[field.key];
+        return value !== undefined && value !== null && value !== '';
+      });
+  
+      return Math.round((filledFields.length / relevantFields.length) * 100);
+    };
+  }, [sectionFields, formData, requiredOnly]);
 
   // Update completed sections state
   useEffect(() => {
@@ -74,7 +76,7 @@ export function useFormProgress({
     });
     
     setCompletedSections(newCompletedSections);
-  }, [formData, sections, sectionFields]);
+  }, [formData, sections, sectionFields, getSectionProgress]);
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
