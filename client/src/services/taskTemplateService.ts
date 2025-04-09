@@ -89,6 +89,10 @@ export class TaskTemplateService {
    * @returns Promise with template and configurations
    */
   static async getTemplateByTaskType(taskType: string): Promise<TaskTemplateWithConfigs> {
+    // Create an AbortController for timeout
+    const controller = new AbortController();
+    let timeoutId: number | null = null;
+    
     try {
       console.log(`[TaskTemplateService] Fetching template for task type: ${taskType} at ${new Date().toISOString()}`);
       
@@ -101,6 +105,12 @@ export class TaskTemplateService {
       
       const requestId = `template-by-type-${taskType}-${requestStartTime}`;
       
+      // Set up timeout
+      timeoutId = window.setTimeout(() => {
+        controller.abort();
+        console.error(`[TaskTemplateService] Request timed out after 10 seconds for task type: ${taskType}`);
+      }, 10000); // 10 second timeout
+      
       const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
@@ -108,8 +118,15 @@ export class TaskTemplateService {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
           'X-Request-ID': requestId
-        }
+        },
+        signal: controller.signal
       });
+      
+      // Clear timeout since the request completed
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
       
       const requestEndTime = Date.now();
       const requestDuration = requestEndTime - requestStartTime;
@@ -143,6 +160,11 @@ export class TaskTemplateService {
     } catch (error) {
       console.error('[TaskTemplateService] Error fetching task template by type:', error);
       throw error;
+    } finally {
+      // Clean up timeout if it still exists
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
   
