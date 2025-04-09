@@ -66,25 +66,48 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
         setTemplate(templateData);
         
-        // Get form service for this task type
-        const service = componentFactory.getFormService(taskType);
-        if (!service) {
-          throw new Error(`No form service registered for task type: ${taskType}`);
+        // Log template data
+        console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
+        
+        try {
+          // Try to get form service for original task type first
+          const service = componentFactory.getFormService(taskType);
+          
+          if (service) {
+            setFormService(service);
+            console.log(`[UniversalForm] Found form service using original task type: ${taskType}`);
+          } else {
+            // If not found with original task type, try with mapped DB task type
+            const dbService = componentFactory.getFormService(dbTaskType);
+            
+            if (dbService) {
+              setFormService(dbService);
+              console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`);
+            } else {
+              // Last resort - check for a fallback registration
+              throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
+            }
+          }
+        } catch (error) {
+          console.error("[UniversalForm] Error getting form service:", error);
+          throw error;
         }
         
-        setFormService(service);
-        
         // Initialize the form service with the template
-        await service.initialize(templateData.id);
+        if (!formService) {
+          throw new Error("Form service not initialized properly");
+        }
+        
+        await formService.initialize(templateData.id);
         
         // Load initial data if available
         if (Object.keys(initialData).length > 0) {
-          service.loadFormData(initialData);
+          formService.loadFormData(initialData);
         }
         
         // Get form structure
-        const formSections = sortSections(service.getSections());
-        const formFields = sortFields(service.getFields());
+        const formSections = sortSections(formService.getSections());
+        const formFields = sortFields(formService.getFields());
         
         setSections(formSections);
         setFields(formFields);
