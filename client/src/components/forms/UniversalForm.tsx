@@ -323,10 +323,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           (async () => {
             try {
               console.log(`[DEBUG UniversalForm] Service already initialized but loading saved progress for task ID: ${taskId}`);
-              const savedFormData = await formService.loadProgress(taskId);
-              console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data:`, savedFormData);
               
+              // Key fix: Only make one API request, wait for it to complete before proceeding
+              const savedFormData = await formService.loadProgress(taskId).catch(error => {
+                console.error(`[DEBUG UniversalForm] Error loading saved progress for already initialized service:`, error);
+                
+                // Try to get currently loaded form data from service if API fails
+                try {
+                  const currentFormData = formService.getFormData();
+                  console.log(`[DEBUG UniversalForm] Using existing form data from service after API error:`, 
+                    Object.keys(currentFormData).length > 0 ? 
+                      `${Object.keys(currentFormData).length} fields found` : 
+                      'No fields available'
+                  );
+                  return currentFormData;
+                } catch (e) {
+                  console.error(`[DEBUG UniversalForm] Could not get form data from service:`, e);
+                  return {};
+                }
+              });
+              
+              // If we retrieved valid form data, update the form
               if (savedFormData && Object.keys(savedFormData).length > 0) {
+                console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data:`, savedFormData);
                 console.log(`[DEBUG UniversalForm] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
                 
                 // Update loadedFormData state to ensure it's available for form initialization
@@ -338,7 +357,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 console.log('[DEBUG UniversalForm] No saved data found for already initialized service');
               }
             } catch (loadError) {
-              console.error(`[DEBUG UniversalForm] Error loading saved progress for already initialized service:`, loadError);
+              console.error(`[DEBUG UniversalForm] Error in loadProgress for already initialized service:`, loadError);
             }
           })();
         }
