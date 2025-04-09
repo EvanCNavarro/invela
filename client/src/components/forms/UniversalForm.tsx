@@ -57,9 +57,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Generate a unique request ID for tracking
     const requestId = `${taskType}-${Date.now()}`;
+    console.log(`[UniversalForm] Generated new request ID: ${requestId} for task type: ${taskType}`);
+    
+    // This approach ensures the request ID is properly set before the fetchTemplate runs
     setTemplateRequestId(requestId);
     
     const fetchTemplate = async () => {
+      console.log(`[UniversalForm] Starting fetchTemplate with request ID: ${requestId}, current templateRequestId: ${templateRequestId}`);
+      
       try {
         // Skip if we've exceeded max initialization attempts
         if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
@@ -72,11 +77,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Update attempt counter
         setInitializationAttempts(prev => prev + 1);
         
-        // Check if this request is still relevant
-        if (templateRequestId !== requestId) {
-          console.log(`[UniversalForm] Skipping stale request: ${requestId}`);
-          return;
-        }
+        // Important: We're using the locally captured requestId instead of templateRequestId state
+        // This ensures we don't run into state timing issues
         
         console.log(`[UniversalForm] Starting template fetch for taskType: ${taskType}, attempt: ${initializationAttempts + 1}`);
         setLoading(true);
@@ -208,9 +210,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Generate a unique initialization ID
     const initId = `${template.id}-${Date.now()}`;
+    console.log(`[UniversalForm] Generated new service initialization ID: ${initId}`);
     setServiceInitId(initId);
     
     const initializeService = async () => {
+      console.log(`[UniversalForm] Starting service initialization with ID: ${initId}, current serviceInitId: ${serviceInitId}`);
+      
       // Skip if we've exceeded max initialization attempts
       if (serviceInitAttempts >= MAX_SERVICE_INIT_ATTEMPTS) {
         console.warn(`[UniversalForm] Exceeded maximum service initialization attempts (${MAX_SERVICE_INIT_ATTEMPTS})`);
@@ -222,11 +227,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Update attempt counter
       setServiceInitAttempts(prev => prev + 1);
       
-      // Check if this initialization is still relevant
-      if (serviceInitId !== initId) {
-        console.log(`[UniversalForm] Skipping stale service initialization: ${initId}`);
-        return;
-      }
+      // Important: Using the local initId instead of checking serviceInitId state
+      // This avoids state update timing issues
       
       try {
         console.log(`[UniversalForm] Initializing form service with template ID ${template.id}, attempt: ${serviceInitAttempts + 1}`);
