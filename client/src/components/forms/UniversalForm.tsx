@@ -431,6 +431,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
+  // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
+  const sectionTabs = React.useMemo(() => {
+    if (!sections || !fields) return [];
+    return sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      fields: fields.filter(field => field.section === section.id)
+    }));
+  }, [sections, fields]);
+  
   // If no template or form service was found
   if (!template || !formService) {
     return (
@@ -449,15 +459,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       </Card>
     );
   }
-  
-  // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
-  const sectionTabs = React.useMemo(() => {
-    return sections.map(section => ({
-      id: section.id,
-      title: section.title,
-      fields: fields.filter(field => field.section === section.id)
-    }));
-  }, [sections, fields]);
   
   return (
     <Card className="w-full">
