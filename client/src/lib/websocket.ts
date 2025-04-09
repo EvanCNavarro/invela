@@ -37,6 +37,11 @@ class WebSocketService {
 
     this.heartbeatInterval = setInterval(() => {
       if (this.socket?.readyState === WebSocket.OPEN) {
+        // Only log at debug level to reduce console noise
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('[WebSocket] Sending ping');
+        }
+        
         this.socket.send(JSON.stringify({ type: 'ping' }));
 
         // Set a timeout for pong response
@@ -48,7 +53,7 @@ class WebSocketService {
           this.reconnect();
         }, 15000); // Wait 15s for pong before reconnecting
       }
-    }, 45000); // Send heartbeat every 45s
+    }, 120000); // Send heartbeat every 2 minutes instead of 45s to reduce network traffic
   }
 
   private async connect(): Promise<void> {
