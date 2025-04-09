@@ -3,13 +3,17 @@ import { UseFormReturn } from 'react-hook-form';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FormSection } from '../../../services/formService';
+import { FormSection as ServiceFormSection, FormField } from '../../../services/formService';
+import { FormSection as NavigationFormSection } from '../SectionNavigation';
 import { TaskTemplateWithConfigs } from '../../../services/taskTemplateService';
 import { sortFields } from '../../../utils/formUtils';
 import { FieldRenderer } from '../field-renderers/FieldRenderer';
 
+// Define which FormSection implementation to use
+type FormSection = NavigationFormSection;
+
 interface SectionRendererProps {
-  section: FormSection;
+  section: NavigationFormSection;
   template: TaskTemplateWithConfigs;
   form: UseFormReturn<any>;
   onFieldChange?: (name: string, value: any) => void;
@@ -58,7 +62,7 @@ const SectionRendererBase = ({
   // Sort fields by order property - memoized to avoid sorting on each render
   const sortedFields = useMemo(() => {
     // console.log(`Sorting fields for section ${section.id}`);
-    return sortFields(section.fields);
+    return section.fields ? sortFields(section.fields as FormField[]) : [];
   }, [section.fields]);
   
   // Toggle section collapse - useCallback to maintain function reference identity

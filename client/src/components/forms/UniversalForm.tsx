@@ -4,14 +4,38 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { componentFactory } from '../../services/componentFactory';
-import { FormServiceInterface, FormField, FormSection, FormData, FormSubmitOptions } from '../../services/formService';
+import { FormServiceInterface, FormField, FormData, FormSubmitOptions, FormSection as ServiceFormSection } from '../../services/formService';
 import { TaskTemplateService, TaskTemplateWithConfigs } from '../../services/taskTemplateService';
 import { createFormSchema, sortFields, sortSections } from '../../utils/formUtils';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { SectionRenderer } from './renderers/SectionRenderer';
+import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './SectionNavigation';
+import SectionContent from './SectionContent';
+import FormProgressBar from './FormProgressBar';
+import { useFormProgress } from '@/hooks/use-form-progress';
+
+// Create a type alias that combines both section types - using NavigationFormSection as our primary type
+type FormSection = NavigationFormSection;
+
+/**
+ * Helper function to convert FormSection from service to navigation version
+ * This handles the type conversion between service-specific FormSection and navigation component FormSection
+ * 
+ * @param serviceSections - Array of service-specific FormSection objects
+ * @returns Array of NavigationFormSection objects suitable for the UI components
+ */
+const toNavigationSections = (serviceSections: ServiceFormSection[]): NavigationFormSection[] => {
+  return serviceSections.map(section => ({
+    id: section.id,
+    title: section.title,
+    order: section.order || 0,
+    collapsed: section.collapsed || false,
+    // Add optional fields for NavigationFormSection
+    fields: [] // This will be populated separately
+  }));
+};
 
 // SectionRenderer is already memoized internally
 
@@ -50,7 +74,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [formService, setFormService] = useState<FormServiceInterface | null>(null);
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<FormField[]>([]);
-  const [activeTab, setActiveTab] = useState('all');
   
   // Setup form with validation
   const form = useForm({
@@ -241,7 +264,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         console.log(`[UniversalForm] Service already initialized with ${existingFields.length} fields and ${existingSections.length} sections`);
         
         // Set form structure directly without reinitializing
-        setSections(sortSections(existingSections));
+        // Get form structure from service and convert to NavigationFormSection type
+        const sortedSections = sortSections(existingSections);
+        const navigationSections = toNavigationSections(sortedSections);
+        
+        setSections(navigationSections);
         setFields(sortFields(existingFields));
         setLoading(false);
         return; // Skip initialization
@@ -315,14 +342,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           formService.loadFormData(initialData);
         }
         
-        // Get form structure
-        const formSections = sortSections(formService.getSections());
+        // Get form structure from service
+        const serviceFormSections = sortSections(formService.getSections());
         const formFields = sortFields(formService.getFields());
         
-        console.log(`[UniversalForm] Form structure loaded: ${formSections.length} sections, ${formFields.length} fields`);
+        console.log(`[UniversalForm] Form structure loaded: ${serviceFormSections.length} sections, ${formFields.length} fields`);
         
-        // Set state with the form structure
-        setSections(formSections);
+        // Convert service sections to NavigationFormSection type
+        const navigationSections = toNavigationSections(serviceFormSections);
+        
+        // Set state with the properly converted form structure
+        setSections(navigationSections);
         setFields(formFields);
         
         // Form is ready
@@ -405,6 +435,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [formService, fields, debouncedProgressUpdate, onProgress]);
   
+  // Always call hooks at the top level in the same order
+  // This fixes the React hooks order error
+  const formProgressState = useFormProgress({
+    sections: sections,
+    formData: form.getValues(),
+    fields: fields,
+    requiredOnly: true
+  });
+  
   // If still loading or error occurred
   if (loading) {
     return (
@@ -460,29 +499,45 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     );
   }
   
+  // Destructure the form progress state only after we've determined we're going to use it
+  const { activeSection, setActiveSection, completedSections, overallProgress } = formProgressState;
+  
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>{template.name}</CardTitle>
         <CardDescription>{template.description}</CardDescription>
         
-        {sections.length > 1 && (
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-            <TabsList className="grid" style={{ gridTemplateColumns: `repeat(${sections.length + 1}, minmax(0, 1fr))` }}>
-              <TabsTrigger value="all">All Fields</TabsTrigger>
-              {sectionTabs.map(tab => (
-                <TabsTrigger key={tab.id} value={tab.id}>{tab.title}</TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
+        {/* Overall progress indicator */}
+        <div className="mt-4">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-sm font-medium text-gray-700">Overall Progress</span>
+            <span className="text-sm text-gray-500">{overallProgress}%</span>
+          </div>
+          <FormProgressBar 
+            progress={overallProgress} 
+            height="md"
+            color={overallProgress === 100 ? 'success' : 'primary'}
+          />
+        </div>
       </CardHeader>
       
       <CardContent>
+        {/* Section navigation */}
+        {sections.length > 1 && (
+          <ResponsiveSectionNavigation
+            sections={sections}
+            activeSection={activeSection}
+            completedSections={completedSections}
+            onSectionChange={setActiveSection}
+            className="mb-6"
+          />
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             {sections.length <= 1 ? (
-              // If there is only one section or none, just render the fields without tabs
+              // If there is only one section, just render all fields
               <div className="space-y-6">
                 {sections.map(section => (
                   <SectionRenderer
@@ -495,49 +550,59 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 ))}
               </div>
             ) : (
-              // If there are multiple sections, use Tabs component
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                {/* Render all fields if "all" tab is active */}
-                <TabsContent value="all" className="mt-0">
-                  <div className="space-y-6">
-                    {sections.map(section => (
+              // If there are multiple sections, render the active section with animation
+              <div className="min-h-[300px]">
+                {sections.map((section, index) => (
+                  <SectionContent
+                    key={section.id}
+                    isActive={index === activeSection}
+                    direction={index > activeSection ? 'right' : 'left'}
+                  >
+                    <div className="space-y-6">
                       <SectionRenderer
-                        key={section.id}
                         section={section}
                         template={template}
                         form={form}
                         onFieldChange={handleFieldChange}
                       />
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                {/* Render section tabs */}
-                {sectionTabs.map(tab => (
-                  <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                    <div className="space-y-4">
-                      {tab.fields.map(field => (
-                        <FieldRenderer
-                          key={field.key}
-                          field={field}
-                          template={template}
-                          form={form}
-                          onFieldChange={val => handleFieldChange(field.key, val)}
-                        />
-                      ))}
                     </div>
-                  </TabsContent>
+                  </SectionContent>
                 ))}
-              </Tabs>
+              </div>
             )}
             
-            <div className="flex justify-end space-x-2 pt-4">
-              {onCancel && (
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancel
-                </Button>
-              )}
-              <Button type="submit">Submit</Button>
+            {/* Navigation and submission buttons */}
+            <div className="flex justify-between items-center pt-6 border-t">
+              <div>
+                {activeSection > 0 && sections.length > 1 && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setActiveSection(activeSection - 1)}
+                  >
+                    Previous
+                  </Button>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                {onCancel && (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                )}
+                
+                {activeSection < sections.length - 1 && sections.length > 1 ? (
+                  <Button 
+                    type="button" 
+                    onClick={() => setActiveSection(activeSection + 1)}
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button type="submit">Submit</Button>
+                )}
+              </div>
             </div>
           </form>
         </Form>
