@@ -93,58 +93,78 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<FormField[]>([]);
   
-  // State to track loaded data
-  const [loadedFormData, setLoadedFormData] = useState<FormData>(initialData);
+  // SIMPLIFIED APPROACH: Create static defaults and load data just once
   
-  // Create default empty values for all fields to prevent uncontrolled/controlled input warnings
+  // Create empty default values for all field types
   const createEmptyDefaultValues = (fields: FormField[]): FormData => {
     const emptyValues: FormData = {};
     fields.forEach(field => {
-      // Initialize all fields with empty string to prevent uncontrolled input warnings
-      // For different field types, we can provide appropriate default values
+      // Set defaults based on field type
       switch (field.type) {
         case 'checkbox':
         case 'toggle':
           emptyValues[field.key] = false;
-          break;
-        case 'number':
-          emptyValues[field.key] = '';  // We use empty string instead of null for number inputs too
           break;
         case 'select':
         case 'multi-select':
           emptyValues[field.key] = field.type === 'multi-select' ? [] : '';
           break;
         default:
-          emptyValues[field.key] = ''; // Default empty string for text inputs
+          emptyValues[field.key] = ''; // Default to empty string for most inputs
       }
     });
     return emptyValues;
   };
   
-  // Combine empty defaults with any loaded data
-  const getFormDefaultValues = (): FormData => {
-    // Start with empty defaults for all fields
-    const defaultValues = createEmptyDefaultValues(fields);
-    
-    // Merge with any existing loaded data
-    return { ...defaultValues, ...loadedFormData };
-  };
+  // Use a ref to track if we already loaded saved data
+  const savedDataLoadedRef = useRef(false);
   
-  // Setup form with validation - use merged default values
+  // Store all form data in one state object to avoid re-renders
+  const [formData, setFormData] = useState<FormData>({
+    ...createEmptyDefaultValues(fields),
+    ...initialData
+  });
+  
+  // Setup form with validation and fixed empty defaults to prevent warnings
   const form = useForm({
-    defaultValues: getFormDefaultValues(),
+    defaultValues: formData,
     resolver: zodResolver(createFormSchema(fields)),
     mode: 'onChange',
   });
   
-  // Reset form when either fields or loadedFormData changes
+  // Only load saved data once when fields are available
   useEffect(() => {
-    // Create default values with empty strings to prevent uncontrolled inputs
-    const defaultValues = getFormDefaultValues();
+    // Skip if no fields or already loaded data
+    if (fields.length === 0 || savedDataLoadedRef.current || !taskId || !formService) {
+      return;
+    }
     
-    console.log(`[DEBUG UniversalForm] Updating form with ${Object.keys(defaultValues).length} fields (${Object.keys(loadedFormData).length} from loaded data)`);
-    form.reset(defaultValues);
-  }, [loadedFormData, fields, form]);
+    // Mark that we've started the data loading process
+    savedDataLoadedRef.current = true;
+    
+    // Load saved data once
+    const loadSavedData = async () => {
+      try {
+        const savedData = await formService.loadProgress(taskId);
+        
+        // Only update if we got actual data
+        if (savedData && Object.keys(savedData).length > 0) {
+          // Update state and form with saved data
+          const completeData = {
+            ...createEmptyDefaultValues(fields),
+            ...savedData
+          };
+          
+          setFormData(completeData);
+          form.reset(completeData);
+        }
+      } catch (error) {
+        console.error('Failed to load saved form data:', error);
+      }
+    };
+    
+    loadSavedData();
+  }, [fields, taskId, formService]);
   
   // Request tracking to prevent multiple concurrent initialization attempts
   const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
@@ -388,8 +408,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data:`, savedFormData);
                 console.log(`[DEBUG UniversalForm] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
                 
-                // Update loadedFormData state to ensure it's available for form initialization
-                setLoadedFormData(savedFormData);
+                // Update formData state to ensure it's available for form initialization
+                setFormData(savedFormData);
                 
                 // Reset form with saved values - this is critical for when a user returns to the form
                 form.reset(savedFormData);
@@ -483,8 +503,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (savedFormData && Object.keys(savedFormData).length > 0) {
               console.log(`[DEBUG] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
               logger.debug(`Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
-              // Update loadedFormData state to ensure it's available for form initialization
-              setLoadedFormData(savedFormData);
+              // Update formData state to ensure it's available for form initialization
+              setFormData(savedFormData);
               // Reset form with saved values
               form.reset(savedFormData);
             } else {
@@ -498,8 +518,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (Object.keys(initialData).length > 0) {
               logger.debug(`Using initialData as fallback for task ID: ${taskId}`);
               formService.loadFormData(initialData);
-              // Update loadedFormData state
-              setLoadedFormData(initialData);
+              // Update formData state
+              setFormData(initialData);
               // Reset form with initial data
               form.reset(initialData);
             }
@@ -509,8 +529,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         else if (Object.keys(initialData).length > 0) {
           logger.debug(`No taskId provided, using initialData only`);
           formService.loadFormData(initialData);
-          // Update loadedFormData state
-          setLoadedFormData(initialData);
+          // Update formData state
+          setFormData(initialData);
           // Reset form with initial data
           form.reset(initialData);
         }
