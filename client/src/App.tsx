@@ -25,6 +25,7 @@ import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
 import DebugPage from "@/pages/debug-page";
 import ReplitDebug from "@/pages/replit-debug";
+import StandaloneDebugPage from "@/pages/standalone-debug";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -87,6 +88,7 @@ function Router() {
         <Route path="/register" component={RegisterPage} />
         <Route path="/debug" component={DebugPage} />
         <Route path="/replit-debug" component={ReplitDebug} />
+        <Route path="/standalone-debug" component={StandaloneDebugPage} />
         <Route path="/auth">
           {(params) => {
             const searchParams = new URLSearchParams(window.location.search);
