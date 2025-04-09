@@ -40,15 +40,31 @@ export async function apiRequest<T>(
     bodyData = urlOrData;
   }
 
-  const res = await fetch(url, {
-    method,
-    headers: bodyData ? { "Content-Type": "application/json" } : {},
-    body: bodyData ? JSON.stringify(bodyData) : undefined,
-    credentials: "include",
-  });
+  // Log API request for debugging
+  console.log(`[API Request] ${method} ${url} with${bodyData ? '' : 'out'} body data`, 
+    bodyData ? { bodyPreview: typeof bodyData === 'object' ? '(Object)' : String(bodyData).substring(0, 50) } : '');
 
-  await throwIfResNotOk(res);
-  return await res.json() as T;
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        ...(bodyData ? { "Content-Type": "application/json" } : {}),
+        // Add a request ID to help with debugging
+        "X-Request-ID": `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`
+      },
+      body: bodyData ? JSON.stringify(bodyData) : undefined,
+      credentials: "include", // Always include credentials
+    });
+
+    // Log response status
+    console.log(`[API Response] ${method} ${url} - Status: ${res.status}`);
+    
+    await throwIfResNotOk(res);
+    return await res.json() as T;
+  } catch (error) {
+    console.error(`[API Error] ${method} ${url} - Failed:`, error);
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -57,16 +73,33 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
+    const url = queryKey[0] as string;
+    console.log(`[TanStack Query] Fetching: ${url}`);
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
+    // Add request ID for tracing
+    const requestId = `req-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    
+    try {
+      const res = await fetch(url, {
+        credentials: "include",
+        headers: {
+          "X-Request-ID": requestId
+        }
+      });
+
+      console.log(`[TanStack Query] Response for ${url}: Status ${res.status}`);
+
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        console.log(`[TanStack Query] 401 Unauthorized for ${url}, returning null as configured`);
+        return null;
+      }
+
+      await throwIfResNotOk(res);
+      return await res.json();
+    } catch (error) {
+      console.error(`[TanStack Query] Error fetching ${url}:`, error);
+      throw error;
     }
-
-    await throwIfResNotOk(res);
-    return await res.json();
   };
 
 export const queryClient = new QueryClient({
