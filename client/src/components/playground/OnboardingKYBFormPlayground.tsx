@@ -1382,35 +1382,45 @@ export const OnboardingKYBFormPlayground = ({
       });
       
       // 2. First update the formData to ensure it's preserved
-      setFormData(prevData => {
-        // Create a complete merged copy to ensure no data loss
-        const completeData = {...prevData};
-        console.log('[KYB Form Debug] NAVIGATION-BACK: Form data before state update', {
-          status: 'PROCESSING',
-          dataFieldsBefore: Object.keys(completeData).length,
-          timestamp: new Date().toISOString()
-        });
-        return completeData;
+      // Create a completely independent deep copy to avoid any state reference issues
+      const deepCopyData = JSON.parse(JSON.stringify(preservedFormData));
+      
+      console.log('[KYB Form Debug] NAVIGATION-BACK: Made deep copy of form data', {
+        status: 'PROCESSING',
+        formDataOriginal: preservedFormData,
+        formDataCopy: deepCopyData,
+        originalKeys: Object.keys(preservedFormData),
+        copyKeys: Object.keys(deepCopyData),
+        timestamp: new Date().toISOString()
       });
       
-      // 3. Then update the current step in a separate render cycle
+      // Store the form data in a more explicit way before navigation
+      const forcePreserveFormData = deepCopyData;
+      
+      // Apply the step change first
+      setCurrentStep(prevStep);
+      
+      // Then apply form data in a synchronized way
+      console.log('[KYB Form Debug] NAVIGATION-BACK: Applied step change, now restoring form data', {
+        status: 'PROCESSING',
+        fromStep: currentStep,
+        toStep: prevStep,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Use an immediate timeout to ensure the form data is applied after React processes the step change
       setTimeout(() => {
-        setCurrentStep(prevStep);
+        // Directly set the form data without a callback to avoid any state inconsistencies
+        setFormData(forcePreserveFormData);
         
-        // 4. Again ensure form data is preserved after step change
-        setTimeout(() => {
-          setFormData(prevData => {
-            // Ensure all data from the preserved copy is included
-            const finalData = {...prevData, ...preservedFormData};
-            console.log('[KYB Form Debug] NAVIGATION-BACK: Form data after state update', {
-              status: 'SUCCESS',
-              dataFieldsAfter: Object.keys(finalData).length,
-              timestamp: new Date().toISOString()
-            });
-            return finalData;
-          });
-        }, 20);
-      }, 20);
+        console.log('[KYB Form Debug] NAVIGATION-BACK: Form data restored completely', {
+          status: 'SUCCESS',
+          restoredData: forcePreserveFormData,
+          restoredKeys: Object.keys(forcePreserveFormData),
+          fieldCount: Object.keys(forcePreserveFormData).length,
+          timestamp: new Date().toISOString()
+        });
+      }, 50); // Use a slightly longer timeout to ensure step change is complete
       
       console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
@@ -1621,36 +1631,45 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      // 2. First update the formData to ensure it's preserved
-      setFormData(prevData => {
-        // Create a complete merged copy to ensure no data loss
-        const completeData = {...prevData};
-        console.log('[KYB Form Debug] NAVIGATION-NEXT: Form data before state update', {
-          status: 'PROCESSING',
-          dataFieldsBefore: Object.keys(completeData).length,
-          timestamp: new Date().toISOString()
-        });
-        return completeData;
+      // Create a completely independent deep copy to avoid any state reference issues
+      const deepCopyData = JSON.parse(JSON.stringify(preservedFormData));
+      
+      console.log('[KYB Form Debug] NAVIGATION-NEXT: Made deep copy of form data', {
+        status: 'PROCESSING',
+        formDataOriginal: preservedFormData,
+        formDataCopy: deepCopyData,
+        originalKeys: Object.keys(preservedFormData),
+        copyKeys: Object.keys(deepCopyData),
+        timestamp: new Date().toISOString()
       });
       
-      // 3. Then update the current step in a separate render cycle
+      // Store the form data in a more explicit way before navigation
+      const forcePreserveFormData = deepCopyData;
+      
+      // Apply the step change first
+      setCurrentStep(nextStep);
+      
+      // Then apply form data in a synchronized way
+      console.log('[KYB Form Debug] NAVIGATION-NEXT: Applied step change, now restoring form data', {
+        status: 'PROCESSING',
+        fromStep: currentStep,
+        toStep: nextStep,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Use an immediate timeout to ensure the form data is applied after React processes the step change
       setTimeout(() => {
-        setCurrentStep(nextStep);
+        // Directly set the form data without a callback to avoid any state inconsistencies
+        setFormData(forcePreserveFormData);
         
-        // 4. Again ensure form data is preserved after step change
-        setTimeout(() => {
-          setFormData(prevData => {
-            // Ensure all data from the preserved copy is included
-            const finalData = {...prevData, ...preservedFormData};
-            console.log('[KYB Form Debug] NAVIGATION-NEXT: Form data after state update', {
-              status: 'SUCCESS',
-              dataFieldsAfter: Object.keys(finalData).length,
-              timestamp: new Date().toISOString()
-            });
-            return finalData;
-          });
-        }, 20);
-      }, 20);
+        console.log('[KYB Form Debug] NAVIGATION-NEXT: Form data restored completely', {
+          status: 'SUCCESS',
+          restoredData: forcePreserveFormData,
+          restoredKeys: Object.keys(forcePreserveFormData),
+          fieldCount: Object.keys(forcePreserveFormData).length,
+          timestamp: new Date().toISOString()
+        });
+      }, 50); // Use a slightly longer timeout to ensure step change is complete
       
       console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
         status: 'SUCCESS',
@@ -2431,39 +2450,48 @@ export const OnboardingKYBFormPlayground = ({
                             timestamp: new Date().toISOString()
                           });
                           
-                          // Use a more reliable approach to navigate and preserve state
+                          // Use a completely different approach with a deeper copy and detailed logging
                           const targetStep = index;
                           
-                          // First update the formData to ensure it's preserved
-                          setFormData(prevData => {
-                            // Create a complete merged copy to ensure no data loss
-                            const completeData = {...prevData};
-                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data before state update', {
-                              status: 'PROCESSING',
-                              dataFieldsBefore: Object.keys(completeData).length,
-                              timestamp: new Date().toISOString()
-                            });
-                            return completeData;
+                          // Create a completely independent deep copy of the form data
+                          const deepCopyData = JSON.parse(JSON.stringify(formData));
+                          
+                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Made deep copy of form data', {
+                            status: 'PROCESSING',
+                            formDataOriginal: formData, // Log actual object for debugging
+                            formDataCopy: deepCopyData,
+                            originalKeys: Object.keys(formData),
+                            copyKeys: Object.keys(deepCopyData),
+                            timestamp: new Date().toISOString()
                           });
                           
-                          // Then update the current step in a separate render cycle
+                          // Store the form data in a more explicit way before navigation
+                          const forcePreserveFormData = deepCopyData;
+                          
+                          // Apply the step change first
+                          setCurrentStep(targetStep);
+                          
+                          // Then apply form data in a synchronized way
+                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Applied step change, now restoring form data', {
+                            status: 'PROCESSING',
+                            fromStep: currentStep,
+                            toStep: targetStep,
+                            timestamp: new Date().toISOString()
+                          });
+                          
+                          // Use an immediate timeout to ensure the form data is applied after React processes the step change
                           setTimeout(() => {
-                            setCurrentStep(targetStep);
+                            // Directly set the form data without a callback to avoid any state inconsistencies
+                            setFormData(forcePreserveFormData);
                             
-                            // Again ensure form data is preserved after step change
-                            setTimeout(() => {
-                              setFormData(prevData => {
-                                // Ensure all data from the preserved copy is included
-                                const finalData = {...prevData, ...preservedFormData};
-                                console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data after state update', {
-                                  status: 'SUCCESS',
-                                  dataFieldsAfter: Object.keys(finalData).length,
-                                  timestamp: new Date().toISOString()
-                                });
-                                return finalData;
-                              });
-                            }, 20);
-                          }, 20);
+                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data restored completely', {
+                              status: 'SUCCESS',
+                              restoredData: forcePreserveFormData,
+                              restoredKeys: Object.keys(forcePreserveFormData),
+                              fieldCount: Object.keys(forcePreserveFormData).length,
+                              timestamp: new Date().toISOString()
+                            });
+                          }, 50); // Use a slightly longer timeout to ensure step change is complete
                         } else {
                           console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Step not clickable', {
                             status: 'CANCELLED',
