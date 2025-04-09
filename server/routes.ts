@@ -273,21 +273,43 @@ export function registerRoutes(app: Express): Express {
   });
 
 
+  // Tasks cache
+  const tasksCache = new Map<string, { data: any[], timestamp: number }>();
+  const TASKS_CACHE_TTL = 30 * 1000; // 30 seconds in milliseconds - shorter than user/company caches for more frequent updates
+
   // Tasks endpoints
   app.get("/api/tasks", requireAuth, async (req, res) => {
     try {
+      const now = Date.now();
+      const userId = req.user.id;
+      const companyId = req.user.company_id;
+      const userEmail = req.user.email;
+      
+      // Create a cache key based on user ID, company ID, and email
+      const cacheKey = `${userId}_${companyId}_${userEmail}`;
+      const cachedData = tasksCache.get(cacheKey);
+      
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < TASKS_CACHE_TTL) {
+        // Only log cache hits occasionally to reduce log noise
+        if (Math.random() < 0.1) { // Log ~10% of cache hits (more than the user cache for monitoring)
+          console.log('[Tasks] Using cached task data for user:', userId);
+        }
+        return res.json(cachedData.data);
+      }
+      
       console.log('[Tasks] ====== Starting task fetch =====');
       console.log('[Tasks] User details:', {
-        id: req.user.id,
-        company_id: req.user.company_id,
-        email: req.user.email
+        id: userId,
+        company_id: companyId,
+        email: userEmail
       });
 
       // First, let's check if there are any company-wide KYB tasks
       const kybTasks = await db.select()
         .from(tasks)
         .where(and(
-          eq(tasks.company_id, req.user.company_id),
+          eq(tasks.company_id, companyId),
           eq(tasks.task_type, 'company_kyb'),
           eq(tasks.task_scope, 'company')
         ));
@@ -303,25 +325,25 @@ export function registerRoutes(app: Express): Express {
       // 4. KYB tasks for the user's company
       // 5. User onboarding tasks for the user's email
       const query = or(
-        eq(tasks.assigned_to, req.user.id),
-        eq(tasks.created_by, req.user.id),
+        eq(tasks.assigned_to, userId),
+        eq(tasks.created_by, userId),
         and(
-          eq(tasks.company_id, req.user.company_id),
+          eq(tasks.company_id, companyId),
           isNull(tasks.assigned_to),
           eq(tasks.task_scope, 'company')
         ),
         and(
           eq(tasks.task_type, 'user_onboarding'),
-          sql`LOWER(${tasks.user_email}) = LOWER(${req.user.email})`
+          sql`LOWER(${tasks.user_email}) = LOWER(${userEmail})`
         )
       );
 
       console.log('[Tasks] Query conditions:', {
         conditions: {
-          condition1: `tasks.assigned_to = ${req.user.id}`,
-          condition2: `tasks.created_by = ${req.user.id}`,
-          condition3: `tasks.company_id = ${req.user.company_id} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
-          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${req.user.email}')`
+          condition1: `tasks.assigned_to = ${userId}`,
+          condition2: `tasks.created_by = ${userId}`,
+          condition3: `tasks.company_id = ${companyId} AND tasks.assigned_to IS NULL AND tasks.task_scope = 'company'`,
+          condition4: `tasks.task_type = 'user_onboarding' AND LOWER(tasks.user_email) = LOWER('${userEmail}')`
         }
       });
 
@@ -333,6 +355,12 @@ export function registerRoutes(app: Express): Express {
       console.log('[Tasks] Tasks found:', {
         count: userTasks.length,
         // No longer showing the full task list for better console readability
+      });
+      
+      // Update the cache
+      tasksCache.set(cacheKey, {
+        data: userTasks,
+        timestamp: now
       });
 
       res.json(userTasks);
