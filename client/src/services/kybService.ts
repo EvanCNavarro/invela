@@ -380,6 +380,8 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybProgress(taskId: number): Promise<KybProgressResponse> {
     try {
+      console.log(`[KybService] Getting progress data for task ID: ${taskId}`);
+      
       // Make a query to get progress data, including the task ID in the query string
       const response = await fetch(`/api/kyb/progress?taskId=${taskId}`, {
         method: 'GET',
@@ -405,6 +407,7 @@ export class KybFormService implements FormServiceInterface {
       let data;
       try {
         data = JSON.parse(text);
+        console.log(`[KybService] Successfully parsed progress data:`, data);
       } catch (parseError) {
         console.error('[KybService] Error parsing JSON response:', parseError);
         return { formData: {}, progress: 0 };
@@ -414,6 +417,19 @@ export class KybFormService implements FormServiceInterface {
       // This prevents unnecessary API calls if the data hasn't changed
       if (data.formData) {
         this.lastSavedData = JSON.stringify(data.formData);
+        
+        // Ensure all values are non-null (null can cause controlled/uncontrolled input warnings)
+        const normalizedFormData = Object.fromEntries(
+          Object.entries(data.formData).map(([key, value]) => [key, value === null ? '' : value])
+        );
+        
+        console.log(`[KybService] Normalized form data with ${Object.keys(normalizedFormData).length} fields`);
+        
+        return {
+          formData: normalizedFormData,
+          progress: data.progress || 0,
+          status: data.status
+        };
       }
       
       return {
@@ -432,6 +448,8 @@ export class KybFormService implements FormServiceInterface {
    */
   async loadProgress(taskId: number): Promise<Record<string, any>> {
     try {
+      console.log(`[DEBUG KybService] Loading progress for task ID: ${taskId}`);
+      
       // Get current form data before loading - we'll use this if the API call fails
       const currentFormData = this.formData;
       
@@ -441,17 +459,27 @@ export class KybFormService implements FormServiceInterface {
       
       // If no data was returned but we have existing data, keep the current data
       if (!formData || Object.keys(formData).length === 0) {
+        console.log('[DEBUG KybService] No saved data found or empty data object received');
         if (Object.keys(currentFormData).length > 0) {
+          console.log(`[DEBUG KybService] Using existing form data with ${Object.keys(currentFormData).length} fields`);
           return currentFormData;
         }
         
+        console.log('[DEBUG KybService] No existing form data, using empty object');
         this.loadFormData({});
         return {};
       }
       
-      // Load the form data
-      this.loadFormData(formData);
-      return formData;
+      // Normalize form data to prevent null values (causing controlled/uncontrolled input warnings)
+      const normalizedFormData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
+      );
+      
+      console.log(`[DEBUG KybService] For already initialized service - loaded saved data:`, normalizedFormData);
+      
+      // Load the normalized form data
+      this.loadFormData(normalizedFormData);
+      return normalizedFormData;
     } catch (error) {
       console.error(`Error loading progress for task ${taskId}:`, error);
       
