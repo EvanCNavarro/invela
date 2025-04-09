@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DashboardLayout } from "@/layouts/DashboardLayout";
-import { OnboardingKYBFormPlayground } from "@/components/playground/OnboardingKYBFormPlayground";
+import { UniversalForm } from "@/components/forms/UniversalForm";
 import { CardFormPlayground } from "@/components/playground/CardFormPlayground";
 import { SecurityFormPlayground } from "@/components/playground/SecurityFormPlayground";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -398,28 +398,30 @@ export default function TaskPage({ params }: TaskPageProps) {
 
           <div className="container max-w-7xl mx-auto">
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Header is now in the OnboardingKYBFormPlayground component */}
-              <OnboardingKYBFormPlayground
-                taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                savedFormData={task.savedFormData}
-                onSubmit={(formData) => {
-                  toast({
-                    title: "Submitting KYB Form",
-                    description: "Please wait while we process your submission...",
-                  });
+              {/* Using Universal Form Component */}
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
+                  <p className="text-sm text-gray-500">Complete KYB verification for {displayName}</p>
+                </div>
+                
+                <UniversalForm
+                  taskId={task.id}
+                  taskType="kyb"
+                  initialData={task.savedFormData}
+                  onSubmit={(formData) => {
+                    toast({
+                      title: "Submitting KYB Form",
+                      description: "Please wait while we process your submission...",
+                    });
 
-                  fetch(`/api/kyb/submit/${task.id}`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ formData })
-                  })
+                    fetch(`/api/kyb/submit/${task.id}`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ formData })
+                    })
                     .then(async response => {
                       const data = await response.json();
                       if (!response.ok) {
@@ -448,8 +450,9 @@ export default function TaskPage({ params }: TaskPageProps) {
                         variant: "destructive",
                       });
                     });
-                }}
-              />
+                  }}
+                />
+              </div>
             </div>
 
             {showSuccessModal && (
