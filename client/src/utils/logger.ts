@@ -14,16 +14,16 @@ interface LoggerOptions {
   grouping?: boolean;
 }
 
-// Default global options
+// Default global options - much more aggressive throttling for performance
 const DEFAULT_OPTIONS: LoggerOptions = {
-  enabled: process.env.NODE_ENV !== 'production',
+  enabled: process.env.NODE_ENV !== 'production' && false, // Disable logging completely for performance
   levels: {
     debug: false, // Debug is off by default to reduce spam
-    info: process.env.NODE_ENV === 'development', // Only in explicit development mode
-    warn: true, // Always show warnings
-    error: true, // Always show errors
+    info: false,  // Disable info logs completely for performance
+    warn: false,  // Disable warn logs for performance except in critical sections
+    error: true,  // Only show true errors
   },
-  grouping: true
+  grouping: false // Disable grouping for performance
 };
 
 // Store created loggers by namespace to maintain their state

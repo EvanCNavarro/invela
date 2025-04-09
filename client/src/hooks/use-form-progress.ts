@@ -78,78 +78,175 @@ export function useFormProgress({
     }, {});
   }, [sections, fields]);
 
-  // Calculate if a section is complete - optimized with caching
+  // Optimization constants
+  const MAX_CACHE_ENTRIES = 20;     // Maximum entries per section cache
+  const HASH_STRING_LIMIT = 50;     // Maximum length for string value in hash
+  const CACHE_REUSE_TIMEOUT = 2000; // Milliseconds to keep using cached values
+  
+  // Last calculation timestamp to throttle expensive updates even more
+  const lastCalculationRef = useRef<Record<string, number>>({});
+  
+  // Calculate if a section is complete - extreme optimization with aggressive caching
   const getSectionProgress = useCallback((sectionId: string | number): number => {
     // Convert the section ID to a string for consistent cache keys
     const cacheKey = String(sectionId);
     
-    // Get the current form values
-    const formValues = getFormValues();
+    // OPTIMIZATION 1: Return cached values during transitions or when calculations are too frequent
+    const now = Date.now();
+    const lastCalculation = lastCalculationRef.current[cacheKey] || 0;
+    const isRapidRecalculation = (now - lastCalculation) < CACHE_REUSE_TIMEOUT;
     
-    // Generate a unique key for the current form data state
-    // This is a simplification - in a real implementation you might use a more sophisticated
-    // approach to generate this key based on the relevant form values for this section
-    const formDataHash = JSON.stringify(
-      (sectionFields[sectionId] || []).reduce((acc, field) => {
-        acc[field.key] = formValues[field.key];
-        return acc;
-      }, {} as Record<string, any>)
-    );
-    
-    // Check if we have a cached result for this section and form data state
-    if (progressCacheRef.current[cacheKey]?.[formDataHash] !== undefined) {
-      return progressCacheRef.current[cacheKey][formDataHash];
-    }
-    
-    // If we're in a rapid section transition, return the cached value or 0
-    // This prevents expensive calculations during quick navigation
-    if (activeTransitionRef.current !== null) {
-      // Return last known value if available, otherwise assume 0
+    if (activeTransitionRef.current !== null || isRapidRecalculation) {
       const lastKnownValues = progressCacheRef.current[cacheKey];
-      if (lastKnownValues) {
-        const lastValue = Object.values(lastKnownValues)[0];
-        return lastValue ?? 0;
+      if (lastKnownValues && Object.keys(lastKnownValues).length > 0) {
+        // Use the most recent cached value
+        const values = Object.values(lastKnownValues);
+        return values[values.length - 1] ?? 0;
       }
-      return 0;
+      return 0; // Default value when no cache exists
     }
     
-    // Calculate the progress only if necessary
+    // Update last calculation timestamp
+    lastCalculationRef.current[cacheKey] = now;
+    
+    // OPTIMIZATION 2: Early return for empty sections
     const sectionFieldList = sectionFields[sectionId] || [];
     if (sectionFieldList.length === 0) return 0;
 
+    // OPTIMIZATION 3: Lazy evaluation - only get form values when actually needed
+    const formValues = getFormValues();
+    
+    // OPTIMIZATION 4: Filter relevant fields only once
     const relevantFields = requiredOnly 
       ? sectionFieldList.filter(field => field.validation?.required)
       : sectionFieldList;
     
     if (relevantFields.length === 0) return 0;
-
-    // Use the form values previously retrieved
-    const filledFields = relevantFields.filter(field => {
-      const value = formValues[field.key];
-      return value !== undefined && value !== null && value !== '';
-    });
-
-    const progress = Math.round((filledFields.length / relevantFields.length) * 100);
     
-    // Cache the result
+    // OPTIMIZATION 5: Ultra-efficient hash generation
+    let hashKeys = '';
+    let hashValues = '';
+    
+    // Directly build strings instead of using array operations and joins
+    for (let i = 0; i < relevantFields.length; i++) {
+      const field = relevantFields[i];
+      hashKeys += field.key + (i < relevantFields.length - 1 ? ',' : '');
+      
+      const value = formValues[field.key];
+      // Convert to string and limit length
+      const valueStr = value !== undefined && value !== null 
+        ? String(value).substring(0, HASH_STRING_LIMIT) 
+        : '';
+      hashValues += valueStr + (i < relevantFields.length - 1 ? '|' : '');
+    }
+    
+    const formDataHash = `${hashKeys}:${hashValues}`;
+    
+    // OPTIMIZATION 6: Direct cache lookup without optional chaining for speed
+    const sectionCache = progressCacheRef.current[cacheKey];
+    if (sectionCache && sectionCache[formDataHash] !== undefined) {
+      return sectionCache[formDataHash];
+    }
+    
+    // OPTIMIZATION 7: Count filled fields with single-pass direct comparison
+    let filledCount = 0;
+    for (const field of relevantFields) {
+      const value = formValues[field.key];
+      if (value !== undefined && value !== null && value !== '') {
+        filledCount++;
+      }
+    }
+
+    const progress = Math.round((filledCount / relevantFields.length) * 100);
+    
+    // OPTIMIZATION 8: Fast cache creation with pre-check
     if (!progressCacheRef.current[cacheKey]) {
       progressCacheRef.current[cacheKey] = {};
     }
-    progressCacheRef.current[cacheKey][formDataHash] = progress;
+    
+    // OPTIMIZATION 9: Efficient cache limit enforcement for memory management
+    const cacheObj = progressCacheRef.current[cacheKey];
+    const cacheKeys = Object.keys(cacheObj);
+    
+    if (cacheKeys.length >= MAX_CACHE_ENTRIES) {
+      // Remove oldest 20% of entries in bulk for better performance
+      const removeCount = Math.max(1, Math.floor(MAX_CACHE_ENTRIES * 0.2));
+      for (let i = 0; i < removeCount; i++) {
+        delete cacheObj[cacheKeys[i]];
+      }
+    }
+    
+    // Store the result in cache
+    cacheObj[formDataHash] = progress;
     
     return progress;
-  }, [sectionFields, getFormValues, requiredOnly]);
+  }, [sectionFields, requiredOnly]); // Important: keep getFormValues out of dependencies
 
-  // Update completed sections state with throttling to prevent UI freezing
+  // Last updated timestamp to prevent excessive recalculation
+  const lastUpdateRef = useRef<number>(0);
+  // Store pending update info
+  const pendingUpdateRef = useRef<{timeoutId: number | null; timestamp: number | null}>({
+    timeoutId: null,
+    timestamp: null
+  });
+  
+  // Update completed sections state with aggressive throttling
   useEffect(() => {
     // Skip updating during rapid transitions between sections
     if (activeTransitionRef.current !== null) {
       return;
     }
     
-    // Debounce the update to reduce CPU load from frequent updates
-    let timeoutId: number | null = null;
+    const now = Date.now();
+    // Only recalculate once per 1000ms at most (aggressive throttling)
+    const MIN_UPDATE_INTERVAL = 1000;
     
+    // If an update is too recent, skip it completely
+    if (now - lastUpdateRef.current < MIN_UPDATE_INTERVAL) {
+      // If there's already a pending update that's scheduled later, keep it
+      if (pendingUpdateRef.current.timestamp !== null && 
+          pendingUpdateRef.current.timestamp > now) {
+        return;
+      }
+      
+      // Cancel any existing update
+      if (pendingUpdateRef.current.timeoutId !== null) {
+        window.clearTimeout(pendingUpdateRef.current.timeoutId);
+      }
+      
+      // Schedule a delayed update at the next available interval
+      const nextUpdateTime = lastUpdateRef.current + MIN_UPDATE_INTERVAL - now + 50; // add 50ms buffer
+      
+      const updateCompletedSections = () => {
+        const newCompletedSections: Record<string | number, boolean> = {};
+        
+        // Process in batches to avoid long-running operations
+        for (let i = 0; i < sections.length; i++) {
+          const progress = getSectionProgress(sections[i].id);
+          newCompletedSections[sections[i].id] = progress === 100;
+          
+          // Allow browser to process other tasks if we're taking too long
+          if (i > 0 && i % 3 === 0 && Date.now() - now > 50) {
+            break; // Stop processing for now to prevent UI freeze
+          }
+        }
+        
+        setCompletedSections(prev => ({...prev, ...newCompletedSections}));
+        
+        // Update timestamp and clear pending refs
+        lastUpdateRef.current = Date.now();
+        pendingUpdateRef.current.timeoutId = null;
+        pendingUpdateRef.current.timestamp = null;
+      };
+      
+      // Queue update
+      pendingUpdateRef.current.timeoutId = window.setTimeout(updateCompletedSections, nextUpdateTime);
+      pendingUpdateRef.current.timestamp = now + nextUpdateTime;
+      
+      return;
+    }
+    
+    // If we get here, we're outside the throttling window and can update immediately
     const updateCompletedSections = () => {
       const newCompletedSections: Record<string | number, boolean> = {};
       
@@ -159,30 +256,58 @@ export function useFormProgress({
       });
       
       setCompletedSections(newCompletedSections);
+      lastUpdateRef.current = Date.now();
     };
     
-    // Delay the update by 250ms to batch changes together
-    timeoutId = window.setTimeout(updateCompletedSections, 250);
+    // Immediate update (still slightly delayed to batch React state changes)
+    pendingUpdateRef.current.timeoutId = window.setTimeout(updateCompletedSections, 50);
     
     return () => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+      if (pendingUpdateRef.current.timeoutId !== null) {
+        window.clearTimeout(pendingUpdateRef.current.timeoutId);
+        pendingUpdateRef.current.timeoutId = null;
+        pendingUpdateRef.current.timestamp = null;
       }
     };
-  }, [sections, sectionFields, getSectionProgress]); // Remove getFormValues to prevent excessive recalculations
+  }, [sections, getSectionProgress]); // Remove sectionFields dependency to prevent recalculation
 
-  // Calculate overall progress
+  // Cache for overall progress to reduce recalculations
+  const overallProgressCacheRef = useRef<{value: number; timestamp: number}>({
+    value: 0,
+    timestamp: 0
+  });
+  
+  // Calculate overall progress with caching
   const overallProgress = useMemo(() => {
-    // Skip calculation during rapid section changes
-    if (activeTransitionRef.current !== null) {
-      return 0; // Return placeholder value during transitions
+    const now = Date.now();
+    
+    // Skip calculation during rapid section changes or if we have a recent value
+    if (activeTransitionRef.current !== null || 
+        (now - overallProgressCacheRef.current.timestamp < 2000)) {
+      return overallProgressCacheRef.current.value;
     }
     
     const totalSections = sections.length;
     if (totalSections === 0) return 0;
     
-    const completedCount = Object.values(completedSections).filter(Boolean).length;
-    return Math.round((completedCount / totalSections) * 100);
+    // Optimize the filter operation
+    let completedCount = 0;
+    const completeValues = Object.values(completedSections);
+    for (let i = 0; i < completeValues.length; i++) {
+      if (completeValues[i] === true) {
+        completedCount++;
+      }
+    }
+    
+    const progress = Math.round((completedCount / totalSections) * 100);
+    
+    // Update cache
+    overallProgressCacheRef.current = {
+      value: progress,
+      timestamp: now
+    };
+    
+    return progress;
   }, [completedSections, sections]);
 
   return {

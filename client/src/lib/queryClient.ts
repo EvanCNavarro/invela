@@ -132,29 +132,42 @@ export function getOptimizedQueryOptions(url: string | string[]) {
     refetchOnMount: true,
   };
   
-  // Frequently accessed endpoints - more aggressive caching to reduce redundant requests
+  // Frequently accessed endpoints - much more aggressive caching to dramatically reduce API calls
   if (urlStr.includes('/api/companies/current')) {
     return {
-      refetchInterval: 60000,       // 1 minute - poll for updates periodically 
-      refetchOnWindowFocus: true,   // Fetch when tab becomes active
-      staleTime: 30000,             // 30 seconds - keep data fresh for 30 seconds
+      refetchInterval: 300000,      // 5 minutes - poll less frequently 
+      refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
+      staleTime: 240000,            // 4 minutes - keep data fresh for much longer
       retry: false,
-      cacheTime: 5 * 60 * 1000,     // 5 minutes - keep in cache longer
-      refetchOnReconnect: true,
-      refetchOnMount: true,
+      cacheTime: 10 * 60 * 1000,    // 10 minutes - keep in cache longer
+      refetchOnReconnect: false,    // Don't refetch on reconnect
+      refetchOnMount: false,        // Don't refetch on mount
     };
   }
   
-  // Tasks endpoint - slightly different caching strategy
+  // Tasks endpoint - drastically reduce polling to prevent lag spikes
   if (urlStr.includes('/api/tasks')) {
     return {
-      refetchInterval: 45000,       // 45 seconds - poll for updates periodically
-      refetchOnWindowFocus: true,   // Fetch when tab becomes active
-      staleTime: 20000,             // 20 seconds - keep data fresh for 20 seconds
+      refetchInterval: 600000,      // 10 minutes - drastically reduce polling frequency
+      refetchOnWindowFocus: false,  // Don't fetch when tab becomes active
+      staleTime: 300000,            // 5 minutes - consider data fresh for much longer
       retry: false,
-      cacheTime: 3 * 60 * 1000,     // 3 minutes - keep in cache
-      refetchOnReconnect: true,
-      refetchOnMount: true,
+      cacheTime: 30 * 60 * 1000,    // 30 minutes - keep in cache much longer
+      refetchOnReconnect: false,    // Don't refetch on reconnect
+      refetchOnMount: false,        // Don't refetch on mount
+    };
+  }
+  
+  // KYB fields - aggressive caching since form fields rarely change
+  if (urlStr.includes('/api/kyb/fields') || urlStr.includes('/api/form-fields/')) {
+    return {
+      refetchInterval: false,       // Don't poll automatically
+      refetchOnWindowFocus: false,  // Don't fetch on window focus
+      staleTime: 3600000,           // 1 hour - form fields basically never change
+      retry: false,
+      cacheTime: 3600000,           // 1 hour
+      refetchOnReconnect: false,    // Don't refetch on reconnect
+      refetchOnMount: false,        // Don't refetch on mount
     };
   }
   
