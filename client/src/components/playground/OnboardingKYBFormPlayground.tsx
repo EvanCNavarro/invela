@@ -739,6 +739,20 @@ export const OnboardingKYBFormPlayground = ({
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
   const isCompanyDataLoading = useState(false);
+  
+  // Handle component unmount to prevent memory leaks and state updates on unmounted components
+  useEffect(() => {
+    // Mark as mounted on component init
+    isMountedRef.current = true;
+    
+    // Clean up function that runs when component unmounts
+    return () => {
+      console.log('[KYB Form Debug] Component unmounting - preventing further state updates', {
+        timestamp: new Date().toISOString()
+      });
+      isMountedRef.current = false;
+    };
+  }, []);
   // Initialize dynamicFormSteps with empty arrays for each step to ensure consistent structure
   const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>(() => {
     // Create an array with the same length as FORM_STEPS with separate empty arrays for each step
@@ -994,8 +1008,12 @@ export const OnboardingKYBFormPlayground = ({
   // Clean up and invalidate cache when unmounting
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
+      // Cache invalidation when component unmounts and has a taskId
       if (taskId) {
+        console.log('[KYB Form Debug] Unmounting with taskId, invalidating task queries', {
+          taskId,
+          timestamp: new Date().toISOString()
+        });
         queryClient.invalidateQueries({ queryKey: ['/api/tasks/kyb'] });
         queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
       }
@@ -2013,12 +2031,7 @@ export const OnboardingKYBFormPlayground = ({
     };
   }, []);
 
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
+  // The component mount/unmount is already handled in the effect at the top of the component
 
   // Load company data
   useEffect(() => {
@@ -2467,48 +2480,104 @@ export const OnboardingKYBFormPlayground = ({
                             timestamp: new Date().toISOString()
                           });
                           
-                          // Use a completely different approach with a deeper copy and detailed logging
+                          // BARRIER 1: Create a deep, independent copy of form data as a snapshot
+                          const navigationId = `nav_direct_${eventId}`;
                           const targetStep = index;
                           
-                          // Create a completely independent deep copy of the form data
+                          // Create a completely independent deep copy to avoid any state reference issues
                           const deepCopyData = JSON.parse(JSON.stringify(formData));
                           
-                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Made deep copy of form data', {
+                          console.log(`[KYB TRACE-${eventId}] BARRIER 1 - Created deep copy of form data`, {
+                            navigationId,
                             status: 'PROCESSING',
-                            formDataOriginal: formData, // Log actual object for debugging
-                            formDataCopy: deepCopyData,
+                            fromStep: currentStep,
+                            toStep: targetStep,
                             originalKeys: Object.keys(formData),
                             copyKeys: Object.keys(deepCopyData),
                             timestamp: new Date().toISOString()
                           });
                           
-                          // Store the form data in a more explicit way before navigation
-                          const forcePreserveFormData = deepCopyData;
+                          // BARRIER 2: Save form data to localStorage as a reliability backup
+                          try {
+                            const formDataBackup = JSON.stringify(deepCopyData);
+                            localStorage.setItem('form_data_backup', formDataBackup);
+                            localStorage.setItem('form_backup_timestamp', Date.now().toString());
+                            localStorage.setItem('form_backup_step', currentStep.toString());
+                            localStorage.setItem('form_backup_target_step', targetStep.toString());
+                            
+                            console.log(`[KYB TRACE-${eventId}] BARRIER 2 - Created localStorage backup`, {
+                              navigationId,
+                              status: 'SUCCESS',
+                              backupSize: formDataBackup.length,
+                              backupStep: currentStep,
+                              targetStep: targetStep,
+                              timestamp: new Date().toISOString()
+                            });
+                          } catch (e) {
+                            console.log(`[KYB TRACE-${eventId}] BARRIER 2 - LocalStorage backup failed`, {
+                              navigationId,
+                              status: 'WARNING',
+                              error: e instanceof Error ? e.message : String(e),
+                              timestamp: new Date().toISOString()
+                            });
+                          }
                           
-                          // Apply the step change first
-                          setCurrentStep(targetStep);
-                          
-                          // Then apply form data in a synchronized way
-                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Applied step change, now restoring form data', {
+                          // BARRIER 3: Apply step change using atomic updates
+                          console.log(`[KYB TRACE-${eventId}] BARRIER 3 - Executing step change`, {
+                            navigationId,
                             status: 'PROCESSING',
                             fromStep: currentStep,
                             toStep: targetStep,
                             timestamp: new Date().toISOString()
                           });
                           
-                          // Use an immediate timeout to ensure the form data is applied after React processes the step change
-                          setTimeout(() => {
-                            // Directly set the form data without a callback to avoid any state inconsistencies
-                            setFormData(forcePreserveFormData);
-                            
-                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Form data restored completely', {
-                              status: 'SUCCESS',
-                              restoredData: forcePreserveFormData,
-                              restoredKeys: Object.keys(forcePreserveFormData),
-                              fieldCount: Object.keys(forcePreserveFormData).length,
-                              timestamp: new Date().toISOString()
-                            });
-                          }, 50); // Use a slightly longer timeout to ensure step change is complete
+                          // Apply the step change immediately
+                          setCurrentStep(targetStep);
+                          
+                          // BARRIER 4: Safely restore form data after step change
+                          console.log(`[KYB TRACE-${eventId}] BARRIER 4 - Using RAF for synchronized state updates`, {
+                            navigationId,
+                            status: 'PROCESSING',
+                            fromStep: currentStep,
+                            toStep: targetStep,
+                            timestamp: new Date().toISOString()
+                          });
+                          
+                          // Use requestAnimationFrame instead of setTimeout for more reliable browser rendering sync
+                          requestAnimationFrame(() => {
+                            // Only apply if component is still mounted
+                            if (isMountedRef.current) {
+                              // Directly set the form data without a callback to avoid any state inconsistencies
+                              setFormData(deepCopyData);
+                              
+                              console.log(`[KYB TRACE-${eventId}] BARRIER 4 - Form data restored via RAF`, {
+                                navigationId,
+                                status: 'SUCCESS',
+                                restoredKeys: Object.keys(deepCopyData),
+                                fieldCount: Object.keys(deepCopyData).length,
+                                timestamp: new Date().toISOString()
+                              });
+                              
+                              // Add a second RAF for good measure to ensure UI is updated after our state changes
+                              requestAnimationFrame(() => {
+                                if (isMountedRef.current) {
+                                  console.log(`[KYB TRACE-${eventId}] BARRIER 5 - Navigation completed`, {
+                                    navigationId,
+                                    status: 'COMPLETE',
+                                    fromStep: currentStep,
+                                    toStep: targetStep,
+                                    timestamp: new Date().toISOString()
+                                  });
+                                }
+                              });
+                            } else {
+                              console.log(`[KYB TRACE-${eventId}] BARRIER 4 - Component unmounted, cancelling state update`, {
+                                navigationId,
+                                status: 'CANCELLED',
+                                timestamp: new Date().toISOString()
+                              });
+                            }
+                          });
                         } else {
                           console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Step not clickable', {
                             status: 'CANCELLED',
