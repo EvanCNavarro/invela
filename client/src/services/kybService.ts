@@ -340,6 +340,13 @@ export class KybFormService implements FormServiceInterface {
         };
       }
       
+      console.log(`[KybService] Saving progress for task ID: ${taskId}, progress: ${progress}, fields: ${Object.keys(formData).length}`);
+      
+      // Normalize form data before sending to server (remove null values)
+      const normalizedFormData = Object.fromEntries(
+        Object.entries(formData).map(([key, value]) => [key, value === null ? '' : value])
+      );
+      
       // Send the minimum necessary data to reduce payload size
       const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
@@ -351,7 +358,7 @@ export class KybFormService implements FormServiceInterface {
         body: JSON.stringify({
           taskId,  // Essential - Include taskId in the request body
           progress,
-          formData
+          formData: normalizedFormData
         })
       });
       
@@ -364,7 +371,26 @@ export class KybFormService implements FormServiceInterface {
         };
       }
       
-      return await response.json();
+      // Parse response and handle success
+      const responseText = await response.text();
+      let responseData;
+      
+      try {
+        // Log response for debugging if empty
+        if (!responseText || responseText.trim() === '') {
+          console.log('[KybService] Empty response from server when saving progress (this may be normal)');
+          responseData = { success: true };
+        } else {
+          responseData = JSON.parse(responseText);
+          console.log(`[KybService] Successfully saved progress for task ${taskId}`);
+        }
+      } catch (parseError) {
+        console.error('[KybService] Error parsing save response:', parseError);
+        console.error('[KybService] Raw response:', responseText.substring(0, 200));
+        responseData = { success: true }; // Assume success if we received a 200 OK
+      }
+      
+      return responseData;
     } catch (error) {
       console.error('[KybService] Network error while saving form data:', error);
       return {
@@ -382,8 +408,9 @@ export class KybFormService implements FormServiceInterface {
     try {
       console.log(`[KybService] Getting progress data for task ID: ${taskId}`);
       
-      // Make a query to get progress data, including the task ID in the query string
-      const response = await fetch(`/api/kyb/progress?taskId=${taskId}`, {
+      // Make a query to get progress data, using taskId as a path parameter
+      // Fix the URL path to match the server endpoint
+      const response = await fetch(`/api/kyb/progress/${taskId}`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -406,10 +433,22 @@ export class KybFormService implements FormServiceInterface {
       // Safely parse the JSON
       let data;
       try {
-        data = JSON.parse(text);
-        console.log(`[KybService] Successfully parsed progress data:`, data);
+        // Log the raw response text for debugging
+        console.log(`[KybService] Raw response:`, text.substring(0, 100) + (text.length > 100 ? '...' : ''));
+        
+        // Handle empty responses by returning a default object
+        if (!text || text.trim() === '') {
+          console.warn('[KybService] Empty JSON response, using default empty object');
+          data = { formData: {}, progress: 0 };
+        } else {
+          data = JSON.parse(text);
+          console.log(`[KybService] Successfully parsed progress data:`, data);
+        }
       } catch (parseError) {
         console.error('[KybService] Error parsing JSON response:', parseError);
+        console.error('[KybService] Raw response that failed to parse:', text.substring(0, 200));
+        
+        // If we get an error parsing, return a default object
         return { formData: {}, progress: 0 };
       }
       
