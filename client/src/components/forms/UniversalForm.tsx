@@ -15,9 +15,13 @@ import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } fro
 import SectionContent from './SectionContent';
 import FormProgressBar from './FormProgressBar';
 import { useFormProgress } from '@/hooks/use-form-progress';
+import { getLogger } from '../../utils/logger';
 
 // Create a type alias that combines both section types - using NavigationFormSection as our primary type
 type FormSection = NavigationFormSection;
+
+// Create logger instance
+const logger = getLogger('UniversalForm');
 
 /**
  * Helper function to convert FormSection from service to navigation version
@@ -28,10 +32,9 @@ type FormSection = NavigationFormSection;
  */
 const toNavigationSections = (serviceSections: ServiceFormSection[]): NavigationFormSection[] => {
   return serviceSections.map(section => {
-    // Only log in development environment and not in production
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
-      console.log(`[toNavigationSections] Section ${section.id} (${section.title}) has fields:`, section.fields || 'none');
-    }
+    // Using the logger utility instead of direct console.log 
+    // this is controlled by logger configuration and will only show in development by default
+    logger.debug(`Processing section ${section.id} (${section.title}) with ${section.fields?.length || 0} fields`);
     
     return {
       id: section.id,
@@ -101,10 +104,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // If the sections already have fields attached, use those
     if (sections.length > 0 && sections[0].fields && sections[0].fields.length > 0) {
-      // Only log in development and not in production
-      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
-        console.log(`[UniversalForm] Using pre-populated fields from sections`);
-      }
+      // Only log in development and not in production - using logger utility
+      logger.debug(`Using pre-populated fields from sections`);
       return sections.map(section => ({
         id: section.id,
         title: section.title,
@@ -113,9 +114,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
     
     // Otherwise, filter fields by section ID (fallback approach)
-    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
-      console.log(`[UniversalForm] Filtering fields by section ID`);
-    }
+    logger.debug(`Filtering fields by section ID`);
     return sections.map(section => ({
       id: section.id,
       title: section.title,
@@ -130,18 +129,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // Generate a unique request ID for tracking
     const requestId = `${taskType}-${Date.now()}`;
-    console.log(`[UniversalForm] Generated new request ID: ${requestId} for task type: ${taskType}`);
+    logger.debug(`Generated new request ID: ${requestId} for task type: ${taskType}`);
     
     // This approach ensures the request ID is properly set before the fetchTemplate runs
     setTemplateRequestId(requestId);
     
     const fetchTemplate = async () => {
-      console.log(`[UniversalForm] Starting fetchTemplate with request ID: ${requestId}, current templateRequestId: ${templateRequestId}`);
+      logger.debug(`Starting fetchTemplate with request ID: ${requestId}, current templateRequestId: ${templateRequestId}`);
       
       try {
         // Skip if we've exceeded max initialization attempts
         if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
-          console.warn(`[UniversalForm] Exceeded maximum initialization attempts (${MAX_INITIALIZATION_ATTEMPTS})`);
+          logger.warn(`Exceeded maximum initialization attempts (${MAX_INITIALIZATION_ATTEMPTS})`);
           setError(`Failed to initialize form after ${MAX_INITIALIZATION_ATTEMPTS} attempts. Please refresh and try again.`);
           setLoading(false);
           return;

@@ -200,30 +200,30 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybFields(): Promise<KybField[]> {
     try {
-      console.log(`[KYB Service] Fetching KYB fields from API... Time: ${new Date().toISOString()}`);
+      this.logger.info(`Fetching KYB fields from API... Time: ${new Date().toISOString()}`);
       
       // Check if templateId is set
-      console.log(`[KYB Service] Current templateId: ${this.templateId || 'not set'}`);
+      this.logger.debug(`Current templateId: ${this.templateId || 'not set'}`);
       
       // Log the request
-      console.log(`[KYB Service] Making fetch request to /api/kyb/fields with credentials`);
+      this.logger.debug(`Making fetch request to /api/kyb/fields with credentials`);
       const requestStartTime = Date.now();
       
       // Try to get info on available endpoints
       try {
-        console.log('[KYB Service] Checking available endpoints from server for debugging...');
+        this.logger.debug('Checking available endpoints from server for debugging...');
         const endpointsResponse = await fetch('/api-docs', {
           method: 'GET',
           credentials: 'include'
         }).catch(e => ({ ok: false, error: e }));
         
         if (endpointsResponse.ok) {
-          console.log('[KYB Service] API documentation available at /api-docs');
+          this.logger.debug('API documentation available at /api-docs');
         } else {
-          console.log('[KYB Service] API documentation not available at /api-docs');
+          this.logger.debug('API documentation not available at /api-docs');
         }
       } catch (e) {
-        console.log('[KYB Service] Error checking API docs:', e);
+        this.logger.debug('Error checking API docs:', e);
       }
       
       // Use a direct fetch with credentials to ensure cookies are sent
@@ -239,30 +239,30 @@ export class KybFormService implements FormServiceInterface {
       
       // Log timing and response status
       const requestDuration = Date.now() - requestStartTime;
-      console.log(`[KYB Service] KYB fields API response status: ${response.status}, duration: ${requestDuration}ms`);
+      this.logger.debug(`KYB fields API response status: ${response.status}, duration: ${requestDuration}ms`);
       
-      // Log response headers
+      // Log response headers (we'll always send it at debug level which will be filtered by the logger)
       const headers: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         headers[key] = value;
       });
-      console.log('[KYB Service] Response headers:', headers);
+      this.logger.debug('Response headers:', headers);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[KYB Service] Error fetching KYB fields: HTTP ${response.status}`, errorText);
+        this.logger.error(`Error fetching KYB fields: HTTP ${response.status}`, errorText);
         
         // Try to check if it's an auth issue
         try {
-          console.log('[KYB Service] Checking auth status due to field fetch failure...');
+          this.logger.debug('Checking auth status due to field fetch failure...');
           const authCheckResponse = await fetch('/api/auth/status', {
             method: 'GET',
             credentials: 'include'
           }).catch(e => ({ ok: false, status: 'error', statusText: e.message }));
           
-          console.log(`[KYB Service] Auth check response status: ${authCheckResponse.status || 'unknown'}`);
+          this.logger.debug(`Auth check response status: ${authCheckResponse.status || 'unknown'}`);
         } catch (authError) {
-          console.warn('[KYB Service] Auth check also failed:', authError);
+          this.logger.warn('Auth check also failed:', authError);
         }
         
         throw new Error(`Failed to fetch KYB fields: ${response.status} ${errorText}`);
@@ -271,28 +271,30 @@ export class KybFormService implements FormServiceInterface {
       let fields;
       try {
         fields = await response.json();
-        console.log('[KYB Service] Successfully parsed response JSON');
-      } catch (jsonError) {
-        console.error('[KYB Service] Error parsing response JSON:', jsonError);
-        throw new Error(`Failed to parse KYB fields response: ${jsonError.message}`);
+        this.logger.debug('Successfully parsed response JSON');
+      } catch (jsonError: unknown) {
+        this.logger.error('Error parsing response JSON:', jsonError);
+        // Safely convert error to string for the error message
+        const errorMessage = jsonError instanceof Error ? jsonError.message : String(jsonError);
+        throw new Error(`Failed to parse KYB fields response: ${errorMessage}`);
       }
       
       // Log to help debug
       const fieldsCount = Array.isArray(fields) ? fields.length : 0;
-      console.log('[KYB Service] Successfully fetched KYB fields:', { 
+      this.logger.info('Successfully fetched KYB fields:', { 
         count: fieldsCount, 
         firstField: fieldsCount > 0 ? fields[0].field_key : 'none',
-        fieldTypes: fieldsCount > 0 ? [...new Set(fields.map(f => f.field_type))].join(', ') : 'none',
-        groups: fieldsCount > 0 ? [...new Set(fields.map(f => f.group))].join(', ') : 'none'
+        fieldTypes: fieldsCount > 0 ? [...new Set(fields.map((f: KybField) => f.field_type))].join(', ') : 'none',
+        groups: fieldsCount > 0 ? [...new Set(fields.map((f: KybField) => f.group))].join(', ') : 'none'
       });
       
       if (fieldsCount === 0) {
-        console.warn('[KYB Service] Empty fields array received, which may cause issues with form rendering');
+        this.logger.warn('Empty fields array received, which may cause issues with form rendering');
       }
       
       return Array.isArray(fields) ? fields : [];
-    } catch (error) {
-      console.error('[KYB Service] Error fetching KYB fields:', error);
+    } catch (error: unknown) {
+      this.logger.error('Error fetching KYB fields:', error);
       throw error; // Rethrow to allow the calling function to handle it
     }
   }
@@ -305,7 +307,7 @@ export class KybFormService implements FormServiceInterface {
    */
   async getKybFieldsByStepIndex(stepIndex: number): Promise<KybField[]> {
     try {
-      console.log(`[KYB Service] Fetching fields for step index: ${stepIndex}`);
+      this.logger.info(`Fetching fields for step index: ${stepIndex}`);
       
       // Use direct fetch with credentials to ensure cookies are sent
       const response = await fetch(`/api/form-fields/company_kyb/${stepIndex}`, {
@@ -318,11 +320,11 @@ export class KybFormService implements FormServiceInterface {
         }
       });
       
-      console.log(`[KYB Service] Step fields API response status: ${response.status} for step ${stepIndex}`);
+      this.logger.debug(`Step fields API response status: ${response.status} for step ${stepIndex}`);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[KYB Service] Error fetching KYB fields for step ${stepIndex}: HTTP ${response.status}`, errorText);
+        this.logger.error(`Error fetching KYB fields for step ${stepIndex}: HTTP ${response.status}`, errorText);
         throw new Error(`Failed to fetch KYB fields for step ${stepIndex}: ${response.status} ${errorText}`);
       }
       
@@ -330,10 +332,10 @@ export class KybFormService implements FormServiceInterface {
       
       // Safe check if fields is an array
       const fieldsArray = Array.isArray(fields) ? fields : [];
-      console.log(`[KYB Service] Found ${fieldsArray.length} fields for step ${stepIndex}`);
+      this.logger.debug(`Found ${fieldsArray.length} fields for step ${stepIndex}`);
       return fieldsArray;
-    } catch (error) {
-      console.error(`[KYB Service] Error fetching KYB fields for step ${stepIndex}:`, error);
+    } catch (error: unknown) {
+      this.logger.error(`Error fetching KYB fields for step ${stepIndex}:`, error);
       throw error; // Rethrow to allow the calling function to handle it
     }
   }
@@ -542,7 +544,7 @@ export class KybFormService implements FormServiceInterface {
     try {
       const progress = this.calculateProgress();
       await this.saveKybProgress(taskId, progress, this.formData);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Error saving KYB progress:', error);
       throw error;
     }
@@ -584,7 +586,7 @@ export class KybFormService implements FormServiceInterface {
       }
       
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Error saving KYB progress:', error);
       throw error;
     }
@@ -631,7 +633,7 @@ export class KybFormService implements FormServiceInterface {
         progress: typedData.progress || 0,
         status: typedData.status
       };
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Error getting KYB progress:', error);
       throw error;
     }
@@ -661,7 +663,7 @@ export class KybFormService implements FormServiceInterface {
       
       this.loadFormData(formData);
       return formData;
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error(`Error loading KYB progress for task ${taskId}:`, error);
       // Fall back to empty object on error, but still throw the error
       this.loadFormData({});
@@ -681,7 +683,7 @@ export class KybFormService implements FormServiceInterface {
     
     try {
       return await this.submitKybForm(options.taskId, this.formData, options.fileName);
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Error submitting KYB form:', error);
       throw error;
     }
@@ -723,7 +725,7 @@ export class KybFormService implements FormServiceInterface {
       }
       
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('Error submitting KYB form:', error);
       throw error;
     }
