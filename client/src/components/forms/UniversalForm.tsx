@@ -378,16 +378,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         if (taskId) {
           try {
             logger.debug(`Loading saved progress for task ID: ${taskId}`);
+            // Add console log to always be visible
+            console.log(`[DEBUG] Loading saved progress for task ID: ${taskId}`);
             const savedFormData = await formService.loadProgress(taskId);
+            console.log(`[DEBUG] Successfully loaded saved progress:`, savedFormData);
             logger.debug(`Successfully loaded saved progress for task ID: ${taskId}`);
             
             // Critical: Update React Hook Form with the loaded data
             if (savedFormData && Object.keys(savedFormData).length > 0) {
+              console.log(`[DEBUG] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
               logger.debug(`Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
               // Update loadedFormData state to ensure it's available for form initialization
               setLoadedFormData(savedFormData);
               // Reset form with saved values
               form.reset(savedFormData);
+            } else {
+              console.log('[DEBUG] No saved data found or empty data object received');
             }
           } catch (loadError) {
             logger.error(`Error loading saved progress for task ID: ${taskId}:`, loadError);
@@ -513,39 +519,85 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   const handleFieldChange = useCallback((name: string, value: any) => {
-    if (!formService) return;
+    if (!formService) {
+      console.log('[DEBUG] Cannot update field - form service is not available');
+      return;
+    }
     
-    logger.debug(`Field update: ${name} = ${value !== undefined && value !== null ? (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
+    // Enhanced logging that's more visible in console
+    console.log(`[DEBUG UniversalForm] Field update: ${name} = ${value !== undefined && value !== null ? 
+      (typeof value === 'object' ? JSON.stringify(value) : value) : 'empty'}`);
+    
+    // Get current form data before the update
+    let previousData = {};
+    try {
+      previousData = formService.getFormData();
+      console.log(`[DEBUG UniversalForm] Current form data before update has ${Object.keys(previousData).length} fields`);
+    } catch (error) {
+      console.log('[DEBUG UniversalForm] Could not get current form data', error);
+    }
     
     // Update form data in the service
     formService.updateFormData(name, value);
     
+    // Get updated form data after the update
+    let updatedData = {};
+    try {
+      updatedData = formService.getFormData();
+      console.log(`[DEBUG UniversalForm] Form data after update has ${Object.keys(updatedData).length} fields`);
+    } catch (error) {
+      console.log('[DEBUG UniversalForm] Could not get updated form data', error);
+    }
+    
     // Auto-save after changes (debounced)
     if (taskId) {
+      const saveDelay = 1500; // 1.5 seconds delay
+      console.log(`[DEBUG UniversalForm] Preparing to auto-save data for task ID: ${taskId}, field: ${name}, delay: ${saveDelay}ms`);
+      
       // Clear previous timer if it exists
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
+        console.log('[DEBUG UniversalForm] Cleared previous auto-save timer');
       }
       
-      // Set new timer for auto-save (1500ms delay)
+      // Capture current taskId in closure to ensure we're using the right one when timeout fires
+      const currentTaskId = taskId;
+      
+      // Set new timer for auto-save
       saveTimerRef.current = setTimeout(async () => {
         try {
-          logger.debug(`Auto-saving form data for task ID: ${taskId}`);
+          // Before saving, retrieve the latest form data from service
+          const formDataBeforeSave = formService.getFormData();
+          console.log(`[DEBUG UniversalForm] Auto-saving form data for task ID: ${currentTaskId}, 
+            field count: ${Object.keys(formDataBeforeSave).length}`);
+          
+          // Sample some fields for verification
+          const fieldSample = Object.entries(formDataBeforeSave).slice(0, 3);
+          console.log(`[DEBUG UniversalForm] Form data sample before save:`, fieldSample);
+          
+          // Proceed with saving
           const result = await formService.save({
-            taskId,
+            taskId: currentTaskId,
             formType: taskType,
             includeMetadata: true
           });
-          logger.debug(`Auto-save successful: ${result ? 'true' : 'false'}`);
+          
+          console.log(`[DEBUG UniversalForm] Auto-save result: ${result ? 'success' : 'failed'}, 
+            timestamp: ${new Date().toISOString()}`);
         } catch (error) {
+          console.error(`[DEBUG UniversalForm] Auto-save error:`, error);
           logger.error(`Auto-save failed:`, error);
         }
       }, 1500);
+      console.log(`[DEBUG] Set new auto-save timer for task ID: ${currentTaskId}`);
+    } else {
+      console.log('[DEBUG] No taskId available, skipping auto-save');
     }
     
     // Use debounced progress calculation
     if (onProgress) {
       debouncedProgressUpdate(fields);
+      console.log('[DEBUG] Triggered progress update');
     }
   }, [formService, fields, debouncedProgressUpdate, onProgress, taskId, taskType]);
   
