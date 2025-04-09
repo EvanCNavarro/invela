@@ -358,7 +358,22 @@ export class KybFormService implements FormServiceInterface {
         return { formData: {}, progress: 0 };
       }
       
-      const data = await response.json();
+      // Check for empty response before parsing
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        console.warn('[DEBUG KybService] Empty response received from server');
+        return { formData: {}, progress: 0 };
+      }
+      
+      // Safely parse the JSON
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('[DEBUG KybService] Error parsing JSON response:', parseError);
+        return { formData: {}, progress: 0 };
+      }
+      
       console.log(`[DEBUG KybService] Successfully loaded data with ${Object.keys(data.formData || {}).length} fields`);
       
       return {
