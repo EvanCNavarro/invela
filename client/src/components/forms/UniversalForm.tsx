@@ -93,9 +93,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<FormField[]>([]);
   
+  // State to track loaded data
+  const [loadedFormData, setLoadedFormData] = useState<FormData>(initialData);
+  
   // Setup form with validation
   const form = useForm({
-    defaultValues: initialData,
+    defaultValues: loadedFormData,
     resolver: zodResolver(createFormSchema(fields)),
     mode: 'onChange',
   });
@@ -381,6 +384,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             // Critical: Update React Hook Form with the loaded data
             if (savedFormData && Object.keys(savedFormData).length > 0) {
               logger.debug(`Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
+              // Update loadedFormData state to ensure it's available for form initialization
+              setLoadedFormData(savedFormData);
               // Reset form with saved values
               form.reset(savedFormData);
             }
@@ -392,6 +397,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             if (Object.keys(initialData).length > 0) {
               logger.debug(`Using initialData as fallback for task ID: ${taskId}`);
               formService.loadFormData(initialData);
+              // Update loadedFormData state
+              setLoadedFormData(initialData);
               // Reset form with initial data
               form.reset(initialData);
             }
@@ -401,6 +408,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         else if (Object.keys(initialData).length > 0) {
           logger.debug(`No taskId provided, using initialData only`);
           formService.loadFormData(initialData);
+          // Update loadedFormData state
+          setLoadedFormData(initialData);
           // Reset form with initial data
           form.reset(initialData);
         }
