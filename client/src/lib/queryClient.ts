@@ -13,20 +13,42 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(
-  method: string,
-  url: string,
-  data?: unknown | undefined,
-): Promise<Response> {
+export async function apiRequest<T>(
+  methodOrUrl: string,
+  urlOrData?: string | unknown,
+  data?: unknown,
+): Promise<T> {
+  let method: string = 'GET';
+  let url: string;
+  let bodyData: unknown | undefined;
+
+  // Handle both function signatures:
+  // 1. apiRequest<T>(url) - GET request
+  // 2. apiRequest<T>(method, url, data) - method with optional data
+  if (urlOrData === undefined) {
+    // No second parameter, assume methodOrUrl is the URL and this is a GET request
+    url = methodOrUrl;
+    bodyData = undefined;
+  } else if (typeof urlOrData === 'string') {
+    // Second parameter is a string, assume it's the URL and methodOrUrl is the HTTP method
+    method = methodOrUrl;
+    url = urlOrData;
+    bodyData = data;
+  } else {
+    // Second parameter is not a string, assume it's the request data and methodOrUrl is the URL
+    url = methodOrUrl;
+    bodyData = urlOrData;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers: bodyData ? { "Content-Type": "application/json" } : {},
+    body: bodyData ? JSON.stringify(bodyData) : undefined,
     credentials: "include",
   });
 
   await throwIfResNotOk(res);
-  return res;
+  return await res.json() as T;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
