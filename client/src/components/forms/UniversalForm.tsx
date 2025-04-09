@@ -45,11 +45,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     mode: 'onChange',
   });
   
-  // Load template and configuration
+  // Load template and configuration - step 1: fetch template 
   useEffect(() => {
-    const loadTemplate = async () => {
+    const fetchTemplate = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Map task types to their database equivalents
         const taskTypeMap: Record<string, string> = {
@@ -64,41 +65,55 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         // Fetch template configuration from API
         const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
-        setTemplate(templateData);
         
         // Log template data
         console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
         
-        try {
-          // Try to get form service for original task type first
-          const service = componentFactory.getFormService(taskType);
+        // Find the appropriate form service
+        let service = componentFactory.getFormService(taskType);
+        
+        if (service) {
+          console.log(`[UniversalForm] Found form service using original task type: ${taskType}`);
+        } else {
+          // If not found with original task type, try with mapped DB task type
+          service = componentFactory.getFormService(dbTaskType);
           
           if (service) {
-            setFormService(service);
-            console.log(`[UniversalForm] Found form service using original task type: ${taskType}`);
+            console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`);
           } else {
-            // If not found with original task type, try with mapped DB task type
-            const dbService = componentFactory.getFormService(dbTaskType);
-            
-            if (dbService) {
-              setFormService(dbService);
-              console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`);
-            } else {
-              // Last resort - check for a fallback registration
-              throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
-            }
+            // No service found for either task type
+            throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
           }
-        } catch (error) {
-          console.error("[UniversalForm] Error getting form service:", error);
-          throw error;
         }
         
-        // Initialize the form service with the template
-        if (!formService) {
-          throw new Error("Form service not initialized properly");
-        }
+        // First set the template and service states
+        setTemplate(templateData);
+        setFormService(service);
         
-        await formService.initialize(templateData.id);
+        // We'll use a second useEffect to handle initialization once the state is updated
+      } catch (err) {
+        console.error('[UniversalForm] Error loading form template or service:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load form template');
+        setLoading(false);
+      }
+    };
+    
+    fetchTemplate();
+  }, [taskType]); 
+  
+  // Step 2: Initialize service once we have both template and service
+  useEffect(() => {
+    const initializeService = async () => {
+      // Only proceed if we have both template and service
+      if (!template || !formService) {
+        return;
+      }
+      
+      try {
+        console.log(`[UniversalForm] Initializing form service with template ID ${template.id}`);
+        
+        // Initialize the service with template ID
+        await formService.initialize(template.id);
         
         // Load initial data if available
         if (Object.keys(initialData).length > 0) {
@@ -114,14 +129,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         setLoading(false);
       } catch (err) {
-        console.error('Error loading form template:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load form template');
+        console.error('[UniversalForm] Error initializing form service:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize form');
         setLoading(false);
       }
     };
     
-    loadTemplate();
-  }, [taskType, initialData]);
+    initializeService();
+  }, [template, formService, initialData]);
   
   // Handle form submission
   const handleSubmit = async (data: FormData) => {
