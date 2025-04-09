@@ -478,9 +478,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Always call hooks at the top level in the same order
   // This fixes the React hooks order error
   
-  // Memoize form values to prevent infinite renders
-  const formValues = useMemo(() => form.getValues(), []);
+  // Get current form values whenever they change
+  const formValues = form.watch();
   
+  // Use a debounce mechanism to prevent too many updates
   const formProgressState = useFormProgress({
     sections: sections,
     formData: formValues,
