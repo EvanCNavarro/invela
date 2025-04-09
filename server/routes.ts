@@ -435,6 +435,10 @@ export function registerRoutes(app: Express): Express {
     }
   });
   
+  // Network Visualization cache
+  const networkCache = new Map<number, { data: any, timestamp: number }>();
+  const NETWORK_CACHE_TTL = 60 * 1000; // 60 seconds in milliseconds - network data changes less frequently
+  
   // Network Visualization endpoint
   app.get("/api/network/visualization", requireAuth, async (req, res) => {
     try {
@@ -445,8 +449,20 @@ export function registerRoutes(app: Express): Express {
           code: "AUTH_REQUIRED"
         });
       }
-
-      console.log('[Network Visualization] Fetching network data for company:', req.user.company_id);
+      
+      const now = Date.now();
+      const companyId = req.user.company_id;
+      const cachedData = networkCache.get(companyId);
+      
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < NETWORK_CACHE_TTL) {
+        if (Math.random() < 0.1) { // Log only ~10% of cache hits to reduce noise
+          console.log('[Network Visualization] Using cached network data for company:', companyId);
+        }
+        return res.json(cachedData.data);
+      }
+      
+      console.log('[Network Visualization] Fetching network data for company:', companyId);
 
       // 1. Get current company info for the center node
       const [currentCompany] = await db.select({
@@ -551,6 +567,12 @@ export function registerRoutes(app: Express): Express {
       console.log('[Network Visualization] Returning visualization data:', {
         centerNode: responseData.center.name,
         nodeCount: responseData.nodes.length
+      });
+      
+      // Update the cache with fresh data
+      networkCache.set(companyId, {
+        data: responseData,
+        timestamp: now
       });
 
       res.json(responseData);

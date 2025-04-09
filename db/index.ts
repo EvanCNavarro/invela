@@ -5,11 +5,13 @@ import * as schema from "./schema";
 
 neonConfig.webSocketConstructor = ws;
 
+// Connection pooling optimization to reduce the number of connections
 const MAX_CONNECTION_RETRIES = 3;
 const INITIAL_RETRY_DELAY = 1000; // 1 second
-const POOL_SIZE = 5; // Reduced from 10 to minimize excessive connections
-const IDLE_TIMEOUT = 30000; // Increased from 10000 to reduce connection churn
-const MAX_USES = 5000; // Reduced from 7500 for better connection lifecycle
+const POOL_SIZE = 3; // Further reduced pool size to minimize connection messages
+const IDLE_TIMEOUT = 60000; // Extended to 60 seconds to significantly reduce connection churn
+const MAX_USES = 7500; // Increased to reduce connection reuse frequency
+const CONNECTION_TIMEOUT = 60000; // Increased connection timeout to avoid quick timeouts
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -22,7 +24,7 @@ export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: POOL_SIZE,
   idleTimeoutMillis: IDLE_TIMEOUT,
-  connectionTimeoutMillis: 30000,
+  connectionTimeoutMillis: CONNECTION_TIMEOUT,
   maxUses: MAX_USES,
 });
 
@@ -59,15 +61,24 @@ pool.on('error', (err, client) => {
   }
 });
 
-// Reduced noise in connection monitoring
+// Further reduced connection logging - only log first few connections and errors
+let connectCount = 0;
+const MAX_CONNECT_LOGS = 3; // Only log the first 3 connections
+
 pool.on('connect', (client) => {
-  const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] New client connected to the pool`);
+  if (connectCount < MAX_CONNECT_LOGS) {
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] New client connected to the pool (${connectCount + 1}/${POOL_SIZE})`);
+    connectCount++;
+  } else if (connectCount === MAX_CONNECT_LOGS) {
+    console.log(`Suppressing further connection logs. Pool size: ${POOL_SIZE}`);
+    connectCount++;
+  }
   retryCount = 0;
 });
 
-// Only log pool events in development
-if (process.env.NODE_ENV === 'development') {
+// Only enable detailed pool logging in development and when explicitly requested
+if (process.env.NODE_ENV === 'development' && process.env.DEBUG_POOL === 'true') {
   pool.on('acquire', () => {
     console.debug('Client acquired from pool');
   });
