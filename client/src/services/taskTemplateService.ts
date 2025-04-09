@@ -89,82 +89,39 @@ export class TaskTemplateService {
    * @returns Promise with template and configurations
    */
   static async getTemplateByTaskType(taskType: string): Promise<TaskTemplateWithConfigs> {
-    // Create an AbortController for timeout
-    const controller = new AbortController();
-    let timeoutId: number | null = null;
-    
     try {
-      console.log(`[TaskTemplateService] Fetching template for task type: ${taskType} at ${new Date().toISOString()}`);
+      console.log(`[TaskTemplateService] Fetching template for task type: ${taskType}`);
       
       const url = `/api/task-templates/by-type/${taskType}`;
-      console.log(`[TaskTemplateService] Full URL: ${window.location.origin}${url}`);
       
-      // Use direct fetch with credentials to ensure cookies are sent
-      const requestStartTime = Date.now();
-      console.log(`[TaskTemplateService] Starting fetch request at ${new Date(requestStartTime).toISOString()}`);
-      
-      const requestId = `template-by-type-${taskType}-${requestStartTime}`;
-      
-      // Set up timeout
-      timeoutId = window.setTimeout(() => {
-        controller.abort();
-        console.error(`[TaskTemplateService] Request timed out after 10 seconds for task type: ${taskType}`);
-      }, 10000); // 10 second timeout
-      
+      // Simple fetch implementation
       const response = await fetch(url, {
         method: 'GET',
         credentials: 'include',
         headers: {
           'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-Request-ID': requestId
-        },
-        signal: controller.signal
+          'X-Requested-With': 'XMLHttpRequest'
+        }
       });
-      
-      // Clear timeout since the request completed
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-      
-      const requestEndTime = Date.now();
-      const requestDuration = requestEndTime - requestStartTime;
-      
-      console.log(`[TaskTemplateService] Template API response: 
-        - Status: ${response.status} 
-        - StatusText: ${response.statusText}
-        - Duration: ${requestDuration}ms
-        - Task Type: ${taskType}
-        - Request ID: ${requestId}
-        - Time: ${new Date(requestEndTime).toISOString()}
-      `);
       
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`[TaskTemplateService] Error fetching template for task type ${taskType}: HTTP ${response.status}`, errorText);
-        throw new Error(`Failed to fetch template: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(`Failed to fetch template: ${response.status} ${response.statusText}`);
       }
       
-      console.log(`[TaskTemplateService] Starting JSON parsing at ${new Date().toISOString()}`);
       const data = await response.json();
       console.log(`[TaskTemplateService] Successfully fetched template:`, { 
         templateId: data.id,
         templateName: data.name,
         taskType: data.task_type,
-        configCount: data.configurations?.length || 0,
-        time: new Date().toISOString()
+        configCount: data.configurations?.length || 0
       });
       
       return data;
     } catch (error) {
       console.error('[TaskTemplateService] Error fetching task template by type:', error);
       throw error;
-    } finally {
-      // Clean up timeout if it still exists
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
     }
   }
   
