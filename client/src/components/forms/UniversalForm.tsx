@@ -28,8 +28,10 @@ type FormSection = NavigationFormSection;
  */
 const toNavigationSections = (serviceSections: ServiceFormSection[]): NavigationFormSection[] => {
   return serviceSections.map(section => {
-    // Debug section fields content
-    console.log(`[toNavigationSections] Section ${section.id} (${section.title}) has fields:`, section.fields || 'none');
+    // Only log in development environment and not in production
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
+      console.log(`[toNavigationSections] Section ${section.id} (${section.title}) has fields:`, section.fields || 'none');
+    }
     
     return {
       id: section.id,
@@ -99,7 +101,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     
     // If the sections already have fields attached, use those
     if (sections.length > 0 && sections[0].fields && sections[0].fields.length > 0) {
-      console.log(`[UniversalForm] Using pre-populated fields from sections`);
+      // Only log in development and not in production
+      if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
+        console.log(`[UniversalForm] Using pre-populated fields from sections`);
+      }
       return sections.map(section => ({
         id: section.id,
         title: section.title,
@@ -108,7 +113,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
     
     // Otherwise, filter fields by section ID (fallback approach)
-    console.log(`[UniversalForm] Filtering fields by section ID`);
+    if (process.env.NODE_ENV === 'development' && false) { // Disabled for now to reduce noise
+      console.log(`[UniversalForm] Filtering fields by section ID`);
+    }
     return sections.map(section => ({
       id: section.id,
       title: section.title,
