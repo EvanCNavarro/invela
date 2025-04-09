@@ -97,38 +97,87 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         console.log(`[UniversalForm] Template fetch attempt ${initializationAttempts + 1}/${MAX_INITIALIZATION_ATTEMPTS} for ${dbTaskType}`);
         
         // Fetch template configuration from API
-        console.log(`[UniversalForm] Making template fetch request at ${new Date().toISOString()}`);
-        const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
-        console.log(`[UniversalForm] Template fetch response received at ${new Date().toISOString()}`);
+        console.log(`[UniversalForm] Making template fetch request for ${dbTaskType} at ${new Date().toISOString()}`);
+        console.log(`[UniversalForm] Request details:`, {
+          taskId,
+          originalTaskType: taskType,
+          mappedTaskType: dbTaskType,
+          requestId,
+          attemptNumber: initializationAttempts + 1,
+          timestamp: new Date().toISOString()
+        });
         
-        // Check if this request is still relevant after the async operation
-        if (templateRequestId !== requestId) {
-          console.log(`[UniversalForm] Discarding stale response: ${requestId}`);
-          return;
+        let templateData;
+        try {
+          templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
+          console.log(`[UniversalForm] Template fetch response received at ${new Date().toISOString()}`);
+          console.log(`[UniversalForm] Template data:`, {
+            id: templateData.id,
+            name: templateData.name,
+            taskType: templateData.task_type, 
+            component: templateData.component_type,
+            configCount: templateData.configurations?.length
+          });
+          
+          // Check if this request is still relevant after the async operation
+          if (templateRequestId !== requestId) {
+            console.log(`[UniversalForm] Discarding stale response: ${requestId}`);
+            return;
+          }
+          
+          // Log template data
+          console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
+        } catch (error) {
+          console.error(`[UniversalForm] Template fetch error for ${dbTaskType}:`, error);
+          console.log(`[UniversalForm] Will attempt to continue anyway and check service registration`);
+          // We'll continue execution and try to get the service, even without template
         }
         
-        // Log template data
-        console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
+        // Debug: Check if services are registered
+        console.log('[UniversalForm] DEBUG: Checking service registration');
+        const allServices = componentFactory.getRegisteredFormServices();
+        const serviceKeys = Object.keys(allServices);
+        console.log(`[UniversalForm] Available services: [${serviceKeys.join(', ')}]`);
+        
+        // Debug: Explicitly check for kyb service
+        const kybServiceCheck = componentFactory.getFormService('kyb');
+        console.log('[UniversalForm] KYB service available:', !!kybServiceCheck, 
+          kybServiceCheck ? `(${kybServiceCheck.constructor.name})` : '');
         
         // Find the appropriate form service
+        console.log(`[UniversalForm] Looking for form service for task type: ${taskType}`);
         let service = componentFactory.getFormService(taskType);
         
         if (service) {
-          console.log(`[UniversalForm] Found form service using original task type: ${taskType}`);
+          console.log(`[UniversalForm] Found form service using original task type: ${taskType}`, {
+            serviceType: service.constructor.name
+          });
         } else {
           // If not found with original task type, try with mapped DB task type
+          console.log(`[UniversalForm] No service found for ${taskType}, trying with DB task type: ${dbTaskType}`);
           service = componentFactory.getFormService(dbTaskType);
           
           if (service) {
-            console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`);
+            console.log(`[UniversalForm] Found form service using mapped DB task type: ${dbTaskType}`, {
+              serviceType: service.constructor.name
+            });
           } else {
             // No service found for either task type
+            console.error(`[UniversalForm] No service found for either ${taskType} or ${dbTaskType}`);
             throw new Error(`No form service registered for task types: ${taskType} or ${dbTaskType}`);
           }
         }
         
-        // First set the template and service states
-        setTemplate(templateData);
+        // First set the template and service states - template might be undefined if there was an error
+        console.log(`[UniversalForm] Setting template:`, templateData ? { 
+          id: templateData.id, 
+          name: templateData.name 
+        } : 'null');
+        setTemplate(templateData || null);
+        
+        console.log(`[UniversalForm] Setting form service:`, {
+          serviceType: service ? service.constructor.name : 'null'
+        });
         setFormService(service);
         
         // We'll use a second useEffect to handle initialization once the state is updated
