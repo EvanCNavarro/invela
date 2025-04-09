@@ -634,18 +634,12 @@ export class KybFormService implements FormServiceInterface {
       
       console.log(`[DEBUG KybService] Sending save progress API request at ${new Date().toISOString()}`);
       
-      // Create an AbortController to handle timeout
+      // Create an AbortController for timeout handling
       const controller = new AbortController();
       
-      // Use a timeout that automatically checks if controller is still valid
-      setTimeout(() => {
-        try {
-          if (controller.signal.aborted === false) {
-            controller.abort();
-          }
-        } catch (e) {
-          console.error('Error during abort:', e);
-        }
+      // Set a simple timeout that aborts the request after the specified time
+      const timeoutId = setTimeout(() => {
+        controller.abort();
       }, 10000); // 10 second timeout
       
       try {
@@ -744,20 +738,12 @@ export class KybFormService implements FormServiceInterface {
       // Use direct fetch with credentials with timeout handling
       console.log(`[DEBUG KybService] Sending API request at ${new Date().toISOString()}`);
       
-      // Create an AbortController to handle timeout
+      // Create an AbortController for timeout handling
       const controller = new AbortController();
       
-      // Use a reference that doesn't need to be cleared
-      setTimeout(() => {
-        try {
-          // Only abort if the request is still pending
-          // This prevents "signal is aborted without reason" errors
-          if (controller.signal.aborted === false) {
-            controller.abort();
-          }
-        } catch (e) {
-          console.error('Error during abort:', e);
-        }
+      // Set a simple timeout that aborts the request after the specified time
+      const timeoutId = setTimeout(() => {
+        controller.abort();
       }, 5000); // 5 second timeout
       
       try {
