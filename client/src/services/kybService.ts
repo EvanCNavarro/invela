@@ -141,17 +141,33 @@ export class KybFormService implements FormServiceInterface {
       const fieldGroups = this.groupFieldsBySection(kybFields);
       console.log(`[KYB Service] Created ${Object.keys(fieldGroups).length} field groups`);
       
-      // Create sections from groups
-      this.sections = Object.entries(fieldGroups).map(([groupName, groupFields], index) => {
-        console.log(`[KYB Service] Processing group: ${groupName} with ${groupFields.length} fields`);
-        return {
-          id: groupName,
-          title: groupName,
-          order: index,
-          collapsed: false,
-          fields: groupFields.map(field => this.convertToFormField(field))
-        };
-      });
+      // Define section display order with properly normalized section names
+      // This ensures consistent section naming throughout the application
+      const sectionOrder = [
+        { id: "Company Profile", title: "Company Profile" },
+        { id: "Governance & Leadership", title: "Governance & Leadership" },
+        { id: "Financial Profile", title: "Financial Profile" },
+        { id: "Operations & Compliance", title: "Operations & Compliance" }
+      ];
+      
+      // Log all available field groups for debugging
+      console.log(`[KYB Service] Available field groups: ${Object.keys(fieldGroups).join(', ')}`);
+      
+      // Create sections in the predefined order using our normalized section names
+      this.sections = sectionOrder
+        .filter(section => fieldGroups[section.id]) // Only include sections that have fields
+        .map((section, index) => {
+          const groupFields = fieldGroups[section.id] || [];
+          console.log(`[KYB Service] Processing group: ${section.id} with ${groupFields.length} fields`);
+          return {
+            id: section.id,
+            title: section.title,
+            order: index,
+            collapsed: false,
+            // Convert fields using our normalization-aware converter
+            fields: groupFields.map(field => this.convertToFormField(field))
+          };
+        });
       
       console.log(`[KYB Service] Created ${this.sections.length} sections`);
       
@@ -325,15 +341,69 @@ export class KybFormService implements FormServiceInterface {
    * @param fields Array of KYB fields to group
    * @returns Object with group names as keys and arrays of fields as values
    */
+  /**
+   * Get the standardized section name mapping dictionary
+   * This ensures consistent section name normalization across the service
+   * @returns Record mapping various section name formats to their standardized version
+   */
+  private getSectionNormalizationMap(): Record<string, string> {
+    return {
+      // Map camelCase to display format
+      "companyProfile": "Company Profile",
+      "governanceLeadership": "Governance & Leadership",
+      "financialProfile": "Financial Profile",
+      "operationsCompliance": "Operations & Compliance",
+      
+      // Map lowercase to display format for case-insensitive matching
+      "company profile": "Company Profile",
+      "governance & leadership": "Governance & Leadership",
+      "financial profile": "Financial Profile", 
+      "operations & compliance": "Operations & Compliance"
+    };
+  }
+  
+  /**
+   * Normalize a section/group name to its standardized display format
+   * @param groupName The section/group name to normalize
+   * @returns The normalized section name
+   */
+  private normalizeSectionName(groupName: string): string {
+    const normalizedGroups = this.getSectionNormalizationMap();
+    
+    // Try exact match, then lowercase match, or fall back to original
+    const normalizedName = normalizedGroups[groupName] || 
+                         normalizedGroups[groupName.toLowerCase()] || 
+                         groupName;
+                         
+    // Log for debugging if a normalization happened
+    if (normalizedName !== groupName) {
+      console.log(`[KYB Service] Normalized section name: "${groupName}" → "${normalizedName}"`);
+    }
+    
+    return normalizedName;
+  }
+  
+  /**
+   * Groups KYB fields by their group property
+   * Normalizes section names to avoid duplicates like "Company Profile" and "companyProfile"
+   * @param fields Array of KYB fields to group
+   * @returns Object with normalized group names as keys and arrays of fields as values
+   */
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
     const groups: Record<string, KybField[]> = {};
     
+    // Group the fields using normalized section names
     for (const field of fields) {
-      if (!groups[field.group]) {
-        groups[field.group] = [];
+      // Get normalized group name
+      const normalizedGroup = this.normalizeSectionName(field.group);
+      
+      // Ensure the group exists in our collection
+      if (!groups[normalizedGroup]) {
+        groups[normalizedGroup] = [];
       }
       
-      groups[field.group].push(field);
+      // Add the field to the normalized group
+      groups[normalizedGroup].push(field);
     }
     
     // Sort fields within each group by their order property
@@ -346,15 +416,19 @@ export class KybFormService implements FormServiceInterface {
   
   /**
    * Convert KybField from database to FormField format for the form
+   * Also normalizes the section name to ensure consistent grouping
    * @param field KYB field from the API
    * @returns FormField object ready for the universal form
    */
   convertToFormField(field: KybField): FormField {
+    // Use the common normalization helper for consistency
+    const normalizedSection = this.normalizeSectionName(field.group);
+    
     return {
       key: field.field_key,
       label: field.display_name,
       type: field.field_type,
-      section: field.group,
+      section: normalizedSection, // Use the normalized section name
       placeholder: field.question,
       helpText: field.help_text || undefined,
       validation: {
