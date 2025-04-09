@@ -65,10 +65,21 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         case 'multi-line':
         case 'single-line':
         default:
-          return '';
+          return ''; // Always return empty string, never undefined or null
       }
     }
-    return value;
+    
+    // Convert values to appropriate types for each field
+    switch (type) {
+      case 'checkbox':
+        return Boolean(value); // Ensure boolean for checkboxes
+      case 'dropdown':
+        return String(value); // Ensure string for dropdowns
+      case 'multi-line':
+      case 'single-line':
+      default:
+        return String(value); // Ensure string for text inputs
+    }
   };
 
   // Function to render the appropriate input component based on type
