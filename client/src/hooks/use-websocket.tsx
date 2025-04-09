@@ -33,24 +33,51 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
   // Effect to manage WebSocket connection
   useEffect(() => {
+    let autoConnectTimer: ReturnType<typeof setTimeout>;
+    
     // Only attempt connection if autoConnect is true and we haven't tried connecting yet
+    // Add a short delay to avoid connection race conditions during initial load
     if (autoConnect && !hasConnected.current) {
       hasConnected.current = true;
       setStatus('connecting');
       
-      // Attempt a connection which will trigger our onOpen event on success
-      webSocketService.connect()
-        .then(() => {
-          setStatus('connected');
-          if (onOpen) onOpen();
-        })
-        .catch((error) => {
-          setStatus('error');
-          if (onError) onError(error);
-        });
+      // Small delay to let React finish rendering and avoid race conditions
+      autoConnectTimer = setTimeout(() => {
+        console.log('[WebSocket Hook] Auto-connecting after delay');
+        
+        // Attempt a connection which will trigger our onOpen event on success
+        webSocketService.connect()
+          .then(() => {
+            setStatus('connected');
+            if (onOpen) onOpen();
+          })
+          .catch((error) => {
+            console.error('[WebSocket Hook] Connection error:', error);
+            setStatus('error');
+            if (onError) onError(error instanceof Event ? error : new Event('error'));
+            
+            // If initial auto-connect fails, try once more after a pause
+            setTimeout(() => {
+              console.log('[WebSocket Hook] Retrying connection once after failure');
+              webSocketService.connect()
+                .then(() => {
+                  setStatus('connected');
+                  if (onOpen) onOpen();
+                })
+                .catch((retryError) => {
+                  console.error('[WebSocket Hook] Retry connection error:', retryError);
+                  setStatus('error');
+                  // Give up after one retry to avoid infinite connection loops
+                });
+            }, 1500); // Wait 1.5s before retry
+          });
+      }, 500); // Wait 0.5s before initial connection
     }
 
     return () => {
+      // Clean up delayed auto-connect if component unmounts
+      clearTimeout(autoConnectTimer);
+      
       // Clean up all subscriptions
       subscribedEvents.current.forEach(eventType => {
         const handlersMap = unsubscribeFunctions.current.get(eventType);
@@ -74,15 +101,27 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
     
+    // Create an abort timeout to avoid hanging in connecting state
+    const abortTimeout = setTimeout(() => {
+      if (status === 'connecting') {
+        console.warn('[WebSocket Hook] Connect operation timed out after 5s');
+        setStatus('error');
+        if (onError) onError(new Event('timeout'));
+      }
+    }, 5000);
+    
     setStatus('connecting');
     webSocketService.connect()
       .then(() => {
+        clearTimeout(abortTimeout);
         setStatus('connected');
         if (onOpen) onOpen();
       })
       .catch((error) => {
+        clearTimeout(abortTimeout);
+        console.error('[WebSocket Hook] Connect error:', error);
         setStatus('error');
-        if (onError) onError(error);
+        if (onError) onError(error instanceof Event ? error : new Event('error'));
       });
   }, [status, onOpen, onError]);
 
