@@ -371,8 +371,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         logger.debug(`Proceeding with service initialization (ID: ${initId})`);
         
-        // Load initial data if available
-        if (Object.keys(initialData).length > 0) {
+        // If we have a taskId, load saved progress from the server
+        if (taskId) {
+          try {
+            logger.debug(`Loading saved progress for task ID: ${taskId}`);
+            await formService.loadProgress(taskId);
+            logger.debug(`Successfully loaded saved progress for task ID: ${taskId}`);
+          } catch (loadError) {
+            logger.error(`Error loading saved progress for task ID: ${taskId}:`, loadError);
+            // Continue with initialization even if loading saved progress fails
+            
+            // If loading from server fails but we have initialData, use that instead
+            if (Object.keys(initialData).length > 0) {
+              logger.debug(`Using initialData as fallback for task ID: ${taskId}`);
+              formService.loadFormData(initialData);
+            }
+          }
+        }
+        // If no taskId but we have initialData, load it into the service
+        else if (Object.keys(initialData).length > 0) {
+          logger.debug(`No taskId provided, using initialData only`);
           formService.loadFormData(initialData);
         }
         
