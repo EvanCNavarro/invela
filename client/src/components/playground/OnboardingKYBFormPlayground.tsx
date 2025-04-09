@@ -2361,7 +2361,37 @@ export const OnboardingKYBFormPlayground = ({
                         // 2. It's the next step and the current step is valid
                         // 3. Its prior step is fully completed
                         if (isClickable) {
+                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: User clicked numbered step', {
+                            status: 'START',
+                            fromStep: currentStep,
+                            toStep: index,
+                            timestamp: new Date().toISOString()
+                          });
+                          
+                          // Preserve form data during step transition
+                          const preservedFormData = {...formData};
+                          
+                          // Navigate to the clicked step
                           setCurrentStep(index);
+                          
+                          // Restore form data after state change
+                          setTimeout(() => {
+                            setFormData(preservedFormData);
+                            console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Navigation complete', {
+                              status: 'SUCCESS',
+                              fromStep: currentStep,
+                              toStep: index,
+                              preservedDataFields: Object.keys(preservedFormData).length,
+                              timestamp: new Date().toISOString()
+                            });
+                          }, 10);
+                        } else {
+                          console.log('[KYB Form Debug] DIRECT STEP NAVIGATION: Step not clickable', {
+                            status: 'CANCELLED',
+                            attemptedStep: index,
+                            isClickable,
+                            timestamp: new Date().toISOString()
+                          });
                         }
                       }}
                     >
