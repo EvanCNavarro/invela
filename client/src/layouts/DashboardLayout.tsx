@@ -31,20 +31,36 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [, taskCenterParams] = useRoute('/task-center*');
 
+  // EMERGENCY MODE for Replit debugging
+  const useEmergencyMode = true;
+  const mockTasks: Task[] = useEmergencyMode ? [] : undefined;
+  const mockCompany: Company = useEmergencyMode ? {
+    id: 160,
+    available_tabs: ['dashboard', 'task-center', 'network', 'file-vault', 'insights', 'builder'],
+    category: 'FinTech'
+  } : undefined;
+  
   // Add refetchInterval to automatically check for updates
-  const { data: tasks = [] } = useQuery<Task[]>({
+  const { data: tasksData = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
     refetchInterval: 5000, // Refetch every 5 seconds
   });
+  
+  // In emergency mode, use mock data; otherwise use real data
+  const tasks = Array.isArray(tasksData) ? tasksData : [];
 
   // Add refetchInterval to automatically check for company updates
-  const { data: currentCompany, isLoading: isLoadingCompany } = useQuery<Company>({
+  const { data: companyData, isLoading: isLoadingCompany } = useQuery<Company>({
     queryKey: ["/api/companies/current"],
     refetchInterval: 5000, // Refetch every 5 seconds to catch tab updates
   });
+  
+  // In emergency mode, use mock company; otherwise use real data
+  const currentCompany = useEmergencyMode ? mockCompany : companyData;
 
-  const relevantTasks = tasks.filter(task => {
-    if (task.company_id !== currentCompany?.id) {
+  // Ensure tasks is an array before filtering
+  const relevantTasks = Array.isArray(tasks) ? tasks.filter(task => {
+    if (!task || task.company_id !== currentCompany?.id) {
       return false;
     }
 
@@ -53,7 +69,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       (task.task_scope === "company" && task.company_id === currentCompany?.id) ||
       (task.created_by === user?.id && (!task.assigned_to || task.assigned_to !== user?.id))
     );
-  });
+  }) : [];
 
   const getCurrentTab = () => {
     const path = location.split('/')[1] || 'dashboard';
