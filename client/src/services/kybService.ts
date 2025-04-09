@@ -613,7 +613,7 @@ export class KybFormService implements FormServiceInterface {
       this.logger.info(`Saving progress for task ${taskId}, progress: ${progress}%`);
       
       // Use direct fetch with credentials
-      const response = await fetch(`/api/kyb/progress/${taskId}`, {
+      const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -623,6 +623,7 @@ export class KybFormService implements FormServiceInterface {
           'X-Request-ID': `kyb-progress-${taskId}-${Date.now()}`
         },
         body: JSON.stringify({
+          taskId,
           progress,
           formData
         })
