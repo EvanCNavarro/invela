@@ -54,15 +54,46 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   const enableAiSuggestions = mergedConfig.enableAiSuggestions === true;
   const enableRiskAnalysis = mergedConfig.enableRiskAnalysis === true;
   
+  // Function to normalize field values to prevent controlled/uncontrolled input warnings
+  const getNormalizedValue = (value: any, type: string): any => {
+    // Ensure value is never undefined - always provide appropriate defaults by type
+    if (value === undefined || value === null) {
+      switch (type) {
+        case 'checkbox':
+          return false;
+        case 'dropdown':
+        case 'multi-line':
+        case 'single-line':
+        default:
+          return '';
+      }
+    }
+    return value;
+  };
+
   // Function to render the appropriate input component based on type
   const renderInputComponent = (fieldProps: any) => {
+    // Always normalize the field value to ensure consistent types
+    const normalizedValue = getNormalizedValue(fieldProps.value, componentType);
+    
+    // Create a modified fieldProps with normalized value
+    const modifiedFieldProps = {
+      ...fieldProps,
+      value: normalizedValue,
+      onChange: fieldProps.onChange  // Keep the original onChange handler
+    };
+    
+    // Log normalized values for debugging
+    // console.log(`[FieldRenderer] Field ${field.key} normalized value: "${normalizedValue}" (${typeof normalizedValue})`);
+    
     switch (componentType) {
       case 'multi-line':
         return (
           <Textarea
-            {...fieldProps}
+            {...modifiedFieldProps}
+            value={normalizedValue}  // Explicitly set value to ensure it's controlled
             placeholder={field.placeholder || ''}
-            className="min-h-[120px]"
+            className="min-h-[120px] bg-white"
             onChange={(e) => {
               fieldProps.onChange(e);
               onFieldChange?.(e.target.value);
@@ -73,7 +104,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       case 'dropdown':
         return (
           <Select
-            value={fieldProps.value || ''}
+            value={String(normalizedValue)}  // Ensure value is a string, never undefined
             onValueChange={(value) => {
               fieldProps.onChange(value);
               onFieldChange?.(value);
@@ -100,7 +131,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       case 'checkbox':
         return (
           <Checkbox
-            checked={!!fieldProps.value}
+            checked={Boolean(normalizedValue)}  // Explicitly convert to boolean
             onCheckedChange={(checked) => {
               fieldProps.onChange(checked);
               onFieldChange?.(checked);
@@ -114,8 +145,10 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       default:
         return (
           <Input
-            {...fieldProps}
+            {...modifiedFieldProps}
+            value={normalizedValue}  // Explicitly set value to ensure it's controlled
             placeholder={field.placeholder || ''}
+            className="bg-white"
             onChange={(e) => {
               fieldProps.onChange(e);
               onFieldChange?.(e.target.value);
