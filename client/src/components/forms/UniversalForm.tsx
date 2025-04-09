@@ -45,6 +45,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     mode: 'onChange',
   });
   
+  // When fields or initialData change, reset the form with the new values
+  useEffect(() => {
+    if (fields.length > 0) {
+      form.reset(initialData);
+    }
+  }, [fields, initialData, form]);
+  
   // Load template and configuration - step 1: fetch template 
   useEffect(() => {
     const fetchTemplate = async () => {
@@ -290,10 +297,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 ))}
               </div>
             ) : (
-              // If there are multiple sections, use Tabs component
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              // If there are multiple sections, use Tabs component with a unique ID
+              <div className="content-tabs">
                 {/* Render all fields if "all" tab is active */}
-                <TabsContent value="all" className="mt-0">
+                {activeTab === 'all' && (
                   <div className="space-y-6">
                     {sections.map(section => (
                       <SectionRenderer
@@ -305,12 +312,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       />
                     ))}
                   </div>
-                </TabsContent>
+                )}
                 
                 {/* Render section tabs */}
                 {sectionTabs.map(tab => (
-                  <TabsContent key={tab.id} value={tab.id} className="mt-0">
-                    <div className="space-y-4">
+                  activeTab === tab.id && (
+                    <div key={tab.id} className="space-y-4">
                       {tab.fields.map(field => (
                         <FieldRenderer
                           key={field.key}
@@ -321,9 +328,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         />
                       ))}
                     </div>
-                  </TabsContent>
+                  )
                 ))}
-              </Tabs>
+              </div>
             )}
             
             <div className="flex justify-end space-x-2 pt-4">
