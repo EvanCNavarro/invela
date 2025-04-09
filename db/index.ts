@@ -105,9 +105,13 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Migrations have already been applied successfully to the database,
-// so we're disabling automatic migrations on startup to prevent issues.
-console.log('Database migrations are disabled on startup - use the CLI tool to run migrations if needed.');
-
-// If you need to run migrations manually, use:
-// npx tsx run-migrations.ts
+// Run migrations on startup
+(async () => {
+  try {
+    console.log('Running database migrations...');
+    await runMigrations();
+    console.log('Database migrations completed successfully');
+  } catch (error) {
+    console.error('Failed to run migrations:', error);
+  }
+})();

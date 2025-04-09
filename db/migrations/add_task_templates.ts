@@ -9,50 +9,28 @@ export async function up() {
   console.log('Adding task templates and configurations...');
 
   try {
-    // Check if KYB template already exists
-    const existingKybTemplate = await db.query.taskTemplates.findFirst({
-      where: (templates, { eq }) => eq(templates.task_type, 'company_kyb')
-    });
-    
-    let kybTemplate;
-    
-    if (existingKybTemplate) {
-      console.log(`KYB template already exists with ID: ${existingKybTemplate.id}`);
-      kybTemplate = existingKybTemplate;
-    } else {
-      // Create a new KYB task template if it doesn't exist
-      const [newKybTemplate] = await db.insert(taskTemplates)
-        .values({
-          name: 'Know Your Business (KYB) Form',
-          description: 'Standard KYB form for collecting company information',
-          task_type: 'company_kyb',
-          component_type: 'form',
-          status: 'ACTIVE',
-        })
-        .returning();
-        
-      console.log(`Created new KYB template with ID: ${newKybTemplate.id}`);
-      kybTemplate = newKybTemplate;
-    }
+    // First, let's create a KYB task template
+    const [kybTemplate] = await db.insert(taskTemplates)
+      .values({
+        name: 'Know Your Business (KYB) Form',
+        description: 'Standard KYB form for collecting company information',
+        task_type: 'company_kyb',
+        component_type: 'form',
+        status: 'ACTIVE',
+      })
+      .returning();
 
     console.log(`Created KYB template with ID: ${kybTemplate.id}`);
 
-    // Check if there are existing configurations for this template
-    const existingKybConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq }) => eq(configs.template_id, kybTemplate.id)
-    });
-    
-    // Add global configurations for KYB if they don't exist yet
-    if (existingKybConfigs.length === 0) {
-      console.log(`Adding configurations for KYB template ID: ${kybTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
-          {
-            template_id: kybTemplate.id,
-            config_key: 'enableAiSuggestions',
-            config_value: true,
-            scope: 'global',
-          },
+    // Add global configurations for KYB
+    await db.insert(componentConfigurations)
+      .values([
+        {
+          template_id: kybTemplate.id,
+          config_key: 'enableAiSuggestions',
+          config_value: true,
+          scope: 'global',
+        },
         {
           template_id: kybTemplate.id,
           config_key: 'defaultFieldType',
@@ -79,20 +57,9 @@ export async function up() {
         },
       ]);
 
-    }
-    
-    // Add specific field overrides for KYB if they don't exist
-    const existingKybFieldConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq, and }) => and(
-        eq(configs.template_id, kybTemplate.id),
-        eq(configs.scope, 'field')
-      )
-    });
-    
-    if (existingKybFieldConfigs.length === 0) {
-      console.log(`Adding field configurations for KYB template ID: ${kybTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
+    // Add specific field overrides for KYB
+    await db.insert(componentConfigurations)
+      .values([
         {
           template_id: kybTemplate.id,
           config_key: 'fieldType',
@@ -122,49 +89,23 @@ export async function up() {
           scope_target: 'business-model',
         },
       ]);
-    }
 
-    // Check if CARD template already exists
-    const existingCardTemplate = await db.query.taskTemplates.findFirst({
-      where: (templates, { eq }) => eq(templates.task_type, 'card_application')
-    });
-    
-    let cardTemplate;
-    
-    if (existingCardTemplate) {
-      console.log(`CARD template already exists with ID: ${existingCardTemplate.id}`);
-      cardTemplate = existingCardTemplate;
-    } else {
-      // Create a new CARD template if it doesn't exist
-      const [newCardTemplate] = await db.insert(taskTemplates)
-        .values({
-          name: 'Card Application Form',
-          description: 'Application form for banking card products',
-          task_type: 'card_application',
-          component_type: 'form',
-          status: 'ACTIVE',
-        })
-        .returning();
-        
-      console.log(`Created new CARD template with ID: ${newCardTemplate.id}`);
-      cardTemplate = newCardTemplate;
-    }
+    // Now, create CARD form template
+    const [cardTemplate] = await db.insert(taskTemplates)
+      .values({
+        name: 'Card Application Form',
+        description: 'Application form for banking card products',
+        task_type: 'card_application',
+        component_type: 'form',
+        status: 'ACTIVE',
+      })
+      .returning();
 
     console.log(`Created CARD template with ID: ${cardTemplate.id}`);
 
-    // Check if there are existing configurations for the CARD template
-    const existingCardConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq, and }) => and(
-        eq(configs.template_id, cardTemplate.id),
-        eq(configs.scope, 'global')
-      )
-    });
-    
-    // Add global configurations for CARD if they don't exist
-    if (existingCardConfigs.length === 0) {
-      console.log(`Adding global configurations for CARD template ID: ${cardTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
+    // Add global configurations for CARD
+    await db.insert(componentConfigurations)
+      .values([
         {
           template_id: cardTemplate.id,
           config_key: 'enableAiSuggestions',
@@ -196,21 +137,10 @@ export async function up() {
           scope: 'global',
         },
       ]);
-    }
 
-    // Check if there are existing field configurations for the CARD template
-    const existingCardFieldConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq, and }) => and(
-        eq(configs.template_id, cardTemplate.id),
-        eq(configs.scope, 'field')
-      )
-    });
-    
-    // Add specific field overrides for CARD if they don't exist
-    if (existingCardFieldConfigs.length === 0) {
-      console.log(`Adding field configurations for CARD template ID: ${cardTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
+    // Add specific field overrides for CARD
+    await db.insert(componentConfigurations)
+      .values([
         {
           template_id: cardTemplate.id,
           config_key: 'fieldType',
@@ -240,49 +170,23 @@ export async function up() {
           scope_target: 'card-type',
         },
       ]);
-    }
 
-    // Check if Security template already exists
-    const existingSecurityTemplate = await db.query.taskTemplates.findFirst({
-      where: (templates, { eq }) => eq(templates.task_type, 'security_assessment')
-    });
-    
-    let securityTemplate;
-    
-    if (existingSecurityTemplate) {
-      console.log(`Security template already exists with ID: ${existingSecurityTemplate.id}`);
-      securityTemplate = existingSecurityTemplate;
-    } else {
-      // Create a new Security template if it doesn't exist
-      const [newSecurityTemplate] = await db.insert(taskTemplates)
-        .values({
-          name: 'Security Assessment Form',
-          description: 'Security assessment for system integrations',
-          task_type: 'security_assessment',
-          component_type: 'form',
-          status: 'ACTIVE',
-        })
-        .returning();
-        
-      console.log(`Created new Security template with ID: ${newSecurityTemplate.id}`);
-      securityTemplate = newSecurityTemplate;
-    }
+    // Finally, create Security Assessment template
+    const [securityTemplate] = await db.insert(taskTemplates)
+      .values({
+        name: 'Security Assessment Form',
+        description: 'Security assessment for system integrations',
+        task_type: 'security_assessment',
+        component_type: 'form',
+        status: 'ACTIVE',
+      })
+      .returning();
 
     console.log(`Created Security template with ID: ${securityTemplate.id}`);
 
-    // Check if there are existing configurations for the Security template
-    const existingSecurityConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq, and }) => and(
-        eq(configs.template_id, securityTemplate.id),
-        eq(configs.scope, 'global')
-      )
-    });
-    
-    // Add global configurations for Security if they don't exist
-    if (existingSecurityConfigs.length === 0) {
-      console.log(`Adding global configurations for Security template ID: ${securityTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
+    // Add global configurations for Security
+    await db.insert(componentConfigurations)
+      .values([
         {
           template_id: securityTemplate.id,
           config_key: 'enableAiSuggestions',
@@ -315,21 +219,9 @@ export async function up() {
         },
       ]);
 
-    }
-    
-    // Check if there are existing section configurations for the Security template
-    const existingSecuritySectionConfigs = await db.query.componentConfigurations.findMany({
-      where: (configs, { eq, and }) => and(
-        eq(configs.template_id, securityTemplate.id),
-        eq(configs.scope, 'section')
-      )
-    });
-    
-    // Add section configurations for Security if they don't exist
-    if (existingSecuritySectionConfigs.length === 0) {
-      console.log(`Adding section configurations for Security template ID: ${securityTemplate.id}`);
-      await db.insert(componentConfigurations)
-        .values([
+    // Add section configurations for Security
+    await db.insert(componentConfigurations)
+      .values([
         {
           template_id: securityTemplate.id,
           config_key: 'sectionTitle',
@@ -359,7 +251,6 @@ export async function up() {
           scope_target: 'authentication',
         },
       ]);
-    }
 
     console.log('Successfully added all task templates and configurations');
     return { success: true };
