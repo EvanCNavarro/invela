@@ -45,8 +45,13 @@ export class KybFormService implements FormServiceInterface {
    * Initialize the KYB form service
    * @param templateId ID of the task template
    */
+  // Static cache for fields to prevent redundant API calls
+  private static fieldsCache: Record<number, KybField[]> = {};
+  private static initializationPromise: Record<number, Promise<void>> = {};
+  
   async initialize(templateId: number): Promise<void> {
-    this.logger.info(`Initialize called with templateId: ${templateId}, already initialized: ${this.initialized}, time: ${new Date().toISOString()}`);
+    // Only log at debug level to reduce console noise
+    this.logger.debug(`Initialize called with templateId: ${templateId}, already initialized: ${this.initialized}, time: ${new Date().toISOString()}`);
     
     // Add a check for invalid template ID
     if (!templateId || isNaN(templateId)) {
@@ -54,84 +59,88 @@ export class KybFormService implements FormServiceInterface {
       throw new Error(`Invalid KYB template ID: ${templateId}`);
     }
     
+    // If we're already initialized, just return immediately
     if (this.initialized) {
-      this.logger.info('Already initialized, returning early');
+      this.logger.debug('Already initialized, returning early');
       return;
     }
     
+    // If another initialization is in progress for this template, wait for it
+    if (KybFormService.initializationPromise[templateId]) {
+      this.logger.debug(`Another initialization in progress for template ${templateId}, waiting for it to complete`);
+      await KybFormService.initializationPromise[templateId];
+      
+      // If we're now initialized (by the other process), just return
+      if (this.initialized) {
+        this.logger.debug('Initialization completed by another instance');
+        return;
+      }
+    }
+    
+    // Start a new initialization and track the promise
+    const initPromise = this._initialize(templateId);
+    KybFormService.initializationPromise[templateId] = initPromise;
+    
+    try {
+      await initPromise;
+    } finally {
+      // Clear the promise reference once done
+      delete KybFormService.initializationPromise[templateId];
+    }
+  }
+  
+  private async _initialize(templateId: number): Promise<void> {
     this.templateId = templateId;
     
     try {
-      this.logger.info(`Fetching KYB fields for template ID: ${templateId}`);
+      this.logger.debug(`Fetching KYB fields for template ID: ${templateId}`);
       
-      // Log service state before fetching fields
-      this.logger.debug(`Current service state: initialized=${this.initialized}, fields count=${this.fields.length}, sections count=${this.sections.length}`);
+      // Check if we have cached fields for this template ID
+      let kybFields: KybField[] = KybFormService.fieldsCache[templateId] || [];
       
-      // Check for alternative API endpoints
-      try {
-        this.logger.debug('Attempting to fetch template configuration...');
-        const templateResponse = await fetch(`/api/task-templates/${templateId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-Request-ID': `kyb-template-${templateId}-${Date.now()}`
-          }
-        });
-        this.logger.debug(`Template response status: ${templateResponse.status}`);
-        if (templateResponse.ok) {
-          const templateData = await templateResponse.json();
-          this.logger.debug('Template data:', { 
-            id: templateData.id, 
-            name: templateData.name, 
-            taskType: templateData.task_type,
-            configCount: templateData.configurations?.length || 0
-          });
-        }
-      } catch (templateError) {
-        this.logger.error('Error fetching template:', templateError);
-      }
-      
-      // Fetch KYB fields from the API with retry
-      let kybFields: KybField[] = [];
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          this.logger.info(`Attempt ${retryCount + 1}/${maxRetries} to fetch KYB fields...`);
-          kybFields = await this.getKybFields();
-          this.logger.debug(`Fields response received, count: ${kybFields?.length || 0}`);
-          
-          if (kybFields && kybFields.length > 0) {
-            this.logger.info(`Successfully fetched ${kybFields.length} fields on attempt ${retryCount + 1}`);
-            break; // Success, exit the loop
-          }
-          this.logger.warn(`No KYB fields found, retrying (${retryCount + 1}/${maxRetries})...`);
-          retryCount++;
-          // Short exponential backoff
-          await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount)));
-        } catch (fetchError) {
-          this.logger.error(`Error fetching KYB fields (attempt ${retryCount + 1}/${maxRetries}):`, fetchError);
-          
-          // Try the alternative step-based endpoint
+      // If we have cached fields, use them
+      if (kybFields.length > 0) {
+        this.logger.debug(`Using ${kybFields.length} cached fields for template ${templateId}`);
+      } else {
+        // Fetch KYB fields from the API with retry
+        let retryCount = 0;
+        const maxRetries = 2; // Reduced from 3 to 2
+        
+        while (retryCount < maxRetries && kybFields.length === 0) {
           try {
-            this.logger.info('Attempting to fetch step 1 fields as fallback...');
-            const stepFields = await this.getKybFieldsByStepIndex(1);
-            if (stepFields && stepFields.length > 0) {
-              this.logger.info(`Successfully fetched ${stepFields.length} fields from step 1 endpoint`);
-              kybFields = stepFields;
-              break; // Success with alternative endpoint
+            this.logger.debug(`Attempt ${retryCount + 1}/${maxRetries} to fetch KYB fields...`);
+            kybFields = await this.getKybFields();
+            
+            if (kybFields && kybFields.length > 0) {
+              // Cache the fields for future use
+              KybFormService.fieldsCache[templateId] = kybFields;
+              this.logger.debug(`Successfully fetched and cached ${kybFields.length} fields`);
+              break; // Success, exit the loop
             }
-          } catch (stepError) {
-            this.logger.error('Step fields fallback also failed:', stepError);
+            
+            retryCount++;
+            // Reduced backoff to improve performance
+            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (fetchError) {
+            this.logger.debug(`Error fetching KYB fields (attempt ${retryCount + 1}/${maxRetries})`);
+            
+            // Try the alternative step-based endpoint as fallback
+            try {
+              const stepFields = await this.getKybFieldsByStepIndex(1);
+              if (stepFields && stepFields.length > 0) {
+                kybFields = stepFields;
+                // Cache these fields too
+                KybFormService.fieldsCache[templateId] = kybFields;
+                break; // Success with alternative endpoint
+              }
+            } catch (stepError) {
+              // Just continue with the retry loop
+            }
+            
+            retryCount++;
+            if (retryCount >= maxRetries) throw fetchError;
+            await new Promise(resolve => setTimeout(resolve, 300));
           }
-          
-          retryCount++;
-          if (retryCount >= maxRetries) throw fetchError;
-          // Short exponential backoff
-          await new Promise(resolve => setTimeout(resolve, 500 * Math.pow(2, retryCount)));
         }
       }
       
@@ -394,33 +403,68 @@ export class KybFormService implements FormServiceInterface {
     return normalizedName;
   }
   
+  // Cache for normalized group names to avoid recalculating
+  private normalizedGroupCache: Record<string, string> = {};
+  
+  // Cache for grouped fields to avoid reprocessing
+  private static groupedFieldsCache: Record<string, Record<string, KybField[]>> = {};
+  
   /**
-   * Groups KYB fields by their group property
+   * Groups KYB fields by their group property with aggressive caching for performance
    * Normalizes section names to avoid duplicates like "Company Profile" and "companyProfile"
    * @param fields Array of KYB fields to group
    * @returns Object with normalized group names as keys and arrays of fields as values
    */
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
+    if (!fields || fields.length === 0) {
+      return {};
+    }
+    
+    // Generate a simple cache key based on the first and last field
+    const cacheKey = `${fields.length}-${fields[0].id}-${fields[fields.length-1].id}`;
+    
+    // Check if we have a cached result
+    if (KybFormService.groupedFieldsCache[cacheKey]) {
+      return KybFormService.groupedFieldsCache[cacheKey];
+    }
+    
     const groups: Record<string, KybField[]> = {};
+    
+    // Pre-populate groups with known sections to avoid repeated condition checks
+    const knownSections = [
+      "Company Profile", 
+      "Governance & Leadership", 
+      "Financial Profile", 
+      "Operations & Compliance"
+    ];
+    
+    for (const section of knownSections) {
+      groups[section] = [];
+    }
     
     // Group the fields using normalized section names
     for (const field of fields) {
-      // Get normalized group name
-      const normalizedGroup = this.normalizeSectionName(field.group);
-      
-      // Ensure the group exists in our collection
-      if (!groups[normalizedGroup]) {
-        groups[normalizedGroup] = [];
+      // Get normalized group name using our cache
+      let normalizedGroup = this.normalizedGroupCache[field.group];
+      if (!normalizedGroup) {
+        normalizedGroup = this.normalizeSectionName(field.group);
+        this.normalizedGroupCache[field.group] = normalizedGroup;
       }
       
-      // Add the field to the normalized group
-      groups[normalizedGroup].push(field);
+      // Add the field to the normalized group, creating the array if needed
+      (groups[normalizedGroup] = groups[normalizedGroup] || []).push(field);
     }
     
     // Sort fields within each group by their order property
+    // Only sort non-empty groups to save processing
     for (const group in groups) {
-      groups[group] = groups[group].sort((a, b) => a.order - b.order);
+      if (groups[group].length > 1) {
+        groups[group].sort((a, b) => a.order - b.order);
+      }
     }
+    
+    // Cache the result for future calls with these fields
+    KybFormService.groupedFieldsCache[cacheKey] = groups;
     
     return groups;
   }
