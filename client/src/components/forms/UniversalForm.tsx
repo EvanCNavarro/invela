@@ -95,11 +95,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // SIMPLIFIED APPROACH: Create static defaults and load data just once
   
-  // Create empty default values for all field types
+  // Create empty default values for all field types with explicit defaults
+  // to prevent uncontrolled to controlled input warnings
   const createEmptyDefaultValues = (fields: FormField[]): FormData => {
     const emptyValues: FormData = {};
+    
+    // Initialize essential form fields even before we know field types
+    emptyValues['taskId'] = taskId || '';
+    emptyValues['currentStep'] = 1;
+    emptyValues['currentStepIndex'] = 0;
+    
     fields.forEach(field => {
-      // Set defaults based on field type
+      // Set defaults based on field type - never use undefined
+      // Always ensure there's a defined value even if empty
       switch (field.type) {
         case 'checkbox':
         case 'toggle':
@@ -110,9 +118,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           emptyValues[field.key] = field.type === 'multi-select' ? [] : '';
           break;
         default:
-          emptyValues[field.key] = ''; // Default to empty string for most inputs
+          // Default to empty string for all text inputs and any unknown types
+          // This prevents any possibility of undefined values
+          emptyValues[field.key] = '';
       }
+      
+      // Log to verify we're setting initial values
+      console.log(`[DEBUG UniversalForm] Setting initial value for ${field.key}: ${JSON.stringify(emptyValues[field.key])}`);
     });
+    
+    console.log(`[DEBUG UniversalForm] Created default values for ${Object.keys(emptyValues).length} fields`);
     return emptyValues;
   };
   

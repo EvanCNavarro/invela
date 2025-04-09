@@ -52,14 +52,17 @@ export class KybFormService implements FormServiceInterface {
    */
   async initialize(templateId: number): Promise<void> {
     if (this.initialized && this.templateId === templateId) {
+      console.log('[DEBUG] KybService already initialized with template:', templateId);
       return; // Already initialized with this template
     }
 
     try {
       this.templateId = templateId;
+      console.log('[DEBUG] KybService initializing with template ID:', templateId);
       
       // Fetch KYB fields from the server or cache
       const fields = await this.getKybFields();
+      console.log('[DEBUG] Retrieved KYB fields:', fields.length);
       
       // Convert fields to form fields and organize into sections
       this.fields = fields.map(field => this.convertToFormField(field));
@@ -67,17 +70,59 @@ export class KybFormService implements FormServiceInterface {
       // Group fields by section name
       const groupedFields = this.groupFieldsBySection(fields);
       
-      // Create sections from grouped fields with proper interface implementation
-      this.sections = Object.entries(groupedFields).map(([sectionName, sectionFields], index) => ({
-        id: `section-${index + 1}`, // FormSection requires string ID
-        title: sectionName,         // Use title instead of name
-        description: '',
-        order: index + 1,
-        collapsed: false,
-        fields: sectionFields.map(field => this.convertToFormField(field))
-      }));
+      // Standard expected section names in the correct order
+      const expectedSections = [
+        'Company Profile',
+        'Governance & Leadership',
+        'Financial Profile',
+        'Operations & Compliance'
+      ];
+      
+      // Ensure we have all standard sections, even if empty
+      const normalizedSections: Record<string, KybField[]> = {};
+      
+      // First, populate with expected sections (empty arrays if no fields)
+      expectedSections.forEach(section => {
+        normalizedSections[section] = groupedFields[section] || [];
+      });
+      
+      // Then add any additional sections from groupedFields that aren't standard
+      Object.entries(groupedFields).forEach(([sectionName, sectionFields]) => {
+        if (!expectedSections.includes(sectionName)) {
+          normalizedSections[sectionName] = sectionFields;
+        }
+      });
+      
+      console.log('[DEBUG] Creating sections from fields. Sections found:', Object.keys(normalizedSections).join(', '));
+      
+      // Create sections from normalized grouped fields with proper interface implementation
+      // Use the expected order for standard sections
+      this.sections = Object.entries(normalizedSections).map(([sectionName, sectionFields], index) => {
+        // Find index in expectedSections to determine proper order
+        const expectedIndex = expectedSections.indexOf(sectionName);
+        const order = expectedIndex >= 0 ? expectedIndex + 1 : expectedSections.length + index + 1;
+        
+        return {
+          id: `section-${order}`, // FormSection requires string ID
+          title: sectionName,     // Use title instead of name
+          description: '',
+          order: order,
+          collapsed: false,
+          fields: sectionFields.map(field => this.convertToFormField(field))
+        };
+      });
+      
+      // Sort sections by order
+      this.sections.sort((a, b) => a.order - b.order);
+      
+      // Log the created sections
+      console.log('[DEBUG] Created sections:');
+      this.sections.forEach(section => {
+        console.log(`[DEBUG] - Section "${section.title}" with ${section.fields.length} fields (order: ${section.order})`);
+      });
       
       this.initialized = true;
+      console.log('[DEBUG] KybService initialization complete.');
     } catch (error) {
       console.error('Error initializing KYB form service:', error);
       throw error;
@@ -141,41 +186,66 @@ export class KybFormService implements FormServiceInterface {
    * Group KYB fields by their section name
    */
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
-    // Standard section names we want to use
-    const sectionMap = {
-      'companyProfile': 'Company Profile',
+    // Standard section names we want to use - use a more comprehensive approach
+    const sectionMap: Record<string, string> = {
+      // Company Profile variations
       'companyprofile': 'Company Profile',
       'company_profile': 'Company Profile',
       'company profile': 'Company Profile',
+      'companyProfile': 'Company Profile',
       
-      'governanceLeadership': 'Governance & Leadership',
+      // Governance & Leadership variations
       'governanceleadership': 'Governance & Leadership',
       'governance_leadership': 'Governance & Leadership',
       'governance leadership': 'Governance & Leadership',
+      'governanceLeadership': 'Governance & Leadership',
+      'governance': 'Governance & Leadership',
+      'leadership': 'Governance & Leadership',
       
-      'financialProfile': 'Financial Profile',
+      // Financial Profile variations
       'financialprofile': 'Financial Profile',
       'financial_profile': 'Financial Profile',
       'financial profile': 'Financial Profile',
+      'financialProfile': 'Financial Profile',
+      'financial': 'Financial Profile',
       
-      'operationsCompliance': 'Operations & Compliance',
+      // Operations & Compliance variations
       'operationscompliance': 'Operations & Compliance',
       'operations_compliance': 'Operations & Compliance',
-      'operations compliance': 'Operations & Compliance'
+      'operations compliance': 'Operations & Compliance',
+      'operationsCompliance': 'Operations & Compliance',
+      'operations': 'Operations & Compliance',
+      'compliance': 'Operations & Compliance'
     };
+    
+    // Log for debugging
+    console.log('[DEBUG] KybService - Grouping fields by section. Found fields:', fields.length);
     
     // Group fields by their normalized section name
     const grouped: Record<string, KybField[]> = {};
     
+    // First pass - map known section names
     fields.forEach(field => {
-      const rawGroup = field.group || 'Other';
-      // Normalize the group name using our mapping
-      const normalizedGroup = sectionMap[rawGroup.toLowerCase().replace(/[^a-z0-9]/g, '')] || rawGroup;
+      // Use a more permissive approach to field grouping
+      let rawGroup = field.group || '';
+      if (!rawGroup || rawGroup.trim() === '') {
+        rawGroup = 'Other'; // Default group
+      }
       
+      // Convert to lowercase and remove special chars for matching
+      const simplifiedKey = rawGroup.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      // Find the matching section or use the raw group name
+      const normalizedGroup = sectionMap[simplifiedKey] || sectionMap[rawGroup] || rawGroup;
+      
+      console.log(`[DEBUG] Field grouping: "${field.field_key}" → raw group: "${rawGroup}" → normalized: "${normalizedGroup}"`);
+      
+      // Initialize the group if it doesn't exist
       if (!grouped[normalizedGroup]) {
         grouped[normalizedGroup] = [];
       }
       
+      // Add the field to its group
       grouped[normalizedGroup].push(field);
     });
     
