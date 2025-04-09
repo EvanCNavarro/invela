@@ -608,6 +608,38 @@ const convertKybFieldToFormField = (field: KybField): FormField => {
   // Map field types from database to form component
   let fieldType: string | undefined = undefined;
   let options: string[] | undefined = undefined;
+  
+  // Map field_key to company data property for suggestions
+  const suggestionMappings: Record<string, string> = {
+    // Company profile fields
+    'legalEntityName': 'name',
+    'businessType': 'legal_structure',
+    'jurisdiction': 'hq_address',
+    'registeredAddress': 'hq_address',
+    'companyPhone': 'phone',
+    'incorporationDate': 'incorporation_year',
+    'priorNames': 'name',
+    'registrationNumber': 'id',
+    
+    // Governance & Leadership fields
+    'ceoName': 'founders_and_leadership',
+    'boardMembers': 'founders_and_leadership',
+    'directorsOfficers': 'founders_and_leadership',
+    'beneficialOwners': 'founders_and_leadership',
+    
+    // Financial Profile fields
+    'annualRevenue': 'revenue',
+    'fundingSources': 'investors',
+    'fundingStage': 'funding_stage',
+    'marketCapitalization': 'revenue',
+    
+    // Operations & Compliance fields
+    'employeeCount': 'num_employees',
+    'operatingCountries': 'hq_address',
+    'productsServices': 'products_services',
+    'licensesPermits': 'certifications_compliance',
+    'regulatoryBodies': 'certifications_compliance'
+  };
 
   if (field.field_type === 'BOOLEAN') {
     fieldType = 'BOOLEAN';
@@ -632,6 +664,13 @@ const convertKybFieldToFormField = (field: KybField): FormField => {
       ];
     }
   }
+  
+  // Get the appropriate suggestion mapping for this field
+  let suggestion: string | undefined = undefined;
+  if (suggestionMappings[field.field_key]) {
+    suggestion = suggestionMappings[field.field_key];
+    console.log(`[KYB Form Debug] Adding suggestion mapping for field ${field.field_key}: ${suggestion}`);
+  }
 
   return {
     name: field.field_key,
@@ -639,7 +678,8 @@ const convertKybFieldToFormField = (field: KybField): FormField => {
     question: field.question,
     tooltip: field.help_text || '',
     field_type: fieldType,
-    options: options
+    options: options,
+    suggestion: suggestion
   };
 };
 
