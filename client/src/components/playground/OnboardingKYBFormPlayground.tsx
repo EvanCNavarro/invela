@@ -610,6 +610,7 @@ const convertKybFieldToFormField = (field: KybField): FormField => {
   let options: string[] | undefined = undefined;
   
   // Map field_key to company data property for suggestions
+  // This creates a dynamic mapping system that handles all form types
   const suggestionMappings: Record<string, string> = {
     // Company profile fields
     'legalEntityName': 'name',
@@ -622,22 +623,31 @@ const convertKybFieldToFormField = (field: KybField): FormField => {
     'registrationNumber': 'id',
     
     // Governance & Leadership fields
+    'contactEmail': 'email', // Added for second step fields
     'ceoName': 'founders_and_leadership',
     'boardMembers': 'founders_and_leadership',
     'directorsOfficers': 'founders_and_leadership',
+    'ultimateBeneficialOwners': 'founders_and_leadership', // Updated field name
     'beneficialOwners': 'founders_and_leadership',
+    'authorizedSigners': 'founders_and_leadership',
+    'governmentOwnership': 'ownership_structure',
+    'corporateRegistration': 'registration_details',
     
     // Financial Profile fields
     'annualRevenue': 'revenue',
     'fundingSources': 'investors',
     'fundingStage': 'funding_stage',
     'marketCapitalization': 'revenue',
+    'externalAudit': 'certifications_compliance',
     
     // Operations & Compliance fields
     'employeeCount': 'num_employees',
     'operatingCountries': 'hq_address',
     'productsServices': 'products_services',
     'licensesPermits': 'certifications_compliance',
+    'licenses': 'certifications_compliance',
+    'goodStanding': 'accreditation_status',
+    'controlEnvironment': 'certifications_compliance',
     'regulatoryBodies': 'certifications_compliance'
   };
 
@@ -1360,14 +1370,15 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      setCurrentStep(current => {
-        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
-          status: 'SUCCESS',
-          fromStep: current,
-          toStep: current - 1,
-          timestamp: new Date().toISOString()
-        });
-        return current - 1;
+      // FIXED: First set current step directly to ensure immediate navigation
+      // This is simpler and more reliable than using the callback form
+      setCurrentStep(prevStep);
+      
+      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
+        status: 'SUCCESS',
+        fromStep: currentStep,
+        toStep: prevStep,
+        timestamp: new Date().toISOString()
       });
     } else {
       console.log('[KYB Form Debug] NAVIGATION-BACK: Already at first step, cannot go back', {
@@ -1560,14 +1571,14 @@ export const OnboardingKYBFormPlayground = ({
         timestamp: new Date().toISOString()
       });
       
-      setCurrentStep(current => {
-        console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
-          status: 'SUCCESS',
-          fromStep: current,
-          toStep: current + 1,
-          timestamp: new Date().toISOString()
-        });
-        return current + 1;
+      // FIXED: Use direct navigation similar to the fix in handleBack
+      setCurrentStep(nextStep);
+      
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
+        status: 'SUCCESS',
+        fromStep: currentStep,
+        toStep: nextStep,
+        timestamp: new Date().toISOString()
       });
     } else {
       // STEP 5 (alternate): Enter review mode
