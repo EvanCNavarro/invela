@@ -162,8 +162,25 @@ export function setupAuth(app: Express) {
     done(null, user.id);
   });
 
+  // Simple in-memory cache for user session data
+  const userCache = new Map<number, { user: Express.User, timestamp: number }>();
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
+  
   passport.deserializeUser(async (id: number, done) => {
     try {
+      const now = Date.now();
+      const cachedData = userCache.get(id);
+      
+      // Use cached data if it exists and is not expired
+      if (cachedData && (now - cachedData.timestamp) < CACHE_TTL) {
+        // Only log cache hits occasionally to reduce log noise
+        if (Math.random() < 0.05) { // Log ~5% of cache hits
+          console.log('[Auth] Using cached user data:', id);
+        }
+        return done(null, cachedData.user);
+      }
+      
+      // If not in cache or expired, query the database
       console.log('[Auth] Deserializing user:', id);
       const [user] = await db
         .select()
@@ -176,6 +193,9 @@ export function setupAuth(app: Express) {
         return done(null, false);
       }
 
+      // Update the cache
+      userCache.set(id, { user, timestamp: now });
+      
       done(null, user);
     } catch (error) {
       console.error('[Auth] Deserialization error:', error);
