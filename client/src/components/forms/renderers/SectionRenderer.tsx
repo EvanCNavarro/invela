@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,46 +15,59 @@ interface SectionRendererProps {
   onFieldChange?: (name: string, value: any) => void;
 }
 
-export const SectionRenderer: React.FC<SectionRendererProps> = ({
+// Base component for rendering form sections
+const SectionRendererBase = ({
   section,
   template,
   form,
   onFieldChange
-}) => {
+}: SectionRendererProps) => {
   // State for section collapse
   const [collapsed, setCollapsed] = useState(section.collapsed || false);
   
-  // Extract section configuration from template
-  const globalConfig = template.configurations
-    .filter(config => config.scope === 'global')
-    .reduce((acc, curr) => {
-      acc[curr.config_key] = curr.config_value;
-      return acc;
-    }, {} as Record<string, any>);
+  // Extract section configuration from template - memoized to avoid recalculation on each render
+  const globalConfig = useMemo(() => {
+    // console.log(`Computing global config for section ${section.id}`);
+    return template.configurations
+      .filter(config => config.scope === 'global')
+      .reduce((acc, curr) => {
+        acc[curr.config_key] = curr.config_value;
+        return acc;
+      }, {} as Record<string, any>);
+  }, [template.configurations]);
   
-  const sectionConfig = template.configurations
-    .filter(config => config.scope === 'section' && config.scope_target === section.id)
-    .reduce((acc, curr) => {
-      acc[curr.config_key] = curr.config_value;
-      return acc;
-    }, {} as Record<string, any>);
+  const sectionConfig = useMemo(() => {
+    // console.log(`Computing section config for section ${section.id}`);
+    return template.configurations
+      .filter(config => config.scope === 'section' && config.scope_target === section.id)
+      .reduce((acc, curr) => {
+        acc[curr.config_key] = curr.config_value;
+        return acc;
+      }, {} as Record<string, any>);
+  }, [template.configurations, section.id]);
   
-  // Merge configurations with section-specific overriding global
-  const mergedConfig = { ...globalConfig, ...sectionConfig };
+  // Merge configurations with section-specific overriding global - memoized
+  const mergedConfig = useMemo(() => {
+    // console.log(`Merging configs for section ${section.id}`);
+    return { ...globalConfig, ...sectionConfig };
+  }, [globalConfig, sectionConfig]);
   
   // Get animation speed from config
   const animationSpeed = mergedConfig.animationSpeed || 'normal';
   
-  // Sort fields by order property
-  const sortedFields = sortFields(section.fields);
+  // Sort fields by order property - memoized to avoid sorting on each render
+  const sortedFields = useMemo(() => {
+    // console.log(`Sorting fields for section ${section.id}`);
+    return sortFields(section.fields);
+  }, [section.fields]);
   
-  // Toggle section collapse
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
+  // Toggle section collapse - useCallback to maintain function reference identity
+  const toggleCollapse = useCallback(() => {
+    setCollapsed(prevState => !prevState);
+  }, []);
   
-  // Calculate transition duration based on animation speed
-  const getTransitionDuration = () => {
+  // Calculate transition duration based on animation speed - memoized
+  const getTransitionDuration = useCallback(() => {
     switch (animationSpeed) {
       case 'fast':
         return 'duration-150';
@@ -64,7 +77,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       default:
         return 'duration-300';
     }
-  };
+  }, [animationSpeed]);
   
   return (
     <Card className="w-full">
@@ -94,17 +107,39 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         }}
       >
         <CardContent className="space-y-4">
-          {sortedFields.map(field => (
-            <FieldRenderer
-              key={field.key}
-              field={field}
-              template={template}
-              form={form}
-              onFieldChange={val => onFieldChange?.(field.key, val)}
-            />
-          ))}
+          {sortedFields.map(field => {
+            // Create memoized callback for each field
+            const handleFieldChange = useCallback((val: any) => {
+              onFieldChange?.(field.key, val);
+            }, [field.key, onFieldChange]);
+            
+            return (
+              <FieldRenderer
+                key={field.key}
+                field={field}
+                template={template}
+                form={form}
+                onFieldChange={handleFieldChange}
+              />
+            );
+          })}
         </CardContent>
       </div>
     </Card>
   );
 };
+
+// Custom comparison function for memoization
+const areEqual = (prevProps: SectionRendererProps, nextProps: SectionRendererProps) => {
+  // Only re-render if these specific props change
+  return (
+    prevProps.section.id === nextProps.section.id &&
+    prevProps.template.id === nextProps.template.id &&
+    prevProps.form === nextProps.form &&
+    prevProps.onFieldChange === nextProps.onFieldChange &&
+    JSON.stringify(prevProps.section.fields) === JSON.stringify(nextProps.section.fields)
+  );
+};
+
+// Memoized version of the SectionRenderer component
+export const SectionRenderer = memo(SectionRendererBase, areEqual);
