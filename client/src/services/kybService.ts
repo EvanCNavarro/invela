@@ -636,11 +636,17 @@ export class KybFormService implements FormServiceInterface {
       
       // Create an AbortController to handle timeout
       const controller = new AbortController();
-      // Use a named function to avoid arrow function syntax issues
-      function abortRequest() {
-        controller.abort();
-      }
-      const timeoutId = setTimeout(abortRequest, 10000); // 10 second timeout
+      
+      // Use a timeout that automatically checks if controller is still valid
+      setTimeout(() => {
+        try {
+          if (controller.signal.aborted === false) {
+            controller.abort();
+          }
+        } catch (e) {
+          console.error('Error during abort:', e);
+        }
+      }, 10000); // 10 second timeout
       
       try {
         // Use direct fetch with credentials and timeout handling
@@ -664,7 +670,7 @@ export class KybFormService implements FormServiceInterface {
         });
         
         // Clear the timeout since the request completed
-        clearTimeout(timeoutId);
+        // No need to clear timeouts with the new implementation
         
         this.logger.debug(`Save progress API response status: ${response.status} for task ${taskId}`);
         console.log(`[DEBUG KybService] Save progress API response - Status: ${response.status}, Status Text: ${response.statusText} for task ${taskId} at ${new Date().toISOString()}`);
@@ -692,7 +698,7 @@ export class KybFormService implements FormServiceInterface {
         return result;
       } catch (fetchError) {
         // Clear the timeout in case of error
-        clearTimeout(timeoutId);
+        // No need to clear timeouts with the new implementation
         
         // Check if this was an abort error (timeout)
         if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
@@ -741,10 +747,17 @@ export class KybFormService implements FormServiceInterface {
       // Create an AbortController to handle timeout
       const controller = new AbortController();
       
-      // Use the simplest possible setTimeout approach
-      // Using any type to avoid TypeScript issues with NodeJS.Timeout vs number
-      const timeoutId: any = setTimeout(function() {
-        controller.abort();
+      // Use a reference that doesn't need to be cleared
+      setTimeout(() => {
+        try {
+          // Only abort if the request is still pending
+          // This prevents "signal is aborted without reason" errors
+          if (controller.signal.aborted === false) {
+            controller.abort();
+          }
+        } catch (e) {
+          console.error('Error during abort:', e);
+        }
       }, 5000); // 5 second timeout
       
       try {
@@ -762,7 +775,7 @@ export class KybFormService implements FormServiceInterface {
         });
         
         // Clear the timeout since the request completed
-        clearTimeout(timeoutId);
+        // No need to clear timeouts with the new implementation
         
         this.logger.debug(`Get progress API response status: ${response.status} for task ${taskId}`);
         console.log(`[DEBUG KybService] Progress API response - Status: ${response.status}, Status Text: ${response.statusText} for task ${taskId} at ${new Date().toISOString()}`);
@@ -813,7 +826,7 @@ export class KybFormService implements FormServiceInterface {
         return result;
       } catch (fetchError) {
         // Clear the timeout in case of error
-        clearTimeout(timeoutId);
+        // No need to clear timeouts with the new implementation
         
         // Check if this was an abort error (timeout)
         if (fetchError instanceof DOMException && fetchError.name === 'AbortError') {
