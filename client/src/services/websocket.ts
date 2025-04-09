@@ -42,19 +42,58 @@ class WebSocketService {
     // Clear any existing connection promise
     this.connectionPromise = null;
     
-    // Create a new connection promise
-    this.connectionPromise = new Promise((resolve) => {
+    // Create a new connection promise with timeout
+    this.connectionPromise = new Promise((resolve, reject) => {
       this.connectionResolver = resolve;
       
-      this.socket = new WebSocket(this.url);
+      // Set a timeout to prevent hanging connections
+      const timeoutId = setTimeout(() => {
+        if (this.socket && this.socket.readyState !== WebSocket.OPEN) {
+          // Connection is taking too long, reject the promise
+          console.warn('[WebSocket] Connection attempt timed out after 5 seconds');
+          
+          // Only reject if we haven't already connected
+          if (this.connectionResolver) {
+            this.connectionResolver = null;
+            reject(new Error('Connection timeout'));
+          }
+          
+          // If socket is in CONNECTING state, close it
+          if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
+            this.socket.close();
+            this.socket = null;
+          }
+        }
+      }, 5000);
       
-      this.socket.onopen = this.handleOpen.bind(this);
-      this.socket.onmessage = this.handleMessage.bind(this);
-      this.socket.onclose = this.handleClose.bind(this);
-      this.socket.onerror = this.handleError.bind(this);
+      try {
+        this.socket = new WebSocket(this.url);
+        
+        this.socket.onopen = (event) => {
+          clearTimeout(timeoutId);
+          this.handleOpen(event);
+        };
+        this.socket.onmessage = this.handleMessage.bind(this);
+        this.socket.onclose = (event) => {
+          clearTimeout(timeoutId);
+          this.handleClose(event);
+        };
+        this.socket.onerror = (event) => {
+          clearTimeout(timeoutId);
+          this.handleError(event);
+        };
+      } catch (error) {
+        clearTimeout(timeoutId);
+        console.error('[WebSocket] Error creating WebSocket:', error);
+        reject(error);
+      }
     });
     
-    return this.connectionPromise;
+    return this.connectionPromise.catch(error => {
+      console.error('[WebSocket] Connection failed:', error);
+      // Return a rejected promise to be handled by the caller
+      return Promise.reject(error);
+    });
   }
 
   /**
