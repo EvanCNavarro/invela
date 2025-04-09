@@ -27,14 +27,20 @@ type FormSection = NavigationFormSection;
  * @returns Array of NavigationFormSection objects suitable for the UI components
  */
 const toNavigationSections = (serviceSections: ServiceFormSection[]): NavigationFormSection[] => {
-  return serviceSections.map(section => ({
-    id: section.id,
-    title: section.title,
-    order: section.order || 0,
-    collapsed: section.collapsed || false,
-    // Add optional fields for NavigationFormSection
-    fields: [] // This will be populated separately
-  }));
+  return serviceSections.map(section => {
+    // Debug section fields content
+    console.log(`[toNavigationSections] Section ${section.id} (${section.title}) has fields:`, section.fields || 'none');
+    
+    return {
+      id: section.id,
+      title: section.title,
+      order: section.order || 0,
+      collapsed: section.collapsed || false,
+      description: section.description,
+      // Properly transfer the fields property from service section to navigation section
+      fields: section.fields || [] // Ensure fields are properly copied over
+    };
+  });
 };
 
 // SectionRenderer is already memoized internally
@@ -90,6 +96,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Group fields by section for tab view - using useMemo to prevent unnecessary recalculations
   const sectionTabs = useMemo(() => {
     if (!sections || !fields) return [];
+    
+    // If the sections already have fields attached, use those
+    if (sections.length > 0 && sections[0].fields && sections[0].fields.length > 0) {
+      console.log(`[UniversalForm] Using pre-populated fields from sections`);
+      return sections.map(section => ({
+        id: section.id,
+        title: section.title,
+        fields: section.fields || []
+      }));
+    }
+    
+    // Otherwise, filter fields by section ID (fallback approach)
+    console.log(`[UniversalForm] Filtering fields by section ID`);
     return sections.map(section => ({
       id: section.id,
       title: section.title,

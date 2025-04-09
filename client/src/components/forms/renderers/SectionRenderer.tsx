@@ -62,8 +62,13 @@ const SectionRendererBase = ({
   // Sort fields by order property - memoized to avoid sorting on each render
   const sortedFields = useMemo(() => {
     // console.log(`Sorting fields for section ${section.id}`);
+    if (!section.fields || section.fields.length === 0) {
+      console.warn(`No fields found for section ${section.id} (${section.title})`);
+      return [];
+    }
+    console.log(`Fields for section ${section.id} (${section.title}):`, section.fields);
     return section.fields ? sortFields(section.fields as FormField[]) : [];
-  }, [section.fields]);
+  }, [section.fields, section.id, section.title]);
   
   // Toggle section collapse - useCallback to maintain function reference identity
   const toggleCollapse = useCallback(() => {
