@@ -70,6 +70,8 @@ router.get('/by-type/:taskType', async (req, res) => {
   try {
     const taskType = req.params.taskType;
     
+    console.log(`[Task Templates API] Fetching template for task type: ${taskType}, user: ${req.user?.id || 'unknown'}`);
+    
     // Use separate where conditions to avoid potential SQL syntax issues
     const template = await db.query.taskTemplates.findFirst({
       where: (templates) => {
@@ -81,12 +83,17 @@ router.get('/by-type/:taskType', async (req, res) => {
     });
     
     if (!template) {
+      console.log(`[Task Templates API] No active template found for task type: ${taskType}`);
       return res.status(404).json({ error: `No active template found for task type: ${taskType}` });
     }
+    
+    console.log(`[Task Templates API] Found template: ${template.id} (${template.name}) for task type: ${taskType}`);
     
     const configurations = await db.query.componentConfigurations.findMany({
       where: eq(componentConfigurations.template_id, template.id)
     });
+    
+    console.log(`[Task Templates API] Retrieved ${configurations.length} configuration items for template ID: ${template.id}`);
     
     res.json({
       ...template,
