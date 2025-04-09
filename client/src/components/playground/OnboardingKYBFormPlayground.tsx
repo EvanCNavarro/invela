@@ -688,7 +688,16 @@ export const OnboardingKYBFormPlayground = ({
   const isMountedRef = useRef(true);
   const formDataRef = useRef<Record<string, string>>({});
   const isCompanyDataLoading = useState(false);
-  const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>([]);
+  // Initialize dynamicFormSteps with empty arrays for each step to ensure consistent structure
+  const [dynamicFormSteps, setDynamicFormSteps] = useState<FormField[][]>(() => {
+    // Create an array with the same length as FORM_STEPS with separate empty arrays for each step
+    console.log('[KYB Form Debug] INITIALIZATION: Creating empty placeholder steps array', {
+      staticStepsCount: FORM_STEPS.length,
+      timestamp: new Date().toISOString()
+    });
+    // Using map to create separate empty array instances for each step
+    return Array(FORM_STEPS.length).fill(null).map(() => []);
+  });
   const [fieldConfig, setFieldConfig] = useState<Record<string, FormField>>({});
   
   // Fetch all KYB fields to have them available for reference
@@ -1101,26 +1110,51 @@ export const OnboardingKYBFormPlayground = ({
   };
 
   const handleBack = async () => {
-    console.log('[KYB Form Debug] Navigation Event: Back button clicked');
+    console.log('[KYB Form Debug] NAVIGATION: Back button clicked', {
+      status: 'START',
+      currentStep,
+      isReviewMode,
+      timestamp: new Date().toISOString()
+    });
     
     if (isReviewMode) {
-      // Exit review mode and go back to form
+      // STEP 1: Exit review mode and go back to form
+      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 1/5: Exiting review mode', {
+        status: 'SUCCESS',
+        timestamp: new Date().toISOString()
+      });
       setIsReviewMode(false);
       return;
     }
     
     if (currentStep > 0) {
-      // Prefetch data for the previous step before navigating
+      // STEP 2: Prefetch data for the previous step before navigating
       const prevStep = currentStep - 1;
+      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 2/5: Preparing to navigate to previous step', {
+        status: 'SUCCESS',
+        prevStep,
+        currentStep,
+        timestamp: new Date().toISOString()
+      });
       
-      // Check if we already have data for the previous step
+      // STEP 3: Check if we already have data for the previous step
       const hasPrevStepData = dynamicFormSteps.length > 0 && 
                             Array.isArray(dynamicFormSteps[prevStep]) && 
                             dynamicFormSteps[prevStep].length > 0;
+      
+      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 3/5: Checking for previous step data', {
+        status: hasPrevStepData ? 'SUCCESS' : 'PENDING',
+        prevStep,
+        dynamicFormStepsLength: dynamicFormSteps.length,
+        hasPrevStepData,
+        fieldCount: hasPrevStepData ? dynamicFormSteps[prevStep].length : 0,
+        timestamp: new Date().toISOString()
+      });
                             
-      // If we don't have the data yet, fetch it before navigation
+      // STEP 4: If we don't have the data yet, fetch it before navigation
       if (!hasPrevStepData) {
-        console.log('[KYB Form Debug] Fetching data for previous step before navigation:', {
+        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Fetching data for previous step', {
+          status: 'PENDING',
           prevStep,
           timestamp: new Date().toISOString()
         });
@@ -1130,9 +1164,11 @@ export const OnboardingKYBFormPlayground = ({
           const prevStepData = await getKybFieldsByStepIndex(prevStep);
           
           if (prevStepData && prevStepData.length > 0) {
-            console.log('[KYB Form Debug] Previous step data fetched successfully:', {
+            console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Data fetch completed', {
+              status: 'SUCCESS',
               prevStep,
               fieldCount: prevStepData.length,
+              fieldNames: prevStepData.map(f => f.field_key),
               timestamp: new Date().toISOString()
             });
             
@@ -1150,6 +1186,16 @@ export const OnboardingKYBFormPlayground = ({
             setDynamicFormSteps(prevSteps => {
               const updatedSteps = [...prevSteps];
               updatedSteps[prevStep] = formFields;
+              
+              console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Updating form steps array', {
+                status: 'SUCCESS',
+                prevStep,
+                currentStep,
+                prevStepsLength: prevSteps.length,
+                updatedStepsLength: updatedSteps.length,
+                timestamp: new Date().toISOString()
+              });
+              
               return updatedSteps;
             });
             
@@ -1159,37 +1205,72 @@ export const OnboardingKYBFormPlayground = ({
               ...formFieldsMap
             }));
           } else {
-            console.log('[KYB Form Debug] No data found for previous step:', {
+            console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: No data found for previous step', {
+              status: 'FAILED',
               prevStep,
               timestamp: new Date().toISOString()
             });
           }
         } catch (error) {
-          console.error('[KYB Form Debug] Error fetching previous step data:', {
+          console.error('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Error fetching previous step data', {
+            status: 'FAILED',
             prevStep,
             error: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString()
           });
         }
       } else {
-        console.log('[KYB Form Debug] Using existing data for previous step navigation:', {
+        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Using existing data for previous step', {
+          status: 'SUCCESS',
           prevStep,
           fieldCount: dynamicFormSteps[prevStep].length,
+          fieldNames: dynamicFormSteps[prevStep].map(f => f.name),
           timestamp: new Date().toISOString()
         });
       }
       
-      // Then navigate to the previous step
-      setCurrentStep(current => current - 1);
+      // STEP 5: Navigate to the previous step
+      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigating to previous step', {
+        status: 'PENDING',
+        fromStep: currentStep,
+        toStep: prevStep,
+        timestamp: new Date().toISOString()
+      });
+      
+      setCurrentStep(current => {
+        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
+          status: 'SUCCESS',
+          fromStep: current,
+          toStep: current - 1,
+          timestamp: new Date().toISOString()
+        });
+        return current - 1;
+      });
+    } else {
+      console.log('[KYB Form Debug] NAVIGATION-BACK: Already at first step, cannot go back', {
+        status: 'CANCELLED',
+        currentStep,
+        timestamp: new Date().toISOString()
+      });
     }
   };
 
   const handleNext = async () => {
-    console.log('[KYB Form Debug] Navigation Event: Next button clicked');
+    console.log('[KYB Form Debug] NAVIGATION: Next button clicked', {
+      status: 'START',
+      currentStep,
+      isReviewMode,
+      timestamp: new Date().toISOString()
+    });
     
     if (isReviewMode) {
-      // From review mode, submit the form
-      console.log('Form submitted from review page:', formData);
+      // STEP 1: From review mode, submit the form
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 1/5: Submitting form from review page', {
+        status: 'SUCCESS',
+        fieldCount: Object.keys(formData).length,
+        timestamp: new Date().toISOString()
+      });
+      
       if (onSubmit) {
         onSubmit(formData);
       }
@@ -1197,21 +1278,45 @@ export const OnboardingKYBFormPlayground = ({
       return;
     }
     
-    // Use dynamic steps length if available, otherwise fallback to static steps
+    // STEP 2: Calculate max steps and determine if we can navigate forward
     const maxSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps.length - 1 : FORM_STEPS.length - 1;
+    console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 2/5: Calculating navigation options', {
+      status: 'SUCCESS',
+      currentStep,
+      maxSteps,
+      dynamicFormStepsLength: dynamicFormSteps.length,
+      canNavigateNext: currentStep < maxSteps,
+      isLastStep: currentStep >= maxSteps,
+      timestamp: new Date().toISOString()
+    });
     
     if (currentStep < maxSteps) {
-      // Prefetch data for the next step before navigating
+      // STEP 3: Prepare next step navigation
       const nextStep = currentStep + 1;
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 3/5: Preparing next step navigation', {
+        status: 'SUCCESS',
+        fromStep: currentStep,
+        toStep: nextStep,
+        timestamp: new Date().toISOString()
+      });
       
       // Check if we already have data for the next step
       const hasNextStepData = dynamicFormSteps.length > 0 && 
                             Array.isArray(dynamicFormSteps[nextStep]) && 
                             dynamicFormSteps[nextStep].length > 0;
+      
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 3/5: Checking next step data availability', {
+        status: hasNextStepData ? 'SUCCESS' : 'PENDING',
+        nextStep,
+        hasNextStepData,
+        fieldCount: hasNextStepData ? dynamicFormSteps[nextStep].length : 0,
+        timestamp: new Date().toISOString()
+      });
                             
-      // If we don't have the data yet, fetch it before navigation
+      // STEP 4: If next step data is missing, fetch it
       if (!hasNextStepData) {
-        console.log('[KYB Form Debug] Fetching data for next step before navigation:', {
+        console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: Fetching data for next step', {
+          status: 'PENDING',
           nextStep,
           timestamp: new Date().toISOString()
         });
@@ -1221,9 +1326,11 @@ export const OnboardingKYBFormPlayground = ({
           const nextStepData = await getKybFieldsByStepIndex(nextStep);
           
           if (nextStepData && nextStepData.length > 0) {
-            console.log('[KYB Form Debug] Next step data fetched successfully:', {
+            console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: Data fetch completed', {
+              status: 'SUCCESS',
               nextStep,
               fieldCount: nextStepData.length,
+              fieldNames: nextStepData.map(f => f.field_key),
               timestamp: new Date().toISOString()
             });
             
@@ -1241,6 +1348,17 @@ export const OnboardingKYBFormPlayground = ({
             setDynamicFormSteps(prevSteps => {
               const updatedSteps = [...prevSteps];
               updatedSteps[nextStep] = formFields;
+              
+              console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: Updating form steps array', {
+                status: 'SUCCESS',
+                fromStep: currentStep,
+                toStep: nextStep,
+                prevStepsLength: prevSteps.length,
+                updatedStepsLength: updatedSteps.length,
+                newStepFieldCount: formFields.length,
+                timestamp: new Date().toISOString()
+              });
+              
               return updatedSteps;
             });
             
@@ -1250,29 +1368,55 @@ export const OnboardingKYBFormPlayground = ({
               ...formFieldsMap
             }));
           } else {
-            console.log('[KYB Form Debug] No data found for next step:', {
+            console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: No data found for next step', {
+              status: 'FAILED',
               nextStep,
               timestamp: new Date().toISOString()
             });
           }
         } catch (error) {
-          console.error('[KYB Form Debug] Error fetching next step data:', {
+          console.error('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: Error fetching next step data', {
+            status: 'FAILED',
             nextStep,
             error: error instanceof Error ? error.message : 'Unknown error',
             timestamp: new Date().toISOString()
           });
         }
       } else {
-        console.log('[KYB Form Debug] Using existing data for next step navigation:', {
+        console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 4/5: Using existing data', {
+          status: 'SUCCESS',
           nextStep,
           fieldCount: dynamicFormSteps[nextStep].length,
+          fieldNames: dynamicFormSteps[nextStep].map(f => f.name),
           timestamp: new Date().toISOString()
         });
       }
       
-      // Then navigate to the next step
-      setCurrentStep(current => current + 1);
+      // STEP 5: Navigate to the next step
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigating to next step', {
+        status: 'PENDING',
+        fromStep: currentStep,
+        toStep: nextStep,
+        timestamp: new Date().toISOString()
+      });
+      
+      setCurrentStep(current => {
+        console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Navigation complete', {
+          status: 'SUCCESS',
+          fromStep: current,
+          toStep: current + 1,
+          timestamp: new Date().toISOString()
+        });
+        return current + 1;
+      });
     } else {
+      // STEP 5 (alternate): Enter review mode
+      console.log('[KYB Form Debug] NAVIGATION-NEXT STEP 5/5: Entering review mode', {
+        status: 'SUCCESS',
+        lastStep: currentStep,
+        timestamp: new Date().toISOString()
+      });
+      
       // Last step completed, go to review mode instead of submitting
       setIsReviewMode(true);
     }
@@ -1286,10 +1430,122 @@ export const OnboardingKYBFormPlayground = ({
     setIsSubmitted(true);
   };
 
-  // Use dynamic form steps if available, otherwise fall back to static steps
-  const currentStepData: FormField[] = dynamicFormSteps.length > 0 && dynamicFormSteps[currentStep] 
-    ? dynamicFormSteps[currentStep] 
-    : FORM_STEPS[currentStep];
+  // STEP SELECTION ANALYSIS: Debug the step data selection process in detail
+  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - START', {
+    timestamp: new Date().toISOString(),
+    currentStepState: currentStep,
+    isReviewMode,
+    dynamicStepsCount: dynamicFormSteps.length
+  });
+  
+  // Part 1: Analyze dynamicFormSteps structure
+  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - PART 1: Dynamic steps structure', {
+    timestamp: new Date().toISOString(),
+    dynamicStepsAvailable: dynamicFormSteps.length > 0,
+    dynamicStepsSummary: dynamicFormSteps.map((step, idx) => ({
+      stepIndex: idx,
+      exists: !!step,
+      isArray: Array.isArray(step),
+      fieldCount: Array.isArray(step) ? step.length : 0,
+      fieldNames: Array.isArray(step) && step.length > 0 ? step.map(f => f.name) : []
+    }))
+  });
+  
+  // Part 2: Current step analysis
+  let hasCurrentStepInDynamicData = false;
+  let currentStepDynamicFieldCount = 0;
+  let validDynamicStep = false;
+  
+  if (dynamicFormSteps.length > 0) {
+    hasCurrentStepInDynamicData = currentStep < dynamicFormSteps.length;
+    if (hasCurrentStepInDynamicData) {
+      validDynamicStep = Array.isArray(dynamicFormSteps[currentStep]) && dynamicFormSteps[currentStep].length > 0;
+      currentStepDynamicFieldCount = validDynamicStep ? dynamicFormSteps[currentStep].length : 0;
+    }
+  }
+  
+  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - PART 2: Current step availability', {
+    timestamp: new Date().toISOString(),
+    currentStep,
+    hasCurrentStepInDynamicData,
+    validDynamicStep,
+    currentStepDynamicFieldCount,
+    willFallbackToStatic: !validDynamicStep,
+    staticStepsAvailable: FORM_STEPS.length > 0,
+    staticStepsCount: FORM_STEPS.length,
+    currentStepInStaticRange: currentStep < FORM_STEPS.length,
+    staticStepFieldCount: currentStep < FORM_STEPS.length ? FORM_STEPS[currentStep].length : 0
+  });
+  
+  // Part 3: Make the decision with explicit logging
+  const useDynamicData = dynamicFormSteps.length > 0 && 
+                        Array.isArray(dynamicFormSteps[currentStep]) && 
+                        dynamicFormSteps[currentStep].length > 0;
+                        
+  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - PART 3: Selection decision', {
+    timestamp: new Date().toISOString(),
+    useDynamicData,
+    selectionReason: useDynamicData ? 'Valid dynamic step data available' : 'Falling back to static data',
+    dynamicDataStatus: dynamicFormSteps.length > 0 
+      ? (Array.isArray(dynamicFormSteps[currentStep]) 
+         ? (dynamicFormSteps[currentStep].length > 0 
+            ? 'COMPLETE' 
+            : 'EMPTY_ARRAY') 
+         : 'NOT_ARRAY') 
+      : 'NO_DYNAMIC_DATA',
+    staticDataStatus: currentStep < FORM_STEPS.length 
+      ? (FORM_STEPS[currentStep].length > 0 
+         ? 'AVAILABLE' 
+         : 'EMPTY') 
+      : 'OUT_OF_RANGE'
+  });
+  
+  // Now select the current step data with enhanced error handling
+  let currentStepData: FormField[] = [];
+  
+  try {
+    if (useDynamicData) {
+      currentStepData = dynamicFormSteps[currentStep];
+      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using dynamic step data', {
+        timestamp: new Date().toISOString(),
+        fieldCount: currentStepData.length,
+        fieldNames: currentStepData.map(f => f.name)
+      });
+    } else if (currentStep < FORM_STEPS.length) {
+      currentStepData = FORM_STEPS[currentStep];
+      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using static step data', {
+        timestamp: new Date().toISOString(),
+        fieldCount: currentStepData.length,
+        fieldNames: currentStepData.map(f => f.name)
+      });
+    } else {
+      console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - ERROR: No valid step data available', {
+        timestamp: new Date().toISOString(),
+        currentStep,
+        dynamicStepsCount: dynamicFormSteps.length,
+        staticStepsCount: FORM_STEPS.length
+      });
+      // Fallback to empty array - we'll handle this gracefully in the UI
+    }
+  } catch (error) {
+    console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - EXCEPTION: Error selecting step data', {
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    // Fallback to empty array on error
+  }
+  
+  // Final validation
+  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - COMPLETE', {
+    timestamp: new Date().toISOString(),
+    success: currentStepData && currentStepData.length > 0,
+    fieldCount: currentStepData?.length || 0,
+    stepTitle: STEP_TITLES[currentStep] || 'Unknown Step',
+    isLastStep: dynamicFormSteps.length > 0 
+      ? currentStep === dynamicFormSteps.length - 1
+      : currentStep === FORM_STEPS.length - 1
+  });
     
   const isLastStep: boolean = dynamicFormSteps.length > 0 
     ? currentStep === dynamicFormSteps.length - 1
@@ -1297,6 +1553,12 @@ export const OnboardingKYBFormPlayground = ({
 
   // Check if current step is valid
   const isCurrentStepValid = validateCurrentStep(formData, currentStepData);
+  
+  console.log('[KYB Form Debug] CHECKPOINT 3: Step validation result', {
+    currentStep,
+    isValid: isCurrentStepValid,
+    timestamp: new Date().toISOString()
+  });
 
 
   // Enhanced getSuggestionForField function
@@ -1687,13 +1949,26 @@ export const OnboardingKYBFormPlayground = ({
             {!isSubmitted && (
               <div className="flex justify-start px-0 mb-4 gap-6">
                 {(dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS).map((step, index) => {
+                  // Safely check each step is valid
+                  if (!step || !Array.isArray(step)) {
+                    console.log('[KYB Form Debug] Invalid step found:', {
+                      stepIndex: index,
+                      step
+                    });
+                    return null; // Skip rendering this step
+                  }
+                  
+                  // Extract field names safely
+                  const stepFields = step
+                    .filter(field => field && typeof field === 'object' && 'name' in field)
+                    .map(field => field.name);
+                    
                   // Check if ALL fields in this step are completed
-                  const stepFields = step.map(field => field.name);
-                  const stepCompleted = stepFields.every(fieldName => 
+                  const stepCompleted = stepFields.length > 0 && stepFields.every(fieldName => 
                     formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
                   
                   // Check if ANY fields in this step have values
-                  const hasProgress = stepFields.some(fieldName => 
+                  const hasProgress = stepFields.length > 0 && stepFields.some(fieldName => 
                     formData && formData[fieldName] && formData[fieldName].toString().trim() !== '');
                   
                   // Determine colors and status
@@ -1716,24 +1991,33 @@ export const OnboardingKYBFormPlayground = ({
                     const formSteps = dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS;
                     
                     // Safely check if the previous step exists
-                    if (formSteps && formSteps[index-1]) {
+                    if (formSteps && formSteps[index-1] && Array.isArray(formSteps[index-1])) {
                       // Now safely map and check each field
-                      const fieldNames = formSteps[index-1].map(field => field.name);
-                      
-                      // Check if all fields have valid values
-                      isPriorStepCompleted = fieldNames.every(fieldName => 
-                        formData && 
-                        formData[fieldName] !== undefined && 
-                        formData[fieldName] !== null &&
-                        (
-                          // String values should be non-empty when trimmed
-                          (typeof formData[fieldName] === 'string' && formData[fieldName].trim() !== '') ||
-                          // Boolean values are valid as-is
-                          typeof formData[fieldName] === 'boolean' ||
-                          // Numbers are valid as-is (except NaN)
-                          (typeof formData[fieldName] === 'number' && !isNaN(formData[fieldName]))
-                        )
-                      );
+                      const fieldNames = formSteps[index-1].map(field => {
+                        // Check that field is a valid object with name property before accessing
+                        if (field && typeof field === 'object' && 'name' in field) {
+                          return field.name;
+                        }
+                        return '';
+                      }).filter(name => name !== ''); // Filter out any empty names
+
+                      // Check if we have any field names to check
+                      if (fieldNames.length > 0) {
+                        // Check if all fields have valid values
+                        isPriorStepCompleted = fieldNames.every(fieldName => 
+                          formData && 
+                          formData[fieldName] !== undefined && 
+                          formData[fieldName] !== null &&
+                          (
+                            // String values should be non-empty when trimmed
+                            (typeof formData[fieldName] === 'string' && formData[fieldName].trim() !== '') ||
+                            // Boolean values are valid as-is
+                            typeof formData[fieldName] === 'boolean' ||
+                            // Numbers are valid as-is (except NaN)
+                            (typeof formData[fieldName] === 'number' && !isNaN(formData[fieldName]))
+                          )
+                        );
+                      }
                     }
                   }
                   
