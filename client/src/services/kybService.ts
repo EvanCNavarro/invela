@@ -242,26 +242,42 @@ export class KybFormService implements FormServiceInterface {
    * Update form data for a specific field
    */
   updateFormData(fieldKey: string, value: any): void {
+    // Log the update attempt for debugging
+    console.log(`[DEBUG KybService] Field update: ${fieldKey} = ${value}`);
+    console.log(`[DEBUG KybService] Current form data before update has ${Object.keys(this.formData).length} fields`);
+    
+    // Store the old value for reference
+    const oldValue = this.formData[fieldKey];
+    
+    // Normalize value (convert null to empty string to avoid controlled/uncontrolled input warnings)
+    const normalizedValue = value === null ? '' : value;
+    
     // Check if the value has actually changed before updating
-    if (JSON.stringify(this.formData[fieldKey]) === JSON.stringify(value)) {
+    if (JSON.stringify(oldValue) === JSON.stringify(normalizedValue)) {
+      console.log(`[DEBUG KybService] Skipping update - value unchanged for field ${fieldKey}`);
       return; // Value hasn't changed, no need to update
     }
     
     // Update the value in the internal formData object
-    this.formData[fieldKey] = value;
+    this.formData[fieldKey] = normalizedValue;
+    
+    // Debug - log the change
+    console.log(`[DEBUG KybService] Updated field ${fieldKey} from "${oldValue || ''}" to "${normalizedValue || ''}"`);
     
     // Update the field value in fields array
     this.fields = this.fields.map(field => 
-      field.key === fieldKey ? { ...field, value } : field
+      field.key === fieldKey ? { ...field, value: normalizedValue } : field
     );
     
     // Update the field value in sections
     this.sections = this.sections.map(section => ({
       ...section,
       fields: section.fields.map(field => 
-        field.key === fieldKey ? { ...field, value } : field
+        field.key === fieldKey ? { ...field, value: normalizedValue } : field
       )
     }));
+    
+    console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
   }
 
   /**
@@ -295,34 +311,74 @@ export class KybFormService implements FormServiceInterface {
       return;
     }
     
-    // Check if data has actually changed by comparing with last saved data
+    // Get current form data JSON
     const currentDataString = JSON.stringify(this.formData);
-    if (currentDataString === this.lastSavedData) {
-      console.log('[KybService] Skipping save - data unchanged');
-      return;
-    }
     
-    // Clear any existing timer
-    if (this.saveProgressTimer) {
-      clearTimeout(this.saveProgressTimer);
-      this.saveProgressTimer = null;
-    }
+    // Debug logging to track data changes
+    console.log(`[DEBUG KybService] Current form data: ${Object.keys(this.formData).length} fields`);
     
-    // Set a new timer for debouncing (800ms)
-    this.saveProgressTimer = setTimeout(async () => {
+    if (this.lastSavedData) {
       try {
-        // Update the last saved data reference BEFORE the API call
-        // This prevents race conditions if the user makes changes during the API call
-        this.lastSavedData = currentDataString;
+        const previousData = JSON.parse(this.lastSavedData);
         
-        const progress = this.calculateProgress();
-        await this.saveKybProgress(taskId, progress, this.formData);
-        console.log(`[KybService] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
-      } catch (error) {
-        console.error('[KybService] Error saving progress:', error);
-        // Silent failure to allow user to continue working
+        // Debug - Find changed fields
+        const changedFields = Object.keys(this.formData).filter(key => {
+          // Skip fields that haven't changed
+          return previousData[key] !== this.formData[key];
+        });
+        
+        // Log changes for debugging
+        if (changedFields.length > 0) {
+          console.log(`[DEBUG KybService] Changed fields: ${changedFields.join(', ')}`);
+          changedFields.forEach(field => {
+            console.log(`[DEBUG KybService] Field [${field}] changed from "${previousData[field] || ''}" to "${this.formData[field] || ''}"`);
+          });
+        } else {
+          // If no changes detected but JSON strings are different
+          if (currentDataString !== this.lastSavedData) {
+            console.log('[DEBUG KybService] JSON strings differ but no field changes detected - forcing save');
+          } else {
+            console.log('[DEBUG KybService] No fields have changed values');
+          }
+        }
+      } catch (err) {
+        console.error('[DEBUG KybService] Error comparing data changes:', err);
       }
-    }, 800);
+    }
+    
+    // Force a save if lastSavedData is empty (first save) or if the data has changed
+    if (!this.lastSavedData || currentDataString !== this.lastSavedData) {
+      // Clear any existing timer
+      if (this.saveProgressTimer) {
+        clearTimeout(this.saveProgressTimer);
+        this.saveProgressTimer = null;
+      }
+      
+      // Set a new timer for debouncing (800ms)
+      this.saveProgressTimer = setTimeout(async () => {
+        try {
+          console.log(`[KybService] Saving ${Object.keys(this.formData).length} fields to database...`);
+          const progress = this.calculateProgress();
+          
+          // Save to server first, only update lastSavedData if successful
+          const result = await this.saveKybProgress(taskId, progress, this.formData);
+          
+          // Only update lastSavedData if the save was successful
+          if (result && result.success) {
+            // Update last saved data reference AFTER successful save
+            this.lastSavedData = currentDataString;
+            console.log(`[KybService] Successfully saved progress (${progress}%) with ${Object.keys(this.formData).length} fields`);
+          } else {
+            console.error('[KybService] Failed to save progress:', result?.error || 'Unknown error');
+          }
+        } catch (error) {
+          console.error('[KybService] Error saving progress:', error);
+          // Silent failure to allow user to continue working
+        }
+      }, 800);
+    } else {
+      console.log('[KybService] Skipping save - data unchanged');
+    }
   }
 
   /**
