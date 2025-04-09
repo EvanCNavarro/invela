@@ -4,7 +4,7 @@ import type { FormField } from '@/services/formService';
 
 export interface UseFormProgressOptions {
   sections: FormSection[];
-  formData: Record<string, any>;
+  getFormValues: () => Record<string, any>;
   fields: FormField[];
   requiredOnly?: boolean;
 }
@@ -26,7 +26,7 @@ type ProgressCache = Record<string, Record<string, number>>;
  */
 export function useFormProgress({
   sections,
-  formData,
+  getFormValues,
   fields,
   requiredOnly = true
 }: UseFormProgressOptions): FormProgressState {
@@ -83,12 +83,15 @@ export function useFormProgress({
     // Convert the section ID to a string for consistent cache keys
     const cacheKey = String(sectionId);
     
+    // Get the current form values
+    const formValues = getFormValues();
+    
     // Generate a unique key for the current form data state
     // This is a simplification - in a real implementation you might use a more sophisticated
     // approach to generate this key based on the relevant form values for this section
     const formDataHash = JSON.stringify(
       (sectionFields[sectionId] || []).reduce((acc, field) => {
-        acc[field.key] = formData[field.key];
+        acc[field.key] = formValues[field.key];
         return acc;
       }, {} as Record<string, any>)
     );
@@ -120,8 +123,9 @@ export function useFormProgress({
     
     if (relevantFields.length === 0) return 0;
 
+    // Use the form values previously retrieved
     const filledFields = relevantFields.filter(field => {
-      const value = formData[field.key];
+      const value = formValues[field.key];
       return value !== undefined && value !== null && value !== '';
     });
 
@@ -134,7 +138,7 @@ export function useFormProgress({
     progressCacheRef.current[cacheKey][formDataHash] = progress;
     
     return progress;
-  }, [sectionFields, formData, requiredOnly]);
+  }, [sectionFields, getFormValues, requiredOnly]);
 
   // Update completed sections state with throttling to prevent UI freezing
   useEffect(() => {
@@ -160,7 +164,7 @@ export function useFormProgress({
     return () => {
       cancelAnimationFrame(frameId);
     };
-  }, [formData, sections, sectionFields, getSectionProgress]);
+  }, [sections, sectionFields, getSectionProgress, getFormValues]);
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
