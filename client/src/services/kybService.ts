@@ -95,11 +95,13 @@ export class KybFormService implements FormServiceInterface {
       console.log(`[KYB Service] Fetching fields for step index: ${stepIndex}`);
       
       // Use our new API endpoint for fetching fields by step index
-      const response = await apiRequest('GET', `/api/form-fields/company_kyb/${stepIndex}`);
-      const fields = await response.json();
+      // apiRequest already returns parsed JSON in our application
+      const fields = await apiRequest('GET', `/api/form-fields/company_kyb/${stepIndex}`);
       
-      console.log(`[KYB Service] Found ${fields.length} fields for step ${stepIndex}`);
-      return fields;
+      // Safe check if fields is an array
+      const fieldsArray = Array.isArray(fields) ? fields : [];
+      console.log(`[KYB Service] Found ${fieldsArray.length} fields for step ${stepIndex}`);
+      return fieldsArray;
     } catch (error) {
       console.error(`[KYB Service] Error fetching KYB fields for step ${stepIndex}:`, error);
       return [];
