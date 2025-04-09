@@ -3,7 +3,7 @@ import {
   useQuery,
   useMutation,
 } from "@tanstack/react-query";
-import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
+import { getQueryFn, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import type { RegisterData, LoginData, User } from "@/types/auth";
@@ -30,7 +30,14 @@ const useLoginMutation = () => {
         passwordLength: credentials.password?.length
       });
 
-      const res = await apiRequest("POST", "/api/login", credentials);
+      // Use fetch directly to handle raw response
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(credentials),
+        credentials: "include"
+      });
+      
       if (!res.ok) {
         // Get plain text error message directly from response
         const errorText = await res.text();
@@ -55,7 +62,16 @@ const useLoginMutation = () => {
 
       // Fetch current company to check available tabs
       try {
-        const companyRes = await apiRequest("GET", "/api/companies/current");
+        // Use fetch directly to match our direct fetch approach
+        const companyRes = await fetch("/api/companies/current", {
+          method: "GET",
+          credentials: "include"
+        });
+        
+        if (!companyRes.ok) {
+          throw new Error("Failed to fetch company data");
+        }
+        
         const company: Company = await companyRes.json();
 
         console.log('[Auth] Company data fetched:', {
@@ -101,8 +117,16 @@ const useRegisterMutation = () => {
 
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      const res = await apiRequest("POST", "/api/account/setup", data);
+      // Use fetch directly to handle raw response
+      const res = await fetch("/api/account/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include"
+      });
+      
       if (!res.ok) {
+        // Try to parse JSON error first, fallback to text
         const errorData = await res.json().catch(async () => ({ 
           message: await res.text() 
         }));
@@ -149,7 +173,13 @@ const useLogoutMutation = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout");
+      // Use fetch directly to handle raw response
+      const res = await fetch("/api/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include"
+      });
+      
       if (!res.ok) {
         // Get plain text error message directly from response
         const errorText = await res.text();
