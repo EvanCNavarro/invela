@@ -732,6 +732,7 @@ export const OnboardingKYBFormPlayground = ({
   const [isLoading, setIsLoading] = useState(true);
   const [dataInitialized, setDataInitialized] = useState(false);
   const [formReady, setFormReady] = useState(false);
+  const [lastLoadTime, setLastLoadTime] = useState(Date.now()); // Add state to track last load time for forcing rerenders
   const [dynamicStepsWithFallbacks, setDynamicStepsWithFallbacks] = useState<FormField[][]>([]);
   const lastProgressRef = useRef<number>(0);
   const lastUpdateRef = useRef(0);
@@ -1709,72 +1710,98 @@ export const OnboardingKYBFormPlayground = ({
       : 'OUT_OF_RANGE'
   });
   
-  // Use dynamic current step data reference to prevent unnecessary re-renders
-  // Creating a stable reference to step data to avoid unnecessary rerenders
+  // Create a stable reference to step data to avoid unnecessary rerenders
   const currentStepDataRef = useRef<FormField[]>([]);
   
-  // Update the step data reference only when needed
-  try {
-    // First check if we have fallback data available
-    if (dynamicStepsWithFallbacks.length > 0 && 
-        Array.isArray(dynamicStepsWithFallbacks[currentStep]) && 
-        dynamicStepsWithFallbacks[currentStep].length > 0) {
-      
-      currentStepDataRef.current = dynamicStepsWithFallbacks[currentStep];
-      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using fallback step data', {
-        timestamp: new Date().toISOString(),
-        isFallback: true,
-        fieldCount: currentStepDataRef.current.length,
-        fieldNames: currentStepDataRef.current.map(f => f.name)
-      });
-    } 
-    // Otherwise try regular dynamic data
-    else if (useDynamicData) {
-      currentStepDataRef.current = dynamicFormSteps[currentStep];
-      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using dynamic step data', {
-        timestamp: new Date().toISOString(),
-        fieldCount: currentStepDataRef.current.length,
-        fieldNames: currentStepDataRef.current.map(f => f.name)
-      });
-    } 
-    // Finally use static data as last resort
-    else if (currentStep < FORM_STEPS.length) {
-      currentStepDataRef.current = FORM_STEPS[currentStep];
-      console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - SUCCESS: Using static step data', {
-        timestamp: new Date().toISOString(),
-        fieldCount: currentStepDataRef.current.length,
-        fieldNames: currentStepDataRef.current.map(f => f.name)
-      });
-    } else {
-      console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - ERROR: No valid step data available', {
+  // CRITICAL FIX: Add a dedicated effect to update the current step data whenever the step changes
+  // This ensures the step data is updated properly when navigating between steps
+  useEffect(() => {
+    console.log('[KYB Form Debug] CURRENT STEP DATA EFFECT TRIGGERED', {
+      eventId: Date.now(),
+      currentStep,
+      dynamicStepsCount: dynamicFormSteps.length,
+      dynamicWithFallbacksCount: dynamicStepsWithFallbacks.length,
+      timestamp: new Date().toISOString()
+    });
+    
+    try {
+      // First check if we have fallback data available
+      if (dynamicStepsWithFallbacks.length > 0 && 
+          Array.isArray(dynamicStepsWithFallbacks[currentStep]) && 
+          dynamicStepsWithFallbacks[currentStep].length > 0) {
+        
+        // Log what data source we're using and what fields are available
+        const fieldsList = dynamicStepsWithFallbacks[currentStep];
+        currentStepDataRef.current = fieldsList;
+        
+        console.log('[KYB Form Debug] STEP DATA UPDATED - Using fallback step data', {
+          timestamp: new Date().toISOString(),
+          isFallback: true,
+          stepIndex: currentStep,
+          fieldCount: fieldsList.length,
+          fieldNames: fieldsList.map(f => f.name)
+        });
+      } 
+      // Otherwise try regular dynamic data
+      else if (useDynamicData && dynamicFormSteps.length > 0 && 
+              Array.isArray(dynamicFormSteps[currentStep]) && 
+              dynamicFormSteps[currentStep].length > 0) {
+        
+        const fieldsList = dynamicFormSteps[currentStep];
+        currentStepDataRef.current = fieldsList;
+        
+        console.log('[KYB Form Debug] STEP DATA UPDATED - Using dynamic step data', {
+          timestamp: new Date().toISOString(),
+          stepIndex: currentStep,
+          fieldCount: fieldsList.length,
+          fieldNames: fieldsList.map(f => f.name)
+        });
+      } 
+      // Finally use static data as last resort
+      else if (currentStep < FORM_STEPS.length) {
+        const fieldsList = FORM_STEPS[currentStep];
+        currentStepDataRef.current = fieldsList;
+        
+        console.log('[KYB Form Debug] STEP DATA UPDATED - Using static step data', {
+          timestamp: new Date().toISOString(),
+          stepIndex: currentStep,
+          fieldCount: fieldsList.length,
+          fieldNames: fieldsList.map(f => f.name)
+        });
+      } else {
+        console.error('[KYB Form Debug] STEP DATA UPDATE FAILED - No valid step data available', {
+          timestamp: new Date().toISOString(),
+          currentStep,
+          dynamicStepsCount: dynamicFormSteps.length,
+          staticStepsCount: FORM_STEPS.length
+        });
+        // Fallback to empty array - we'll handle this gracefully in the UI
+        currentStepDataRef.current = [];
+      }
+    } catch (error) {
+      console.error('[KYB Form Debug] STEP DATA UPDATE ERROR', {
         timestamp: new Date().toISOString(),
         currentStep,
-        dynamicStepsCount: dynamicFormSteps.length,
-        staticStepsCount: FORM_STEPS.length
+        error: error instanceof Error ? error.message : String(error)
       });
-      // Fallback to empty array - we'll handle this gracefully in the UI
+      // Fallback to empty array in case of errors
       currentStepDataRef.current = [];
     }
-  } catch (error) {
-    console.error('[KYB Form Debug] STEP SELECTION ANALYSIS - EXCEPTION: Error selecting step data', {
+    
+    // Force a rerender by updating a benign state value after fields are updated
+    setLastLoadTime(Date.now());
+    
+    // Validation after updating the step data
+    console.log('[KYB Form Debug] STEP DATA UPDATE COMPLETE', {
       timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      success: currentStepDataRef.current.length > 0,
+      fieldCount: currentStepDataRef.current.length,
+      stepTitle: STEP_TITLES[currentStep] || 'Unknown Step',
+      fieldsSample: currentStepDataRef.current.slice(0, 3).map(f => f.name),
+      isLastStep: currentStep === (dynamicFormSteps.length > 0 ? dynamicFormSteps.length - 1 : FORM_STEPS.length - 1)
     });
-    // Fallback to empty array on error
-    currentStepDataRef.current = [];
-  }
-  
-  // Final validation
-  console.log('[KYB Form Debug] STEP SELECTION ANALYSIS - COMPLETE', {
-    timestamp: new Date().toISOString(),
-    success: currentStepDataRef.current && currentStepDataRef.current.length > 0,
-    fieldCount: currentStepDataRef.current?.length || 0,
-    stepTitle: STEP_TITLES[currentStep] || 'Unknown Step',
-    isLastStep: dynamicFormSteps.length > 0 
-      ? currentStep === dynamicFormSteps.length - 1
-      : currentStep === FORM_STEPS.length - 1
-  });
+    
+  }, [currentStep, dynamicFormSteps, dynamicStepsWithFallbacks, useDynamicData]);
     
   const isLastStep: boolean = dynamicFormSteps.length > 0 
     ? currentStep === dynamicFormSteps.length - 1
