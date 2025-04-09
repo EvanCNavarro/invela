@@ -300,6 +300,7 @@ export class KybFormService implements FormServiceInterface {
    */
   async saveKybProgress(taskId: number, progress: number, formData: Record<string, any>) {
     try {
+      // Send as urlencoded parameter
       const response = await fetch(`/api/kyb/progress`, {
         method: 'POST',
         credentials: 'include',
@@ -308,7 +309,6 @@ export class KybFormService implements FormServiceInterface {
           'Accept': 'application/json'
         },
         body: JSON.stringify({
-          taskId,
           progress,
           formData
         })
@@ -341,9 +341,9 @@ export class KybFormService implements FormServiceInterface {
     try {
       console.log(`[DEBUG KybService] Getting progress for task ID: ${taskId}`);
       
-      // Use the correct URL format based on server logs - WITHOUT taskID in path
-      // Server expects a query parameter instead of a path parameter
-      const response = await fetch(`/api/kyb/progress?taskId=${taskId}`, {
+      // Fix URL format - the URL should be just /api/kyb/progress
+      // The server already has access to the task ID via session
+      const response = await fetch(`/api/kyb/progress`, {
         method: 'GET',
         credentials: 'include',
         headers: {
@@ -450,7 +450,8 @@ export class KybFormService implements FormServiceInterface {
    */
   async submitKybForm(taskId: number, formData: Record<string, any>, fileName?: string) {
     try {
-      const response = await fetch(`/api/kyb/submit/${taskId}`, {
+      // Use consistent pattern with other API calls - no taskId in path
+      const response = await fetch(`/api/kyb/submit`, {
         method: 'POST',
         credentials: 'include',
         headers: {
