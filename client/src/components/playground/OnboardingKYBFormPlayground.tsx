@@ -1948,14 +1948,39 @@ export const OnboardingKYBFormPlayground = ({
             {/* Step Wizard */}
             {!isSubmitted && (
               <div className="flex justify-start px-0 mb-4 gap-6">
+                {/* Add extra debug for all steps */}
+                {console.log('[KYB Form Debug] Rendering all steps:', {
+                  stepsCount: dynamicFormSteps.length,
+                  fallbackStepsCount: FORM_STEPS.length,
+                  usingDynamic: dynamicFormSteps.length > 0,
+                  firstStepSample: dynamicFormSteps.length > 0 && dynamicFormSteps[0]
+                })}
+                
                 {(dynamicFormSteps.length > 0 ? dynamicFormSteps : FORM_STEPS).map((step, index) => {
+                  // Enhanced step validation with extra logging
+                  console.log('[KYB Form Debug] Processing step:', {
+                    stepIndex: index,
+                    isArray: Array.isArray(step),
+                    length: step && Array.isArray(step) ? step.length : 0,
+                    firstFieldSample: step && Array.isArray(step) && step.length > 0 ? step[0] : null
+                  });
+                  
                   // Safely check each step is valid
                   if (!step || !Array.isArray(step)) {
-                    console.log('[KYB Form Debug] Invalid step found:', {
+                    console.error('[KYB Form Debug] Invalid step found:', {
                       stepIndex: index,
                       step
                     });
-                    return null; // Skip rendering this step
+                    // Return dummy element instead of null to maintain structure
+                    return <div key={`empty-step-${index}`} className="flex-none w-[250px] opacity-50"></div>;
+                  }
+                  
+                  // If the step array is empty, also render a placeholder
+                  if (step.length === 0) {
+                    console.error('[KYB Form Debug] Empty step array found:', {
+                      stepIndex: index
+                    });
+                    return <div key={`empty-step-${index}`} className="flex-none w-[250px] opacity-50"></div>;
                   }
                   
                   // Extract field names safely
@@ -2064,9 +2089,14 @@ export const OnboardingKYBFormPlayground = ({
                     }
                   }
                   
+                  // Safely extract the first field name for the key
+                  const firstField = step[0];
+                  const firstFieldName = firstField && typeof firstField === 'object' && 'name' in firstField ? 
+                    firstField.name : `step-${index}`;
+                    
                   return (
                     <div 
-                      key={step[0].name} 
+                      key={firstFieldName} 
                       className={`flex flex-col items-center justify-center relative py-2 px-3 w-[250px] ${
                         isClickable ? 'cursor-pointer group' : 'cursor-not-allowed'
                       }`}
