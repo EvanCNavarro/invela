@@ -80,8 +80,7 @@ if (process.env.NODE_ENV === 'development') {
 // Create the drizzle db instance with the configured pool
 export const db = drizzle({ client: pool, schema });
 
-// Import migrations
-import { runMigrations } from './migrations';
+// Migrations removed - database schema already established
 
 // Graceful shutdown handler with improved error handling
 async function handleShutdown(signal: string) {
@@ -105,76 +104,11 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection:', reason);
 });
 
-// Create a simple migration tracker table if it doesn't exist
-async function ensureMigrationTable() {
-  try {
-    // Check if the migration_status table exists
-    const tableExistsResult = await pool.query(`
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.tables
-        WHERE table_name = 'migration_status'
-      );
-    `);
-    
-    const tableExists = tableExistsResult.rows[0].exists;
-    
-    if (!tableExists) {
-      console.log('Creating migration status tracking table');
-      // Create the table if it doesn't exist
-      await pool.query(`
-        CREATE TABLE migration_status (
-          id SERIAL PRIMARY KEY,
-          last_run TIMESTAMP NOT NULL DEFAULT NOW(),
-          version INTEGER NOT NULL,
-          status VARCHAR(20) NOT NULL
-        );
-      `);
-      
-      // Insert initial record with version 0
-      await pool.query(`
-        INSERT INTO migration_status (version, status)
-        VALUES (0, 'INITIAL');
-      `);
-      
-      return { currentVersion: 0, needsMigration: true };
-    } else {
-      // Get the current migration version
-      const versionResult = await pool.query(`
-        SELECT version FROM migration_status
-        ORDER BY id DESC LIMIT 1;
-      `);
-      
-      const currentVersion = versionResult.rows[0]?.version || 0;
-      return { currentVersion, needsMigration: currentVersion < 1 };
-    }
-  } catch (error) {
-    console.error('Error checking migration status:', error);
-    // Default to running migrations if we can't check
-    return { currentVersion: 0, needsMigration: true };
-  }
-}
-
-// Run migrations only if needed
-(async () => {
-  try {
-    const { currentVersion, needsMigration } = await ensureMigrationTable();
-    
-    if (needsMigration) {
-      console.log(`Running database migrations (current version: ${currentVersion})...`);
-      await runMigrations();
-      
-      // Update the migration version
-      await pool.query(`
-        INSERT INTO migration_status (version, status)
-        VALUES (1, 'COMPLETED');
-      `);
-      
-      console.log('Database migrations completed successfully and version updated to 1');
-    } else {
-      console.log(`Database migrations already up to date (version: ${currentVersion})`);
-    }
-  } catch (error) {
-    console.error('Failed to run migrations:', error);
-  }
-})();
+// Migrations are no longer automatically run on startup.
+// The database schema is already set up, so there's no need to run migrations each time.
+// 
+// If you need to run migrations manually, use:
+//   npm run migrations
+// 
+// Or import and call runMigrations() directly from another script.
+console.log('Database migrations disabled - schema already applied');
