@@ -1229,17 +1229,14 @@ export const OnboardingKYBFormPlayground = ({
       action: 'BACK_NAVIGATION_START',
       currentStep,
       isReviewMode,
-      formDataKeys: Object.keys(formData),
-      formDataKeysCount: Object.keys(formData).length,
-      formDataKeysSample: Object.keys(formData).slice(0, 5),
-      formDataValuesSample: Object.entries(formData).slice(0, 3),
+      formDataKeys: Object.keys(formData).length,
       dynamicFormStepsCount: dynamicFormSteps.length,
       timestamp: new Date().toISOString()
     });
     
     if (isReviewMode) {
-      // STEP 1: Exit review mode and go back to form
-      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 1/5: Exiting review mode', {
+      // Exit review mode and go back to form
+      console.log('[KYB Form Debug] Exiting review mode', {
         status: 'SUCCESS',
         timestamp: new Date().toISOString()
       });
@@ -1248,215 +1245,130 @@ export const OnboardingKYBFormPlayground = ({
     }
     
     if (currentStep > 0) {
-      // STEP 2: Prefetch data for the previous step before navigating
       const prevStep = currentStep - 1;
-      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 2/5: Preparing to navigate to previous step', {
-        status: 'SUCCESS',
-        prevStep,
-        currentStep,
+      
+      // CRITICAL FIX: Always preserve form data first
+      const formDataCopy = JSON.parse(JSON.stringify(formData));
+      console.log('[KYB Form Debug] Form data preserved for later restoration', {
+        keys: Object.keys(formDataCopy).length,
         timestamp: new Date().toISOString()
       });
       
-      // STEP 3: Check if we already have data for the previous step
-      const hasPrevStepData = dynamicFormSteps.length > 0 && 
-                            Array.isArray(dynamicFormSteps[prevStep]) && 
-                            dynamicFormSteps[prevStep].length > 0;
-      
-      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 3/5: Checking for previous step data', {
-        status: hasPrevStepData ? 'SUCCESS' : 'PENDING',
-        prevStep,
-        dynamicFormStepsLength: dynamicFormSteps.length,
-        hasPrevStepData,
-        fieldCount: hasPrevStepData ? dynamicFormSteps[prevStep].length : 0,
-        timestamp: new Date().toISOString()
-      });
-                            
-      // STEP 4: If we don't have the data yet, fetch it before navigation
-      if (!hasPrevStepData) {
-        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Fetching data for previous step', {
-          status: 'PENDING',
-          prevStep,
+      // CRITICAL FIX: Always fetch fresh data for the target step to ensure consistency
+      try {
+        console.log('[KYB Form Debug] Fetching fresh data for step:', {
+          stepIndex: prevStep,
           timestamp: new Date().toISOString()
         });
         
-        try {
-          // Fetch the data synchronously before navigating
-          const prevStepData = await getKybFieldsByStepIndex(prevStep);
-          
-          if (prevStepData && prevStepData.length > 0) {
-            console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Data fetch completed', {
-              status: 'SUCCESS',
-              prevStep,
-              fieldCount: prevStepData.length,
-              fieldNames: prevStepData.map(f => f.field_key),
-              timestamp: new Date().toISOString()
-            });
-            
-            // Process the previous step data
-            const formFieldsMap: Record<string, FormField> = {};
-            const formFields = prevStepData
-              .sort((a, b) => a.order - b.order)
-              .map(field => {
-                const formField = convertKybFieldToFormField(field);
-                formFieldsMap[field.field_key] = formField;
-                return formField;
-              });
-            
-            // Update dynamicFormSteps with the new data
-            setDynamicFormSteps(prevSteps => {
-              const updatedSteps = [...prevSteps];
-              updatedSteps[prevStep] = formFields;
-              
-              console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Updating form steps array', {
-                status: 'SUCCESS',
-                prevStep,
-                currentStep,
-                prevStepsLength: prevSteps.length,
-                updatedStepsLength: updatedSteps.length,
-                timestamp: new Date().toISOString()
-              });
-              
-              // Immediately create a consistent version with fallbacks
-              // This ensures dynamicStepsWithFallbacks stays in sync
-              const enhancedSteps = [...updatedSteps];
-              const fallbackTitles = [
-                "Company Profile", 
-                "Business Details", 
-                "Ownership Structure", 
-                "Additional Information"
-              ];
-              
-              let hasEmptySteps = false;
-              enhancedSteps.forEach((step, index) => {
-                if (!step || !Array.isArray(step) || step.length === 0) {
-                  console.log(`[KYB Form Debug] Creating placeholder for empty step ${index} during back navigation`, {
-                    timestamp: new Date().toISOString()
-                  });
-                  hasEmptySteps = true;
-                  
-                  // Create a placeholder field for this step
-                  enhancedSteps[index] = [{
-                    name: `placeholder-step-${index}`,
-                    label: fallbackTitles[index] || `Step ${index + 1}`,
-                    question: `This section will be available after completing the previous steps.`,
-                    tooltip: "This step will contain fields related to your business verification."
-                  }];
-                }
-              });
-              
-              // Always update the fallbacks to maintain consistency
-              console.log('[KYB Form Debug] Updating dynamicStepsWithFallbacks during back navigation:', {
-                originalSteps: updatedSteps.map(step => step?.length || 0),
-                enhancedSteps: enhancedSteps.map(step => step?.length || 0),
-                hasEmptySteps,
-                timestamp: new Date().toISOString()
-              });
-              setDynamicStepsWithFallbacks(enhancedSteps);
-              
-              return updatedSteps;
-            });
-            
-            // Update fieldConfig with the new fields
-            setFieldConfig(prevConfig => ({
-              ...prevConfig,
-              ...formFieldsMap
-            }));
-          } else {
-            console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: No data found for previous step', {
-              status: 'FAILED',
-              prevStep,
-              timestamp: new Date().toISOString()
-            });
-          }
-        } catch (error) {
-          console.error('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Error fetching previous step data', {
-            status: 'FAILED',
-            prevStep,
-            error: error instanceof Error ? error.message : 'Unknown error',
+        // Force fetch the step data to ensure we have the latest
+        const stepFields = await getKybFieldsByStepIndex(prevStep);
+        
+        if (stepFields && stepFields.length > 0) {
+          console.log('[KYB Form Debug] Successfully fetched fields for step:', {
+            stepIndex: prevStep,
+            fieldCount: stepFields.length,
+            fieldNames: stepFields.map(f => f.field_key),
             timestamp: new Date().toISOString()
           });
+          
+          // Process the fields into the correct format
+          const processedFields = stepFields
+            .sort((a, b) => a.order - b.order)
+            .map(field => convertKybFieldToFormField(field));
+          
+          // Create field configuration map
+          const fieldsConfigMap = stepFields.reduce((map, field) => {
+            map[field.field_key] = convertKybFieldToFormField(field);
+            return map;
+          }, {} as Record<string, FormField>);
+          
+          // CRITICAL FIX: Update all related state in a precise order
+          
+          // 1. Update field configurations to ensure field definitions are available
+          console.log('[KYB Form Debug] Updating field configurations', {
+            fieldCount: Object.keys(fieldsConfigMap).length,
+            timestamp: new Date().toISOString()
+          });
+          setFieldConfig(prevConfig => ({
+            ...prevConfig,
+            ...fieldsConfigMap
+          }));
+          
+          // 2. Update dynamic steps with the processed fields
+          console.log('[KYB Form Debug] Updating dynamic form steps array', {
+            stepIndex: prevStep,
+            fieldCount: processedFields.length,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Create a new steps array with the updated fields
+          const updatedSteps = [...dynamicFormSteps];
+          updatedSteps[prevStep] = processedFields;
+          setDynamicFormSteps(updatedSteps);
+          
+          // 3. Also update the fallbacks array to maintain consistency
+          console.log('[KYB Form Debug] Updating dynamic steps with fallbacks', {
+            stepIndex: prevStep,
+            fieldCount: processedFields.length,
+            timestamp: new Date().toISOString()
+          });
+          
+          const updatedFallbacks = [...dynamicStepsWithFallbacks];
+          updatedFallbacks[prevStep] = processedFields;
+          setDynamicStepsWithFallbacks(updatedFallbacks);
+          
+          // 4. Change to the previous step AFTER all data is properly loaded
+          console.log('[KYB Form Debug] Navigating to previous step', {
+            fromStep: currentStep,
+            toStep: prevStep,
+            timestamp: new Date().toISOString()
+          });
+          
+          // CRITICAL FIX: Use a more reliable approach for state transitions
+          // First set the step change
+          setCurrentStep(prevStep);
+          
+          // Then restore form data with a slight delay to ensure step change is processed
+          setTimeout(() => {
+            console.log('[KYB Form Debug] Restoring form data after step change', {
+              formDataKeys: Object.keys(formDataCopy),
+              timestamp: new Date().toISOString()
+            });
+            
+            // Apply the preserved form data
+            setFormData(formDataCopy);
+            
+            // CRITICAL FIX: Force a form redraw by touching a benign state value
+            setLastLoadTime(Date.now());
+            
+            console.log('[KYB Form Debug] Back navigation complete', {
+              currentStep: prevStep,
+              formDataRestored: true,
+              timestamp: new Date().toISOString()
+            });
+          }, 10);
+        } else {
+          console.error('[KYB Form Debug] No fields found for previous step', {
+            prevStep,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Still navigate to the previous step even if we don't have fields
+          setCurrentStep(prevStep);
         }
-      } else {
-        console.log('[KYB Form Debug] NAVIGATION-BACK STEP 4/5: Using existing data for previous step', {
-          status: 'SUCCESS',
+      } catch (error) {
+        console.error('[KYB Form Debug] Error fetching previous step data:', {
+          error: error instanceof Error ? error.message : 'Unknown error',
           prevStep,
-          fieldCount: dynamicFormSteps[prevStep].length,
-          fieldNames: dynamicFormSteps[prevStep].map(f => f.name),
           timestamp: new Date().toISOString()
         });
-      }
-      
-      // STEP 5: Navigate to the previous step
-      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigating to previous step', {
-        status: 'PENDING',
-        fromStep: currentStep,
-        toStep: prevStep,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Use a more reliable approach to navigate and preserve state
-      // 1. Create a copy of the current form data to preserve values
-      const preservedFormData = {...formData};
-      
-      console.log('[KYB Form Debug] NAVIGATION-BACK: Preserving form data before navigation', {
-        status: 'PENDING',
-        dataFields: Object.keys(preservedFormData),
-        fieldCount: Object.keys(preservedFormData).length,
-        timestamp: new Date().toISOString()
-      });
-      
-      // 2. First update the formData to ensure it's preserved
-      // Create a completely independent deep copy to avoid any state reference issues
-      const deepCopyData = JSON.parse(JSON.stringify(preservedFormData));
-      
-      console.log('[KYB Form Debug] NAVIGATION-BACK: Made deep copy of form data', {
-        status: 'PROCESSING',
-        formDataOriginal: preservedFormData,
-        formDataCopy: deepCopyData,
-        originalKeys: Object.keys(preservedFormData),
-        copyKeys: Object.keys(deepCopyData),
-        timestamp: new Date().toISOString()
-      });
-      
-      // Store the form data in a more explicit way before navigation
-      const forcePreserveFormData = deepCopyData;
-      
-      // Apply the step change first
-      setCurrentStep(prevStep);
-      
-      // Then apply form data in a synchronized way
-      console.log('[KYB Form Debug] NAVIGATION-BACK: Applied step change, now restoring form data', {
-        status: 'PROCESSING',
-        fromStep: currentStep,
-        toStep: prevStep,
-        timestamp: new Date().toISOString()
-      });
-      
-      // Use an immediate timeout to ensure the form data is applied after React processes the step change
-      setTimeout(() => {
-        // Directly set the form data without a callback to avoid any state inconsistencies
-        setFormData(forcePreserveFormData);
         
-        console.log('[KYB Form Debug] NAVIGATION-BACK: Form data restored completely', {
-          status: 'SUCCESS',
-          restoredData: forcePreserveFormData,
-          restoredKeys: Object.keys(forcePreserveFormData),
-          fieldCount: Object.keys(forcePreserveFormData).length,
-          timestamp: new Date().toISOString()
-        });
-      }, 50); // Use a slightly longer timeout to ensure step change is complete
-      
-      console.log('[KYB Form Debug] NAVIGATION-BACK STEP 5/5: Navigation complete', {
-        status: 'SUCCESS',
-        fromStep: currentStep,
-        toStep: prevStep,
-        preservedDataFields: Object.keys(preservedFormData).length,
-        timestamp: new Date().toISOString()
-      });
+        // Still navigate to the previous step even if there was an error
+        setCurrentStep(prevStep);
+      }
     } else {
-      console.log('[KYB Form Debug] NAVIGATION-BACK: Already at first step, cannot go back', {
-        status: 'CANCELLED',
-        currentStep,
+      console.log('[KYB Form Debug] Already at first step, cannot go back', {
         timestamp: new Date().toISOString()
       });
     }
