@@ -121,11 +121,10 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             configCount: templateData.configurations?.length
           });
           
-          // Check if this request is still relevant after the async operation
-          if (templateRequestId !== requestId) {
-            console.log(`[UniversalForm] Discarding stale response: ${requestId}`);
-            return;
-          }
+          // Important: We are NOT checking templateRequestId here anymore
+          // since it's an asynchronous state update and won't reliably reflect
+          // our current requestId. We're using the locally captured requestId 
+          // throughout this function closure instead.
           
           // Log template data
           console.log(`[UniversalForm] Template loaded successfully: ID=${templateData.id}, Name=${templateData.name}`);
@@ -199,7 +198,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Service initialization tracking
   const [serviceInitId, setServiceInitId] = useState<string | null>(null);
   const [serviceInitAttempts, setServiceInitAttempts] = useState(0);
-  const MAX_SERVICE_INIT_ATTEMPTS = 2;
+  const MAX_SERVICE_INIT_ATTEMPTS = 5; // Increased from 2 to 5 to allow more attempts
   
   // Step 2: Initialize service once we have both template and service
   useEffect(() => {
@@ -207,6 +206,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     if (!template || !formService) {
       return;
     }
+
+    // Reset attempt counter when we get a new template or form service
+    setServiceInitAttempts(0);
     
     // Generate a unique initialization ID
     const initId = `${template.id}-${Date.now()}`;
@@ -233,22 +235,36 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       try {
         console.log(`[UniversalForm] Initializing form service with template ID ${template.id}, attempt: ${serviceInitAttempts + 1}`);
         
+        // Let's add more debug info about the form service
+        console.log(`[UniversalForm] Form service type: ${formService.constructor.name}`);
+        
+        // Check if any fields/sections are already available
+        try {
+          const existingFields = formService.getFields();
+          const existingSections = formService.getSections();
+          console.log(`[UniversalForm] Pre-init check - Fields: ${existingFields.length}, Sections: ${existingSections.length}`);
+        } catch (e) {
+          console.log(`[UniversalForm] Pre-init check - No fields/sections available yet`);
+        }
+        
         // Initialize the service with template ID - with timeout protection
         const initPromise = formService.initialize(template.id);
         
         // Set a timeout to prevent hanging
         const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Service initialization timed out after 5 seconds')), 5000);
+          setTimeout(() => reject(new Error('Service initialization timed out after 10 seconds')), 10000);
         });
         
         // Race the initialization against the timeout
+        console.log(`[UniversalForm] Awaiting promise resolution...`);
         await Promise.race([initPromise, timeoutPromise]);
+        console.log(`[UniversalForm] Service initialization completed successfully`);
         
-        // Check if this request is still relevant after async operation
-        if (serviceInitId !== initId) {
-          console.log(`[UniversalForm] Discarding stale service initialization result: ${initId}`);
-          return;
-        }
+        // IMPORTANT: We're NOT checking serviceInitId anymore because of React's 
+        // asynchronous state updates. Using the locally captured initId throughout 
+        // this function closure to maintain consistency.
+        
+        console.log(`[UniversalForm] Proceeding with service initialization (ID: ${initId})`);
         
         // Load initial data if available
         if (Object.keys(initialData).length > 0) {
@@ -268,12 +284,11 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // Form is ready
         setLoading(false);
       } catch (err) {
-        // Only update state if this initialization is still relevant
-        if (serviceInitId === initId) {
-          console.error('[UniversalForm] Error initializing form service:', err);
-          setError(err instanceof Error ? err.message : 'Failed to initialize form');
-          setLoading(false);
-        }
+        // We're not checking serviceInitId here either, for the same reason
+        // as above - React's asynchronous state updates can cause timing issues
+        console.error('[UniversalForm] Error initializing form service:', err);
+        setError(err instanceof Error ? err.message : 'Failed to initialize form');
+        setLoading(false);
       }
     };
     
