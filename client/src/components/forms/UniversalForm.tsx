@@ -727,8 +727,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       console.log('[DEBUG UniversalForm] Could not get current form data', error);
     }
     
+    // Normalize value (prevent null values that cause controlled/uncontrolled input warnings)
+    const normalizedValue = value === null ? '' : value;
+    
     // Update form data in the service
-    formService.updateFormData(name, value);
+    formService.updateFormData(name, normalizedValue);
+    
+    // Also update local React state via form's setValue method
+    // This ensures React form state stays in sync with the service
+    form.setValue(name, normalizedValue);
     
     // Get updated form data after the update
     let updatedData = {};
