@@ -739,6 +739,19 @@ export const OnboardingKYBFormPlayground = ({
         // Update the step for the current index
         updatedSteps[currentStep] = formFields;
         
+        console.log('[KYB Form Debug] Updating dynamicFormSteps:', {
+          currentStep,
+          previousStepsCount: prevSteps.length,
+          updatedStepsCount: updatedSteps.length,
+          updatedCurrentStepFieldCount: formFields.length,
+          allSteps: updatedSteps.map((step, idx) => ({
+            stepIndex: idx,
+            fieldCount: step ? step.length : 0,
+            fieldNames: step ? step.map(f => f.name) : []
+          })),
+          timestamp: new Date().toISOString()
+        });
+        
         return updatedSteps;
       });
       
