@@ -16,7 +16,7 @@ router.get('/', async (req, res) => {
     let query = db.select().from(taskTemplates);
     
     if (activeOnly) {
-      query = query.where(eq(taskTemplates.is_active, true));
+      query = query.where(eq(taskTemplates.status, 'active'));
     }
     
     const templates = await query;
@@ -73,7 +73,7 @@ router.get('/by-type/:taskType', async (req, res) => {
     const template = await db.query.taskTemplates.findFirst({
       where: and(
         eq(taskTemplates.task_type, taskType),
-        eq(taskTemplates.is_active, true)
+        eq(taskTemplates.status, 'active')
       )
     });
     
@@ -101,7 +101,7 @@ router.get('/by-type/:taskType', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { name, description, task_type, version = 1, is_active = true } = req.body;
+    const { name, description, task_type, component_type = 'form', status = 'active' } = req.body;
     
     if (!name || !description || !task_type) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -123,8 +123,8 @@ router.post('/', async (req, res) => {
       name,
       description,
       task_type,
-      version,
-      is_active
+      component_type,
+      status
     }).returning();
     
     if (!result.length) {
@@ -152,7 +152,7 @@ router.patch('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid template ID' });
     }
     
-    const { name, description, task_type, version, is_active } = req.body;
+    const { name, description, task_type, component_type, status } = req.body;
     
     // Check if the template exists
     const template = await db.query.taskTemplates.findFirst({
@@ -169,8 +169,8 @@ router.patch('/:id', async (req, res) => {
         name: name ?? template.name,
         description: description ?? template.description,
         task_type: task_type ?? template.task_type,
-        version: version ?? template.version,
-        is_active: is_active !== undefined ? is_active : template.is_active
+        component_type: component_type ?? template.component_type,
+        status: status !== undefined ? status : template.status
       })
       .where(eq(taskTemplates.id, templateId))
       .returning();
