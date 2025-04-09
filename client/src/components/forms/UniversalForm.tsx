@@ -51,8 +51,19 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       try {
         setLoading(true);
         
+        // Map task types to their database equivalents
+        const taskTypeMap: Record<string, string> = {
+          'kyb': 'company_kyb',
+          'card': 'company_card',
+          'security': 'security_assessment'
+        };
+        
+        // Use the mapped task type for API requests
+        const dbTaskType = taskTypeMap[taskType] || taskType;
+        console.log(`[UniversalForm] Mapped task type: ${taskType} → ${dbTaskType}`);
+        
         // Fetch template configuration from API
-        const templateData = await TaskTemplateService.getTemplateByTaskType(taskType);
+        const templateData = await TaskTemplateService.getTemplateByTaskType(dbTaskType);
         setTemplate(templateData);
         
         // Get form service for this task type
