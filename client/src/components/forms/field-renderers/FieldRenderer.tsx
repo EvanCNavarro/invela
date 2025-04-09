@@ -56,40 +56,30 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   
   // Function to render the appropriate input component based on type
   const renderInputComponent = (fieldProps: any) => {
-    // Ensure all value changes are correctly tracked
-    const handleValueChange = (value: any) => {
-      console.log(`[FieldRenderer] Field '${field.key}' changed to:`, value);
-      fieldProps.onChange(value);
-      onFieldChange?.(value);
-    };
-
-    // Ensure proper event handling for DOM events
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      console.log(`[FieldRenderer] Field '${field.key}' changed to:`, e.target.value);
-      fieldProps.onChange(e.target.value);
-      onFieldChange?.(e.target.value);
-    };
-
     switch (componentType) {
       case 'multi-line':
         return (
           <Textarea
-            id={`field-${field.key}`}
-            name={field.key}
-            defaultValue={fieldProps.value || ''}
+            {...fieldProps}
             placeholder={field.placeholder || ''}
             className="min-h-[120px]"
-            onChange={handleInputChange}
+            onChange={(e) => {
+              fieldProps.onChange(e);
+              onFieldChange?.(e.target.value);
+            }}
           />
         );
         
       case 'dropdown':
         return (
           <Select
-            defaultValue={fieldProps.value || ''}
-            onValueChange={handleValueChange}
+            value={fieldProps.value || ''}
+            onValueChange={(value) => {
+              fieldProps.onChange(value);
+              onFieldChange?.(value);
+            }}
           >
-            <SelectTrigger id={`field-${field.key}`}>
+            <SelectTrigger>
               <SelectValue placeholder={field.placeholder || 'Select an option'} />
             </SelectTrigger>
             <SelectContent>
@@ -110,11 +100,10 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       case 'checkbox':
         return (
           <Checkbox
-            id={`field-${field.key}`}
-            defaultChecked={!!fieldProps.value}
+            checked={!!fieldProps.value}
             onCheckedChange={(checked) => {
-              console.log(`[FieldRenderer] Checkbox '${field.key}' changed to:`, checked);
-              handleValueChange(checked);
+              fieldProps.onChange(checked);
+              onFieldChange?.(checked);
             }}
           />
         );
@@ -125,11 +114,12 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       default:
         return (
           <Input
-            id={`field-${field.key}`}
-            name={field.key}
-            defaultValue={fieldProps.value || ''}
+            {...fieldProps}
             placeholder={field.placeholder || ''}
-            onChange={handleInputChange}
+            onChange={(e) => {
+              fieldProps.onChange(e);
+              onFieldChange?.(e.target.value);
+            }}
           />
         );
     }
