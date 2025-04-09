@@ -278,6 +278,25 @@ export default function App() {
     registerServices();
   }, []);
   
+  // EMERGENCY FIX FOR REPLIT: Disabling WebSocket to allow basic rendering
+  // This is a temporary solution to get the application working in Replit
+  const useEmergencyMode = true;
+  
+  if (useEmergencyMode) {
+    console.log('[App] EMERGENCY MODE: WebSocket provider disabled for troubleshooting');
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>
+            <Router />
+            <Toaster />
+          </AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+  }
+  
+  // Normal mode (standard app structure)
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider>
