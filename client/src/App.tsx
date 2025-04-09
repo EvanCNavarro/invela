@@ -23,6 +23,7 @@ import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
+import DebugPage from "@/pages/debug-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -83,6 +84,7 @@ function Router() {
         {/* Public routes */}
         <Route path="/login" component={LoginPage} />
         <Route path="/register" component={RegisterPage} />
+        <Route path="/debug" component={DebugPage} />
         <Route path="/auth">
           {(params) => {
             const searchParams = new URLSearchParams(window.location.search);
