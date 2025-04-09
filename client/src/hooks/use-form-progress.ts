@@ -66,7 +66,8 @@ export function useFormProgress({
     };
   }, [sectionFields, formData, requiredOnly]);
 
-  // Update completed sections state
+  // Update completed sections state - IMPORTANT: DO NOT include getSectionProgress in dependencies
+  // as it creates a circular dependency and causes infinite renders
   useEffect(() => {
     const newCompletedSections: Record<string | number, boolean> = {};
     
@@ -76,7 +77,7 @@ export function useFormProgress({
     });
     
     setCompletedSections(newCompletedSections);
-  }, [formData, sections, sectionFields, getSectionProgress]);
+  }, [formData, sections, sectionFields]); // Removed getSectionProgress from dependencies
 
   // Calculate overall progress
   const overallProgress = useMemo(() => {
