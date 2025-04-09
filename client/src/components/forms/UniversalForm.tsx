@@ -103,6 +103,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     mode: 'onChange',
   });
   
+  // Reset form when loadedFormData changes
+  useEffect(() => {
+    if (loadedFormData && Object.keys(loadedFormData).length > 0) {
+      console.log(`[DEBUG UniversalForm] LoadedFormData changed, resetting form with ${Object.keys(loadedFormData).length} fields`);
+      form.reset(loadedFormData);
+    }
+  }, [loadedFormData, form]);
+  
   // Request tracking to prevent multiple concurrent initialization attempts
   const [templateRequestId, setTemplateRequestId] = useState<string | null>(null);
   const [initializationAttempts, setInitializationAttempts] = useState(0);
@@ -307,6 +315,34 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         
         setSections(navigationSections);
         setFields(sortFields(existingFields));
+        
+        // CRITICAL FIX: Even if service is already initialized, we still need to load saved data
+        // when navigating back to the form
+        if (taskId) {
+          // Use an immediately invoked async function
+          (async () => {
+            try {
+              console.log(`[DEBUG UniversalForm] Service already initialized but loading saved progress for task ID: ${taskId}`);
+              const savedFormData = await formService.loadProgress(taskId);
+              console.log(`[DEBUG UniversalForm] For already initialized service - loaded saved data:`, savedFormData);
+              
+              if (savedFormData && Object.keys(savedFormData).length > 0) {
+                console.log(`[DEBUG UniversalForm] Updating form with saved data: ${Object.keys(savedFormData).length} fields`);
+                
+                // Update loadedFormData state to ensure it's available for form initialization
+                setLoadedFormData(savedFormData);
+                
+                // Reset form with saved values - this is critical for when a user returns to the form
+                form.reset(savedFormData);
+              } else {
+                console.log('[DEBUG UniversalForm] No saved data found for already initialized service');
+              }
+            } catch (loadError) {
+              console.error(`[DEBUG UniversalForm] Error loading saved progress for already initialized service:`, loadError);
+            }
+          })();
+        }
+        
         setLoading(false);
         return; // Skip initialization
       }
