@@ -252,14 +252,24 @@ export class KybFormService implements FormServiceInterface {
     
     // Normalize value - handle null, undefined, and empty values properly
     // This is critical for proper form field updates
+    // Empty string is a valid value that should be stored and saved to database
     const normalizedValue = (value === null || value === undefined) ? '' : value;
     
+    // Track if the field previously had a value but is now being cleared
+    const isClearing = (oldValue !== undefined && oldValue !== null && oldValue !== '') && 
+                       (normalizedValue === '' || normalizedValue === null);
+    
+    if (isClearing) {
+      console.log(`[DEBUG KybService] Clearing field ${fieldKey} from "${oldValue}" to empty value`);
+    }
+    
     // More accurate change detection - convert to strings to ensure proper comparison
+    // But preserve type for actual storage
     const oldValueStr = oldValue !== undefined ? String(oldValue) : '';
     const newValueStr = normalizedValue !== undefined ? String(normalizedValue) : '';
     
-    // Use string comparison to detect changes
-    if (oldValueStr === newValueStr && oldValue !== undefined) {
+    // Use string comparison to detect changes, but always update when clearing a field
+    if (oldValueStr === newValueStr && oldValue !== undefined && !isClearing) {
       console.log(`[DEBUG KybService] Skipping update - value unchanged for field ${fieldKey}`);
       return; // Value hasn't changed, no need to update
     }
@@ -269,6 +279,10 @@ export class KybFormService implements FormServiceInterface {
     
     // Improved debug logging with type info
     console.log(`[DEBUG KybService] Updated field ${fieldKey} from "${oldValue || ''}" (${typeof oldValue}) to "${normalizedValue || ''}" (${typeof normalizedValue})`);
+    
+    // Verify the update happened
+    console.log(`[DEBUG KybService] Form data after update has ${Object.keys(this.formData).length} fields`);
+    console.log(`[DEBUG KybService] Form data now contains key ${fieldKey} with value: ${this.formData[fieldKey]}`);
     
     // Update the field value in fields array
     this.fields = this.fields.map(field => 

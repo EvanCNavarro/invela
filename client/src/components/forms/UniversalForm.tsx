@@ -731,19 +731,61 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       console.log('[DEBUG UniversalForm] Could not get current form data', error);
     }
     
-    // Improved normalization handling both null and undefined values consistently
-    const normalizedValue = (value === null || value === undefined) ? '' : value;
+    // Track if the field is being cleared (had a value before, now being set to empty)
+    const isClearing = previousData[name] !== undefined && 
+                      previousData[name] !== null && 
+                      previousData[name] !== '' && 
+                      (value === null || value === undefined || value === '');
     
-    // Always ensure empty values are properly handled as empty strings
-    // This is crucial for overwriting existing values
-    if (normalizedValue === '') {
-      console.log(`[DEBUG UniversalForm] Handling empty value for field ${name} - ensuring proper empty string`);
+    // Special handling for clearing fields - treat empty strings, null, and undefined all as the same
+    if (isClearing) {
+      console.log(`[DEBUG UniversalForm] CLEARING field ${name} from "${previousData[name]}" to empty value`);
+      
+      // Force update in both form and service for clearing
+      formService.updateFormData(name, '');  // Pass empty string consistently
+      
+      // Explicitly use empty string in form state to ensure clearing works properly
+      form.setValue(name, '', { 
+        shouldDirty: true, 
+        shouldTouch: true,
+        shouldValidate: true 
+      });
+      
+      // Also trigger auto-save when clearing a field
+      if (taskId) {
+        const currentTaskId = taskId;
+        
+        // Shorter debounce for clearing fields (immediate feedback is better)
+        console.log(`[DEBUG UniversalForm] Preparing immediate auto-save for cleared field ${name}`);
+        
+        // Clear previous timer if it exists
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current);
+          console.log('[DEBUG UniversalForm] Cleared previous auto-save timer');
+        }
+        
+        // Set new timer with shorter delay for clearing fields
+        saveTimerRef.current = setTimeout(async () => {
+          try {
+            await formService.saveProgress(currentTaskId);
+            console.log(`[DEBUG UniversalForm] Auto-saved cleared field ${name} for task ${currentTaskId}`);
+          } catch (error) {
+            console.error('[DEBUG UniversalForm] Error auto-saving cleared field:', error);
+          }
+        }, 500); // Shorter delay for clearing fields
+      }
+      
+      return; // Exit early after special handling for clearing fields
     }
+    
+    // For non-clearing updates, proceed with normal flow
+    // Normalize value consistently (treat null and undefined as empty string)
+    const normalizedValue = (value === null || value === undefined) ? '' : value;
     
     // Force immediate update in both the service and form
     console.log(`[DEBUG UniversalForm] Updating field ${name} with normalized value: "${normalizedValue}"`);
     
-    // Update form data in the service
+    // Update form data in the service (using consistent normalization)
     formService.updateFormData(name, normalizedValue);
     
     // Also update local React state via form's setValue method
