@@ -947,22 +947,50 @@ export const OnboardingKYBFormPlayground = ({
     console.log('[KYB Form Debug] Step changed:', {
       currentStep,
       fieldsLoaded: kybFields ? kybFields.length : 0,
+      formReady,
+      dynamicStepsCount: dynamicFormSteps.length,
       timestamp: new Date().toISOString()
     });
     
-    // When step changes, invalidate the query for the current step's fields
-    queryClient.invalidateQueries({ 
-      queryKey: ['/api/form-fields/company_kyb', currentStep]
-    });
+    // Check if we already have step data for the current step
+    // If not, fetch it without invalidating cache
+    const hasCurrentStepData = dynamicFormSteps.length > 0 && 
+                               Array.isArray(dynamicFormSteps[currentStep]) && 
+                               dynamicFormSteps[currentStep].length > 0;
+                               
+    if (!hasCurrentStepData) {
+      console.log('[KYB Form Debug] No data found for current step, fetching:', { 
+        currentStep, 
+        timestamp: new Date().toISOString() 
+      });
+      
+      // Only invalidate if we don't have the data
+      queryClient.invalidateQueries({ 
+        queryKey: ['/api/form-fields/company_kyb', currentStep]
+      });
+    } else {
+      console.log('[KYB Form Debug] Using existing data for step:', { 
+        currentStep, 
+        fieldCount: dynamicFormSteps[currentStep].length,
+        timestamp: new Date().toISOString() 
+      });
+    }
     
     // Prefetch fields for adjacent steps - next and previous
     if (currentStep > 0) {
       const prevStep = currentStep - 1;
-      queryClient.prefetchQuery({
-        queryKey: ['/api/form-fields/company_kyb', prevStep],
-        queryFn: () => getKybFieldsByStepIndex(prevStep),
-        staleTime: 5 * 60 * 1000,
-      });
+      // Only prefetch if we don't already have this data
+      const hasPrevStepData = dynamicFormSteps.length > 0 && 
+                              Array.isArray(dynamicFormSteps[prevStep]) && 
+                              dynamicFormSteps[prevStep].length > 0;
+                              
+      if (!hasPrevStepData) {
+        queryClient.prefetchQuery({
+          queryKey: ['/api/form-fields/company_kyb', prevStep],
+          queryFn: () => getKybFieldsByStepIndex(prevStep),
+          staleTime: 5 * 60 * 1000,
+        });
+      }
     }
     
     // Use dynamic steps length if available, otherwise fallback to static steps
@@ -970,13 +998,20 @@ export const OnboardingKYBFormPlayground = ({
     
     if (currentStep < maxSteps) {
       const nextStep = currentStep + 1;
-      queryClient.prefetchQuery({
-        queryKey: ['/api/form-fields/company_kyb', nextStep],
-        queryFn: () => getKybFieldsByStepIndex(nextStep),
-        staleTime: 5 * 60 * 1000,
-      });
+      // Only prefetch if we don't already have this data
+      const hasNextStepData = dynamicFormSteps.length > 0 && 
+                              Array.isArray(dynamicFormSteps[nextStep]) && 
+                              dynamicFormSteps[nextStep].length > 0;
+                              
+      if (!hasNextStepData) {
+        queryClient.prefetchQuery({
+          queryKey: ['/api/form-fields/company_kyb', nextStep],
+          queryFn: () => getKybFieldsByStepIndex(nextStep),
+          staleTime: 5 * 60 * 1000,
+        });
+      }
     }
-  }, [currentStep, queryClient, dynamicFormSteps, kybFields, getKybFieldsByStepIndex]);
+  }, [currentStep, queryClient, dynamicFormSteps, kybFields, getKybFieldsByStepIndex, formReady]);
 
   // Handle form updates
   const handleFormDataUpdate = async (fieldName: string, value: string) => {
@@ -1065,7 +1100,9 @@ export const OnboardingKYBFormPlayground = ({
     }
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    console.log('[KYB Form Debug] Navigation Event: Back button clicked');
+    
     if (isReviewMode) {
       // Exit review mode and go back to form
       setIsReviewMode(false);
@@ -1076,19 +1113,78 @@ export const OnboardingKYBFormPlayground = ({
       // Prefetch data for the previous step before navigating
       const prevStep = currentStep - 1;
       
-      // Prefetch the fields for the previous step if they're not already in cache
-      queryClient.prefetchQuery({
-        queryKey: ['/api/form-fields/company_kyb', prevStep],
-        queryFn: () => getKybFieldsByStepIndex(prevStep),
-        staleTime: 5 * 60 * 1000,
-      });
+      // Check if we already have data for the previous step
+      const hasPrevStepData = dynamicFormSteps.length > 0 && 
+                            Array.isArray(dynamicFormSteps[prevStep]) && 
+                            dynamicFormSteps[prevStep].length > 0;
+                            
+      // If we don't have the data yet, fetch it before navigation
+      if (!hasPrevStepData) {
+        console.log('[KYB Form Debug] Fetching data for previous step before navigation:', {
+          prevStep,
+          timestamp: new Date().toISOString()
+        });
+        
+        try {
+          // Fetch the data synchronously before navigating
+          const prevStepData = await getKybFieldsByStepIndex(prevStep);
+          
+          if (prevStepData && prevStepData.length > 0) {
+            console.log('[KYB Form Debug] Previous step data fetched successfully:', {
+              prevStep,
+              fieldCount: prevStepData.length,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Process the previous step data
+            const formFieldsMap: Record<string, FormField> = {};
+            const formFields = prevStepData
+              .sort((a, b) => a.order - b.order)
+              .map(field => {
+                const formField = convertKybFieldToFormField(field);
+                formFieldsMap[field.field_key] = formField;
+                return formField;
+              });
+            
+            // Update dynamicFormSteps with the new data
+            setDynamicFormSteps(prevSteps => {
+              const updatedSteps = [...prevSteps];
+              updatedSteps[prevStep] = formFields;
+              return updatedSteps;
+            });
+            
+            // Update fieldConfig with the new fields
+            setFieldConfig(prevConfig => ({
+              ...prevConfig,
+              ...formFieldsMap
+            }));
+          } else {
+            console.log('[KYB Form Debug] No data found for previous step:', {
+              prevStep,
+              timestamp: new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          console.error('[KYB Form Debug] Error fetching previous step data:', {
+            prevStep,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        console.log('[KYB Form Debug] Using existing data for previous step navigation:', {
+          prevStep,
+          fieldCount: dynamicFormSteps[prevStep].length,
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // Then navigate to the previous step
       setCurrentStep(current => current - 1);
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     console.log('[KYB Form Debug] Navigation Event: Next button clicked');
     
     if (isReviewMode) {
@@ -1108,12 +1204,71 @@ export const OnboardingKYBFormPlayground = ({
       // Prefetch data for the next step before navigating
       const nextStep = currentStep + 1;
       
-      // Prefetch the fields for the next step
-      queryClient.prefetchQuery({
-        queryKey: ['/api/form-fields/company_kyb', nextStep],
-        queryFn: () => getKybFieldsByStepIndex(nextStep),
-        staleTime: 5 * 60 * 1000,
-      });
+      // Check if we already have data for the next step
+      const hasNextStepData = dynamicFormSteps.length > 0 && 
+                            Array.isArray(dynamicFormSteps[nextStep]) && 
+                            dynamicFormSteps[nextStep].length > 0;
+                            
+      // If we don't have the data yet, fetch it before navigation
+      if (!hasNextStepData) {
+        console.log('[KYB Form Debug] Fetching data for next step before navigation:', {
+          nextStep,
+          timestamp: new Date().toISOString()
+        });
+        
+        try {
+          // Fetch the data synchronously before navigating
+          const nextStepData = await getKybFieldsByStepIndex(nextStep);
+          
+          if (nextStepData && nextStepData.length > 0) {
+            console.log('[KYB Form Debug] Next step data fetched successfully:', {
+              nextStep,
+              fieldCount: nextStepData.length,
+              timestamp: new Date().toISOString()
+            });
+            
+            // Process the next step data
+            const formFieldsMap: Record<string, FormField> = {};
+            const formFields = nextStepData
+              .sort((a, b) => a.order - b.order)
+              .map(field => {
+                const formField = convertKybFieldToFormField(field);
+                formFieldsMap[field.field_key] = formField;
+                return formField;
+              });
+            
+            // Update dynamicFormSteps with the new data
+            setDynamicFormSteps(prevSteps => {
+              const updatedSteps = [...prevSteps];
+              updatedSteps[nextStep] = formFields;
+              return updatedSteps;
+            });
+            
+            // Update fieldConfig with the new fields
+            setFieldConfig(prevConfig => ({
+              ...prevConfig,
+              ...formFieldsMap
+            }));
+          } else {
+            console.log('[KYB Form Debug] No data found for next step:', {
+              nextStep,
+              timestamp: new Date().toISOString()
+            });
+          }
+        } catch (error) {
+          console.error('[KYB Form Debug] Error fetching next step data:', {
+            nextStep,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            timestamp: new Date().toISOString()
+          });
+        }
+      } else {
+        console.log('[KYB Form Debug] Using existing data for next step navigation:', {
+          nextStep,
+          fieldCount: dynamicFormSteps[nextStep].length,
+          timestamp: new Date().toISOString()
+        });
+      }
       
       // Then navigate to the next step
       setCurrentStep(current => current + 1);
