@@ -1,6 +1,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CircleCheck, CircleDashed, CircleDotDashed } from 'lucide-react';
+import { StatusIcon } from './StatusIcon';
 
 // Section model for the navigation component
 export interface FormSection {
@@ -85,17 +85,9 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
               
               {/* Status text with icon on second line */}
               <div className="flex items-center mt-2">
-                {/* Status icon */}
+                {/* Status icon using custom component */}
                 <span className="mr-2">
-                  {isCompleted && (
-                    <CircleCheck size={14} className="text-emerald-500" />
-                  )}
-                  {!isCompleted && isActive && (
-                    <CircleDashed size={14} className="text-primary" />
-                  )}
-                  {!isCompleted && !isActive && (
-                    <CircleDashed size={14} className="text-gray-400" />
-                  )}
+                  <StatusIcon isCompleted={isCompleted} isActive={isActive} size={14} />
                 </span>
                 
                 {/* Status text */}
@@ -181,17 +173,9 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
               
               {/* Status text with icon on second line */}
               <div className="flex items-center mt-2">
-                {/* Status icon */}
+                {/* Status icon using custom component */}
                 <span className="mr-2">
-                  {isCompleted && (
-                    <CircleCheck size={14} className="text-emerald-500" />
-                  )}
-                  {!isCompleted && isActive && (
-                    <CircleDashed size={14} className="text-primary" />
-                  )}
-                  {!isCompleted && !isActive && (
-                    <CircleDashed size={14} className="text-gray-400" />
-                  )}
+                  <StatusIcon isCompleted={isCompleted} isActive={isActive} size={14} />
                 </span>
                 
                 {/* Status text */}
