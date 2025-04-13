@@ -175,7 +175,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       control={form.control}
       name={field.key}
       render={({ field: fieldProps }) => (
-        <FormItem className="mb-14">
+        <FormItem>
           {/* Question Field Container */}
           <div className="question-container">
             <div className="flex items-center gap-2 mb-1">
