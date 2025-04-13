@@ -123,11 +123,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           emptyValues[field.key] = '';
       }
       
-      // Log to verify we're setting initial values
-      console.log(`[DEBUG UniversalForm] Setting initial value for ${field.key}: ${JSON.stringify(emptyValues[field.key])}`);
+      // Only log in development environment to reduce noise in production
+      if (process.env.NODE_ENV === 'development') {
+        logger.debug(`Setting initial value for ${field.key}: ${JSON.stringify(emptyValues[field.key])}`);
+      }
     });
     
-    console.log(`[DEBUG UniversalForm] Created default values for ${Object.keys(emptyValues).length} fields`);
+    if (process.env.NODE_ENV === 'development') {
+      logger.debug(`Created default values for ${Object.keys(emptyValues).length} fields`);
+    }
     return emptyValues;
   };
   
@@ -953,8 +957,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{template.name}</CardTitle>
-        <CardDescription>{template.description}</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>{template.name}</CardTitle>
+            <CardDescription>{template.description}</CardDescription>
+          </div>
+          
+          {/* Submit button in top right */}
+          <Button 
+            type="button"
+            onClick={() => form.handleSubmit(handleSubmit)()}
+            className="ml-auto"
+          >
+            Submit
+          </Button>
+        </div>
         
         {/* Overall progress indicator */}
         <div className="mt-4">
@@ -1019,7 +1036,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </div>
             )}
             
-            {/* Navigation and submission buttons */}
+            {/* Navigation buttons */}
             <div className="flex justify-between items-center pt-6 border-t">
               <div>
                 {activeSection > 0 && sections.length > 1 && (
@@ -1040,15 +1057,13 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   </Button>
                 )}
                 
-                {activeSection < sections.length - 1 && sections.length > 1 ? (
+                {activeSection < sections.length - 1 && sections.length > 1 && (
                   <Button 
                     type="button" 
                     onClick={() => setActiveSection(activeSection + 1)}
                   >
                     Next
                   </Button>
-                ) : (
-                  <Button type="submit">Submit</Button>
                 )}
               </div>
             </div>
