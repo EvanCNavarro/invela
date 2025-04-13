@@ -11,7 +11,7 @@ import { TaskTemplateService, TaskTemplateWithConfigs } from '../../services/tas
 import { createFormSchema, sortFields, sortSections } from '../../utils/formUtils';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { SectionRenderer } from './renderers/SectionRenderer';
-import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './SectionNavigation';
+import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './TabsNavigation';
 import SectionContent from './SectionContent';
 import FormProgressBar from './FormProgressBar';
 import { useFormProgress } from '@/hooks/use-form-progress';
