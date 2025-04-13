@@ -82,7 +82,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
-              {/* Title and number with consistent layout */}
+              {/* Section number and title on first line */}
               <div className="flex items-center w-full">
                 <span 
                   className={cn(
@@ -103,42 +103,19 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   {section.title}
                 </span>
                 
-                {/* Show appropriate icon based on status - positioned to the far right */}
+                {/* Icon (only on top line) positioned to the far right */}
                 <span className="ml-auto pl-2">
                   {isCompleted && (
                     <CircleCheck size={16} className="text-emerald-500" />
                   )}
-                  {isInProgress && isActive && (
-                    <CircleDot size={16} className="text-primary" />
-                  )}
-                  {isInProgress && !isActive && (
-                    <CircleDashed size={16} className="text-gray-600" />
-                  )}
-                  {isNotStarted && isActive && (
-                    <CircleDot size={16} className="text-primary" />
-                  )}
-                  {isNotStarted && !isActive && (
-                    <CircleDashed size={16} className="text-gray-600" />
+                  {!isCompleted && (
+                    <CircleDashed size={16} className="text-gray-400" />
                   )}
                 </span>
               </div>
               
-              {/* Status indicator on the next line with left alignment and icon on the left */}
-              <div className="flex items-center mt-1">
-                {!isCompleted && (
-                  <span className="mr-2">
-                    {isActive ? (
-                      <CircleDot size={14} className="text-primary" />
-                    ) : (
-                      <CircleDashed size={14} className="text-gray-400" />
-                    )}
-                  </span>
-                )}
-                {isCompleted && (
-                  <span className="mr-2">
-                    <CircleCheck size={14} className="text-emerald-500" />
-                  </span>
-                )}
+              {/* Status text on second line without any icon */}
+              <div className="mt-1">
                 <span 
                   className={cn(
                     "text-xs",
@@ -217,42 +194,19 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                   {sectionNumber}. {section.title}
                 </span>
                 
-                {/* Show appropriate icon based on status */}
+                {/* Icon (only on top line) positioned to the far right */}
                 <span className="ml-auto pl-2">
                   {isCompleted && (
                     <CircleCheck size={14} className="text-emerald-500" />
                   )}
-                  {isInProgress && isActive && (
-                    <CircleDot size={14} className="text-primary" />
-                  )}
-                  {isInProgress && !isActive && (
-                    <CircleDashed size={14} className="text-gray-600" />
-                  )}
-                  {isNotStarted && isActive && (
-                    <CircleDot size={14} className="text-primary" />
-                  )}
-                  {isNotStarted && !isActive && (
-                    <CircleDashed size={14} className="text-gray-600" />
+                  {!isCompleted && (
+                    <CircleDashed size={14} className="text-gray-400" />
                   )}
                 </span>
               </div>
               
-              {/* Status indicator on the next line with left alignment and icon on the left */}
-              <div className="flex items-center mt-1">
-                {!isCompleted && (
-                  <span className="mr-2">
-                    {isActive ? (
-                      <CircleDot size={14} className="text-primary" />
-                    ) : (
-                      <CircleDashed size={14} className="text-gray-400" />
-                    )}
-                  </span>
-                )}
-                {isCompleted && (
-                  <span className="mr-2">
-                    <CircleCheck size={14} className="text-emerald-500" />
-                  </span>
-                )}
+              {/* Status text on second line without any icon */}
+              <div className="mt-1">
                 <span 
                   className={cn(
                     "text-xs",
