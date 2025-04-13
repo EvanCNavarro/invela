@@ -175,41 +175,44 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       control={form.control}
       name={field.key}
       render={({ field: fieldProps }) => (
-        <FormItem className="mb-10">
-          <div className="flex items-center gap-2 mb-1">
-            {/* Label - gray color, regular boldness */}
-            <FormLabel className="text-gray-600 font-normal">
-              {field.label}
-            </FormLabel>
-            
-            {field.helpText && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="cursor-help">
-                      <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                    {field.helpText}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
-          
-          {/* Question - displayed below label and above field, black and bold */}
-          {field.question && (
-            <div className="mb-2 font-semibold text-black">
-              {field.question}
+        <FormItem className="mb-14">
+          {/* Question Field Container */}
+          <div className="question-container">
+            <div className="flex items-center gap-2 mb-1">
+              {/* Label - gray color, regular boldness */}
+              <FormLabel className="text-gray-600 font-normal">
+                {field.label}
+              </FormLabel>
+              
+              {field.helpText && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-help">
+                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
+                      {field.helpText}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </div>
-          )}
-          
-          <FormControl>
-            {renderInputComponent(fieldProps)}
-          </FormControl>
-          
-          <FormMessage />
+            
+            {/* Question - displayed below label and above field, black and bold */}
+            {field.question && (
+              <div className="mb-2 font-semibold text-black">
+                {field.question}
+              </div>
+            )}
+            
+            <FormControl>
+              {renderInputComponent(fieldProps)}
+            </FormControl>
+            
+            <FormMessage />
+          </div>
         </FormItem>
       )}
     />

@@ -82,6 +82,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
+              {/* Title and number with consistent layout */}
               <div className="flex items-center w-full">
                 <span 
                   className={cn(
@@ -94,7 +95,7 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 </span>
                 <span 
                   className={cn(
-                    "font-medium text-sm flex-1 mr-1",
+                    "font-medium text-sm flex-1",
                     isActive ? "text-primary" : "text-gray-700",
                     isCompleted && !isActive ? "text-emerald-600" : ""
                   )}
@@ -102,8 +103,8 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   {section.title}
                 </span>
                 
-                {/* Show appropriate icon based on status */}
-                <span className="ml-auto">
+                {/* Show appropriate icon based on status - positioned to the far right */}
+                <span className="ml-auto pl-2">
                   {isCompleted && (
                     <CircleCheck size={16} className="text-emerald-500" />
                   )}
@@ -122,8 +123,22 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 </span>
               </div>
               
-              {/* Status indicator text with remaining count */}
+              {/* Status indicator on the next line with left alignment and icon on the left */}
               <div className="flex items-center mt-1">
+                {!isCompleted && (
+                  <span className="mr-2">
+                    {isActive ? (
+                      <CircleDot size={14} className="text-primary" />
+                    ) : (
+                      <CircleDashed size={14} className="text-gray-400" />
+                    )}
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="mr-2">
+                    <CircleCheck size={14} className="text-emerald-500" />
+                  </span>
+                )}
                 <span 
                   className={cn(
                     "text-xs",
@@ -203,7 +218,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                 </span>
                 
                 {/* Show appropriate icon based on status */}
-                <span className="ml-auto">
+                <span className="ml-auto pl-2">
                   {isCompleted && (
                     <CircleCheck size={14} className="text-emerald-500" />
                   )}
@@ -222,16 +237,32 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                 </span>
               </div>
               
-              {/* Status indicator text with remaining count */}
-              <span 
-                className={cn(
-                  "text-xs mt-1 block text-left",
-                  isCompleted ? "text-emerald-500" : 
-                  isActive ? "text-primary" : "text-gray-400"
+              {/* Status indicator on the next line with left alignment and icon on the left */}
+              <div className="flex items-center mt-1">
+                {!isCompleted && (
+                  <span className="mr-2">
+                    {isActive ? (
+                      <CircleDot size={14} className="text-primary" />
+                    ) : (
+                      <CircleDashed size={14} className="text-gray-400" />
+                    )}
+                  </span>
                 )}
-              >
-                {statusText}
-              </span>
+                {isCompleted && (
+                  <span className="mr-2">
+                    <CircleCheck size={14} className="text-emerald-500" />
+                  </span>
+                )}
+                <span 
+                  className={cn(
+                    "text-xs",
+                    isCompleted ? "text-emerald-500" : 
+                    isActive ? "text-primary" : "text-gray-400"
+                  )}
+                >
+                  {statusText}
+                </span>
+              </div>
             </div>
           );
         })}
