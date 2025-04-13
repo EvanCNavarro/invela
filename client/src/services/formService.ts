@@ -22,6 +22,7 @@ export interface FormField {
   section: string;
   placeholder?: string;
   helpText?: string;
+  question?: string;
   default?: any;
   options?: { label: string; value: any }[];
   validation?: FormFieldValidation;
