@@ -1,6 +1,6 @@
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { CircleCheck, CircleDashed, CircleDotDashed } from 'lucide-react';
+import { classNames as cn } from '@/lib/utils';
+import { CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 
 // Section model for the navigation component
 export interface FormSection {

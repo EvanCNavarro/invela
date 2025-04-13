@@ -91,7 +91,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                     <CircleCheck size={14} className="text-emerald-500" />
                   )}
                   {!isCompleted && isActive && (
-                    <CircleDashed size={14} className="text-primary" />
+                    <CircleDotDashed size={14} className="text-primary" />
                   )}
                   {!isCompleted && !isActive && (
                     <CircleDashed size={14} className="text-gray-400" />
@@ -187,7 +187,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                     <CircleCheck size={14} className="text-emerald-500" />
                   )}
                   {!isCompleted && isActive && (
-                    <CircleDashed size={14} className="text-primary" />
+                    <CircleDotDashed size={14} className="text-primary" />
                   )}
                   {!isCompleted && !isActive && (
                     <CircleDashed size={14} className="text-gray-400" />
