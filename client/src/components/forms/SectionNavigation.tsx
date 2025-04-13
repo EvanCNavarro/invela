@@ -83,39 +83,34 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
               )}
             >
               {/* Section number and title on first line */}
-              <div className="flex items-center w-full">
+              <div className="w-full">
                 <span 
                   className={cn(
-                    "font-medium text-sm mr-2",
-                    isActive ? "text-primary" : "text-gray-600",
-                    isCompleted && !isActive ? "text-emerald-600" : ""
-                  )}
-                >
-                  {sectionNumber}.
-                </span>
-                <span 
-                  className={cn(
-                    "font-medium text-sm flex-1",
+                    "font-medium text-sm",
                     isActive ? "text-primary" : "text-gray-700",
                     isCompleted && !isActive ? "text-emerald-600" : ""
                   )}
                 >
-                  {section.title}
-                </span>
-                
-                {/* Icon (only on top line) positioned to the far right */}
-                <span className="ml-auto pl-2">
-                  {isCompleted && (
-                    <CircleCheck size={16} className="text-emerald-500" />
-                  )}
-                  {!isCompleted && (
-                    <CircleDashed size={16} className="text-gray-400" />
-                  )}
+                  {sectionNumber}. {section.title}
                 </span>
               </div>
               
-              {/* Status text on second line without any icon */}
-              <div className="mt-1">
+              {/* Status text with icon on second line */}
+              <div className="flex items-center mt-2">
+                {/* Status icon */}
+                <span className="mr-2">
+                  {isCompleted && (
+                    <CircleCheck size={14} className="text-emerald-500" />
+                  )}
+                  {!isCompleted && isActive && (
+                    <CircleDot size={14} className="text-primary" />
+                  )}
+                  {!isCompleted && !isActive && (
+                    <CircleDashed size={14} className="text-gray-400" />
+                  )}
+                </span>
+                
+                {/* Status text */}
                 <span 
                   className={cn(
                     "text-xs",
@@ -183,30 +178,35 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
-              <div className="flex items-center">
+              {/* Section number and title on first line */}
+              <div className="w-full">
                 <span 
                   className={cn(
-                    "font-medium text-sm mr-1",
+                    "font-medium text-sm",
                     isActive ? "text-primary" : "text-gray-700",
                     isCompleted && !isActive ? "text-emerald-600" : ""
                   )}
                 >
                   {sectionNumber}. {section.title}
                 </span>
-                
-                {/* Icon (only on top line) positioned to the far right */}
-                <span className="ml-auto pl-2">
+              </div>
+              
+              {/* Status text with icon on second line */}
+              <div className="flex items-center mt-2">
+                {/* Status icon */}
+                <span className="mr-2">
                   {isCompleted && (
                     <CircleCheck size={14} className="text-emerald-500" />
                   )}
-                  {!isCompleted && (
+                  {!isCompleted && isActive && (
+                    <CircleDot size={14} className="text-primary" />
+                  )}
+                  {!isCompleted && !isActive && (
                     <CircleDashed size={14} className="text-gray-400" />
                   )}
                 </span>
-              </div>
-              
-              {/* Status text on second line without any icon */}
-              <div className="mt-1">
+                
+                {/* Status text */}
                 <span 
                   className={cn(
                     "text-xs",

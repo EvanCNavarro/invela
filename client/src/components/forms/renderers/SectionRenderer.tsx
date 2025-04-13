@@ -71,7 +71,7 @@ const SectionRendererBase = ({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent>
         {sortedFields.map(field => {
           // Create memoized callback for each field
           const handleFieldChange = useCallback((val: any) => {
@@ -79,13 +79,14 @@ const SectionRendererBase = ({
           }, [field.key, onFieldChange]);
           
           return (
-            <FieldRenderer
-              key={field.key}
-              field={field}
-              template={template}
-              form={form}
-              onFieldChange={handleFieldChange}
-            />
+            <div key={field.key} className="mb-8 last:mb-0">
+              <FieldRenderer
+                field={field}
+                template={template}
+                form={form}
+                onFieldChange={handleFieldChange}
+              />
+            </div>
           );
         })}
       </CardContent>
