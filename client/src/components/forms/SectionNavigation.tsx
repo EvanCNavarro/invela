@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Check } from 'lucide-react';
+import { Check, CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface FormSection {
@@ -45,6 +45,27 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
           // Get section number for display (1-based index)
           const sectionNumber = index + 1;
           
+          // Check if section has fields available
+          const fieldsCount = section.fields?.length || 0;
+          const filledFieldsCount = section.fields?.filter(field => 
+            field.value && field.value.toString().trim() !== ''
+          )?.length || 0;
+          
+          // Determine section status
+          const isInProgress = !isCompleted && filledFieldsCount > 0;
+          const isNotStarted = !isCompleted && filledFieldsCount === 0;
+          const remainingCount = fieldsCount - filledFieldsCount;
+          
+          // Status text based on completion state
+          let statusText = '';
+          if (isCompleted) {
+            statusText = 'Completed';
+          } else if (isInProgress) {
+            statusText = `In Progress (${remainingCount} remaining)`;
+          } else {
+            statusText = `Not Started (${fieldsCount} remaining)`;
+          }
+          
           return (
             <div
               key={section.id}
@@ -81,22 +102,38 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   {section.title}
                 </span>
                 
-                {isCompleted && (
-                  <span className="text-emerald-500 rounded-full">
-                    <Check size={16} className="text-emerald-500" />
-                  </span>
-                )}
+                {/* Show appropriate icon based on status */}
+                <span className="ml-auto">
+                  {isCompleted && (
+                    <CircleCheck size={16} className="text-emerald-500" />
+                  )}
+                  {isInProgress && isActive && (
+                    <CircleDot size={16} className="text-primary" />
+                  )}
+                  {isInProgress && !isActive && (
+                    <CircleDashed size={16} className="text-gray-600" />
+                  )}
+                  {isNotStarted && isActive && (
+                    <CircleDot size={16} className="text-primary" />
+                  )}
+                  {isNotStarted && !isActive && (
+                    <CircleDashed size={16} className="text-gray-600" />
+                  )}
+                </span>
               </div>
               
-              {/* Status indicator text below */}
-              <span 
-                className={cn(
-                  "text-xs mt-1",
-                  isCompleted ? "text-emerald-500" : "text-gray-400"
-                )}
-              >
-                {isCompleted ? "Complete" : "Incomplete"}
-              </span>
+              {/* Status indicator text with remaining count */}
+              <div className="flex items-center mt-1">
+                <span 
+                  className={cn(
+                    "text-xs",
+                    isCompleted ? "text-emerald-500" : 
+                    isActive ? "text-primary" : "text-gray-400"
+                  )}
+                >
+                  {statusText}
+                </span>
+              </div>
             </div>
           );
         })}
@@ -121,19 +158,40 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
           const isCompleted = completedSections[section.id] === true;
           const sectionNumber = index + 1;
           
+          // Check if section has fields available
+          const fieldsCount = section.fields?.length || 0;
+          const filledFieldsCount = section.fields?.filter(field => 
+            field.value && field.value.toString().trim() !== ''
+          )?.length || 0;
+          
+          // Determine section status
+          const isInProgress = !isCompleted && filledFieldsCount > 0;
+          const isNotStarted = !isCompleted && filledFieldsCount === 0;
+          const remainingCount = fieldsCount - filledFieldsCount;
+          
+          // Status text based on completion state
+          let statusText = '';
+          if (isCompleted) {
+            statusText = 'Completed';
+          } else if (isInProgress) {
+            statusText = `In Progress (${remainingCount} remaining)`;
+          } else {
+            statusText = `Not Started (${fieldsCount} remaining)`;
+          }
+          
           return (
             <div
               key={section.id}
               onClick={() => onSectionChange(index)}
               className={cn(
                 "inline-block px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
-                "min-w-[150px] text-center",
+                "min-w-[180px]",
                 isActive ? "border-primary" : "border-transparent",
                 isCompleted && !isActive ? "border-emerald-500" : "",
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
-              <div className="flex items-center justify-center">
+              <div className="flex items-center">
                 <span 
                   className={cn(
                     "font-medium text-sm mr-1",
@@ -144,20 +202,35 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                   {sectionNumber}. {section.title}
                 </span>
                 
-                {isCompleted && (
-                  <span className="ml-1">
-                    <Check size={14} className="text-emerald-500" />
-                  </span>
-                )}
+                {/* Show appropriate icon based on status */}
+                <span className="ml-auto">
+                  {isCompleted && (
+                    <CircleCheck size={14} className="text-emerald-500" />
+                  )}
+                  {isInProgress && isActive && (
+                    <CircleDot size={14} className="text-primary" />
+                  )}
+                  {isInProgress && !isActive && (
+                    <CircleDashed size={14} className="text-gray-600" />
+                  )}
+                  {isNotStarted && isActive && (
+                    <CircleDot size={14} className="text-primary" />
+                  )}
+                  {isNotStarted && !isActive && (
+                    <CircleDashed size={14} className="text-gray-600" />
+                  )}
+                </span>
               </div>
               
+              {/* Status indicator text with remaining count */}
               <span 
                 className={cn(
-                  "text-xs mt-1 block",
-                  isCompleted ? "text-emerald-500" : "text-gray-400"
+                  "text-xs mt-1 block text-left",
+                  isCompleted ? "text-emerald-500" : 
+                  isActive ? "text-primary" : "text-gray-400"
                 )}
               >
-                {isCompleted ? "Complete" : "Incomplete"}
+                {statusText}
               </span>
             </div>
           );

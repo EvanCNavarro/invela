@@ -175,12 +175,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       control={form.control}
       name={field.key}
       render={({ field: fieldProps }) => (
-        <FormItem className="mb-8">
+        <FormItem className="mb-10">
           <div className="flex items-center gap-2 mb-1">
             {/* Label - gray color, regular boldness */}
             <FormLabel className="text-gray-600 font-normal">
               {field.label}
-              {/* Remove required asterisks as all fields are required */}
             </FormLabel>
             
             {field.helpText && (
@@ -191,18 +190,11 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                       <InfoIcon className="h-4 w-4 text-muted-foreground" />
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side={tooltipPosition as any}>
+                  <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
                     {field.helpText}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-            )}
-            
-            {enableRiskAnalysis && (
-              <div className="ml-auto text-xs text-muted-foreground">
-                {/* Risk score indicator would go here */}
-                {/* We'll implement this in a separate component */}
-              </div>
             )}
           </div>
           
@@ -216,12 +208,6 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
           <FormControl>
             {renderInputComponent(fieldProps)}
           </FormControl>
-          
-          {/* Remove AI Suggestions button */}
-          
-          <FormDescription>
-            {/* Additional description */}
-          </FormDescription>
           
           <FormMessage />
         </FormItem>

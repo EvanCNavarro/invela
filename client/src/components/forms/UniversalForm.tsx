@@ -957,20 +957,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   return (
     <Card className="w-full">
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>{template.name}</CardTitle>
-            <CardDescription>{template.description}</CardDescription>
-          </div>
-          
-          {/* Submit button in top right */}
-          <Button 
-            type="button"
-            onClick={() => form.handleSubmit(handleSubmit)()}
-            className="ml-auto"
-          >
-            Submit
-          </Button>
+        <div>
+          <CardTitle>{template.name}</CardTitle>
+          <CardDescription>{template.description}</CardDescription>
         </div>
         
         {/* Overall progress indicator */}
@@ -1037,7 +1026,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             )}
             
             {/* Navigation buttons */}
-            <div className="flex justify-between items-center pt-6 border-t">
+            <div className="flex justify-between items-center pt-6">
               <div>
                 {activeSection > 0 && sections.length > 1 && (
                   <Button 
