@@ -283,7 +283,8 @@ router.post('/api/kyb/progress', async (req, res) => {
       // Important change: Always store empty string values directly in the database
       // Never convert empty strings to null - this prevents the form from handling them correctly
       const responseValue = value === null ? '' : String(value);
-      const status = responseValue === '' ? 'EMPTY' : 'COMPLETE';
+      // Set status to FILLED when there's a value (even empty spaces), and EMPTY only when truly empty
+      const status = responseValue.trim() === '' ? 'EMPTY' : 'FILLED';
 
       // Check if response exists
       const [existingResponse] = await db.select()
