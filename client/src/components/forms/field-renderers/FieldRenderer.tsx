@@ -25,14 +25,23 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   form,
   onFieldChange
 }) => {
-  // Early return with a simpler rendering if no form is provided (diagnostic mode)
-  if (!form) {
+  // Create a specific diagnostic mode rendering when in demo/test mode
+  // This completely avoids using FormField and form control that require react-hook-form
+  if (!form || !form.control) {
     return (
-      <div className="field-display-only">
-        <div className="mb-1 font-medium">{field.label}</div>
+      <div className="field-display-only mb-4 border-b pb-3">
+        <div className="mb-1 font-semibold text-gray-700">{field.label || field.key}</div>
+        {field.question && <div className="text-base mb-2">{field.question}</div>}
         {field.helpText && <div className="text-sm text-gray-500 mb-1">{field.helpText}</div>}
-        <div className="border p-2 rounded bg-gray-50">
-          {field.value || <span className="text-gray-400">No value</span>}
+        <div className="border p-2 rounded bg-gray-50 mt-1">
+          {field.value ? (
+            <span>{field.value}</span>
+          ) : (
+            <span className="text-gray-400 italic">Empty field</span>
+          )}
+        </div>
+        <div className="text-xs text-gray-400 mt-1">
+          Field type: {field.type || 'text'}, Key: {field.key}, Section: {field.section || 'none'}
         </div>
       </div>
     );
