@@ -109,12 +109,22 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
           return (
             <div
               key={section.id}
-              onClick={() => onSectionChange(index)}
+              onClick={() => {
+                // Only allow clicking on Review & Submit if form is completed
+                if (isReviewSection && reviewStatus === 'locked') {
+                  // Do nothing if Review & Submit is locked
+                  return;
+                }
+                
+                onSectionChange(index);
+              }}
               className={cn(
-                "relative flex-1 px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
+                "relative flex-1 px-4 py-3 transition-all duration-200 border-b-2",
                 // Active tabs have subtle background, inactive tabs have white background
-                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white hover:bg-gray-50",
+                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white", 
                 isCompleted && !isActive ? "border-emerald-500" : "",
+                // Don't show as clickable if Review & Submit is locked
+                (isReviewSection && reviewStatus === 'locked') ? "opacity-80 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer",
                 // First item in row with rounded left
                 index === 0 ? "rounded-tl-md" : ""
               )}
@@ -232,13 +242,23 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
           return (
             <div
               key={section.id}
-              onClick={() => onSectionChange(index)}
+              onClick={() => {
+                // Only allow clicking on Review & Submit if form is completed
+                if (isReviewSection && reviewStatus === 'locked') {
+                  // Do nothing if Review & Submit is locked
+                  return;
+                }
+                
+                onSectionChange(index);
+              }}
               className={cn(
-                "inline-block px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
+                "inline-block px-4 py-3 transition-all duration-200 border-b-2",
                 "min-w-[180px]",
                 // Active tabs have subtle background, inactive tabs have white background
-                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white hover:bg-gray-50",
+                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white", 
                 isCompleted && !isActive ? "border-emerald-500" : "",
+                // Don't show as clickable if Review & Submit is locked
+                (isReviewSection && reviewStatus === 'locked') ? "opacity-80 cursor-not-allowed" : "hover:bg-gray-50 cursor-pointer",
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
