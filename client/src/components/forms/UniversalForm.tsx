@@ -402,7 +402,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Render main form
   return (
-    <div className="w-full max-w-full md:max-w-4xl mx-auto">      
+    <div className="w-full mx-auto">      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
           {/* Progress bar showing overall completion - moved to gray area above tabs */}
@@ -419,7 +419,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           />
           
           {/* Form content - with continuous white box, rounded only at bottom */}
-          <div className="bg-white rounded-b-md p-6 border-t-0">
+          <div className="bg-white rounded-b-md p-3 sm:p-6 border-t-0">
             {/* Data loading indicator */}
             {isDataLoading && (
               <div className="flex items-center justify-center py-4">
