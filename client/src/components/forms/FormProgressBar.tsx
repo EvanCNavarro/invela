@@ -90,8 +90,10 @@ const FormProgressBar: React.FC<FormProgressBarProps> = ({
           <div 
             className="absolute transition-all duration-500 ease-out"
             style={{ 
-              left: `${Math.min(Math.max(displayProgress, 3), 97)}%`, 
-              transform: 'translateX(-50%)',
+              // When at 100%, align text to the right edge of the progress bar instead of centered on it
+              left: displayProgress === 100 ? '100%' : `${Math.min(Math.max(displayProgress, 3), 97)}%`,
+              // When at 100%, transform from center to right alignment
+              transform: displayProgress === 100 ? 'translateX(-100%)' : 'translateX(-50%)',
               top: '2px'
             }}
           >
