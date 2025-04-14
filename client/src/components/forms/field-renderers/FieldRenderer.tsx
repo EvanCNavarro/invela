@@ -25,9 +25,14 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   form,
   onFieldChange
 }) => {
-  // Create a specific diagnostic mode rendering when in demo/test mode
-  // This completely avoids using FormField and form control that require react-hook-form
-  if (!form || !form.control) {
+  // Check if we should use diagnostic rendering mode:
+  // 1. When form is undefined or form.control is undefined (invalid form)
+  // 2. When in a diagnostic context (window.location.pathname includes 'diagnostic')
+  const isDiagnosticMode = !form || !form.control || 
+    (typeof window !== 'undefined' && window.location.pathname.includes('diagnostic'));
+    
+  // Use a safe display mode for diagnostic/testing that avoids hooks and form registration
+  if (isDiagnosticMode) {
     return (
       <div className="field-display-only mb-4 border-b pb-3">
         <div className="mb-1 font-semibold text-gray-700">{field.label || field.key}</div>
