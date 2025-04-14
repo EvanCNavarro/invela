@@ -340,7 +340,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           <CardDescription>{formDescription}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10">
-          <InvelaLoadingSpinner size="lg" text="Loading form..." />
+          <LoadingSpinner size="lg" />
+          <p className="mt-2 text-sm text-muted-foreground">Loading form...</p>
         </CardContent>
       </Card>
     );
@@ -406,7 +407,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             {/* Data loading indicator */}
             {isDataLoading && (
               <div className="flex items-center justify-center py-4">
-                <InvelaLoadingSpinner size="sm" text="Loading saved data..." />
+                <LoadingSpinner size="sm" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading saved data...</span>
               </div>
             )}
             
