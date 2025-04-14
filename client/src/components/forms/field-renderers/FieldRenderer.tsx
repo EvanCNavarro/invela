@@ -203,6 +203,53 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   };
   
   // Field with tooltip and risk analysis if applicable
+  // Check if we can use form control 
+  const hasValidFormControl = form && form.control;
+  
+  // If we don't have a valid form control, render a simplified version
+  if (!hasValidFormControl) {
+    return (
+      <div className="field-display">
+        <div className="flex items-center gap-2 mb-1">
+          <Label className="text-gray-600 font-normal">
+            {field.label}
+          </Label>
+          
+          {field.helpText && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="cursor-help">
+                    <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
+                  {field.helpText}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+        
+        {field.question && (
+          <div className="mb-2 font-semibold text-black">
+            {field.question}
+          </div>
+        )}
+        
+        {renderInputComponent({
+          name: field.key,
+          value: field.value || '',
+          onChange: (e: any) => {
+            const value = e?.target?.value !== undefined ? e.target.value : e;
+            onFieldChange?.(value);
+          }
+        })}
+      </div>
+    );
+  }
+  
+  // Standard rendering with form control
   return (
     <FormField
       control={form.control}
