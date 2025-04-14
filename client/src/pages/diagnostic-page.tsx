@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { kybService } from '@/services/kybService';
 import { UniversalForm } from '@/components/forms/UniversalForm';
+import DiagnosticFormView from '@/components/diagnostic/DiagnosticFormView';
 import getLogger from '@/utils/logger';
 
 // Set up logger
@@ -341,10 +342,10 @@ export default function DiagnosticPage() {
               </div>
               
               <div className="bg-white border rounded-lg">
-                <UniversalForm 
-                  taskType="kyb" 
-                  taskId={348} 
-                  onSubmit={(data) => console.log('Form submitted:', data)}
+                {/* Use the dedicated diagnostic form viewer that avoids hook form errors */}
+                <DiagnosticFormView
+                  taskType="kyb"
+                  taskId={348}
                 />
               </div>
             </CardContent>
