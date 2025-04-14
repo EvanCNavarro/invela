@@ -79,23 +79,46 @@ export class KybFormService implements FormServiceInterface {
    */
   async initialize(templateId: number): Promise<void> {
     if (this.initialized && this.templateId === templateId) {
-      console.log('[DEBUG] KybService already initialized with template:', templateId);
+      this.logger.info('KybService already initialized with template:', templateId);
       return; // Already initialized with this template
     }
 
     try {
       this.templateId = templateId;
-      console.log('[DEBUG] KybService initializing with template ID:', templateId);
+      this.logger.info(`KybService initializing with template ID: ${templateId}`);
+      
+      // CLEAR PREVIOUS STATE to ensure fresh initialization
+      this.fields = [];
+      this.sections = [];
+      this.initialized = false;
       
       // Fetch KYB fields from the server or cache
       const fields = await this.getKybFields();
-      console.log('[DEBUG] Retrieved KYB fields:', fields.length);
+      this.logger.info(`Retrieved KYB fields from API: ${fields.length}`);
+      
+      if (fields.length === 0) {
+        this.logger.error('No KYB fields retrieved from API - form will be empty');
+        this.initialized = true; // Mark as initialized even though it's empty
+        return;
+      }
+      
+      // Log the first field to help diagnose format issues
+      this.logger.info('Sample first field:', {
+        id: fields[0].id,
+        key: fields[0].field_key,
+        type: fields[0].field_type,
+        group: fields[0].group
+      });
       
       // Convert fields to form fields and organize into sections
       this.fields = fields.map(field => this.convertToFormField(field));
       
       // Group fields by section name
       const groupedFields = this.groupFieldsBySection(fields);
+      this.logger.info(`Field grouping result: ${Object.keys(groupedFields).length} groups found`);
+      
+      // Log the sections we found versus what we expect
+      this.logger.info(`Grouped field sections: ${Object.keys(groupedFields).join(', ')}`);
       
       // Standard expected section names in the correct order
       const expectedSections = [
@@ -105,18 +128,22 @@ export class KybFormService implements FormServiceInterface {
         'Operations & Compliance'
       ];
       
+      this.logger.info(`Expected section names: ${expectedSections.join(', ')}`);
+      
       // Ensure we have all standard sections, even if empty
       const normalizedSections: Record<string, KybField[]> = {};
       
       // First, populate with expected sections (empty arrays if no fields)
       expectedSections.forEach(section => {
         normalizedSections[section] = groupedFields[section] || [];
+        this.logger.info(`Section ${section} has ${normalizedSections[section].length} fields`);
       });
       
       // Then add any additional sections from groupedFields that aren't standard
       Object.entries(groupedFields).forEach(([sectionName, sectionFields]) => {
         if (!expectedSections.includes(sectionName)) {
           normalizedSections[sectionName] = sectionFields;
+          this.logger.info(`Additional section ${sectionName} has ${sectionFields.length} fields`);
         }
       });
       
@@ -241,7 +268,7 @@ export class KybFormService implements FormServiceInterface {
   groupFieldsBySection(fields: KybField[]): Record<string, KybField[]> {
     // Standard section names we want to use - use a more comprehensive approach
     const sectionMap: Record<string, string> = {
-      // Company Profile variations
+      // Company Profile variations - IMPORTANT: Match the exact DB value!
       'companyprofile': 'Company Profile',
       'company_profile': 'Company Profile',
       'company profile': 'Company Profile',
@@ -270,6 +297,12 @@ export class KybFormService implements FormServiceInterface {
       'operations': 'Operations & Compliance',
       'compliance': 'Operations & Compliance'
     };
+    
+    // CRITICAL FIX: Directly map the four exact group names from database
+    sectionMap['companyProfile'] = 'Company Profile';
+    sectionMap['governanceLeadership'] = 'Governance & Leadership';
+    sectionMap['financialProfile'] = 'Financial Profile';
+    sectionMap['operationsCompliance'] = 'Operations & Compliance';
     
     // Log for debugging
     console.log('[DEBUG] KybService - Grouping fields by section. Found fields:', fields.length);

@@ -23,6 +23,7 @@ import FileVault from "@/pages/FileVault";
 import CompanyProfilePage from "@/pages/company-profile-page";
 import PlaygroundPage from "@/pages/playground-page";
 import TaskPage from "@/pages/task-page";
+import DiagnosticPage from "@/pages/diagnostic-page";
 import { BuilderPage } from "@/pages/builder/BuilderPage";
 import { OnboardingBuilderPage } from "@/pages/builder/sub-pages/OnboardingBuilderPage";
 import { RiskRulesBuilderPage } from "@/pages/builder/sub-pages/RiskRulesBuilderPage";
@@ -260,6 +261,11 @@ function Router() {
             </ProtectedLayout>
           )} 
         />
+        
+        {/* Diagnostic Page - For Developers */}
+        <Route path="/diagnostic">
+          <DiagnosticPage />
+        </Route>
 
         <Route component={NotFound} />
       </Switch>
