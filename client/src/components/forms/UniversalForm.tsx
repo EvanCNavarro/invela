@@ -387,16 +387,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Render main form
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {/* Progress bar showing overall completion - outside the form box */}
       <div className="mb-6">
-        {/* Progress bar showing overall completion */}
-        <div className="mb-4">
-          <FormProgressBar progress={overallProgress} />
-        </div>
+        <FormProgressBar progress={overallProgress} />
       </div>
       
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Section navigation tabs */}
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+          {/* Section navigation tabs - flush with form content */}
           <ResponsiveSectionNavigation
             sections={sections}
             sectionStatuses={sectionStatuses}
@@ -404,38 +402,40 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             onSectionChange={setActiveSection}
           />
           
-          {/* Data loading indicator */}
-          {isDataLoading && (
-            <div className="flex items-center justify-center py-4">
-              <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
-              <span className="text-sm text-muted-foreground">Loading saved data...</span>
-            </div>
-          )}
-          
-          {/* Data error display */}
-          {dataError && (
-            <div className="p-3 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700 text-sm">
-              {dataError}
-            </div>
-          )}
-          
-          {/* Section content - no extra border/bg here */}
-          <div>
-            {/* Current section content */}
-            {sections.map((section, index) => (
-              <div
-                key={section.id}
-                className={index === activeSection ? 'block' : 'hidden'}
-              >
-                <SectionContent
-                  section={section}
-                  fields={fields.filter(field => field.section === section.id)}
-                  template={template || undefined}
-                  onFieldChange={handleFieldChange}
-                />
+          {/* Form content - with continuous white box */}
+          <div className="bg-white rounded-b-md p-6 border-t-0">
+            {/* Data loading indicator */}
+            {isDataLoading && (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
+                <span className="text-sm text-muted-foreground">Loading saved data...</span>
               </div>
-            ))}
-          </div>
+            )}
+            
+            {/* Data error display */}
+            {dataError && (
+              <div className="p-3 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700 text-sm">
+                {dataError}
+              </div>
+            )}
+            
+            {/* Section content */}
+            <div className="pt-2">
+              {/* Current section content */}
+              {sections.map((section, index) => (
+                <div
+                  key={section.id}
+                  className={index === activeSection ? 'block' : 'hidden'}
+                >
+                  <SectionContent
+                    section={section}
+                    fields={fields.filter(field => field.section === section.id)}
+                    template={template || undefined}
+                    onFieldChange={handleFieldChange}
+                  />
+                </div>
+              ))}
+            </div>
             
             {/* Navigation buttons */}
             <div className="flex justify-between">
@@ -475,6 +475,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 )}
               </div>
             </div>
+          </div>
           </form>
         </Form>
     </div>
