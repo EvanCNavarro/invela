@@ -137,8 +137,29 @@ export function useFormStatus({
       let filledCount = 0;
       relevantFields.forEach(field => {
         const value = formValues[field.key];
-        const isFilled = value !== undefined && value !== null && value !== '';
+        
+        // Enhanced field value determination logic
+        let isFilled = false;
+        
+        // Special handling for different field types
+        if (typeof value === 'boolean') {
+          // Checkboxes and toggles are "filled" when they're true or false (explicitly set)
+          isFilled = true;
+        } else if (Array.isArray(value)) {
+          // Arrays (multi-select, etc.) are filled if they have at least one non-empty item
+          isFilled = value.length > 0 && value.some(item => item !== null && item !== '');
+        } else if (typeof value === 'object' && value !== null) {
+          // Objects are filled if they have any properties
+          isFilled = Object.keys(value).length > 0;
+        } else {
+          // For strings and primitives, check if they're not empty
+          // Trim the value to handle spaces-only inputs
+          isFilled = value !== undefined && value !== null && 
+                   (typeof value === 'string' ? value.trim() !== '' : String(value) !== '');
+        }
+        
         if (isFilled) {
+          logger.debug(`Field ${field.key} is filled with value: ${typeof value === 'object' ? 'object' : value}`);
           filledCount++;
         }
       });
