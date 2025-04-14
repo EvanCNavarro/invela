@@ -176,14 +176,31 @@ export class KybFormService implements FormServiceInterface {
       // Sort sections by order
       this.sections.sort((a, b) => a.order - b.order);
       
-      // Log the created sections
-      console.log('[DEBUG] Created sections:');
+      // CRITICAL FIX: Update the main fields array by extracting all fields from sections
+      // This ensures all fields have the correct section ID assigned
+      this.fields = this.sections.reduce((allFields, section) => {
+        return [...allFields, ...section.fields];
+      }, []);
+      
+      // Log the created sections and field counts
+      this.logger.info('Created sections:');
       this.sections.forEach(section => {
-        console.log(`[DEBUG] - Section "${section.title}" with ${section.fields.length} fields (order: ${section.order})`);
+        this.logger.info(`- Section "${section.title}" with ${section.fields.length} fields (order: ${section.order})`);
       });
       
+      // Verify all fields have section IDs
+      const fieldsWithoutSection = this.fields.filter(field => !field.section);
+      if (fieldsWithoutSection.length > 0) {
+        this.logger.warn(`WARNING: ${fieldsWithoutSection.length} fields don't have section IDs assigned`);
+        fieldsWithoutSection.forEach(field => {
+          this.logger.warn(`- Field without section: ${field.key}`);
+        });
+      } else {
+        this.logger.info(`Success: All ${this.fields.length} fields have section IDs correctly assigned`);
+      }
+      
       this.initialized = true;
-      console.log('[DEBUG] KybService initialization complete.');
+      this.logger.info('KybService initialization complete.');
     } catch (error) {
       console.error('Error initializing KYB form service:', error);
       throw error;
