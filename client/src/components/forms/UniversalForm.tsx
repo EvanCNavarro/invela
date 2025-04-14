@@ -585,6 +585,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 }
                 
                 // Regular section content
+                // Calculate the starting question number for this section
+                const previousSectionsFieldCount = sections
+                  .slice(0, index)
+                  .reduce((count, prevSection) => 
+                    count + fields.filter(f => f.section === prevSection.id).length, 0);
+                  
                 return (
                   <div
                     key={section.id}
@@ -595,6 +601,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       fields={fields.filter(field => field.section === section.id)}
                       template={template || undefined}
                       onFieldChange={handleFieldChange}
+                      startingQuestionNumber={previousSectionsFieldCount + 1} // Pass the starting number
                     />
                   </div>
                 );
