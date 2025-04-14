@@ -388,10 +388,10 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
-                <p className="text-sm text-gray-500">Complete KYB verification for {displayName}</p>
+                <p className="text-sm text-gray-500">Submit KYB (Know Your Business) details to verify "{displayName}"</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -487,10 +487,10 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">Security Assessment: {derivedCompanyName}</h2>
-                <p className="text-sm text-gray-500">Complete security assessment for {displayName}</p>
+                <p className="text-sm text-gray-500">Submit security assessment details to verify "{displayName}"</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -600,10 +600,10 @@ export default function TaskPage({ params }: TaskPageProps) {
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">Open Banking (1033) Survey: {derivedCompanyName}</h2>
-                <p className="text-sm text-gray-500">Complete Open Banking assessment for {displayName}</p>
+                <p className="text-sm text-gray-500">Submit Open Banking compliance details to verify "{displayName}"</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-sm p-6">
