@@ -387,14 +387,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
 
-          <div className="container max-w-7xl mx-auto">
-            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
+          <div className="w-full">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
                 <p className="text-sm text-gray-500">Submit KYB (Know Your Business) details to verify "{displayName}"</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
                 <UniversalForm
                   taskId={task.id}
                   taskType="kyb"
@@ -486,14 +486,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
 
-          <div className="container max-w-7xl mx-auto">
-            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
+          <div className="w-full">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">Security Assessment: {derivedCompanyName}</h2>
                 <p className="text-sm text-gray-500">Submit security assessment details to verify "{displayName}"</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
                 <SecurityFormPlayground
                   taskId={task.id}
                   companyName={derivedCompanyName}
@@ -599,14 +599,14 @@ export default function TaskPage({ params }: TaskPageProps) {
             )}
           </div>
 
-          <div className="container max-w-7xl mx-auto">
-            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-6 mb-6">
+          <div className="w-full">
+            <div className="bg-[#F2F5F7] rounded-lg shadow-sm p-4 sm:p-6 mb-6">
               <div className="mb-5">
                 <h2 className="text-xl font-semibold">Open Banking (1033) Survey: {derivedCompanyName}</h2>
                 <p className="text-sm text-gray-500">Submit Open Banking compliance details to verify "{displayName}"</p>
               </div>
               
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
                 {selectedMethod === 'upload' && !showForm ? (
                   <DocumentUploadWizard
                     companyName={derivedCompanyName}
