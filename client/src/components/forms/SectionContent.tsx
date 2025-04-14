@@ -102,10 +102,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
       
       {/* Fields list - fully responsive container */}
       <div className="space-y-8 w-full">
-        {sortedFields.map((field) => (
+        {sortedFields.map((field, index) => (
           <div key={field.key} className="w-full transition-all duration-300">
             <FieldRenderer 
-              field={field}
+              field={{
+                ...field,
+                questionNumber: index + 1 // Add question numbering from 1 to total count
+              }}
               template={safeTemplate}
               form={formContext || {
                 // Provide a safe fallback for diagnostic mode
