@@ -1,7 +1,14 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
+import { 
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription
+} from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
@@ -28,7 +35,7 @@ import { useFormStatus, SectionStatus } from '@/hooks/form/use-form-status';
 import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } from './SectionNavigation';
 import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
-import { SectionRenderer } from './renderers/SectionRenderer';
+
 import SectionContent from './SectionContent';
 
 // Create a type alias for form sections
@@ -126,6 +133,27 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     requiredOnly: true,
     onChange: onProgress
   });
+  
+  // Create and manage the Review & Submit section
+  const [allSections, setAllSections] = useState<FormSection[]>([]);
+  
+  // Update sections when main form sections change to include the Review & Submit section
+  useEffect(() => {
+    if (sections.length > 0) {
+      // Create a Review & Submit section to be added at the end
+      const reviewSection: FormSection = {
+        id: 'review-section',
+        title: 'Review & Submit',
+        order: sections.length,
+        description: 'Review your answers and submit the form',
+      };
+      
+      // Combine regular sections with review section
+      setAllSections([...sections, reviewSection]);
+    } else {
+      setAllSections([]);
+    }
+  }, [sections]);
   
   // Load template and form configuration - step 1: fetch template
   useEffect(() => {
@@ -439,10 +467,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           
           {/* Section navigation tabs - flush with form content */}
           <ResponsiveSectionNavigation
-            sections={sections}
+            sections={allSections}
             sectionStatuses={sectionStatuses}
             activeSection={activeSection}
-            onSectionChange={setActiveSection}
+            onSectionChange={(index) => {
+              // Only allow access to the review section if the form is complete
+              if (index === allSections.length - 1 && overallProgress < 100) {
+                toast({
+                  title: "Form incomplete",
+                  description: "Please complete all required fields before proceeding to review.",
+                  variant: "warning",
+                });
+                return;
+              }
+              setActiveSection(index);
+            }}
           />
           
           {/* Form content - with continuous white box, rounded only at bottom */}
@@ -465,19 +504,101 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             {/* Section content */}
             <div className="pt-2">
               {/* Current section content */}
-              {sections.map((section, index) => (
-                <div
-                  key={section.id}
-                  className={index === activeSection ? 'block' : 'hidden'}
-                >
-                  <SectionContent
-                    section={section}
-                    fields={fields.filter(field => field.section === section.id)}
-                    template={template || undefined}
-                    onFieldChange={handleFieldChange}
-                  />
-                </div>
-              ))}
+              {allSections.map((section, index) => {
+                // Handle the special review section
+                if (section.id === 'review-section') {
+                  return (
+                    <div
+                      key={section.id}
+                      className={index === activeSection ? 'block' : 'hidden'}
+                    >
+                      <div className="space-y-8">
+                        <h3 className="text-xl font-semibold">Review & Submit</h3>
+                        <p className="text-gray-600">
+                          Please review your responses below before submitting.
+                        </p>
+                        
+                        {/* Review all sections and their answers */}
+                        <div className="space-y-8">
+                          {sections.map((reviewSection, sectionIndex) => (
+                            <div key={`review-${sectionIndex}`} className="border border-gray-200 rounded-md p-4 bg-gray-50">
+                              <h4 className="font-medium text-lg mb-4">
+                                Section {sectionIndex + 1}: {reviewSection.title}
+                              </h4>
+                              <div className="space-y-4">
+                                {fields.filter(field => field.section === reviewSection.id).map((field, fieldIndex) => {
+                                  const value = form.getValues(field.key);
+                                  return (
+                                    <div key={field.key} className="flex flex-col space-y-1">
+                                      <span className="text-sm font-medium text-gray-700">
+                                        {fieldIndex + 1}. {field.question || field.label}
+                                      </span>
+                                      <div className="bg-white p-2 border border-gray-200 rounded min-h-[2rem]">
+                                        {value !== undefined && value !== null && value !== '' 
+                                          ? (typeof value === 'object' ? JSON.stringify(value) : value.toString())
+                                          : <span className="text-gray-400 italic">No answer provided</span>
+                                        }
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        
+                        {/* Final agreement checkbox */}
+                        <div className="mt-8 space-y-4">
+                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                            <Checkbox
+                              checked={form.getValues("agreement_confirmation")}
+                              onCheckedChange={(checked) => {
+                                form.setValue("agreement_confirmation", checked);
+                              }}
+                              id="agreement_confirmation"
+                            />
+                            <div className="space-y-1 leading-none">
+                              <label 
+                                htmlFor="agreement_confirmation" 
+                                className="font-medium cursor-pointer"
+                              >
+                                I confirm all information is accurate and complete
+                              </label>
+                              <p className="text-sm text-muted-foreground">
+                                By checking this box, you confirm that you have reviewed all information and it is accurate to the best of your knowledge.
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <Button 
+                            type="button"
+                            onClick={form.handleSubmit(handleSubmit)}
+                            disabled={!form.getValues('agreement_confirmation')}
+                            className="w-full"
+                          >
+                            Submit Form
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Regular section content
+                return (
+                  <div
+                    key={section.id}
+                    className={index === activeSection ? 'block' : 'hidden'}
+                  >
+                    <SectionContent
+                      section={section}
+                      fields={fields.filter(field => field.section === section.id)}
+                      template={template || undefined}
+                      onFieldChange={handleFieldChange}
+                    />
+                  </div>
+                );
+              })}
             </div>
             
             {/* Navigation buttons */}
@@ -528,13 +649,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           type="button" 
                           onClick={(e) => {
                             e.preventDefault();
-                            // Only submit if all fields are complete
+                            // Only navigate to review section if all fields are complete
                             if (overallProgress === 100) {
-                              form.handleSubmit(handleSubmit)(e);
+                              // Navigate to the review section (which is the last section in allSections)
+                              setActiveSection(allSections.length - 1);
                             } else {
                               toast({
                                 title: "Form incomplete",
-                                description: "Please complete all required fields before submitting.",
+                                description: "Please complete all required fields before proceeding to review.",
                                 variant: "warning",
                               });
                             }
