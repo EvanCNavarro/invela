@@ -46,17 +46,17 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
           // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
           
-          // Two ways to determine completion:
-          // 1. Either explicitly marked as completed in the completedSections prop
-          // 2. Or all fields are filled (remainingCount === 0)
-          const allFieldsFilled = fieldsCount > 0 && remainingCount <= 0;
-          const isActuallyCompleted = isCompleted || allFieldsFilled;
+          // Critical change: When remaining count is 0 and there are fields to fill, force completed state
+          const isForceCompleted = remainingCount === 0 && fieldsCount > 0;
+          
+          // Mark as completed if explicitly set OR there are no remaining fields
+          const isActuallyCompleted = isCompleted || isForceCompleted;
           
           // Other states for progress indication
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
           const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
           
-          // Status text based on completion state
+          // Status text based on completion state with the critical change
           let statusText = '';
           if (isActuallyCompleted) {
             statusText = 'Completed';
@@ -143,17 +143,17 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
           // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
           
-          // Two ways to determine completion:
-          // 1. Either explicitly marked as completed in the completedSections prop
-          // 2. Or all fields are filled (remainingCount === 0)
-          const allFieldsFilled = fieldsCount > 0 && remainingCount <= 0;
-          const isActuallyCompleted = isCompleted || allFieldsFilled;
+          // Critical change: When remaining count is 0 and there are fields to fill, force completed state
+          const isForceCompleted = remainingCount === 0 && fieldsCount > 0;
+          
+          // Mark as completed if explicitly set OR there are no remaining fields
+          const isActuallyCompleted = isCompleted || isForceCompleted;
           
           // Other states for progress indication
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
           const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
           
-          // Status text based on completion state
+          // Status text based on completion state with the critical change
           let statusText = '';
           if (isActuallyCompleted) {
             statusText = 'Completed';
