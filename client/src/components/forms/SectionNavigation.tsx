@@ -43,8 +43,8 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // Determine section status
-          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount === fieldsCount;
+          // Determine section status - if all fields are filled, consider it completed
+          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
           // Mark as completed if explicitly set or all fields are filled
           const isActuallyCompleted = isCompleted || allFieldsCompleted;
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
@@ -67,7 +67,8 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
               onClick={() => onSectionChange(index)}
               className={cn(
                 "relative flex-1 px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
-                isActive ? "border-primary bg-slate-50" : "border-transparent",
+                // Active tabs should have white background, inactive tabs should have light gray
+                isActive ? "border-primary bg-white" : "border-transparent bg-slate-50",
                 isActuallyCompleted && !isActive ? "border-emerald-500" : "",
                 // First item in row with rounded left
                 index === 0 ? "rounded-tl-md" : ""
@@ -134,8 +135,8 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // Determine section status
-          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount === fieldsCount;
+          // Determine section status - if all fields are filled, consider it completed
+          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
           // Mark as completed if explicitly set or all fields are filled
           const isActuallyCompleted = isCompleted || allFieldsCompleted;
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
@@ -159,7 +160,8 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
               className={cn(
                 "inline-block px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
                 "min-w-[180px]",
-                isActive ? "border-primary" : "border-transparent",
+                // Active tabs should have white background, inactive tabs should have light gray
+                isActive ? "border-primary bg-white" : "border-transparent bg-slate-50",
                 isActuallyCompleted && !isActive ? "border-emerald-500" : "",
                 index === 0 ? "rounded-tl-md" : ""
               )}
