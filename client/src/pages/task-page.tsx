@@ -358,18 +358,9 @@ export default function TaskPage({ params }: TaskPageProps) {
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm font-medium bg-white border-muted-foreground/20"
-                onClick={handleBackClick}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Task Center
-              </Button>
-
-              {isSubmitted && (
+            
+            {isSubmitted && (
+              <div className="flex justify-end">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -392,19 +383,18 @@ export default function TaskPage({ params }: TaskPageProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Using Universal Form Component */}
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
-                  <p className="text-sm text-gray-500">Complete KYB verification for {displayName}</p>
-                </div>
-                
+            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+              <div className="mb-5">
+                <h2 className="text-xl font-semibold">KYB Form: {derivedCompanyName}</h2>
+                <p className="text-sm text-gray-500">Complete KYB verification for {displayName}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow-sm p-6">
                 <UniversalForm
                   taskId={task.id}
                   taskType="kyb"
@@ -475,18 +465,9 @@ export default function TaskPage({ params }: TaskPageProps) {
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm font-medium bg-white border-muted-foreground/20"
-                onClick={handleBackClick}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Task Center
-              </Button>
-
-              {isSubmitted && (
+            
+            {isSubmitted && (
+              <div className="flex justify-end">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -501,66 +482,72 @@ export default function TaskPage({ params }: TaskPageProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              {/* Security Form Implementation - Header is now part of SecurityFormPlayground */}
-              <SecurityFormPlayground
-                taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                savedFormData={task.savedFormData}
-                taskStatus={task.status}
-                isSubmitted={isSubmitted}
-                onSubmit={(formData) => {
-                  toast({
-                    title: "Submitting Security Assessment",
-                    description: "Please wait while we process your submission...",
-                  });
-
-                  // Submit the security assessment
-                  fetch(`/api/security/submit/${task.id}`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ formData })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to submit security assessment');
-                      }
-                      return data;
-                    })
-                    .then(() => {
-                      fireSuperConfetti();
-
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "Security assessment has been submitted successfully.",
-                        variant: "default",
-                      });
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Security assessment submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to submit security assessment. Please try again.",
-                        variant: "destructive",
-                      });
+            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+              <div className="mb-5">
+                <h2 className="text-xl font-semibold">Security Assessment: {derivedCompanyName}</h2>
+                <p className="text-sm text-gray-500">Complete security assessment for {displayName}</p>
+              </div>
+              
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <SecurityFormPlayground
+                  taskId={task.id}
+                  companyName={derivedCompanyName}
+                  companyData={{
+                    name: displayName,
+                    description: task.metadata?.company?.description || undefined
+                  }}
+                  savedFormData={task.savedFormData}
+                  taskStatus={task.status}
+                  isSubmitted={isSubmitted}
+                  onSubmit={(formData) => {
+                    toast({
+                      title: "Submitting Security Assessment",
+                      description: "Please wait while we process your submission...",
                     });
-                }}
-              />
+
+                    // Submit the security assessment
+                    fetch(`/api/security/submit/${task.id}`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ formData })
+                    })
+                      .then(async response => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                          throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                        }
+                        return data;
+                      })
+                      .then(() => {
+                        fireSuperConfetti();
+
+                        setIsSubmitted(true);
+                        setShowSuccessModal(true);
+
+                        toast({
+                          title: "Success",
+                          description: "Security assessment has been submitted successfully.",
+                          variant: "default",
+                        });
+                      })
+                      .catch(error => {
+                        console.error('[TaskPage] Security assessment submission failed:', error);
+                        toast({
+                          title: "Error",
+                          description: error.message || "Failed to submit security assessment. Please try again.",
+                          variant: "destructive",
+                        });
+                      });
+                  }}
+                />
+              </div>
             </div>
           </div>
           
@@ -583,18 +570,9 @@ export default function TaskPage({ params }: TaskPageProps) {
         <PageTemplate className="space-y-6">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-sm font-medium bg-white border-muted-foreground/20"
-                onClick={handleBackClick}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Task Center
-              </Button>
-
-              {isSubmitted && (
+            
+            {isSubmitted && (
+              <div className="flex justify-end">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -617,89 +595,98 @@ export default function TaskPage({ params }: TaskPageProps) {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           <div className="container max-w-7xl mx-auto">
-            {selectedMethod === 'upload' && !showForm ? (
-              <DocumentUploadWizard
-                companyName={derivedCompanyName}
-                onComplete={() => {
-                  setShowForm(true);
-                }}
-              />
-            ) : (selectedMethod === 'manual' || showForm) ? (
-              <CardFormPlayground
-                taskId={task.id}
-                companyName={derivedCompanyName}
-                companyData={{
-                  name: displayName,
-                  description: task.metadata?.company?.description || undefined
-                }}
-                onSubmit={(formData) => {
-                  fetch('/api/card/save', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
-                      formData,
-                      taskId: task.id
-                    })
-                  })
-                    .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save compliance form');
-                      }
-                      return data;
-                    })
-                    .then((result) => {
-                      fireSuperConfetti();
-
-                      setFileId(result.fileId);
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: result.warnings?.length
-                          ? "Compliance form has been saved successfully with some updates to existing data."
-                          : "Compliance form has been saved successfully.",
-                        variant: "default",
-                      });
-
-                      if (result.warnings?.length) {
-                        result.warnings.forEach((warning: string) => {
-                          console.warn('[Card Form] Warning:', warning);
-                        });
-                      }
-                    })
-                    .catch(error => {
-                      console.error('[TaskPage] Form submission failed:', error);
-                      toast({
-                        title: "Error",
-                        description: error.message || "Failed to submit compliance form. Please try again.",
-                        variant: "destructive",
-                      });
-                    });
-                }}
-              />
-            ) : (
-              // Method selection screen
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h2 className="text-2xl font-semibold mb-4">Open Banking (1033) Survey: {displayName}</h2>
-                <p className="text-muted-foreground mb-6">
-                  Please select how you would like to provide the Section 1033 compliance information for {displayName}.
-                </p>
-                
-                <CardMethodChoice 
-                  taskId={task.id}
-                  onMethodSelect={(method) => setSelectedMethod(method)} 
-                  companyName={displayName}
-                />
+            <div className="bg-gray-50 rounded-lg shadow-sm p-6 mb-6">
+              <div className="mb-5">
+                <h2 className="text-xl font-semibold">Open Banking (1033) Survey: {derivedCompanyName}</h2>
+                <p className="text-sm text-gray-500">Complete Open Banking assessment for {displayName}</p>
               </div>
-            )}
+              
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                {selectedMethod === 'upload' && !showForm ? (
+                  <DocumentUploadWizard
+                    companyName={derivedCompanyName}
+                    onComplete={() => {
+                      setShowForm(true);
+                    }}
+                  />
+                ) : (selectedMethod === 'manual' || showForm) ? (
+                  <CardFormPlayground
+                    taskId={task.id}
+                    companyName={derivedCompanyName}
+                    companyData={{
+                      name: displayName,
+                      description: task.metadata?.company?.description || undefined
+                    }}
+                    onSubmit={(formData) => {
+                      fetch('/api/card/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          fileName: `compliance_${derivedCompanyName}_${new Date().toISOString().replace(/[:]/g, '').split('.')[0]}`,
+                          formData,
+                          taskId: task.id
+                        })
+                      })
+                        .then(async response => {
+                          const data = await response.json();
+                          if (!response.ok) {
+                            throw new Error(data.details || data.error || 'Failed to save compliance form');
+                          }
+                          return data;
+                        })
+                        .then((result) => {
+                          fireSuperConfetti();
+
+                          setFileId(result.fileId);
+                          setIsSubmitted(true);
+                          setShowSuccessModal(true);
+
+                          toast({
+                            title: "Success",
+                            description: result.warnings?.length
+                              ? "Compliance form has been saved successfully with some updates to existing data."
+                              : "Compliance form has been saved successfully.",
+                            variant: "default",
+                          });
+
+                          if (result.warnings?.length) {
+                            result.warnings.forEach((warning: string) => {
+                              console.warn('[Card Form] Warning:', warning);
+                            });
+                          }
+                        })
+                        .catch(error => {
+                          console.error('[TaskPage] Form submission failed:', error);
+                          toast({
+                            title: "Error",
+                            description: error.message || "Failed to submit compliance form. Please try again.",
+                            variant: "destructive",
+                          });
+                        });
+                    }}
+                  />
+                ) : (
+                  // Method selection screen
+                  <div className="bg-white rounded-lg border border-gray-100 p-6">
+                    <h3 className="text-lg font-medium mb-4">Select Submission Method</h3>
+                    <p className="text-muted-foreground mb-6">
+                      Please select how you would like to provide the Section 1033 compliance information for {displayName}.
+                    </p>
+                    
+                    <CardMethodChoice 
+                      taskId={task.id}
+                      onMethodSelect={(method) => setSelectedMethod(method)} 
+                      companyName={displayName}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </PageTemplate>
       </DashboardLayout>
