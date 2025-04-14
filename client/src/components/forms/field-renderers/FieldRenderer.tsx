@@ -10,7 +10,8 @@ import { TaskTemplateWithConfigs } from '../../../services/taskTemplateService';
 import { getFieldComponentType } from '../../../utils/formUtils';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, CheckCircle2, AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FieldRendererProps {
   field: FormFieldType;
@@ -130,17 +131,60 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       onChange: fieldProps.onChange  // Keep the original onChange handler
     };
     
-    // Log normalized values for debugging
-    // console.log(`[FieldRenderer] Field ${field.key} normalized value: "${normalizedValue}" (${typeof normalizedValue})`);
+    // Check validation status for styling
+    const { formState } = form || { formState: { errors: {} } };
+    const hasError = form && formState.errors[field.key];
+    const isFilled = normalizedValue !== undefined && normalizedValue !== null && normalizedValue !== '';
+    const isActive = modifiedFieldProps.name === document.activeElement?.id;
+    
+    // Determine validation state 
+    let validationState: 'default' | 'active' | 'success' | 'error' = 'default';
+    if (hasError) validationState = 'error';
+    else if (isFilled) validationState = 'success';
+    else if (isActive) validationState = 'active';
+    
+    // Define validation style classes
+    const borderClasses = {
+      default: 'border-input',
+      active: 'border-blue-500 ring-2 ring-blue-200',
+      success: 'border-green-500',
+      error: 'border-red-500'
+    };
+    
+    // Create a wrapper with validation icon
+    const wrapWithValidation = (component: React.ReactNode) => {
+      return (
+        <div className="relative">
+          {component}
+          
+          {/* Success validation icon */}
+          {validationState === 'success' && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 pointer-events-none">
+              <CheckCircle2 size={16} />
+            </div>
+          )}
+          
+          {/* Error validation icon */}
+          {validationState === 'error' && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
+              <AlertCircle size={16} />
+            </div>
+          )}
+        </div>
+      );
+    };
     
     switch (componentType) {
       case 'multi-line':
-        return (
+        return wrapWithValidation(
           <Textarea
             {...modifiedFieldProps}
-            value={normalizedValue}  // Explicitly set value to ensure it's controlled
+            value={normalizedValue}
             placeholder={field.placeholder || ''}
-            className="min-h-[120px] bg-white"
+            className={cn(
+              "min-h-[120px] bg-white pr-8",
+              borderClasses[validationState]
+            )}
             onChange={(e) => {
               fieldProps.onChange(e);
               onFieldChange?.(e.target.value);
@@ -151,14 +195,24 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       case 'dropdown':
         return (
           <Select
-            value={String(normalizedValue)}  // Ensure value is a string, never undefined
+            value={String(normalizedValue)}
             onValueChange={(value) => {
               fieldProps.onChange(value);
               onFieldChange?.(value);
             }}
           >
-            <SelectTrigger>
+            <SelectTrigger className={cn(borderClasses[validationState])}>
               <SelectValue placeholder={field.placeholder || 'Select an option'} />
+              {validationState === 'success' && (
+                <div className="ml-auto mr-1 text-green-500">
+                  <CheckCircle2 size={16} />
+                </div>
+              )}
+              {validationState === 'error' && (
+                <div className="ml-auto mr-1 text-red-500">
+                  <AlertCircle size={16} />
+                </div>
+              )}
             </SelectTrigger>
             <SelectContent>
               {Array.isArray(field.options) && field.options.map((option, index) => {
@@ -177,25 +231,42 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         
       case 'checkbox':
         return (
-          <Checkbox
-            checked={Boolean(normalizedValue)}  // Explicitly convert to boolean
-            onCheckedChange={(checked) => {
-              fieldProps.onChange(checked);
-              onFieldChange?.(checked);
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={Boolean(normalizedValue)}
+              className={cn({
+                'ring-2 ring-red-200': validationState === 'error',
+                'ring-2 ring-green-200': validationState === 'success'
+              })}
+              onCheckedChange={(checked) => {
+                fieldProps.onChange(checked);
+                onFieldChange?.(checked);
+              }}
+            />
+            {validationState === 'success' && (
+              <span className="text-green-500">
+                <CheckCircle2 size={16} />
+              </span>
+            )}
+            {validationState === 'error' && (
+              <span className="text-red-500">
+                <AlertCircle size={16} />
+              </span>
+            )}
+          </div>
         );
-        
-      // Add more component types as needed
         
       case 'single-line':
       default:
-        return (
+        return wrapWithValidation(
           <Input
             {...modifiedFieldProps}
-            value={normalizedValue}  // Explicitly set value to ensure it's controlled
+            value={normalizedValue}
             placeholder={field.placeholder || ''}
-            className="bg-white"
+            className={cn(
+              "bg-white pr-8",
+              borderClasses[validationState]
+            )}
             onChange={(e) => {
               fieldProps.onChange(e);
               onFieldChange?.(e.target.value);
