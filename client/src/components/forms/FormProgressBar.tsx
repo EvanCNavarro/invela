@@ -39,9 +39,18 @@ const FormProgressBar: React.FC<FormProgressBarProps> = ({
       return 'bg-green-500';
     }
     
-    // For values below 100%, use a gradient that reveals more of the green as progress increases
-    // This creates the effect of 'unveiling' the green color as progress increases
-    return 'bg-gradient-to-r from-blue-500 via-blue-400 to-green-500';
+    // For values above 90%, transition more to green
+    if (value >= 90) {
+      return 'bg-gradient-to-r from-blue-400 via-green-400 to-green-500';
+    }
+    
+    // For values above 50%, start introducing green
+    if (value >= 50) {
+      return 'bg-gradient-to-r from-blue-500 via-blue-400 to-green-400';
+    }
+    
+    // For values below 50%, keep primarily blue
+    return 'bg-gradient-to-r from-blue-600 to-blue-400';
   };
   
   // Get the height class based on barHeight prop

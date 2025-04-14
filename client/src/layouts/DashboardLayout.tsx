@@ -137,9 +137,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         <main className="flex-1 relative overflow-auto">
           <div className={cn(
-            "px-8 py-4",
+            "px-4 sm:px-6 md:px-8 py-4",
             "transition-all duration-300 ease-in-out",
-            "container mx-auto max-w-7xl"
+            "container mx-auto max-w-full"
           )}>
             {children}
           </div>
