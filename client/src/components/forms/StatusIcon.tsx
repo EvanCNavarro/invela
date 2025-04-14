@@ -1,37 +1,45 @@
 import React from 'react';
-import { CircleCheck, CircleDashed, CircleDot } from 'lucide-react';
+import { Check, Circle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface StatusIconProps {
+// Props for the StatusIcon component
+export interface StatusIconProps {
   isCompleted: boolean;
   isActive: boolean;
   size?: number;
+  className?: string;
 }
 
 /**
- * Custom component for section status icons with better control over styling
+ * A component to display section completion status with appropriate icons and colors
  */
-export const StatusIcon: React.FC<StatusIconProps> = ({ 
-  isCompleted, 
+export const StatusIcon: React.FC<StatusIconProps> = ({
+  isCompleted,
   isActive,
-  size = 14 
+  size = 16,
+  className
 }) => {
+  // If completed, show a green check icon
   if (isCompleted) {
-    return <CircleCheck size={size} className="text-emerald-500" />;
-  }
-  
-  if (isActive) {
-    // Custom styling for active but incomplete sections
-    // This creates a "circle dot dashed" effect by layering a CircleDashed with a center dot
     return (
-      <div className="relative inline-flex justify-center items-center">
-        <CircleDashed size={size} className="text-primary" />
-        {/* Center dot */}
-        <div className="absolute w-1.5 h-1.5 rounded-full bg-primary"></div>
-      </div>
+      <span className={cn("text-emerald-500", className)}>
+        <Check size={size} strokeWidth={3} />
+      </span>
     );
   }
   
-  return <CircleDashed size={size} className="text-gray-400" />;
+  // Otherwise, show a circle with appropriate color based on active state
+  return (
+    <span 
+      className={cn(
+        "text-gray-400",
+        isActive && "text-primary",
+        className
+      )}
+    >
+      <Circle size={size} strokeWidth={1.5} />
+    </span>
+  );
 };
 
 export default StatusIcon;
