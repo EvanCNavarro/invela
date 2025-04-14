@@ -266,7 +266,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Handle form submission
   const handleSubmit = useCallback(async (data: FormData) => {
     try {
+      // Verify form is complete before submitting
+      if (overallProgress < 100) {
+        toast({
+          title: "Form incomplete",
+          description: "Please complete all required fields before submitting.",
+          variant: "warning",
+        });
+        return;
+      }
+      
       logger.info('Form submitted');
+      
+      // Show submission toast
+      toast({
+        title: 'Submitting KYB Form',
+        description: 'Please wait while we process your submission...',
+      });
       
       // First save the current progress
       await saveProgress();
@@ -290,7 +306,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         variant: 'destructive',
       });
     }
-  }, [saveProgress, onSubmit]);
+  }, [saveProgress, onSubmit, overallProgress]);
   
   // Handle cancellation
   const handleCancel = useCallback(() => {
@@ -466,12 +482,32 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                 {activeSection < sections.length - 1 ? (
                   <Button
                     type="button"
-                    onClick={() => setActiveSection(activeSection + 1)}
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent any form submission
+                      setActiveSection(activeSection + 1);
+                    }}
                   >
                     Next
                   </Button>
                 ) : (
-                  <Button type="submit">Submit</Button>
+                  <Button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Only submit if all fields are complete
+                      if (overallProgress === 100) {
+                        form.handleSubmit(handleSubmit)(e);
+                      } else {
+                        toast({
+                          title: "Form incomplete",
+                          description: "Please complete all required fields before submitting.",
+                          variant: "warning",
+                        });
+                      }
+                    }}
+                  >
+                    Submit
+                  </Button>
                 )}
               </div>
             </div>
