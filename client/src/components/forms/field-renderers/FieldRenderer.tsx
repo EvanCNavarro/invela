@@ -25,18 +25,25 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   form,
   onFieldChange
 }) => {
-  // Extract field configuration from template
-  const globalConfig = template.configurations
-    .filter(config => config.scope === 'global')
+  // Extract field configuration from template, with safeguards for missing properties
+  const configurations = template?.configurations || [];
+  
+  // Default empty objects in case configurations are missing
+  const globalConfig = configurations
+    .filter(config => config?.scope === 'global')
     .reduce((acc, curr) => {
-      acc[curr.config_key] = curr.config_value;
+      if (curr?.config_key) {
+        acc[curr.config_key] = curr.config_value;
+      }
       return acc;
     }, {} as Record<string, any>);
   
-  const fieldConfig = template.configurations
-    .filter(config => config.scope === 'field' && config.scope_target === field.key)
+  const fieldConfig = configurations
+    .filter(config => config?.scope === 'field' && config?.scope_target === field.key)
     .reduce((acc, curr) => {
-      acc[curr.config_key] = curr.config_value;
+      if (curr?.config_key) {
+        acc[curr.config_key] = curr.config_value;
+      }
       return acc;
     }, {} as Record<string, any>);
   
@@ -44,8 +51,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   const mergedConfig = { ...globalConfig, ...fieldConfig };
   
   // Get the component type based on configuration
-  const defaultFieldType = globalConfig.defaultFieldType || 'single-line';
-  const componentType = fieldConfig.fieldType || getFieldComponentType(field, defaultFieldType);
+  const defaultFieldType = globalConfig?.defaultFieldType || 'single-line';
+  const componentType = fieldConfig?.fieldType || getFieldComponentType(field, defaultFieldType);
   
   // Get tooltip position from configuration
   const tooltipPosition = mergedConfig.tooltipPosition || 'right';
