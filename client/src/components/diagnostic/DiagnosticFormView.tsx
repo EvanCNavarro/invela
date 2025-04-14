@@ -60,8 +60,9 @@ export const DiagnosticFormView: React.FC<DiagnosticFormViewProps> = ({
   }, [taskType, taskId]);
 
   // Render a read-only field for diagnostic display
+  // We'll use the same rendering as the FieldRenderer in diagnostic mode
   const renderField = (field: FormField) => (
-    <div key={field.key} className="mb-6 border-b pb-4">
+    <div key={field.key} className="field-display-only mb-6 border-b pb-4">
       <div className="flex items-start mb-1">
         <div className="flex-1">
           <div className="font-medium text-gray-900">{field.label || field.key}</div>
@@ -79,13 +80,18 @@ export const DiagnosticFormView: React.FC<DiagnosticFormViewProps> = ({
       )}
       
       <div className="mt-2 border bg-gray-50 p-2 rounded text-gray-500 italic">
-        No value
+        {field.value ? (
+          <span>{typeof field.value === 'object' ? JSON.stringify(field.value) : String(field.value)}</span>
+        ) : (
+          <span>No value</span>
+        )}
       </div>
       
-      <div className="text-xs text-gray-400 mt-2 flex gap-4">
+      <div className="text-xs text-gray-400 mt-2 flex flex-wrap gap-4">
         <span>Key: {field.key}</span>
         <span>Section: {field.section}</span>
         <span>Order: {field.order !== undefined ? field.order : 'none'}</span>
+        <span>Type: {field.type || 'text'}</span>
       </div>
     </div>
   );
