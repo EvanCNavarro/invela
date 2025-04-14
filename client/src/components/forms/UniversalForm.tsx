@@ -386,60 +386,56 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Render main form
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>{formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-        
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="mb-6">
         {/* Progress bar showing overall completion */}
-        <div className="mt-4">
+        <div className="mb-4">
           <FormProgressBar progress={overallProgress} />
         </div>
-      </CardHeader>
+      </div>
       
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            {/* Section navigation tabs */}
-            <ResponsiveSectionNavigation
-              sections={sections}
-              sectionStatuses={sectionStatuses}
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-            />
-            
-            {/* Data loading indicator */}
-            {isDataLoading && (
-              <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
-                <span className="text-sm text-muted-foreground">Loading saved data...</span>
-              </div>
-            )}
-            
-            {/* Data error display */}
-            {dataError && (
-              <div className="p-3 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700 text-sm">
-                {dataError}
-              </div>
-            )}
-            
-            {/* Section content */}
-            <div className="bg-white rounded-md p-6 border border-slate-200">
-              {/* Current section content */}
-              {sections.map((section, index) => (
-                <div
-                  key={section.id}
-                  className={index === activeSection ? 'block' : 'hidden'}
-                >
-                  <SectionContent
-                    section={section}
-                    fields={fields.filter(field => field.section === section.id)}
-                    template={template || undefined}
-                    onFieldChange={handleFieldChange}
-                  />
-                </div>
-              ))}
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          {/* Section navigation tabs */}
+          <ResponsiveSectionNavigation
+            sections={sections}
+            sectionStatuses={sectionStatuses}
+            activeSection={activeSection}
+            onSectionChange={setActiveSection}
+          />
+          
+          {/* Data loading indicator */}
+          {isDataLoading && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
+              <span className="text-sm text-muted-foreground">Loading saved data...</span>
             </div>
+          )}
+          
+          {/* Data error display */}
+          {dataError && (
+            <div className="p-3 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700 text-sm">
+              {dataError}
+            </div>
+          )}
+          
+          {/* Section content - no extra border/bg here */}
+          <div>
+            {/* Current section content */}
+            {sections.map((section, index) => (
+              <div
+                key={section.id}
+                className={index === activeSection ? 'block' : 'hidden'}
+              >
+                <SectionContent
+                  section={section}
+                  fields={fields.filter(field => field.section === section.id)}
+                  template={template || undefined}
+                  onFieldChange={handleFieldChange}
+                />
+              </div>
+            ))}
+          </div>
             
             {/* Navigation buttons */}
             <div className="flex justify-between">
@@ -481,8 +477,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 
