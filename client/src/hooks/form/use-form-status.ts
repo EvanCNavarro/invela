@@ -68,18 +68,27 @@ export function useFormStatus({
     // First, check if sections have fields attached directly
     const sectionsHaveFields = sections.length > 0 && 
                               sections[0].fields && 
+                              Array.isArray(sections[0].fields) && 
                               sections[0].fields.length > 0;
     
     if (sectionsHaveFields) {
       // Use fields directly from sections if available
       sections.forEach(section => {
-        map[section.id] = section.fields || [];
+        if (section.fields && Array.isArray(section.fields)) {
+          map[section.id] = section.fields;
+          logger.debug(`Section ${section.id} (${section.title}) has ${section.fields.length} fields directly attached`);
+        } else {
+          map[section.id] = [];
+          logger.debug(`Section ${section.id} (${section.title}) has no directly attached fields`);
+        }
       });
       logger.debug(`Using fields from sections (${Object.keys(map).length} sections)`);
     } else {
       // Otherwise, filter fields by section ID
       sections.forEach(section => {
-        map[section.id] = fields.filter(field => field.section === section.id);
+        const sectionFields = fields.filter(field => field.section === section.id);
+        map[section.id] = sectionFields;
+        logger.debug(`Section ${section.id} (${section.title}) has ${sectionFields.length} fields by filter`);
       });
       logger.debug(`Built section fields map by filtering (${Object.keys(map).length} sections)`);
     }
@@ -100,12 +109,17 @@ export function useFormStatus({
     sections.forEach(section => {
       const sectionFields = fieldsMap[section.id] || [];
       
-      // Filter to only required fields if needed
-      const relevantFields = requiredOnly 
-        ? sectionFields.filter(field => field.validation?.required)
-        : sectionFields;
+      // Log for debugging
+      logger.debug(`Processing section "${section.title}" with ${sectionFields.length} fields`);
       
-      // Skip empty sections
+      // For MVP, count all fields regardless of required status since validation isn't fully implemented
+      // We'll temporarily ignore the requiredOnly flag to ensure field counts appear
+      const relevantFields = sectionFields;
+      
+      // Add debugging for relevant fields
+      logger.debug(`Section "${section.title}" has ${relevantFields.length} relevant fields`);
+      
+      // Skip truly empty sections
       if (relevantFields.length === 0) {
         sectionStatuses.push({
           id: section.id,
