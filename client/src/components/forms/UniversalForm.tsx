@@ -479,7 +479,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   }
                 }}
                 disabled={activeSection === 0}
+                className="flex items-center gap-1"
               >
+                <ArrowLeft className="h-4 w-4" />
                 Previous
               </Button>
               
@@ -501,28 +503,47 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       e.preventDefault(); // Prevent any form submission
                       setActiveSection(activeSection + 1);
                     }}
+                    className="flex items-center gap-1"
                   >
                     Next
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 ) : (
-                  <Button 
-                    type="button" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      // Only submit if all fields are complete
-                      if (overallProgress === 100) {
-                        form.handleSubmit(handleSubmit)(e);
-                      } else {
-                        toast({
-                          title: "Form incomplete",
-                          description: "Please complete all required fields before submitting.",
-                          variant: "warning",
-                        });
-                      }
-                    }}
-                  >
-                    Submit
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          type="button" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            // Only submit if all fields are complete
+                            if (overallProgress === 100) {
+                              form.handleSubmit(handleSubmit)(e);
+                            } else {
+                              toast({
+                                title: "Form incomplete",
+                                description: "Please complete all required fields before submitting.",
+                                variant: "warning",
+                              });
+                            }
+                          }}
+                          className={cn(
+                            "flex items-center gap-1",
+                            overallProgress === 100 && "animate-pulse-ring"
+                          )}
+                          disabled={overallProgress < 100}
+                        >
+                          Final Review
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      {overallProgress < 100 && (
+                        <TooltipContent>
+                          <p>Complete all required fields ({Math.round(100 - overallProgress)}% remaining) to proceed to final review</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
             </div>
