@@ -25,6 +25,18 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   form,
   onFieldChange
 }) => {
+  // Early return with a simpler rendering if no form is provided (diagnostic mode)
+  if (!form) {
+    return (
+      <div className="field-display-only">
+        <div className="mb-1 font-medium">{field.label}</div>
+        {field.helpText && <div className="text-sm text-gray-500 mb-1">{field.helpText}</div>}
+        <div className="border p-2 rounded bg-gray-50">
+          {field.value || <span className="text-gray-400">No value</span>}
+        </div>
+      </div>
+    );
+  }
   // Extract field configuration from template, with safeguards for missing properties
   const configurations = template?.configurations || [];
   

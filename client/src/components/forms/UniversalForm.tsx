@@ -434,6 +434,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                   <SectionContent
                     section={section}
                     fields={fields.filter(field => field.section === section.id)}
+                    template={template}
                     onFieldChange={handleFieldChange}
                   />
                 </div>
