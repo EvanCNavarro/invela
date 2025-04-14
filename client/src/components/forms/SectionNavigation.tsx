@@ -123,7 +123,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "text-xs",
                     isCompleted ? "text-emerald-500" : 
-                    isActive ? "text-primary" : "text-gray-500"
+                    isActive ? "text-primary" : "text-gray-400"
                   )}
                 >
                   {statusText}
@@ -214,7 +214,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "text-xs",
                     isCompleted ? "text-emerald-500" : 
-                    isActive ? "text-primary" : "text-gray-500"
+                    isActive ? "text-primary" : "text-gray-400"
                   )}
                 >
                   {statusText}
