@@ -1,5 +1,4 @@
-// Temporary debug version to add logs and fix
-import React, { useEffect } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { StatusIcon } from './StatusIcon';
 
@@ -30,12 +29,6 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
   onSectionChange,
   className,
 }) => {
-  // For debugging
-  useEffect(() => {
-    console.log("Sections:", sections);
-    console.log("Completed sections:", completedSections);
-  }, [sections, completedSections]);
-
   return (
     <div className={cn("w-full bg-white rounded-md mb-6", className)}>
       <div className="flex flex-col md:flex-row">
@@ -50,23 +43,13 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // For debugging
-          if (index === 0) {
-            console.log(`Section ${section.id} (${section.title}):`, { 
-              fieldsCount, 
-              filledFieldsCount, 
-              completedStatus: isCompleted,
-              fields: section.fields
-            });
-          }
-          
-          // Two conditions for completion:
-          // 1. Officially marked as completed in completedSections
-          // 2. All fields in the section are filled (remaining count is 0)
+          // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
-          const allFieldsFilled = fieldsCount > 0 && remainingCount === 0;
           
-          // Mark as completed if explicitly set OR all fields are filled
+          // Two ways to determine completion:
+          // 1. Either explicitly marked as completed in the completedSections prop
+          // 2. Or all fields are filled (remainingCount === 0)
+          const allFieldsFilled = fieldsCount > 0 && remainingCount <= 0;
           const isActuallyCompleted = isCompleted || allFieldsFilled;
           
           // Other states for progress indication
@@ -157,13 +140,13 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // Two conditions for completion:
-          // 1. Officially marked as completed in completedSections
-          // 2. All fields in the section are filled (remaining count is 0)
+          // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
-          const allFieldsFilled = fieldsCount > 0 && remainingCount === 0;
           
-          // Mark as completed if explicitly set OR all fields are filled
+          // Two ways to determine completion:
+          // 1. Either explicitly marked as completed in the completedSections prop
+          // 2. Or all fields are filled (remainingCount === 0)
+          const allFieldsFilled = fieldsCount > 0 && remainingCount <= 0;
           const isActuallyCompleted = isCompleted || allFieldsFilled;
           
           // Other states for progress indication
