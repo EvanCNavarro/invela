@@ -46,21 +46,19 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
           // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
           
-          // Critical change: When remaining count is 0 and there are fields to fill, force completed state
-          const isForceCompleted = remainingCount === 0 && fieldsCount > 0;
+          // NEW: Directly check if all fields are filled for this section
+          const allFieldsFilled = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
           
-          // Mark as completed if explicitly set OR there are no remaining fields
-          const isActuallyCompleted = isCompleted || isForceCompleted;
+          // NEW: Explicitly override isCompleted with allFieldsFilled
+          // This ensures that a section with all fields filled shows as completed
+          // regardless of the completedSections prop
+          const finalIsCompleted = isCompleted || allFieldsFilled;
           
-          // Other states for progress indication
-          const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
-          const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
-          
-          // Status text based on completion state with the critical change
+          // Generate status text based on completion
           let statusText = '';
-          if (isActuallyCompleted) {
+          if (finalIsCompleted) {
             statusText = 'Completed';
-          } else if (isInProgress) {
+          } else if (filledFieldsCount > 0) {
             statusText = `In Progress (${remainingCount} remaining)`;
           } else {
             statusText = `Not Started (${fieldsCount} remaining)`;
@@ -74,7 +72,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 "relative flex-1 px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
                 // Active tabs should have white background, inactive tabs should have light gray
                 isActive ? "border-primary bg-white" : "border-transparent bg-slate-50",
-                isActuallyCompleted && !isActive ? "border-emerald-500" : "",
+                finalIsCompleted && !isActive ? "border-emerald-500" : "",
                 // First item in row with rounded left
                 index === 0 ? "rounded-tl-md" : ""
               )}
@@ -85,7 +83,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "font-medium text-sm",
                     isActive ? "text-primary" : "text-gray-700",
-                    isActuallyCompleted && !isActive ? "text-emerald-600" : ""
+                    finalIsCompleted && !isActive ? "text-emerald-600" : ""
                   )}
                 >
                   {sectionNumber}. {section.title}
@@ -96,14 +94,14 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
               <div className="flex items-center mt-2">
                 {/* Status icon using custom component */}
                 <span className="mr-2">
-                  <StatusIcon isCompleted={isActuallyCompleted} isActive={isActive} size={14} />
+                  <StatusIcon isCompleted={finalIsCompleted} isActive={isActive} size={14} />
                 </span>
                 
                 {/* Status text */}
                 <span 
                   className={cn(
                     "text-xs",
-                    isActuallyCompleted ? "text-emerald-500" : 
+                    finalIsCompleted ? "text-emerald-500" : 
                     isActive ? "text-primary" : "text-gray-400"
                   )}
                 >
@@ -143,21 +141,19 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
           // Calculate remaining fields count
           const remainingCount = fieldsCount - filledFieldsCount;
           
-          // Critical change: When remaining count is 0 and there are fields to fill, force completed state
-          const isForceCompleted = remainingCount === 0 && fieldsCount > 0;
+          // NEW: Directly check if all fields are filled for this section
+          const allFieldsFilled = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
           
-          // Mark as completed if explicitly set OR there are no remaining fields
-          const isActuallyCompleted = isCompleted || isForceCompleted;
+          // NEW: Explicitly override isCompleted with allFieldsFilled
+          // This ensures that a section with all fields filled shows as completed
+          // regardless of the completedSections prop
+          const finalIsCompleted = isCompleted || allFieldsFilled;
           
-          // Other states for progress indication
-          const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
-          const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
-          
-          // Status text based on completion state with the critical change
+          // Generate status text based on completion
           let statusText = '';
-          if (isActuallyCompleted) {
+          if (finalIsCompleted) {
             statusText = 'Completed';
-          } else if (isInProgress) {
+          } else if (filledFieldsCount > 0) {
             statusText = `In Progress (${remainingCount} remaining)`;
           } else {
             statusText = `Not Started (${fieldsCount} remaining)`;
@@ -172,7 +168,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                 "min-w-[180px]",
                 // Active tabs should have white background, inactive tabs should have light gray
                 isActive ? "border-primary bg-white" : "border-transparent bg-slate-50",
-                isActuallyCompleted && !isActive ? "border-emerald-500" : "",
+                finalIsCompleted && !isActive ? "border-emerald-500" : "",
                 index === 0 ? "rounded-tl-md" : ""
               )}
             >
@@ -182,7 +178,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "font-medium text-sm",
                     isActive ? "text-primary" : "text-gray-700",
-                    isActuallyCompleted && !isActive ? "text-emerald-600" : ""
+                    finalIsCompleted && !isActive ? "text-emerald-600" : ""
                   )}
                 >
                   {sectionNumber}. {section.title}
@@ -193,14 +189,14 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
               <div className="flex items-center mt-2">
                 {/* Status icon using custom component */}
                 <span className="mr-2">
-                  <StatusIcon isCompleted={isActuallyCompleted} isActive={isActive} size={14} />
+                  <StatusIcon isCompleted={finalIsCompleted} isActive={isActive} size={14} />
                 </span>
                 
                 {/* Status text */}
                 <span 
                   className={cn(
                     "text-xs",
-                    isActuallyCompleted ? "text-emerald-500" : 
+                    finalIsCompleted ? "text-emerald-500" : 
                     isActive ? "text-primary" : "text-gray-400"
                   )}
                 >
