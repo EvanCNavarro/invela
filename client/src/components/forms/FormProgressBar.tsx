@@ -96,7 +96,7 @@ const FormProgressBar: React.FC<FormProgressBarProps> = ({
             }}
           >
             <span className="text-xs text-gray-500 whitespace-nowrap">
-              {displayProgress}% Complete
+              {displayProgress === 100 ? "Ready for Submission" : `${displayProgress}% Complete`}
             </span>
           </div>
         </div>
