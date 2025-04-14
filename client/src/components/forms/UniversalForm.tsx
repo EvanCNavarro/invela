@@ -669,10 +669,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               });
                             }
                           }}
-                          className={cn(
-                            "flex items-center gap-1",
-                            overallProgress === 100 && "animate-pulse-ring"
-                          )}
+                          className="flex items-center gap-1"
                           disabled={overallProgress < 100}
                         >
                           Final Review
