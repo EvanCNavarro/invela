@@ -18,7 +18,7 @@ export function PageTemplate({
   return (
     <div className="flex-1 flex overflow-x-hidden">
       <div className={cn(
-        "flex-1 min-w-0 transition-all duration-300 bg-[#F1F5FB]",
+        "flex-1 min-w-0 transition-all duration-300",
         drawerOpen ? "mr-[25.75rem]" : "",
       )}>
         {showBreadcrumbs && <BreadcrumbNav />}
