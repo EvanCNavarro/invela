@@ -32,10 +32,16 @@ const FormProgressBar: React.FC<FormProgressBarProps> = ({
   // Round to nearest integer for display
   const displayProgress = Math.round(validProgress);
   
-  // Use gradient color for the progress bar, from blue to green
+  // Use appropriate color for the progress bar based on completion
   const getProgressColor = (value: number) => {
-    // Always use the gradient from blue to green for a smooth transition
-    return 'bg-gradient-to-r from-blue-500 to-green-500';
+    // For 100% complete, use solid green
+    if (value >= 100) {
+      return 'bg-green-500';
+    }
+    
+    // For values below 100%, use a gradient that reveals more of the green as progress increases
+    // This creates the effect of 'unveiling' the green color as progress increases
+    return 'bg-gradient-to-r from-blue-500 via-blue-400 to-green-500';
   };
   
   // Get the height class based on barHeight prop

@@ -1,18 +1,46 @@
-import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import React, { useState, useCallback } from 'react';
+import { useFormContext, UseFormReturn } from 'react-hook-form';
+import { cn } from '@/lib/utils';
+import { CheckCircle2, AlertCircle, Info as InfoIcon } from 'lucide-react';
+import { 
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { FormField as FormFieldType } from '../../../services/formService';
-import { TaskTemplateWithConfigs } from '../../../services/taskTemplateService';
-import { getFieldComponentType } from '../../../utils/formUtils';
 import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { InfoIcon, CheckCircle2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { FormField as FormFieldType } from '@/services/formService';
+import { TaskTemplateWithConfigs } from '@/services/taskTemplateService';
 
+// Helper function to determine component type
+function getFieldComponentType(field: FormFieldType, defaultType = 'single-line'): string {
+  // If field has explicit component type, use that
+  if (field.type) return field.type;
+  
+  // Otherwise infer from field properties
+  if (field.options) return 'dropdown';
+  return defaultType;
+}
+
+// Props for the FieldRenderer component
 interface FieldRendererProps {
   field: FormFieldType;
   template: TaskTemplateWithConfigs;
@@ -26,9 +54,10 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   form,
   onFieldChange
 }) => {
-  // Check if we should use diagnostic rendering mode:
-  // 1. When form is undefined or form.control is undefined (invalid form)
-  // 2. When in a diagnostic context (window.location.pathname includes 'diagnostic')
+  // State for tracking field focus
+  const [isFocused, setIsFocused] = useState(false);
+  
+  // Check if we should use diagnostic rendering mode
   const isDiagnosticMode = !form || !form.control || 
     (typeof window !== 'undefined' && window.location.pathname.includes('diagnostic'));
     
@@ -55,7 +84,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
       </div>
     );
   }
-  // Extract field configuration from template, with safeguards for missing properties
+  
+  // Extract field configuration from template
   const configurations = template?.configurations || [];
   
   // Default empty objects in case configurations are missing
@@ -87,214 +117,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   // Get tooltip position from configuration
   const tooltipPosition = mergedConfig.tooltipPosition || 'right';
   
-  // Determine if field should show AI suggestions and risk analysis
-  const enableAiSuggestions = mergedConfig.enableAiSuggestions === true;
-  const enableRiskAnalysis = mergedConfig.enableRiskAnalysis === true;
-  
-  // Function to normalize field values to prevent controlled/uncontrolled input warnings
-  const getNormalizedValue = (value: any, type: string): any => {
-    // Ensure value is never undefined - always provide appropriate defaults by type
-    if (value === undefined || value === null) {
-      switch (type) {
-        case 'checkbox':
-          return false;
-        case 'dropdown':
-        case 'multi-line':
-        case 'single-line':
-        default:
-          return ''; // Always return empty string, never undefined or null
-      }
-    }
-    
-    // Convert values to appropriate types for each field
-    switch (type) {
-      case 'checkbox':
-        return Boolean(value); // Ensure boolean for checkboxes
-      case 'dropdown':
-        return String(value); // Ensure string for dropdowns
-      case 'multi-line':
-      case 'single-line':
-      default:
-        return String(value); // Ensure string for text inputs
-    }
-  };
-
-  // Function to render the appropriate input component based on type
-  const renderInputComponent = (fieldProps: any) => {
-    // Always normalize the field value to ensure consistent types
-    const normalizedValue = getNormalizedValue(fieldProps.value, componentType);
-    
-    // Create a modified fieldProps with normalized value
-    const modifiedFieldProps = {
-      ...fieldProps,
-      value: normalizedValue,
-      onChange: fieldProps.onChange  // Keep the original onChange handler
-    };
-    
-    // Check validation status for styling
-    const { formState } = form || { formState: { errors: {} } };
-    const hasError = form && formState.errors[field.key];
-    const isFilled = normalizedValue !== undefined && normalizedValue !== null && normalizedValue !== '';
-    
-    // Check if field is focused - needs to use DOM APIs
-    const isActive = (() => {
-      if (typeof document === 'undefined') return false;
-      const activeElement = document.activeElement;
-      
-      // Check if element is focused
-      if (activeElement && activeElement.id === modifiedFieldProps.name) return true;
-      
-      // When rendered in shadow DOM or within complex components, 
-      // the id might not match directly, so check if a field with this name has focus
-      const focusedField = document.querySelector(`[name="${modifiedFieldProps.name}"]:focus`);
-      return !!focusedField;
-    })();
-    
-    // Determine validation state 
-    let validationState: 'default' | 'active' | 'success' | 'error' = 'default';
-    if (hasError) validationState = 'error';
-    else if (isFilled) validationState = 'success';
-    else if (isActive) validationState = 'active';
-    
-    // Define validation style classes
-    const borderClasses = {
-      default: 'border-input',
-      active: 'border-blue-500 ring-2 ring-blue-200',
-      success: 'border-green-500',
-      error: 'border-red-500'
-    };
-    
-    // Create a wrapper with validation icon
-    const wrapWithValidation = (component: React.ReactNode) => {
-      return (
-        <div className="relative">
-          {component}
-          
-          {/* Success validation icon */}
-          {validationState === 'success' && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 pointer-events-none">
-              <CheckCircle2 size={16} />
-            </div>
-          )}
-          
-          {/* Error validation icon */}
-          {validationState === 'error' && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
-              <AlertCircle size={16} />
-            </div>
-          )}
-        </div>
-      );
-    };
-    
-    switch (componentType) {
-      case 'multi-line':
-        return wrapWithValidation(
-          <Textarea
-            {...modifiedFieldProps}
-            value={normalizedValue}
-            placeholder={field.placeholder || ''}
-            className={cn(
-              "min-h-[120px] bg-white pr-8",
-              borderClasses[validationState]
-            )}
-            onChange={(e) => {
-              fieldProps.onChange(e);
-              onFieldChange?.(e.target.value);
-            }}
-          />
-        );
-        
-      case 'dropdown':
-        return (
-          <Select
-            value={String(normalizedValue)}
-            onValueChange={(value) => {
-              fieldProps.onChange(value);
-              onFieldChange?.(value);
-            }}
-          >
-            <SelectTrigger className={cn(borderClasses[validationState])}>
-              <SelectValue placeholder={field.placeholder || 'Select an option'} />
-              {validationState === 'success' && (
-                <div className="ml-auto mr-1 text-green-500">
-                  <CheckCircle2 size={16} />
-                </div>
-              )}
-              {validationState === 'error' && (
-                <div className="ml-auto mr-1 text-red-500">
-                  <AlertCircle size={16} />
-                </div>
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {Array.isArray(field.options) && field.options.map((option, index) => {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
-                
-                return (
-                  <SelectItem key={index} value={String(value)}>
-                    {label}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        );
-        
-      case 'checkbox':
-        return (
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={Boolean(normalizedValue)}
-              className={cn({
-                'ring-2 ring-red-200': validationState === 'error',
-                'ring-2 ring-green-200': validationState === 'success'
-              })}
-              onCheckedChange={(checked) => {
-                fieldProps.onChange(checked);
-                onFieldChange?.(checked);
-              }}
-            />
-            {validationState === 'success' && (
-              <span className="text-green-500">
-                <CheckCircle2 size={16} />
-              </span>
-            )}
-            {validationState === 'error' && (
-              <span className="text-red-500">
-                <AlertCircle size={16} />
-              </span>
-            )}
-          </div>
-        );
-        
-      case 'single-line':
-      default:
-        return wrapWithValidation(
-          <Input
-            {...modifiedFieldProps}
-            value={normalizedValue}
-            placeholder={field.placeholder || ''}
-            className={cn(
-              "bg-white pr-8",
-              borderClasses[validationState]
-            )}
-            onChange={(e) => {
-              fieldProps.onChange(e);
-              onFieldChange?.(e.target.value);
-            }}
-          />
-        );
-    }
-  };
-  
-  // Field with tooltip and risk analysis if applicable
-  // Check if we can use form control 
-  const hasValidFormControl = form && form.control;
-  
   // If we don't have a valid form control, render a simplified version
-  if (!hasValidFormControl) {
+  if (!form.control) {
     // Determine validation state (simplified version)
     const fieldValue = (field as any).value;
     const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
@@ -336,18 +160,41 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
             </div>
           )}
           
-          {renderInputComponent({
-            name: field.key,
-            value: (field as any).value || '',
-            onChange: (e: any) => {
-              const value = e?.target?.value !== undefined ? e.target.value : e;
-              onFieldChange?.(value);
-            }
-          })}
+          <div className="bg-gray-100 p-3 rounded">
+            {fieldValue || 'No value'}
+          </div>
         </div>
       </div>
     );
   }
+  
+  // Function to normalize field values to prevent controlled/uncontrolled input warnings
+  const getNormalizedValue = useCallback((value: any, type: string): any => {
+    // Ensure value is never undefined - always provide appropriate defaults by type
+    if (value === undefined || value === null) {
+      switch (type) {
+        case 'checkbox':
+          return false;
+        case 'dropdown':
+        case 'multi-line':
+        case 'single-line':
+        default:
+          return ''; // Always return empty string, never undefined or null
+      }
+    }
+    
+    // Convert values to appropriate types for each field
+    switch (type) {
+      case 'checkbox':
+        return Boolean(value); // Ensure boolean for checkboxes
+      case 'dropdown':
+        return String(value); // Ensure string for dropdowns
+      case 'multi-line':
+      case 'single-line':
+      default:
+        return String(value); // Ensure string for text inputs
+    }
+  }, []);
   
   // Standard rendering with form control
   return (
@@ -361,19 +208,8 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         const fieldValue = form.getValues(field.key);
         const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
         
-        // Check if field is focused - needs to use DOM APIs
-        const isActive = (() => {
-          if (typeof document === 'undefined') return false;
-          const activeElement = document.activeElement;
-          
-          // Check if element is focused
-          if (activeElement && activeElement.id === fieldProps.name) return true;
-          
-          // When rendered in shadow DOM or within complex components, 
-          // the id might not match directly, so check if a field with this name has focus
-          const focusedField = document.querySelector(`[name="${fieldProps.name}"]:focus`);
-          return !!focusedField;
-        })();
+        // Combine our focused state with active field
+        const isActive = isFocused;
         
         // Determine validation state
         let validationState: 'default' | 'active' | 'success' | 'error' = 'default';
@@ -381,12 +217,166 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         else if (isFilled) validationState = 'success';
         else if (isActive) validationState = 'active';
         
+        // Define styles based on validation state
+        const borderClasses = {
+          default: 'border-input',
+          active: 'border-blue-500 ring-2 ring-blue-200',
+          success: 'border-green-500',
+          error: 'border-red-500'
+        };
+        
         // Define bar color based on validation state
         const barColorClasses = {
           default: 'bg-gray-300',
           active: 'bg-blue-500',
           success: 'bg-green-500',
           error: 'bg-red-500'
+        };
+        
+        // Create event handlers for field focus and blur
+        const handleFocus = () => {
+          setIsFocused(true);
+        };
+        
+        const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+          setIsFocused(false);
+          fieldProps.onBlur(e);
+        };
+        
+        // Create enhanced field props with focus tracking
+        const enhancedFieldProps = {
+          ...fieldProps,
+          onFocus: handleFocus,
+          onBlur: handleBlur
+        };
+        
+        // Create a wrapper with validation icon
+        const wrapWithValidation = (component: React.ReactNode) => {
+          return (
+            <div className="relative">
+              {component}
+              
+              {/* Success validation icon */}
+              {validationState === 'success' && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-green-500 pointer-events-none">
+                  <CheckCircle2 size={16} />
+                </div>
+              )}
+              
+              {/* Error validation icon */}
+              {validationState === 'error' && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 pointer-events-none">
+                  <AlertCircle size={16} />
+                </div>
+              )}
+            </div>
+          );
+        };
+        
+        // Render the appropriate input component based on type
+        const renderInputComponent = () => {
+          const normalizedValue = getNormalizedValue(fieldProps.value, componentType);
+          
+          switch (componentType) {
+            case 'multi-line':
+              return wrapWithValidation(
+                <Textarea
+                  {...enhancedFieldProps}
+                  value={normalizedValue}
+                  placeholder={field.placeholder || ''}
+                  className={cn(
+                    "min-h-[120px] bg-white pr-8",
+                    borderClasses[validationState]
+                  )}
+                  onChange={(e) => {
+                    fieldProps.onChange(e);
+                    onFieldChange?.(e.target.value);
+                  }}
+                />
+              );
+              
+            case 'dropdown':
+              return (
+                <Select
+                  value={String(normalizedValue)}
+                  onValueChange={(value) => {
+                    fieldProps.onChange(value);
+                    onFieldChange?.(value);
+                  }}
+                >
+                  <SelectTrigger className={cn(borderClasses[validationState])}>
+                    <SelectValue placeholder={field.placeholder || 'Select an option'} />
+                    {validationState === 'success' && (
+                      <div className="ml-auto mr-1 text-green-500">
+                        <CheckCircle2 size={16} />
+                      </div>
+                    )}
+                    {validationState === 'error' && (
+                      <div className="ml-auto mr-1 text-red-500">
+                        <AlertCircle size={16} />
+                      </div>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.isArray(field.options) && field.options.map((option, index) => {
+                      const value = typeof option === 'object' ? option.value : option;
+                      const label = typeof option === 'object' ? option.label : option;
+                      
+                      return (
+                        <SelectItem key={index} value={String(value)}>
+                          {label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              );
+              
+            case 'checkbox':
+              return (
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={Boolean(normalizedValue)}
+                    className={cn({
+                      'ring-2 ring-red-200': validationState === 'error',
+                      'ring-2 ring-green-200': validationState === 'success'
+                    })}
+                    onCheckedChange={(checked) => {
+                      fieldProps.onChange(checked);
+                      onFieldChange?.(checked);
+                    }}
+                  />
+                  {validationState === 'success' && (
+                    <span className="text-green-500">
+                      <CheckCircle2 size={16} />
+                    </span>
+                  )}
+                  {validationState === 'error' && (
+                    <span className="text-red-500">
+                      <AlertCircle size={16} />
+                    </span>
+                  )}
+                </div>
+              );
+              
+            case 'single-line':
+            default:
+              return wrapWithValidation(
+                <Input
+                  {...enhancedFieldProps}
+                  value={normalizedValue}
+                  placeholder={field.placeholder || ''}
+                  className={cn(
+                    "bg-white pr-8",
+                    borderClasses[validationState]
+                  )}
+                  onChange={(e) => {
+                    fieldProps.onChange(e);
+                    onFieldChange?.(e.target.value);
+                  }}
+                />
+              );
+          }
         };
         
         return (
@@ -428,7 +418,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                 )}
                 
                 <FormControl>
-                  {renderInputComponent(fieldProps)}
+                  {renderInputComponent()}
                 </FormControl>
                 
                 <FormMessage />
@@ -440,3 +430,5 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     />
   );
 };
+
+export default FieldRenderer;
