@@ -419,7 +419,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
                 {/* Question - displayed below label and above field, black and bold */}
                 {field.question && (
                   <div className="mb-2 font-semibold text-black">
-                    {field.question}
+                    {field.questionNumber ? `${field.questionNumber}. ${field.question}` : field.question}
                   </div>
                 )}
                 
