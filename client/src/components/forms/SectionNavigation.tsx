@@ -91,8 +91,8 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
               onClick={() => onSectionChange(index)}
               className={cn(
                 "relative flex-1 px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
-                // Active tabs have soft light blue background, inactive tabs have light gray
-                isActive ? "border-primary bg-blue-50" : "border-transparent bg-slate-50",
+                // Active tabs have subtle background, inactive tabs have white background
+                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white hover:bg-gray-50",
                 isCompleted && !isActive ? "border-emerald-500" : "",
                 // First item in row with rounded left
                 index === 0 ? "rounded-tl-md" : ""
@@ -183,8 +183,8 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
               className={cn(
                 "inline-block px-4 py-3 cursor-pointer transition-all duration-200 border-b-2",
                 "min-w-[180px]",
-                // Active tabs have soft light blue background, inactive tabs have light gray
-                isActive ? "border-primary bg-blue-50" : "border-transparent bg-slate-50",
+                // Active tabs have subtle background, inactive tabs have white background
+                isActive ? "border-primary bg-blue-50" : "border-transparent bg-white hover:bg-gray-50",
                 isCompleted && !isActive ? "border-emerald-500" : "",
                 index === 0 ? "rounded-tl-md" : ""
               )}
