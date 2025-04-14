@@ -17,6 +17,7 @@ const DEFAULT_TEMPLATE: TaskTemplateWithConfigs = {
   name: 'Default Template',
   description: 'Automatically generated default template',
   task_type: '',
+  component_type: 'default', // Added missing component_type
   status: 'active',
   configurations: [],
   created_at: new Date(),

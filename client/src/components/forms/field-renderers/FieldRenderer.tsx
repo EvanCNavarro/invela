@@ -33,14 +33,17 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     
   // Use a safe display mode for diagnostic/testing that avoids hooks and form registration
   if (isDiagnosticMode) {
+    // In diagnostic mode, safely access field value using type assertion
+    const fieldValue = (field as any).value;
+    
     return (
       <div className="field-display-only mb-4 border-b pb-3">
         <div className="mb-1 font-semibold text-gray-700">{field.label || field.key}</div>
         {field.question && <div className="text-base mb-2">{field.question}</div>}
         {field.helpText && <div className="text-sm text-gray-500 mb-1">{field.helpText}</div>}
         <div className="border p-2 rounded bg-gray-50 mt-1">
-          {field.value ? (
-            <span>{field.value}</span>
+          {fieldValue ? (
+            <span>{fieldValue}</span>
           ) : (
             <span className="text-gray-400 italic">Empty field</span>
           )}
@@ -239,7 +242,7 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         
         {renderInputComponent({
           name: field.key,
-          value: field.value || '',
+          value: (field as any).value || '',
           onChange: (e: any) => {
             const value = e?.target?.value !== undefined ? e.target.value : e;
             onFieldChange?.(value);
