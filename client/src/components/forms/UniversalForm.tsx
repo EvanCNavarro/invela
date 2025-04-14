@@ -252,6 +252,31 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     initializeForm();
   }, [formService]);
   
+  // Auto-navigate to first incomplete field or last section when form is ready
+  useEffect(() => {
+    // Only run this effect once initial data is loaded and form is ready
+    if (sections.length > 0 && !loading && fields.length > 0 && dataHasLoaded) {
+      logger.info('Auto-navigating form based on field completion status');
+      
+      // If form is 100% complete, navigate to the last section
+      if (overallProgress === 100) {
+        logger.info('Form is complete, navigating to last section');
+        setActiveSection(sections.length - 1);
+        return;
+      }
+      
+      // Find the first section with incomplete fields
+      const firstIncompleteSectionIndex = sectionStatuses.findIndex(
+        status => !status.isCompleted
+      );
+      
+      if (firstIncompleteSectionIndex !== -1) {
+        logger.info(`Found incomplete section at index ${firstIncompleteSectionIndex}, navigating there`);
+        setActiveSection(firstIncompleteSectionIndex);
+      }
+    }
+  }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection]);
+  
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
     logger.debug(`Field change: ${name} = ${value}`);
