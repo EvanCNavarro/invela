@@ -30,6 +30,7 @@ interface SectionContentProps {
   fields: FormField[];
   template?: TaskTemplateWithConfigs;
   onFieldChange: (name: string, value: any) => void;
+  startingQuestionNumber?: number; // Add starting question number prop
 }
 
 /**
@@ -39,7 +40,8 @@ const SectionContent: React.FC<SectionContentProps> = ({
   section,
   fields,
   template,
-  onFieldChange
+  onFieldChange,
+  startingQuestionNumber = 1
 }) => {
   // Try to get the form context from React Hook Form
   // If we're inside a FormProvider, this will give us the form methods
@@ -107,7 +109,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
             <FieldRenderer 
               field={{
                 ...field,
-                questionNumber: index + 1 // Add question numbering from 1 to total count
+                questionNumber: startingQuestionNumber + index // Use the starting number plus index for sequential numbering
               }}
               template={safeTemplate}
               form={formContext || {
