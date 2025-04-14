@@ -549,23 +549,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4">
                             <Checkbox
                               checked={form.getValues("agreement_confirmation")}
                               onCheckedChange={(checked) => {
                                 form.setValue("agreement_confirmation", checked);
                               }}
                               id="agreement_confirmation"
+                              className="mt-1"
                             />
                             <div className="space-y-1 leading-none">
                               <label 
                                 htmlFor="agreement_confirmation" 
-                                className="font-medium cursor-pointer"
+                                className="font-semibold cursor-pointer text-gray-800"
                               >
-                                I confirm all information is accurate and complete
+                                Declaration of Accuracy
                               </label>
-                              <p className="text-sm text-muted-foreground">
-                                By checking this box, you confirm that you have reviewed all information and it is accurate to the best of your knowledge.
+                              <p className="text-sm text-gray-600">
+                                I, as an authorized representative for this company, confirm that all information provided is accurate, complete, and truthful to the best of my knowledge. I understand that providing false information may result in rejection of our application or termination of services.
                               </p>
                             </div>
                           </div>
@@ -574,9 +575,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             type="button"
                             onClick={form.handleSubmit(handleSubmit)}
                             disabled={!form.getValues('agreement_confirmation')}
-                            className="w-full"
+                            className="w-full font-medium text-base py-6"
                           >
-                            Submit Form
+                            Submit KYB Form
                           </Button>
                         </div>
                       </div>
@@ -669,8 +670,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-1",
-                            overallProgress === 100 && "animate-pulse-ring"
+                            "flex items-center gap-1 relative",
+                            overallProgress === 100 && "after:absolute after:inset-0 after:rounded-md after:animate-pulse-ring after:border-2 after:border-primary"
                           )}
                           disabled={overallProgress < 100}
                         >
