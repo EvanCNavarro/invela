@@ -87,7 +87,7 @@ const SectionContent: React.FC<SectionContentProps> = ({
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Section header */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-gray-900 mb-1">
@@ -100,22 +100,23 @@ const SectionContent: React.FC<SectionContentProps> = ({
         )}
       </div>
       
-      {/* Fields list */}
-      <div className="space-y-6">
+      {/* Fields list - fully responsive container */}
+      <div className="space-y-8 w-full">
         {sortedFields.map((field) => (
-          <FieldRenderer 
-            key={field.key}
-            field={field}
-            template={safeTemplate}
-            form={formContext || {
-              // Provide a safe fallback for diagnostic mode
-              control: null,
-              formState: { errors: {} },
-              getValues: () => ({}),
-              setValue: () => ({})
-            }}
-            onFieldChange={(value) => onFieldChange(field.key, value)}
-          />
+          <div key={field.key} className="w-full transition-all duration-300">
+            <FieldRenderer 
+              field={field}
+              template={safeTemplate}
+              form={formContext || {
+                // Provide a safe fallback for diagnostic mode
+                control: null,
+                formState: { errors: {} },
+                getValues: () => ({}),
+                setValue: () => ({})
+              }}
+              onFieldChange={(value) => onFieldChange(field.key, value)}
+            />
+          </div>
         ))}
         
         {/* Empty state if no fields */}

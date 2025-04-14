@@ -135,7 +135,20 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     const { formState } = form || { formState: { errors: {} } };
     const hasError = form && formState.errors[field.key];
     const isFilled = normalizedValue !== undefined && normalizedValue !== null && normalizedValue !== '';
-    const isActive = modifiedFieldProps.name === document.activeElement?.id;
+    
+    // Check if field is focused - needs to use DOM APIs
+    const isActive = (() => {
+      if (typeof document === 'undefined') return false;
+      const activeElement = document.activeElement;
+      
+      // Check if element is focused
+      if (activeElement && activeElement.id === modifiedFieldProps.name) return true;
+      
+      // When rendered in shadow DOM or within complex components, 
+      // the id might not match directly, so check if a field with this name has focus
+      const focusedField = document.querySelector(`[name="${modifiedFieldProps.name}"]:focus`);
+      return !!focusedField;
+    })();
     
     // Determine validation state 
     let validationState: 'default' | 'active' | 'success' | 'error' = 'default';
@@ -347,7 +360,20 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
         const hasError = !!formState.errors[field.key];
         const fieldValue = form.getValues(field.key);
         const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
-        const isActive = fieldProps.name === document.activeElement?.id;
+        
+        // Check if field is focused - needs to use DOM APIs
+        const isActive = (() => {
+          if (typeof document === 'undefined') return false;
+          const activeElement = document.activeElement;
+          
+          // Check if element is focused
+          if (activeElement && activeElement.id === fieldProps.name) return true;
+          
+          // When rendered in shadow DOM or within complex components, 
+          // the id might not match directly, so check if a field with this name has focus
+          const focusedField = document.querySelector(`[name="${fieldProps.name}"]:focus`);
+          return !!focusedField;
+        })();
         
         // Determine validation state
         let validationState: 'default' | 'active' | 'success' | 'error' = 'default';

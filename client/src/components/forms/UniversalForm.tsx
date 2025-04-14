@@ -386,7 +386,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Render main form
   return (
-    <div className="w-full max-w-4xl mx-auto">      
+    <div className="w-full max-w-full md:max-w-4xl mx-auto">      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
           {/* Progress bar showing overall completion - moved to gray area above tabs */}
