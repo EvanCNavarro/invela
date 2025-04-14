@@ -104,7 +104,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(220,33%,97%)] relative">
+    <div className="min-h-screen bg-[#FAFCFD] relative">
       <aside
         className={cn(
           "fixed top-0 left-0 z-40 h-screen transition-all duration-300 ease-in-out",
