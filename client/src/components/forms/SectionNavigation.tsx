@@ -27,6 +27,7 @@ export interface SectionStatusInfo {
   filledFields: number;
   remainingFields: number;
   progress: number; // 0-100
+  reviewStatus?: 'locked' | 'unlocked' | 'submitted'; // For the review section
 }
 
 // Props for the SectionNavigation component
@@ -52,6 +53,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
         {sections.map((section, index) => {
           const isActive = index === activeSection;
           const sectionNumber = index + 1;
+          const isReviewSection = section.title === 'Review & Submit';
           
           // Find status for this section
           const status = sectionStatuses.find(s => s.id === section.id) || {
@@ -67,14 +69,31 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
           // The section is completed if its status is 'completed'
           const isCompleted = status.status === 'completed';
           
-          // Generate status text based on status
+          // Generate status text based on status and whether it's the review section
           let statusText = '';
-          if (status.status === 'completed') {
-            statusText = 'Completed';
-          } else if (status.status === 'in-progress') {
-            statusText = `In Progress (${status.remainingFields} remaining)`;
+          let reviewStatus: 'locked' | 'unlocked' | 'submitted' = 'locked';
+          
+          if (isReviewSection) {
+            // For Review & Submit section
+            if (status.status === 'completed') {
+              statusText = 'Submitted';
+              reviewStatus = 'submitted';
+            } else if (status.progress === 100) {
+              statusText = 'Unlocked';
+              reviewStatus = 'unlocked';
+            } else {
+              statusText = 'Locked';
+              reviewStatus = 'locked';
+            }
           } else {
-            statusText = `Not Started (${status.totalFields} remaining)`;
+            // For regular sections
+            if (status.status === 'completed') {
+              statusText = 'Completed';
+            } else if (status.status === 'in-progress') {
+              statusText = `In Progress (${status.remainingFields} remaining)`;
+            } else {
+              statusText = `Not Started (${status.totalFields} remaining)`;
+            }
           }
           
           // Log section status for debugging
@@ -82,7 +101,9 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             isActive, 
             isCompleted, 
             status: status.status,
-            remaining: status.remainingFields
+            remaining: status.remainingFields,
+            isReviewSection,
+            reviewStatus
           });
           
           return (
@@ -115,14 +136,28 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
               <div className="flex items-center mt-2">
                 {/* Status icon using custom component */}
                 <span className="mr-2">
-                  <StatusIcon isCompleted={isCompleted} isActive={isActive} size={14} />
+                  {isReviewSection ? (
+                    <StatusIcon 
+                      isCompleted={isCompleted} 
+                      isActive={isActive} 
+                      size={14} 
+                      variant="review" 
+                      reviewStatus={reviewStatus} 
+                    />
+                  ) : (
+                    <StatusIcon 
+                      isCompleted={isCompleted} 
+                      isActive={isActive} 
+                      size={14} 
+                    />
+                  )}
                 </span>
                 
                 {/* Status text */}
                 <span 
                   className={cn(
                     "text-xs",
-                    isCompleted ? "text-emerald-500" : 
+                    isCompleted || (isReviewSection && reviewStatus === 'submitted') ? "text-emerald-500" : 
                     isActive ? "text-primary" : "text-gray-400"
                   )}
                 >
