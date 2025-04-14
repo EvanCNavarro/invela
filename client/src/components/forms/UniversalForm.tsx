@@ -670,8 +670,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             }
                           }}
                           className={cn(
-                            "flex items-center gap-1 relative",
-                            overallProgress === 100 && "after:absolute after:inset-0 after:rounded-md after:animate-pulse-ring after:border-2 after:border-primary"
+                            "flex items-center gap-1",
+                            overallProgress === 100 && "animate-pulse-ring"
                           )}
                           disabled={overallProgress < 100}
                         >
