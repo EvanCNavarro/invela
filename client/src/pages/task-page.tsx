@@ -355,7 +355,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   if (taskContentType === 'kyb' && task) {
     return (
       <DashboardLayout>
-        <PageTemplate className="space-y-6">
+        <PageTemplate className="space-y-6 bg-[#F1F5FB]">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
             
@@ -462,7 +462,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   if (taskContentType === 'security' && task) {
     return (
       <DashboardLayout>
-        <PageTemplate className="space-y-6">
+        <PageTemplate className="space-y-6 bg-[#F1F5FB]">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
             
@@ -567,7 +567,7 @@ export default function TaskPage({ params }: TaskPageProps) {
   if (taskContentType === 'card' && task) {
     return (
       <DashboardLayout>
-        <PageTemplate className="space-y-6">
+        <PageTemplate className="space-y-6 bg-[#F1F5FB]">
           <div className="space-y-4">
             <BreadcrumbNav forceFallback={true} />
             

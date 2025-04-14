@@ -59,19 +59,15 @@ const SectionRendererBase = ({
   }, [section.fields, section.id, section.title]);
   
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>{sectionConfig.sectionTitle || section.title}</CardTitle>
-            {section.description && (
-              <CardDescription>{sectionConfig.sectionDescription || section.description}</CardDescription>
-            )}
-          </div>
-        </div>
-      </CardHeader>
+    <div className="w-full">
+      <div className="mb-5">
+        <h3 className="text-lg font-semibold">{sectionConfig.sectionTitle || section.title}</h3>
+        {section.description && (
+          <p className="text-sm text-gray-500">{sectionConfig.sectionDescription || section.description}</p>
+        )}
+      </div>
       
-      <CardContent>
+      <div className="space-y-6">
         {sortedFields.map(field => {
           // Create memoized callback for each field
           const handleFieldChange = useCallback((val: any) => {
@@ -89,8 +85,8 @@ const SectionRendererBase = ({
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 
