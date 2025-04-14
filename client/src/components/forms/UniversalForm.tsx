@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { InvelaLoadingSpinner } from '@/components/ui/invela-loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
 import { FormServiceInterface, FormField, FormData, FormSection as ServiceFormSection } from '@/services/formService';
 import { TaskTemplateService, TaskTemplateWithConfigs } from '@/services/taskTemplateService';
@@ -340,8 +340,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           <CardDescription>{formDescription}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center py-10">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-4" />
-          <p className="text-sm text-muted-foreground">Loading form...</p>
+          <InvelaLoadingSpinner size="lg" text="Loading form..." />
         </CardContent>
       </Card>
     );
@@ -407,8 +406,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             {/* Data loading indicator */}
             {isDataLoading && (
               <div className="flex items-center justify-center py-4">
-                <Loader2 className="w-5 h-5 text-primary animate-spin mr-2" />
-                <span className="text-sm text-muted-foreground">Loading saved data...</span>
+                <InvelaLoadingSpinner size="sm" text="Loading saved data..." />
               </div>
             )}
             
