@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Form } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
-import { InvelaLoadingSpinner } from '@/components/ui/invela-loading-spinner';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
 import { FormServiceInterface, FormField, FormData, FormSection as ServiceFormSection } from '@/services/formService';
 import { TaskTemplateService, TaskTemplateWithConfigs } from '@/services/taskTemplateService';
