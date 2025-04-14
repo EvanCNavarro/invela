@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { useFormContext } from 'react-hook-form';
 import getLogger from '@/utils/logger';
 import { FormField } from '@/services/formService';
 import { FormSection } from './SectionNavigation';
@@ -18,8 +19,8 @@ const DEFAULT_TEMPLATE: TaskTemplateWithConfigs = {
   task_type: '',
   status: 'active',
   configurations: [],
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString()
+  created_at: new Date(),
+  updated_at: new Date()
 };
 
 // Props for the SectionContent component
@@ -39,6 +40,10 @@ const SectionContent: React.FC<SectionContentProps> = ({
   template,
   onFieldChange
 }) => {
+  // Try to get the form context from React Hook Form
+  // If we're inside a FormProvider, this will give us the form methods
+  const formContext = useFormContext();
+  
   // Defensive checks to prevent runtime errors
   if (!section) {
     logger.error('Missing section data', { section });
@@ -73,6 +78,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
     return (a.order || 0) - (b.order || 0);
   });
   
+  // Use diagnostic mode if form context is not available
+  const isDiagnosticMode = !formContext;
+  
+  if (isDiagnosticMode) {
+    logger.warn(`Section "${section.title}" rendering in diagnostic mode due to missing form context`);
+  }
+  
   return (
     <div className="space-y-6">
       {/* Section header */}
@@ -94,12 +106,13 @@ const SectionContent: React.FC<SectionContentProps> = ({
             key={field.key}
             field={field}
             template={safeTemplate}
-            form={{
-              control: { register: () => ({}) } as any,
-              formState: { errors: {} } as any,
+            form={formContext || {
+              // Provide a safe fallback for diagnostic mode
+              control: null,
+              formState: { errors: {} },
               getValues: () => ({}),
               setValue: () => ({})
-            } as any}
+            }}
             onFieldChange={(value) => onFieldChange(field.key, value)}
           />
         ))}
