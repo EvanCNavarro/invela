@@ -438,7 +438,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             </div>
             
             {/* Navigation buttons */}
-            <div className="flex justify-between">
+            <div className="flex justify-between mt-8">
               <Button
                 type="button"
                 variant="outline"
@@ -476,8 +476,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               </div>
             </div>
           </div>
-          </form>
-        </Form>
+        </form>
+      </Form>
     </div>
   );
 };
