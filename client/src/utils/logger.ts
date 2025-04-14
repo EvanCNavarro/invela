@@ -1,218 +1,122 @@
 /**
- * Logger utility to manage console logging in a centralized way
- * Allows for enabling/disabling logs by level and namespace
- * 
- * OPTIMIZED FOR PERFORMANCE: 
- * - Aggressive log filtering
- * - Lazy initialization of loggers
- * - Minimal overhead when logging is disabled
+ * A configurable logger utility for consistent logging throughout the application
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+// Logger levels that can be enabled or disabled
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
-interface LoggerOptions {
-  // Enable/disable all logs in development or production
-  enabled?: boolean;
-  // Enable specific log levels
-  levels?: Partial<Record<LogLevel, boolean>>;
-  // Enable console group for grouped logs
-  grouping?: boolean;
-  // Enable lazy initialization (only create logger when needed)
-  lazy?: boolean;
+// Logger configuration options
+export interface LoggerConfig {
+  levels?: {
+    debug?: boolean;
+    info?: boolean;
+    warn?: boolean;
+    error?: boolean;
+  };
+  prefix?: string;
+  colors?: {
+    debug?: string;
+    info?: string;
+    warn?: string;
+    error?: string;
+  };
 }
 
-// Default global options - aggressive throttling for performance
-const DEFAULT_OPTIONS: LoggerOptions = {
-  enabled: process.env.NODE_ENV !== 'production' && false, // Disable logging completely by default
-  levels: {
-    debug: false, // Debug is off by default
-    info: false,  // Info is off by default
-    warn: false,  // Warnings are off by default
-    error: true,  // Only show true errors
-  },
-  grouping: false, // Disable grouping for performance
-  lazy: true      // Enable lazy initialization by default
+// Default colors for each log level
+const DEFAULT_COLORS = {
+  debug: '#888888',  // Gray
+  info: '#2196F3',   // Blue
+  warn: '#FF9800',   // Orange
+  error: '#F44336'   // Red
 };
 
-// Store created loggers by namespace to maintain their state
-const loggers: Record<string, Logger> = {};
+// Default configuration with all levels enabled
+const DEFAULT_CONFIG: LoggerConfig = {
+  levels: {
+    debug: process.env.NODE_ENV === 'development',
+    info: true,
+    warn: true,
+    error: true
+  },
+  colors: DEFAULT_COLORS
+};
 
-/**
- * Logger class to manage console logging with namespaces
- */
+// Logger class that handles all logging operations
 export class Logger {
-  private namespace: string;
-  private _options: LoggerOptions;
-  private activeGroups: number = 0;
-
-  constructor(namespace: string, options: LoggerOptions = {}) {
-    this.namespace = namespace;
-    this._options = {
-      ...DEFAULT_OPTIONS,
-      ...options,
-      levels: {
-        ...DEFAULT_OPTIONS.levels,
-        ...(options.levels || {})
-      }
-    };
-  }
-
-  /**
-   * Get the current logger options
-   */
-  get options(): LoggerOptions {
-    return this._options;
-  }
-
-  /**
-   * Set new logger options
-   */
-  set options(newOptions: LoggerOptions) {
-    this._options = {
-      ...this._options,
-      ...newOptions,
-      levels: {
-        ...this._options.levels,
-        ...(newOptions.levels || {})
-      }
-    };
-  }
-
-  /**
-   * Check if logging is enabled for a specific level
-   */
-  private isEnabled(level: LogLevel): boolean {
-    return (
-      !!this._options.enabled &&
-      !!this._options.levels?.[level]
-    );
-  }
-
-  /**
-   * Format the namespace prefix for log messages
-   */
-  private getPrefix(): string {
-    return `[${this.namespace}]`;
-  }
-
-  /**
-   * Log a debug message
-   */
-  debug(...args: any[]): void {
-    if (!this.isEnabled('debug')) return;
-    console.debug(this.getPrefix(), ...args);
-  }
-
-  /**
-   * Log an info message
-   */
-  info(...args: any[]): void {
-    if (!this.isEnabled('info')) return;
-    console.info(this.getPrefix(), ...args);
-  }
-
-  /**
-   * Log a warning message
-   */
-  warn(...args: any[]): void {
-    if (!this.isEnabled('warn')) return;
-    console.warn(this.getPrefix(), ...args);
-  }
-
-  /**
-   * Log an error message
-   */
-  error(...args: any[]): void {
-    if (!this.isEnabled('error')) return;
-    console.error(this.getPrefix(), ...args);
-  }
-
-  /**
-   * Start a console group with the namespace prefix
-   */
-  group(label: string): void {
-    if (!this.isEnabled('debug') || !this._options.grouping) return;
-    console.group(`${this.getPrefix()} ${label}`);
-    this.activeGroups++;
-  }
-
-  /**
-   * End the current console group
-   */
-  groupEnd(): void {
-    if (!this.isEnabled('debug') || !this._options.grouping || this.activeGroups <= 0) return;
-    console.groupEnd();
-    this.activeGroups--;
-  }
-
-  /**
-   * Time an operation and log its duration
-   */
-  time(label: string): () => void {
-    if (!this.isEnabled('debug')) return () => {};
+  private module: string;
+  private config: LoggerConfig;
+  
+  constructor(module: string, config: LoggerConfig = {}) {
+    this.module = module;
     
-    const start = performance.now();
-    const timeLabel = `${this.getPrefix()} ${label}`;
-    
-    return () => {
-      const duration = performance.now() - start;
-      console.log(`${timeLabel} (${duration.toFixed(2)}ms)`);
+    // Merge provided config with defaults
+    this.config = {
+      levels: { ...DEFAULT_CONFIG.levels, ...config.levels },
+      colors: { ...DEFAULT_CONFIG.colors, ...config.colors },
+      prefix: config.prefix
     };
   }
-}
-
-/**
- * Get a logger instance for a specific namespace
- * Reuses existing loggers for the same namespace
- * Supports lazy initialization (no logger objects created if logging is disabled)
- */
-export function getLogger(namespace: string, options: LoggerOptions = {}): Logger {
-  // Merge options with defaults
-  const mergedOptions = {
-    ...DEFAULT_OPTIONS,
-    ...options,
-    levels: {
-      ...DEFAULT_OPTIONS.levels,
-      ...(options.levels || {})
+  
+  // Create prefixed message for consistent formatting
+  private createMessage(level: LogLevel, message: string): string {
+    const prefix = this.config.prefix || this.module;
+    return `[${prefix}] ${message}`;
+  }
+  
+  // Debug level logging
+  debug(message: string, ...data: any[]): void {
+    if (this.config.levels?.debug) {
+      const formattedMessage = this.createMessage('debug', message);
+      console.log(
+        `%c${formattedMessage}`,
+        `color: ${this.config.colors?.debug || DEFAULT_COLORS.debug}`,
+        ...data
+      );
     }
-  };
-  
-  // Fast return - if lazy initialization is enabled and logging is disabled
-  // return a minimal logger object without actually creating/storing one
-  if (mergedOptions.lazy && !mergedOptions.enabled) {
-    // Return a lightweight no-op logger that doesn't get stored
-    return new Proxy({} as Logger, {
-      get: (target, prop) => {
-        // For log methods (debug, info, warn, error) return no-op function
-        if (['debug', 'info', 'warn', 'error', 'group', 'groupEnd'].includes(prop as string)) {
-          return () => {};
-        }
-        
-        // For time method return function that returns no-op function
-        if (prop === 'time') {
-          return () => () => {};
-        }
-        
-        // For other properties
-        return undefined;
-      }
-    });
   }
   
-  // Regular initialization - create and store the logger instance
-  if (!loggers[namespace]) {
-    loggers[namespace] = new Logger(namespace, mergedOptions);
+  // Info level logging
+  info(message: string, ...data: any[]): void {
+    if (this.config.levels?.info) {
+      const formattedMessage = this.createMessage('info', message);
+      console.info(
+        `%c${formattedMessage}`,
+        `color: ${this.config.colors?.info || DEFAULT_COLORS.info}`,
+        ...data
+      );
+    }
   }
-  return loggers[namespace];
+  
+  // Warning level logging
+  warn(message: string, ...data: any[]): void {
+    if (this.config.levels?.warn) {
+      const formattedMessage = this.createMessage('warn', message);
+      console.warn(
+        `%c${formattedMessage}`,
+        `color: ${this.config.colors?.warn || DEFAULT_COLORS.warn}`,
+        ...data
+      );
+    }
+  }
+  
+  // Error level logging
+  error(message: string, ...data: any[]): void {
+    if (this.config.levels?.error) {
+      const formattedMessage = this.createMessage('error', message);
+      console.error(
+        `%c${formattedMessage}`,
+        `color: ${this.config.colors?.error || DEFAULT_COLORS.error}`,
+        ...data
+      );
+    }
+  }
 }
 
-/**
- * Enable or disable all loggers
- */
-export function configureAllLoggers(options: LoggerOptions): void {
-  Object.values(loggers).forEach(logger => {
-    logger.options = options;
-  });
+// Factory function to create loggers with backwards compatibility
+function createLogger(module: string, config: LoggerConfig = {}): Logger {
+  return new Logger(module, config);
 }
 
-export default getLogger;
+// Export both as named export and default export for backward compatibility
+export const getLogger = createLogger;
+export default createLogger;
