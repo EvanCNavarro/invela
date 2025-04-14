@@ -66,6 +66,12 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             progress: 0
           };
           
+          // Calculate if all other sections are completed
+          // This is a more reliable way to check if review should be unlocked
+          const allOtherSectionsCompleted = sectionStatuses
+            .filter(s => s.id !== section.id)  // Exclude current section
+            .every(s => s.status === 'completed');
+            
           // The section is completed if its status is 'completed'
           const isCompleted = status.status === 'completed';
           
@@ -78,7 +84,8 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             if (status.status === 'completed') {
               statusText = 'Submitted';
               reviewStatus = 'submitted';
-            } else if (status.progress === 100) {
+            } else if (allOtherSectionsCompleted) {
+              // If all other sections are completed, review is unlocked
               statusText = 'Unlocked';
               reviewStatus = 'unlocked';
             } else {
@@ -209,6 +216,12 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
             progress: 0
           };
           
+          // Calculate if all other sections are completed
+          // This is a more reliable way to check if review should be unlocked
+          const allOtherSectionsCompleted = sectionStatuses
+            .filter(s => s.id !== section.id)  // Exclude current section
+            .every(s => s.status === 'completed');
+            
           // The section is completed if its status is 'completed'
           const isCompleted = status.status === 'completed';
           
@@ -221,7 +234,8 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
             if (status.status === 'completed') {
               statusText = 'Submitted';
               reviewStatus = 'submitted';
-            } else if (status.progress === 100) {
+            } else if (allOtherSectionsCompleted) {
+              // If all other sections are completed, review is unlocked
               statusText = 'Unlocked';
               reviewStatus = 'unlocked';
             } else {
