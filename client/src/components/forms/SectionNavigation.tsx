@@ -1,4 +1,5 @@
-import React from 'react';
+// Temporary debug version to add logs and fix
+import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { StatusIcon } from './StatusIcon';
 
@@ -29,6 +30,12 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
   onSectionChange,
   className,
 }) => {
+  // For debugging
+  useEffect(() => {
+    console.log("Sections:", sections);
+    console.log("Completed sections:", completedSections);
+  }, [sections, completedSections]);
+
   return (
     <div className={cn("w-full bg-white rounded-md mb-6", className)}>
       <div className="flex flex-col md:flex-row">
@@ -43,13 +50,28 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // Determine section status - if all fields are filled, consider it completed
-          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
-          // Mark as completed if explicitly set or all fields are filled
-          const isActuallyCompleted = isCompleted || allFieldsCompleted;
+          // For debugging
+          if (index === 0) {
+            console.log(`Section ${section.id} (${section.title}):`, { 
+              fieldsCount, 
+              filledFieldsCount, 
+              completedStatus: isCompleted,
+              fields: section.fields
+            });
+          }
+          
+          // Two conditions for completion:
+          // 1. Officially marked as completed in completedSections
+          // 2. All fields in the section are filled (remaining count is 0)
+          const remainingCount = fieldsCount - filledFieldsCount;
+          const allFieldsFilled = fieldsCount > 0 && remainingCount === 0;
+          
+          // Mark as completed if explicitly set OR all fields are filled
+          const isActuallyCompleted = isCompleted || allFieldsFilled;
+          
+          // Other states for progress indication
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
           const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
-          const remainingCount = fieldsCount - filledFieldsCount;
           
           // Status text based on completion state
           let statusText = '';
@@ -135,13 +157,18 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
             field.value && field.value.toString().trim() !== ''
           )?.length || 0;
           
-          // Determine section status - if all fields are filled, consider it completed
-          const allFieldsCompleted = fieldsCount > 0 && filledFieldsCount >= fieldsCount;
-          // Mark as completed if explicitly set or all fields are filled
-          const isActuallyCompleted = isCompleted || allFieldsCompleted;
+          // Two conditions for completion:
+          // 1. Officially marked as completed in completedSections
+          // 2. All fields in the section are filled (remaining count is 0)
+          const remainingCount = fieldsCount - filledFieldsCount;
+          const allFieldsFilled = fieldsCount > 0 && remainingCount === 0;
+          
+          // Mark as completed if explicitly set OR all fields are filled
+          const isActuallyCompleted = isCompleted || allFieldsFilled;
+          
+          // Other states for progress indication
           const isInProgress = !isActuallyCompleted && filledFieldsCount > 0;
           const isNotStarted = !isActuallyCompleted && filledFieldsCount === 0;
-          const remainingCount = fieldsCount - filledFieldsCount;
           
           // Status text based on completion state
           let statusText = '';
