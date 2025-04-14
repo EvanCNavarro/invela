@@ -72,7 +72,43 @@ function logResponseDebug(message: string, responses: any[]) {
 // Get all KYB fields with their group information
 router.get('/api/kyb/fields', async (req, res) => {
   try {
+    console.log('[KYB API DIAGNOSTIC] Starting field fetch');
+    
+    // Check if table exists in schema first
+    try {
+      await db.execute(sql`SELECT 1 FROM kyb_fields LIMIT 1`);
+      console.log('[KYB API DIAGNOSTIC] Schema check passed: kyb_fields table exists');
+    } catch (schemaError) {
+      console.error('[KYB API DIAGNOSTIC] Schema check failed:', {
+        error: schemaError instanceof Error ? schemaError.message : 'Unknown error',
+        detail: 'kyb_fields table may not exist'
+      });
+      return res.status(500).json({ 
+        error: 'Database schema issue',
+        detail: 'The KYB fields table does not exist or is not accessible'
+      });
+    }
+    
+    // Count fields first
+    const countResult = await db.execute(sql`SELECT COUNT(*) FROM kyb_fields`);
+    const fieldCount = parseInt(countResult.rows[0]?.count || '0', 10);
+    
+    console.log(`[KYB API DIAGNOSTIC] Field count: ${fieldCount}`);
+    
+    // Then get the actual fields
     const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    
+    console.log('[KYB API DIAGNOSTIC] Fields fetched successfully:', {
+      count: fields.length,
+      fieldKeys: fields.map(f => f.field_key),
+      groups: [...new Set(fields.map(f => f.group))],
+      sampleField: fields.length > 0 ? {
+        id: fields[0].id,
+        key: fields[0].field_key,
+        type: fields[0].field_type,
+        group: fields[0].group
+      } : null
+    });
     
     const result = {
       fields,
@@ -81,7 +117,7 @@ router.get('/api/kyb/fields', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    console.error('[KYB API Debug] Error fetching fields:', {
+    console.error('[KYB API DIAGNOSTIC] Error fetching fields:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString()
