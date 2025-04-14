@@ -147,7 +147,7 @@ export class KybFormService implements FormServiceInterface {
         }
       });
       
-      console.log('[DEBUG] Creating sections from fields. Sections found:', Object.keys(normalizedSections).join(', '));
+      this.logger.info('Creating sections from fields. Sections found:', Object.keys(normalizedSections).join(', '));
       
       // Create sections from normalized grouped fields with proper interface implementation
       // Use the expected order for standard sections
@@ -155,15 +155,22 @@ export class KybFormService implements FormServiceInterface {
         // Find index in expectedSections to determine proper order
         const expectedIndex = expectedSections.indexOf(sectionName);
         const order = expectedIndex >= 0 ? expectedIndex + 1 : expectedSections.length + index + 1;
+        const sectionId = `section-${order}`;
         
-        return {
-          id: `section-${order}`, // FormSection requires string ID
-          title: sectionName,     // Use title instead of name
+        this.logger.info(`Creating section "${sectionName}" with ID "${sectionId}" (${sectionFields.length} fields)`);
+        
+        // Create the section with the properly assigned fields
+        const section = {
+          id: sectionId,      // FormSection requires string ID
+          title: sectionName, // Use title instead of name
           description: '',
           order: order,
           collapsed: false,
-          fields: sectionFields.map(field => this.convertToFormField(field))
+          // Convert each field and assign the proper section ID
+          fields: sectionFields.map(field => this.convertToFormField(field, sectionId))
         };
+        
+        return section;
       });
       
       // Sort sections by order
@@ -341,8 +348,12 @@ export class KybFormService implements FormServiceInterface {
 
   /**
    * Convert KYB field to form field format
+   * @param field The KYB field to convert
+   * @param sectionId Optional section ID to assign to the field
    */
-  convertToFormField(field: KybField): FormField {
+  convertToFormField(field: KybField, sectionId?: string): FormField {
+    this.logger.debug(`Converting field "${field.field_key}" to form field format. Section: ${sectionId || 'unknown'}`);
+    
     return {
       id: field.id,
       key: field.field_key,
@@ -354,7 +365,8 @@ export class KybFormService implements FormServiceInterface {
       validation: field.validation_rules,
       helpText: field.help_text,
       placeholder: '',
-      value: this.formData[field.field_key] || ''
+      value: this.formData[field.field_key] || '',
+      section: sectionId // Assign the section ID to the field
     };
   }
 
