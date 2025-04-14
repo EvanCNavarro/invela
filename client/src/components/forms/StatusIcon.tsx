@@ -1,5 +1,5 @@
 import React from 'react';
-import { CircleCheck, CircleDashed, CircleDotDashed } from 'lucide-react';
+import { CircleCheck, CircleDashed, CircleDotDashed, LockKeyhole, LockKeyholeOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Props for the StatusIcon component
@@ -8,6 +8,8 @@ export interface StatusIconProps {
   isActive: boolean;
   size?: number;
   className?: string;
+  variant?: 'default' | 'review'; // Added review variant
+  reviewStatus?: 'locked' | 'unlocked' | 'submitted'; // Added review status
 }
 
 /**
@@ -16,13 +18,46 @@ export interface StatusIconProps {
  * - CircleCheck for completed sections
  * - CircleDotDashed for active sections
  * - CircleDashed for in-progress or not-started sections
+ * - LockKeyhole for review locked
+ * - LockKeyholeOpen for review unlocked
  */
 export const StatusIcon: React.FC<StatusIconProps> = ({
   isCompleted,
   isActive,
   size = 16,
-  className
+  className,
+  variant = 'default',
+  reviewStatus
 }) => {
+  // Special handling for review section
+  if (variant === 'review') {
+    // If review is submitted (completed), show a green check icon
+    if (reviewStatus === 'submitted') {
+      return (
+        <span className={cn("text-emerald-500", className)}>
+          <CircleCheck size={size} strokeWidth={2} />
+        </span>
+      );
+    }
+    
+    // If review is unlocked (active but not submitted), show a gray unlock icon
+    if (reviewStatus === 'unlocked') {
+      return (
+        <span className={cn("text-gray-400", className)}>
+          <LockKeyholeOpen size={size} strokeWidth={2} />
+        </span>
+      );
+    }
+    
+    // Otherwise (locked), show a gray lock icon
+    return (
+      <span className={cn("text-gray-400", className)}>
+        <LockKeyhole size={size} strokeWidth={2} />
+      </span>
+    );
+  }
+  
+  // For default sections:
   // If completed, show a green circle-check icon
   if (isCompleted) {
     return (
