@@ -211,43 +211,56 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
   
   // If we don't have a valid form control, render a simplified version
   if (!hasValidFormControl) {
+    // Determine validation state (simplified version)
+    const fieldValue = (field as any).value;
+    const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
+    
+    // Default to gray bar, use green if filled
+    const barColor = isFilled ? 'bg-green-500' : 'bg-gray-300';
+    
     return (
-      <div className="field-display">
-        <div className="flex items-center gap-2 mb-1">
-          <Label className="text-gray-600 font-normal">
-            {field.label}
-          </Label>
-          
-          {field.helpText && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="cursor-help">
-                    <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                  {field.helpText}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </div>
+      <div className="field-display flex relative">
+        {/* Vertical bar for grouping */}
+        <div className={`absolute left-0 top-0 w-1 h-full rounded-full ${barColor}`} />
         
-        {field.question && (
-          <div className="mb-2 font-semibold text-black">
-            {field.question}
+        {/* Content with left padding to accommodate the bar */}
+        <div className="pl-4 w-full">
+          <div className="flex items-center gap-2 mb-1">
+            <Label className="text-gray-600 font-normal">
+              {field.label}
+            </Label>
+            
+            {field.helpText && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help">
+                      <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
+                    {field.helpText}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
-        )}
-        
-        {renderInputComponent({
-          name: field.key,
-          value: (field as any).value || '',
-          onChange: (e: any) => {
-            const value = e?.target?.value !== undefined ? e.target.value : e;
-            onFieldChange?.(value);
-          }
-        })}
+          
+          {field.question && (
+            <div className="mb-2 font-semibold text-black">
+              {field.question}
+            </div>
+          )}
+          
+          {renderInputComponent({
+            name: field.key,
+            value: (field as any).value || '',
+            onChange: (e: any) => {
+              const value = e?.target?.value !== undefined ? e.target.value : e;
+              onFieldChange?.(value);
+            }
+          })}
+        </div>
       </div>
     );
   }
@@ -257,47 +270,76 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     <FormField
       control={form.control}
       name={field.key}
-      render={({ field: fieldProps }) => (
-        <FormItem>
-          {/* Question Field Container */}
-          <div className="question-container">
-            <div className="flex items-center gap-2 mb-1">
-              {/* Label - gray color, regular boldness */}
-              <FormLabel className="text-gray-600 font-normal">
-                {field.label}
-              </FormLabel>
+      render={({ field: fieldProps }) => {
+        // Get form state for validation styling
+        const { formState } = form;
+        const hasError = !!formState.errors[field.key];
+        const fieldValue = form.getValues(field.key);
+        const isFilled = fieldValue !== undefined && fieldValue !== null && fieldValue !== '';
+        const isActive = fieldProps.name === document.activeElement?.id;
+        
+        // Determine validation state
+        let validationState: 'default' | 'active' | 'success' | 'error' = 'default';
+        if (hasError) validationState = 'error';
+        else if (isFilled) validationState = 'success';
+        else if (isActive) validationState = 'active';
+        
+        // Define bar color based on validation state
+        const barColorClasses = {
+          default: 'bg-gray-300',
+          active: 'bg-blue-500',
+          success: 'bg-green-500',
+          error: 'bg-red-500'
+        };
+        
+        return (
+          <FormItem>
+            {/* Question Field Container with vertical bar */}
+            <div className="question-container flex relative">
+              {/* Vertical bar for grouping */}
+              <div className={`absolute left-0 top-0 w-1 h-full rounded-full ${barColorClasses[validationState]}`} />
               
-              {field.helpText && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="cursor-help">
-                        <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
-                      {field.helpText}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </div>
-            
-            {/* Question - displayed below label and above field, black and bold */}
-            {field.question && (
-              <div className="mb-2 font-semibold text-black">
-                {field.question}
+              {/* Question content with padding to make room for the bar */}
+              <div className="pl-4 w-full">
+                <div className="flex items-center gap-2 mb-1">
+                  {/* Label - gray color, regular boldness */}
+                  <FormLabel className="text-gray-600 font-normal">
+                    {field.label}
+                  </FormLabel>
+                  
+                  {field.helpText && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">
+                            <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent side={tooltipPosition as any} className="max-w-[300px] text-sm text-wrap break-words">
+                          {field.helpText}
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                
+                {/* Question - displayed below label and above field, black and bold */}
+                {field.question && (
+                  <div className="mb-2 font-semibold text-black">
+                    {field.question}
+                  </div>
+                )}
+                
+                <FormControl>
+                  {renderInputComponent(fieldProps)}
+                </FormControl>
+                
+                <FormMessage />
               </div>
-            )}
-            
-            <FormControl>
-              {renderInputComponent(fieldProps)}
-            </FormControl>
-            
-            <FormMessage />
-          </div>
-        </FormItem>
-      )}
+            </div>
+          </FormItem>
+        );
+      }}
     />
   );
 };
