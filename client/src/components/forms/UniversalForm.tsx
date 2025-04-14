@@ -350,53 +350,37 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Render full loading state
   if (loading) {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>{formTitle}</CardTitle>
-          <CardDescription>{formDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-10">
+      <div className="w-full mx-auto bg-white rounded-md shadow-sm">
+        <div className="flex flex-col items-center justify-center py-16">
           <LoadingSpinner size="lg" />
           <p className="mt-2 text-sm text-muted-foreground">Loading form...</p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
   
   // Render error state
   if (error) {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>{formTitle}</CardTitle>
-          <CardDescription>{formDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="py-6">
-          <div className="p-4 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700">
-            <h3 className="font-medium mb-2">Error Loading Form</h3>
-            <p className="text-sm">{error}</p>
-          </div>
-          <Button onClick={() => window.location.reload()} variant="outline">Retry</Button>
-        </CardContent>
-      </Card>
+      <div className="w-full mx-auto bg-white rounded-md shadow-sm p-6">
+        <div className="p-4 mb-4 border border-red-200 bg-red-50 rounded-md text-red-700">
+          <h3 className="font-medium mb-2">Error Loading Form</h3>
+          <p className="text-sm">{error}</p>
+        </div>
+        <Button onClick={() => window.location.reload()} variant="outline">Retry</Button>
+      </div>
     );
   }
   
   // If we have no sections or fields, show empty state
   if (sections.length === 0 || fields.length === 0) {
     return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardHeader>
-          <CardTitle>{formTitle}</CardTitle>
-          <CardDescription>{formDescription}</CardDescription>
-        </CardHeader>
-        <CardContent className="py-6">
-          <div className="p-4 mb-4 border border-amber-200 bg-amber-50 rounded-md text-amber-700">
-            <h3 className="font-medium mb-2">No Form Content Available</h3>
-            <p className="text-sm">This form has no sections or fields defined.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="w-full mx-auto bg-white rounded-md shadow-sm p-6">
+        <div className="p-4 mb-4 border border-amber-200 bg-amber-50 rounded-md text-amber-700">
+          <h3 className="font-medium mb-2">No Form Content Available</h3>
+          <p className="text-sm">This form has no sections or fields defined.</p>
+        </div>
+      </div>
     );
   }
   
