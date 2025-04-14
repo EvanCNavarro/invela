@@ -47,7 +47,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("w-full bg-white rounded-t-md mb-0", className)}>
+    <div className={cn("w-full mb-0", className)}>
       <div className="flex flex-col md:flex-row">
         {sections.map((section, index) => {
           const isActive = index === activeSection;
@@ -146,7 +146,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
   className,
 }) => {
   return (
-    <div className={cn("w-full bg-white rounded-t-md mb-0 overflow-x-auto", className)}>
+    <div className={cn("w-full mb-0 overflow-x-auto", className)}>
       <div className="flex whitespace-nowrap min-w-full">
         {sections.map((section, index) => {
           const isActive = index === activeSection;

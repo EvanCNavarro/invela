@@ -386,14 +386,14 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Render main form
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      {/* Progress bar showing overall completion - outside the form box */}
-      <div className="mb-6">
-        <FormProgressBar progress={overallProgress} />
-      </div>
-      
+    <div className="w-full max-w-4xl mx-auto">      
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-0">
+          {/* Progress bar showing overall completion - moved to gray area above tabs */}
+          <div className="mb-3">
+            <FormProgressBar progress={overallProgress} />
+          </div>
+          
           {/* Section navigation tabs - flush with form content */}
           <ResponsiveSectionNavigation
             sections={sections}
@@ -402,7 +402,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             onSectionChange={setActiveSection}
           />
           
-          {/* Form content - with continuous white box */}
+          {/* Form content - with continuous white box, rounded only at bottom */}
           <div className="bg-white rounded-b-md p-6 border-t-0">
             {/* Data loading indicator */}
             {isDataLoading && (
