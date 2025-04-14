@@ -167,26 +167,37 @@ export class KybFormService implements FormServiceInterface {
     }
     
     try {
-      console.log('[DEBUG] Fetching KYB fields from server');
+      this.logger.info('Fetching KYB fields from server - DIAGNOSTIC MODE');
       // Simple fetch without all the timeout complexity
       const response = await fetch('/api/kyb/fields');
       
       if (!response.ok) {
+        this.logger.error(`Failed to fetch KYB fields: ${response.status}`);
         throw new Error(`Failed to fetch KYB fields: ${response.status}`);
       }
       
       const responseData = await response.json();
-      console.log('[DEBUG] KYB fields raw response:', responseData);
+      this.logger.info('KYB fields raw response TYPE:', typeof responseData);
+      this.logger.info('KYB fields raw response KEYS:', Object.keys(responseData));
+      this.logger.info('KYB fields success flag:', responseData.success);
+      this.logger.info('KYB fields.fields type:', Array.isArray(responseData.fields) ? 'Array' : typeof responseData.fields);
+      
+      if (responseData.fields) {
+        this.logger.info('KYB fields.fields length:', responseData.fields.length);
+        if (responseData.fields.length > 0) {
+          this.logger.info('Sample field:', JSON.stringify(responseData.fields[0]));
+        }
+      }
       
       // Check if the response has a fields property (API may return { fields: [...] })
       const fields = responseData.fields || responseData;
       
       if (!Array.isArray(fields)) {
-        console.error('[DEBUG] KYB fields is not an array:', fields);
+        this.logger.error('KYB fields is not an array:', fields);
         throw new Error('KYB fields response is not in expected format');
       }
       
-      console.log('[DEBUG] Successfully parsed KYB fields, count:', fields.length);
+      this.logger.info('Successfully parsed KYB fields, count:', fields.length);
       
       // Sort fields by group and then by order
       const sortedFields = sortFields(fields);
