@@ -180,26 +180,61 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         // First try to get fields and sections from the service
         logger.info('Initializing form structure with form service');
         
-        // Fetch fields from the service
-        const serviceFields = await formService.getFields();
-        if (serviceFields && serviceFields.length > 0) {
-          logger.info(`Loaded ${serviceFields.length} fields from form service`);
-          setFields(sortFields(serviceFields));
-        } else {
-          logger.warn('No fields returned from form service');
+        // ENHANCED DIAGNOSTICS: Check if form service is properly initialized
+        logger.info(`Form service type: ${formService.constructor.name}`);
+        logger.info(`Form service has initialize method: ${typeof formService.initialize === 'function'}`);
+        
+        // Initialize service with template if needed
+        if (template && typeof formService.initialize === 'function') {
+          try {
+            logger.info(`Initializing form service with template ID: ${template.id}`);
+            await formService.initialize(template.id);
+            logger.info(`Form service initialization completed`);
+          } catch (initError) {
+            logger.error('Error initializing form service:', initError);
+          }
+        }
+        
+        // Fetch fields from the service with ENHANCED DIAGNOSTICS
+        logger.info(`Fetching fields from form service...`);
+        try {
+          const serviceFields = formService.getFields();
+          logger.info(`Fields result type: ${typeof serviceFields}`);
+          logger.info(`Is fields array: ${Array.isArray(serviceFields)}`);
+          
+          if (serviceFields && serviceFields.length > 0) {
+            logger.info(`Loaded ${serviceFields.length} fields from form service`);
+            logger.info(`Sample field: ${JSON.stringify(serviceFields[0])}`);
+            setFields(sortFields(serviceFields));
+          } else {
+            logger.warn('No fields returned from form service (empty array or null)');
+            setFields([]);
+          }
+        } catch (fieldError) {
+          logger.error('Error getting fields from form service:', fieldError);
           setFields([]);
         }
         
-        // Fetch sections from the service
-        const serviceSections = await formService.getSections();
-        if (serviceSections && serviceSections.length > 0) {
-          logger.info(`Loaded ${serviceSections.length} sections from form service`);
+        // Fetch sections from the service with ENHANCED DIAGNOSTICS
+        logger.info(`Fetching sections from form service...`);
+        try {
+          const serviceSections = formService.getSections();
+          logger.info(`Sections result type: ${typeof serviceSections}`);
+          logger.info(`Is sections array: ${Array.isArray(serviceSections)}`);
           
-          // Convert to navigation sections and sort
-          const navigationSections = toNavigationSections(serviceSections);
-          setSections(sortSections(navigationSections));
-        } else {
-          logger.warn('No sections returned from form service');
+          if (serviceSections && serviceSections.length > 0) {
+            logger.info(`Loaded ${serviceSections.length} sections from form service`);
+            logger.info(`Sample section: ${JSON.stringify(serviceSections[0])}`);
+            
+            // Convert to navigation sections and sort
+            const navigationSections = toNavigationSections(serviceSections);
+            setSections(sortSections(navigationSections));
+          } else {
+            logger.warn('No sections returned from form service (empty array or null)');
+            setSections([]);
+          }
+        } catch (sectionError) {
+          logger.error('Error getting sections from form service:', sectionError);
           setSections([]);
         }
         
