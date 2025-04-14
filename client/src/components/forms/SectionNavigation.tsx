@@ -103,8 +103,8 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                 <span 
                   className={cn(
                     "font-medium text-sm",
-                    isActive ? "text-primary" : "text-gray-700",
-                    isCompleted && !isActive ? "text-emerald-600" : ""
+                    isActive ? "text-primary" : 
+                    isCompleted ? "text-emerald-600" : "text-gray-700"
                   )}
                 >
                   {sectionNumber}. {section.title}
@@ -123,7 +123,7 @@ export const SectionNavigation: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "text-xs",
                     isCompleted ? "text-emerald-500" : 
-                    isActive ? "text-primary" : "text-gray-400"
+                    isActive ? "text-primary" : "text-gray-500"
                   )}
                 >
                   {statusText}
@@ -194,8 +194,8 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                 <span 
                   className={cn(
                     "font-medium text-sm",
-                    isActive ? "text-primary" : "text-gray-700",
-                    isCompleted && !isActive ? "text-emerald-600" : ""
+                    isActive ? "text-primary" : 
+                    isCompleted ? "text-emerald-600" : "text-gray-700"
                   )}
                 >
                   {sectionNumber}. {section.title}
@@ -214,7 +214,7 @@ export const SectionNavigationMobile: React.FC<SectionNavigationProps> = ({
                   className={cn(
                     "text-xs",
                     isCompleted ? "text-emerald-500" : 
-                    isActive ? "text-primary" : "text-gray-400"
+                    isActive ? "text-primary" : "text-gray-500"
                   )}
                 >
                   {statusText}
