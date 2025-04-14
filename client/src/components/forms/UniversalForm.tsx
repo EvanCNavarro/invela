@@ -9,6 +9,18 @@ import { FormServiceInterface, FormField, FormData, FormSection as ServiceFormSe
 import { TaskTemplateService, TaskTemplateWithConfigs } from '@/services/taskTemplateService';
 import { sortFields, sortSections } from '@/utils/formUtils';
 import getLogger from '@/utils/logger';
+import { cn } from '@/lib/utils';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Eye 
+} from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 // Import our new improved hooks and components
 import { useFormDataManager } from '@/hooks/form/use-form-data-manager';
@@ -311,7 +323,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       
       // Show submission toast
       toast({
-        title: 'Submitting KYB Form',
+        title: 'Submitting KYB Form.',
         description: 'Please wait while we process your submission...',
       });
       
