@@ -4,6 +4,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import { db } from '@db';
 import { tasks, TaskStatus, companies, files, kybFields, kybResponses } from '@db/schema';
 import { requireAuth } from '../middleware/auth';
+import path from 'path';
+import fs from 'fs';
 
 // Create a simple logger replacement
 const logger = {
@@ -597,28 +599,14 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     try {
       // Use a transaction to ensure file creation, task updates, and company updates are atomic
       fileId = await db.transaction(async (tx) => {
-        // 1. Generate the file path where we'll save the CSV
-        const filePath = `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`;
-        
-        // Write the CSV data to the physical file
-        const uploadDir = path.join(process.cwd(), 'uploads');
-        
-        // Ensure the uploads directory exists
-        if (!fs.existsSync(uploadDir)) {
-          await fs.promises.mkdir(uploadDir, { recursive: true });
-        }
-        
-        // Write the actual CSV content to disk
-        await fs.promises.writeFile(path.join(process.cwd(), filePath), csvData, 'utf8');
-        
-        // Now insert the file record with reference to the actual file
+        // 1. Create file record in the database first
         const [fileRecord] = await tx.insert(files)
           .values({
             name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
-            content: '', // Not storing content in DB, it's in the file
+            content: csvData, // Store the actual CSV content in the database
             type: 'text/csv',
             status: 'active',
-            path: filePath, // Path to the physical file
+            path: `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`,
             size: Buffer.from(csvData).length,
             version: 1,
             company_id: task.company_id,
@@ -640,21 +628,24 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           throw new Error('Failed to create file record');
         }
         
-        // 2. Get company record to update available tabs
-        const [company] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, task.company_id));
-    
-        if (company) {
-          // Add file-vault to available tabs if not already present
-          const currentTabs = company.available_tabs || ['task-center'];
-          if (!currentTabs.includes('file-vault')) {
-            await tx.update(companies)
-              .set({
-                available_tabs: [...currentTabs, 'file-vault'],
-                updated_at: timestamp
-              })
-              .where(eq(companies.id, task.company_id));
+        // 2. Get company record to update available tabs (KYB task specific functionality)
+        // Only do this for KYB-type tasks
+        if (['KYB', 'company_kyb'].includes(task.task_type)) {
+          const [company] = await tx.select()
+            .from(companies)
+            .where(eq(companies.id, task.company_id));
+      
+          if (company) {
+            // Add file-vault to available tabs if not already present - this is a KYB-specific function
+            const currentTabs = company.available_tabs || ['task-center'];
+            if (!currentTabs.includes('file-vault')) {
+              await tx.update(companies)
+                .set({
+                  available_tabs: [...currentTabs, 'file-vault'],
+                  updated_at: timestamp
+                })
+                .where(eq(companies.id, task.company_id));
+            }
           }
           
           // Handle revenue tier update if present
