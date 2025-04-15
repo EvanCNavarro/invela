@@ -127,6 +127,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
+  // Make sure agreement_confirmation is set to true as default
+  useEffect(() => {
+    if (dataHasLoaded && form) {
+      // Initialize agreement to true if undefined
+      if (form.getValues('agreement_confirmation') === undefined) {
+        form.setValue('agreement_confirmation', true, { shouldValidate: true });
+      }
+    }
+  }, [dataHasLoaded, form]);
+  
   // Function to get current form values for status calculation
   const getFormValues = useCallback(() => {
     return formService ? formService.getFormData() : formData;
@@ -150,6 +160,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Create and manage the Review & Submit section
   const [allSections, setAllSections] = useState<FormSection[]>([]);
+  
+  // Add a state to track consent status
+  const [consentChecked, setConsentChecked] = useState<boolean>(true);
   
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
@@ -619,14 +632,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                             htmlFor="agreement_confirmation"
                             className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 cursor-pointer hover:bg-blue-100 transition-colors"
                             onClick={() => {
-                              const currentValue = form.getValues("agreement_confirmation") ?? true;
-                              form.setValue("agreement_confirmation", !currentValue);
+                              // Toggle the consent state
+                              const newValue = !consentChecked;
+                              setConsentChecked(newValue);
+                              // Update form value
+                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                              // Explicitly refresh status to ensure submit button updates
+                              setTimeout(refreshStatus, 50);
                             }}
                           >
                             <Checkbox
-                              checked={form.getValues("agreement_confirmation") ?? true}
+                              checked={consentChecked}
                               onCheckedChange={(checked) => {
-                                form.setValue("agreement_confirmation", checked);
+                                const newValue = !!checked;
+                                setConsentChecked(newValue);
+                                form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                                // Explicitly refresh status to ensure submit button updates
+                                setTimeout(refreshStatus, 50);
                               }}
                               id="agreement_confirmation"
                               className="mt-1"
@@ -636,13 +658,24 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               <div className="font-semibold text-gray-800">
                                 Declaration and Consent
                               </div>
-                              <p className="text-sm text-gray-700">
-                                I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                hereby certify that all information provided in this form is complete, accurate, 
-                                and truthful to the best of my knowledge. I understand that providing false information 
-                                may result in rejection of our application or termination of services.
-                              </p>
+                              {taskType === 'security' || taskType === 'security_assessment' ? (
+                                <p className="text-sm text-gray-700">
+                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                  hereby certify that all information provided in this security assessment is complete, accurate, 
+                                  and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
+                                  evaluate our company's security posture, and I understand that providing false information 
+                                  may result in rejection of our application or termination of services.
+                                </p>
+                              ) : (
+                                <p className="text-sm text-gray-700">
+                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                  hereby certify that all information provided in this form is complete, accurate, 
+                                  and truthful to the best of my knowledge. I understand that providing false information 
+                                  may result in rejection of our application or termination of services.
+                                </p>
+                              )}
                             </div>
                           </label>
                         </div>
@@ -714,7 +747,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Button 
                         type="button"
                         onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!form.getValues('agreement_confirmation')}
+                        disabled={!consentChecked}
                         className="flex items-center gap-1"
                       >
                         Submit
