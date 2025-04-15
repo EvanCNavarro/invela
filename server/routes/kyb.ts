@@ -598,11 +598,19 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     const warnings: string[] = [];
 
     try {
+      // Catch validation errors before starting transaction
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+      if (!task.company_id) {
+        throw new Error('Company ID is required');
+      }
+      
       // Use a SINGLE transaction for ALL operations (file creation, task update, AND responses)
       fileId = await db.transaction(async (tx) => {
         // 1. Create file record in the database first
-        const [fileRecord] = await tx.insert(files)
-          .values({
+        // Ensure all required fields are properly set to valid values
+        const fileValues = {
             name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
             content: csvData, // Store the actual CSV content in the database
             type: 'text/csv',
@@ -610,8 +618,8 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
             path: `/uploads/kyb_${taskId}_${timestamp.getTime()}.csv`,
             size: Buffer.from(csvData).length,
             version: 1,
-            company_id: task.company_id,
-            user_id: userId,
+            company_id: task.company_id, // Already validated above
+            user_id: userId, // Already validated above
             created_by: userId,
             created_at: timestamp,
             updated_at: timestamp,
@@ -622,7 +630,18 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
               submissionDate: timestamp.toISOString(),
               fields: fields.map(f => f.field_key)
             }
-          })
+          };
+            
+        // Log the file values for debugging
+        logger.info('Creating file record with values:', {
+          fileName: fileValues.name,
+          fileSize: fileValues.size,
+          companyId: fileValues.company_id,
+          userId: fileValues.user_id
+        });
+        
+        const [fileRecord] = await tx.insert(files)
+          .values(fileValues)
           .returning({ id: files.id });
           
         if (!fileRecord) {
