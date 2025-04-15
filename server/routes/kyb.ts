@@ -655,7 +655,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
               .where(eq(kybFields.field_key, 'annualRecurringRevenue'))
               .limit(1);
     
-            if (revenueTierField?.validation_rules && 'options' in revenueTierField.validation_rules) {
+            if (revenueTierField?.validation_rules && revenueTierField.validation_rules !== null && typeof revenueTierField.validation_rules === 'object' && 'options' in revenueTierField.validation_rules) {
               // Map ARR ranges to revenue tiers
               const tierMapping = {
                 'Less than $1 million': 'small',
