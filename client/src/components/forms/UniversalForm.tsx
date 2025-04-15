@@ -129,13 +129,23 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Make sure agreement_confirmation is set to true as default
   useEffect(() => {
-    if (dataHasLoaded && form) {
-      // Initialize agreement to true if undefined
-      if (form.getValues('agreement_confirmation') === undefined) {
-        form.setValue('agreement_confirmation', true, { shouldValidate: true });
+    if (dataHasLoaded && form && !formInitialized) {
+      // Initialize agreement to true if undefined and update our state
+      const currentValue = form.getValues('agreement_confirmation');
+      
+      // If value is undefined in the form, initialize it to true
+      if (currentValue === undefined) {
+        form.setValue('agreement_confirmation', true, { shouldValidate: false });
+        setConsentChecked(true);
+      } else {
+        // Otherwise sync our state with the form's value
+        setConsentChecked(!!currentValue);
       }
+      
+      // Mark the form as initialized to prevent further updates
+      setFormInitialized(true);
     }
-  }, [dataHasLoaded, form]);
+  }, [dataHasLoaded, form, formInitialized]);
   
   // Function to get current form values for status calculation
   const getFormValues = useCallback(() => {
@@ -163,6 +173,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Add a state to track consent status
   const [consentChecked, setConsentChecked] = useState<boolean>(true);
+  
+  // Track if the form has been initialized to avoid state update loops
+  const [formInitialized, setFormInitialized] = useState<boolean>(false);
   
   // Update sections when main form sections change to include the Review & Submit section
   useEffect(() => {
