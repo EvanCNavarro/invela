@@ -711,11 +711,28 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                 </div>
                                 <p className="text-sm text-gray-700">
                                   I, <span className="font-semibold">{
-                                    // Try multiple ways to get the user's name in order of preference
-                                    user?.full_name || 
-                                    (user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : null) ||
-                                    user?.name ||
-                                    (user?.email ? user.email.split('@')[0] : 'the authorized representative')
+                                    // Force use of email (which we know we have) if other name properties are missing
+                                    (() => {
+                                      // Log user details to debug
+                                      console.log("User name extraction attempt:", {
+                                        has_user: !!user,
+                                        full_name: user?.full_name,
+                                        first_name: user?.first_name,
+                                        last_name: user?.last_name,
+                                        name: user?.name,
+                                        email: user?.email
+                                      });
+                                      
+                                      if (user?.full_name) return user.full_name;
+                                      if (user?.first_name && user?.last_name) return `${user.first_name} ${user.last_name}`;
+                                      if (user?.name) return user.name;
+                                      if (user?.email) {
+                                        // Get name part from email and capitalize first letter
+                                        const namePart = user.email.split('@')[0];
+                                        return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                                      }
+                                      return "User"; // Absolute fallback
+                                    })()
                                   }</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
