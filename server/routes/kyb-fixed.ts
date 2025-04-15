@@ -267,10 +267,13 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     
     try {
       // Use a single atomic transaction for all database operations
+      // Track transaction steps for detailed error reporting
+      let transactionStep = 'initialization';
       fileId = await db.transaction(async (tx) => {
-        logger.info('Starting transaction for KYB submission', { taskId });
+        logger.info('Starting transaction for KYB submission', { taskId, userId: req.user?.id });
         
         try {
+          transactionStep = 'creating file record';
           // 1. Create file record in database
           const fileValues = {
             name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
@@ -325,6 +328,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           });
           
           // 2. Update company available tabs if needed
+          transactionStep = 'updating company tabs';
           try {
             const [company] = await tx.select()
               .from(companies)
@@ -362,6 +366,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           }
           
           // 3. Update task metadata and status
+          transactionStep = 'updating task metadata';
           try {
             // Convert task.metadata to object if it's null
             const currentMetadata = task.metadata || {};
@@ -394,6 +399,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           }
           
           // 4. Save all form responses
+          transactionStep = 'saving form responses';
           try {
             for (const field of fields) {
               const value = formData[field.field_key];
