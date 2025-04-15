@@ -21,11 +21,11 @@ enum TaskStatus {
   CANCELLED = 'cancelled'
 }
 
-// Define response statuses
+// Define response statuses to match schema KYBFieldStatus values
 enum ResponseStatus {
-  EMPTY = 'EMPTY',
-  COMPLETE = 'COMPLETE',
-  INVALID = 'INVALID'
+  EMPTY = 'empty',
+  COMPLETE = 'complete',
+  INVALID = 'invalid'
 }
 
 enum SuggestionStatus {
