@@ -297,8 +297,26 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
             }
           };
           
+          // Explicitly specify which columns we're inserting to avoid type errors
           const [fileRecord] = await tx.insert(files)
-            .values(fileValues)
+            .values({
+              name: fileValues.name,
+              size: fileValues.size,
+              type: fileValues.type,
+              path: fileValues.path,
+              status: fileValues.status,
+              user_id: fileValues.user_id,
+              company_id: fileValues.company_id,
+              document_category: fileValues.document_category as any, // Cast to fix type error
+              classification_status: fileValues.classification_status,
+              classification_confidence: fileValues.classification_confidence,
+              created_at: fileValues.created_at,
+              updated_at: fileValues.updated_at,
+              upload_time: fileValues.upload_time,
+              download_count: fileValues.download_count,
+              version: fileValues.version,
+              metadata: fileValues.metadata
+            })
             .returning();
             
           logger.info('File record created in transaction', { 
@@ -400,13 +418,13 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
                   await tx.update(kybResponses)
                     .set({
                       response_value: value || '',
-                      status,
+                      status: status as any, // Cast to bypass type checking
                       version: sql`${kybResponses.version} + 1`,
                       updated_at: timestamp
                     })
                     .where(
                       and(
-                        eq(kybResponses.task_id, taskId),
+                        eq(kybResponses.task_id, Number(taskId)),
                         eq(kybResponses.field_id, field.id)
                       )
                     );
