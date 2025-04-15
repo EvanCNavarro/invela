@@ -315,7 +315,11 @@ export class CardFormService implements FormServiceInterface {
       if (response.status === 207) {
         console.warn('[CardService] Received partial success response:', responseData);
         if (responseData.error) {
-          throw new Error(responseData.details || responseData.error);
+          // Include both error and details in the message for better user feedback
+          const errorMessage = responseData.details 
+            ? `${responseData.error}: ${responseData.details}` 
+            : responseData.error;
+          throw new Error(errorMessage);
         }
       }
       
