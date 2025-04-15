@@ -676,20 +676,18 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                               </div>
                               <div className="space-y-2">
                                 <div className="font-semibold text-gray-800">
-                                  Legal Declaration and Data Processing Consent
+                                  Submission Consent
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.full_name || user?.name || 'the authorized representative'}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
                                 <ul className="text-sm text-gray-700 list-disc pl-5 space-y-1">
                                   <li>Certify that all information provided in this form is complete, accurate, and truthful to the best of my knowledge;</li>
-                                  <li>Acknowledge that this information will be used by Invela for the purpose of risk assessment and compliance verification;</li>
                                   <li>Consent to the processing of this data in accordance with Invela's accreditation and verification procedures;</li>
                                   <li>Understand that this information will be securely maintained according to industry-standard data protection protocols;</li>
-                                  <li>Confirm that I am authorized to submit this information on behalf of {company?.name || 'the company'}; and</li>
-                                  <li>Understand that providing false or misleading information may result in the rejection of our application, termination of services, or other legal consequences.</li>
+                                  <li>Acknowledge that providing false or misleading information may result in rejection of the application or termination of services.</li>
                                 </ul>
                               </div>
                             </div>
