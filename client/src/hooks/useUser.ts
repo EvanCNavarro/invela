@@ -20,13 +20,9 @@ export function useUser() {
     error 
   } = useQuery<User>({ 
     queryKey: ['/api/users/current'],
-    queryFn: getQueryFn({ on401: "returnNull", on500: "returnNull" }),
+    queryFn: getQueryFn({ on401: "returnNull" }),
     retry: 1,
-    refetchOnWindowFocus: false,
-    // Prevent parsing errors from crashing the app
-    onError: (err) => {
-      console.error('Error fetching user data:', err);
-    }
+    refetchOnWindowFocus: false
   });
 
   return {

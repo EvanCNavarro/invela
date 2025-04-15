@@ -6,7 +6,7 @@ async function throwIfResNotOk(res: Response) {
     const text = (await res.text()) || res.statusText;
     
     // Include the status in console for debugging, but not in the user-facing message
-    console.error(`API error ${res.status}: ${text}`);
+    console.error(`API error ${res.status}: ${text.substring(0, 200)}...`);
     
     // Throw a clean error without the status code prefix
     throw new Error(text);
@@ -108,7 +108,28 @@ export const getQueryFn: <T>(options: {
       }
 
       await throwIfResNotOk(res);
-      return await res.json();
+      
+      // Get the text first so we can check for HTML
+      const text = await res.text();
+      
+      // Check if the response is HTML (likely a login redirect)
+      if (text.includes('<!DOCTYPE html>')) {
+        console.warn(`[TanStack Query] HTML response received from ${url}, likely needs authentication`);
+        return {}; // Return empty object
+      }
+      
+      // Check if empty response
+      if (!text.trim()) {
+        console.warn(`[TanStack Query] Empty response from ${url}`);
+        return {};
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error(`[TanStack Query] Invalid JSON in response from ${url}:`, e);
+        return {}; // Return empty object on parse error
+      }
     } catch (error) {
       console.error(`[TanStack Query] Error fetching ${url}:`, error);
       throw error;
