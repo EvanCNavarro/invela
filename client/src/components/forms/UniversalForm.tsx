@@ -657,6 +657,15 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
               throw new Error('Server returned an invalid response. Please try again.');
             }
             
+            // Check if this is a partial success response (we need to explicitly check this)
+            if (result.error && result.status === 207) {
+              logger.warn('Received partial success response', result);
+              const errorMessage = result.details 
+                ? `${result.error}: ${result.details}` 
+                : result.error;
+              throw new Error(errorMessage);
+            }
+            
             // If we got here without an error, the submission was successful
             submissionSuccessful = true;
             logger.info('Form submission API call successful');
