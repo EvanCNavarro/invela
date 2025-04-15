@@ -137,7 +137,7 @@ router.get('/api/kyb/fields', async (req, res) => {
     
     // Count fields first
     const countResult = await db.execute(sql`SELECT COUNT(*) FROM kyb_fields`);
-    const fieldCount = parseInt(countResult.rows[0]?.count || '0', 10);
+    const fieldCount = parseInt(countResult.rows[0]?.count?.toString() || '0', 10);
     
     console.log(`[KYB API DIAGNOSTIC] Field count: ${fieldCount}`);
     
@@ -655,7 +655,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
               .where(eq(kybFields.field_key, 'annualRecurringRevenue'))
               .limit(1);
     
-            if (revenueTierField?.validation_rules?.options) {
+            if (revenueTierField?.validation_rules && 'options' in revenueTierField.validation_rules) {
               // Map ARR ranges to revenue tiers
               const tierMapping = {
                 'Less than $1 million': 'small',
