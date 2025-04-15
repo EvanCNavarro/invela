@@ -641,49 +641,26 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Final agreement checkbox - simplified implementation */}
+                        {/* Final agreement checkbox - basic checkbox approach */}
                         <div className="mt-8 space-y-4">
-                          <div 
-                            className={cn(
-                              "flex items-start p-4 gap-3 border rounded-md cursor-pointer",
-                              !!form.getValues('agreement_confirmation') 
-                                ? "bg-blue-100 border-blue-200" 
-                                : "bg-white hover:bg-gray-50"
-                            )}
-                            onClick={() => {
-                              // Use simple value toggling instead of FormField to avoid infinite updates
-                              const currentValue = form.getValues('agreement_confirmation');
-                              form.setValue('agreement_confirmation', !currentValue, { shouldValidate: true });
-                            }}
-                          >
-                            <div className="flex-shrink-0 mt-1">
-                              <Checkbox
-                                checked={!!form.getValues('agreement_confirmation')}
-                                id="agreement_confirmation"
-                                onClick={(e) => {
-                                  // Stop propagation to prevent double toggling
-                                  e.stopPropagation();
-                                }}
-                                onCheckedChange={(checked) => {
-                                  // Use simple controlled component pattern
-                                  form.setValue('agreement_confirmation', !!checked, { shouldValidate: true });
-                                }}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <div className="font-semibold text-gray-800">
-                                Declaration and Consent
+                          <div className="border rounded-md p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 mt-1">
+                                <input
+                                  id="agreement_confirmation"
+                                  name="agreement_confirmation"
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                                  onChange={(e) => {
+                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
+                                  }}
+                                  checked={!!form.getValues("agreement_confirmation")}
+                                />
                               </div>
-                              {taskType === 'security' || taskType === 'security_assessment' ? (
-                                <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                  hereby certify that all information provided in this security assessment is complete, accurate, 
-                                  and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
-                                  evaluate our company's security posture, and I understand that providing false information 
-                                  may result in rejection of our application or termination of services.
-                                </p>
-                              ) : (
+                              <div className="space-y-2">
+                                <label htmlFor="agreement_confirmation" className="font-semibold text-gray-800 cursor-pointer">
+                                  Declaration and Consent
+                                </label>
                                 <p className="text-sm text-gray-700">
                                   I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
                                   on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
@@ -691,7 +668,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   and truthful to the best of my knowledge. I understand that providing false information 
                                   may result in rejection of our application or termination of services.
                                 </p>
-                              )}
+                              </div>
                             </div>
                           </div>
                         </div>
