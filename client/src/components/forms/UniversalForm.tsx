@@ -45,6 +45,7 @@ import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } fro
 import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { useUser } from '@/hooks/useUser';
+import { User } from '@/types/auth';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { CheckCircle } from 'lucide-react';
 
@@ -131,15 +132,17 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   });
   
-  // Set agreement_confirmation to true by default
+  // Set agreement_confirmation to true by default (with stronger default approach)
   useEffect(() => {
-    if (dataHasLoaded && form) {
-      // Initialize agreement confirmation to true by default
-      if (form.getValues("agreement_confirmation") === undefined) {
-        form.setValue("agreement_confirmation", true, { shouldValidate: true });
-      }
+    if (form) {
+      // Initialize agreement confirmation to true by default - always set it initially
+      // and also whenever we navigate to the review section
+      form.setValue("agreement_confirmation", true, { shouldValidate: true });
+      
+      // Log the value to confirm it was set
+      console.log('Setting default agreement confirmation to TRUE');
     }
-  }, [dataHasLoaded, form]);
+  }, [dataHasLoaded, form, activeSection]);
   
   // Function to get current form values for status calculation
   const getFormValues = useCallback(() => {
@@ -676,7 +679,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
+                                  I, <span className="font-semibold">{(user as User)?.full_name || user?.name || user?.email || 'the authorized representative'}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
