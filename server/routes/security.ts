@@ -379,88 +379,119 @@ async function processSecuritySubmission(req, res, task, formData, fileName) {
         userIdFromRequest: req.user?.id,
         userIdFromTask: task.created_by,
       });
-      throw new Error('No valid user ID available for file creation');
+      // Return proper error response instead of throwing
+      return res.status(400).json({
+        error: 'User identification failed',
+        details: 'Could not determine a valid user ID for file creation'
+      });
+    }
+
+    // Use a transaction to ensure all operations succeed or fail together
+    try {
+      // Start a transaction
+      const fileId = await db.transaction(async (tx) => {
+        // 1. Insert the file record
+        const [fileRecord] = await tx.insert(files)
+          .values({
+            name: safeFileName,
+            content: csvData,
+            type: 'text/csv',
+            status: 'active',
+            path: `/uploads/security_${task.id}_${timestamp.getTime()}.csv`,
+            size: Buffer.from(csvData).length,
+            version: 1,
+            company_id: task.company_id,
+            user_id: userId, // Set this explicitly from authenticated user or task creator
+            created_by: userId, // Keep consistency with user_id
+            created_at: timestamp,
+            updated_at: timestamp,
+            metadata: {
+              taskId: task.id,
+              taskType: 'security',
+              formVersion: '1.0',
+              submissionDate: timestamp.toISOString(),
+              riskScore
+            }
+          })
+          .returning({ id: files.id });
+          
+        // 2. Update the task
+        await tx.update(tasks)
+          .set({
+            status: TaskStatus.SUBMITTED,
+            progress: 100,
+            updated_at: new Date(),
+            metadata: {
+              ...task.metadata,
+              securityFormFile: fileRecord.id,
+              submissionDate: new Date().toISOString(),
+              riskScore
+            }
+          })
+          .where(eq(tasks.id, task.id));
+          
+        // 3. Update company data
+        const [company] = await tx.select()
+          .from(companies)
+          .where(eq(companies.id, task.company_id));
+        
+        if (company) {
+          // Update company risk score and available tabs
+          const currentTabs = company.available_tabs || ['task-center'];
+          const updates: any = { 
+            risk_score: riskScore,
+            updated_at: new Date()
+          };
+          
+          if (!currentTabs.includes('file-vault')) {
+            updates.available_tabs = [...currentTabs, 'file-vault'];
+          }
+          
+          await tx.update(companies)
+            .set(updates)
+            .where(eq(companies.id, task.company_id));
+        }
+        
+        // Return the file ID from the transaction
+        return fileRecord.id;
+      });
+      
+      logger.info('Security assessment submitted successfully', {
+        taskId: task.id,
+        fileId,
+        riskScore
+      });
+      
+      return res.json({
+        success: true,
+        fileId,
+        riskScore
+      });
+      
+    } catch (txError) {
+      // If transaction fails, log and return a proper error response
+      logger.error('Transaction failed during security submission', {
+        error: txError instanceof Error ? txError.message : 'Unknown error',
+        stack: txError instanceof Error ? txError.stack : undefined
+      });
+      
+      return res.status(500).json({
+        error: 'Transaction failed',
+        details: txError instanceof Error ? txError.message : 'Failed to complete the submission process'
+      });
     }
     
-    const [fileId] = await db.insert(files)
-      .values({
-        name: safeFileName,
-        content: csvData,
-        type: 'text/csv',
-        status: 'active',
-        path: `/uploads/security_${task.id}_${timestamp.getTime()}.csv`,
-        size: Buffer.from(csvData).length,
-        version: 1,
-        company_id: task.company_id,
-        user_id: userId, // Set this explicitly from authenticated user or task creator
-        created_by: userId, // Keep consistency with user_id
-        created_at: timestamp,
-        updated_at: timestamp,
-        metadata: {
-          taskId: task.id,
-          taskType: 'security',
-          formVersion: '1.0',
-          submissionDate: timestamp.toISOString(),
-          riskScore
-        }
-      })
-      .returning({ id: files.id });
-    
-    // Update the task
-    await db.update(tasks)
-      .set({
-        status: TaskStatus.SUBMITTED,
-        progress: 100,
-        updated_at: new Date(),
-        metadata: {
-          ...task.metadata,
-          securityFormFile: fileId.id,
-          submissionDate: new Date().toISOString(),
-          riskScore
-        }
-      })
-      .where(eq(tasks.id, task.id));
-    
-    // Add the file-vault to available tabs if not already present
-    const [company] = await db.select()
-      .from(companies)
-      .where(eq(companies.id, task.company_id));
-    
-    if (company) {
-      // Update company risk score and available tabs
-      const currentTabs = company.available_tabs || ['task-center'];
-      const updates: any = { 
-        risk_score: riskScore,
-        updated_at: new Date()
-      };
-      
-      if (!currentTabs.includes('file-vault')) {
-        updates.available_tabs = [...currentTabs, 'file-vault'];
-      }
-      
-      await db.update(companies)
-        .set(updates)
-        .where(eq(companies.id, task.company_id));
-    }
-    
-    logger.info('Security assessment submitted successfully', {
-      taskId: task.id,
-      fileId: fileId.id,
-      riskScore
-    });
-    
-    return res.json({
-      success: true,
-      fileId: fileId.id,
-      riskScore
-    });
   } catch (error) {
     logger.error('Error processing security submission', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     });
     
-    throw error;
+    // Return proper error response instead of throwing
+    return res.status(500).json({
+      error: 'Submission failed',
+      details: error instanceof Error ? error.message : 'An unexpected error occurred'
+    });
   }
 }
 
