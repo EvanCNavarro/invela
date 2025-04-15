@@ -641,9 +641,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                           </Accordion>
                         </div>
                         
-                        {/* Final agreement checkbox - basic checkbox approach */}
+                        {/* Final agreement checkbox - fully clickable block with visual feedback */}
                         <div className="mt-8 space-y-4">
-                          <div className="border rounded-md p-4">
+                          <div 
+                            onClick={() => {
+                              // Toggle when clicking anywhere in the block
+                              const newValue = !form.getValues("agreement_confirmation");
+                              form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                            }}
+                            className={cn(
+                              "border rounded-md p-4 cursor-pointer transition-colors",
+                              form.getValues("agreement_confirmation") 
+                                ? "bg-blue-100 border-blue-200" 
+                                : "bg-white hover:bg-gray-50"
+                            )}
+                          >
                             <div className="flex items-start gap-3">
                               <div className="flex-shrink-0 mt-1">
                                 <input
@@ -651,16 +663,21 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   name="agreement_confirmation"
                                   type="checkbox"
                                   className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                                  onChange={(e) => {
-                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
-                                  }}
                                   checked={!!form.getValues("agreement_confirmation")}
+                                  onChange={() => {}} // Controlled by parent div onClick
+                                  onClick={(e) => {
+                                    // Stop propagation to prevent double toggle
+                                    e.stopPropagation();
+                                    // Toggle directly here
+                                    const newValue = !form.getValues("agreement_confirmation");
+                                    form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                                  }}
                                 />
                               </div>
                               <div className="space-y-2">
-                                <label htmlFor="agreement_confirmation" className="font-semibold text-gray-800 cursor-pointer">
+                                <div className="font-semibold text-gray-800">
                                   Declaration and Consent
-                                </label>
+                                </div>
                                 <p className="text-sm text-gray-700">
                                   I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
                                   on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
