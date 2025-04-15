@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { db } from '@db';
-import { tasks, securityFields, securityResponses, TaskStatus, companies } from '@db/schema';
+import { tasks, securityFields, securityResponses, TaskStatus, companies, files } from '@db/schema';
 import { eq, and, sql, ilike } from 'drizzle-orm';
 import { requireAuth } from '../middleware/auth';
 import { Logger } from '../utils/logger';
