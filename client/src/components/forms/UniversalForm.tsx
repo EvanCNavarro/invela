@@ -107,11 +107,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   const [sections, setSections] = useState<FormSection[]>([]);
   const [fields, setFields] = useState<FormField[]>([]);
   
-  // Add a state to track consent status
-  const [consentChecked, setConsentChecked] = useState<boolean>(true);
-  
-  // Track if the form has been initialized to avoid state update loops
-  const [formInitialized, setFormInitialized] = useState<boolean>(false);
+  // We'll manage consent directly through form values
   
   // Use our new form data manager hook to handle form data
   const {
@@ -135,23 +131,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Make sure agreement_confirmation is set to true as default
   useEffect(() => {
-    if (dataHasLoaded && form && !formInitialized) {
-      // Initialize agreement to true if undefined and update our state
+    if (dataHasLoaded && form) {
+      // Initialize agreement to true if undefined
       const currentValue = form.getValues('agreement_confirmation');
       
       // If value is undefined in the form, initialize it to true
       if (currentValue === undefined) {
         form.setValue('agreement_confirmation', true, { shouldValidate: false });
-        setConsentChecked(true);
-      } else {
-        // Otherwise sync our state with the form's value
-        setConsentChecked(!!currentValue);
       }
-      
-      // Mark the form as initialized to prevent further updates
-      setFormInitialized(true);
     }
-  }, [dataHasLoaded, form, formInitialized]);
+  }, [dataHasLoaded, form]);
   
   // Function to get current form values for status calculation
   const getFormValues = useCallback(() => {
@@ -748,7 +737,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                       <Button 
                         type="button"
                         onClick={form.handleSubmit(handleSubmit)}
-                        disabled={!consentChecked}
+                        disabled={!form.getValues("agreement_confirmation")}
                         className="flex items-center gap-1"
                       >
                         Submit
