@@ -40,16 +40,17 @@ export const StatusIcon: React.FC<StatusIconProps> = ({
       );
     }
     
-    // If review is unlocked (active but not submitted), show a gray unlock icon
+    // If review is unlocked (active but not submitted)
     if (reviewStatus === 'unlocked') {
+      // Use primary color (blue) when active, otherwise gray
       return (
-        <span className={cn("text-gray-400", className)}>
+        <span className={cn(isActive ? "text-primary" : "text-gray-400", className)}>
           <LockKeyholeOpen size={size} strokeWidth={2} />
         </span>
       );
     }
     
-    // Otherwise (locked), show a gray lock icon
+    // Otherwise (locked), show a lock icon (gray)
     return (
       <span className={cn("text-gray-400", className)}>
         <LockKeyhole size={size} strokeWidth={2} />
