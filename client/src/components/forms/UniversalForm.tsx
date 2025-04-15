@@ -326,14 +326,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Track first load state to only auto-navigate once
   const [hasAutoNavigated, setHasAutoNavigated] = useState(false);
   
-  // Auto-navigate to first incomplete field or last section ONLY on initial form load
+  // Auto-navigate to review section (when status is "ready_for_submission") or first incomplete field
   useEffect(() => {
     // Only run this effect once on initial data load and never again
     if (sections.length > 0 && !loading && fields.length > 0 && dataHasLoaded && !hasAutoNavigated) {
-      logger.info('Auto-navigating form on initial load based on field completion status');
+      logger.info('Auto-navigating form on initial load based on task status and completion');
       
       // Mark that we've performed the auto-navigation
       setHasAutoNavigated(true);
+      
+      // Get task status to check for ready_for_submission
+      const isReadyForSubmission = taskId && taskType && window.location.search.includes('review=true');
+      
+      // If task is ready for submission, navigate to the Review & Submit section
+      if (isReadyForSubmission && allSections.length > 0) {
+        logger.info('Task is ready for submission, navigating to review section');
+        // The last section is the Review & Submit section
+        setActiveSection(allSections.length - 1);
+        return;
+      }
       
       // If form is 100% complete, navigate to the last section
       if (overallProgress === 100) {
@@ -352,7 +363,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         setActiveSection(firstIncompleteSectionIndex);
       }
     }
-  }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated]);
+  }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
   // Handle field change events
   const handleFieldChange = useCallback((name: string, value: any) => {
@@ -632,51 +643,57 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Final agreement checkbox */}
                         <div className="mt-8 space-y-4">
-                          <div className="flex flex-row items-start space-x-3 space-y-0 rounded-md bg-blue-50 border border-blue-100 p-4 hover:bg-blue-100 transition-colors">
-                            <div className="flex-shrink-0 mt-1">
-                              <FormField
-                                control={form.control}
-                                name="agreement_confirmation"
-                                render={({ field }) => (
-                                  <FormItem className="space-y-0">
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={field.onChange}
-                                        id="agreement_confirmation"
-                                      />
-                                    </FormControl>
-                                  </FormItem>
-                                )}
-                              />
-                            </div>
-                            <div className="space-y-2 leading-normal">
-                              <div className="font-semibold text-gray-800">
-                                Declaration and Consent
+                          <div
+                            className="border rounded-md cursor-pointer"
+                            onClick={() => {
+                              const currentValue = form.getValues('agreement_confirmation');
+                              form.setValue('agreement_confirmation', !currentValue, { shouldValidate: true });
+                            }}
+                          >
+                            <div className={cn(
+                              "flex items-start p-4 gap-3 transition-colors",
+                              form.watch('agreement_confirmation') 
+                                ? "bg-blue-100 border-blue-200" 
+                                : "bg-white hover:bg-gray-50"
+                            )}>
+                              <div className="flex-shrink-0 mt-1">
+                                <Checkbox
+                                  checked={form.watch('agreement_confirmation') || false}
+                                  onCheckedChange={(checked) => {
+                                    form.setValue('agreement_confirmation', checked ? true : false, { shouldValidate: true });
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  id="agreement_confirmation"
+                                />
                               </div>
-                              {taskType === 'security' || taskType === 'security_assessment' ? (
-                                <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                  hereby certify that all information provided in this security assessment is complete, accurate, 
-                                  and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
-                                  evaluate our company's security posture, and I understand that providing false information 
-                                  may result in rejection of our application or termination of services.
-                                </p>
-                              ) : (
-                                <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
-                                  on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
-                                  hereby certify that all information provided in this form is complete, accurate, 
-                                  and truthful to the best of my knowledge. I understand that providing false information 
-                                  may result in rejection of our application or termination of services.
-                                </p>
-                              )}
+                              <div className="space-y-2">
+                                <div className="font-semibold text-gray-800">
+                                  Declaration and Consent
+                                </div>
+                                {taskType === 'security' || taskType === 'security_assessment' ? (
+                                  <p className="text-sm text-gray-700">
+                                    I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                    on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                    hereby certify that all information provided in this security assessment is complete, accurate, 
+                                    and truthful to the best of my knowledge. I acknowledge that this assessment will be used to 
+                                    evaluate our company's security posture, and I understand that providing false information 
+                                    may result in rejection of our application or termination of services.
+                                  </p>
+                                ) : (
+                                  <p className="text-sm text-gray-700">
+                                    I, <span className="font-semibold">{user?.name || 'the authorized representative'}</span>, 
+                                    on behalf of <span className="font-semibold">{company?.name || 'our company'}</span>, 
+                                    hereby certify that all information provided in this form is complete, accurate, 
+                                    and truthful to the best of my knowledge. I understand that providing false information 
+                                    may result in rejection of our application or termination of services.
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
+                        </div>
                       </div>
-                    </div>
                   );
                 }
                 
