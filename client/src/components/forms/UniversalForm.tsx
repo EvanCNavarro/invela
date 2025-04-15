@@ -456,6 +456,12 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     logger.info('Processing form submission success actions');
     
     try {
+      // Validate that we got a success response with a fileId first
+      if (!result || !result.success || !result.fileId) {
+        logger.error('Form submission result invalid, cannot proceed with success actions', result);
+        return Promise.reject(new Error('Invalid submission result received from server'));
+      }
+      
       // Create an array of actions that were performed during submission
       const completedActions: SubmissionAction[] = [];
       const actionPromises: Promise<any>[] = [];

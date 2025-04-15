@@ -426,29 +426,65 @@ export default function TaskPage({ params }: TaskPageProps) {
                       })
                     })
                     .then(async response => {
-                      const data = await response.json();
-                      if (!response.ok) {
-                        throw new Error(data.details || data.error || 'Failed to save KYB form');
+                      // First try to parse the response
+                      try {
+                        const data = await response.json();
+                        
+                        // Then check if the response was successful
+                        if (!response.ok) {
+                          throw new Error(data.details || data.error || 'Failed to save KYB form');
+                        }
+                        
+                        // Verify we got a valid result with a fileId
+                        if (!data || !data.success || !data.fileId) {
+                          throw new Error('Server returned an invalid or incomplete response');
+                        }
+                        
+                        return data;
+                      } catch (parseError) {
+                        // Handle JSON parse errors specifically
+                        if (parseError instanceof SyntaxError) {
+                          console.error('[TaskPage] Failed to parse server response:', parseError);
+                          throw new Error('Server returned an invalid response format. Please try again.');
+                        }
+                        // Re-throw other errors
+                        throw parseError;
                       }
-                      return data;
                     })
                     .then((result) => {
-                      fireEnhancedConfetti();
-
-                      setFileId(result.fileId);
-                      setIsSubmitted(true);
-                      setShowSuccessModal(true);
-
-                      toast({
-                        title: "Success",
-                        description: "KYB form has been saved successfully.",
-                        variant: "default",
-                      });
+                      // Only show success UI if we have a valid result
+                      if (result && result.success && result.fileId) {
+                        // Show confetti animation for success
+                        fireEnhancedConfetti();
+                        
+                        // Update state for success modal
+                        setFileId(result.fileId);
+                        setIsSubmitted(true);
+                        setShowSuccessModal(true);
+                        
+                        // Show success toast
+                        toast({
+                          title: "Success",
+                          description: "KYB form has been saved successfully.",
+                          variant: "default",
+                        });
+                      } else {
+                        // This shouldn't happen if we validate in the previous then(),
+                        // but just in case something slips through
+                        throw new Error('Received invalid success response from server');
+                      }
                     })
                     .catch(error => {
+                      // Log the error for debugging
                       console.error('[TaskPage] Form submission failed:', error);
+                      
+                      // Reset any partial success state to avoid showing success modal
+                      setIsSubmitted(false);
+                      setShowSuccessModal(false);
+                      
+                      // Show error toast with specific error message
                       toast({
-                        title: "Error",
+                        title: "Submission Failed",
                         description: error.message || "Failed to save KYB form. Please try again.",
                         variant: "destructive",
                       });
@@ -545,28 +581,64 @@ export default function TaskPage({ params }: TaskPageProps) {
                       })
                     })
                       .then(async response => {
-                        const data = await response.json();
-                        if (!response.ok) {
-                          throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                        // First try to parse the response
+                        try {
+                          const data = await response.json();
+                          
+                          // Then check if the response was successful
+                          if (!response.ok) {
+                            throw new Error(data.details || data.error || 'Failed to submit security assessment');
+                          }
+                          
+                          // Verify we got a valid result
+                          if (!data || !data.success) {
+                            throw new Error('Server returned an invalid or incomplete response');
+                          }
+                          
+                          return data;
+                        } catch (parseError) {
+                          // Handle JSON parse errors specifically
+                          if (parseError instanceof SyntaxError) {
+                            console.error('[TaskPage] Failed to parse server response:', parseError);
+                            throw new Error('Server returned an invalid response format. Please try again.');
+                          }
+                          // Re-throw other errors
+                          throw parseError;
                         }
-                        return data;
                       })
-                      .then(() => {
-                        fireSuperConfetti();
-
-                        setIsSubmitted(true);
-                        setShowSuccessModal(true);
-
-                        toast({
-                          title: "Success",
-                          description: "Security assessment has been submitted successfully.",
-                          variant: "default",
-                        });
+                      .then((result) => {
+                        // Only show success UI if we have a valid result
+                        if (result && result.success) {
+                          // Show confetti animation for success
+                          fireSuperConfetti();
+                          
+                          // Update state for success modal
+                          setIsSubmitted(true);
+                          setShowSuccessModal(true);
+                          
+                          // Show success toast
+                          toast({
+                            title: "Success",
+                            description: "Security assessment has been submitted successfully.",
+                            variant: "default",
+                          });
+                        } else {
+                          // This shouldn't happen if we validate in the previous then(),
+                          // but just in case something slips through
+                          throw new Error('Received invalid success response from server');
+                        }
                       })
                       .catch(error => {
+                        // Log the error for debugging
                         console.error('[TaskPage] Security assessment submission failed:', error);
+                        
+                        // Reset any partial success state to avoid showing success modal
+                        setIsSubmitted(false);
+                        setShowSuccessModal(false);
+                        
+                        // Show error toast with specific error message
                         toast({
-                          title: "Error",
+                          title: "Submission Failed",
                           description: error.message || "Failed to submit security assessment. Please try again.",
                           variant: "destructive",
                         });
