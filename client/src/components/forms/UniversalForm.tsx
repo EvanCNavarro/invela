@@ -666,9 +666,6 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
           });
         }
       } else {
-        // Close the "submitting" toast
-        submissionToast.dismiss();
-        
         // If no onSubmit callback, just show a simple success toast
         toast({
           title: 'Form submitted',
