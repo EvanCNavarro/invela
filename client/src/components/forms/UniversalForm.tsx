@@ -134,12 +134,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   // Set agreement_confirmation to true by default
   useEffect(() => {
     if (dataHasLoaded && form) {
-      // Initialize agreement to true if undefined
-      const currentValue = form.getValues('agreement_confirmation');
-      
-      // If value is undefined in the form, initialize it to true
-      if (currentValue === undefined) {
-        form.setValue('agreement_confirmation', true, { shouldValidate: true });
+      // Initialize agreement confirmation to true by default
+      if (form.getValues("agreement_confirmation") === undefined) {
+        form.setValue("agreement_confirmation", true, { shouldValidate: true });
       }
     }
   }, [dataHasLoaded, form]);
