@@ -270,118 +270,176 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
       fileId = await db.transaction(async (tx) => {
         logger.info('Starting transaction for KYB submission', { taskId });
         
-        // 1. Create file record in database
-        const fileValues = {
-          name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
-          size: Buffer.from(csvData).length,
-          type: 'text/csv',
-          path: `/uploads/${csvFileName}`,
-          status: 'active',
-          user_id: task.created_by,
-          company_id: task.company_id,
-          document_category: 'other',
-          classification_status: 'processed',
-          classification_confidence: 1.0,
-          created_at: timestamp,
-          updated_at: timestamp,
-          upload_time: timestamp,
-          download_count: 0,
-          version: 1.0,
-          metadata: {
-            taskId,
-            taskType: 'kyb',
-            formVersion: '1.0',
-            submissionDate: timestamp.toISOString(),
-            fields: fields.map(f => f.field_key)
-          }
-        };
-        
-        const [fileRecord] = await tx.insert(files)
-          .values(fileValues)
-          .returning();
-          
-        logger.info('File record created in transaction', { 
-          fileId: fileRecord.id,
-          taskId 
-        });
-        
-        // 2. Update company available tabs if needed
-        const [company] = await tx.select()
-          .from(companies)
-          .where(eq(companies.id, task.company_id));
-          
-        if (company) {
-          // Add file-vault to available tabs if not already present
-          const currentTabs = company.available_tabs || ['task-center'];
-          if (!currentTabs.includes('file-vault')) {
-            await tx.update(companies)
-              .set({
-                available_tabs: [...currentTabs, 'file-vault'],
-                updated_at: timestamp
-              })
-              .where(eq(companies.id, task.company_id));
-          }
-        }
-        
-        // 3. Update task metadata and status
-        await tx.update(tasks)
-          .set({
-            status: TaskStatus.SUBMITTED,
-            progress: 100,
+        try {
+          // 1. Create file record in database
+          const fileValues = {
+            name: fileName || `kyb_form_${taskId}_${timestamp.toISOString()}.csv`,
+            size: Buffer.from(csvData).length,
+            type: 'text/csv',
+            path: `/uploads/${csvFileName}`,
+            status: 'active',
+            user_id: task.created_by,
+            company_id: task.company_id,
+            document_category: 'other',
+            classification_status: 'processed',
+            classification_confidence: 1.0,
+            created_at: timestamp,
             updated_at: timestamp,
+            upload_time: timestamp,
+            download_count: 0,
+            version: 1.0,
             metadata: {
-              ...task.metadata,
-              kybFormFile: fileRecord.id,
+              taskId,
+              taskType: 'kyb',
+              formVersion: '1.0',
               submissionDate: timestamp.toISOString(),
-              formVersion: '1.0'
+              fields: fields.map(f => f.field_key)
             }
-          })
-          .where(eq(tasks.id, taskId));
+          };
           
-        // 4. Save all form responses
-        for (const field of fields) {
-          const value = formData[field.field_key];
-          const status = value ? ResponseStatus.COMPLETE : ResponseStatus.EMPTY;
+          const [fileRecord] = await tx.insert(files)
+            .values(fileValues)
+            .returning();
+            
+          logger.info('File record created in transaction', { 
+            fileId: fileRecord.id,
+            taskId 
+          });
           
+          // 2. Update company available tabs if needed
           try {
-            // First try to insert
-            await tx.insert(kybResponses)
-              .values({
-                task_id: taskId,
-                field_id: field.id,
-                response_value: value || '',
-                status,
-                version: 1,
-                created_at: timestamp,
-                updated_at: timestamp
-              });
-          } catch (err) {
-            const error = err as Error;
-            if (error.message.includes('duplicate key value violates unique constraint')) {
-              // If duplicate, update instead
-              await tx.update(kybResponses)
-                .set({
-                  response_value: value || '',
-                  status,
-                  version: sql`${kybResponses.version} + 1`,
-                  updated_at: timestamp
-                })
-                .where(
-                  and(
-                    eq(kybResponses.task_id, taskId),
-                    eq(kybResponses.field_id, field.id)
-                  )
-                );
-              warnings.push(`Updated existing response for field: ${field.field_key}`);
-            } else {
-              // For non-duplicate errors, we need to stop the entire transaction
-              throw error;
+            const [company] = await tx.select()
+              .from(companies)
+              .where(eq(companies.id, task.company_id));
+              
+            logger.info('Company data retrieved in transaction', { 
+              companyId: task.company_id,
+              availableTabs: company?.available_tabs
+            });
+            
+            if (company) {
+              // Add file-vault to available tabs if not already present
+              const currentTabs = company.available_tabs || ['task-center'];
+              if (!currentTabs.includes('file-vault')) {
+                await tx.update(companies)
+                  .set({
+                    available_tabs: [...currentTabs, 'file-vault'],
+                    updated_at: timestamp
+                  })
+                  .where(eq(companies.id, task.company_id));
+                  
+                logger.info('Company tabs updated in transaction', { 
+                  companyId: task.company_id, 
+                  updatedTabs: [...currentTabs, 'file-vault']
+                });
+              }
             }
+          } catch (companyError) {
+            logger.error('Error updating company tabs', {
+              error: companyError instanceof Error ? companyError.message : 'Unknown error',
+              stack: companyError instanceof Error ? companyError.stack : undefined,
+              companyId: task.company_id
+            });
+            throw companyError;
           }
+          
+          // 3. Update task metadata and status
+          try {
+            // Convert task.metadata to object if it's null
+            const currentMetadata = task.metadata || {};
+            
+            await tx.update(tasks)
+              .set({
+                status: TaskStatus.SUBMITTED,
+                progress: 100,
+                updated_at: timestamp,
+                metadata: {
+                  ...currentMetadata,
+                  kybFormFile: fileRecord.id,
+                  submissionDate: timestamp.toISOString(),
+                  formVersion: '1.0'
+                }
+              })
+              .where(eq(tasks.id, taskId));
+              
+            logger.info('Task updated in transaction', { 
+              taskId,
+              status: TaskStatus.SUBMITTED
+            });
+          } catch (taskError) {
+            logger.error('Error updating task', {
+              error: taskError instanceof Error ? taskError.message : 'Unknown error',
+              stack: taskError instanceof Error ? taskError.stack : undefined,
+              taskId
+            });
+            throw taskError;
+          }
+          
+          // 4. Save all form responses
+          try {
+            for (const field of fields) {
+              const value = formData[field.field_key];
+              const status = value ? ResponseStatus.COMPLETE : ResponseStatus.EMPTY;
+              
+              try {
+                // First try to insert
+                await tx.insert(kybResponses)
+                  .values({
+                    task_id: taskId,
+                    field_id: field.id,
+                    response_value: value || '',
+                    status,
+                    version: 1,
+                    created_at: timestamp,
+                    updated_at: timestamp
+                  });
+              } catch (err) {
+                const error = err as Error;
+                if (error.message.includes('duplicate key value violates unique constraint')) {
+                  // If duplicate, update instead
+                  await tx.update(kybResponses)
+                    .set({
+                      response_value: value || '',
+                      status,
+                      version: sql`${kybResponses.version} + 1`,
+                      updated_at: timestamp
+                    })
+                    .where(
+                      and(
+                        eq(kybResponses.task_id, taskId),
+                        eq(kybResponses.field_id, field.id)
+                      )
+                    );
+                  warnings.push(`Updated existing response for field: ${field.field_key}`);
+                } else {
+                  // For non-duplicate errors, we need to stop the entire transaction
+                  throw error;
+                }
+              }
+            }
+            
+            logger.info('All responses saved in transaction', { 
+              taskId,
+              responseCount: fields.length
+            });
+          } catch (responseError) {
+            logger.error('Error saving responses', {
+              error: responseError instanceof Error ? responseError.message : 'Unknown error',
+              stack: responseError instanceof Error ? responseError.stack : undefined,
+              taskId
+            });
+            throw responseError;
+          }
+          
+          // Transaction successful, return the file ID
+          return fileRecord.id;
+        } catch (transactionError) {
+          logger.error('Transaction step failed', {
+            error: transactionError instanceof Error ? transactionError.message : 'Unknown error',
+            stack: transactionError instanceof Error ? transactionError.stack : undefined
+          });
+          throw transactionError;
         }
-        
-        // Transaction successful, return the file ID
-        return fileRecord.id;
       });
       
       // Success - transaction completed
