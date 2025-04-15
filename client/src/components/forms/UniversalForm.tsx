@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -355,30 +355,45 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
     }
   }, [sections.length, loading, fields.length, dataHasLoaded, overallProgress, sectionStatuses, setActiveSection, hasAutoNavigated, taskId, taskType, allSections.length]);
   
-  // Single consolidated effect to manage agreement confirmation
+  // Reference to track if we've already checked the box for this review section visit
+  const hasCheckedRef = useRef(false);
+  
+  // Monitor section changes to handle checkbox state when navigating to review section
   useEffect(() => {
-    // Only proceed if form is initialized
-    if (!form) return;
+    if (!form || allSections.length === 0) return;
     
-    // Register the field if it's not already registered
-    const fieldRegistered = form.getValues().hasOwnProperty("agreement_confirmation");
-    if (!fieldRegistered) {
+    // Register the field with the form if needed
+    if (!form.getValues().hasOwnProperty("agreement_confirmation")) {
       form.register("agreement_confirmation");
     }
     
-    // Use a single approach to setting the value - only when on review section
-    const isReviewSection = allSections.length > 0 && activeSection === allSections.length - 1;
+    // Check if we're on the review section
+    const isReviewSection = activeSection === allSections.length - 1;
     
     if (isReviewSection) {
-      // Set once with a small delay to ensure DOM is ready
-      setTimeout(() => {
-        // Use silent update to prevent triggering re-renders and validation
-        form.setValue("agreement_confirmation", true, { 
-          shouldDirty: false,
-          shouldTouch: false,
-          shouldValidate: false 
-        });
-      }, 50);
+      // Set agreement to true immediately
+      form.setValue("agreement_confirmation", true, { shouldValidate: true });
+      
+      // Also reset our reference flag
+      hasCheckedRef.current = true;
+      
+      // Add multiple backup attempts to handle any race conditions
+      const checkFn = () => {
+        if (hasCheckedRef.current) {
+          form.setValue("agreement_confirmation", true, { shouldValidate: true });
+        }
+      };
+      
+      // Set multiple timeouts at different intervals
+      const t1 = setTimeout(checkFn, 100);
+      const t2 = setTimeout(checkFn, 500);
+      
+      // Cleanup function to prevent memory leaks
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+        hasCheckedRef.current = false;
+      };
     }
   }, [form, activeSection, allSections.length]);
   
@@ -680,14 +695,16 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   name="agreement_confirmation"
                                   type="checkbox"
                                   className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary"
-                                  checked={!!form.getValues("agreement_confirmation")}
-                                  onChange={() => {}} // Controlled component with empty handler
                                   onClick={(e) => {
                                     // Stop propagation to prevent parent div from firing
                                     e.stopPropagation();
                                     // Only handle click directly here to avoid flicker
                                     const newValue = !form.getValues("agreement_confirmation");
                                     form.setValue("agreement_confirmation", newValue, { shouldValidate: true });
+                                  }}
+                                  onChange={(e) => {
+                                    // Handle the change event by updating the form state
+                                    form.setValue("agreement_confirmation", e.target.checked, { shouldValidate: true });
                                   }}
                                 />
                               </div>
@@ -696,7 +713,7 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                                   Submission Consent <span className="text-red-500">*</span>
                                 </div>
                                 <p className="text-sm text-gray-700">
-                                  I, <span className="font-semibold">{user?.first_name && user?.last_name ? `${user.first_name} ${user.last_name}` : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
+                                  I, <span className="font-semibold">{user?.full_name ? user.full_name : (user?.email ? user.email.split('@')[0] : 'the authorized representative')}</span>, in my capacity 
                                   as an authorized representative of <span className="font-semibold">{company?.name || 'the company'}</span>, do 
                                   hereby:
                                 </p>
