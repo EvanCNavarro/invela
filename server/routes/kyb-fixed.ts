@@ -181,6 +181,9 @@ router.get('/api/kyb/progress/:taskId', async (req, res) => {
 
 // Save KYB form data
 router.post('/api/kyb/save', requireAuth, async (req, res) => {
+  // Transaction step tracking - define at top level for error logging
+  let transactionStep = 'initialization';
+
   try {
     const { taskId, formData, fileName } = req.body;
     
@@ -267,8 +270,6 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     
     try {
       // Use a single atomic transaction for all database operations
-      // Track transaction steps for detailed error reporting
-      let transactionStep = 'initialization';
       fileId = await db.transaction(async (tx) => {
         logger.info('Starting transaction for KYB submission', { taskId, userId: req.user?.id });
         
@@ -300,26 +301,35 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
             }
           };
           
-          // Explicitly specify which columns we're inserting to avoid type errors
+          // Explicitly specify which columns we're inserting with proper type casting
+          // Convert the fileValues object to a proper files table insert with type casting
+          const insertValues = {
+            name: fileValues.name,
+            size: fileValues.size,
+            type: fileValues.type,
+            path: fileValues.path,
+            status: fileValues.status,
+            user_id: fileValues.user_id,
+            company_id: fileValues.company_id,
+            document_category: fileValues.document_category as any, // Cast to fix type error
+            classification_status: fileValues.classification_status,
+            classification_confidence: fileValues.classification_confidence,
+            created_at: fileValues.created_at,
+            updated_at: fileValues.updated_at,
+            upload_time: fileValues.upload_time,
+            download_count: fileValues.download_count,
+            version: fileValues.version,
+            metadata: fileValues.metadata
+          };
+          
+          logger.info('Inserting file record with data', { 
+            fileName: insertValues.name,
+            taskId
+          });
+          
+          // Use the "as any" type assertion to bypass TypeScript type checking
           const [fileRecord] = await tx.insert(files)
-            .values({
-              name: fileValues.name,
-              size: fileValues.size,
-              type: fileValues.type,
-              path: fileValues.path,
-              status: fileValues.status,
-              user_id: fileValues.user_id,
-              company_id: fileValues.company_id,
-              document_category: fileValues.document_category as any, // Cast to fix type error
-              classification_status: fileValues.classification_status,
-              classification_confidence: fileValues.classification_confidence,
-              created_at: fileValues.created_at,
-              updated_at: fileValues.updated_at,
-              upload_time: fileValues.upload_time,
-              download_count: fileValues.download_count,
-              version: fileValues.version,
-              metadata: fileValues.metadata
-            })
+            .values(insertValues as any)
             .returning();
             
           logger.info('File record created in transaction', { 
@@ -401,42 +411,111 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           // 4. Save all form responses
           transactionStep = 'saving form responses';
           try {
+            // Fetch existing responses to determine which ones to update or delete
+            const existingResponses = await tx.select()
+              .from(kybResponses)
+              .where(eq(kybResponses.task_id, Number(taskId)));
+            
+            logger.info('Found existing responses', {
+              taskId, 
+              count: existingResponses.length,
+              timestamp: new Date().toISOString()
+            });
+            
+            // First, handle any problematic responses that might be duplicated
+            if (existingResponses.length > fields.length) {
+              logger.warn('Found more responses than fields - may have duplicates', {
+                responseCount: existingResponses.length,
+                fieldCount: fields.length
+              });
+              
+              // Get counts by field_id to detect duplicates
+              const responseCountsByField: Record<number, number> = {};
+              
+              for (const response of existingResponses) {
+                responseCountsByField[response.field_id] = (responseCountsByField[response.field_id] || 0) + 1;
+              }
+              
+              // Find duplicate field_ids (more than one response for a field)
+              const duplicateFieldIds = Object.entries(responseCountsByField)
+                .filter(([_, count]) => count > 1)
+                .map(([fieldId]) => Number(fieldId));
+              
+              if (duplicateFieldIds.length > 0) {
+                logger.warn('Found duplicate responses for fields', { 
+                  duplicateFieldIds,
+                  counts: duplicateFieldIds.map(id => ({
+                    fieldId: id,
+                    count: responseCountsByField[id]
+                  }))
+                });
+                
+                // Delete all duplicate responses to start fresh
+                for (const fieldId of duplicateFieldIds) {
+                  await tx.delete(kybResponses)
+                    .where(
+                      and(
+                        eq(kybResponses.task_id, Number(taskId)),
+                        eq(kybResponses.field_id, fieldId)
+                      )
+                    );
+                  
+                  warnings.push(`Cleaned up duplicated responses for field ID: ${fieldId}`);
+                }
+              }
+            }
+            
+            // Now process each field
             for (const field of fields) {
               const value = formData[field.field_key];
               const status = value ? ResponseStatus.COMPLETE : ResponseStatus.EMPTY;
               
-              try {
-                // First try to insert
-                await tx.insert(kybResponses)
-                  .values({
-                    task_id: Number(taskId),
-                    field_id: field.id,
+              // Check if response already exists for this field
+              const existingResponse = existingResponses.find(r => r.field_id === field.id);
+              
+              if (existingResponse) {
+                // Update existing response
+                await tx.update(kybResponses)
+                  .set({
                     response_value: value || '',
                     status: status as any, // Cast to bypass type checking
-                    version: 1,
-                    created_at: timestamp,
+                    version: sql`${kybResponses.version} + 1`,
                     updated_at: timestamp
-                  });
-              } catch (err) {
-                const error = err as Error;
-                if (error.message.includes('duplicate key value violates unique constraint')) {
-                  // If duplicate, update instead
-                  await tx.update(kybResponses)
-                    .set({
+                  })
+                  .where(
+                    and(
+                      eq(kybResponses.task_id, Number(taskId)),
+                      eq(kybResponses.field_id, field.id)
+                    )
+                  );
+                
+                logger.info(`Updated existing response for field: ${field.field_key}`, {
+                  fieldId: field.id,
+                  responseId: existingResponse.id
+                });
+              } else {
+                // Insert new response
+                try {
+                  await tx.insert(kybResponses)
+                    .values({
+                      task_id: Number(taskId),
+                      field_id: field.id,
                       response_value: value || '',
                       status: status as any, // Cast to bypass type checking
-                      version: sql`${kybResponses.version} + 1`,
+                      version: 1,
+                      created_at: timestamp,
                       updated_at: timestamp
-                    })
-                    .where(
-                      and(
-                        eq(kybResponses.task_id, Number(taskId)),
-                        eq(kybResponses.field_id, field.id)
-                      )
-                    );
-                  warnings.push(`Updated existing response for field: ${field.field_key}`);
-                } else {
-                  // For non-duplicate errors, we need to stop the entire transaction
+                    });
+                    
+                  logger.info(`Created new response for field: ${field.field_key}`, {
+                    fieldId: field.id
+                  });
+                } catch (insertError) {
+                  const error = insertError as Error;
+                  logger.error(`Error inserting response for field: ${field.field_key}`, {
+                    error: error.message,
+                    fieldId: field.id
+                  });
                   throw error;
                 }
               }
@@ -459,8 +538,10 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
           return fileRecord.id;
         } catch (transactionError) {
           logger.error('Transaction step failed', {
+            step: transactionStep,
             error: transactionError instanceof Error ? transactionError.message : 'Unknown error',
-            stack: transactionError instanceof Error ? transactionError.stack : undefined
+            stack: transactionError instanceof Error ? transactionError.stack : undefined,
+            taskId
           });
           throw transactionError;
         }
@@ -484,6 +565,7 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
     } catch (txError) {
       // Transaction error handling
       logger.error('Transaction failed during KYB submission', {
+        step: transactionStep,
         error: txError instanceof Error ? txError.message : 'Unknown error',
         stack: txError instanceof Error ? txError.stack : undefined,
         taskId
@@ -547,6 +629,73 @@ router.post('/api/kyb/save', requireAuth, async (req, res) => {
       details: errorDetails,
       statusCode,
       timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Diagnostic endpoint for KYB responses
+router.get('/api/kyb/diagnostics/:taskId', async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    
+    // Get task info
+    const [task] = await db.select()
+      .from(tasks)
+      .where(eq(tasks.id, parseInt(taskId)));
+    
+    if (!task) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    // Fetch all fields with their definitions
+    const fields = await db.select().from(kybFields).orderBy(kybFields.order);
+    
+    // Get all existing responses for this task
+    const responses = await db.select()
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, parseInt(taskId)));
+    
+    // Get response count by field
+    const responseCountByField = await db.select({
+      field_id: kybResponses.field_id,
+      count: sql`count(${kybResponses.id})`
+    })
+      .from(kybResponses)
+      .where(eq(kybResponses.task_id, parseInt(taskId)))
+      .groupBy(kybResponses.field_id);
+      
+    // Join fields with their response counts
+    const fieldResponseCounts = fields.map(field => {
+      const responseCount = responseCountByField.find(r => r.field_id === field.id);
+      return {
+        field_id: field.id,
+        field_key: field.field_key,
+        display_name: field.display_name,
+        response_count: responseCount ? Number(responseCount.count) : 0
+      };
+    });
+    
+    // Calculate overall stats
+    const duplicateFields = fieldResponseCounts.filter(f => Number(f.response_count) > 1);
+    const missingFields = fieldResponseCounts.filter(f => f.response_count === 0);
+    
+    // Return diagnostic info
+    return res.json({
+      task_id: task.id,
+      task_status: task.status,
+      task_progress: task.progress,
+      field_count: fields.length,
+      response_count: responses.length,
+      duplicate_fields: duplicateFields,
+      missing_fields: missingFields,
+      fields_with_responses: fieldResponseCounts,
+      field_status: responseCountByField
+    });
+  } catch (error) {
+    console.error('Error generating KYB diagnostics:', error);
+    res.status(500).json({
+      error: 'Failed to generate KYB diagnostics',
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
