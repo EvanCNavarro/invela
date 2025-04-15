@@ -9,6 +9,12 @@ import {
   FormDescription
 } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { toast } from '@/hooks/use-toast';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { componentFactory } from '@/services/componentFactory';
@@ -520,31 +526,55 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
                         
                         {/* Review all sections and their answers */}
                         <div className="space-y-8">
-                          {sections.map((reviewSection, sectionIndex) => (
-                            <div key={`review-${sectionIndex}`} className="border border-gray-200 rounded-md p-4 bg-gray-50">
-                              <h4 className="font-medium text-lg mb-4">
-                                Section {sectionIndex + 1}: {reviewSection.title}
-                              </h4>
-                              <div className="space-y-4">
-                                {fields.filter(field => field.section === reviewSection.id).map((field, fieldIndex) => {
-                                  const value = form.getValues(field.key);
-                                  return (
-                                    <div key={field.key} className="flex flex-col space-y-1">
-                                      <span className="text-sm font-medium text-gray-700">
-                                        {fieldIndex + 1}. {field.question || field.label}
+                          {/* Using shadcn Accordion for collapsible sections, collapsed by default */}
+                          <Accordion type="multiple" className="w-full">
+                            {sections.map((reviewSection, sectionIndex) => {
+                              const sectionFields = fields.filter(field => field.section === reviewSection.id);
+                              const filledFieldCount = sectionFields.filter(field => {
+                                const value = form.getValues(field.key);
+                                return value !== undefined && value !== null && value !== '';
+                              }).length;
+                              
+                              return (
+                                <AccordionItem 
+                                  key={`review-${sectionIndex}`} 
+                                  value={`section-${sectionIndex}`}
+                                  className="border border-gray-200 rounded-md mb-4 bg-gray-50 overflow-hidden"
+                                >
+                                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100">
+                                    <div className="flex justify-between w-full items-center">
+                                      <h4 className="font-medium text-lg text-left">
+                                        Section {sectionIndex + 1}: {reviewSection.title}
+                                      </h4>
+                                      <span className="text-sm text-gray-500 mr-2">
+                                        {filledFieldCount}/{sectionFields.length} questions answered
                                       </span>
-                                      <div className="bg-white p-2 border border-gray-200 rounded min-h-[2rem]">
-                                        {value !== undefined && value !== null && value !== '' 
-                                          ? (typeof value === 'object' ? JSON.stringify(value) : value.toString())
-                                          : <span className="text-gray-400 italic">No answer provided</span>
-                                        }
-                                      </div>
                                     </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          ))}
+                                  </AccordionTrigger>
+                                  <AccordionContent className="px-4 pb-4">
+                                    <div className="space-y-4 pt-2">
+                                      {sectionFields.map((field, fieldIndex) => {
+                                        const value = form.getValues(field.key);
+                                        return (
+                                          <div key={field.key} className="flex flex-col space-y-1">
+                                            <span className="text-sm font-medium text-gray-700">
+                                              {fieldIndex + 1}. {field.question || field.label}
+                                            </span>
+                                            <div className="bg-white p-2 border border-gray-200 rounded min-h-[2rem]">
+                                              {value !== undefined && value !== null && value !== '' 
+                                                ? (typeof value === 'object' ? JSON.stringify(value) : value.toString())
+                                                : <span className="text-gray-400 italic">No answer provided</span>
+                                              }
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              );
+                            })}
+                          </Accordion>
                         </div>
                         
                         {/* Final agreement checkbox */}
