@@ -45,7 +45,7 @@ import ResponsiveSectionNavigation, { FormSection as NavigationFormSection } fro
 import FormProgressBar from './FormProgressBar';
 import { FieldRenderer } from './field-renderers/FieldRenderer';
 import { useUser } from '@/hooks/useUser';
-import { User } from '@/types/auth';
+import type { User } from '@/types/auth';
 import { useCurrentCompany } from '@/hooks/use-current-company';
 import { CheckCircle } from 'lucide-react';
 
