@@ -451,7 +451,8 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
   
   // Track completed actions and show success modal
   // Function to handle successful form submission with transaction-like behavior
-  const handleFormSuccess = useCallback(async (result: any = {}) => {
+  // Returns a promise that resolves when all actions are completed successfully
+  const handleFormSuccess = useCallback(async (result: any = {}): Promise<boolean> => {
     logger.info('Processing form submission success actions');
     
     try {
@@ -546,21 +547,22 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       if (actionPromises.length > 0) {
         try {
           await Promise.all(actionPromises);
-          logger.info('All submission actions completed successfully');
+          logger.info('All submission action promises completed successfully');
         } catch (err) {
-          logger.error('One or more submission actions failed', err);
+          logger.error('One or more submission action promises failed', err);
           hasError = true;
         }
       }
       
-      // If any action failed, don't show success state
+      // If any action failed, don't show success state and reject the promise
       if (hasError) {
+        logger.error('One or more post-submission actions failed');
         toast({
           title: 'Submission partially complete',
           description: 'Some actions could not be completed. Please check the Task Center for details.',
           variant: 'warning',
         });
-        return;
+        return Promise.reject(new Error('Post-submission actions failed'));
       }
       
       // Set submission result with all actions
@@ -580,6 +582,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Show the success modal
       setShowSuccessModal(true);
       
+      // Return true to indicate success
+      return true;
+      
     } catch (err) {
       // Catch-all error handler
       logger.error('Failed to process form submission success', err);
@@ -588,6 +593,9 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         description: 'There was a problem finalizing your submission.',
         variant: 'destructive',
       });
+      
+      // Reject the promise with the error
+      return Promise.reject(err);
     }
   }, [taskId]);
 
@@ -618,15 +626,25 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
       // Then call the onSubmit callback if provided
       if (onSubmit) {
         try {
-          // Wrap onSubmit in a try-catch to handle JSON parsing errors
+          // First, only attempt to submit the form to the server and validate response
+          // Don't show any success messages or trigger success modal until we're sure it worked
           let result;
           let submissionSuccessful = false;
           
           try {
             // Call the onSubmit handler which typically makes API requests
+            logger.info('Calling onSubmit handler to process form submission');
             result = await onSubmit(data);
+            
+            // Verify the result is a valid object and not HTML or other invalid response
+            if (typeof result !== 'object' || result === null) {
+              logger.error(`Invalid result from form submission: ${typeof result}`, result);
+              throw new Error('Server returned an invalid response. Please try again.');
+            }
+            
             // If we got here without an error, the submission was successful
             submissionSuccessful = true;
+            logger.info('Form submission API call successful');
           } catch (apiError: any) {
             // Check if this is a JSON parse error from an API response
             if (apiError instanceof SyntaxError && 
@@ -638,27 +656,38 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
             }
             
             // Rethrow other errors
+            logger.error('Form submission API call failed', apiError);
             throw apiError;
           }
           
           // Only proceed with success actions if the submission was actually successful
-          if (submissionSuccessful) {
-            // Handle successful submission
-            logger.info('Form submission successful');
-            
-            // Show success toast
-            toast({
-              title: 'Form submitted successfully',
-              description: 'Your form has been successfully processed.',
-              variant: 'success'
-            });
-            
-            // Trigger success handler with the result
-            handleFormSuccess({ 
-              ...((typeof result === 'object' && result !== null) ? result : {}),
-              taskId: taskId,
-              taskStatus: "completed"
-            });
+          if (submissionSuccessful && result) {
+            try {
+              // First process all post-submission actions before showing any success UI
+              logger.info('Form submission successful, processing post-submission actions');
+              
+              // Execute post-submission actions (handleFormSuccess now returns a promise)
+              await handleFormSuccess({ 
+                ...((typeof result === 'object' && result !== null) ? result : {}),
+                taskId: taskId,
+                taskStatus: "completed"
+              });
+              
+              // Only after all actions are complete, show success toast
+              logger.info('All post-submission actions completed successfully');
+              toast({
+                title: 'Form submitted successfully',
+                description: 'Your form has been successfully processed.',
+                variant: 'success'
+              });
+            } catch (postSubmitError) {
+              // If post-submission actions fail, show an error
+              logger.error('Post-submission actions failed', postSubmitError);
+              throw new Error('Form was submitted but some follow-up actions failed. Please check the Task Center for status.');
+            }
+          } else {
+            // This shouldn't happen, but just in case
+            throw new Error('Form submission completed but returned an invalid result.');
           }
         } catch (submitError) {
           // If submission fails, show error toast
@@ -673,17 +702,29 @@ export const UniversalForm: React.FC<UniversalFormProps> = ({
         }
       } else {
         try {
-          // If no onSubmit callback, just show a simple success toast
-          toast({
-            title: 'Form submitted',
-            description: 'Your form has been successfully submitted.',
-          });
+          // For case with no onSubmit callback, we need to follow the same pattern
+          // Process all post-submission actions first
+          logger.info('No onSubmit handler provided, processing default success actions');
           
-          // Show success modal with basic information
-          handleFormSuccess({
-            taskId: taskId,
-            taskStatus: "completed"
-          });
+          try {
+            // Execute post-submission actions and wait for them to complete
+            await handleFormSuccess({
+              taskId: taskId,
+              taskStatus: "completed"
+            });
+            
+            // Only show success toast after all actions are completed
+            logger.info('All default post-submission actions completed successfully');
+            toast({
+              title: 'Form submitted',
+              description: 'Your form has been successfully submitted.',
+              variant: 'success'
+            });
+          } catch (postSubmitError) {
+            // If post-submission actions fail, show an error
+            logger.error('Default post-submission actions failed', postSubmitError);
+            throw new Error('Form was submitted but some follow-up actions failed. Please check the Task Center for status.');
+          }
         } catch (error) {
           logger.error('Error in default form submission:', error);
           
